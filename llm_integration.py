@@ -14,16 +14,22 @@ def generate_external_ai_response(model_name: str, api_key: str, prompt: str, hi
 
     # Standardize model names for APIs
     if "Gemini" in model_name:
-        if "Pro" in model_name:
-            api_model = "gemini-3.5-flash" # Pro is mapped to the newest available 3.5 flash
-        else:
+        if "3.5 Flash" in model_name:
             api_model = "gemini-3.5-flash"
+        elif "1.5 Pro" in model_name:
+            api_model = "gemini-1.5-pro"
+        elif "1.5 Flash" in model_name:
+            api_model = "gemini-1.5-flash"
+        else:
+            api_model = "gemini-1.5-flash"
         return _call_gemini(api_model, api_key, prompt, history)
     elif "GPT" in model_name:
         if "4o" in model_name:
             api_model = "gpt-4o"
-        else:
+        elif "3.5" in model_name:
             api_model = "gpt-3.5-turbo"
+        else:
+            api_model = "gpt-4o"
         return _call_openai(api_model, api_key, prompt, history)
     else:
         return "⚠️ Unknown external model selected.", False

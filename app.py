@@ -187,184 +187,251 @@ FUNCTIONAL_GROUPS: Dict[str, str] = {
 _CSS = """
 <style>
 /* ══════════════════════════════════════════════════════════
-   🟢 Core Research Theme — Clean Professional Dark UI
+   🟢 Core Research Theme — Sleek Obsidian Glass Dark UI
    ══════════════════════════════════════════════════════════ */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
-h1, h2, h3, h4, h5 { font-family: 'Inter', sans-serif !important; letter-spacing: -0.02em; }
+html, body, [class*="css"] { 
+    font-family: 'Outfit', sans-serif !important; 
+}
+h1, h2, h3, h4, h5 { 
+    font-family: 'Outfit', sans-serif !important; 
+    letter-spacing: -0.02em; 
+    color: #f1f5f9;
+}
 
 .stApp {
-    background: linear-gradient(180deg, #0a0e14 0%, #0e1117 30%, #111827 100%);
+    background: radial-gradient(circle at 50% 0%, #0f172a 0%, #090d16 60%, #030408 100%) !important;
 }
 
 /* ── Header ── */
 .main-header {
-    background: linear-gradient(135deg, #131820 0%, #1a2332 50%, #161d2b 100%);
-    padding: 28px 32px;
-    border-radius: 16px;
-    margin-bottom: 28px;
-    border: 1px solid rgba(99, 179, 237, 0.12);
-    box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+    background: linear-gradient(135deg, rgba(21, 32, 54, 0.65) 0%, rgba(13, 20, 35, 0.85) 100%) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 30px 35px !important;
+    border-radius: 20px !important;
+    margin-bottom: 28px !important;
+    border: 1px solid rgba(59, 130, 246, 0.15) !important;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05) !important;
     position: relative;
     overflow: hidden;
 }
 .main-header::before {
-    content: ''; position: absolute; top: -60%; right: -15%; width: 350px; height: 350px;
-    background: radial-gradient(circle, rgba(99, 179, 237, 0.05) 0%, transparent 70%); pointer-events: none;
+    content: ''; 
+    position: absolute; 
+    top: -50%; 
+    right: -10%; 
+    width: 400px; 
+    height: 400px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%); 
+    pointer-events: none;
 }
 .main-header h1 {
-    margin: 0; font-size: 2rem; font-weight: 800; letter-spacing: -0.5px;
-    background: linear-gradient(135deg, #63b3ed 0%, #a0d2db 50%, #b794f4 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin: 0; 
+    font-size: 2.4rem !important; 
+    font-weight: 800 !important; 
+    letter-spacing: -0.8px !important;
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #8b5cf6 100%);
+    -webkit-background-clip: text !important; 
+    -webkit-text-fill-color: transparent !important;
 }
 .main-header p {
-    margin: 6px 0 0 0; color: rgba(148, 163, 184, 0.9); font-size: 0.85rem; font-weight: 400;
-    letter-spacing: 0.3px;
+    margin: 8px 0 0 0 !important; 
+    color: #94a3b8 !important; 
+    font-size: 0.95rem !important; 
+    font-weight: 400 !important;
+    letter-spacing: 0.2px !important;
 }
 
 /* ── Cards ── */
 .card {
-    background: linear-gradient(145deg, #141922, #1a2030);
-    border: 1px solid rgba(255,255,255,0.05);
-    border-radius: 14px;
-    padding: 18px;
-    margin-bottom: 12px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    background: rgba(17, 24, 39, 0.45) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    border-radius: 16px !important;
+    padding: 22px !important;
+    margin-bottom: 15px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.2) !important;
 }
 .card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    border-color: rgba(99, 179, 237, 0.15);
+    transform: translateY(-3px) !important;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.35) !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
 }
 
 /* ── Metrics ── */
 [data-testid="stMetric"] {
-    background: linear-gradient(145deg, #141922, #1c2333);
-    border: 1px solid rgba(255,255,255,0.05);
-    border-radius: 12px;
-    padding: 14px 16px;
-    transition: all 0.2s ease;
+    background: rgba(17, 24, 39, 0.5) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.05) !important;
+    border-radius: 14px !important;
+    padding: 16px 20px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18) !important;
 }
 [data-testid="stMetric"]:hover {
-    transform: translateY(-2px);
-    border-color: rgba(99, 179, 237, 0.2);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    transform: translateY(-3px) !important;
+    border-color: rgba(59, 130, 246, 0.25) !important;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.28) !important;
 }
 [data-testid="stMetricLabel"] {
-    color: #8892a6 !important; font-size: 0.75rem !important;
-    text-transform: uppercase; letter-spacing: 0.8px;
+    color: #94a3b8 !important; 
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase; 
+    letter-spacing: 1px;
 }
 [data-testid="stMetricValue"] {
     font-family: 'JetBrains Mono', monospace !important;
-    color: #e2e8f0 !important; font-weight: 600 !important;
+    color: #f1f5f9 !important; 
+    font-weight: 700 !important;
+    font-size: 1.8rem !important;
 }
 
 /* ── Sidebar ── */
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0c1015, #111822, #0e1420) !important;
-    border-right: 1px solid rgba(255,255,255,0.04);
+    background: linear-gradient(180deg, #090d16 0%, #05070d 100%) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.04) !important;
 }
 section[data-testid="stSidebar"] .stButton > button {
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.07);
-    background: linear-gradient(145deg, #18202e, #1f293a);
-    color: #c9d1d9;
-    font-weight: 500;
-    transition: all 0.2s ease;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    background: rgba(30, 41, 59, 0.45) !important;
+    color: #f1f5f9 !important;
+    font-weight: 600 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 section[data-testid="stSidebar"] .stButton > button:hover {
-    background: linear-gradient(145deg, #1f293a, #263347);
-    border-color: rgba(99, 179, 237, 0.3);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    background: rgba(59, 130, 246, 0.15) !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25) !important;
+}
+
+/* ── Streamlit Native Form Inputs & Selectboxes ── */
+.stTextInput input, .stTextArea textarea, .stNumberInput input, .stSelectbox [data-baseweb="select"] {
+    background-color: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    color: #f1f5f9 !important;
+    transition: all 0.3s ease !important;
+}
+.stTextInput input:focus, .stTextArea textarea:focus, .stNumberInput input:focus {
+    border-color: rgba(59, 130, 246, 0.4) !important;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.2) !important;
 }
 
 /* ── Tabs & Expanders ── */
 .stTabs [data-baseweb="tab-list"] {
-    gap: 4px;
-    background-color: transparent;
+    gap: 8px !important;
+    background-color: rgba(15, 23, 42, 0.4) !important;
+    padding: 6px !important;
+    border-radius: 14px !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 .stTabs [data-baseweb="tab"] {
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-weight: 500;
-    transition: background 0.2s ease;
+    border-radius: 10px !important;
+    padding: 8px 18px !important;
+    font-weight: 600 !important;
+    color: #94a3b8 !important;
+    border: none !important;
+    transition: all 0.25s ease !important;
+}
+.stTabs [aria-selected="true"] {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(37, 99, 235, 0.22) 100%) !important;
+    color: #60a5fa !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* ── Scrollbar ── */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
-::-webkit-scrollbar-thumb { background: rgba(99, 179, 237, 0.2); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(99, 179, 237, 0.4); }
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: rgba(0,0,0,0.15); }
+::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.18); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.35); }
 
 /* ── Section divider ── */
 .section-divider {
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(99, 179, 237, 0.15), transparent);
-    margin: 24px 0;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.15), transparent);
+    margin: 28px 0;
 }
 
 /* ── Floating AI Chat Button ── */
 .oracle-chat-btn {
     position: fixed; top: 12px; right: 60px; z-index: 99999;
-    background: linear-gradient(135deg, #6a1b9a, #e52e71);
-    border: none; border-radius: 12px;
-    padding: 10px 20px;
-    color: white; font-weight: 700; font-size: 0.85rem;
-    cursor: pointer;
-    box-shadow: 0 4px 20px rgba(229, 46, 113, 0.4);
-    transition: all 0.3s ease;
-    font-family: 'Inter', sans-serif;
-    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, #7c3aed, #db2777) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 12px !important;
+    padding: 10px 22px !important;
+    color: white !important; 
+    font-weight: 700 !important; 
+    font-size: 0.85rem !important;
+    cursor: pointer !important;
+    box-shadow: 0 10px 25px rgba(219, 39, 119, 0.3) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    letter-spacing: 0.5px !important;
     animation: oracle-glow 3s infinite;
 }
 .oracle-chat-btn:hover {
-    transform: translateY(-2px) scale(1.03);
-    box-shadow: 0 6px 30px rgba(229, 46, 113, 0.6);
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 15px 30px rgba(219, 39, 119, 0.5) !important;
 }
 @keyframes oracle-glow {
-    0%, 100% { box-shadow: 0 4px 20px rgba(229, 46, 113, 0.3); }
-    50% { box-shadow: 0 4px 30px rgba(229, 46, 113, 0.6), 0 0 40px rgba(106, 27, 154, 0.2); }
+    0%, 100% { box-shadow: 0 10px 25px rgba(219, 39, 119, 0.25); }
+    50% { box-shadow: 0 15px 35px rgba(219, 39, 119, 0.55), 0 0 30px rgba(124, 58, 237, 0.15); }
 }
 
 /* ── Full-Screen Chat Overlay ── */
 .oracle-fullscreen {
-    background: linear-gradient(180deg, #0a0012 0%, #12081e 30%, #0e0618 100%);
-    border-radius: 16px;
-    border: 1px solid rgba(229, 46, 113, 0.15);
-    padding: 0;
-    margin: -1rem;
-    min-height: 85vh;
+    background: linear-gradient(180deg, #090514 0%, #110924 30%, #0d061c 100%) !important;
+    border-radius: 20px !important;
+    border: 1px solid rgba(219, 39, 119, 0.15) !important;
+    padding: 0 !important;
+    margin: -1rem !important;
+    min-height: 85vh !important;
     position: relative;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55) !important;
 }
 .oracle-chat-header {
-    background: linear-gradient(135deg, #1a0830 0%, #2a1045 50%, #1e0a38 100%);
-    padding: 24px 32px;
-    border-radius: 16px 16px 0 0;
-    border-bottom: 1px solid rgba(229, 46, 113, 0.2);
+    background: linear-gradient(135deg, #18092a 0%, #281044 50%, #1c0934 100%) !important;
+    padding: 24px 32px !important;
+    border-radius: 20px 20px 0 0 !important;
+    border-bottom: 1px solid rgba(219, 39, 119, 0.2) !important;
     display: flex; align-items: center; justify-content: space-between;
 }
 .oracle-chat-header h2 {
-    margin: 0;
-    background: linear-gradient(90deg, #ff8a00, #e52e71, #b83dba);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    font-size: 1.5rem; font-weight: 800;
+    margin: 0 !important;
+    background: linear-gradient(90deg, #fbbf24, #db2777, #a855f7) !important;
+    -webkit-background-clip: text !important; 
+    -webkit-text-fill-color: transparent !important;
+    font-size: 1.6rem !important; 
+    font-weight: 850 !important;
 }
 .oracle-chat-header p {
-    color: rgba(168, 237, 234, 0.7); font-size: 0.8rem; margin: 4px 0 0 0;
+    color: rgba(168, 237, 234, 0.75) !important; 
+    font-size: 0.82rem !important; 
+    margin: 6px 0 0 0 !important;
 }
 .oracle-status {
-    display: inline-block; padding: 4px 12px; border-radius: 20px;
-    background: rgba(229, 46, 113, 0.1); border: 1px solid rgba(229, 46, 113, 0.3);
-    color: #e52e71; font-size: 0.7rem; font-weight: 600;
-    letter-spacing: 1.5px; text-transform: uppercase;
+    display: inline-block !important; 
+    padding: 6px 14px !important; 
+    border-radius: 20px !important;
+    background: rgba(219, 39, 119, 0.12) !important; 
+    border: 1px solid rgba(219, 39, 119, 0.35) !important;
+    color: #db2777 !important; 
+    font-size: 0.72rem !important; 
+    font-weight: 600 !important;
+    letter-spacing: 1.5px; 
+    text-transform: uppercase;
     animation: status-pulse 2s infinite;
 }
 @keyframes status-pulse {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
+    50% { opacity: 0.65; }
 }
 </style>
 """
@@ -372,53 +439,59 @@ section[data-testid="stSidebar"] .stButton > button:hover {
 GENESIS_CSS = """
 <style>
 /* ══════════════════════════════════════════════════════════
-   🔵 Genesis Protocol Theme — Premium Professional
+   🔵 Genesis Protocol Theme — Sci-Fi Cyan Blue UI
    ══════════════════════════════════════════════════════════ */
 .stApp {
-    background: linear-gradient(180deg, #080d15 0%, #0c1220 30%, #101828 100%);
+    background: radial-gradient(circle at 50% 0%, #0d1e3d 0%, #060c18 60%, #020409 100%) !important;
 }
 .main-header {
-    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-    border: 1px solid rgba(168, 237, 234, 0.12);
-    box-shadow: 0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.75) 0%, rgba(8, 14, 28, 0.9) 100%) !important;
+    border: 1px solid rgba(168, 237, 234, 0.22) !important;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06) !important;
 }
 .main-header::before {
-    width: 500px; height: 500px;
-    background: radial-gradient(circle, rgba(168,237,234,0.08) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(168, 237, 234, 0.12) 0%, transparent 70%) !important;
 }
 .main-header h1 {
-    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 50%, #d299c2 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    font-size: 2.2rem;
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 50%, #d299c2 100%) !important;
+    -webkit-background-clip: text !important; 
+    -webkit-text-fill-color: transparent !important;
+    text-shadow: 0 0 30px rgba(168, 237, 234, 0.15) !important;
 }
-.main-header p { color: rgba(158, 158, 192, 0.9); }
+.main-header p { 
+    color: rgba(168, 237, 234, 0.8) !important; 
+}
 
 .card {
-    background: linear-gradient(145deg, #12182a, #1a2540);
-    border: 1px solid rgba(168, 237, 234, 0.06);
+    background: rgba(12, 22, 43, 0.5) !important;
+    border: 1px solid rgba(168, 237, 234, 0.08) !important;
 }
 .card:hover {
-    border-color: rgba(168, 237, 234, 0.18);
-    box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+    border-color: rgba(168, 237, 234, 0.3) !important;
+    box-shadow: 0 20px 40px rgba(168, 237, 234, 0.1) !important;
 }
 
 [data-testid="stMetric"] {
-    background: linear-gradient(145deg, #12182a, #1a2540);
-    border: 1px solid rgba(168, 237, 234, 0.06);
+    background: rgba(12, 22, 43, 0.55) !important;
+    border: 1px solid rgba(168, 237, 234, 0.08) !important;
 }
 [data-testid="stMetric"]:hover {
-    border-color: rgba(168, 237, 234, 0.2);
+    border-color: rgba(168, 237, 234, 0.3) !important;
+}
+[data-testid="stMetricValue"] {
+    color: #a8edea !important;
 }
 
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #080d15, #0f1525, #0c1220) !important;
+    background: linear-gradient(180deg, #060c18 0%, #03060c 100%) !important;
 }
 section[data-testid="stSidebar"] .stButton > button:hover {
-    border-color: rgba(168, 237, 234, 0.3);
+    border-color: rgba(168, 237, 234, 0.45) !important;
+    background: rgba(168, 237, 234, 0.08) !important;
 }
 
 .section-divider {
-    background: linear-gradient(90deg, transparent, rgba(168, 237, 234, 0.15), transparent);
+    background: linear-gradient(90deg, transparent, rgba(168, 237, 234, 0.22), transparent) !important;
 }
 </style>
 """
@@ -426,56 +499,61 @@ section[data-testid="stSidebar"] .stButton > button:hover {
 SINGULARITY_CSS = GENESIS_CSS + """
 <style>
 /* ══════════════════════════════════════════════════════════
-   🟣 Singularity Engine — Extreme Sci-Fi Premium
+   🟣 Singularity Engine — High-End Deep Space Neon UI
    ══════════════════════════════════════════════════════════ */
 .stApp {
-    background: radial-gradient(ellipse at top right, #1a0b2e 0%, #0e0618 25%, #0a0e14 50%, #0e1117 100%);
+    background: radial-gradient(circle at 100% 0%, #220e3a 0%, #0a0414 45%, #030107 80%) !important;
 }
 .main-header {
-    background: linear-gradient(135deg, #2a0845 0%, #6441A5 60%, #3a1868 100%);
-    border: 1px solid rgba(229, 46, 113, 0.3);
-    box-shadow: 0 0 50px rgba(229, 46, 113, 0.15), 0 8px 40px rgba(0,0,0,0.5),
-                inset 0 0 30px rgba(106, 27, 154, 0.3);
+    background: linear-gradient(135deg, rgba(32, 10, 60, 0.75) 0%, rgba(13, 5, 26, 0.92) 100%) !important;
+    border: 1px solid rgba(236, 72, 153, 0.35) !important;
+    box-shadow: 0 30px 60px rgba(236, 72, 153, 0.15), 0 20px 50px rgba(0,0,0,0.55), inset 0 0 30px rgba(124, 58, 237, 0.25) !important;
 }
 .main-header::before {
-    background: radial-gradient(circle, rgba(229, 46, 113, 0.06) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, transparent 70%) !important;
 }
 .main-header h1 {
-    background: linear-gradient(90deg, #ff8a00, #e52e71, #b83dba);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background: linear-gradient(90deg, #f59e0b 0%, #ec4899 50%, #a855f7 100%) !important;
+    -webkit-background-clip: text !important; 
+    -webkit-text-fill-color: transparent !important;
+    text-shadow: 0 0 45px rgba(236, 72, 153, 0.25) !important;
+}
+.main-header p {
+    color: #e2e8f0 !important;
 }
 
 .card {
-    background: linear-gradient(145deg, #100820, #1a0e30);
-    border: 1px solid rgba(229, 46, 113, 0.12);
+    background: rgba(22, 12, 45, 0.45) !important;
+    border: 1px solid rgba(236, 72, 153, 0.15) !important;
 }
 .card:hover {
-    box-shadow: 0 8px 30px rgba(229, 46, 113, 0.2);
-    border-color: rgba(229, 46, 113, 0.35);
+    border-color: rgba(236, 72, 153, 0.4) !important;
+    box-shadow: 0 25px 45px rgba(236, 72, 153, 0.2) !important;
 }
 
 [data-testid="stMetric"] {
-    background: linear-gradient(145deg, #120a20, #1e0e35);
-    border: 1px solid rgba(229, 46, 113, 0.1);
+    background: rgba(22, 12, 45, 0.5) !important;
+    border: 1px solid rgba(236, 72, 153, 0.12) !important;
 }
 [data-testid="stMetric"]:hover {
-    border-color: rgba(229, 46, 113, 0.3);
-    box-shadow: 0 4px 16px rgba(229, 46, 113, 0.15);
+    border-color: rgba(236, 72, 153, 0.45) !important;
+    box-shadow: 0 20px 40px rgba(236, 72, 153, 0.15) !important;
 }
 [data-testid="stMetricValue"] {
-    color: #ffa0b4 !important;
-    text-shadow: 0 0 8px rgba(255, 138, 128, 0.2);
+    color: #f472b6 !important;
+    text-shadow: 0 0 10px rgba(236, 72, 153, 0.25) !important;
 }
 
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0a0515, #120a20, #0e0818) !important;
+    background: linear-gradient(180deg, #0a0414 0%, #040108 100%) !important;
 }
 section[data-testid="stSidebar"] .stButton > button:hover {
-    border-color: rgba(229, 46, 113, 0.3);
+    border-color: rgba(236, 72, 153, 0.45) !important;
+    background: rgba(236, 72, 153, 0.08) !important;
 }
 
 .section-divider {
-    background: linear-gradient(90deg, transparent, rgba(229, 46, 113, 0.2), transparent);
+    background: linear-gradient(90deg, transparent, rgba(236, 72, 153, 0.25), transparent) !important;
 }
 </style>
 """
@@ -1351,6 +1429,14 @@ def setup_authenticator():
     )
 
 def main() -> None:
+    # ── Singularity Engine AI Configuration Init ──
+    if "singularity_ai_source" not in st.session_state:
+        st.session_state["singularity_ai_source"] = "built_in"
+    if "singularity_selected_model" not in st.session_state:
+        st.session_state["singularity_selected_model"] = "Gemini 3.5 Flash"
+    if "singularity_api_key" not in st.session_state:
+        st.session_state["singularity_api_key"] = ""
+
     authenticator = setup_authenticator()
     
     if authenticator is not None:
@@ -1503,6 +1589,49 @@ def main() -> None:
             """, unsafe_allow_html=True
         )
         st.markdown(SINGULARITY_CSS, unsafe_allow_html=True)
+        
+        with st.sidebar.expander("🧠 Oracle AI Configuration", expanded=True):
+            ai_source_options = ["🟣 Our AI (ระบบวิเคราะห์ของเรา)", "🌐 External AI (ใส่คีย์ค่ายอื่น)"]
+            default_source_idx = 0 if st.session_state.get("singularity_ai_source", "built_in") == "built_in" else 1
+            ai_source = st.radio(
+                "AI Source / แหล่งประมวลผล",
+                options=ai_source_options,
+                index=default_source_idx,
+                key="singularity_ai_source_radio"
+            )
+            st.session_state["singularity_ai_source"] = "built_in" if "Our AI" in ai_source else "external"
+            
+            if st.session_state["singularity_ai_source"] == "external":
+                model_options = ["Gemini 3.5 Flash", "Gemini 1.5 Pro", "Gemini 1.5 Flash", "GPT-4o", "GPT-3.5 Turbo"]
+                current_model = st.session_state.get("singularity_selected_model", "Gemini 3.5 Flash")
+                default_model_idx = model_options.index(current_model) if current_model in model_options else 0
+                
+                selected_model = st.selectbox(
+                    "Select Model / เลือกโมเดล",
+                    options=model_options,
+                    index=default_model_idx,
+                    key="singularity_model_selectbox"
+                )
+                st.session_state["singularity_selected_model"] = selected_model
+                
+                provider_name = "Google Gemini" if "Gemini" in selected_model else "OpenAI"
+                placeholder = "AIzaSy..." if "Gemini" in selected_model else "sk-..."
+                
+                api_key = st.text_input(
+                    f"{provider_name} API Key",
+                    type="password",
+                    value=st.session_state.get("singularity_api_key", ""),
+                    placeholder=placeholder,
+                    key="singularity_api_key_input"
+                )
+                st.session_state["singularity_api_key"] = api_key
+                
+                if not api_key:
+                    st.caption("⚠️ API Key is required for External AI analysis.")
+            else:
+                st.session_state["singularity_selected_model"] = "Local MolSol AI"
+                st.session_state["singularity_api_key"] = ""
+                st.success("🤖 Using proprietary built-in simulated AI.")
 
 
     st.sidebar.markdown("---")
@@ -1644,45 +1773,71 @@ def _render_docking_mode(smiles_input: str, pro_mode: bool, singularity_mode: bo
     target_name = st.selectbox("Select Target Protein", list(targets.keys()))
     st.caption(targets[target_name])
 
-    col1, col2 = st.columns([1, 2])
+    col1, col2 = st.columns([1, 1.5])
     with col1:
-        st.markdown(f"**Ligand SMILES:** `{smiles_input[:30]}...`")
-        if st.button("🧬 Run Docking Simulation", type="primary", use_container_width=True):
-            with st.spinner("Simulating molecular docking and binding free energy..."):
-                import time, random
-                time.sleep(2) # Simulate heavy computation
-                score = round(random.uniform(5.0, 9.5), 2)
-                st.session_state["last_docking_score"] = score
-                st.session_state["last_docking_target"] = target_name
-            st.success("Simulation Complete!")
+        with st.container(border=True):
+            st.markdown("### ⚙️ Simulation Controls")
+            st.markdown(f"**Ligand SMILES:** `{smiles_input[:30]}...`")
+            if st.button("🧬 Run Docking Simulation", type="primary", use_container_width=True):
+                with st.spinner("Simulating molecular docking and binding free energy..."):
+                    import time, random
+                    time.sleep(2) # Simulate heavy computation
+                    score = round(random.uniform(5.0, 9.5), 2)
+                    st.session_state["last_docking_score"] = score
+                    st.session_state["last_docking_target"] = target_name
+                st.success("Simulation Complete!")
 
     if "last_docking_score" in st.session_state and st.session_state.get("last_docking_target") == target_name:
         score = st.session_state["last_docking_score"]
         st.markdown("---")
-        st.markdown("### 📊 Docking Results")
         
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Binding Affinity (pKd)", f"{score}", f"+{round(score - 6.0, 1)} vs baseline")
-        c2.metric("Estimated IC50", f"{round(10**(9-score), 1)} nM")
-        c3.metric("Docking Status", "Stable Pose" if score > 7.0 else "Weak Binding")
+        with st.container(border=True):
+            st.markdown("### 📊 Docking Results")
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Binding Affinity (pKd)", f"{score}", f"+{round(score - 6.0, 1)} vs baseline")
+            c2.metric("Estimated IC50", f"{round(10**(9-score), 1)} nM")
+            c3.metric("Docking Status", "Stable Pose" if score > 7.0 else "Weak Binding")
 
         if singularity_mode:
-            st.markdown("### 🧠 Oracle AI Deep Analysis")
-            if st.button("Generate Structural Insights", use_container_width=True, type="secondary"):
-                with st.spinner("Oracle AI is analyzing the receptor-ligand interactions..."):
-                    prompt = f"Analyze the binding of molecule {smiles_input} to {target_name}. The predicted pKd is {score}. Explain the potential hydrogen bonds, hydrophobic interactions, and why this molecule might be effective or ineffective."
-                    api_key = st.session_state.get("llm_api_key", "")
-                    model_name = st.session_state.get("llm_model_name", "Gemini 1.5 Pro")
-                    from llm_integration import generate_external_ai_response
-                    
-                    if not api_key:
-                        analysis = f"**[Oracle AI Analysis]**\nThe molecule shows a predicted pKd of {score} against {target_name}. This indicates a {'strong' if score > 7.0 else 'moderate'} binding affinity. The primary interactions likely involve hydrogen bonding with the key active site residues and hydrophobic packing in the binding pocket. (Please configure an API key for a real analysis)."
-                    else:
-                        analysis, error = generate_external_ai_response(model_name, api_key, prompt, [])
-                        if error:
-                            analysis = f"⚠️ Error connecting to Oracle AI: {analysis}"
-                    
-                    st.info(analysis)
+            st.markdown("")
+            with st.container(border=True):
+                st.markdown("### 🧠 Oracle AI Deep Analysis")
+                
+                # Show a brief status card of the active AI Engine
+                source_label = "ระบบ AI ของเรา (วิเคราะห์ภายใน)" if st.session_state.get("singularity_ai_source", "built_in") == "built_in" else f"คีย์ภายนอก ({st.session_state.get('singularity_selected_model', 'Gemini 3.5 Flash')})"
+                st.caption(f"⚡ **Active Engine:** {source_label}")
+
+                if st.button("Generate Structural Insights", use_container_width=True, type="secondary"):
+                    with st.spinner("Oracle AI is analyzing the receptor-ligand interactions..."):
+                        ai_source = st.session_state.get("singularity_ai_source", "built_in")
+                        
+                        if ai_source == "built_in":
+                            import time
+                            time.sleep(1.5)
+                            analysis = (
+                                f"🧬 **[Singularity Oracle Built-in AI Analysis]**\n\n"
+                                f"**Target:** {target_name}\n"
+                                f"**Compound SMILES:** `{smiles_input}`\n"
+                                f"**Predicted Affinity (pKd):** {score}\n\n"
+                                f"**Structural Insights:**\n"
+                                f"1. **Hydrogen Bonding:** โครงสร้างโมเลกุลมีหมู่ฟังก์ชันที่มีคุณสมบัติในการสร้างพันธะไฮโดรเจน (Hydrogen Bonding) กับกรดอะมิโนบริเวณ Active Site ของ {target_name} ช่วยเพิ่มความเสถียรในการเกาะจับ\n"
+                                f"2. **Hydrophobic Contacts:** ส่วนที่มีความไม่ชอบน้ำ (Lipophilic Core) เข้าไปจับกับ Hydrophobic Pocket ของเป้าหมายได้อย่างดี ส่งผลให้มีค่า Binding Affinity สูงถึง {score}\n"
+                                f"3. **Target Efficacy:** จากคะแนนที่ได้ ({score}) ยานี้มีแนวโน้ม{'ที่ดีมากในการจับกับเป้าหมายเพื่อยับยั้งการทำงานของโรค' if score > 7.5 else 'ระดับปานกลาง ซึ่งอาจจะต้องมีการดัดแปลงหมู่ฟังก์ชันเพิ่มเติมเพื่อเพิ่มความจำเพาะเจาะจง (Selectivity)'}"
+                            )
+                        else:
+                            api_key = st.session_state.get("singularity_api_key", "")
+                            model_name = st.session_state.get("singularity_selected_model", "Gemini 3.5 Flash")
+                            
+                            if not api_key:
+                                analysis = "⚠️ **External AI Key Missing:** กรุณาระบุ API Key ใน Sidebar ที่หัวข้อ **Oracle AI Configuration** เพื่อใช้งานการวิเคราะห์ด้วย AI ภายนอก"
+                            else:
+                                prompt = f"Analyze the binding of molecule {smiles_input} to {target_name}. The predicted pKd is {score}. Explain the potential hydrogen bonds, hydrophobic interactions, and why this molecule might be effective or ineffective."
+                                from llm_integration import generate_external_ai_response
+                                analysis, error = generate_external_ai_response(model_name, api_key, prompt, [])
+                                if error:
+                                    analysis = f"⚠️ **Error connecting to External AI:** {analysis}"
+                        
+                        st.info(analysis)
         else:
             st.info("🔒 **Upgrade to Singularity Engine** to unlock Oracle AI Deep Analysis for structural insights and interaction mapping.")
 
@@ -1724,21 +1879,23 @@ def _render_analysis_mode(smiles_input: str, model: xgb.XGBRegressor) -> None:
     col_struct, col_xai = st.columns(2)
 
     with col_struct:
-        st.markdown("### 🔬 2D Molecular Structure")
-        st.image(mol_to_image(mol), width="stretch")
+        with st.container(border=True):
+            st.markdown("### 🔬 2D Molecular Structure")
+            st.image(mol_to_image(mol), use_container_width=True)
 
     with col_xai:
-        st.markdown("### 🎨 XAI Atomic Contribution Map")
-        st.caption(
-            "🔵 Blue = Enhances Solubility &nbsp;&nbsp;&nbsp; "
-            "🔴 Red = Reduces Solubility &nbsp;&nbsp;&nbsp; "
-            "⚪ Grey = Neutral"
-        )
-        try:
-            xai_img = render_xai_map(mol, weights)
-            st.image(xai_img, width="stretch")
-        except Exception as exc:
-            st.warning(f"Could not render XAI map: {exc}")
+        with st.container(border=True):
+            st.markdown("### 🎨 XAI Atomic Contribution Map")
+            st.caption(
+                "🔵 Blue = Enhances Solubility &nbsp;&nbsp;&nbsp; "
+                "🔴 Red = Reduces Solubility &nbsp;&nbsp;&nbsp; "
+                "⚪ Grey = Neutral"
+            )
+            try:
+                xai_img = render_xai_map(mol, weights)
+                st.image(xai_img, use_container_width=True)
+            except Exception as exc:
+                st.warning(f"Could not render XAI map: {exc}")
 
     # ══════════════════════════════════════════════════════════════════════
     # ROW 2 — Molecular Properties + Lipinski
@@ -1748,30 +1905,33 @@ def _render_analysis_mode(smiles_input: str, model: xgb.XGBRegressor) -> None:
     col_props, col_lip = st.columns([3, 2])
 
     with col_props:
-        st.markdown("### 📊 Molecular Properties")
+        with st.container(border=True):
+            st.markdown("### 📊 Molecular Properties")
+            st.markdown("")
 
-        prop_items = list(props.items())
-        # 3 rows of 4 columns
-        for row_idx in range(3):
-            mc = st.columns(4)
-            for i, (k, v) in enumerate(prop_items[row_idx*4 : (row_idx+1)*4]):
-                with mc[i]:
-                    st.metric(label=k, value=str(v))
+            prop_items = list(props.items())
+            # 3 rows of 4 columns
+            for row_idx in range(3):
+                mc = st.columns(4)
+                for i, (k, v) in enumerate(prop_items[row_idx*4 : (row_idx+1)*4]):
+                    with mc[i]:
+                        st.metric(label=k, value=str(v))
 
     with col_lip:
-        st.markdown("### 🚦 Lipinski Rule of Five")
-        n_viol, violations, _ = lipinski_assessment(props)
-        st.write(f"Violations: {n_viol}")
-        st.markdown("")
-        checks = [
-            ("MW ≤ 500",   props["Molecular Weight"],          props["Molecular Weight"] <= 500),
-            ("LogP ≤ 5",   props["LogP (Crippen)"],            props["LogP (Crippen)"]   <= 5),
-            ("HBD ≤ 5",    props["HBD (H-Bond Donors)"],      props["HBD (H-Bond Donors)"]  <= 5),
-            ("HBA ≤ 10",   props["HBA (H-Bond Acceptors)"],   props["HBA (H-Bond Acceptors)"] <= 10),
-        ]
-        for label, val, ok in checks:
-            icon = "✅" if ok else "❌"
-            st.markdown(f"{icon} {label}: **{val}**")
+        with st.container(border=True):
+            st.markdown("### 🚦 Lipinski Rule of Five")
+            n_viol, violations, _ = lipinski_assessment(props)
+            st.write(f"Violations: {n_viol}")
+            st.markdown("")
+            checks = [
+                ("MW ≤ 500",   props["Molecular Weight"],          props["Molecular Weight"] <= 500),
+                ("LogP ≤ 5",   props["LogP (Crippen)"],            props["LogP (Crippen)"]   <= 5),
+                ("HBD ≤ 5",    props["HBD (H-Bond Donors)"],      props["HBD (H-Bond Donors)"]  <= 5),
+                ("HBA ≤ 10",   props["HBA (H-Bond Acceptors)"],   props["HBA (H-Bond Acceptors)"] <= 10),
+            ]
+            for label, val, ok in checks:
+                icon = "✅" if ok else "❌"
+                st.markdown(f"{icon} {label}: **{val}**")
 
     # ══════════════════════════════════════════════════════════════════════
     # ROW 3 — Solubility Prediction + PubChem Lookup
@@ -1781,29 +1941,31 @@ def _render_analysis_mode(smiles_input: str, model: xgb.XGBRegressor) -> None:
     col_sol, col_pub = st.columns(2)
 
     with col_sol:
-        st.markdown("### 🧪 Predicted Aqueous Solubility")
-        if pred_logs > -1:
-            sol_tag = "🟢 Highly Soluble"
-        elif pred_logs > -3:
-            sol_tag = "🟡 Moderately Soluble"
-        elif pred_logs > -5:
-            sol_tag = "🟠 Slightly Soluble"
-        else:
-            sol_tag = "🔴 Poorly Soluble"
-        st.metric("Predicted LogS", f"{pred_logs:.4f}")
-        st.markdown(f"**Solubility Class:** {sol_tag}")
+        with st.container(border=True):
+            st.markdown("### 🧪 Predicted Aqueous Solubility")
+            if pred_logs > -1:
+                sol_tag = "🟢 Highly Soluble"
+            elif pred_logs > -3:
+                sol_tag = "🟡 Moderately Soluble"
+            elif pred_logs > -5:
+                sol_tag = "🟠 Slightly Soluble"
+            else:
+                sol_tag = "🔴 Poorly Soluble"
+            st.metric("Predicted LogS", f"{pred_logs:.4f}")
+            st.markdown(f"**Solubility Class:** {sol_tag}")
 
     with col_pub:
-        st.markdown("### 🌐 PubChem Registry Lookup")
-        with st.spinner("Querying PubChem PUG REST…"):
-            cid = lookup_pubchem_cid(canonical)
-        if cid:
-            st.success(
-                f"🔗 **Existing Registered Molecule** — "
-                f"[CID: {cid}](https://pubchem.ncbi.nlm.nih.gov/compound/{cid})"
-            )
-        else:
-            st.info("✨ **Novel De Novo Substance** — Not found in PubChem")
+        with st.container(border=True):
+            st.markdown("### 🌐 PubChem Registry Lookup")
+            with st.spinner("Querying PubChem PUG REST…"):
+                cid = lookup_pubchem_cid(canonical)
+            if cid:
+                st.success(
+                    f"🔗 **Existing Registered Molecule** — "
+                    f"[CID: {cid}](https://pubchem.ncbi.nlm.nih.gov/compound/{cid})"
+                )
+            else:
+                st.info("✨ **Novel De Novo Substance** — Not found in PubChem")
 
     # ══════════════════════════════════════════════════════════════════════
     # ROW 4 — AI Interpretation Panel
@@ -1872,38 +2034,40 @@ def _render_denovo_mode(smiles_input: str, model: xgb.XGBRegressor, pro_mode: bo
     AllChem.Compute2DCoords(mol)
     cp1, cp2 = st.columns([1, 2])
     with cp1:
-        st.image(
-            mol_to_image(mol, size=(380, 300)),
-            caption="Parent Structure",
-            width="stretch",
-        )
+        with st.container(border=True):
+            st.image(
+                mol_to_image(mol, size=(380, 300)),
+                caption="Parent Structure",
+                use_container_width=True,
+            )
     with cp2:
-        props = compute_properties(mol)
-        parent_logs = predict_solubility(model, mol)
-        st.markdown(f"**Parent LogS:** `{parent_logs:.4f}`")
-        st.markdown(
-            f"**MW:** {props['Molecular Weight']:.1f} &nbsp;|&nbsp; "
-            f"**LogP:** {props['LogP (Crippen)']:.2f} &nbsp;|&nbsp; "
-            f"**HBD:** {props['HBD (H-Bond Donors)']} &nbsp;|&nbsp; "
-            f"**HBA:** {props['HBA (H-Bond Acceptors)']}"
-        )
-        _, _, badge = lipinski_assessment(props)
-        st.markdown(badge)
+        with st.container(border=True):
+            st.markdown("### 🧬 Parent Molecule Summary")
+            st.markdown(f"**Parent LogS:** `{parent_logs:.4f}`")
+            st.markdown(
+                f"**MW:** {props['Molecular Weight']:.1f} &nbsp;|&nbsp; "
+                f"**LogP:** {props['LogP (Crippen)']:.2f} &nbsp;|&nbsp; "
+                f"**HBD:** {props['HBD (H-Bond Donors)']} &nbsp;|&nbsp; "
+                f"**HBA:** {props['HBA (H-Bond Acceptors)']}"
+            )
+            _, _, badge = lipinski_assessment(props)
+            st.markdown(badge)
 
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
     # ── Optimization Goal ─────────────────────────────────────────────────
-    st.markdown("### 🎯 Choose Optimization Goal")
-    optimization_objective = st.radio(
-        "AI Agent Objective:",
-        [
-            "📈 Maximize Solubility (LogS)", 
-            "🛡️ Create Safe Drug (LogS + QED - Tox)",
-            "☠️ Maximize Toxicity (Extreme Poison)"
-        ],
-        index=1,
-        help="Choose whether to focus purely on solubility, enforce strict drug-likeness, or intentionally generate highly toxic substances."
-    )
+    with st.container(border=True):
+        st.markdown("### 🎯 Choose Optimization Goal")
+        optimization_objective = st.radio(
+            "AI Agent Objective:",
+            [
+                "📈 Maximize Solubility (LogS)", 
+                "🛡️ Create Safe Drug (LogS + QED - Tox)",
+                "☠️ Maximize Toxicity (Extreme Poison)"
+            ],
+            index=1,
+            help="Choose whether to focus purely on solubility, enforce strict drug-likeness, or intentionally generate highly toxic substances."
+        )
     # Map the UI label back to the internal backend label
     if "Safe Drug" in optimization_objective:
         backend_objective = "Create Best Drug (Multi-Objective)"
@@ -1915,12 +2079,14 @@ def _render_denovo_mode(smiles_input: str, model: xgb.XGBRegressor, pro_mode: bo
     # ── Target Receptor Simulation (Singularity Engine) ────────────────────
     target_receptor = "None"
     if pro_mode:
-        st.markdown("### 🧬 Target Receptor Binding Simulation (Pro)")
-        target_receptor = st.selectbox(
-            "Select Target:",
-            ["None", "🧬 SARS-CoV-2 MPro", "🧠 Dopamine D2 Receptor", "🔥 Cyclooxygenase-2"],
-            help="Simulate how well the drug binds to a specific target class (-kcal/mol). The AI will try to maximize this affinity."
-        )
+        st.markdown("")
+        with st.container(border=True):
+            st.markdown("### 🧬 Target Receptor Binding Simulation (Pro)")
+            target_receptor = st.selectbox(
+                "Select Target:",
+                ["None", "🧬 SARS-CoV-2 MPro", "🧠 Dopamine D2 Receptor", "🔥 Cyclooxygenase-2"],
+                help="Simulate how well the drug binds to a specific target class (-kcal/mol). The AI will try to maximize this affinity."
+            )
 
     # ── GA Parameters ─────────────────────────────────────────────────────
     if pro_mode:
@@ -2032,43 +2198,49 @@ def _render_denovo_mode(smiles_input: str, model: xgb.XGBRegressor, pro_mode: bo
         # ── Row 1: Structure comparison ───────────────────────────────────
         bc1, bc2 = st.columns(2)
         with bc1:
-            st.markdown("**🧪 Parent Molecule**")
-            st.image(mol_to_image(mol), caption="Parent Structure", width="stretch")
-            st.markdown(f"**LogS:** `{parent_logs_saved:.4f}`")
-            st.markdown(f"**QED:** `{props.get('QED Score', 'N/A')}`")
-            st.markdown(f"**Toxicity Alerts:** `{props.get('Toxicity Alerts', 0)}`")
+            with st.container(border=True):
+                st.markdown("**🧪 Parent Molecule**")
+                st.image(mol_to_image(mol), caption="Parent Structure", use_container_width=True)
+                st.markdown(f"**LogS:** `{parent_logs_saved:.4f}`")
+                st.markdown(f"**QED:** `{props.get('QED Score', 'N/A')}`")
+                st.markdown(f"**Toxicity Alerts:** `{props.get('Toxicity Alerts', 0)}`")
 
         with bc2:
-            st.markdown("**🧬 Best Candidate**")
-            st.image(mol_to_image(best_mol), caption="Best Candidate Structure", width="stretch")
-            st.markdown(f"**LogS:** `{best['predicted_logs']}` ({sign}{improvement:.4f})")
-            st.markdown(f"**QED:** `{best_props.get('QED Score', 'N/A')}`")
-            tox_c = best_props.get('Toxicity Alerts', 0)
-            tox_icon = "✅ Safe" if tox_c == 0 else f"⚠️ {tox_c} Alerts"
-            st.markdown(f"**Toxicity:** `{tox_icon}`")
-            st.code(best["smiles"], language=None)
-            _, _, b_badge = lipinski_assessment(best_props)
-            st.markdown(b_badge)
+            with st.container(border=True):
+                st.markdown("**🧬 Best Candidate**")
+                st.image(mol_to_image(best_mol), caption="Best Candidate Structure", use_container_width=True)
+                st.markdown(f"**LogS:** `{best['predicted_logs']}` ({sign}{improvement:.4f})")
+                st.markdown(f"**QED:** `{best_props.get('QED Score', 'N/A')}`")
+                tox_c = best_props.get('Toxicity Alerts', 0)
+                tox_icon = "✅ Safe" if tox_c == 0 else f"⚠️ {tox_c} Alerts"
+                st.markdown(f"**Toxicity:** `{tox_icon}`")
+                st.code(best["smiles"], language=None)
+                _, _, b_badge = lipinski_assessment(best_props)
+                st.markdown(b_badge)
 
         # ── Row 2: Badges (Similarity + Patent) ──────────────────────────
         badge1, badge2 = st.columns(2)
         with badge1:
-            if tanimoto >= 0.7:
-                st.success(f"🧬 **Similarity to Parent:** {tanimoto*100:.1f}% (Highly Preserved)")
-            elif tanimoto >= 0.4:
-                st.info(f"🧬 **Similarity to Parent:** {tanimoto*100:.1f}% (Moderate Drift)")
-            else:
-                st.warning(f"🧬 **Similarity to Parent:** {tanimoto*100:.1f}% (Scaffold Hopped)")
+            with st.container(border=True):
+                st.markdown("**🧬 Similarity Assessment**")
+                if tanimoto >= 0.7:
+                    st.success(f"🧬 **Similarity to Parent:** {tanimoto*100:.1f}% (Highly Preserved)")
+                elif tanimoto >= 0.4:
+                    st.info(f"🧬 **Similarity to Parent:** {tanimoto*100:.1f}% (Moderate Drift)")
+                else:
+                    st.warning(f"🧬 **Similarity to Parent:** {tanimoto*100:.1f}% (Scaffold Hopped)")
         with badge2:
-            with st.spinner("Automated Patent & Literature Check…"):
-                cid = lookup_pubchem_cid(best["smiles"])
-            if cid:
-                st.error(
-                    f"⚠️ **KNOWN COMPOUND** — "
-                    f"[CID: {cid}](https://pubchem.ncbi.nlm.nih.gov/compound/{cid})"
-                )
-            else:
-                st.success("✅ **NOVEL COMPOUND (No Patent Collision)**")
+            with st.container(border=True):
+                st.markdown("**🌐 Patent Check**")
+                with st.spinner("Automated Patent & Literature Check…"):
+                    cid = lookup_pubchem_cid(best["smiles"])
+                if cid:
+                    st.error(
+                        f"⚠️ **KNOWN COMPOUND** — "
+                        f"[CID: {cid}](https://pubchem.ncbi.nlm.nih.gov/compound/{cid})"
+                    )
+                else:
+                    st.success("✅ **NOVEL COMPOUND (No Patent Collision)**")
 
         # ── Row 3: Radar Chart + Mutation Map + 3D Viewer (Genesis Only) ──
         if pro_mode and not singularity_mode:
@@ -2160,11 +2332,11 @@ def _render_denovo_mode(smiles_input: str, model: xgb.XGBRegressor, pro_mode: bo
                         )
                         drawer.FinishDrawing()
                         png_data = drawer.GetDrawingText()
-                        st.image(png_data, caption="🟢 Preserved  🔴 Mutated", width="stretch")
+                        st.image(png_data, caption="🟢 Preserved  🔴 Mutated", use_container_width=True)
                     else:
-                        st.image(mol_to_image(best_mol), caption="No common substructure found", width="stretch")
+                        st.image(mol_to_image(best_mol), caption="No common substructure found", use_container_width=True)
                 except Exception:
-                    st.image(mol_to_image(best_mol), caption="Mutation map unavailable", width="stretch")
+                    st.image(mol_to_image(best_mol), caption="Mutation map unavailable", use_container_width=True)
 
             # --- 3D VIEWER ---
             with viz3:
@@ -2185,7 +2357,7 @@ def _render_denovo_mode(smiles_input: str, model: xgb.XGBRegressor, pro_mode: bo
                         html_3d = viewer._make_html()
                         st.components.v1.html(html_3d, height=380, scrolling=False)
                     except Exception:
-                        st.image(mol_to_image(best_mol), caption="3D generation failed (showing 2D)", width="stretch")
+                        st.image(mol_to_image(best_mol), caption="3D generation failed (showing 2D)", use_container_width=True)
                 else:
                     st.info("Install `py3Dmol` for interactive 3D view.")
 
@@ -2269,7 +2441,7 @@ def _render_denovo_mode(smiles_input: str, model: xgb.XGBRegressor, pro_mode: bo
                         viewer.zoomTo()
                         st.components.v1.html(viewer._make_html(), height=450, scrolling=False)
                     except Exception:
-                        st.image(mol_to_image(best_mol), width="stretch")
+                        st.image(mol_to_image(best_mol), use_container_width=True)
                 else:
                     st.info("Install py3Dmol.")
 
@@ -2507,26 +2679,23 @@ def _render_fullscreen_oracle_chat(model, gnn_model, affinity_model) -> None:
         """, unsafe_allow_html=True
     )
 
-    # ── AI Model Settings (Main Page) ──
-    with st.expander("⚙️ Oracle AI Engine Settings", expanded=False):
-        st.markdown("✨ **Singularity Oracle Network**")
-        st.markdown("Select an AI core to power the Oracle. For Cloud Models, provide your own API Key.")
-        selected_ai = st.radio(
-            "🧠 Select AI Model",
-            [
-                "1. ⭐ Gemini 3.5 Flash (Latest)",
-                "2. ⭐ GPT-4o (Excellent)",
-                "3. 🟢 GPT-3.5 Turbo (Fast)",
-                "4. 🔵 Local MolSol AI (Offline Rule-Based)"
-            ],
-            index=0,
-            horizontal=False
-        )
-        api_key = ""
-        if "Gemini" in selected_ai:
-            api_key = st.text_input("Google Gemini API Key", type="password", key="gemini_api_key")
-        elif "GPT" in selected_ai:
-            api_key = st.text_input("OpenAI API Key", type="password", key="openai_api_key")
+    # ── Active AI Engine Info (Main Page) ──
+    ai_source = st.session_state.get("singularity_ai_source", "built_in")
+    selected_model = st.session_state.get("singularity_selected_model", "Local MolSol AI")
+    api_key = st.session_state.get("singularity_api_key", "")
+    
+    with st.expander("⚙️ Oracle AI Engine Status / สถานะการประมวลผล", expanded=False):
+        st.markdown("✨ **Singularity Oracle Network Status**")
+        if ai_source == "built_in":
+            st.success("🤖 **Proprietary Built-in AI Active**")
+            st.markdown("กำลังประมวลผลด้วยโมเดลวิเคราะห์ภายในประเทศ (ไม่จำเป็นต้องใช้ API Key)")
+        else:
+            st.info(f"🌐 **External AI Active: {selected_model}**")
+            if api_key:
+                st.success("✅ API Key จากภายนอกเชื่อมต่ออยู่เรียบร้อยแล้ว")
+            else:
+                st.warning("⚠️ ข้อมูล API Key ยังไม่สมบูรณ์ (กรุณาระบุคีย์ในหัวข้อ Oracle AI Configuration แถบ Sidebar ซ้ายมือ)")
+        st.caption("💡 ท่านสามารถกำหนดคีย์และเลือกโมเดลได้ที่หัวข้อ **Oracle AI Configuration** แถบ Sidebar ซ้ายมือได้ตลอดเวลา")
 
     # ── Info Banner ──
     st.markdown(
@@ -2592,15 +2761,18 @@ def _render_fullscreen_oracle_chat(model, gnn_model, affinity_model) -> None:
 
                 # ── Conversational Response (use Oracle AI) ──
                 if pred_intent == "conversation":
-                    if "Local MolSol AI" in selected_ai:
+                    if ai_source == "built_in":
                         response = _get_fallback_response(lower_prompt)
                     else:
-                        import llm_integration
-                        import importlib
-                        importlib.reload(llm_integration)
-                        response, is_quota_error = llm_integration.generate_external_ai_response(selected_ai, api_key, prompt, st.session_state.singularity_messages[:-1])
-                        if is_quota_error:
-                            st.warning(response)
+                        if not api_key:
+                            response = "⚠️ **External AI Key Missing:** กรุณาระบุ API Key ใน Sidebar ที่หัวข้อ **Oracle AI Configuration** เพื่อใช้งานคีย์ AI ภายนอก"
+                        else:
+                            import llm_integration
+                            import importlib
+                            importlib.reload(llm_integration)
+                            response, is_quota_error = llm_integration.generate_external_ai_response(selected_model, api_key, prompt, st.session_state.singularity_messages[:-1])
+                            if is_quota_error:
+                                st.warning(response)
 
                     st.markdown(response)
                     st.session_state.singularity_messages.append({"role": "assistant", "content": response})
@@ -2653,25 +2825,28 @@ def _render_fullscreen_oracle_chat(model, gnn_model, affinity_model) -> None:
 
                     # Smart Oracle intro or External AI analysis
                     ai_intro = ""
-                    if "Local MolSol AI" in selected_ai:
+                    if ai_source == "built_in":
                         ai_intro = f"Analyzing molecular properties for **{optimization_objective}** with affinity towards **{target_receptor}**. I have processed the constraints and synthesized an optimal scaffold utilizing quantum-inspired genetic algorithms."
                     else:
-                        import llm_integration
-                        import importlib
-                        importlib.reload(llm_integration)
-                        design_prompt = (
-                            f"Act as an elite chemist. We are designing a drug to optimize {optimization_objective} "
-                            f"targeting {target_receptor}. Our genetic algorithm has proposed the SMILES: '{smi}' "
-                            f"with a predicted LogS of {logs:.4f}. Please provide a comprehensive and detailed chemical analysis explaining why this structure "
-                            f"or its functional groups might be highly effective, focusing on deep chemical rationale and potential interactions."
-                        )
-                        # We don't need full history for this analysis
-                        ai_resp, is_q_err = llm_integration.generate_external_ai_response(selected_ai, api_key, design_prompt, [])
-                        if is_q_err or "❌" in ai_resp or "⚠️" in ai_resp:
-                            # Fallback if API fails or key is invalid
-                            ai_intro = f"Analyzing molecular properties for **{optimization_objective}** with affinity towards **{target_receptor}**. (Note: External AI analysis failed - {ai_resp})"
+                        if not api_key:
+                            ai_intro = f"Analyzing molecular properties for **{optimization_objective}** with affinity towards **{target_receptor}**. (Note: External API key is missing.)"
                         else:
-                            ai_intro = ai_resp
+                            import llm_integration
+                            import importlib
+                            importlib.reload(llm_integration)
+                            design_prompt = (
+                                f"Act as an elite chemist. We are designing a drug to optimize {optimization_objective} "
+                                f"targeting {target_receptor}. Our genetic algorithm has proposed the SMILES: '{smi}' "
+                                f"with a predicted LogS of {logs:.4f}. Please provide a comprehensive and detailed chemical analysis explaining why this structure "
+                                f"or its functional groups might be highly effective, focusing on deep chemical rationale and potential interactions."
+                            )
+                            # We don't need full history for this analysis
+                            ai_resp, is_q_err = llm_integration.generate_external_ai_response(selected_model, api_key, design_prompt, [])
+                            if is_q_err or "❌" in ai_resp or "⚠️" in ai_resp:
+                                # Fallback if API fails or key is invalid
+                                ai_intro = f"Analyzing molecular properties for **{optimization_objective}** with affinity towards **{target_receptor}**. (Note: External AI analysis failed - {ai_resp})"
+                            else:
+                                ai_intro = ai_resp
 
                     if ai_intro:
                         response = f"{ai_intro}\n\n"
