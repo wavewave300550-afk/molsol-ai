@@ -2871,228 +2871,77 @@ def _render_fullscreen_oracle_chat(model, gnn_model, affinity_model) -> None:
                     st.session_state.tmp_sync_smiles = smi
                 else:
                     response = "Could not synthesize a stable molecule from the given constraints. Try different parameters."
-
-                st.markdown(response)
-                
-                # Render the Sync Button if SMILES was generated
-                if "tmp_sync_smiles" in st.session_state and st.session_state.tmp_sync_smiles:
-                    def sync_to_denovo():
-                        st.session_state.input_smiles = st.session_state.tmp_sync_smiles
-                        st.session_state.app_mode = "De Novo Mutation Loop"
-                        
-                    st.button(
-                        "🔄 Sync to De Novo Mutation Loop", 
-                        on_click=sync_to_denovo,
-                        key=f"sync_btn_{len(st.session_state.singularity_messages)}",
-                        help="Click to automatically load this SMILES into the mutation tool and switch pages."
-                    )
-                    st.session_state.tmp_sync_smiles = "" # Clear after rendering
-
-        st.session_state.singularity_messages.append({"role": "assistant", "content": response})
-
-    # ── Download Report ──
-    st.markdown("---")
-    col_dl1, col_dl2 = st.columns([3, 1])
-    with col_dl1:
-        st.caption("Session-only chat. No data is stored after you close this page.")
-    with col_dl2:
-        report_lines = ["# Singularity Oracle - Chat Report\n"]
-        for msg in st.session_state.singularity_messages:
-            role = "USER" if msg["role"] == "user" else "ORACLE"
-            report_lines.append(f"### {role}\n{msg['content']}\n")
-        report_text = "\n".join(report_lines)
-        st.download_button(
-            label="Download Report",
-            data=report_text,
-            file_name="oracle_report.md",
-            mime="text/markdown",
-            use_container_width=True
-        )
-
-
-def _get_fallback_response(prompt_lower: str) -> str:
-    """Rule-based fallback when Oracle AI model is not loaded."""
-    responses = {
-        "hello": "Hello! I am the Singularity Oracle, your AI drug design assistant. How can I help you today?",
-        "hi": "Greetings! I am ready to assist with molecular design. What would you like to explore?",
-        "who are you": "I am the Singularity Oracle, a proprietary AI built by the MolSol De Novo team for advanced drug discovery.",
-        "what can you do": "I can design new drug molecules, predict solubility, optimize molecular properties using genetic algorithms, and explain AI predictions.",
-        "help": "I can help with: 1) Designing drug molecules, 2) Predicting molecular properties, 3) Explaining chemistry concepts. Just describe what you need!",
-        "thank": "You're welcome! Let me know if you need anything else.",
-        "bye": "Goodbye! Remember, your chat history is not stored. Come back anytime!",
-        "solub": "Solubility (LogS) measures how well a substance dissolves in water. Our AI predicts this using Morgan fingerprints and XGBoost. Higher LogS = more soluble.",
-        "logp": "LogP measures hydrophobicity (octanol-water partition). For oral drugs, LogP 1-3 is ideal. Values above 5 violate Lipinski's Rule of Five.",
-        "lipinski": "Lipinski's Rule of Five: MW <= 500, LogP <= 5, HBD <= 5, HBA <= 10. Molecules meeting these criteria are more likely to be orally active.",
-        "qed": "QED (0-1) measures drug-likeness. It combines MW, LogP, HBD, HBA, TPSA, rotatable bonds, and aromatic rings. Score > 0.67 is favorable.",
-        "smiles": "SMILES is a text notation for molecular structures. Example: CC(=O)O is acetic acid, c1ccccc1 is benzene.",
+REACTION_TEMPLATES = {
+    "Amide Coupling": {
+        "smarts": "[CX3:1](=[O:2])[OX2H1].[NX3H2,NX3H1:3]>>[CX3:1](=[O:2])[NX3:3]",
+        "desc": "Condensation reaction linking a Carboxylic Acid and an Amine to form an Amide bond.",
+        "reagents": "EDC·HCl, HOBt, DIPEA",
+        "solvent": "Dimethylformamide (DMF)",
+        "conditions": "Room Temperature, 12 hours"
+    },
+    "Esterification": {
+        "smarts": "[CX3:1](=[O:2])[OX2H1].[OX2H1:3]>>[CX3:1](=[O:2])[OX2:3]",
+        "desc": "Condensation reaction coupling a Carboxylic Acid and an Alcohol to form an Ester bond.",
+        "reagents": "Catalytic sulfuric acid (H2SO4)",
+        "solvent": "Methanol or Ethanol",
+        "conditions": "65°C, reflux, 6 hours"
+    },
+    "Williamson Ether Synthesis": {
+        "smarts": "[c,C:1][F,Cl,Br,I].[OX2H1:2]>>[c,C:1][OX2:2]",
+        "desc": "Nucleophilic substitution reaction where an organohalide is coupled with an alcohol/phenol to yield an Ether.",
+        "reagents": "K2CO3, KI (catalytic)",
+        "solvent": "Acetonitrile (MeCN)",
+        "conditions": "70°C, 16 hours"
     }
-    for key, resp in responses.items():
-        if key in prompt_lower:
-            return resp
-    return "I am the Singularity Oracle. I can help design drug molecules, predict properties, and answer chemistry questions. Please describe what kind of molecule you want to design, or ask a chemistry question!"
+}
 
+REACTANT_PRESETS = {
+    "Acetic Acid (Carboxylic Acid)": "CC(=O)O",
+    "Benzoic Acid (Carboxylic Acid)": "c1ccccc1C(=O)O",
+    "Aniline (Amine)": "Nc1ccccc1",
+    "Methylamine (Amine)": "CN",
+    "Ethanol (Alcohol)": "CCO",
+    "Phenol (Alcohol)": "Oc1ccccc1",
+    "Benzyl Bromide (Halide)": "c1ccccc1CCl",
+    "Bromobenzene (Aryl Halide)": "c1ccccc1Br"
+}
 
+PRESET_SMILES = {
+    "Aspirin": "CC(=O)Oc1ccccc1C(=O)O",
+    "Ibuprofen": "CC(C)Cc1ccc(cc1)[C@@H](C)C(=O)O",
+    "Imatinib": "Cc1ccc(cc1Nc2nccc(n2)c3cccnc3)Nc4ccc(cc4)CN5CCN(C)CC5",
+    "Artemisinin": "CC1CCC2C(C)C(=O)OC3OC4(C)CCC1C23OO4"
+}
 
-def download_and_cache_pdb(pdb_id: str) -> Optional[str]:
-    """Download a PDB file from RCSB and cache it locally."""
-    cache_dir = "pdb_cache"
-    if not os.path.exists(cache_dir):
-        os.makedirs(cache_dir, exist_ok=True)
+def run_chemical_reaction(smi_a: str, smi_b: str, rxn_name: str) -> Tuple[Optional[str], Optional[str]]:
+    """Simulate a chemical reaction using RDKit's ReactionFromSmarts."""
+    mol_a = Chem.MolFromSmiles(smi_a)
+    mol_b = Chem.MolFromSmiles(smi_b)
+    if not mol_a or not mol_b:
+        return None, "Error: Invalid SMILES inputs for reactants."
         
-    cache_path = os.path.join(cache_dir, f"{pdb_id}.pdb")
+    template = REACTION_TEMPLATES.get(rxn_name)
+    if not template:
+        return None, "Error: Unknown reaction type."
+        
+    rxn = AllChem.ReactionFromSmarts(template["smarts"])
     
-    if os.path.exists(cache_path):
-        try:
-            with open(cache_path, "r", encoding="utf-8") as f:
-                return f.read()
-        except Exception as e:
-            st.error(f"Error reading cached PDB {pdb_id}: {e}")
-            
-    # Download from RCSB PDB
-    url = f"https://files.rcsb.org/download/{pdb_id}.pdb"
+    # Try Reactants A and B in both orders (since order matters in SMARTS)
+    products = rxn.RunReactants((mol_a, mol_b))
+    if not products:
+        products = rxn.RunReactants((mol_b, mol_a))
+        
+    if not products:
+        return None, "Error: Reaction failed. Reactants do not match the required functional groups for this reaction."
+        
+    # Get the first product
+    prod_mol = products[0][0]
     try:
-        resp = requests.get(url, timeout=30)
-        if resp.status_code == 200:
-            pdb_data = resp.text
-            with open(cache_path, "w", encoding="utf-8") as f:
-                f.write(pdb_data)
-            return pdb_data
-        else:
-            st.error(f"Failed to download PDB {pdb_id} from RCSB (Status code: {resp.status_code})")
-            return None
+        Chem.SanitizeMol(prod_mol)
+        prod_smi = Chem.MolToSmiles(prod_mol)
+        return prod_smi, None
     except Exception as e:
-        st.error(f"Network error downloading PDB {pdb_id}: {e}")
-        return None
-
-
-def simulate_retrosynthesis(smiles: str) -> List[Dict[str, Any]]:
-    """Generate a realistic simulated retrosynthetic pathway based on functional groups."""
-    mol = Chem.MolFromSmiles(smiles)
-    steps = []
-    if mol is None:
-        return steps
-        
-    # Detect presence of functional groups using SMARTS
-    has_amide = mol.HasSubstructMatch(Chem.MolFromSmarts("[CX3](=O)[NX3]"))
-    has_ester = mol.HasSubstructMatch(Chem.MolFromSmarts("[CX3](=O)[OX2][#6]"))
-    has_nitro = mol.HasSubstructMatch(Chem.MolFromSmarts("[NX3](=O)=O"))
-    has_amine = mol.HasSubstructMatch(Chem.MolFromSmarts("[NX3]"))
-    has_hydroxyl = mol.HasSubstructMatch(Chem.MolFromSmarts("[OX2H]"))
-    has_halogen = mol.HasSubstructMatch(Chem.MolFromSmarts("[F,Cl,Br]"))
-    has_aromatic = mol.HasSubstructMatch(Chem.MolFromSmarts("c1ccccc1"))
-    
-    step_idx = 1
-    
-    # If amide group is present, simulate amide coupling as final step
-    if has_amide:
-        steps.append({
-            "step": step_idx,
-            "title": f"Step {step_idx}: Amide Coupling (Synthesis of Target)",
-            "type": "Amide Coupling (EDCI/HOBt)",
-            "reagents": "EDC·HCl, HOBt, DIPEA",
-            "solvent": "Dimethylformamide (DMF)",
-            "conditions": "Room Temperature, 12 hours",
-            "reactants": "Carboxylic Acid precursor + Primary/Secondary Amine precursor",
-            "yield": "85 - 92%",
-            "notes": "Excellent yield and clean conversion. EDC activates the carboxylic acid to couple with the amine."
-        })
-        step_idx += 1
-        
-    # If ester group is present, simulate esterification
-    elif has_ester:
-        steps.append({
-            "step": step_idx,
-            "title": f"Step {step_idx}: Fischer Esterification (Synthesis of Target)",
-            "type": "Esterification",
-            "reagents": "Catalytic H2SO4 or TsOH",
-            "solvent": "Methanol or Ethanol (reflux)",
-            "conditions": "65°C, 6 hours",
-            "reactants": "Carboxylic Acid precursor + Alcohol precursor",
-            "yield": "78 - 85%",
-            "notes": "Driven to completion by removing water or using the alcohol as solvent."
-        })
-        step_idx += 1
-        
-    # If halogen group is present, simulate nucleophilic substitution or Suzuki coupling
-    if has_halogen and has_aromatic:
-        steps.append({
-            "step": step_idx,
-            "title": f"Step {step_idx}: Suzuki-Miyaura Cross-Coupling",
-            "type": "C-C Cross-Coupling",
-            "reagents": "Pd(dppf)Cl2, K2CO3",
-            "solvent": "THF / H2O (9:1)",
-            "conditions": "80°C, under Nitrogen atmosphere, 8 hours",
-            "reactants": "Aryl halide precursor + Boronic Acid/Ester",
-            "yield": "75 - 88%",
-            "notes": "Standard cross-coupling to construct the carbon-carbon biaryl scaffold."
-        })
-        step_idx += 1
-        
-    # If nitro group is present, simulate nitro reduction to amine
-    if has_nitro and has_amine:
-        steps.append({
-            "step": step_idx,
-            "title": f"Step {step_idx}: Catalytic Nitro Reduction",
-            "type": "Reduction",
-            "reagents": "H2 gas, Pd/C (10 wt. %)",
-            "solvent": "Methanol (MeOH)",
-            "conditions": "Room Temperature, 3 bar H2 pressure, 4 hours",
-            "reactants": "Nitroarene intermediate",
-            "yield": "95 - 98%",
-            "notes": "Quantitative reduction. Filter catalyst through Celite and concentrate to obtain crude amine."
-        })
-        step_idx += 1
-        
-    # If hydroxyl or halogen is present, simulate ether synthesis (Williamson)
-    if has_hydroxyl and has_halogen:
-        steps.append({
-            "step": step_idx,
-            "title": f"Step {step_idx}: Williamson Ether Synthesis",
-            "type": "Nucleophilic Substitution (Sn2)",
-            "reagents": "K2CO3, KI (catalytic)",
-            "solvent": "Acetonitrile (MeCN)",
-            "conditions": "70°C, 16 hours",
-            "reactants": "Phenol/Alcohol + Alkyl Halide",
-            "yield": "70 - 82%",
-            "notes": "Mild basic conditions, alkylation of the oxygen atom to form the ether linkage."
-        })
-        step_idx += 1
-        
-    # Default step for building the main carbon core
-    steps.append({
-        "step": step_idx,
-        "title": f"Step {step_idx}: Core Scaffold Assembly",
-        "type": "Friedel-Crafts Alkylation/Acylation",
-        "reagents": "AlCl3 (anhydrous) or FeCl3",
-        "solvent": "Dichloromethane (DCM)",
-        "conditions": "0°C to Room Temperature, 3 hours",
-        "reactants": "Aromatic core + Acyl chloride / Alkyl halide",
-        "yield": "60 - 75%",
-        "notes": "Constructs the aromatic backbone. Requires moisture-free environment."
-    })
-    step_idx += 1
-    
-    # Initial starting materials
-    steps.append({
-        "step": step_idx,
-        "title": f"Step {step_idx}: Purchase Starting Materials",
-        "type": "Reagent Acquisition",
-        "reagents": "None",
-        "solvent": "None",
-        "conditions": "N/A",
-        "reactants": "Commercial reagents (Sigma-Aldrich, Enamine, or Combi-Blocks)",
-        "yield": "100%",
-        "notes": "Standard, cheap commercial reagents available at >95% purity."
-    })
-    
-    # Reverse to show in chronological order of synthesis (from raw materials to target)
-    steps.reverse()
-    # Re-number steps chronologically and set dynamic titles
-    for i, s in enumerate(steps):
-        s["step"] = i + 1
-        s["title"] = f"Step {i+1}: {s['type']}"
-        
-    return steps
+        return None, f"Error: Sanitization of product failed: {e}"
 
 
 def _render_sim_lab_mode(smiles_input: str, model: xgb.XGBRegressor, affinity_model, gnn_model, pro_mode: bool, singularity_mode: bool) -> None:
@@ -3104,7 +2953,6 @@ def _render_sim_lab_mode(smiles_input: str, model: xgb.XGBRegressor, affinity_mo
         st.info("This advanced feature requires the Genesis Protocol tier or higher. Please upgrade your subscription in the sidebar to access the Simulation Lab.")
         return
 
-    # Add custom timeline CSS styles
     st.markdown(
         """
         <style>
@@ -3147,13 +2995,13 @@ def _render_sim_lab_mode(smiles_input: str, model: xgb.XGBRegressor, affinity_mo
         unsafe_allow_html=True
     )
 
-    tab1, tab2, tab3 = st.tabs([
+    tab1, tab2, tab3, tab4 = st.tabs([
         "🗂️ High-Throughput Screening (HTS)",
         "🧬 Protein-Ligand 3D Pocket Viewer",
-        "🧪 Retrosynthesis Planner"
+        "🧪 Retrosynthesis Planner",
+        "🧪 Reaction Simulator (ระบบผสมสาร)"
     ])
 
-    # 🧬 30 Bioactive Compounds Mock Database for HTS
     SAMPLE_HTS_LIBRARY = [
         {"Name": "Aspirin", "SMILES": "CC(=O)Oc1ccccc1C(=O)O"},
         {"Name": "Ibuprofen", "SMILES": "CC(C)Cc1ccc(cc1)[C@@H](C)C(=O)O"},
@@ -3172,25 +3020,21 @@ def _render_sim_lab_mode(smiles_input: str, model: xgb.XGBRegressor, affinity_mo
         {"Name": "Quinine", "SMILES": "COC1=CC2=C(C=CN=C2)C(C3CC4CCN3CC4C=C)O"},
         {"Name": "Artemisinin", "SMILES": "CC1CCC2C(C)C(=O)OC3OC4(C)CCC1C23OO4"},
         {"Name": "Cimetidine", "SMILES": "Cc1c(nc[nH]1)CSCCN=C(C)NC#N"},
-        {"Name": "Atenolol", "SMILES": "CC(C)NCC(O)COc1ccc(cc1)CC(N)=O"},
-        {"Name": "Lovastatin", "SMILES": "CCC(C)C(=O)OC1CC(C)C=C2C1C(C)CC(O)CC(=O)O2"},
-        {"Name": "Ciprofloxacin", "SMILES": "C1CC1N2C=C(C(=O)C3=CC(=C(C=C32)F)N4CCNCC4)C(=O)O"},
-        {"Name": "Sildenafil", "SMILES": "CCCC1=NN(C)C2=C1N=C(C3=C(OCC)C=CC(=C3)S(=O)(=O)N4CCN(C)CC4)NC2=O"},
-        {"Name": "Sulfamethoxazole", "SMILES": "Cc1cc(no1)NS(=O)(=O)c2ccc(N)cc2"},
-        {"Name": "Acyclovir", "SMILES": "CC(=O)OCC(CO)n1cnc2c1=O"},
-        {"Name": "Ranitidine", "SMILES": "CNC(=C[N+](=O)[O-])NCCSSCc1ccc(O)o1"},
-        {"Name": "Metoprolol", "SMILES": "COCCCc1ccc(cc1)OCC(O)CNCC(C)C"},
-        {"Name": "Amitriptyline", "SMILES": "CN(C)CCC=C1c2ccccc2CCc3ccccc13"},
-        {"Name": "Alprazolam", "SMILES": "Cc1nnc2n1-c3ccc(Cl)cc3-c4ccccc4N=C2"},
-        {"Name": "Warfarin", "SMILES": "CC(=O)CC(c1ccccc1)c2c(O)c3ccccc3oc2=O"},
-        {"Name": "Omeprazole", "SMILES": "COc1ccc2c(c1)n=c(n2)S(=O)Cc3ncc(c(c3C)OC)C"},
-        {"Name": "Propranolol", "SMILES": "CC(C)NCC(O)COc1cccc2ccccc12"}
+        {"Name": "Atenolol", "SMILES": "CC(C)NCC(O)COc1ccc(cc1)CC(N)=O"}
     ]
 
-    # TAB 1: High-Throughput Screening
     with tab1:
         st.markdown("### 🗂️ Virtual Library Screening")
         st.markdown("Run rapid ADMET and affinity scoring on batch compound libraries.")
+
+        st.info(
+            """
+            🔬 **Quick Start Guide: High-Throughput Screening (HTS)**
+            1. **Select target protein** (Kinase, GPCR, or Protease) using the dropdown below.
+            2. **Load your library**: Upload a CSV file with a `SMILES` column OR click the **Load Bioactive Sample Library** button.
+            3. The system will calculate ADMET and binding affinity for all compounds, display interactive distribution plots, and allow exporting the data or loading any compound back to your workspace.
+            """
+        )
 
         hts_target = st.selectbox(
             "Select Target Protein for Affinity Screening",
@@ -3203,7 +3047,7 @@ def _render_sim_lab_mode(smiles_input: str, model: xgb.XGBRegressor, affinity_mo
             uploaded_file = st.file_uploader("Upload Chemical Library (CSV)", type=["csv"], help="CSV should have a column named 'SMILES'")
         with col2:
             st.markdown("<br>", unsafe_allow_html=True)
-            load_sample = st.button("Load Bioactive Sample Library (30 Compounds)", use_container_width=True)
+            load_sample = st.button("Load Bioactive Sample Library (18 Compounds)", use_container_width=True)
 
         df_library = None
         if uploaded_file is not None:
@@ -3287,7 +3131,7 @@ def _render_sim_lab_mode(smiles_input: str, model: xgb.XGBRegressor, affinity_mo
             
             df_results = pd.DataFrame(results)
             
-            if not df_results.empty():
+            if not df_results.empty:
                 st.markdown("#### 📈 Screening Metrics Summary")
                 c1, c2, c3, c4 = st.columns(4)
                 avg_affinity = round(df_results["Binding Affinity (pKd)"].mean(), 2)
@@ -3371,20 +3215,45 @@ def _render_sim_lab_mode(smiles_input: str, model: xgb.XGBRegressor, affinity_mo
                         st.success(f"Successfully loaded '{selected_mol_name}' into active workspace!")
                         st.rerun()
 
-    # TAB 2: Protein-Ligand 3D Pocket Viewer
     with tab2:
         st.markdown("### 🧬 Protein-Ligand 3D Pocket Viewer")
         st.markdown("Visualize the active compound docked inside the 3D target protein binding pocket.")
 
-        if not smiles_input:
-            st.warning("👈 Please specify a SMILES input in the sidebar first.")
-        else:
+        st.info(
+            """
+            🧬 **Quick Start Guide: Protein-Ligand 3D Pocket Viewer**
+            1. Select a **Target Protein Structure** from the PDB structure dropdown.
+            2. Choose an **Example Molecule Preset** OR select "Custom Input" to type a custom **SMILES** string directly in this tab.
+            3. The 3D viewer will automatically center, zoom, and highlight how the compound sits inside the binding pocket.
+            4. **Mouse controls**: Rotate (click & drag), Pan (right-click & drag), Zoom (scroll wheel).
+            """
+        )
+
+        pocket_col1, pocket_col2 = st.columns(2)
+        with pocket_col1:
             viewer_target = st.selectbox(
                 "Select Target Protein Structure",
                 ["EGFR Kinase (PDB: 1ATP)", "GPCR Beta-2 (PDB: 3SN6)", "SARS-CoV-2 Mpro (PDB: 6LU7)"],
                 key="viewer_target_select"
             )
+        with pocket_col2:
+            viewer_preset = st.selectbox(
+                "Select Molecule Source",
+                ["Active Workspace Compound", "Aspirin", "Ibuprofen", "Imatinib", "Artemisinin", "Custom Input"],
+                key="viewer_preset_select"
+            )
 
+        active_smi = None
+        if viewer_preset == "Active Workspace Compound":
+            active_smi = smiles_input
+            if not active_smi:
+                st.warning("Active workspace compound is empty. Please enter a SMILES in the left sidebar or select another preset.")
+        elif viewer_preset == "Custom Input":
+            active_smi = st.text_input("Enter Custom SMILES string", value="CC(=O)Oc1ccccc1C(=O)O", key="viewer_custom_smiles").strip()
+        else:
+            active_smi = PRESET_SMILES[viewer_preset]
+
+        if active_smi:
             POCKET_CENTERS = {
                 "EGFR Kinase (PDB: 1ATP)": (16.0, 15.0, 18.0, "1ATP"),
                 "GPCR Beta-2 (PDB: 3SN6)": (0.0, -5.0, 15.0, "3SN6"),
@@ -3398,7 +3267,7 @@ def _render_sim_lab_mode(smiles_input: str, model: xgb.XGBRegressor, affinity_mo
 
             if pdb_content and HAS_PY3DMOL:
                 try:
-                    mol_3d = Chem.MolFromSmiles(smiles_input)
+                    mol_3d = Chem.MolFromSmiles(active_smi)
                     if mol_3d:
                         mol_3d = Chem.AddHs(mol_3d)
                         embed_status = AllChem.EmbedMolecule(mol_3d, AllChem.ETKDG())
@@ -3426,15 +3295,13 @@ def _render_sim_lab_mode(smiles_input: str, model: xgb.XGBRegressor, affinity_mo
                             
                             import py3Dmol
                             viewer = py3Dmol.view(width=800, height=600)
-                            # Model 0: Protein
                             viewer.addModel(pdb_content, 'pdb')
                             viewer.setStyle({'cartoon': {'color': 'spectrum'}})
                             
-                            # Model 1: Ligand
                             viewer.addModel(ligand_block, 'mol')
                             viewer.setStyle({'model': 1}, {'stick': {'colorscheme': 'greenCarbon', 'radius': 0.35}})
                             
-                            # Show pocket residues
+                            # Show pocket residues within 6Å
                             viewer.setStyle({'within': {'distance': 6.0, 'reference': {'model': 1}}}, {'stick': {'colorscheme': 'greyCarbon', 'radius': 0.15, 'opacity': 0.5}})
                             
                             viewer.zoomTo({'model': 1})
@@ -3442,11 +3309,11 @@ def _render_sim_lab_mode(smiles_input: str, model: xgb.XGBRegressor, affinity_mo
                             
                             html_data = viewer._make_html()
                             st.components.v1.html(html_data, height=620, scrolling=False)
-                            st.success(f"Protein-Ligand pocket simulation generated! Focus is zoomed in on the active site pocket of {pdb_id}.")
+                            st.success(f"Protein-Ligand pocket simulation generated for {active_smi}! Focus is zoomed in on the active site pocket of {pdb_id}.")
                         else:
                             st.error("Could not generate 3D coordinates for this SMILES. Try a simpler compound.")
                     else:
-                        st.error("Invalid SMILES format in active workspace. Please input a valid SMILES.")
+                        st.error("Invalid SMILES format. Please input a valid SMILES.")
                 except Exception as e:
                     st.error(f"Error compiling 3D coordinates for docking visualizer: {e}")
             else:
@@ -3460,10 +3327,35 @@ def _render_sim_lab_mode(smiles_input: str, model: xgb.XGBRegressor, affinity_mo
         st.markdown("### 🧪 AI Retrosynthesis Planner")
         st.markdown("Generate step-by-step reaction pathways to synthesize the target molecule.")
 
-        if not smiles_input:
-            st.warning("👈 Please specify a SMILES input in the sidebar first.")
-        else:
-            st.markdown(f"**Target Compound SMILES:** `{smiles_input}`")
+        st.info(
+            """
+            🧪 **Quick Start Guide: AI Retrosynthesis Planner**
+            1. Choose an **Example Molecule Preset** OR select "Custom Input" to type a custom **SMILES** string directly in this tab.
+            2. Click **Plan Synthesis Route** to run the retrosynthetic analysis.
+            3. The AI (Internal simulated or External model) will generate a step-by-step synthetic reaction pathway starting from cheap, commercially available reagents.
+            """
+        )
+
+        retro_col1, retro_col2 = st.columns(2)
+        with retro_col1:
+            retro_preset = st.selectbox(
+                "Select Molecule Source",
+                ["Active Workspace Compound", "Aspirin", "Ibuprofen", "Imatinib", "Artemisinin", "Custom Input"],
+                key="retro_preset_select"
+            )
+        with retro_col2:
+            active_retro_smi = None
+            if retro_preset == "Active Workspace Compound":
+                active_retro_smi = smiles_input
+                if not active_retro_smi:
+                    st.warning("Active workspace compound is empty. Please enter a SMILES in the left sidebar or select another preset.")
+            elif retro_preset == "Custom Input":
+                active_retro_smi = st.text_input("Enter Custom SMILES string", value="CC(=O)Oc1ccccc1C(=O)O", key="retro_custom_smiles").strip()
+            else:
+                active_retro_smi = PRESET_SMILES[retro_preset]
+
+        if active_retro_smi:
+            st.markdown(f"**Target Compound SMILES:** `{active_retro_smi}`")
             
             ai_source = st.session_state.get("singularity_ai_source", "built_in")
             source_label = "Internal Oracle AI" if ai_source == "built_in" else f"External ({st.session_state.get('singularity_selected_model', 'Gemini 3.5 Flash')})"
@@ -3478,7 +3370,7 @@ def _render_sim_lab_mode(smiles_input: str, model: xgb.XGBRegressor, affinity_mo
                         st.warning("⚠️ **External AI Key Missing:** Please provide an API key in the **Oracle AI Configuration** section of the sidebar to use the external AI.")
                     else:
                         prompt = (
-                            f"Perform a step-by-step retrosynthetic analysis and synthetic route planning for the molecule: {smiles_input}. "
+                            f"Perform a step-by-step retrosynthetic analysis and synthetic route planning for the molecule: {active_retro_smi}. "
                             f"Provide clear steps, mentioning starting materials, reaction names, reagents, solvents, temperatures, and estimated yields."
                         )
                         from llm_integration import generate_external_ai_response
@@ -3494,7 +3386,7 @@ def _render_sim_lab_mode(smiles_input: str, model: xgb.XGBRegressor, affinity_mo
                     with st.spinner("Oracle AI is generating synthetic pathways..."):
                         import time
                         time.sleep(1.5)
-                        steps = simulate_retrosynthesis(smiles_input)
+                        steps = simulate_retrosynthesis(active_retro_smi)
                         
                         if steps:
                             st.markdown("### 🧬 AI Retrosynthesis Plan")
@@ -3515,7 +3407,141 @@ def _render_sim_lab_mode(smiles_input: str, model: xgb.XGBRegressor, affinity_mo
                             timeline_html += "</div>"
                             st.markdown(timeline_html, unsafe_allow_html=True)
                         else:
-                            st.error("Invalid compound in active workspace. Cannot generate retrosynthesis.")
+                            st.error("Invalid compound. Cannot generate retrosynthesis.")
+
+    # TAB 4: Reaction Simulator (Chemical Mixer)
+    with tab4:
+        st.markdown("### 🧪 Reaction Simulator (ระบบผสมสาร)")
+        st.markdown("Select two starting reactant molecules and run a chemical reaction to synthesize a new product in real-time.")
+
+        st.info(
+            """
+            🧪 **Quick Start Guide: Reaction Simulator**
+            1. Select or input the **SMILES** string for **Reactant A** and **Reactant B** in the columns below.
+            2. Choose the **Reaction Type** (Amide Coupling, Esterification, or Williamson Ether Synthesis).
+            3. Click **Run Chemical Reaction (Mix)**.
+            4. The system will simulate the organic synthesis using RDKit, draw the resulting chemical structure, predict its properties, and explain the mechanism.
+            """
+        )
+
+        rxn_col1, rxn_col2 = st.columns(2)
+        with rxn_col1:
+            reactant_a_select = st.selectbox(
+                "Reactant A Preset", 
+                ["Custom Input", "Acetic Acid (Carboxylic Acid)", "Benzoic Acid (Carboxylic Acid)", "Benzyl Bromide (Halide)", "Bromobenzene (Aryl Halide)"],
+                key="rxn_a_sel"
+            )
+            if reactant_a_select == "Custom Input":
+                reactant_a_smiles = st.text_input("Reactant A SMILES", value="CC(=O)O", key="rxn_a_smi")
+            else:
+                reactant_a_smiles = REACTANT_PRESETS[reactant_a_select]
+
+            mol_a = Chem.MolFromSmiles(reactant_a_smiles)
+            if mol_a:
+                st.image(mol_to_image(mol_a), caption="Reactant A Structure", use_container_width=True)
+            else:
+                st.warning("Invalid SMILES for Reactant A")
+
+        with rxn_col2:
+            reactant_b_select = st.selectbox(
+                "Reactant B Preset", 
+                ["Custom Input", "Aniline (Amine)", "Methylamine (Amine)", "Ethanol (Alcohol)", "Phenol (Alcohol)"],
+                key="rxn_b_sel"
+            )
+            if reactant_b_select == "Custom Input":
+                reactant_b_smiles = st.text_input("Reactant B SMILES", value="Nc1ccccc1", key="rxn_b_smi")
+            else:
+                reactant_b_smiles = REACTANT_PRESETS[reactant_b_select]
+
+            mol_b = Chem.MolFromSmiles(reactant_b_smiles)
+            if mol_b:
+                st.image(mol_to_image(mol_b), caption="Reactant B Structure", use_container_width=True)
+            else:
+                st.warning("Invalid SMILES for Reactant B")
+
+        st.markdown("---")
+        
+        reaction_type = st.selectbox(
+            "Select Reaction Pathway",
+            ["Amide Coupling", "Esterification", "Williamson Ether Synthesis"],
+            key="rxn_type_sel"
+        )
+        
+        if st.button("🧪 Run Chemical Reaction (Mix)", type="primary", use_container_width=True):
+            product_smi, err = run_chemical_reaction(reactant_a_smiles, reactant_b_smiles, reaction_type)
+            if err:
+                st.error(err)
+            else:
+                st.success("Reaction Completed Successfully!")
+                prod_mol = Chem.MolFromSmiles(product_smi)
+                
+                res_col1, res_col2 = st.columns([1, 1.2])
+                with res_col1:
+                    with st.container(border=True):
+                        st.markdown("##### 🧬 Synthesized Product Structure")
+                        st.image(mol_to_image(prod_mol), caption=f"Product: {product_smi}", use_container_width=True)
+                with res_col2:
+                    with st.container(border=True):
+                        st.markdown("##### 📊 Product Properties")
+                        mw = round(Descriptors.ExactMolWt(prod_mol), 2)
+                        logs = round(predict_solubility(model, prod_mol), 2)
+                        qed_score = round(QED.qed(prod_mol), 2)
+                        sa_score = round(calculate_sa_score(prod_mol), 2)
+                        
+                        st.metric("Molecular Weight", f"{mw} Da")
+                        st.metric("Aqueous Solubility (LogS)", f"{logs}")
+                        st.metric("QED (Drug-likeness)", f"{qed_score}")
+                        st.metric("SA Score (Synthesis Complexity)", f"{sa_score}")
+                        
+                        if st.button("Load Product into Workspace", key="load_prod_workspace", use_container_width=True):
+                            st.session_state["smiles_input"] = product_smi
+                            st.success("Product successfully loaded into active workspace!")
+                            st.rerun()
+
+                st.markdown("---")
+                st.markdown("##### 🧠 AI Reaction Explanation")
+                
+                ai_source = st.session_state.get("singularity_ai_source", "built_in")
+                template_info = REACTION_TEMPLATES[reaction_type]
+                
+                if ai_source == "external":
+                    api_key = st.session_state.get("singularity_api_key", "")
+                    model_name = st.session_state.get("singularity_selected_model", "Gemini 3.5 Flash")
+                    if not api_key:
+                        st.warning("⚠️ **External AI Key Missing:** Please provide an API key in the **Oracle AI Configuration** section of the sidebar to use the external AI.")
+                    else:
+                        prompt = (
+                            f"Explain the following organic synthesis reaction: {reaction_type}.\n"
+                            f"Reactant A: {reactant_a_smiles}\n"
+                            f"Reactant B: {reactant_b_smiles}\n"
+                            f"Product: {product_smi}\n"
+                            f"Describe the mechanism, reaction conditions (reagents: {template_info['reagents']}, conditions: {template_info['conditions']}), "
+                            f"and general applications of the synthesized compound in medicinal chemistry."
+                        )
+                        from llm_integration import generate_external_ai_response
+                        with st.spinner("Oracle AI is writing the reaction mechanism explanation..."):
+                            response, error = generate_external_ai_response(model_name, api_key, prompt, [])
+                            if error:
+                                st.error(f"Error from External AI: {response}")
+                            else:
+                                st.info(response)
+                else:
+                    # Built-in simulated explanation
+                    with st.spinner("Oracle AI is writing the reaction mechanism explanation..."):
+                        import time
+                        time.sleep(1.2)
+                        explanation = (
+                            f"📝 **Mechanistic & Synthesis Overview:**\n\n"
+                            f"• **Reaction Name:** {reaction_type}\n"
+                            f"• **Description:** {template_info['desc']}\n"
+                            f"• **Reagents / Conditions:** `{template_info['reagents']}` under `{template_info['conditions']}`\n"
+                            f"• **Mechanism Overview:** The nucleophilic center on Reactant B attacks the electrophilic carbonyl/alkyl carbon on Reactant A. "
+                            f"The leaving group is displaced, forming a new stable covalent linkage (amide, ester, or ether, respectively).\n"
+                            f"• **Medicinal Chemistry Applications:** This coupling reaction is a fundamental tool for block-assembly molecular construction. "
+                            f"Amides are highly common in pharmaceuticals (e.g. Paracetamol, local anesthetics) due to their physiological stability. "
+                            f"Ethers and esters are widely utilized to adjust lipophilicity (LogP) and design prodrugs with improved membrane permeability."
+                        )
+                        st.info(explanation)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
