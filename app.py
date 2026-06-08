@@ -207,12 +207,69 @@ h1, h2, h3, h4, h5 {
     background: radial-gradient(circle at 50% 0%, #0f172a 0%, #090d16 60%, #030408 100%) !important;
 }
 
+/* ── Login Screen Additions ── */
+.login-container {
+    text-align: center;
+    margin-top: 50px;
+    margin-bottom: 25px;
+}
+.login-logo {
+    font-size: 4.5rem;
+    animation: pulse-glow 3s infinite;
+    display: inline-block;
+}
+@keyframes pulse-glow {
+    0%, 100% { filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.45)); transform: scale(1); }
+    50% { filter: drop-shadow(0 0 28px rgba(59, 130, 246, 0.9)); transform: scale(1.06); }
+}
+.login-title {
+    font-size: 2.8rem !important;
+    font-weight: 850 !important;
+    letter-spacing: -1.2px !important;
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #8b5cf6 100%);
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    margin-top: 15px !important;
+    margin-bottom: 6px !important;
+}
+.login-subtitle {
+    color: #94a3b8 !important;
+    font-size: 1.05rem !important;
+    margin-bottom: 25px !important;
+    font-weight: 400 !important;
+    letter-spacing: 0.5px;
+}
+
+/* Form styling */
+[data-testid="stForm"] {
+    background: rgba(13, 20, 35, 0.6) !important;
+    backdrop-filter: blur(25px) !important;
+    -webkit-backdrop-filter: blur(25px) !important;
+    border: 1px solid rgba(59, 130, 246, 0.18) !important;
+    border-radius: 20px !important;
+    padding: 35px 40px !important;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+}
+
+/* Global Image Styling */
+.stImage > img, .element-container img {
+    border-radius: 12px !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4) !important;
+    transition: all 0.3s ease !important;
+}
+.stImage > img:hover, .element-container img:hover {
+    border-color: rgba(59, 130, 246, 0.3) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5) !important;
+}
+
 /* ── Header ── */
 .main-header {
     background: linear-gradient(135deg, rgba(21, 32, 54, 0.65) 0%, rgba(13, 20, 35, 0.85) 100%) !important;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    padding: 30px 35px !important;
+    padding: 24px 30px !important;
     border-radius: 20px !important;
     margin-bottom: 28px !important;
     border: 1px solid rgba(59, 130, 246, 0.15) !important;
@@ -232,7 +289,7 @@ h1, h2, h3, h4, h5 {
 }
 .main-header h1 {
     margin: 0; 
-    font-size: 2.4rem !important; 
+    font-size: 2.2rem !important; 
     font-weight: 800 !important; 
     letter-spacing: -0.8px !important;
     background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #8b5cf6 100%);
@@ -240,9 +297,9 @@ h1, h2, h3, h4, h5 {
     -webkit-text-fill-color: transparent !important;
 }
 .main-header p {
-    margin: 8px 0 0 0 !important; 
+    margin: 6px 0 0 0 !important; 
     color: #94a3b8 !important; 
-    font-size: 0.95rem !important; 
+    font-size: 0.9rem !important; 
     font-weight: 400 !important;
     letter-spacing: 0.2px !important;
 }
@@ -275,6 +332,10 @@ h1, h2, h3, h4, h5 {
     padding: 16px 20px !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     box-shadow: 0 8px 24px rgba(0,0,0,0.18) !important;
+    min-height: 110px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
 }
 [data-testid="stMetric"]:hover {
     transform: translateY(-3px) !important;
@@ -283,7 +344,7 @@ h1, h2, h3, h4, h5 {
 }
 [data-testid="stMetricLabel"] {
     color: #94a3b8 !important; 
-    font-size: 0.8rem !important;
+    font-size: 0.75rem !important;
     font-weight: 600 !important;
     text-transform: uppercase; 
     letter-spacing: 1px;
@@ -292,12 +353,12 @@ h1, h2, h3, h4, h5 {
     font-family: 'JetBrains Mono', monospace !important;
     color: #f1f5f9 !important; 
     font-weight: 700 !important;
-    font-size: 1.8rem !important;
+    font-size: 1.6rem !important;
 }
 
 /* ── Sidebar ── */
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #090d16 0%, #05070d 100%) !important;
+    background: linear-gradient(180deg, #05070c 0%, #020306 100%) !important;
     border-right: 1px solid rgba(255, 255, 255, 0.04) !important;
 }
 section[data-testid="stSidebar"] .stButton > button {
@@ -404,7 +465,7 @@ section[data-testid="stSidebar"] .stButton > button:hover {
     padding: 24px 32px !important;
     border-radius: 20px 20px 0 0 !important;
     border-bottom: 1px solid rgba(219, 39, 119, 0.2) !important;
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex align-items: center; justify-content: space-between;
 }
 .oracle-chat-header h2 {
     margin: 0 !important;
@@ -447,39 +508,125 @@ GENESIS_CSS = """
 .stApp {
     background: radial-gradient(circle at 50% 0%, #0d1e3d 0%, #060c18 60%, #020409 100%) !important;
 }
+
+/* Login Screen Additions */
+.login-container {
+    text-align: center;
+    margin-top: 50px;
+    margin-bottom: 25px;
+}
+.login-logo {
+    font-size: 4.5rem;
+    animation: pulse-glow-genesis 3s infinite;
+    display: inline-block;
+}
+@keyframes pulse-glow-genesis {
+    0%, 100% { filter: drop-shadow(0 0 12px rgba(168, 237, 234, 0.45)); transform: scale(1); }
+    50% { filter: drop-shadow(0 0 28px rgba(168, 237, 234, 0.9)); transform: scale(1.06); }
+}
+.login-title {
+    font-size: 2.8rem !important;
+    font-weight: 850 !important;
+    letter-spacing: -1.2px !important;
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 50%, #d299c2 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    margin-top: 15px !important;
+    margin-bottom: 6px !important;
+}
+.login-subtitle {
+    color: rgba(168, 237, 234, 0.8) !important;
+    font-size: 1.05rem !important;
+    margin-bottom: 25px !important;
+    font-weight: 400 !important;
+    letter-spacing: 0.5px;
+}
+
+[data-testid="stForm"] {
+    background: rgba(12, 22, 43, 0.6) !important;
+    backdrop-filter: blur(25px) !important;
+    -webkit-backdrop-filter: blur(25px) !important;
+    border: 1px solid rgba(168, 237, 234, 0.22) !important;
+    border-radius: 20px !important;
+    padding: 35px 40px !important;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+}
+
+.stImage > img, .element-container img {
+    border-radius: 12px !important;
+    border: 1px solid rgba(168, 237, 234, 0.15) !important;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4) !important;
+    transition: all 0.3s ease !important;
+}
+.stImage > img:hover, .element-container img:hover {
+    border-color: rgba(168, 237, 234, 0.4) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5) !important;
+}
+
 .main-header {
     background: linear-gradient(135deg, rgba(15, 23, 42, 0.75) 0%, rgba(8, 14, 28, 0.9) 100%) !important;
     border: 1px solid rgba(168, 237, 234, 0.22) !important;
     box-shadow: 0 25px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+    padding: 24px 30px !important;
+    border-radius: 20px !important;
+    margin-bottom: 28px !important;
+    position: relative;
+    overflow: hidden;
 }
 .main-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
     background: radial-gradient(circle, rgba(168, 237, 234, 0.12) 0%, transparent 70%) !important;
+    pointer-events: none;
 }
 .main-header h1 {
     background: linear-gradient(135deg, #a8edea 0%, #fed6e3 50%, #d299c2 100%) !important;
     -webkit-background-clip: text !important; 
     -webkit-text-fill-color: transparent !important;
     text-shadow: 0 0 30px rgba(168, 237, 234, 0.15) !important;
+    margin: 0;
+    font-size: 2.2rem !important;
+    font-weight: 800 !important;
 }
 .main-header p { 
     color: rgba(168, 237, 234, 0.8) !important; 
+    margin: 6px 0 0 0 !important;
+    font-size: 0.9rem !important;
 }
 
 .card {
     background: rgba(12, 22, 43, 0.5) !important;
     border: 1px solid rgba(168, 237, 234, 0.08) !important;
+    border-radius: 16px !important;
+    padding: 22px !important;
+    margin-bottom: 15px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 .card:hover {
     border-color: rgba(168, 237, 234, 0.3) !important;
     box-shadow: 0 20px 40px rgba(168, 237, 234, 0.1) !important;
+    transform: translateY(-3px) !important;
 }
 
 [data-testid="stMetric"] {
     background: rgba(12, 22, 43, 0.55) !important;
     border: 1px solid rgba(168, 237, 234, 0.08) !important;
+    border-radius: 14px !important;
+    padding: 16px 20px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    min-height: 110px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
 }
 [data-testid="stMetric"]:hover {
     border-color: rgba(168, 237, 234, 0.3) !important;
+    transform: translateY(-3px) !important;
 }
 [data-testid="stMetricValue"] {
     color: #a8edea !important;
@@ -507,6 +654,24 @@ SINGULARITY_CSS = GENESIS_CSS + """
 .stApp {
     background: radial-gradient(circle at 100% 0%, #220e3a 0%, #0a0414 45%, #030107 80%) !important;
 }
+
+/* Login Screen Additions */
+.login-logo {
+    animation: pulse-glow-singularity 3s infinite !important;
+}
+@keyframes pulse-glow-singularity {
+    0%, 100% { filter: drop-shadow(0 0 12px rgba(236, 72, 153, 0.5)); transform: scale(1); }
+    50% { filter: drop-shadow(0 0 30px rgba(236, 72, 153, 0.9)); transform: scale(1.06); }
+}
+.login-title {
+    background: linear-gradient(90deg, #f59e0b 0%, #ec4899 50%, #a855f7 100%) !important;
+}
+[data-testid="stForm"] {
+    background: rgba(22, 12, 45, 0.55) !important;
+    border: 1px solid rgba(236, 72, 153, 0.3) !important;
+    box-shadow: 0 25px 60px rgba(236, 72, 153, 0.15), 0 20px 50px rgba(0,0,0,0.55) !important;
+}
+
 .main-header {
     background: linear-gradient(135deg, rgba(32, 10, 60, 0.75) 0%, rgba(13, 5, 26, 0.92) 100%) !important;
     border: 1px solid rgba(236, 72, 153, 0.35) !important;
@@ -562,12 +727,147 @@ section[data-testid="stSidebar"] .stButton > button:hover {
 """
 
 
-st.markdown(_CSS, unsafe_allow_html=True)
+def download_and_cache_pdb(pdb_id: str) -> Optional[str]:
+    """Download a PDB file from RCSB and cache it locally."""
+    cache_dir = "pdb_cache"
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir, exist_ok=True)
+        
+    cache_path = os.path.join(cache_dir, f"{pdb_id}.pdb")
+    
+    if os.path.exists(cache_path):
+        try:
+            with open(cache_path, "r", encoding="utf-8") as f:
+                return f.read()
+        except Exception as e:
+            st.error(f"Error reading cached PDB {pdb_id}: {e}")
+            
+    # Download from RCSB PDB
+    url = f"https://files.rcsb.org/download/{pdb_id}.pdb"
+    try:
+        resp = requests.get(url, timeout=30)
+        if resp.status_code == 200:
+            pdb_data = resp.text
+            with open(cache_path, "w", encoding="utf-8") as f:
+                f.write(pdb_data)
+            return pdb_data
+        else:
+            st.error(f"Failed to download PDB {pdb_id} from RCSB (Status code: {resp.status_code})")
+            return None
+    except Exception as e:
+        st.error(f"Network error downloading PDB {pdb_id}: {e}")
+        return None
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# SECTION 5 — CORE HELPER FUNCTIONS
-# ═══════════════════════════════════════════════════════════════════════════════
+def simulate_retrosynthesis(smiles: str) -> List[Dict[str, Any]]:
+    """Generate a realistic simulated retrosynthetic pathway based on functional groups."""
+    mol = Chem.MolFromSmiles(smiles)
+    steps = []
+    if mol is None:
+        return steps
+        
+    # Detect presence of functional groups using SMARTS
+    has_amide = mol.HasSubstructMatch(Chem.MolFromSmarts("[CX3](=O)[NX3]"))
+    has_ester = mol.HasSubstructMatch(Chem.MolFromSmarts("[CX3](=O)[OX2][#6]"))
+    has_nitro = mol.HasSubstructMatch(Chem.MolFromSmarts("[NX3](=O)=O"))
+    has_amine = mol.HasSubstructMatch(Chem.MolFromSmarts("[NX3]"))
+    has_hydroxyl = mol.HasSubstructMatch(Chem.MolFromSmarts("[OX2H]"))
+    has_halogen = mol.HasSubstructMatch(Chem.MolFromSmarts("[F,Cl,Br]"))
+    has_aromatic = mol.HasSubstructMatch(Chem.MolFromSmarts("c1ccccc1"))
+    
+    # Retrosynthetic breakdown
+    step_num = 1
+    
+    # If it's an amide, break it
+    if has_amide:
+        steps.append({
+            "step": step_num,
+            "title": "Amide Disconnection",
+            "type": "Amide Coupling (Condensation)",
+            "reagents": "HATU, DIPEA",
+            "solvent": "DMF (Dimethylformamide)",
+            "conditions": "Room Temperature, 4 hours",
+            "reactants": "Carboxylic acid precursor + Amine precursor",
+            "yield": "88%",
+            "notes": "Amide couplings are highly efficient. Protect other reactive amine/acid sites if necessary."
+        })
+        step_num += 1
+        
+    # If it's an ester, break it
+    if has_ester:
+        steps.append({
+            "step": step_num,
+            "title": "Ester Disconnection",
+            "type": "Steglich Esterification",
+            "reagents": "DCC, DMAP",
+            "solvent": "DCM (Dichloromethane)",
+            "conditions": "0°C to Room Temperature, 12 hours",
+            "reactants": "Carboxylic acid precursor + Alcohol precursor",
+            "yield": "78%",
+            "notes": "Uses mild conditions. DCC forms insoluble urea which is filtered off."
+        })
+        step_num += 1
+
+    # If it has an ether/halogen, Williamson Ether
+    if has_hydroxyl and has_halogen:
+        steps.append({
+            "step": step_num,
+            "title": "Ether Disconnection",
+            "type": "Williamson Ether Synthesis",
+            "reagents": "K2CO3, KI (cat.)",
+            "solvent": "DMF",
+            "conditions": "80°C, 8 hours",
+            "reactants": "Alkyl Halide + Phenol/Alcohol precursor",
+            "yield": "72%",
+            "notes": "A classic nucleophilic substitution. Heating is required to overcome the barrier."
+        })
+        step_num += 1
+
+    # If it has a nitro group, reduce it from nitro
+    if has_nitro:
+        steps.append({
+            "step": step_num,
+            "title": "Nitro Reduction",
+            "type": "Hydrogenation",
+            "reagents": "H2 gas, Pd/C catalyst",
+            "solvent": "Methanol",
+            "conditions": "Room Temperature, 3 hours",
+            "reactants": "Nitroarene precursor",
+            "yield": "94%",
+            "notes": "Highly quantitative reaction. Keep away from ignition sources (palladium on carbon is pyrophoric)."
+        })
+        step_num += 1
+
+    # If it has aromatic halide and aromatic ring, Suzuki coupling
+    if has_aromatic and has_halogen:
+        steps.append({
+            "step": step_num,
+            "title": "C-C Bond Disconnection",
+            "type": "Suzuki-Miyaura Cross-Coupling",
+            "reagents": "Pd(dppf)Cl2 catalyst, K2CO3 base",
+            "solvent": "Dioxane / Water (4:1)",
+            "conditions": "90°C, inert N2 atm, 6 hours",
+            "reactants": "Aryl Halide + Aryl Boronic Acid",
+            "yield": "82%",
+            "notes": "Powerful method to form carbon-carbon bonds. Degassing the solvent is critical to prevent catalyst oxidation."
+        })
+        step_num += 1
+
+    # Base case if no group matches, or as starting material synthesis
+    steps.append({
+        "step": step_num,
+        "title": "Starting Material Sourcing",
+        "type": "Commercially Available Purchase",
+        "reagents": "N/A",
+        "solvent": "N/A",
+        "conditions": "N/A",
+        "reactants": "Commercial Chemical Catalog",
+        "yield": "100%",
+        "notes": "The precursor materials are cheap and widely available from vendors (Sigma-Aldrich, TCI)."
+    })
+    
+    return steps
+
 
 def clean_molecule(smiles_input: str) -> Tuple[Optional[Chem.Mol], Optional[str], Optional[str]]:
     """Validate, parse, salt-strip, and sanitize a SMILES string.
@@ -1432,6 +1732,9 @@ def setup_authenticator():
     )
 
 def main() -> None:
+    # ── Inject Style Early ──
+    st.markdown(_CSS, unsafe_allow_html=True)
+
     # ── Singularity Engine AI Configuration Init ──
     if "singularity_ai_source" not in st.session_state:
         st.session_state["singularity_ai_source"] = "built_in"
@@ -1444,10 +1747,17 @@ def main() -> None:
     
     if authenticator is not None:
         if st.session_state.get("authentication_status") is not True:
-            st.markdown("<h2 style='text-align: center; color: #ff8a00; margin-top: 50px;'>🔐 Secure Access Required</h2>", unsafe_allow_html=True)
-            st.markdown("<p style='text-align: center; color: #a8edea;'>Welcome to MolSol De Novo. Please authenticate your identity.</p>", unsafe_allow_html=True)
-            
-            col1, col2, col3 = st.columns([1, 1.5, 1])
+            st.markdown(
+                """
+                <div class="login-container">
+                    <div class="login-logo">🧬</div>
+                    <h1 class="login-title">MolSol De Novo</h1>
+                    <p class="login-subtitle">Quantum-Inspired AI Molecular Design Platform</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            col1, col2, col3 = st.columns([1, 1.3, 1])
             with col2:
                 try:
                     authenticator.login(location="main")
@@ -1471,10 +1781,20 @@ def main() -> None:
                 st.session_state["subscription_tier"] = "Free"
     else:
         if not st.session_state.get("logged_in", False):
-            st.markdown("<h2 style='text-align: center; color: #ff8a00; margin-top: 50px;'>🔐 Secure Access Required</h2>", unsafe_allow_html=True)
-            col1, col2, col3 = st.columns([1, 1.5, 1])
+            st.markdown(
+                """
+                <div class="login-container">
+                    <div class="login-logo">🧬</div>
+                    <h1 class="login-title">MolSol De Novo</h1>
+                    <p class="login-subtitle">Quantum-Inspired AI Molecular Design Platform</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            col1, col2, col3 = st.columns([1, 1.3, 1])
             with col2:
                 with st.form("login_form"):
+                    st.markdown("<h3 style='text-align: center; color: #ff8a00; margin-top:0;'>Fallback Login</h3>", unsafe_allow_html=True)
                     username = st.text_input("Username", value="admin")
                     password = st.text_input("Password", type="password", value="password")
                     submit = st.form_submit_button("Authenticate Identity", use_container_width=True)
@@ -1931,17 +2251,49 @@ def _render_analysis_mode(smiles_input: str, model: xgb.XGBRegressor) -> None:
         with st.container(border=True):
             st.markdown("### 🚦 Lipinski Rule of Five")
             n_viol, violations, _ = lipinski_assessment(props)
-            st.write(f"Violations: {n_viol}")
-            st.markdown("")
+            
+            # Colored status indicator
+            if n_viol == 0:
+                status_color = "#10b981" # green
+                status_bg = "rgba(16, 185, 129, 0.12)"
+                status_text = "PASSED"
+            else:
+                status_color = "#f43f5e" # red
+                status_bg = "rgba(244, 63, 94, 0.12)"
+                status_text = f"FAILED ({n_viol} Violation{'s' if n_viol > 1 else ''})"
+                
+            st.markdown(
+                f"""
+                <div style="background: {status_bg}; border: 1px solid {status_color}33; border-radius: 12px; padding: 15px; text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; font-weight: 600;">Status Assessment</div>
+                    <div style="font-size: 1.5rem; color: {status_color}; font-weight: 800; margin-top: 5px;">{status_text}</div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            
             checks = [
-                ("MW ≤ 500",   props["Molecular Weight"],          props["Molecular Weight"] <= 500),
-                ("LogP ≤ 5",   props["LogP (Crippen)"],            props["LogP (Crippen)"]   <= 5),
-                ("HBD ≤ 5",    props["HBD (H-Bond Donors)"],      props["HBD (H-Bond Donors)"]  <= 5),
-                ("HBA ≤ 10",   props["HBA (H-Bond Acceptors)"],   props["HBA (H-Bond Acceptors)"] <= 10),
+                ("Molecular Weight &le; 500 Da", props["Molecular Weight"], props["Molecular Weight"] <= 500),
+                ("LogP &le; 5", props["LogP (Crippen)"], props["LogP (Crippen)"] <= 5),
+                ("H-Bond Donors &le; 5", props["HBD (H-Bond Donors)"], props["HBD (H-Bond Donors)"] <= 5),
+                ("H-Bond Acceptors &le; 10", props["HBA (H-Bond Acceptors)"], props["HBA (H-Bond Acceptors)"] <= 10),
             ]
             for label, val, ok in checks:
-                icon = "✅" if ok else "❌"
-                st.markdown(f"{icon} {label}: **{val}**")
+                icon_color = "#10b981" if ok else "#f43f5e"
+                icon_bg = "rgba(16, 185, 129, 0.12)" if ok else "rgba(244, 63, 94, 0.12)"
+                icon = "✓" if ok else "✗"
+                st.markdown(
+                    f"""
+                    <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 10px; margin-bottom: 8px;">
+                        <span style="color: #cbd5e1; font-size: 0.9rem;">{label}</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: #94a3b8;">{val}</span>
+                            <span style="display: inline-block; width: 22px; height: 22px; border-radius: 50%; background: {icon_bg}; color: {icon_color}; text-align: center; line-height: 22px; font-weight: bold; font-size: 0.8rem;">{icon}</span>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
     # ══════════════════════════════════════════════════════════════════════
     # ROW 3 — Solubility Prediction + PubChem Lookup
@@ -2039,29 +2391,44 @@ def _render_denovo_mode(smiles_input: str, model: xgb.XGBRegressor, pro_mode: bo
         return
 
     st.markdown(f"**Parent Molecule:** `{canonical}`")
+    
+    # Pre-compute parent properties & LogS to resolve NameError
+    props = compute_properties(mol)
+    parent_logs = predict_solubility(model, mol)
 
     # ── Parent overview ───────────────────────────────────────────────────
     AllChem.Compute2DCoords(mol)
-    cp1, cp2 = st.columns([1, 2])
+    cp1, cp2 = st.columns([1.2, 2])
     with cp1:
         with st.container(border=True):
+            st.markdown("<h4 style='margin-top:0;'>🧪 Parent Structure</h4>", unsafe_allow_html=True)
             st.image(
-                mol_to_image(mol, size=(380, 300)),
-                caption="Parent Structure",
+                mol_to_image(mol, size=(380, 260)),
                 use_container_width=True,
             )
     with cp2:
         with st.container(border=True):
-            st.markdown("### 🧬 Parent Molecule Summary")
-            st.markdown(f"**Parent LogS:** `{parent_logs:.4f}`")
+            st.markdown("<h4 style='margin-top:0;'>🧬 Parent Molecular Summary</h4>", unsafe_allow_html=True)
+            
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Aqueous Solubility", f"{parent_logs:.4f} LogS")
+            c2.metric("Molecular Weight", f"{props['Molecular Weight']:.1f} Da")
+            c3.metric("LogP (Partition)", f"{props['LogP (Crippen)']:.2f}")
+            
+            st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+            
+            n_viol, _, badge = lipinski_assessment(props)
+            status_color = "#10b981" if n_viol == 0 else "#f43f5e"
+            status_text = "Lipinski Ro5 Compliant" if n_viol == 0 else f"Lipinski Ro5 Violations: {n_viol}"
             st.markdown(
-                f"**MW:** {props['Molecular Weight']:.1f} &nbsp;|&nbsp; "
-                f"**LogP:** {props['LogP (Crippen)']:.2f} &nbsp;|&nbsp; "
-                f"**HBD:** {props['HBD (H-Bond Donors)']} &nbsp;|&nbsp; "
-                f"**HBA:** {props['HBA (H-Bond Acceptors)']}"
+                f"""
+                <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 12px 18px; border-radius: 10px;">
+                    <span style="color: #cbd5e1; font-weight: 500;">Lipinski Rule of Five</span>
+                    <span style="color: {status_color}; font-weight: 700; font-size: 0.95rem;">{status_text}</span>
+                </div>
+                """,
+                unsafe_allow_html=True
             )
-            _, _, badge = lipinski_assessment(props)
-            st.markdown(badge)
 
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
@@ -2209,24 +2576,42 @@ def _render_denovo_mode(smiles_input: str, model: xgb.XGBRegressor, pro_mode: bo
         bc1, bc2 = st.columns(2)
         with bc1:
             with st.container(border=True):
-                st.markdown("**🧪 Parent Molecule**")
-                st.image(mol_to_image(mol), caption="Parent Structure", use_container_width=True)
-                st.markdown(f"**LogS:** `{parent_logs_saved:.4f}`")
-                st.markdown(f"**QED:** `{props.get('QED Score', 'N/A')}`")
-                st.markdown(f"**Toxicity Alerts:** `{props.get('Toxicity Alerts', 0)}`")
+                st.markdown("<h4 style='margin-top:0;'>🧪 Parent Molecule</h4>", unsafe_allow_html=True)
+                st.image(mol_to_image(mol), use_container_width=True)
+                
+                st.markdown(
+                    f"""
+                    <table style="width:100%; border-collapse: collapse; margin-top:10px;">
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);"><td style="padding: 6px 0; color: #94a3b8; font-size: 0.9rem;">Solubility (LogS)</td><td style="padding: 6px 0; font-family: 'JetBrains Mono', monospace; text-align:right; font-weight:700;">{parent_logs_saved:.4f}</td></tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);"><td style="padding: 6px 0; color: #94a3b8; font-size: 0.9rem;">Drug-Likeness (QED)</td><td style="padding: 6px 0; font-family: 'JetBrains Mono', monospace; text-align:right;">{props.get('QED Score', 0.0):.4f}</td></tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);"><td style="padding: 6px 0; color: #94a3b8; font-size: 0.9rem;">Toxicity Alerts</td><td style="padding: 6px 0; text-align:right; color: {'#10b981' if props.get('Toxicity Alerts', 0) == 0 else '#f43f5e'}; font-weight:700;">{props.get('Toxicity Alerts', 0)}</td></tr>
+                        <tr><td style="padding: 6px 0; color: #94a3b8; font-size: 0.9rem;">Lipinski Rules</td><td style="padding: 6px 0; text-align:right; font-weight:600;">{lipinski_assessment(props)[2]}</td></tr>
+                    </table>
+                    """,
+                    unsafe_allow_html=True
+                )
 
         with bc2:
             with st.container(border=True):
-                st.markdown("**🧬 Best Candidate**")
-                st.image(mol_to_image(best_mol), caption="Best Candidate Structure", use_container_width=True)
-                st.markdown(f"**LogS:** `{best['predicted_logs']}` ({sign}{improvement:.4f})")
-                st.markdown(f"**QED:** `{best_props.get('QED Score', 'N/A')}`")
+                st.markdown("<h4 style='margin-top:0;'>🧬 Evolved Best Candidate</h4>", unsafe_allow_html=True)
+                st.image(mol_to_image(best_mol), use_container_width=True)
+                
                 tox_c = best_props.get('Toxicity Alerts', 0)
-                tox_icon = "✅ Safe" if tox_c == 0 else f"⚠️ {tox_c} Alerts"
-                st.markdown(f"**Toxicity:** `{tox_icon}`")
+                tox_color = "#10b981" if tox_c == 0 else "#f43f5e"
+                
+                st.markdown(
+                    f"""
+                    <table style="width:100%; border-collapse: collapse; margin-top:10px;">
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);"><td style="padding: 6px 0; color: #94a3b8; font-size: 0.9rem;">Solubility (LogS)</td><td style="padding: 6px 0; font-family: 'JetBrains Mono', monospace; text-align:right; font-weight:700; color: { '#10b981' if improvement >= 0 else '#f43f5e' };">{best['predicted_logs']:.4f} ({sign}{improvement:.4f})</td></tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);"><td style="padding: 6px 0; color: #94a3b8; font-size: 0.9rem;">Drug-Likeness (QED)</td><td style="padding: 6px 0; font-family: 'JetBrains Mono', monospace; text-align:right;">{best_props.get('QED Score', 0.0):.4f}</td></tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);"><td style="padding: 6px 0; color: #94a3b8; font-size: 0.9rem;">Toxicity Alerts</td><td style="padding: 6px 0; text-align:right; color: {tox_color}; font-weight:700;">{tox_c}</td></tr>
+                        <tr><td style="padding: 6px 0; color: #94a3b8; font-size: 0.9rem;">Lipinski Rules</td><td style="padding: 6px 0; text-align:right; font-weight:600;">{lipinski_assessment(best_props)[2]}</td></tr>
+                    </table>
+                    """,
+                    unsafe_allow_html=True
+                )
+                st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
                 st.code(best["smiles"], language=None)
-                _, _, b_badge = lipinski_assessment(best_props)
-                st.markdown(b_badge)
 
         # ── Row 2: Badges (Similarity + Patent) ──────────────────────────
         badge1, badge2 = st.columns(2)
@@ -2548,7 +2933,7 @@ def _render_denovo_mode(smiles_input: str, model: xgb.XGBRegressor, pro_mode: bo
                         else: 
                             reactions_structured.append("Reaction: S_N2 Nucleophilic Substitution\n  > Base: K2CO3 (Potassium Carbonate)\n  > Solvent: DMF\n  > Conditions: Mild heating")
                         
-                        formula = best_props.get('Formula', 'Unknown')
+                        formula = rdMolDescriptors.CalcMolFormula(best_mol)
                         
                         terminal_text = f"""
 > SYSTEM: NEURAL MAPPING INITIALIZED...
@@ -2665,6 +3050,25 @@ def load_molsol_oracle_ai():
     except Exception as e:
         print(f"MolSol Oracle AI not available: {e}")
     return None, None, "offline"
+
+
+def _get_fallback_response(prompt_lower: str) -> str:
+    """Smart fallback when external AI APIs are omitted (Free Mode)."""
+    # Keyword-based intelligent routing
+    if any(w in prompt_lower for w in ["solubility", "log", "dissolve"]):
+        return "I can optimize for solubility (LogS). Our Genetic Algorithm utilizes advanced graph convolutions to mutate structures iteratively until optimal hydrophilicity is reached while preserving target binding affinity."
+    elif any(w in prompt_lower for w in ["toxicity", "pain", "brenk", "toxic"]):
+        return "Toxicity is a critical parameter. I actively filter out structures with structural alerts from PAINS and BRENK catalogs, ensuring the generated scaffolds are viable for in-vivo testing."
+    elif any(w in prompt_lower for w in ["kinase", "receptor", "bind", "affinity"]):
+        return "Targeting specific kinases or receptors requires precise stereochemistry. Provide the target name or a parent SMILES, and I will initiate a De Novo Mutation Loop to maximize binding affinity."
+    elif any(w in prompt_lower for w in ["smiles", "molecule", "design", "synthesize", "make"]):
+        return "I am ready to synthesize. Simply enter a SMILES string or a specific design objective, and I will deploy the Singularity Engine to evolve the optimal candidate."
+    elif any(w in prompt_lower for w in ["hello", "hi", "hey"]):
+        return "Hello! I am the Singularity Oracle, your proprietary AI drug design assistant. How can I accelerate your discovery today?"
+    elif any(w in prompt_lower for w in ["who are you", "what are you"]):
+        return "I am the Singularity Oracle, an advanced proprietary neural network built by the MolSol De Novo team to revolutionize computational chemistry and drug discovery."
+    else:
+        return "I am analyzing your input. As the Singularity Oracle, I specialize in computational drug design, SMILES optimization, and property prediction. Could you please specify a molecular design task or a chemistry question?"
 
 
 def _render_fullscreen_oracle_chat(model, gnn_model, affinity_model) -> None:
@@ -3424,7 +3828,7 @@ def _render_sim_lab_mode(smiles_input: str, model: xgb.XGBRegressor, affinity_mo
             """
         )
 
-        rxn_col1, rxn_col2 = st.columns(2)
+        rxn_col1, rxn_col_plus, rxn_col2 = st.columns([1, 0.15, 1])
         with rxn_col1:
             reactant_a_select = st.selectbox(
                 "Reactant A Preset", 
@@ -3441,6 +3845,12 @@ def _render_sim_lab_mode(smiles_input: str, model: xgb.XGBRegressor, affinity_mo
                 st.image(mol_to_image(mol_a), caption="Reactant A Structure", use_container_width=True)
             else:
                 st.warning("Invalid SMILES for Reactant A")
+
+        with rxn_col_plus:
+            st.markdown(
+                "<div style='display:flex; align-items:center; justify-content:center; height:320px; font-size:3rem; color:#475569; font-weight: 300;'>+</div>", 
+                unsafe_allow_html=True
+            )
 
         with rxn_col2:
             reactant_b_select = st.selectbox(
@@ -3475,6 +3885,43 @@ def _render_sim_lab_mode(smiles_input: str, model: xgb.XGBRegressor, affinity_mo
                 st.success("Reaction Completed Successfully!")
                 prod_mol = Chem.MolFromSmiles(product_smi)
                 
+                # ── Visual Reaction Equation ──
+                eq_col1, eq_col_arr, eq_col2 = st.columns([2, 0.8, 2.5])
+                with eq_col1:
+                    st.markdown(
+                        f"""
+                        <div style="text-align:center; padding:15px; border-radius:12px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+                            <div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; margin-bottom:5px;">Reactants Mixed</div>
+                            <span style="color:#60a5fa; font-weight:700;">{reactant_a_select.split(' ')[0]}</span>
+                            <span style="color:#94a3b8; margin:0 5px;">+</span>
+                            <span style="color:#60a5fa; font-weight:700;">{reactant_b_select.split(' ')[0]}</span>
+                        </div>
+                        """, 
+                        unsafe_allow_html=True
+                    )
+                with eq_col_arr:
+                    st.markdown(
+                        f"""
+                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:70px;">
+                            <div style="font-size:1.5rem; color:#ff8a00; line-height:1;">➔</div>
+                            <div style="font-size:0.7rem; color:#94a3b8; text-transform:uppercase; text-align:center; margin-top:3px; line-height:1.2; font-weight:600;">{reaction_type}</div>
+                        </div>
+                        """, 
+                        unsafe_allow_html=True
+                    )
+                with eq_col2:
+                    st.markdown(
+                        f"""
+                        <div style="text-align:center; padding:15px; border-radius:12px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+                            <div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; margin-bottom:5px;">Synthesized Product</div>
+                            <code style="color:#10b981; font-family:'JetBrains Mono', monospace; font-size:0.85rem;">{product_smi[:35]}...</code>
+                        </div>
+                        """, 
+                        unsafe_allow_html=True
+                    )
+
+                st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
+                
                 res_col1, res_col2 = st.columns([1, 1.2])
                 with res_col1:
                     with st.container(border=True):
@@ -3488,11 +3935,21 @@ def _render_sim_lab_mode(smiles_input: str, model: xgb.XGBRegressor, affinity_mo
                         qed_score = round(QED.qed(prod_mol), 2)
                         sa_score = round(calculate_sa_score(prod_mol), 2)
                         
-                        st.metric("Molecular Weight", f"{mw} Da")
-                        st.metric("Aqueous Solubility (LogS)", f"{logs}")
-                        st.metric("QED (Drug-likeness)", f"{qed_score}")
-                        st.metric("SA Score (Synthesis Complexity)", f"{sa_score}")
+                        pm1, pm2 = st.columns(2)
+                        with pm1:
+                            st.metric("Molecular Weight", f"{mw} Da")
+                        with pm2:
+                            st.metric("Aqueous Solubility", f"{logs} LogS")
                         
+                        st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+                        
+                        pm3, pm4 = st.columns(2)
+                        with pm3:
+                            st.metric("Drug-likeness (QED)", f"{qed_score}")
+                        with pm4:
+                            st.metric("Synthesis Complexity", f"{sa_score}")
+                        
+                        st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
                         if st.button("Load Product into Workspace", key="load_prod_workspace", use_container_width=True):
                             st.session_state["smiles_input"] = product_smi
                             st.success("Product successfully loaded into active workspace!")
