@@ -17,11 +17,11 @@ def generate_external_ai_response(model_name: str, api_key: str, prompt: str, hi
         if "3.5 Flash" in model_name:
             api_model = "gemini-3.5-flash"
         elif "1.5 Pro" in model_name:
-            api_model = "gemini-1.5-pro"
+            api_model = "gemini-pro-latest"
         elif "1.5 Flash" in model_name:
-            api_model = "gemini-1.5-flash"
+            api_model = "gemini-flash-latest"
         else:
-            api_model = "gemini-1.5-flash"
+            api_model = "gemini-flash-latest"
         return _call_gemini(api_model, api_key, prompt, history)
     elif "GPT" in model_name:
         if "4o" in model_name:
