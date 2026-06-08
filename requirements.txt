@@ -12,3 +12,4 @@ torch>=2.0.0
 transformers>=4.34.0
 plotly>=5.10.0
 py3Dmol>=2.0.0
+streamlit-authenticator>=0.3.2

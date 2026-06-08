@@ -1,0 +1,16 @@
+cookie:
+  expiry_days: 30
+  key: molsol_super_secret_cookie_key_999
+  name: molsol_session
+credentials:
+  usernames:
+    admin:
+      email: admin@molsol.com
+      name: Administrator
+      password: $2b$12$05pwiYcKenTbqSZRxa./gu8Dd/RHSEG/tpIfvKoF2ACh4XKCS/Zam
+    guest:
+      email: guest@molsol.com
+      name: Guest User
+      password: $2b$12$WHa.x3aBWLcnpAJESn.jN.kZovlpPtHo6blsLnh28h0SK2n/cU/ju
+preauthorized:
+  emails: []

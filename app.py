@@ -1297,29 +1297,64 @@ def run_genetic_algorithm(
 # SECTION 8 — MAIN APPLICATION ENTRY POINT
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def render_login_screen():
-    st.markdown("<h2 style='text-align: center; color: #ff8a00; margin-top: 50px;'>🔐 Secure Access Required</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #a8edea;'>Welcome to MolSol De Novo. Please authenticate your identity.</p>", unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns([1, 1.5, 1])
-    with col2:
-        with st.form("login_form"):
-            username = st.text_input("Username", value="admin")
-            password = st.text_input("Password", type="password", value="password")
-            submit = st.form_submit_button("Authenticate Identity", use_container_width=True)
-            
-            if submit:
-                if username == "admin" and password == "password":
-                    st.session_state["logged_in"] = True
-                    st.session_state["subscription_tier"] = "Free"
-                    st.rerun()
-                else:
-                    st.error("Invalid credentials. Try admin / password.")
+def setup_authenticator():
+    try:
+        import yaml
+        from yaml.loader import SafeLoader
+        import streamlit_authenticator as stauth
+        with open('auth_config.yaml') as file:
+            config = yaml.load(file, Loader=SafeLoader)
+        return stauth.Authenticate(
+            config['credentials'],
+            config['cookie']['name'],
+            config['cookie']['key'],
+            config['cookie']['expiry_days'],
+            config['preauthorized']
+        )
+    except Exception as e:
+        return None
 
 def main() -> None:
-    if not st.session_state.get("logged_in", False):
-        render_login_screen()
-        return
+    authenticator = setup_authenticator()
+    
+    if authenticator is not None:
+        if st.session_state.get("authentication_status") is not True:
+            st.markdown("<h2 style='text-align: center; color: #ff8a00; margin-top: 50px;'>🔐 Secure Access Required</h2>", unsafe_allow_html=True)
+            st.markdown("<p style='text-align: center; color: #a8edea;'>Welcome to MolSol De Novo. Please authenticate your identity.</p>", unsafe_allow_html=True)
+            
+            col1, col2, col3 = st.columns([1, 1.5, 1])
+            with col2:
+                try:
+                    authenticator.login(location="main")
+                except TypeError:
+                    authenticator.login("Login", "main")
+                    
+            if st.session_state.get("authentication_status") is False:
+                st.error('Username/password is incorrect')
+            
+            if not st.session_state.get("authentication_status"):
+                return
+        
+        st.session_state["logged_in"] = True
+        st.session_state["subscription_tier"] = "Free"
+    else:
+        if not st.session_state.get("logged_in", False):
+            st.markdown("<h2 style='text-align: center; color: #ff8a00; margin-top: 50px;'>🔐 Secure Access Required</h2>", unsafe_allow_html=True)
+            col1, col2, col3 = st.columns([1, 1.5, 1])
+            with col2:
+                with st.form("login_form"):
+                    username = st.text_input("Username", value="admin")
+                    password = st.text_input("Password", type="password", value="password")
+                    submit = st.form_submit_button("Authenticate Identity", use_container_width=True)
+                    if submit:
+                        if username == "admin" and password == "password":
+                            st.session_state["logged_in"] = True
+                            st.session_state["subscription_tier"] = "Free"
+                            st.rerun()
+                        else:
+                            st.error("Invalid credentials.")
+            return
+
 
     # (Header moved down to support top-right floating button)
 
@@ -1354,6 +1389,17 @@ def main() -> None:
             st.success("All features unlocked.")
             if st.button("Downgrade to Free", use_container_width=True):
                 st.session_state["subscription_tier"] = "Free"
+                st.rerun()
+        
+        st.markdown("---")
+        if authenticator:
+            try:
+                authenticator.logout("Logout", "main")
+            except Exception:
+                pass
+        else:
+            if st.button("Logout", use_container_width=True):
+                st.session_state["logged_in"] = False
                 st.rerun()
 
     app_modes = ["🔍 Analyze Known Compound", "🧬 De Novo Mutation Loop"]
