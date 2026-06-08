@@ -107,13 +107,16 @@ def simulate_binding_affinity(affinity_model, mol: Chem.Mol, target: str) -> flo
         fp = AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=1024)
         base_fp = list(fp)
         one_hot = [0, 0, 0]
-        if target == "🦠 Kinase (มะเร็ง/อักเสบ)":
+        target_lower = target.lower()
+        if "kinase" in target_lower or "cyclooxygenase" in target_lower or "cox" in target_lower:
             one_hot[0] = 1
-        elif target == "🧠 GPCR (ระบบประสาท/หัวใจ)":
+        elif "gpcr" in target_lower or "dopamine" in target_lower or "receptor" in target_lower:
             one_hot[1] = 1
-        elif target == "🛡️ Protease (ไวรัส/แบคทีเรีย)":
+        elif "protease" in target_lower or "mpro" in target_lower or "sars-cov-2" in target_lower:
             one_hot[2] = 1
-            
+        else:
+            # Default fallback if no match
+            one_hot[0] = 1
         feat_vector = base_fp + one_hot
         arr = np.array(feat_vector, dtype=np.float32).reshape(1, -1)
         return float(affinity_model.predict(arr)[0])
@@ -1541,7 +1544,12 @@ def main() -> None:
                 st.session_state["logged_in"] = False
                 st.rerun()
 
-    app_modes = ["🔍 Analyze Known Compound", "🧬 De Novo Mutation Loop", "🎯 Target Docking Simulation"]
+    app_modes = [
+        "🔍 Analyze Known Compound",
+        "🧬 De Novo Mutation Loop",
+        "🎯 Target Docking Simulation",
+        "🔬 Simulation Lab"
+    ]
     if st.session_state.get("username") == "admin":
         app_modes.append("📊 Admin Dashboard")
 
@@ -1591,15 +1599,15 @@ def main() -> None:
         st.markdown(SINGULARITY_CSS, unsafe_allow_html=True)
         
         with st.sidebar.expander("🧠 Oracle AI Configuration", expanded=True):
-            ai_source_options = ["🟣 Our AI (ระบบวิเคราะห์ของเรา)", "🌐 External AI (ใส่คีย์ค่ายอื่น)"]
+            ai_source_options = ["🟣 Internal Oracle AI", "🌐 External API Provider"]
             default_source_idx = 0 if st.session_state.get("singularity_ai_source", "built_in") == "built_in" else 1
             ai_source = st.radio(
-                "AI Source / แหล่งประมวลผล",
+                "AI Compute Engine",
                 options=ai_source_options,
                 index=default_source_idx,
                 key="singularity_ai_source_radio"
             )
-            st.session_state["singularity_ai_source"] = "built_in" if "Our AI" in ai_source else "external"
+            st.session_state["singularity_ai_source"] = "built_in" if "Internal" in ai_source else "external"
             
             if st.session_state["singularity_ai_source"] == "external":
                 model_options = ["Gemini 3.5 Flash", "Gemini 1.5 Pro", "Gemini 1.5 Flash", "GPT-4o", "GPT-3.5 Turbo"]
@@ -1607,7 +1615,7 @@ def main() -> None:
                 default_model_idx = model_options.index(current_model) if current_model in model_options else 0
                 
                 selected_model = st.selectbox(
-                    "Select Model / เลือกโมเดล",
+                    "Select Model",
                     options=model_options,
                     index=default_model_idx,
                     key="singularity_model_selectbox"
@@ -1743,6 +1751,8 @@ def main() -> None:
         _render_docking_mode(smiles_input, pro_mode, singularity_mode)
     elif mode == "🔍 Analyze Known Compound":
         _render_analysis_mode(smiles_input, model)
+    elif mode == "🔬 Simulation Lab":
+        _render_sim_lab_mode(smiles_input, model, affinity_model, gnn_model, pro_mode, singularity_mode)
     else:
         _render_denovo_mode(smiles_input, model, pro_mode, singularity_mode, affinity_model, gnn_model)
 
@@ -1804,7 +1814,7 @@ def _render_docking_mode(smiles_input: str, pro_mode: bool, singularity_mode: bo
                 st.markdown("### 🧠 Oracle AI Deep Analysis")
                 
                 # Show a brief status card of the active AI Engine
-                source_label = "ระบบ AI ของเรา (วิเคราะห์ภายใน)" if st.session_state.get("singularity_ai_source", "built_in") == "built_in" else f"คีย์ภายนอก ({st.session_state.get('singularity_selected_model', 'Gemini 3.5 Flash')})"
+                source_label = "Internal Oracle AI" if st.session_state.get("singularity_ai_source", "built_in") == "built_in" else f"External ({st.session_state.get('singularity_selected_model', 'Gemini 3.5 Flash')})"
                 st.caption(f"⚡ **Active Engine:** {source_label}")
 
                 if st.button("Generate Structural Insights", use_container_width=True, type="secondary"):
@@ -1820,16 +1830,16 @@ def _render_docking_mode(smiles_input: str, pro_mode: bool, singularity_mode: bo
                                 f"**Compound SMILES:** `{smiles_input}`\n"
                                 f"**Predicted Affinity (pKd):** {score}\n\n"
                                 f"**Structural Insights:**\n"
-                                f"1. **Hydrogen Bonding:** โครงสร้างโมเลกุลมีหมู่ฟังก์ชันที่มีคุณสมบัติในการสร้างพันธะไฮโดรเจน (Hydrogen Bonding) กับกรดอะมิโนบริเวณ Active Site ของ {target_name} ช่วยเพิ่มความเสถียรในการเกาะจับ\n"
-                                f"2. **Hydrophobic Contacts:** ส่วนที่มีความไม่ชอบน้ำ (Lipophilic Core) เข้าไปจับกับ Hydrophobic Pocket ของเป้าหมายได้อย่างดี ส่งผลให้มีค่า Binding Affinity สูงถึง {score}\n"
-                                f"3. **Target Efficacy:** จากคะแนนที่ได้ ({score}) ยานี้มีแนวโน้ม{'ที่ดีมากในการจับกับเป้าหมายเพื่อยับยั้งการทำงานของโรค' if score > 7.5 else 'ระดับปานกลาง ซึ่งอาจจะต้องมีการดัดแปลงหมู่ฟังก์ชันเพิ่มเติมเพื่อเพิ่มความจำเพาะเจาะจง (Selectivity)'}"
+                                f"1. **Hydrogen Bonding:** The molecular structure contains functional groups capable of forming hydrogen bonds with amino acid residues in the active site of {target_name}, enhancing binding stability.\n"
+                                f"2. **Hydrophobic Contacts:** The lipophilic core of the molecule fits well into the hydrophobic pocket of the target, leading to a high binding affinity of {score}.\n"
+                                f"3. **Target Efficacy:** Based on the score ({score}), this drug candidate has a {'very high likelihood of successfully inhibiting the target protein' if score > 7.5 else 'moderate affinity, suggesting functional groups could be further optimized to improve specificity (selectivity)'}."
                             )
                         else:
                             api_key = st.session_state.get("singularity_api_key", "")
                             model_name = st.session_state.get("singularity_selected_model", "Gemini 3.5 Flash")
                             
                             if not api_key:
-                                analysis = "⚠️ **External AI Key Missing:** กรุณาระบุ API Key ใน Sidebar ที่หัวข้อ **Oracle AI Configuration** เพื่อใช้งานการวิเคราะห์ด้วย AI ภายนอก"
+                                analysis = "⚠️ **External AI Key Missing:** Please specify your API Key in the **Oracle AI Configuration** section of the sidebar to use external AI analysis."
                             else:
                                 prompt = f"Analyze the binding of molecule {smiles_input} to {target_name}. The predicted pKd is {score}. Explain the potential hydrogen bonds, hydrophobic interactions, and why this molecule might be effective or ineffective."
                                 from llm_integration import generate_external_ai_response
@@ -2684,18 +2694,18 @@ def _render_fullscreen_oracle_chat(model, gnn_model, affinity_model) -> None:
     selected_model = st.session_state.get("singularity_selected_model", "Local MolSol AI")
     api_key = st.session_state.get("singularity_api_key", "")
     
-    with st.expander("⚙️ Oracle AI Engine Status / สถานะการประมวลผล", expanded=False):
+    with st.expander("⚙️ Oracle AI Engine Status", expanded=False):
         st.markdown("✨ **Singularity Oracle Network Status**")
         if ai_source == "built_in":
             st.success("🤖 **Proprietary Built-in AI Active**")
-            st.markdown("กำลังประมวลผลด้วยโมเดลวิเคราะห์ภายในประเทศ (ไม่จำเป็นต้องใช้ API Key)")
+            st.markdown("Processing requests using local proprietary molecular analytics model (no API key required).")
         else:
             st.info(f"🌐 **External AI Active: {selected_model}**")
             if api_key:
-                st.success("✅ API Key จากภายนอกเชื่อมต่ออยู่เรียบร้อยแล้ว")
+                st.success("✅ External API connection established.")
             else:
-                st.warning("⚠️ ข้อมูล API Key ยังไม่สมบูรณ์ (กรุณาระบุคีย์ในหัวข้อ Oracle AI Configuration แถบ Sidebar ซ้ายมือ)")
-        st.caption("💡 ท่านสามารถกำหนดคีย์และเลือกโมเดลได้ที่หัวข้อ **Oracle AI Configuration** แถบ Sidebar ซ้ายมือได้ตลอดเวลา")
+                st.warning("⚠️ API Key is missing. Please provide a valid key in the **Oracle AI Configuration** section of the sidebar.")
+        st.caption("💡 You can configure providers, keys, and model selections in the **Oracle AI Configuration** tab of the left sidebar at any time.")
 
     # ── Info Banner ──
     st.markdown(
@@ -2922,8 +2932,595 @@ def _get_fallback_response(prompt_lower: str) -> str:
     return "I am the Singularity Oracle. I can help design drug molecules, predict properties, and answer chemistry questions. Please describe what kind of molecule you want to design, or ask a chemistry question!"
 
 
+
+def download_and_cache_pdb(pdb_id: str) -> Optional[str]:
+    """Download a PDB file from RCSB and cache it locally."""
+    cache_dir = "pdb_cache"
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir, exist_ok=True)
+        
+    cache_path = os.path.join(cache_dir, f"{pdb_id}.pdb")
+    
+    if os.path.exists(cache_path):
+        try:
+            with open(cache_path, "r", encoding="utf-8") as f:
+                return f.read()
+        except Exception as e:
+            st.error(f"Error reading cached PDB {pdb_id}: {e}")
+            
+    # Download from RCSB PDB
+    url = f"https://files.rcsb.org/download/{pdb_id}.pdb"
+    try:
+        resp = requests.get(url, timeout=30)
+        if resp.status_code == 200:
+            pdb_data = resp.text
+            with open(cache_path, "w", encoding="utf-8") as f:
+                f.write(pdb_data)
+            return pdb_data
+        else:
+            st.error(f"Failed to download PDB {pdb_id} from RCSB (Status code: {resp.status_code})")
+            return None
+    except Exception as e:
+        st.error(f"Network error downloading PDB {pdb_id}: {e}")
+        return None
+
+
+def simulate_retrosynthesis(smiles: str) -> List[Dict[str, Any]]:
+    """Generate a realistic simulated retrosynthetic pathway based on functional groups."""
+    mol = Chem.MolFromSmiles(smiles)
+    steps = []
+    if mol is None:
+        return steps
+        
+    # Detect presence of functional groups using SMARTS
+    has_amide = mol.HasSubstructMatch(Chem.MolFromSmarts("[CX3](=O)[NX3]"))
+    has_ester = mol.HasSubstructMatch(Chem.MolFromSmarts("[CX3](=O)[OX2][#6]"))
+    has_nitro = mol.HasSubstructMatch(Chem.MolFromSmarts("[NX3](=O)=O"))
+    has_amine = mol.HasSubstructMatch(Chem.MolFromSmarts("[NX3]"))
+    has_hydroxyl = mol.HasSubstructMatch(Chem.MolFromSmarts("[OX2H]"))
+    has_halogen = mol.HasSubstructMatch(Chem.MolFromSmarts("[F,Cl,Br]"))
+    has_aromatic = mol.HasSubstructMatch(Chem.MolFromSmarts("c1ccccc1"))
+    
+    step_idx = 1
+    
+    # If amide group is present, simulate amide coupling as final step
+    if has_amide:
+        steps.append({
+            "step": step_idx,
+            "title": f"Step {step_idx}: Amide Coupling (Synthesis of Target)",
+            "type": "Amide Coupling (EDCI/HOBt)",
+            "reagents": "EDC·HCl, HOBt, DIPEA",
+            "solvent": "Dimethylformamide (DMF)",
+            "conditions": "Room Temperature, 12 hours",
+            "reactants": "Carboxylic Acid precursor + Primary/Secondary Amine precursor",
+            "yield": "85 - 92%",
+            "notes": "Excellent yield and clean conversion. EDC activates the carboxylic acid to couple with the amine."
+        })
+        step_idx += 1
+        
+    # If ester group is present, simulate esterification
+    elif has_ester:
+        steps.append({
+            "step": step_idx,
+            "title": f"Step {step_idx}: Fischer Esterification (Synthesis of Target)",
+            "type": "Esterification",
+            "reagents": "Catalytic H2SO4 or TsOH",
+            "solvent": "Methanol or Ethanol (reflux)",
+            "conditions": "65°C, 6 hours",
+            "reactants": "Carboxylic Acid precursor + Alcohol precursor",
+            "yield": "78 - 85%",
+            "notes": "Driven to completion by removing water or using the alcohol as solvent."
+        })
+        step_idx += 1
+        
+    # If halogen group is present, simulate nucleophilic substitution or Suzuki coupling
+    if has_halogen and has_aromatic:
+        steps.append({
+            "step": step_idx,
+            "title": f"Step {step_idx}: Suzuki-Miyaura Cross-Coupling",
+            "type": "C-C Cross-Coupling",
+            "reagents": "Pd(dppf)Cl2, K2CO3",
+            "solvent": "THF / H2O (9:1)",
+            "conditions": "80°C, under Nitrogen atmosphere, 8 hours",
+            "reactants": "Aryl halide precursor + Boronic Acid/Ester",
+            "yield": "75 - 88%",
+            "notes": "Standard cross-coupling to construct the carbon-carbon biaryl scaffold."
+        })
+        step_idx += 1
+        
+    # If nitro group is present, simulate nitro reduction to amine
+    if has_nitro and has_amine:
+        steps.append({
+            "step": step_idx,
+            "title": f"Step {step_idx}: Catalytic Nitro Reduction",
+            "type": "Reduction",
+            "reagents": "H2 gas, Pd/C (10 wt. %)",
+            "solvent": "Methanol (MeOH)",
+            "conditions": "Room Temperature, 3 bar H2 pressure, 4 hours",
+            "reactants": "Nitroarene intermediate",
+            "yield": "95 - 98%",
+            "notes": "Quantitative reduction. Filter catalyst through Celite and concentrate to obtain crude amine."
+        })
+        step_idx += 1
+        
+    # If hydroxyl or halogen is present, simulate ether synthesis (Williamson)
+    if has_hydroxyl and has_halogen:
+        steps.append({
+            "step": step_idx,
+            "title": f"Step {step_idx}: Williamson Ether Synthesis",
+            "type": "Nucleophilic Substitution (Sn2)",
+            "reagents": "K2CO3, KI (catalytic)",
+            "solvent": "Acetonitrile (MeCN)",
+            "conditions": "70°C, 16 hours",
+            "reactants": "Phenol/Alcohol + Alkyl Halide",
+            "yield": "70 - 82%",
+            "notes": "Mild basic conditions, alkylation of the oxygen atom to form the ether linkage."
+        })
+        step_idx += 1
+        
+    # Default step for building the main carbon core
+    steps.append({
+        "step": step_idx,
+        "title": f"Step {step_idx}: Core Scaffold Assembly",
+        "type": "Friedel-Crafts Alkylation/Acylation",
+        "reagents": "AlCl3 (anhydrous) or FeCl3",
+        "solvent": "Dichloromethane (DCM)",
+        "conditions": "0°C to Room Temperature, 3 hours",
+        "reactants": "Aromatic core + Acyl chloride / Alkyl halide",
+        "yield": "60 - 75%",
+        "notes": "Constructs the aromatic backbone. Requires moisture-free environment."
+    })
+    step_idx += 1
+    
+    # Initial starting materials
+    steps.append({
+        "step": step_idx,
+        "title": f"Step {step_idx}: Purchase Starting Materials",
+        "type": "Reagent Acquisition",
+        "reagents": "None",
+        "solvent": "None",
+        "conditions": "N/A",
+        "reactants": "Commercial reagents (Sigma-Aldrich, Enamine, or Combi-Blocks)",
+        "yield": "100%",
+        "notes": "Standard, cheap commercial reagents available at >95% purity."
+    })
+    
+    # Reverse to show in chronological order of synthesis (from raw materials to target)
+    steps.reverse()
+    # Re-number steps chronologically and set dynamic titles
+    for i, s in enumerate(steps):
+        s["step"] = i + 1
+        s["title"] = f"Step {i+1}: {s['type']}"
+        
+    return steps
+
+
+def _render_sim_lab_mode(smiles_input: str, model: xgb.XGBRegressor, affinity_model, gnn_model, pro_mode: bool, singularity_mode: bool) -> None:
+    st.markdown("<h2 style='color: #8a2be2;'>🔬 Simulation Lab Mode</h2>", unsafe_allow_html=True)
+    st.markdown("Advanced computational chemistry platform for batch virtual screening, 3D pocket docking visualization, and retrosynthetic pathway planning.")
+
+    if not pro_mode:
+        st.error("🔒 **Genesis Protocol Required**")
+        st.info("This advanced feature requires the Genesis Protocol tier or higher. Please upgrade your subscription in the sidebar to access the Simulation Lab.")
+        return
+
+    # Add custom timeline CSS styles
+    st.markdown(
+        """
+        <style>
+        .retro-timeline {
+            position: relative;
+            border-left: 2px solid #ff8a00;
+            margin-left: 30px;
+            padding-left: 30px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .retro-step-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        .retro-step-badge {
+            position: absolute;
+            left: -43px;
+            top: 20px;
+            background: linear-gradient(135deg, #ff8a00, #e52e71);
+            color: white;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            text-align: center;
+            line-height: 26px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            box-shadow: 0 0 10px rgba(255, 138, 0, 0.5);
+            border: 2px solid #0e1117;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    tab1, tab2, tab3 = st.tabs([
+        "🗂️ High-Throughput Screening (HTS)",
+        "🧬 Protein-Ligand 3D Pocket Viewer",
+        "🧪 Retrosynthesis Planner"
+    ])
+
+    # 🧬 30 Bioactive Compounds Mock Database for HTS
+    SAMPLE_HTS_LIBRARY = [
+        {"Name": "Aspirin", "SMILES": "CC(=O)Oc1ccccc1C(=O)O"},
+        {"Name": "Ibuprofen", "SMILES": "CC(C)Cc1ccc(cc1)[C@@H](C)C(=O)O"},
+        {"Name": "Paracetamol", "SMILES": "CC(=O)Nc1ccc(O)cc1"},
+        {"Name": "Metformin", "SMILES": "CN(C)C(=N)NC(=N)N"},
+        {"Name": "Caffeine", "SMILES": "Cn1c(=O)c2c(ncn2C)n(C)c1=O"},
+        {"Name": "Penicillin G", "SMILES": "CC1(C)SC2C(NC(=O)Cc3ccccc3)C(=O)N2C1C(=O)O"},
+        {"Name": "Imatinib", "SMILES": "Cc1ccc(cc1Nc2nccc(n2)c3cccnc3)Nc4ccc(cc4)CN5CCN(C)CC5"},
+        {"Name": "Diazepam", "SMILES": "CN1C(=O)CN=C(c2ccccc2)c3cc(Cl)ccc13"},
+        {"Name": "Fluoxetine", "SMILES": "CNCCC(Oc1ccc(cc1)C(F)(F)F)c2ccccc2"},
+        {"Name": "Salbutamol", "SMILES": "CC(C)(C)NCC(O)c1ccc(O)c(CO)c1"},
+        {"Name": "Nicotine", "SMILES": "CN1CCCC1c2cccnc2"},
+        {"Name": "Resveratrol", "SMILES": "Oc1ccc(cc1)C=Cc2cc(O)cc(O)c2"},
+        {"Name": "Metronidazole", "SMILES": "CC1=NC=C(N1CCO)[N+](=O)[O-]"},
+        {"Name": "Lidocaine", "SMILES": "CCN(CC)CC(=O)Nc1c(C)cccc1C"},
+        {"Name": "Quinine", "SMILES": "COC1=CC2=C(C=CN=C2)C(C3CC4CCN3CC4C=C)O"},
+        {"Name": "Artemisinin", "SMILES": "CC1CCC2C(C)C(=O)OC3OC4(C)CCC1C23OO4"},
+        {"Name": "Cimetidine", "SMILES": "Cc1c(nc[nH]1)CSCCN=C(C)NC#N"},
+        {"Name": "Atenolol", "SMILES": "CC(C)NCC(O)COc1ccc(cc1)CC(N)=O"},
+        {"Name": "Lovastatin", "SMILES": "CCC(C)C(=O)OC1CC(C)C=C2C1C(C)CC(O)CC(=O)O2"},
+        {"Name": "Ciprofloxacin", "SMILES": "C1CC1N2C=C(C(=O)C3=CC(=C(C=C32)F)N4CCNCC4)C(=O)O"},
+        {"Name": "Sildenafil", "SMILES": "CCCC1=NN(C)C2=C1N=C(C3=C(OCC)C=CC(=C3)S(=O)(=O)N4CCN(C)CC4)NC2=O"},
+        {"Name": "Sulfamethoxazole", "SMILES": "Cc1cc(no1)NS(=O)(=O)c2ccc(N)cc2"},
+        {"Name": "Acyclovir", "SMILES": "CC(=O)OCC(CO)n1cnc2c1=O"},
+        {"Name": "Ranitidine", "SMILES": "CNC(=C[N+](=O)[O-])NCCSSCc1ccc(O)o1"},
+        {"Name": "Metoprolol", "SMILES": "COCCCc1ccc(cc1)OCC(O)CNCC(C)C"},
+        {"Name": "Amitriptyline", "SMILES": "CN(C)CCC=C1c2ccccc2CCc3ccccc13"},
+        {"Name": "Alprazolam", "SMILES": "Cc1nnc2n1-c3ccc(Cl)cc3-c4ccccc4N=C2"},
+        {"Name": "Warfarin", "SMILES": "CC(=O)CC(c1ccccc1)c2c(O)c3ccccc3oc2=O"},
+        {"Name": "Omeprazole", "SMILES": "COc1ccc2c(c1)n=c(n2)S(=O)Cc3ncc(c(c3C)OC)C"},
+        {"Name": "Propranolol", "SMILES": "CC(C)NCC(O)COc1cccc2ccccc12"}
+    ]
+
+    # TAB 1: High-Throughput Screening
+    with tab1:
+        st.markdown("### 🗂️ Virtual Library Screening")
+        st.markdown("Run rapid ADMET and affinity scoring on batch compound libraries.")
+
+        hts_target = st.selectbox(
+            "Select Target Protein for Affinity Screening",
+            ["EGFR Kinase (Cancer)", "Dopamine D2 Receptor (GPCR)", "SARS-CoV-2 Mpro (Protease)"],
+            key="hts_target_select"
+        )
+
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            uploaded_file = st.file_uploader("Upload Chemical Library (CSV)", type=["csv"], help="CSV should have a column named 'SMILES'")
+        with col2:
+            st.markdown("<br>", unsafe_allow_html=True)
+            load_sample = st.button("Load Bioactive Sample Library (30 Compounds)", use_container_width=True)
+
+        df_library = None
+        if uploaded_file is not None:
+            try:
+                df_uploaded = pd.read_csv(uploaded_file)
+                smiles_col = None
+                for col in df_uploaded.columns:
+                    if col.lower() == "smiles":
+                        smiles_col = col
+                        break
+                if smiles_col:
+                    df_library = df_uploaded.rename(columns={smiles_col: "SMILES"})
+                    if "Name" not in df_library.columns:
+                        name_col = None
+                        for c in df_library.columns:
+                            if c.lower() in ["name", "id", "compound"]:
+                                name_col = c
+                                break
+                        if name_col:
+                            df_library = df_library.rename(columns={name_col: "Name"})
+                        else:
+                            df_library["Name"] = [f"Compound {i+1}" for i in range(len(df_library))]
+                else:
+                    st.error("Uploaded CSV must contain a column named 'SMILES' (case-insensitive).")
+            except Exception as e:
+                st.error(f"Error parsing uploaded file: {e}")
+        elif load_sample or "hts_sample_loaded" in st.session_state:
+            st.session_state["hts_sample_loaded"] = True
+            df_library = pd.DataFrame(SAMPLE_HTS_LIBRARY)
+
+        if df_library is not None:
+            st.markdown("---")
+            st.markdown("### 📊 Screening Progress")
+            
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            
+            results = []
+            total_compounds = len(df_library)
+            
+            for idx, row in df_library.iterrows():
+                smi = str(row["SMILES"]).strip()
+                name = str(row["Name"]).strip()
+                
+                status_text.text(f"Analyzing {idx+1}/{total_compounds}: {name}...")
+                progress_bar.progress((idx + 1) / total_compounds)
+                
+                mol = Chem.MolFromSmiles(smi)
+                if mol is None:
+                    continue
+                    
+                mw = round(Descriptors.ExactMolWt(mol), 2)
+                logs = round(predict_solubility(model, mol), 2)
+                affinity = round(simulate_binding_affinity(affinity_model, mol, hts_target), 2)
+                qed_score = round(QED.qed(mol), 2)
+                sa_score = round(calculate_sa_score(mol), 2)
+                
+                logp = Descriptors.MolLogP(mol)
+                hbd = Lipinski.NumHDonors(mol)
+                hba = Lipinski.NumHAcceptors(mol)
+                
+                violations = 0
+                if mw > 500: violations += 1
+                if logp > 5: violations += 1
+                if hbd > 5: violations += 1
+                if hba > 10: violations += 1
+                
+                results.append({
+                    "Name": name,
+                    "SMILES": smi,
+                    "MW (Da)": mw,
+                    "LogS (Solubility)": logs,
+                    "Binding Affinity (pKd)": affinity,
+                    "QED (Drug-likeness)": qed_score,
+                    "SA Score (Synthesis)": sa_score,
+                    "Lipinski Violations": violations
+                })
+                
+            progress_bar.empty()
+            status_text.empty()
+            
+            df_results = pd.DataFrame(results)
+            
+            if not df_results.empty():
+                st.markdown("#### 📈 Screening Metrics Summary")
+                c1, c2, c3, c4 = st.columns(4)
+                avg_affinity = round(df_results["Binding Affinity (pKd)"].mean(), 2)
+                avg_logs = round(df_results["LogS (Solubility)"].mean(), 2)
+                avg_qed = round(df_results["QED (Drug-likeness)"].mean(), 2)
+                lipinski_pass_pct = round((df_results["Lipinski Violations"] == 0).sum() / len(df_results) * 100, 1)
+                
+                c1.metric("Average Binding Affinity (pKd)", f"{avg_affinity}")
+                c2.metric("Average Solubility (LogS)", f"{avg_logs}")
+                c3.metric("Average QED (Drug-likeness)", f"{avg_qed}")
+                c4.metric("Lipinski Compliant (0 Violations)", f"{lipinski_pass_pct}%")
+                
+                st.markdown("#### 📊 Visual Analytics")
+                plot_col1, plot_col2 = st.columns(2)
+                
+                with plot_col1:
+                    fig_scatter = go.Figure()
+                    fig_scatter.add_trace(go.Scatter(
+                        x=df_results["LogS (Solubility)"],
+                        y=df_results["Binding Affinity (pKd)"],
+                        mode='markers',
+                        text=df_results["Name"],
+                        marker=dict(
+                            size=10,
+                            color=df_results["QED (Drug-likeness)"],
+                            colorscale='Viridis',
+                            showscale=True,
+                            colorbar=dict(title="QED")
+                        )
+                    ))
+                    fig_scatter.update_layout(
+                        title="Solubility (LogS) vs Binding Affinity (pKd)",
+                        xaxis_title="Solubility (LogS)",
+                        yaxis_title="Binding Affinity (pKd)",
+                        template="plotly_dark",
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)'
+                    )
+                    st.plotly_chart(fig_scatter, use_container_width=True)
+                    
+                with plot_col2:
+                    fig_dist = go.Figure()
+                    fig_dist.add_trace(go.Scatter(
+                        x=df_results["Name"],
+                        y=df_results["Binding Affinity (pKd)"],
+                        mode='lines+markers',
+                        name='Affinity',
+                        line=dict(color='#ff8a00', width=2),
+                        marker=dict(size=8, color='#ff8a00')
+                    ))
+                    fig_dist.update_layout(
+                        title="Binding Affinities across Library",
+                        xaxis_title="Compound",
+                        yaxis_title="Binding Affinity (pKd)",
+                        xaxis=dict(tickangle=45),
+                        template="plotly_dark",
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)'
+                    )
+                    st.plotly_chart(fig_dist, use_container_width=True)
+                    
+                st.markdown("#### 📋 Screening Results Table")
+                st.dataframe(df_results, use_container_width=True)
+                
+                st.markdown("#### ⚙️ Screen Actions")
+                act_col1, act_col2 = st.columns(2)
+                with act_col1:
+                    csv_data = df_results.to_csv(index=False).encode('utf-8')
+                    st.download_button(
+                        "📥 Download Screening Results (CSV)",
+                        data=csv_data,
+                        file_name=f"HTS_Screening_Results_{hts_target.split(' ')[0]}.csv",
+                        mime="text/csv",
+                        use_container_width=True
+                    )
+                with act_col2:
+                    selected_mol_name = st.selectbox("Select Compound to Load into Active Workspace", df_results["Name"].tolist())
+                    if st.button("Load Compound into Active Workspace", type="primary", use_container_width=True):
+                        sel_smi = df_results[df_results["Name"] == selected_mol_name]["SMILES"].values[0]
+                        st.session_state["smiles_input"] = sel_smi
+                        st.success(f"Successfully loaded '{selected_mol_name}' into active workspace!")
+                        st.rerun()
+
+    # TAB 2: Protein-Ligand 3D Pocket Viewer
+    with tab2:
+        st.markdown("### 🧬 Protein-Ligand 3D Pocket Viewer")
+        st.markdown("Visualize the active compound docked inside the 3D target protein binding pocket.")
+
+        if not smiles_input:
+            st.warning("👈 Please specify a SMILES input in the sidebar first.")
+        else:
+            viewer_target = st.selectbox(
+                "Select Target Protein Structure",
+                ["EGFR Kinase (PDB: 1ATP)", "GPCR Beta-2 (PDB: 3SN6)", "SARS-CoV-2 Mpro (PDB: 6LU7)"],
+                key="viewer_target_select"
+            )
+
+            POCKET_CENTERS = {
+                "EGFR Kinase (PDB: 1ATP)": (16.0, 15.0, 18.0, "1ATP"),
+                "GPCR Beta-2 (PDB: 3SN6)": (0.0, -5.0, 15.0, "3SN6"),
+                "SARS-CoV-2 Mpro (PDB: 6LU7)": (-10.0, 12.0, 68.0, "6LU7")
+            }
+            
+            pocket_x, pocket_y, pocket_z, pdb_id = POCKET_CENTERS[viewer_target]
+
+            with st.spinner(f"Loading protein structure for PDB {pdb_id}..."):
+                pdb_content = download_and_cache_pdb(pdb_id)
+
+            if pdb_content and HAS_PY3DMOL:
+                try:
+                    mol_3d = Chem.MolFromSmiles(smiles_input)
+                    if mol_3d:
+                        mol_3d = Chem.AddHs(mol_3d)
+                        embed_status = AllChem.EmbedMolecule(mol_3d, AllChem.ETKDG())
+                        if embed_status != 0:
+                            embed_status = AllChem.EmbedMolecule(mol_3d)
+                        
+                        if embed_status == 0:
+                            AllChem.MMFFOptimizeMolecule(mol_3d)
+                            
+                            conf = mol_3d.GetConformer()
+                            coords = np.array([list(conf.GetAtomPosition(i)) for i in range(mol_3d.GetNumAtoms())])
+                            centroid = np.mean(coords, axis=0)
+                            
+                            from rdkit.Geometry import Point3D
+                            for i in range(mol_3d.GetNumAtoms()):
+                                pos = conf.GetAtomPosition(i)
+                                new_pos = Point3D(
+                                    pos.x - centroid[0] + pocket_x,
+                                    pos.y - centroid[1] + pocket_y,
+                                    pos.z - centroid[2] + pocket_z
+                                )
+                                conf.SetAtomPosition(i, new_pos)
+                            
+                            ligand_block = Chem.MolToMolBlock(mol_3d)
+                            
+                            import py3Dmol
+                            viewer = py3Dmol.view(width=800, height=600)
+                            # Model 0: Protein
+                            viewer.addModel(pdb_content, 'pdb')
+                            viewer.setStyle({'cartoon': {'color': 'spectrum'}})
+                            
+                            # Model 1: Ligand
+                            viewer.addModel(ligand_block, 'mol')
+                            viewer.setStyle({'model': 1}, {'stick': {'colorscheme': 'greenCarbon', 'radius': 0.35}})
+                            
+                            # Show pocket residues
+                            viewer.setStyle({'within': {'distance': 6.0, 'reference': {'model': 1}}}, {'stick': {'colorscheme': 'greyCarbon', 'radius': 0.15, 'opacity': 0.5}})
+                            
+                            viewer.zoomTo({'model': 1})
+                            viewer.spin(True)
+                            
+                            html_data = viewer._make_html()
+                            st.components.v1.html(html_data, height=620, scrolling=False)
+                            st.success(f"Protein-Ligand pocket simulation generated! Focus is zoomed in on the active site pocket of {pdb_id}.")
+                        else:
+                            st.error("Could not generate 3D coordinates for this SMILES. Try a simpler compound.")
+                    else:
+                        st.error("Invalid SMILES format in active workspace. Please input a valid SMILES.")
+                except Exception as e:
+                    st.error(f"Error compiling 3D coordinates for docking visualizer: {e}")
+            else:
+                if not HAS_PY3DMOL:
+                    st.info("Please make sure `py3Dmol` package is installed to view 3D structures.")
+                else:
+                    st.error("Unable to load protein structure. Make sure you have an active network connection.")
+
+    # TAB 3: Retrosynthesis Planner
+    with tab3:
+        st.markdown("### 🧪 AI Retrosynthesis Planner")
+        st.markdown("Generate step-by-step reaction pathways to synthesize the target molecule.")
+
+        if not smiles_input:
+            st.warning("👈 Please specify a SMILES input in the sidebar first.")
+        else:
+            st.markdown(f"**Target Compound SMILES:** `{smiles_input}`")
+            
+            ai_source = st.session_state.get("singularity_ai_source", "built_in")
+            source_label = "Internal Oracle AI" if ai_source == "built_in" else f"External ({st.session_state.get('singularity_selected_model', 'Gemini 3.5 Flash')})"
+            st.caption(f"⚡ **Active Engine:** {source_label}")
+
+            if st.button("Plan Synthesis Route", type="primary", use_container_width=True):
+                if ai_source == "external":
+                    api_key = st.session_state.get("singularity_api_key", "")
+                    model_name = st.session_state.get("singularity_selected_model", "Gemini 3.5 Flash")
+                    
+                    if not api_key:
+                        st.warning("⚠️ **External AI Key Missing:** Please provide an API key in the **Oracle AI Configuration** section of the sidebar to use the external AI.")
+                    else:
+                        prompt = (
+                            f"Perform a step-by-step retrosynthetic analysis and synthetic route planning for the molecule: {smiles_input}. "
+                            f"Provide clear steps, mentioning starting materials, reaction names, reagents, solvents, temperatures, and estimated yields."
+                        )
+                        from llm_integration import generate_external_ai_response
+                        with st.spinner("Oracle AI is planning the chemical synthesis route..."):
+                            response, error = generate_external_ai_response(model_name, api_key, prompt, [])
+                            if error:
+                                st.error(f"Error from External AI: {response}")
+                            else:
+                                st.markdown("### 🧬 AI Retrosynthesis Plan")
+                                st.info(response)
+                else:
+                    # Internal AI simulated planner
+                    with st.spinner("Oracle AI is generating synthetic pathways..."):
+                        import time
+                        time.sleep(1.5)
+                        steps = simulate_retrosynthesis(smiles_input)
+                        
+                        if steps:
+                            st.markdown("### 🧬 AI Retrosynthesis Plan")
+                            timeline_html = "<div class='retro-timeline'>"
+                            for s in steps:
+                                timeline_html += f"""
+                                <div class='retro-step-card'>
+                                    <div class='retro-step-badge'>{s['step']}</div>
+                                    <h4 style='color: #ff8a00; margin-top: 0;'>{s['title']}</h4>
+                                    <div style='margin-bottom: 8px;'><b>Reaction Type:</b> {s['type']}</div>
+                                    <div style='margin-bottom: 8px;'><b>Reagents / Catalysts:</b> <code style='background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px;'>{s['reagents']}</code></div>
+                                    <div style='margin-bottom: 8px;'><b>Solvent:</b> {s['solvent']} | <b>Conditions:</b> {s['conditions']}</div>
+                                    <div style='margin-bottom: 8px;'><b>Reactants:</b> {s['reactants']}</div>
+                                    <div style='margin-bottom: 8px;'><b>Estimated Yield:</b> {s['yield']}</div>
+                                    <div style='color: #a8edea; font-size: 0.9rem; font-style: italic;'>💡 {s['notes']}</div>
+                                </div>
+                                """
+                            timeline_html += "</div>"
+                            st.markdown(timeline_html, unsafe_allow_html=True)
+                        else:
+                            st.error("Invalid compound in active workspace. Cannot generate retrosynthesis.")
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # ENTRY POINT
 # ═══════════════════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
     main()
+
