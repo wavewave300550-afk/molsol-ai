@@ -22,6 +22,7 @@ from typing import Optional, Tuple, List, Dict, Any
 import numpy as np
 import pandas as pd
 import requests
+import xgboost as xgb
 
 import matplotlib
 matplotlib.use("Agg")                       # headless backend — MUST be before pyplot
