@@ -1332,7 +1332,14 @@ def main() -> None:
                 return
         
         st.session_state["logged_in"] = True
-        st.session_state["subscription_tier"] = "Free"
+        
+        # Grant admin maximum privileges automatically
+        if st.session_state.get("username") == "admin":
+            if st.session_state.get("subscription_tier") not in ["Pro", "Singularity"]:
+                st.session_state["subscription_tier"] = "Singularity"
+        else:
+            if "subscription_tier" not in st.session_state:
+                st.session_state["subscription_tier"] = "Free"
     else:
         if not st.session_state.get("logged_in", False):
             st.markdown("<h2 style='text-align: center; color: #ff8a00; margin-top: 50px;'>🔐 Secure Access Required</h2>", unsafe_allow_html=True)
