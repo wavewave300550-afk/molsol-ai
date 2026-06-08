@@ -1298,21 +1298,18 @@ def run_genetic_algorithm(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def setup_authenticator():
-    try:
-        import yaml
-        from yaml.loader import SafeLoader
-        import streamlit_authenticator as stauth
-        with open('auth_config.yaml') as file:
-            config = yaml.load(file, Loader=SafeLoader)
-        return stauth.Authenticate(
-            config['credentials'],
-            config['cookie']['name'],
-            config['cookie']['key'],
-            config['cookie']['expiry_days'],
-            config['preauthorized']
-        )
-    except Exception as e:
-        return None
+    import yaml
+    from yaml.loader import SafeLoader
+    import streamlit_authenticator as stauth
+    with open('auth_config.yaml') as file:
+        config = yaml.load(file, Loader=SafeLoader)
+    return stauth.Authenticate(
+        config['credentials'],
+        config['cookie']['name'],
+        config['cookie']['key'],
+        config['cookie']['expiry_days'],
+        config['preauthorized']
+    )
 
 def main() -> None:
     authenticator = setup_authenticator()
