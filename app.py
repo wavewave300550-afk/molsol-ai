@@ -1378,21 +1378,31 @@ def main() -> None:
         if tier == "Free":
             st.info("Limited to Core Algorithm.")
             if st.button("Upgrade to Genesis Pro ($49/mo)", use_container_width=True):
-                st.session_state["subscription_tier"] = "Pro"
-                st.rerun()
+                if st.session_state.get("username") == "admin":
+                    st.session_state["subscription_tier"] = "Pro"
+                    st.rerun()
+                else:
+                    st.toast("Payment gateway under construction. Upgrade unavailable.", icon="🚧")
             if st.button("Unlock Singularity ($199/mo)", use_container_width=True):
-                st.session_state["subscription_tier"] = "Singularity"
-                st.rerun()
+                if st.session_state.get("username") == "admin":
+                    st.session_state["subscription_tier"] = "Singularity"
+                    st.rerun()
+                else:
+                    st.toast("Payment gateway under construction. Upgrade unavailable.", icon="🚧")
         elif tier == "Pro":
             st.info("Genesis Protocol Active.")
             if st.button("Unlock Singularity ($199/mo)", use_container_width=True):
-                st.session_state["subscription_tier"] = "Singularity"
-                st.rerun()
+                if st.session_state.get("username") == "admin":
+                    st.session_state["subscription_tier"] = "Singularity"
+                    st.rerun()
+                else:
+                    st.toast("Payment gateway under construction. Upgrade unavailable.", icon="🚧")
         elif tier == "Singularity":
             st.success("All features unlocked.")
             if st.button("Downgrade to Free", use_container_width=True):
-                st.session_state["subscription_tier"] = "Free"
-                st.rerun()
+                if st.session_state.get("username") == "admin":
+                    st.session_state["subscription_tier"] = "Free"
+                    st.rerun()
         
         st.markdown("---")
         if authenticator:
