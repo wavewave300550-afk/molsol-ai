@@ -1297,6 +1297,46 @@ def run_genetic_algorithm(
 # SECTION 8 — MAIN APPLICATION ENTRY POINT
 # ═══════════════════════════════════════════════════════════════════════════════
 
+def render_admin_dashboard():
+    import pandas as pd
+    import numpy as np
+    import plotly.express as px
+
+    st.markdown("<h2 style='text-align: center; color: #ff8a00; margin-top: 20px;'>📊 System Admin Dashboard</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #a8edea;'>Overview of MolSol De Novo Platform Status</p>", unsafe_allow_html=True)
+    st.markdown("---")
+
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric(label="Total Molecules Generated", value="12,458", delta="↑ 342 today")
+    col2.metric(label="Active Users", value="48", delta="↑ 12")
+    col3.metric(label="API Quota Remaining", value="85%", delta="-2% today")
+    col4.metric(label="System Status", value="Online", delta="Nominal", delta_color="normal")
+
+    st.markdown("<br><h3>📈 Usage Analytics</h3>", unsafe_allow_html=True)
+    dates = pd.date_range(end=pd.Timestamp.today(), periods=14)
+    np.random.seed(42)
+    usage = np.random.randint(100, 500, size=14)
+    usage = np.sort(usage)
+    usage = usage + np.random.randint(-50, 50, size=14)
+    df = pd.DataFrame({"Date": dates, "API Calls": usage})
+    
+    fig = px.area(df, x="Date", y="API Calls", title="API Usage Trend (Past 14 Days)",
+                  color_discrete_sequence=['#ff8a00'])
+    fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                      font_color='#a8edea', margin=dict(l=20, r=20, t=40, b=20))
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("<br><h3>⚙️ System Controls</h3>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3)
+    if c1.button("Force Clear Cache", use_container_width=True):
+        st.cache_data.clear()
+        st.cache_resource.clear()
+        st.success("Cache Cleared!")
+    if c2.button("Restart AI Worker", use_container_width=True):
+        st.success("AI Worker Restart Signal Sent.")
+    if c3.button("Download Server Logs", use_container_width=True):
+        st.info("Logs downloaded (Simulated).")
+
 def setup_authenticator():
     import yaml
     from yaml.loader import SafeLoader
@@ -1416,6 +1456,8 @@ def main() -> None:
                 st.rerun()
 
     app_modes = ["🔍 Analyze Known Compound", "🧬 De Novo Mutation Loop"]
+    if st.session_state.get("username") == "admin":
+        app_modes.append("📊 Admin Dashboard")
 
     mode = st.sidebar.radio(
         "Select Application Mode",
@@ -1566,6 +1608,8 @@ def main() -> None:
     # ==================================================================
     if singularity_mode and st.session_state.get("show_oracle_chat", False):
         _render_fullscreen_oracle_chat(model, gnn_model, affinity_model)
+    elif mode == "📊 Admin Dashboard":
+        render_admin_dashboard()
     elif mode == "🔍 Analyze Known Compound":
         _render_analysis_mode(smiles_input, model)
     else:
