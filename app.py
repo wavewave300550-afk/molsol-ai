@@ -1930,7 +1930,7 @@ def main() -> None:
             st.session_state["singularity_ai_source"] = "built_in" if "Internal" in ai_source else "external"
             
             if st.session_state["singularity_ai_source"] == "external":
-                model_options = ["Gemini 3.5 Flash", "Gemini 1.5 Pro", "Gemini 1.5 Flash", "GPT-4o", "GPT-3.5 Turbo"]
+                model_options = ["Gemini 3.5 Flash", "Gemini 3.1 Pro", "Gemini 3.1 Flash-Lite", "Gemini 2.5 Pro", "Gemini 2.5 Flash", "Gemini 2.0 Flash", "GPT-4o", "GPT-3.5 Turbo"]
                 current_model = st.session_state.get("singularity_selected_model", "Gemini 3.5 Flash")
                 default_model_idx = model_options.index(current_model) if current_model in model_options else 0
                 
