@@ -1,0 +1,19 @@
+{
+  "name": "tribes-of-the-cosmos",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Minecraft Bedrock add-on: four playable tribes (Dinosauroid, Anunnaki, Flying Spaghetti Monster, Spacer)",
+  "scripts": {
+    "build": "python3 tools/build.py",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "validate": "python3 tools/validate.py",
+    "smoke": "node tools/smoke/smoke.mjs",
+    "preview": "python3 tools/preview.py docs/previews",
+    "test": "npm run typecheck && npm run build && npm run validate && npm run smoke"
+  },
+  "devDependencies": {
+    "@minecraft/server": "2.11.0",
+    "@minecraft/server-ui": "2.3.0",
+    "typescript": "5.6.3"
+  }
+}
