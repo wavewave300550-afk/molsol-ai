@@ -1,0 +1,12 @@
+pack.name=Tribes of the Cosmos
+pack.description=สี่เผ่าที่เล่นได้: Dinosauroid, Anunnaki, Flying Spaghetti Monster และ Spacer
+item.tribes:tribal_codex.name=Codex แห่งเผ่า
+item.tribes:primal_fang.name=เขี้ยวบรรพกาล
+item.tribes:tablet_of_destinies.name=แผ่นจารึกแห่งชะตา
+item.tribes:holy_colander.name=กระชอนศักดิ์สิทธิ์
+item.tribes:omni_gauntlet.name=ถุงมือออมนิ
+entity.tribes:raptor.name=Dinosauroid Pack Raptor
+entity.tribes:lamassu.name=Lamassu, Guardian of Anu
+entity.tribes:noodle_avatar.name=Avatar of the Flying Spaghetti Monster
+entity.tribes:meatball.name=Holy Meatball
+entity.tribes:drone.name=Spacer Combat Drone
