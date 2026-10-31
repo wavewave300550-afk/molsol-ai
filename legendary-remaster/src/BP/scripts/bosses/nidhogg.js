@@ -21,6 +21,7 @@ import { chargeUp, nova, orb, ascend, crack, dome, flare, lightning, petals, ray
 import { fire, moveProp, propAct, removeProp, spawnProp, zone } from "../core/hazards.js";
 import { addTask } from "../core/tasks.js";
 import { add, angleDiff, dirOfYaw, dist, flatDir, flatDist, norm, randIn, rotY, scale, sub, yawOf } from "../core/vec.js";
+import { debris, replayAct, retire, retireAll, sequence, setPiece } from "../core/setpiece.js";
 import { Boss } from "./boss.js";
 import { ahead, lead, strike } from "./kit.js";
 const A = NIDHOGG_ACTS;
@@ -484,6 +485,7 @@ export class Nidhogg extends Boss {
         shake(this.audience(), 0.5, 0.7);
         shock(this.dim, spot, 9, 10, C.venom);
         nova(this.dim, add(spot, { x: 0, y: 1, z: 0 }), C.venom, 7);
+        debris(this.dim, spot, 6, 0.55, this.entity);
         strike(this, spot, 6, (p) => inCircle(p, spot, 4.2, 5), 24, { knock: 1.6, up: 0.7, from: spot, effects: [POISON(1)] });
         this.place(this.pos, this.yaw, 0);
         yield a.ticks - a.marks[0];
@@ -506,6 +508,13 @@ export class Nidhogg extends Boss {
         this.rune(center, 19, rg.ticks + 80, C.venom, 9);
         this.rune(center, 11, rg.ticks + 80, C.frost, -16);
         starRain(this.dim, center, C.venom, 19, rg.ticks, 14, 28, 28);
+        // six runestones of the roots erupt around the arena
+        const stones = [];
+        for (let i = 0; i < 6; i++) {
+            const st = setPiece(this.dim, "runestone", this.ground(add(center, scale(dirOfYaw(i * 60 + 30), 17))), i * 60 + 210, this.entity);
+            if (st)
+                stones.push(st);
+        }
         const meteors = 16;
         for (let i = 0; i < meteors; i++) {
             const tgt = this.fighters.length && i % 2 === 0 ? this.fighters[i % this.fighters.length].location
@@ -516,6 +525,8 @@ export class Nidhogg extends Boss {
             if (i % 3 === 1) {
                 lightning(this.dim, this.ground(add(center, scale(dirOfYaw(randIn(0, 360)), randIn(6, 18)))), C.frost, 26);
                 sound(this.dim, "ambient.weather.lightning.impact", center, 3, 0.9);
+                for (const st of stones)
+                    replayAct(st, 2);
             }
             yield Math.floor((rg.ticks - 10) / meteors);
         }
@@ -540,6 +551,7 @@ export class Nidhogg extends Boss {
                 shock(this.dim, this.ground(add(base, scale(dirT, s))), 4, 8, C.root);
             crack(this.dim, this.ground(add(base, scale(dirT, 10))), 12, C.venom, 110);
             nova(this.dim, add(this.ground(add(base, scale(dirT, 12))), { x: 0, y: 1.5, z: 0 }), C.root, 9);
+            debris(this.dim, this.ground(add(base, scale(dirT, 12))), 8, 0.6, this.entity);
             strike(this, add(base, scale(dirT, 10)), 13, (p) => inLine(p, base, dirT, 21, 6.5, 6), 34,
                 { knock: 1.4, up: 0.9, effects: [POISON(1), ["slowness", 60, 2]] });
             yield 12;
@@ -571,6 +583,8 @@ export class Nidhogg extends Boss {
         shock(this.dim, center, 20, 18, C.venom);
         nova(this.dim, add(center, { x: 0, y: 2, z: 0 }), C.venom, 15);
         crack(this.dim, center, 16, C.venom, 160);
+        debris(this.dim, center, 8, 0.7, this.entity);
+        retireAll(stones, 3, 26);
         for (let i = 0; i < 10; i++)
             lightning(this.dim, this.ground(add(center, scale(dirOfYaw(i * 36), 10.5))), C.frost, 24);
         strike(this, center, 12, (p) => inCircle(p, center, 10, 8), 38, { knock: 1.6, up: 1.2, from: center, effects: [POISON(2), ["wither", 60, 0]] });

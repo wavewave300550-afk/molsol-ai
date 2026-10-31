@@ -18,6 +18,7 @@ import { chargeUp, nova, orb, ascend, crack, dome, flare, lightning, petals, ray
 import { fire, moveProp, removeProp, spawnProp } from "../core/hazards.js";
 import { addTask } from "../core/tasks.js";
 import { add, dirOfYaw, flatDir, flatDist, norm, randIn, rotY, scale, sub, yawOf } from "../core/vec.js";
+import { debris, replayAct, retire, retireAll, sequence, setPiece } from "../core/setpiece.js";
 import { Boss } from "./boss.js";
 import { ahead, lead, strike } from "./kit.js";
 const A = TENKO_ACTS;
@@ -361,11 +362,13 @@ export class Tenko extends Boss {
         const a = this.act("kagura");
         const c = this.ground(this.pos);
         this.rune(c, 8, a.ticks, C.fox);
+        const bell = setPiece(this.dim, "suzu_bell", add(c, { x: 0, y: 8, z: 0 }), this.yaw, this.entity, 0);
         let last = 0;
         for (const m of a.marks) {
             // the bell rings just before each beat: jump on the ring!
             yield Math.max(1, m - last - 6);
             sound(this.dim, "note.bell", c, 4, 1.2);
+            replayAct(bell, 1);
             spiralMark(this.dim, c, C.fox, 3, 6);
             orb(this.dim, add(c, { x: 0, y: 2, z: 0 }), C.fox, 3, 6);
             yield 6;
@@ -380,6 +383,7 @@ export class Tenko extends Boss {
                 return age < 14;
             });
         }
+        retire(bell, 2, 12);
         yield a.ticks - last;
     }
     /**
@@ -459,6 +463,7 @@ export class Tenko extends Boss {
         this.rune(center, 8, a.ticks, C.moon, -52);
         rays(this.dim, add(center, { x: 0, y: 6, z: 0 }), C.moon, 12, a.marks[1], 6);
         petals(this.dim, add(center, { x: 0, y: 4, z: 0 }), C.pink, 7, a.marks[1], 22, 5);
+        const bell = setPiece(this.dim, "suzu_bell", add(center, { x: 0, y: 11, z: 0 }), this.yaw, this.entity, 0);
         for (let k = 0; k < a.marks[0]; k++) {
             this.place(add(center, { x: 0, y: (3 * Math.min(1, (k + 1) / 20)), z: 0 }), this.yaw);
             if (k % 6 === 0)
@@ -476,6 +481,7 @@ export class Tenko extends Boss {
                 sound(this.dim, "note.bell", center, 5, 2.0);
                 glint(this.dim, add(this.pos, { x: 0, y: 4, z: 0 }), C.white, 3);
                 nova(this.dim, add(this.pos, { x: 0, y: 4, z: 0 }), C.moon, 6);
+                replayAct(bell, 1);
             }
             if (k === reverseAt)
                 speed = -2.1;
@@ -523,6 +529,7 @@ export class Tenko extends Boss {
         nova(this.dim, origin, C.fox, 12);
         crack(this.dim, center, 11, C.fox, 110);
         petals(this.dim, origin, C.pink, 3, 8, 90, 14);
+        sequence(bell, [[0, 0], [1, 1], [18, 2]], 32);
         strike(this, center, 9, (p) => inCircle(p, center, 6.5, 5), 34, { knock: 2.2, up: 0.8, from: center });
         yield Math.max(1, a.ticks - a.marks[1]);
         for (let k = 0; k < 10; k++) {

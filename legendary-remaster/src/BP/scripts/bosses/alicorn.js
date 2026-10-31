@@ -21,6 +21,7 @@ import { chargeUp, nova, orb, ascend, crack, dome, flare, lightning, petals, ray
 import { fire, moveProp, removeProp, spawnProp } from "../core/hazards.js";
 import { addTask } from "../core/tasks.js";
 import { add, dirOfYaw, dist, flatDir, flatDist, norm, randIn, rotY, scale, sub, yawOf } from "../core/vec.js";
+import { debris, replayAct, retire, retireAll, sequence, setPiece } from "../core/setpiece.js";
 import { Boss } from "./boss.js";
 import { ahead, lead, strike } from "./kit.js";
 const A = ALICORN_ACTS;
@@ -225,6 +226,7 @@ export class Alicorn extends Boss {
         strike(this, c, 7, (p) => inCircle(p, c, 6), 17, { knock: 1.2, up: 0.6, from: c });
         shock(this.dim, c, 14, 10, C.aurora);
         nova(this.dim, add(c, { x: 0, y: 1, z: 0 }), C.aurora, 7);
+        debris(this.dim, c, 5, 0.5, this.entity);
         const hit = new Set();
         for (let k = 1; k <= 10; k++) {
             const r = 5 + k * 0.9;
@@ -355,6 +357,7 @@ export class Alicorn extends Boss {
         shock(this.dim, spot, 9, 10, C.gold);
         burst(this.dim, spot, C.star, 24, 6, 0.35, 0.6);
         nova(this.dim, add(spot, { x: 0, y: 1, z: 0 }), C.gold, 8);
+        debris(this.dim, spot, 6, 0.6, this.entity);
         strike(this, spot, 6, (p) => inCircle(p, spot, 4.5, 5), 22, { knock: 1.6, up: 0.6, from: spot });
         this.place(this.pos, this.yaw, 0);
         this.hue(HUE.none);
@@ -501,6 +504,9 @@ export class Alicorn extends Boss {
         const flashAt = a.marks[4];
         chargeUp(this.dim, this.horn(), C.gold, flashAt - tick, 22);
         ascend(this.dim, center, C.gold, 14, 18, flashAt - tick, 12);
+        // the halo of the Dawnstar rises behind her: she becomes the sun
+        const back = dirOfYaw(this.yaw);
+        const halo = setPiece(this.dim, "sun_halo", { x: this.pos.x - back.x * 3, y: this.pos.y + 3.5, z: this.pos.z - back.z * 3 }, this.yaw, this.entity);
         for (let k = tick; k < flashAt; k++) {
             const f = (k - tick) / (flashAt - tick);
             if (k % 4 === 0) {
@@ -527,6 +533,7 @@ export class Alicorn extends Boss {
         flare(this.dim, this.horn(), C.white, 44, 24);
         dome(this.dim, this.horn(), C.white, 28, 20);
         crack(this.dim, center, 18, C.gold, 140);
+        sequence(halo, [[0, 2], [16, 3]], 34);
         const eye = this.horn();
         for (const p of this.fighters) {
             let looking = true;

@@ -20,6 +20,7 @@ import { chargeUp, nova, orb, ascend, crack, dome, flare, lightning, petals, ray
 import { fire, moveProp, particleBullet, propAct, removeProp, spawnProp, zone } from "../core/hazards.js";
 import { blocked } from "../core/terrain.js";
 import { add, dirOfYaw, dist, flatDir, flatDist, lerp, norm, randIn, scale, segDist, sub } from "../core/vec.js";
+import { debris, replayAct, retire, retireAll, sequence, setPiece } from "../core/setpiece.js";
 import { Boss } from "./boss.js";
 import { ahead, lead, strike } from "./kit.js";
 const A = TAOTIE_ACTS;
@@ -287,6 +288,7 @@ export class Taotie extends Boss {
         shake(this.audience(), 0.5, 0.8);
         shock(this.dim, c, 15, 12, C.bronze);
         nova(this.dim, add(c, { x: 0, y: 1, z: 0 }), C.bronze, 6);
+        debris(this.dim, c, 6, 0.5, this.entity, C.bronze);
         strike(this, c, 6, (p) => inCircle(p, c, 4.5), 18, { knock: 1.2, up: 0.6, from: c });
         const hit = new Set();
         // expanding shockwave ring: jump over it!
@@ -307,6 +309,7 @@ export class Taotie extends Boss {
         yield* this.leap(dest, 14, 4.5);
         shock(this.dim, dest, 7, 10, C.bronze);
         nova(this.dim, add(dest, { x: 0, y: 1, z: 0 }), C.ember, 4);
+        debris(this.dim, dest, 4, 0.4, this.entity);
         shake(this.audience(), 0.35, 0.5);
         strike(this, dest, 5, (p) => inCircle(p, dest, 3.6), 16, { knock: 1.2, up: 0.5, from: dest });
         yield Math.max(4, a.ticks - a.marks[0] - 14);
@@ -482,6 +485,8 @@ export class Taotie extends Boss {
         this.rune(center, 9, a.marks[0] + 30, C.ember, 26);
         vortex(this.dim, center, C.hunger, 16, 9, a.marks[0], 46, -280);
         vortex(this.dim, center, C.ember, 9, 12, a.marks[0], 24, -420);
+        // the spirit maw of the taotie rises behind him and gapes over the arena
+        const maw = setPiece(this.dim, "spirit_maw", add(center, scale(dirOfYaw(this.yaw), -12)), this.yaw, this.entity);
         // dings rain down: the only shelter
         const n = Math.max(4, Math.min(6, this.fighters.length + 3));
         for (let i = 0; i < n; i++) {
@@ -568,6 +573,8 @@ export class Taotie extends Boss {
         flash(this.audience(), { red: 0.25, green: 0.12, blue: 0.3 });
         burst(this.dim, mouth, C.gold, 40, 8, 0.45, 2);
         nova(this.dim, mouth, C.ember, 13);
+        sequence(maw, [[0, 2], [14, 3]], 36);
+        debris(this.dim, center, 8, 0.6, this.entity, C.bronze);
         crack(this.dim, center, 15, C.ember, 140);
         shock(this.dim, center, 22, 16, C.hunger);
         for (let i = 0; i < 8; i++)

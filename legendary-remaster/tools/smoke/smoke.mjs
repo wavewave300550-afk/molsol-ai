@@ -279,6 +279,9 @@ for (const key of ["taotie", "nidhogg", "hanuman", "alicorn", "tenko", "logos"])
     expect(markedSeen, "logos: the Ophan marked a player");
   }
   if (key === "nidhogg") expect(props.has("legends:world_tree"), "nidhogg: the World-Tree fell");
+  const piece = { taotie: "spirit_maw", nidhogg: "runestone", hanuman: "golden_lotus", alicorn: "sun_halo", tenko: "suzu_bell", logos: "herald_trumpet" }[key];
+  expect(props.has(`legends:${piece}`), `${key}: the ${piece} set-piece appeared`);
+  if (key !== "logos" && key !== "tenko") expect(props.has("legends:debris"), `${key}: heavy impacts threw debris`);
   if (key === "hanuman") expect(props.has("legends:crescent"), "hanuman: crescent moons flew");
   if (key === "alicorn") {
     expect(props.has("legends:aurora_steed"), "alicorn: the aurora stampede ran");

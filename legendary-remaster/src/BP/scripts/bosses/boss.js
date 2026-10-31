@@ -11,6 +11,7 @@
 import { EntityDamageCause, ItemStack } from "@minecraft/server";
 import { allPlayersNear, fightersNear } from "../core/combat.js";
 import { cutIn, cutOut } from "../core/cinema.js";
+import { debris } from "../core/setpiece.js";
 import { ascend, burst, C, chargeUp, crack, dome, flare, flash, lightning, nova, rays, sigil, sound, starRain, vortex } from "../core/fx.js";
 import { clearProps } from "../core/hazards.js";
 import { notify, Pri } from "../core/notice.js";
@@ -138,6 +139,7 @@ export class Boss extends Being {
         const c = this.centre();
         nova(this.dim, c, this.aura, 9);
         crack(this.dim, this.ground(this.pos), 10, this.aura, 80);
+        debris(this.dim, this.ground(this.pos), 8, 0.6, this.entity);
         rays(this.dim, c, this.aura, 16, 30, 16);
         flash(this.audience(), this.aura);
         for (let i = 0; i < 6; i++)

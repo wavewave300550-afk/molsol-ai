@@ -29,6 +29,7 @@ import { notify, Pri } from "../core/notice.js";
 import { addTask } from "../core/tasks.js";
 import { add, dirOfYaw, dist, flatDir, flatDist, norm, randIn, rotY, scale, sub, yawOf } from "../core/vec.js";
 import { Being, beings } from "./being.js";
+import { debris, replayAct, retire, retireAll, sequence, setPiece } from "../core/setpiece.js";
 import { Boss } from "./boss.js";
 import { lead, strike } from "./kit.js";
 const A = LOGOS_ACTS;
@@ -777,11 +778,15 @@ export class Logos extends Boss {
     *trumpet() {
         const a = this.act("trumpet");
         const c = this.ground(this.pos);
+        // seven heralds' trumpets ring the Word and sound with each blast
+        const horns = this.heralds(6, 4.5);
         let last = 0;
         for (const m of a.marks) {
             yield m - last;
             last = m;
             sound(this.dim, "note.bell", c, 5, 0.5);
+            for (const h of horns)
+                replayAct(h, 1);
             sound(this.dim, "mob.warden.sonic_boom", c, 2, 1.6);
             shock(this.dim, c, 17, 15, C.gold);
             nova(this.dim, add(c, { x: 0, y: 2, z: 0 }), C.gold, 7);
@@ -793,7 +798,19 @@ export class Logos extends Boss {
                 return age < 15;
             });
         }
+        retireAll(horns, 2, 10);
         yield a.ticks - last;
+    }
+    /** Seven herald trumpets in a ring around the Word, bells facing out. */
+    heralds(r, h) {
+        const out = [];
+        for (let i = 0; i < 7; i++) {
+            const yaw = this.yaw + i * (360 / 7);
+            const e = setPiece(this.dim, "herald_trumpet", add(this.pos, add(scale(dirOfYaw(yaw), r), { x: 0, y: h, z: 0 })), yaw, this.entity, 0);
+            if (e)
+                out.push(e);
+        }
+        return out;
     }
     *babel() {
         const a = this.act("babel");
@@ -953,6 +970,7 @@ export class Logos extends Boss {
         const edenLife = finalAt - edenAt;
         teleSafe(this.dim, eden, 3.6, edenLife);
         this.rune(eden, 4.2, edenLife, C.safe, 40);
+        let horns = [];
         ascend(this.dim, eden, C.safe, 3.4, 14, edenLife, 4);
         for (let k = edenAt; k < finalAt; k++) {
             if ((k - edenAt) % 40 === 0)
@@ -966,8 +984,10 @@ export class Logos extends Boss {
                 if (flatDist(at, eden) > 5)
                     lightning(this.dim, at, C.holy, 26);
             }
-            if (k === finalAt - 30)
+            if (k === finalAt - 30) {
                 chargeUp(this.dim, this.eye(), C.white, 30, 22);
+                horns = this.heralds(8, 6);
+            }
             if (k > finalAt - 30 && k % 5 === 0)
                 glint(this.dim, this.eye(), C.white, 3 + (k - finalAt + 30) * 0.15);
             yield 1;
@@ -982,6 +1002,8 @@ export class Logos extends Boss {
         flare(this.dim, this.eye(), C.white, 50, 26);
         dome(this.dim, add(center, { x: 0, y: 2, z: 0 }), C.holy, 30, 24);
         crack(this.dim, center, 20, C.holy, 160);
+        for (const h of horns)
+            sequence(h, [[0, 0], [1, 1], [20, 2]], 32);
         for (let i = 0; i < 12; i++)
             lightning(this.dim, this.ground(add(center, scale(dirOfYaw(i * 30), 22))), C.holy, 28);
         for (const p of this.fighters) {

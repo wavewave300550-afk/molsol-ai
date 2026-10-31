@@ -23,6 +23,7 @@ import { chargeUp, nova, orb, ascend, crack, dome, flare, lightning, petals, ray
 import { fire, moveProp, removeProp, spawnProp, zone } from "../core/hazards.js";
 import { addTask } from "../core/tasks.js";
 import { add, dirOfYaw, dist, flatDir, flatDist, flatSegDist, lerp, randIn, rotY, scale, sub, yawOf } from "../core/vec.js";
+import { debris, replayAct, retire, retireAll, sequence, setPiece } from "../core/setpiece.js";
 import { Boss } from "./boss.js";
 import { ahead, lead, strike } from "./kit.js";
 import { Pri } from "../core/notice.js";
@@ -208,6 +209,7 @@ export class Hanuman extends Boss {
         shake(this.audience(), 0.45, 0.6);
         shock(this.dim, dest, 9 * this.reach(), 10, this.phase >= 2 ? C.fire : C.wind);
         nova(this.dim, add(dest, { x: 0, y: 1, z: 0 }), this.phase >= 2 ? C.fire : C.gold, 6 * this.reach());
+        debris(this.dim, dest, 5, 0.5, this.entity);
         strike(this, dest, r + 2, (p) => inCircle(p, dest, r), this.dmg(18), { knock: 1.3, up: 0.8, from: dest });
         yield s.ticks - s.marks[0];
     }
@@ -440,6 +442,7 @@ export class Hanuman extends Boss {
                 shake(this.audience(), 0.7, 1.0);
                 shock(this.dim, spot, 11, 12, C.root);
                 nova(this.dim, add(spot, { x: 0, y: 1.5, z: 0 }), C.gold, 9);
+                debris(this.dim, spot, 8, 0.7, this.entity);
                 deco(this.dim, "shard", add(spot, { x: 0, y: 1, z: 0 }), C.root, 24, 3, 0.45, 8);
                 strike(this, spot, 8, (p) => inCircle(p, spot, 6, 5), this.dmg(24), { knock: 1.8, up: 0.8, from: spot });
             },
@@ -480,6 +483,7 @@ export class Hanuman extends Boss {
         this.rune(center, 18, a.ticks, C.star, 10);
         this.rune(center, 10, a.ticks, C.gold, -18);
         starRain(this.dim, center, C.star, 19, a.marks[1] - a.marks[0] + 20, 16, 26, 24);
+        const lotus = setPiece(this.dim, "golden_lotus", center, this.yaw, this.entity);
         // starfall: a spiral of stars sweeping from the rim towards the centre
         let tick = a.marks[0];
         let i = 0;
@@ -527,6 +531,8 @@ export class Hanuman extends Boss {
         shock(this.dim, center, 16, 14, C.wind);
         nova(this.dim, add(center, { x: 0, y: 1.5, z: 0 }), C.wind, 12);
         crack(this.dim, center, 11, C.gold, 100);
+        debris(this.dim, center, 6, 0.6, this.entity);
+        retire(lotus, 2, 24);
         strike(this, center, 11, (p) => inCircle(p, center, 9, 6), this.dmg(26), { knock: 2.6, up: 0.8, from: center });
         yield Math.max(1, a.ticks - a.marks[6] - 10);
         for (let k = 0; k < 10; k++) {
