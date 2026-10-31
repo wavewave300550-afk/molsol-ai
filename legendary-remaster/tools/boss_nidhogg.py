@@ -245,18 +245,22 @@ def loops():
         fold[b] = e
     fold["neck0"] = {"r": [-6, 0, 0]}
     fold["neck2"] = {"r": [10, 0, 0]}
+    B = 130
     idle = {
-        "body": {"p": [0, sn(55, amp=0.5), 0], "r": [sn(55, amp=0.6), 0, 0]},
-        "neck0": {"r": [sn(40, amp=2.5), sn(18, amp=6), 0]},
-        "neck1": {"r": [sn(40, 50, 2.5), sn(18, 40, 6), 0]},
-        "neck2": {"r": [sn(40, 100, 3), sn(18, 80, 5), 0]},
-        "head": {"r": [sn(40, 140, 3), sn(25, amp=4), sn(15, amp=3)]},
-        "jaw": {"r": [f"4 + {sn(95, amp=3)}", 0, 0]},
-        "horn_r": {"r": [0, 0, sn(30, amp=1)]}, "horn_l": {"r": [0, 0, sn(30, 90, 1)]},
-        "tail_tip": {"r": [sn(60, amp=10), sn(45, amp=16), 0]},
+        "body": {"p": [0, sn(B, amp=1.0), 0], "r": [sn(B, amp=1.4), sn(40, amp=2), sn(55, amp=1.2)]},
+        "neck0": {"r": [sn(B, 0, 3), sn(48, amp=10), 0]},
+        "neck1": {"r": [sn(B, 40, 4), sn(48, -50, 12), sn(60, amp=3)]},
+        "neck2": {"r": [sn(B, 80, 4), sn(48, -100, 12), sn(60, -40, 4)]},
+        "neck3": {"r": [sn(B, 120, 4), sn(48, -150, 10), 0]},
+        "head": {"r": [f"{sn(B, 160, 4)} + {sn(73, amp=3)}", sn(53, amp=9), sn(37, amp=6)]},
+        "jaw": {"r": [f"8 + {sn(B, 200, 6)} + {sn(610, amp=0.8)}", 0, 0]},
+        "horn_r": {"r": [0, 0, sn(B, 30, 1.5)]}, "horn_l": {"r": [0, 0, sn(B, 30, -1.5)]},
+        "tail_tip": {"r": [sn(140, -300, 16), sn(95, -330, 24), 0]},
+        "arm_r": {"r": [sn(70, amp=3), 0, 0]}, "arm_l": {"r": [sn(70, 180, 3), 0, 0]},
+        "wing_r": {"r": [sn(B, 20, 2.5), 0, sn(B, 20, 3)]}, "wing_l": {"r": [sn(B, 20, 2.5), 0, sn(B, 20, -3)]},
     }
     for i in range(6):
-        idle[f"tail{i}"] = {"r": [sn(40, -i * 35, 2 + i * 0.6), sn(30, -i * 45, 5 + i * 1.4), 0]}
+        idle[f"tail{i}"] = {"r": [sn(140, -i * 50, 3 + i * 1.2), sn(95, -i * 55, 6 + i * 2.6), 0]}
     w = "variable.dist * 55"
     walk = {
         "thigh_r": {"r": [f"math.sin({w}) * 20", 0, 0]}, "shin_r": {"r": [f"math.max(0, math.sin({w} + 90)) * 22", 0, 0]},
@@ -264,28 +268,33 @@ def loops():
         "arm_r": {"r": [f"math.sin({w} + 270) * 18", 0, 0]}, "fore_r": {"r": [f"math.max(0, math.sin({w})) * -20", 0, 0]},
         "arm_l": {"r": [f"math.sin({w} + 90) * 18", 0, 0]}, "fore_l": {"r": [f"math.max(0, math.sin({w} + 180)) * -20", 0, 0]},
         "hand_r": {"r": [f"math.max(0, math.sin({w})) * 16", 0, 0]}, "hand_l": {"r": [f"math.max(0, math.sin({w} + 180)) * 16", 0, 0]},
-        "body": {"r": [0, f"math.sin({w}) * 3", f"math.sin({w}) * 2"], "p": [0, f"math.cos(({w}) * 2) * 0.6", 0]},
-        "neck0": {"r": [0, f"math.sin({w}) * -4", 0]},
-        **{f"tail{i}": {"r": [0, f"math.sin({w} - {i * 40}) * {4 + i}", 0]} for i in range(6)},
+        "body": {"r": [f"math.cos(({w}) * 2) * 1.5", f"math.sin({w}) * 5", f"math.sin({w}) * 3.5"], "p": [0, f"math.cos(({w}) * 2) * 1.2", 0]},
+        "neck0": {"r": [0, f"math.sin({w}) * -7", 0]}, "neck2": {"r": [f"math.cos(({w}) * 2) * 3", f"math.sin({w} + 60) * 6", 0]},
+        "head": {"r": [f"math.cos(({w}) * 2 + 90) * -3", f"math.sin({w} + 120) * -5", 0]},
+        **{f"tail{i}": {"r": [0, f"math.sin({w} - {i * 45}) * {7 + i * 2.5}", 0]} for i in range(6)},
     }
-    flap = f"math.sin({T} * 150)"
+    F = 210     # wingbeat ~1.7 s
+    flap = f"math.sin({T} * {F})"
     fly = {
-        "wing_r": {"r": [0, 0, f"{flap} * -26 - 4"]}, "wing_l": {"r": [0, 0, f"{flap} * 26 + 4"]},
-        "wfore_r": {"r": [0, 0, f"math.sin({T} * 150 - 40) * -16"]}, "wfore_l": {"r": [0, 0, f"math.sin({T} * 150 - 40) * 16"]},
-        "whand_r": {"r": [0, 0, f"math.sin({T} * 150 - 80) * -12"]}, "whand_l": {"r": [0, 0, f"math.sin({T} * 150 - 80) * 12"]},
-        "body": {"p": [0, f"math.sin({T} * 150 + 180) * 2.4", 0], "r": [f"-6 + math.sin({T} * 150) * 2", 0, 0]},
+        "wing_r": {"r": [f"math.sin({T} * {F} - 30) * 6", 0, f"{flap} * -38 - 6"]}, "wing_l": {"r": [f"math.sin({T} * {F} - 30) * 6", 0, f"{flap} * 38 + 6"]},
+        "wfore_r": {"r": [0, 0, f"math.sin({T} * {F} - 50) * -24"]}, "wfore_l": {"r": [0, 0, f"math.sin({T} * {F} - 50) * 24"]},
+        "whand_r": {"r": [0, f"math.sin({T} * {F} - 90) * 10", f"math.sin({T} * {F} - 90) * -18"]},
+        "whand_l": {"r": [0, f"math.sin({T} * {F} - 90) * -10", f"math.sin({T} * {F} - 90) * 18"]},
+        "body": {"p": [0, f"math.sin({T} * {F} + 180) * 3.2", 0], "r": [f"-6 + math.sin({T} * {F}) * 3", 0, f"math.sin({T} * 45) * 4"]},
+        "neck1": {"r": [f"math.sin({T} * {F} + 140) * 4", 0, 0]}, "head": {"r": [f"math.sin({T} * {F} + 200) * 4", 0, 0]},
         "thigh_r": {"r": [48, 0, 0]}, "thigh_l": {"r": [48, 0, 0]}, "shin_r": {"r": [30, 0, 0]}, "shin_l": {"r": [30, 0, 0]},
         "foot_r": {"r": [40, 0, 0]}, "foot_l": {"r": [40, 0, 0]},
         "arm_r": {"r": [-50, 0, 0]}, "arm_l": {"r": [-50, 0, 0]}, "fore_r": {"r": [70, 0, 0]}, "fore_l": {"r": [70, 0, 0]},
         "neck0": {"r": [8, 0, 0]}, "neck2": {"r": [-8, 0, 0]},
-        **{f"tail{i}": {"r": [f"math.sin({T} * 90 - {i * 40}) * {2 + i}", 0, 0]} for i in range(6)},
+        **{f"tail{i}": {"r": [f"math.sin({T} * {F} - {i * 45}) * {3 + i * 1.5}", f"math.sin({T} * 60 - {i * 40}) * {3 + i * 2}", 0]} for i in range(6)},
     }
     rage = {   # phase III: neck raised, horns flared, constant tremor
         "neck0": {"r": [-8, 0, 0]}, "head": {"r": [4, 0, f"math.sin({T} * 1100) * 0.8"]},
         "jaw": {"r": [f"6 + math.sin({T} * 300) * 2", 0, 0]},
         "horn_r": {"r": [0, 0, -6]}, "horn_l": {"r": [0, 0, 6]},
     }
-    return {"idle": loop(idle), "walk": loop(walk), "fold": loop(fold), "fly": loop(fly), "rage": loop(rage)}
+    flinch = {"body": {"r": [-3, 0, 2]}, "neck1": {"r": [-8, 0, 0]}, "head": {"r": [-10, 8, 6]}, "jaw": {"r": [16, 0, 0]}}
+    return {"idle": loop(idle), "walk": loop(walk), "fold": loop(fold), "fly": loop(fly), "rage": loop(rage), "flinch": loop(flinch)}
 
 
 def acts():
@@ -434,6 +443,43 @@ def acts():
     return out
 
 
+FX = lambda n: f"legends:fx_{n}"
+LOCATORS = [
+    ("head", "mouth", (0, 23, -90)), ("body", "back", (0, 38, -4)), ("tail3", "tail_mid", (0, 19, 61)),
+    ("tail_tip", "tail_end", (0, 13, 100)), ("hand_r", "paw_r", (-13, 0, -25)), ("hand_l", "paw_l", (13, 0, -25)),
+    ("whand_r", "wingtip_r", (-88, 39, 2)), ("whand_l", "wingtip_l", (88, 39, 2)), ("root", "ground", (0, 0, -6)),
+]
+AURAS = {
+    "p1": [(FX("venom_drip"), "mouth")],
+    "p2": [(FX("venom_drip"), "mouth")],
+    "p3": [(FX("venom_drip"), "mouth"), (FX("venom_mist"), "back"), (FX("venom_mist"), "tail_mid")],
+    "dying": [(FX("venom_mist"), "back")],
+}
+ACT_FX = {
+    "emerge": [(0, FX("dust"), "ground"), (30, FX("debris"), "ground"), (48, FX("dust"), "ground"), (48, FX("venom_spray"), "mouth")],
+    "roar": [(12, FX("venom_spray"), "mouth"), (12, FX("roar_vapor"), "mouth"), (12, FX("flash"), "back")],
+    "bite": [(12, FX("slash_venom"), "mouth"), (12, FX("venom_spray"), "mouth"), (12, FX("dust"), "paw_r")],
+    "tail_sweep": [(15, FX("slash_venom"), "tail_end"), (15, FX("dust"), "tail_mid"), (15, FX("dust"), "tail_end")],
+    "burrow": [(10, FX("dust"), "ground"), (24, FX("debris"), "ground"), (28, FX("dust"), "ground")],
+    "erupt": [(5, FX("debris"), "ground"), (5, FX("dust"), "ground"), (5, FX("venom_spray"), "mouth")],
+    "root_snare": [(16, FX("dust"), "paw_r"), (16, FX("dust"), "paw_l"), (16, FX("debris"), "ground")],
+    "takeoff": [(20, FX("dust"), "ground"), (20, FX("dust"), "wingtip_r"), (20, FX("dust"), "wingtip_l")],
+    "land": [(12, FX("dust"), "ground"), (12, FX("debris"), "ground")],
+    "strafe": [(0, FX("venom_spray"), "mouth"), (10, FX("venom_spray"), "mouth")],
+    "breath": [(t, FX("venom_spray"), "mouth") for t in range(16, 56, 4)] + [(16, FX("roar_vapor"), "mouth")],
+    "gale": [(14, FX("dust"), "wingtip_r"), (14, FX("dust"), "wingtip_l"), (14, FX("dust"), "ground"),
+             (28, FX("dust"), "wingtip_r"), (28, FX("dust"), "wingtip_l"), (28, FX("dust"), "ground")],
+    "dive": [(23, FX("dust"), "ground"), (23, FX("debris"), "ground"), (23, FX("flash"), "ground"), (23, FX("venom_spray"), "mouth")],
+    "ascend": [(24, FX("dust"), "ground"), (24, FX("roar_vapor"), "mouth")],
+    "ragnarok": [(16, FX("venom_spray"), "mouth"), (16, FX("roar_vapor"), "mouth"), (70, FX("venom_spray"), "mouth"), (120, FX("venom_spray"), "mouth")],
+    "rupture": [(26, FX("debris"), "ground"), (26, FX("dust"), "ground"), (26, FX("flash"), "ground"), (26, FX("venom_spray"), "mouth")],
+    "exhausted": [(14, FX("dust"), "ground"), (14, FX("dust"), "back")],
+    "coil": [(14, FX("dust"), "tail_mid"), (36, FX("dust"), "tail_end"), (36, FX("debris"), "ground"), (36, FX("venom_spray"), "mouth")],
+    "death": [(16, FX("venom_spray"), "mouth"), (16, FX("roar_vapor"), "mouth"), (50, FX("dust"), "ground"), (84, FX("vanish"), "back"),
+              (90, FX("flash"), "back")],
+}
+
+
 def entity_cfg():
     return {
         "scale": SCALE,
@@ -444,7 +490,7 @@ def entity_cfg():
             "variable.rage = math.lerp(variable.rage ?? 0.0, variable.ph >= 3 ? 1.0 : 0.0, 0.05);",
         ],
         "animate": [{"idle": "variable.calm + 0.15"}, {"fold": "1.0 - variable.flyw"}, {"walk": "variable.walkw"},
-                    {"fly": "variable.flyw"}, {"rage": "variable.rage"}, "ctrl_act"],
+                    {"fly": "variable.flyw"}, {"rage": "variable.rage"}, {"flinch": "variable.hit"}, "ctrl_act"],
         "texture_expr": "Array.skins[variable.ph >= 3 ? 1 : 0]",
         "skins": ["Texture.default", "Texture.v1"],
         "visibility": [],

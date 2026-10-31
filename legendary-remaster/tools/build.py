@@ -26,7 +26,7 @@ BUILD = os.path.join(ROOT, "build")
 BP = os.path.join(BUILD, "Legends_BP")
 RP = os.path.join(BUILD, "Legends_RP")
 DIST = os.path.join(ROOT, "dist")
-VERSION = [2, 0, 0]
+VERSION = [2, 0, 1]
 
 MODULES = ["boss_taotie", "boss_nidhogg", "boss_hanuman", "boss_alicorn", "boss_tenko", "boss_logos", "choir_seraph", "choir_cherub", "choir_ophan", "props"]                 # remastered entities (module per entity family)
 ORIGINAL_ENTITIES = []      # every entity is remastered or kept as-is in src/RP_static (ding, root_spike, ...)

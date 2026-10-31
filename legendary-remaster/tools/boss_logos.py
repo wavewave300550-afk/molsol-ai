@@ -129,22 +129,26 @@ FOLD = {   # phase I: the page-wings folded down along the column
 
 def loops():
     idle = {
-        "root": {"p": [0, sn(60, amp=1.2), 0]},
-        "core": {"r": [0, sn(20, amp=6), 0]},
-        "ring_a": {"r": [0, 0, f"{T} * 24"]}, "ring_b": {"r": [f"{T} * -18", 0, 0]}, "ring_c": {"r": [0, f"{T} * 14", 0]},
-        "halo": {"r": [0, 0, f"{T} * -6"]},
-        "triad": {"r": [0, f"{T} * 40", 0], "p": [0, sn(70, amp=1), 0]},
-        "alpha": {"p": [0, sn(50, amp=1.6), 0], "r": [0, sn(30, amp=12), 0]},
-        "omega": {"p": [0, sn(50, 180, 1.6), 0], "r": [0, sn(30, 90, 12), 0]},
-        "column": {"r": [0, f"{T} * 30", 0]},
-        "wing_r": {"r": [sn(40, amp=3), sn(30, amp=4), 0]}, "wing_l": {"r": [sn(40, 120, 3), sn(30, 90, -4), 0]},
-        "lid_top": {"r": ["82 * variable.open", 0, 0]}, "lid_bot": {"r": ["-82 * variable.open", 0, 0]},
-        "eye": {"r": [sn(50, amp=4), sn(35, amp=6), 0]},
+        "root": {"p": [sn(45, amp=1.0), sn(90, amp=2.2), 0], "r": [sn(60, amp=2), 0, sn(50, amp=2.5)]},
+        "core": {"r": [0, sn(40, amp=10), 0], "s": f"1 + {sn(180, amp=0.05)}"},
+        "ring_a": {"r": [sn(35, amp=10), 0, f"{T} * 60"]}, "ring_b": {"r": [f"{T} * -48", 0, sn(30, amp=8)]},
+        "ring_c": {"r": [sn(40, amp=6), f"{T} * 36", 0]},
+        "halo": {"r": [0, 0, f"{T} * -14"], "s": f"1 + {sn(150, amp=0.06)}"},
+        "triad": {"r": [0, f"{T} * 80", 0], "p": [0, sn(120, amp=1.8), 0]},
+        "alpha": {"p": [0, sn(80, amp=2.4), 0], "r": [0, sn(45, amp=24), sn(60, amp=6)]},
+        "omega": {"p": [0, sn(80, 180, 2.4), 0], "r": [0, sn(45, 90, 24), sn(60, 90, -6)]},
+        "column": {"r": [0, f"{T} * 70", 0]}, "scroll": {"r": [0, f"{T} * -40", 0]},
+        "wing_r": {"r": [f"{sn(110, amp=6)}", f"{sn(70, amp=8)}", sn(140, amp=5)]},
+        "wing_l": {"r": [f"{sn(110, 120, 6)}", f"{sn(70, 90, -8)}", sn(140, 70, -5)]},
+        "lid_top": {"r": ["82 * variable.open * (1 - math.max(0, math.sin(variable.t * 47) - 0.97) * 30)", 0, 0]},
+        "lid_bot": {"r": ["-82 * variable.open * (1 - math.max(0, math.sin(variable.t * 47) - 0.97) * 30)", 0, 0]},
+        "eye": {"r": [f"{sn(70, amp=6)} + {sn(173, amp=3)}", f"{sn(53, amp=12)} + {sn(211, amp=4)}", 0]},
     }
     for k in range(7):
-        idle[f"seal{k + 1}"] = {"r": [0, 0, sn(60, k * 50, 6)], "p": [0, sn(45, k * 40, 0.6), 0]}
+        idle[f"seal{k + 1}"] = {"r": [sn(90, k * 50, 6), 0, sn(70, k * 50, 12)], "p": [0, sn(100, k * 40, 1.4), 0]}
     fold = {b: {"r": v["r"]} for b, v in FOLD.items()}
-    return {"idle": loop(idle), "fold": loop(fold)}
+    flinch = {"core": {"r": [-8, 0, 4]}, "eye": {"r": [-10, 8, 0]}, "halo": {"s": 0.94}, "root": {"p": [0, 0, 1.5]}}
+    return {"idle": loop(idle), "fold": loop(fold), "flinch": loop(flinch)}
 
 
 def acts():
@@ -240,6 +244,35 @@ def acts():
     return out
 
 
+FX = lambda n: f"legends:fx_{n}"
+LOCATORS = [
+    ("core", "core", (0, 44, 0)), ("eye", "eye", (0, 44, -11)), ("triad", "triad", (0, 66, 0)),
+    ("alpha", "alpha", (-34, 40, -2)), ("omega", "omega", (34, 40, -2)), ("column", "column_end", (0, 5, 0)), ("root", "ground", (0, 0, 0)),
+]
+AURAS = {
+    "p1": [(FX("holy_motes"), "core")],
+    "p2": [(FX("holy_motes"), "core"), (FX("rune_orbit"), "core")],
+    "p3": [(FX("holy_motes"), "core"), (FX("rune_orbit"), "core"), (FX("divine_stars"), "triad"), (FX("holy_motes"), "eye")],
+    "dying": [(FX("rune_orbit"), "core")],
+}
+ACT_FX = {
+    "advent": [(20, FX("holy_burst"), "ground"), (60, FX("holy_burst"), "core"), (60, FX("flash"), "core"), (60, FX("dust"), "ground")],
+    "speak": [(16, FX("holy_burst"), "core"), (16, FX("flash"), "eye")],
+    "fiat": [(24, FX("holy_burst"), "core"), (24, FX("star_burst"), "core")],
+    "lances": [(12, FX("star_burst"), "core"), (12, FX("flash"), "core")],
+    "gaze": [(16, FX("flash"), "eye"), (16, FX("holy_burst"), "eye")],
+    "trumpet": [(m, FX("holy_burst"), "core") for m in (12, 24, 36)] + [(m, FX("dust"), "ground") for m in (12, 24, 36)],
+    "babel": [(10, FX("holy_burst"), "core"), (40, FX("star_burst"), "core")],
+    "reforge": [(36, FX("holy_burst"), "triad"), (36, FX("flash"), "triad")],
+    "unseal": [(20, FX("holy_burst"), "core"), (20, FX("flash"), "core"), (20, FX("debris"), "core")],
+    "apocalypse": [(60, FX("holy_burst"), "triad"), (60, FX("flash"), "triad"), (160, FX("holy_burst"), "core"), (210, FX("star_burst"), "eye"),
+                   (252, FX("flash"), "core"), (252, FX("holy_burst"), "core"), (252, FX("star_burst"), "core"), (252, FX("dust"), "ground")],
+    "death": [(30, FX("holy_burst"), "core"), (80, FX("debris"), "core"), (100, FX("flash"), "core"), (110, FX("vanish"), "core")],
+    "alpha_omega": [(20, FX("holy_burst"), "alpha"), (20, FX("holy_burst"), "omega"), (50, FX("flash"), "alpha"), (50, FX("flash"), "omega")],
+    "concord": [(18, FX("holy_burst"), "triad"), (24, FX("flash"), "triad"), (24, FX("star_burst"), "core")],
+}
+
+
 def entity_cfg():
     return {
         "scale": SCALE,
@@ -249,7 +282,7 @@ def entity_cfg():
             "variable.seals = query.property('legends:var');",
             "variable.unfold = math.lerp(variable.unfold ?? 0.0, variable.ph >= 2 ? 1.0 : 0.0, 0.03);",
         ],
-        "animate": [{"idle": "variable.calm + 0.25"}, {"fold": "1.0 - variable.unfold"}, "ctrl_act"],
+        "animate": [{"idle": "variable.calm + 0.25"}, {"fold": "1.0 - variable.unfold"}, {"flinch": "variable.hit"}, "ctrl_act"],
         "visibility": [{f"seal{k}": f"variable.seals < {k}"} for k in range(1, 8)],
         "bounds": (16, 14, 4.0),
     }

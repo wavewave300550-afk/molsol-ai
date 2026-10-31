@@ -108,7 +108,7 @@ _def("horn_glow", tex="glow", loop=(12, 20), shape=("sphere", 0.2, "outwards"), 
      c0=(1.0, 1.0, 0.95, 0.9), c1=(1.0, 0.9, 0.6, 0.0))
 _def("crown_stars", tex="star", loop=(6, 14), shape=("disc", 1.0, "outwards", True), speed="0.2", accel=(0, 0.6, 0),
      life="1.0", size=(0.6, 0.0), c0=(1.0, 0.95, 0.7, 1.0), c1=(1.0, 0.8, 0.3, 0.0), spin=True)
-_def("foxfire_tip", tex="flame", loop=(9, 16), shape=("sphere", 0.25, "outwards"), speed="0.4", accel=(0, 1.8, 0), drag=0.5,
+_def("foxfire_tip", tex="flame", loop=(6, 10), shape=("sphere", 0.25, "outwards"), speed="0.4", accel=(0, 1.8, 0), drag=0.5,
      life="0.6 + variable.particle_random_1 * 0.3", size=(0.75, 0.1), c0=(0.75, 0.9, 1.0, 1.0), c1=(0.2, 0.45, 1.0, 0.0), spin=True)
 _def("moon_dust", tex="twinkle", loop=(10, 30), shape=("disc", 1.4, "outwards", True), speed="0.2", accel=(0, -0.2, 0),
      life="1.4", size=(0.35, 0.0), c0=(0.9, 0.93, 1.0, 1.0), c1=(0.6, 0.7, 1.0, 0.0))
@@ -181,6 +181,13 @@ def fx_controller(key, auras, death_id=None):
         if effects:
             s["particle_effects"] = [{"effect": short(e), "locator": loc} for e, loc in effects]
         return s
+    if "all" in auras:      # followers: always-on aura, death state
+        on = {"particle_effects": [{"effect": short(e), "locator": loc} for e, loc in auras["all"]],
+              "transitions": ([{"dying": f"variable.act == {death_id}"}] if death_id else [])}
+        states = {"on": on}
+        if death_id:
+            states["dying"] = st("dying", [("on", f"variable.act != {death_id}")], auras.get("dying", []))
+        return {"initial_state": "on", "states": states}
     to = lambda: [("p1", "variable.ph == 1 && variable.act != {d}".format(d=death_id or -1)),
                   ("p2", "variable.ph == 2 && variable.act != {d}".format(d=death_id or -1)),
                   ("p3", "variable.ph >= 3 && variable.act != {d}".format(d=death_id or -1))]

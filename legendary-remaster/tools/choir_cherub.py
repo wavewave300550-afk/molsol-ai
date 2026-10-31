@@ -103,13 +103,14 @@ def build():
 
 def loops():
     idle = {
-        "root": {"p": [0, sn(80, amp=0.8), 0]},
-        "wing_u_r": {"r": [sn(120, amp=6), sn(90, amp=6), 0]}, "wing_u_l": {"r": [sn(120, amp=6), sn(90, amp=-6), 0]},
-        "wing_c_r": {"r": [sn(120, 60, 3), 0, 0]}, "wing_c_l": {"r": [sn(120, 60, 3), 0, 0]},
-        "head": {"r": [0, f"{T} * 22", 0]},             # the four faces slowly turn every way
-        "sword": {"r": [0, f"{T} * 90", 0]},            # the sword that turns every way
-        "ward": {"s": "query.property('legends:var') == 1 ? 1.0 : 0.001", "r": [0, f"{T} * 80", 0]},
-        "arm_l": {"r": [sn(70, amp=4), 0, 0]},
+        "root": {"p": [0, sn(110, amp=1.4), 0], "r": [sn(70, amp=3), 0, sn(55, amp=3)]},
+        "wing_u_r": {"r": [sn(160, amp=12), sn(110, amp=10), sn(160, 40, -6)]}, "wing_u_l": {"r": [sn(160, amp=12), sn(110, amp=-10), sn(160, 40, 6)]},
+        "wing_c_r": {"r": [sn(160, 60, 5), 0, sn(120, amp=3)]}, "wing_c_l": {"r": [sn(160, 60, 5), 0, sn(120, amp=-3)]},
+        "head": {"r": [sn(90, amp=4), f"{T} * 36", 0]},              # the four faces slowly turn every way
+        "sword": {"r": [0, f"{T} * 150", sn(120, amp=6)]},           # the sword that turns every way
+        "ward": {"s": "query.property('legends:var') == 1 ? 1.0 + math.sin(variable.t * 300) * 0.06 : 0.001", "r": [0, f"{T} * 120", 0]},
+        "arm_l": {"r": [sn(110, amp=8), 0, sn(80, amp=5)]}, "arm_r": {"r": [sn(110, 90, 5), 0, 0]},
+        "leg_r": {"r": [sn(110, amp=3), 0, 0]}, "leg_l": {"r": [sn(110, 180, 3), 0, 0]},
     }
     return {"idle": loop(idle)}
 
@@ -149,6 +150,16 @@ def acts():
     a.at(60, {"wing_u_r": {"r": (0, 0, 0)}, "wing_u_l": {"r": (0, 0, 0)}, "arm_r": {"r": (0, 0, 0)}, "root": {"s": 1.0}})
     out.append(a)
     return out
+
+
+FX = lambda n: f"legends:fx_{n}"
+LOCATORS = [("sword", "sword_tip", (-6.4, 51, -3.2)), ("sword", "sword_mid", (-6.4, 38, -3.2)), ("torso", "body", (0, 28, 0)),
+    ("head", "head", (0, 38, 0)), ("root", "ground", (0, 0, 0))]
+AURAS = {"all": [(FX("sword_fire"), "sword_mid")], "dying": [(FX("sword_fire"), "sword_mid")]}
+ACT_FX = {"spawn": [(24, FX("holy_burst"), "body")], "sweep": [(16, FX("slash_gold"), "sword_tip"), (16, FX("fire_burst"), "sword_tip"), (16, FX("dust"), "ground")],
+    "ward": [(16, FX("holy_burst"), "body")], "gaze4": [(m, FX("flash"), "head") for m in (12, 24, 36)],
+    "gate": [(40, FX("fire_burst"), "sword_tip"), (40, FX("dust"), "ground"), (40, FX("debris"), "ground"), (40, FX("flash"), "sword_tip")],
+    "death": [(18, FX("holy_burst"), "body"), (32, FX("vanish"), "body")], "chorus": [(24, FX("holy_burst"), "body")]}
 
 
 def entity_cfg():

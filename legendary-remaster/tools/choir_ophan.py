@@ -63,9 +63,9 @@ def build():
 
 def loops():
     idle = {
-        "root": {"p": [0, sn(70, amp=1.2), 0]},
-        "wheel_a": {"r": [0, 0, f"{T} * 45"]}, "wheel_b": {"r": [f"{T} * -60", 0, 0]}, "wheel_c": {"r": [0, f"{T} * 90", 0]},
-        "core": {"s": f"1 + {sn(240, amp=0.1)}"},
+        "root": {"p": [sn(60, amp=1.2), sn(100, amp=1.8), 0], "r": [sn(45, amp=8), 0, sn(38, amp=8)]},
+        "wheel_a": {"r": [0, 0, f"{T} * 80"]}, "wheel_b": {"r": [f"{T} * -110", 0, 0]}, "wheel_c": {"r": [sn(70, amp=20), f"{T} * 150", 0]},
+        "core": {"s": f"1 + {sn(300, amp=0.14)}", "r": [0, f"{T} * -60", 0]},
     }
     return {"idle": loop(idle)}
 
@@ -110,6 +110,16 @@ def acts():
     a.at(40, {"wheel_a": {"s": 1.0}, "wheel_b": {"s": 1.0}, "core": {"s": 1.0}})
     out.append(a)
     return out
+
+
+FX = lambda n: f"legends:fx_{n}"
+LOCATORS = [("core", "core", (0, 22, 0)), ("root", "ground", (0, 0, 0))]
+AURAS = {"all": [(FX("ophan_sparks"), "core")], "dying": [(FX("ophan_sparks"), "core")]}
+ACT_FX = {"spawn": [(24, FX("holy_burst"), "core")], "roll": [(12, FX("dust"), "ground"), (24, FX("dust"), "ground")],
+    "eyes": [(16, FX("flash"), "core"), (16, FX("star_burst"), "core")], "restore": [(0, FX("holy_burst"), "core"), (40, FX("holy_burst"), "core")],
+    "wheels": [(20, FX("fire_burst"), "core"), (20, FX("flash"), "core"), (50, FX("fire_burst"), "core")],
+    "death": [(18, FX("fire_burst"), "core"), (32, FX("vanish"), "core")], "chorus": [(24, FX("holy_burst"), "core")],
+    "mark": [(14, FX("flash"), "core")]}
 
 
 def entity_cfg():

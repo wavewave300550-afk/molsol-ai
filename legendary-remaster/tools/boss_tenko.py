@@ -164,39 +164,46 @@ def _tails(fn):
 
 
 def loops():
+    B = 150
     idle = {
-        "body": {"p": [0, sn(70, amp=0.4), 0]},
-        "neck": {"r": [sn(60, amp=2), sn(24, amp=6), 0]},
-        "head": {"r": [sn(60, 60, 3), sn(32, amp=7), sn(22, amp=5)]},
-        "ear_r": {"r": [sn(110, amp=6), 0, sn(45, amp=6)]}, "ear_l": {"r": [sn(110, 90, 6), 0, sn(45, 50, -6)]},
-        "jaw": {"r": [f"2 + {sn(90, amp=2)}", 0, 0]},
-        "bell": {"r": [sn(140, amp=10), 0, sn(110, amp=8)]},
-        "pearl": {"p": [0, sn(90, amp=1.2), 0], "r": [0, f"{T} * 60", 0]},
-        "halo": {"r": [0, 0, f"{T} * 18"]},
-        "tailx_0": {"r": [sn(40, amp=3), sn(30, amp=4), 0]}, "tailx_1": {"r": [sn(40, 60, 4), 0, sn(35, amp=4)]},
-        "unseal": {"s": f"1 + {sn(200, amp=0.1)}"},
+        "body": {"p": [0, sn(B, amp=0.7), 0], "r": [sn(B, amp=1.2), sn(45, amp=3), sn(55, amp=1.5)]},
+        "neck": {"r": [f"{sn(B, 40, 3)} + {sn(61, amp=3)}", sn(43, amp=12), sn(33, amp=4)]},
+        "head": {"r": [sn(B, 80, 4), sn(53, 30, 10), f"{sn(29, amp=12)}"]},
+        "ear_r": {"r": [f"{sn(300, amp=12)} * math.max(0, {sn(41, amp=1)})", 0, sn(70, amp=10)]},
+        "ear_l": {"r": [f"{sn(300, 70, 12)} * math.max(0, {sn(41, 140, 1)})", 0, sn(70, 60, -10)]},
+        "jaw": {"r": [f"3 + {sn(B, 120, 3)}", 0, 0]},
+        "bell": {"r": [sn(220, amp=14), 0, sn(170, amp=12)]},
+        "pearl": {"p": [0, sn(120, amp=1.6), 0], "r": [0, f"{T} * 90", 0], "s": f"1 + {sn(300, amp=0.08)}"},
+        "halo": {"r": [0, 0, f"{T} * 30"]},
+        "tailx_0": {"r": [sn(90, amp=4), sn(70, amp=6), 0]}, "tailx_1": {"r": [sn(90, -60, 6), 0, sn(80, amp=6)]},
+        "tailx_2": {"r": [sn(90, -120, 8), 0, sn(80, -60, 8)]},
+        "unseal": {"s": f"1 + {sn(300, amp=0.14)}"},
+        "fleg_r": {"r": [f"math.max(0, {sn(80, amp=1)}) * {sn(480, amp=7)}", 0, 0]},
     }
     for k in range(3):
-        idle[f"wisp{k}"] = {"r": [0, f"{T} * {40 + k * 12}", 0], "p": [0, sn(80, k * 90, 2), 0]}
+        idle[f"wisp{k}"] = {"r": [0, f"{T} * {70 + k * 20}", 0], "p": [0, sn(110, k * 90, 3), 0]}
     for i in range(N_TAILS):
-        ph = i * 37
-        idle[f"tail{i}_0"] = {"r": [sn(45, ph, 3), sn(38, ph, 4), sn(30, ph, 3)]}
-        idle[f"tail{i}_1"] = {"r": [sn(45, ph + 50, 5), sn(38, ph + 60, 6), sn(30, ph + 40, 5)]}
-        idle[f"tail{i}_2"] = {"r": [sn(45, ph + 100, 7), sn(38, ph + 120, 8), sn(30, ph + 90, 7)]}
+        ph = i * 40                       # a wave travels across the fan of tails
+        idle[f"tail{i}_0"] = {"r": [sn(110, ph, 6), sn(80, ph, 6), sn(95, ph, 5)]}
+        idle[f"tail{i}_1"] = {"r": [sn(110, ph - 60, 9), sn(80, ph - 60, 9), sn(95, ph - 50, 8)]}
+        idle[f"tail{i}_2"] = {"r": [sn(110, ph - 120, 12), sn(80, ph - 120, 12), sn(95, ph - 100, 11)]}
     w = "variable.dist * 85"
     walk = {
         "fleg_r": {"r": [f"math.sin({w}) * 30", 0, 0]}, "fleg_r_lo": {"r": [f"math.max(0, math.sin({w} + 90)) * -42", 0, 0]},
         "fleg_l": {"r": [f"math.sin({w} + 180) * 30", 0, 0]}, "fleg_l_lo": {"r": [f"math.max(0, math.sin({w} + 270)) * -42", 0, 0]},
         "hleg_r": {"r": [f"math.sin({w} + 200) * 26", 0, 0]}, "hleg_r_lo": {"r": [f"math.max(0, math.sin({w} + 290)) * 30", 0, 0]},
         "hleg_l": {"r": [f"math.sin({w} + 20) * 26", 0, 0]}, "hleg_l_lo": {"r": [f"math.max(0, math.sin({w} + 110)) * 30", 0, 0]},
-        "body": {"p": [0, f"math.abs(math.cos({w})) * 1.4", 0], "r": [f"math.sin(({w}) * 2) * 2", 0, 0]},
-        "neck": {"r": [f"math.sin(({w}) * 2) * -3", 0, 0]},
-        **{f"tail{i}_0": {"r": [f"math.sin(({w}) * 2 - {i * 20}) * 3", 0, 0]} for i in range(N_TAILS)},
+        "body": {"p": [0, f"math.abs(math.cos({w})) * 2.0", 0], "r": [f"math.sin(({w}) * 2) * 3", f"math.sin({w}) * 3", f"math.sin({w}) * 2"]},
+        "neck": {"r": [f"math.sin(({w}) * 2 + 40) * -5", 0, 0]}, "head": {"r": [f"math.sin(({w}) * 2 + 90) * 4", 0, 0]},
+        **{f"tail{i}_0": {"r": [f"math.sin(({w}) * 2 - {i * 25}) * 6", 0, 0]} for i in range(N_TAILS)},
+        **{f"tail{i}_1": {"r": [f"math.sin(({w}) * 2 - {i * 25 + 60}) * 8", 0, 0]} for i in range(N_TAILS)},
     }
     eclipse = {   # phase III: the moon halo swells, the tails flare wider
         "halo": {"s": 1.35}, **{f"tail{i}_0": {"r": [0, 0, (i - 4) * -3]} for i in range(N_TAILS)},
     }
-    return {"idle": loop(idle), "walk": loop(walk), "eclipse": loop(eclipse)}
+    flinch = {"body": {"r": [-5, 0, 3]}, "neck": {"r": [-10, 8, 0]}, "head": {"r": [-12, -10, 8]}, "ear_r": {"r": [35, 0, 0]}, "ear_l": {"r": [35, 0, 0]},
+              **{f"tail{i}_0": {"r": [-8, 0, 0]} for i in range(N_TAILS)}}
+    return {"idle": loop(idle), "walk": loop(walk), "eclipse": loop(eclipse), "flinch": loop(flinch)}
 
 
 def acts():
@@ -322,6 +329,51 @@ def acts():
     return out
 
 
+FX = lambda n: f"legends:fx_{n}"
+
+
+def _tip(i):
+    pts = catmull(tail_points(i), 3)
+    a, b = pts[-2], pts[-1]
+    d = tuple(b[k] - a[k] for k in range(3))
+    ln = math.sqrt(sum(x * x for x in d)) or 1.0
+    return tuple(round(b[k] + d[k] / ln * 3.5, 2) for k in range(3))
+
+
+_TX = (0.0, TAIL_ROOT[1] + 36, TAIL_ROOT[2] + 3)
+LOCATORS = [(f"tailtip{i}", f"tailtip{i}", _tip(i)) for i in range(N_TAILS)] + [
+    ("unseal", "tailx", _TX), ("head", "mouth", (0, 43, -44)), ("pearl", "pearl", (0, 30, -29)), ("halo", "halo", (0, 60, -16)),
+    ("body", "body", (0, 30, 0)), ("fleg_r_paw", "paw_fr", (-5.4, 0, -15)), ("fleg_l_paw", "paw_fl", (5.4, 0, -15)),
+    ("hleg_r_paw", "paw_hr", (-5.8, 0, 13.5)), ("hleg_l_paw", "paw_hl", (5.8, 0, 13.5)), ("root", "ground", (0, 0, 0)),
+]
+_TIPS = [(FX("foxfire_tip"), f"tailtip{i}") for i in range(N_TAILS)]
+AURAS = {
+    "p1": _TIPS + [(FX("pearl_glow"), "pearl")],
+    "p2": _TIPS + [(FX("pearl_glow"), "pearl")],
+    "p3": _TIPS + [(FX("pearl_glow"), "pearl"), (FX("moon_dust"), "halo"), (FX("foxfire_tip"), "tailx")],
+    "dying": [(FX("moon_dust"), "halo")],
+}
+ACT_FX = {
+    "manifest": [(10, FX("fox_burst"), "ground"), (40, FX("fox_burst"), "pearl"), (40, FX("flash"), "pearl"), (40, FX("dust"), "ground")],
+    "howl": [(16, FX("fox_burst"), "mouth"), (16, FX("roar_vapor"), "mouth"), (16, FX("flash"), "halo")],
+    "pounce": [(9, FX("dust"), "paw_hr"), (9, FX("dust"), "paw_hl"), (20, FX("dust"), "paw_fr"), (20, FX("slash_fox"), "mouth")],
+    "swipe": [(9, FX("slash_fox"), "paw_fr"), (9, FX("dust"), "paw_fr")],
+    "tail_lash": [(16, FX("slash_fox"), "tailtip4"), (16, FX("fox_burst"), "tailtip0"), (16, FX("fox_burst"), "tailtip8"), (16, FX("dust"), "ground")],
+    "foxfire": [(10, FX("fox_burst"), "pearl"), (14, FX("flash"), "pearl")],
+    "lanterns": [(20, FX("fox_burst"), "mouth")],
+    "illusion": [(18, FX("fox_burst"), "body"), (24, FX("flash"), "body"), (24, FX("fox_burst"), "body")],
+    "torii": [(24, FX("dust"), "paw_fr"), (24, FX("dust"), "paw_fl"), (24, FX("debris"), "ground")],
+    "tail_spikes": [(20, FX("dust"), "ground"), (20, FX("debris"), "ground"), (20, FX("fox_burst"), "tailtip4")],
+    "kagura": [(m, FX("dust"), "ground") for m in (12, 28, 44, 60)] + [(m, FX("fox_burst"), "body") for m in (12, 28, 44, 60)],
+    "eclipse": [(40, FX("flash"), "halo"), (40, FX("fox_burst"), "halo"), (120, FX("fox_burst"), "halo"), (186, FX("fox_burst"), "body"),
+                (192, FX("flash"), "body"), (192, FX("dust"), "ground"), (192, FX("debris"), "ground")],
+    "unseal": [(30, FX("fox_burst"), "tailx"), (50, FX("flash"), "tailx"), (50, FX("star_burst"), "halo"), (50, FX("fox_burst"), "tailx")],
+    "dash": [(0, FX("dust"), "paw_hr"), (10, FX("dust"), "paw_hl")],
+    "death": [(20, FX("fox_burst"), "mouth"), (50, FX("dust"), "ground"), (68, FX("vanish"), "body"), (72, FX("flash"), "body")],
+    "procession": [(12, FX("fox_burst"), "pearl"), (16, FX("flash"), "pearl"), (56, FX("fox_burst"), "mouth"), (56, FX("flash"), "halo")],
+}
+
+
 def entity_cfg():
     return {
         "scale": SCALE,
@@ -330,7 +382,7 @@ def entity_cfg():
             "variable.walkw = variable.mv * variable.calm;",
             "variable.ecl = math.lerp(variable.ecl ?? 0.0, variable.ph >= 3 ? 1.0 : 0.0, 0.05);",
         ],
-        "animate": [{"idle": "variable.calm + 0.15"}, {"walk": "variable.walkw"}, {"eclipse": "variable.ecl"}, "ctrl_act"],
+        "animate": [{"idle": "variable.calm + 0.15"}, {"walk": "variable.walkw"}, {"eclipse": "variable.ecl"}, {"flinch": "variable.hit"}, "ctrl_act"],
         "visibility": [{"seal": "variable.ph < 3"}, {"unseal": "variable.ph >= 3"}],
         "bounds": (10, 10, 3.0),
     }
@@ -356,6 +408,7 @@ def extra_entities(RP, m, built_acts):
             "variable.t = (variable.t ?? 0.0) + query.delta_time;", "variable.walkw = variable.mv * variable.calm;"],
             "animate": [{"idle": "variable.calm + 0.15"}, {"walk": "variable.walkw"}, "ctrl_act"]},
         "render_controllers": ["controller.render.legends.tenko_illusion"],
+        "particle_effects": {k: f"legends:fx_{k}" for k in ("fox_burst", "flash", "dust", "slash_fox", "roar_vapor", "debris", "star_burst", "vanish")},
     }
     path = os.path.join(RP, "entity", "legends", "tenko_illusion.entity.json")
     with open(path, "w") as f:

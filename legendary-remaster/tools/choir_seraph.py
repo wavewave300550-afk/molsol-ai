@@ -71,15 +71,16 @@ def build():
 
 
 def loops():
-    flap = f"math.sin({T} * 220)"
+    flap = f"math.sin({T} * 260)"
     idle = {
-        "root": {"p": [0, sn(90, amp=1.0), 0]},
-        "wing_m_r": {"r": [0, f"{flap} * 14", f"{flap} * -26"]}, "wing_m_l": {"r": [0, f"{flap} * -14", f"{flap} * 26"]},
-        "wing_t_r": {"r": [sn(220, 40, 5), 0, 0]}, "wing_t_l": {"r": [sn(220, 40, 5), 0, 0]},
-        "wing_b_r": {"r": [sn(220, 80, 6), 0, 0]}, "wing_b_l": {"r": [sn(220, 80, 6), 0, 0]},
-        "head": {"r": [sn(60, amp=4), sn(40, amp=8), 0]},
-        "coal": {"s": f"1 + {sn(300, amp=0.12)}"}, "halo": {"r": [0, f"{T} * 60", 0]},
-        "arm_r": {"r": [sn(70, amp=4), 0, 0]},
+        "root": {"p": [sn(70, amp=0.8), f"{flap} * -1.2 + {sn(90, amp=0.8)}", 0], "r": [sn(60, amp=4), 0, sn(80, amp=4)]},
+        "wing_m_r": {"r": [f"{flap} * 8", f"{flap} * 18", f"{flap} * -34"]}, "wing_m_l": {"r": [f"{flap} * 8", f"{flap} * -18", f"{flap} * 34"]},
+        "wing_t_r": {"r": [sn(260, 50, 9), sn(260, 50, 5), 0]}, "wing_t_l": {"r": [sn(260, 50, 9), sn(260, 50, -5), 0]},
+        "wing_b_r": {"r": [sn(260, 100, 10), sn(260, 100, -5), 0]}, "wing_b_l": {"r": [sn(260, 100, 10), sn(260, 100, 5), 0]},
+        "head": {"r": [sn(80, amp=6), sn(50, amp=14), sn(40, amp=5)]},
+        "body": {"r": [sn(130, amp=4), sn(45, amp=8), 0]},
+        "coal": {"s": f"1 + {sn(420, amp=0.18)}"}, "halo": {"r": [0, f"{T} * 90", 0]},
+        "arm_r": {"r": [sn(110, amp=8), 0, sn(70, amp=4)]}, "arm_l": {"r": [sn(110, 90, 8), 0, sn(70, 60, -4)]},
     }
     return {"idle": loop(idle)}
 
@@ -132,6 +133,16 @@ def acts():
     a.at(60, {**shut, "head": {"r": (0, 0, 0)}, "wing_m_r": {"r": (0, 0, 0)}, "wing_m_l": {"r": (0, 0, 0)}, "halo": {"s": 1.0}})
     out.append(a)
     return out
+
+
+FX = lambda n: f"legends:fx_{n}"
+LOCATORS = [("body", "body", (0, 20, 0)), ("coal", "coal", (0, 14.5, -10)), ("head", "head", (0, 33.5, -1)), ("root", "ground", (0, 0, 0))]
+AURAS = {"all": [(FX("seraph_fire"), "body"), (FX("tail_embers"), "coal")], "dying": [(FX("seraph_fire"), "body")]}
+ACT_FX = {"spawn": [(24, FX("fire_burst"), "body"), (24, FX("flash"), "body")], "dive": [(16, FX("fire_burst"), "body")],
+    "coal": [(12, FX("fire_burst"), "coal")], "sanctus": [(m, FX("fire_burst"), "body") for m in (12, 24, 36)],
+    "trisagion": [(m, FX("fire_burst"), "body") for m in (18, 38, 58)] + [(m, FX("flash"), "head") for m in (18, 38, 58)],
+    "death": [(18, FX("fire_burst"), "body"), (32, FX("vanish"), "body")], "veil": [(16, FX("fire_burst"), "body")],
+    "chorus": [(24, FX("fire_burst"), "head"), (24, FX("flash"), "head")]}
 
 
 def entity_cfg():

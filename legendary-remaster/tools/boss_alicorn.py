@@ -173,17 +173,23 @@ def loops():
     fp = fold_pose()
     fold = {b: {**({"r": list(d["rot"])} if "rot" in d else {}), **({"p": list(d["pos"])} if "pos" in d else {}),
                 **({"s": d["scale"]} if "scale" in d else {})} for b, d in fp.items()}
+    B = 140
     idle = {
-        "body": {"p": [0, sn(60, amp=0.35), 0]},
-        "neck": {"r": [f"-4 + {sn(60, amp=2)}", sn(25, amp=5), 0]},
-        "head": {"r": [sn(60, 50, 3), sn(30, amp=5), sn(20, amp=2)]},
-        "ear_r": {"r": [sn(90, amp=8), 0, sn(40, amp=6)]}, "ear_l": {"r": [sn(90, 70, 8), 0, sn(40, 30, -6)]},
-        "mane": {"r": [0, 0, sn(70, amp=3)], "p": [sn(55, amp=0.4), 0, 0]},
-        "tail": {"r": [sn(50, amp=5), sn(35, amp=10), 0]},
-        "dawnstar": {"r": [0, 0, f"{T} * 40"]},
-        "crown": {"r": [0, f"{T} * 30", 0], "p": [0, sn(80, amp=0.8), 0]},
-        "fleg_r": {"r": [sn(20, amp=1), 0, 0]},
-        "horn_hue0": {"s": f"1 + {sn(200, amp=0.06)}"},
+        "body": {"p": [0, sn(B, amp=0.8), 0], "r": [sn(B, amp=1.0), 0, sn(50, amp=1.2)]},
+        "neck": {"r": [f"-4 + {sn(B, 30, 3)} + {sn(57, amp=3)}", sn(41, amp=12), 0]},
+        "head": {"r": [f"{sn(B, 70, 4)} + {sn(83, amp=3)}", sn(49, 40, 10), sn(31, amp=6)]},
+        "ear_r": {"r": [f"{sn(260, amp=10)} * math.max(0, {sn(37, amp=1)})", 0, sn(60, amp=10)]},
+        "ear_l": {"r": [f"{sn(260, 90, 10)} * math.max(0, {sn(37, 120, 1)})", 0, sn(60, 50, -10)]},
+        "mane": {"r": [sn(150, amp=3), 0, sn(120, amp=6)], "p": [sn(95, amp=0.6), 0, 0]},
+        "tail": {"r": [f"{sn(150, amp=8)}", sn(95, amp=22), sn(70, amp=6)]},
+        "dawnstar": {"r": [0, 0, f"{T} * 60"]},
+        "crown": {"r": [0, f"{T} * 50", 0], "p": [0, sn(110, amp=1.2), 0]},
+        "fleg_r": {"r": [f"math.max(0, {sn(90, amp=1)}) * {sn(520, amp=8)}", 0, 0]},
+        "fleg_r_lo": {"r": [f"math.max(0, {sn(90, amp=1)}) * -16", 0, 0]},
+        "hleg_l": {"r": [sn(65, amp=2), 0, 0]},
+        "wing_r": {"r": [sn(B, 40, 3), sn(B, 40, 2), 0]}, "wing_l": {"r": [sn(B, 40, 3), sn(B, 40, -2), 0]},
+        "horn_hue0": {"s": f"1 + {sn(320, amp=0.1)}"}, "horn_hue1": {"s": f"1 + {sn(420, amp=0.14)}"},
+        "horn_hue2": {"s": f"1 + {sn(420, amp=0.14)}"}, "horn_hue3": {"s": f"1 + {sn(420, amp=0.14)}"},
     }
     w = "variable.dist * 80"
     walk = {
@@ -191,21 +197,26 @@ def loops():
         "fleg_l": {"r": [f"math.sin({w} + 180) * 26", 0, 0]}, "fleg_l_lo": {"r": [f"math.max(0, math.sin({w} + 270)) * -40", 0, 0]},
         "hleg_r": {"r": [f"math.sin({w} + 270) * 22", 0, 0]}, "hleg_r_lo": {"r": [f"math.max(0, math.sin({w})) * 34", 0, 0]},
         "hleg_l": {"r": [f"math.sin({w} + 90) * 22", 0, 0]}, "hleg_l_lo": {"r": [f"math.max(0, math.sin({w} + 180)) * 34", 0, 0]},
-        "body": {"p": [0, f"math.abs(math.cos({w})) * 1.2", 0], "r": [f"math.sin(({w}) * 2) * 1.5", 0, 0]},
-        "neck": {"r": [f"math.sin(({w}) * 2) * -4", 0, 0]},
-        "tail": {"r": [f"math.sin(({w}) * 2) * 6", 0, 0]},
+        "body": {"p": [0, f"math.abs(math.cos({w})) * 2.0", 0], "r": [f"math.sin(({w}) * 2) * 2.5", 0, f"math.sin({w}) * 2"]},
+        "neck": {"r": [f"math.sin(({w}) * 2 + 40) * -7", 0, 0]}, "head": {"r": [f"math.sin(({w}) * 2 + 90) * 5", 0, 0]},
+        "mane": {"r": [0, 0, f"math.sin(({w}) * 2) * 8"]},
+        "tail": {"r": [f"-10 + math.sin(({w}) * 2) * 10", f"math.sin({w}) * 12", 0]},
     }
-    flap = f"math.sin({T} * 170)"
+    F = 240
+    flap = f"math.sin({T} * {F})"
     fly = {
-        "wing_r": {"r": [0, 0, f"{flap} * -30"]}, "wing_l": {"r": [0, 0, f"{flap} * 30"]},
-        "wfore_r": {"r": [0, 0, f"math.sin({T} * 170 - 40) * -18"]}, "wfore_l": {"r": [0, 0, f"math.sin({T} * 170 - 40) * 18"]},
-        "whand_r": {"r": [0, 0, f"math.sin({T} * 170 - 80) * -14"]}, "whand_l": {"r": [0, 0, f"math.sin({T} * 170 - 80) * 14"]},
-        "body": {"p": [0, f"math.sin({T} * 170 + 180) * 1.5", 0], "r": [-4, 0, 0]},
+        "wing_r": {"r": [f"math.sin({T} * {F} - 30) * 8", 0, f"{flap} * -42"]}, "wing_l": {"r": [f"math.sin({T} * {F} - 30) * 8", 0, f"{flap} * 42"]},
+        "wfore_r": {"r": [0, 0, f"math.sin({T} * {F} - 50) * -26"]}, "wfore_l": {"r": [0, 0, f"math.sin({T} * {F} - 50) * 26"]},
+        "whand_r": {"r": [0, f"math.sin({T} * {F} - 90) * 10", f"math.sin({T} * {F} - 90) * -20"]},
+        "whand_l": {"r": [0, f"math.sin({T} * {F} - 90) * -10", f"math.sin({T} * {F} - 90) * 20"]},
+        "body": {"p": [0, f"math.sin({T} * {F} + 180) * 2.4", 0], "r": [f"-4 + math.sin({T} * {F}) * 2.5", 0, f"math.sin({T} * 45) * 3"]},
+        "neck": {"r": [f"math.sin({T} * {F} + 140) * 4", 0, 0]},
         "fleg_r": {"r": [-40, 0, 0]}, "fleg_l": {"r": [-30, 0, 0]}, "fleg_r_lo": {"r": [-90, 0, 0]}, "fleg_l_lo": {"r": [-80, 0, 0]},
         "hleg_r": {"r": [30, 0, 0]}, "hleg_l": {"r": [36, 0, 0]}, "hleg_r_lo": {"r": [30, 0, 0]}, "hleg_l_lo": {"r": [26, 0, 0]},
         "tail": {"r": [f"-14 + {sn(120, amp=6)}", 0, 0]},
     }
-    return {"idle": loop(idle), "walk": loop(walk), "fold": loop(fold), "fly": loop(fly)}
+    flinch = {"body": {"r": [-5, 0, 3]}, "neck": {"r": [-10, 6, 0]}, "head": {"r": [-12, -8, 6]}, "ear_r": {"r": [30, 0, 0]}, "ear_l": {"r": [30, 0, 0]}}
+    return {"idle": loop(idle), "walk": loop(walk), "fold": loop(fold), "fly": loop(fly), "flinch": loop(flinch)}
 
 
 def acts():
@@ -332,6 +343,44 @@ def acts():
     return out
 
 
+FX = lambda n: f"legends:fx_{n}"
+LOCATORS = [
+    ("horn", "horn_tip", (0, 59.5, -59)), ("mane", "mane", (0, 46, -23)), ("tail", "tail", (0, 22, 34)),
+    ("body", "body", (0, 30, 0)), ("crown", "crown", (0, 63, -34)), ("head", "mouth", (0, 43, -50)),
+    ("fleg_r_hoof", "hoof_fr", (-5.4, 0, -14.5)), ("fleg_l_hoof", "hoof_fl", (5.4, 0, -14.5)),
+    ("hleg_r_hoof", "hoof_hr", (-5.8, 0, 17.5)), ("hleg_l_hoof", "hoof_hl", (5.8, 0, 17.5)),
+    ("whand_r", "wingtip_r", (-62, 45, -10)), ("whand_l", "wingtip_l", (62, 45, -10)), ("root", "ground", (0, 0, 0)),
+]
+AURAS = {
+    "p1": [(FX("aurora_sparkle"), "mane"), (FX("aurora_sparkle"), "tail"), (FX("horn_glow"), "horn_tip")],
+    "p2": [(FX("aurora_sparkle"), "mane"), (FX("aurora_sparkle"), "tail"), (FX("horn_glow"), "horn_tip")],
+    "p3": [(FX("aurora_sparkle"), "mane"), (FX("aurora_sparkle"), "tail"), (FX("horn_glow"), "horn_tip"), (FX("crown_stars"), "crown")],
+    "dying": [(FX("aurora_sparkle"), "body")],
+}
+ACT_FX = {
+    "descend": [(44, FX("dust"), "ground"), (44, FX("aurora_burst"), "ground"), (44, FX("feather_burst"), "body")],
+    "rear": [(20, FX("roar_vapor"), "mouth"), (26, FX("dust"), "hoof_fr"), (26, FX("dust"), "hoof_fl")],
+    "stomp": [(13, FX("roar_vapor"), "mouth"), (18, FX("dust"), "hoof_fr"), (18, FX("dust"), "hoof_fl"), (18, FX("debris"), "ground"),
+              (18, FX("aurora_burst"), "ground")],
+    "charge": [(0, FX("dust"), "hoof_hr"), (5, FX("dust"), "hoof_fl"), (10, FX("dust"), "hoof_hl"), (15, FX("dust"), "hoof_fr")],
+    "lance": [(14, FX("star_burst"), "horn_tip"), (14, FX("flash"), "horn_tip")],
+    "wing_gust": [(14, FX("feather_burst"), "wingtip_r"), (14, FX("feather_burst"), "wingtip_l"), (14, FX("dust"), "ground")],
+    "takeoff": [(14, FX("dust"), "ground"), (14, FX("feather_burst"), "body")],
+    "land": [(10, FX("dust"), "ground"), (10, FX("feather_burst"), "body")],
+    "curtain": [(20, FX("aurora_burst"), "horn_tip"), (20, FX("flash"), "horn_tip")],
+    "comet": [(16, FX("feather_burst"), "body"), (22, FX("dust"), "ground"), (22, FX("debris"), "ground"), (22, FX("star_burst"), "ground"),
+              (22, FX("flash"), "ground")],
+    "barrier": [(20, FX("aurora_burst"), "horn_tip"), (20, FX("flash"), "horn_tip")],
+    "heal": [(0, FX("aurora_burst"), "horn_tip"), (40, FX("aurora_burst"), "horn_tip")],
+    "nova": [(m, FX("aurora_burst"), "horn_tip") for m in (20, 60, 100)] + [(m, FX("feather_burst"), "body") for m in (20, 60, 100)]
+            + [(150, FX("star_burst"), "horn_tip"), (190, FX("star_burst"), "horn_tip"), (220, FX("flash"), "horn_tip"),
+               (220, FX("star_burst"), "horn_tip"), (220, FX("aurora_burst"), "body")],
+    "hyper": [(0, FX("aurora_burst"), "body"), (10, FX("aurora_burst"), "body")],
+    "spiral": [(12, FX("aurora_burst"), "horn_tip"), (30, FX("aurora_burst"), "horn_tip")],
+    "death": [(16, FX("aurora_burst"), "horn_tip"), (44, FX("dust"), "ground"), (68, FX("vanish"), "body"), (72, FX("feather_burst"), "body")],
+}
+
+
 def entity_cfg():
     hv = "query.property('legends:var')"
     return {
@@ -341,7 +390,8 @@ def entity_cfg():
             "variable.flyw = math.lerp(variable.flyw ?? 0.0, query.property('legends:fly') == 1 ? 1.0 : 0.0, 0.08);",
             "variable.walkw = variable.mv * (1.0 - variable.flyw) * variable.calm;",
         ],
-        "animate": [{"idle": "variable.calm + 0.15"}, {"fold": "1.0 - variable.flyw"}, {"walk": "variable.walkw"}, {"fly": "variable.flyw"}, "ctrl_act"],
+        "animate": [{"idle": "variable.calm + 0.15"}, {"fold": "1.0 - variable.flyw"}, {"walk": "variable.walkw"}, {"fly": "variable.flyw"},
+                    {"flinch": "variable.hit"}, "ctrl_act"],
         "visibility": [
             {"crown": "variable.ph >= 3"},
             {"horn_hue0": f"{hv} == 0"}, {"horn_hue1": f"{hv} == 1"}, {"horn_hue2": f"{hv} == 2"}, {"horn_hue3": f"{hv} == 3"},
@@ -397,6 +447,7 @@ def extra_entities(RP, m, built_acts):
         "scripts": {"scale": str(SCALE), "pre_animation": ["variable.t = (variable.t ?? 0.0) + query.delta_time;", "variable.open = 1.0;"],
                     "animate": ["idle", "fold", "gallop"]},
         "render_controllers": ["controller.render.legends.aurora_steed"],
+        "particle_effects": {"dust": "legends:fx_dust"},
     }
     with open(os.path.join(RP, "entity", "legends", "aurora_steed.entity.json"), "w") as f:
         json.dump({"format_version": "1.10.0", "minecraft:client_entity": {"description": desc}}, f, indent=1)

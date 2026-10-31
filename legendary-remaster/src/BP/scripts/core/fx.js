@@ -101,30 +101,45 @@ export function teleRing(dim, center, inner, outer, ticks, col = C.danger) {
     }
 }
 // ------------------------------------------------------------------ impact & ambience
+// Effects are sized for god-sized bosses: every scripted particle is scaled up so it reads at
+// distance and on small (mobile) screens.
+const FX_SIZE = 1.7;
+const FX_COUNT = 1.5;
+const n = (c) => Math.min(60, Math.round(c * FX_COUNT));
+/** Ground impact: expanding shock ring, plus dust, flying debris and a flash for the big ones. */
 export function shock(dim, center, radius, ticks, col) {
     spawn(dim, "legends:shock", lift(center, 0.12), vars(col, { size: radius, life: Math.max(0.1, ticks / 20) }));
+    if (radius >= 5)
+        spawn(dim, "legends:fx_dust", lift(center, 0.3));
+    if (radius >= 8)
+        spawn(dim, "legends:fx_debris", lift(center, 0.5));
+    if (radius >= 12)
+        spawn(dim, "legends:fx_flash", lift(center, 1.2));
 }
 export function pillar(dim, base, height, width, ticks, col) {
-    spawn(dim, "legends:pillar", base, vars(col, { size: width, height, life: Math.max(0.1, ticks / 20) }));
+    spawn(dim, "legends:pillar", base, vars(col, { size: width * 1.3, height, life: Math.max(0.1, ticks / 20) }));
+    spawn(dim, "legends:burst", lift(base, 0.3), vars(col, { count: 10, speed: 3, size: 0.5, radius: width * 0.6 }));
 }
 export function burst(dim, at, col, count = 16, speed = 4, size = 0.22, radius = 0.25) {
-    spawn(dim, "legends:burst", at, vars(col, { count, speed, size, radius }));
+    spawn(dim, "legends:burst", at, vars(col, { count: n(count), speed: speed * 1.2, size: size * FX_SIZE, radius }));
+    if (count >= 24)
+        spawn(dim, "legends:glint", at, vars(col, { count: 1, speed: 0, size: 2.4 + radius, radius: 0 }));
 }
 export function mote(dim, at, col, size = 0.18, life = 0.6) {
-    spawn(dim, "legends:mote", at, vars(col, { count: 1, speed: 0.1, size, radius: 0, life }));
+    spawn(dim, "legends:mote", at, vars(col, { count: 1, speed: 0.1, size: size * FX_SIZE, radius: 0, life }));
 }
 export function glint(dim, at, col, size = 1.2) {
-    spawn(dim, "legends:glint", at, vars(col, { count: 1, speed: 0, size, radius: 0 }));
+    spawn(dim, "legends:glint", at, vars(col, { count: 1, speed: 0, size: size * 1.4, radius: 0 }));
 }
 export function deco(dim, kind, at, col, count = 6, radius = 1, size = 0.3, speed = 1) {
-    spawn(dim, `legends:${kind}`, at, vars(col, { count, radius, size, speed }));
+    spawn(dim, `legends:${kind}`, at, vars(col, { count: n(count), radius, size: size * FX_SIZE, speed }));
 }
 export function spiralMark(dim, at, col, size, ticks) {
     spawn(dim, "legends:spiral", lift(at, 0.1), vars(col, { size, life: Math.max(0.1, ticks / 20) }));
 }
 /** A client-simulated bullet: one particle flying in a straight line (server checks hits analytically). */
 export function bullet(dim, from, dir, speed, ticks, col, size = 0.35) {
-    const m = vars(col, { size, life: ticks / 20 });
+    const m = vars(col, { size: size * 1.4, life: ticks / 20 });
     m.setSpeedAndDirection("variable.dir", speed, dir);
     spawn(dim, "legends:bullet", from, m);
 }

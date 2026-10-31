@@ -233,41 +233,51 @@ STANCE = {   # khon stance: knees bent outward (ย่อเหลี่ยม)
 
 
 def loops():
+    B = 170     # breathing / bounce (deg/s)
     idle = {
-        "hips": {"p": [0, f"-2.4 + {sn(80, amp=0.4)}", 0]},
-        "leg_r": {"r": [-14, 0, -16]}, "leg_l": {"r": [-14, 0, 16]},
-        "shin_r": {"r": [26, 0, 10]}, "shin_l": {"r": [26, 0, -10]},
-        "foot_r": {"r": [-12, 0, 6]}, "foot_l": {"r": [-12, 0, -6]},
-        "torso": {"r": [f"6 + {sn(80, amp=1.2)}", 0, 0]},
-        "chest": {"r": [sn(80, 40, 1.0), sn(30, amp=3), 0]},
-        "head": {"r": [sn(60, amp=3), sn(35, amp=8), sn(25, amp=3)]},
-        "jaw": {"r": [f"6 + {sn(120, amp=3)}", 0, 0]},
-        "arm_r": {"r": [f"-10 + {sn(80, amp=2)}", 0, -8]}, "farm_r": {"r": [-20, 0, 0]},
-        "arm_l": {"r": [f"-6 + {sn(80, 90, 2)}", 0, 12]}, "farm_l": {"r": [-30, 0, 0]},
-        "kanjiak_r": {"r": [0, 0, sn(90, amp=2)]}, "kanjiak_l": {"r": [0, 0, sn(90, 60, 2)]},
-        "apron": {"r": [sn(70, amp=3), 0, sn(50, amp=2)]},
-        "flap_r": {"r": [sn(70, 40, 3), 0, 0]}, "flap_l": {"r": [sn(70, 120, 3), 0, 0]},
-        "tail_tip": {"r": [sn(100, amp=10), sn(70, amp=12), 0]},
+        "hips": {"p": [f"{sn(65, amp=0.9)}", f"-2.6 + math.abs({sn(B / 2, amp=1.3)})", 0], "r": [0, sn(65, amp=6), sn(65, amp=-3)]},
+        "leg_r": {"r": [f"-14 + {sn(B, amp=3)}", 0, -16]}, "leg_l": {"r": [f"-14 + {sn(B, amp=3)}", 0, 16]},
+        "shin_r": {"r": [f"26 + {sn(B, amp=-5)}", 0, 10]}, "shin_l": {"r": [f"26 + {sn(B, amp=-5)}", 0, -10]},
+        "foot_r": {"r": [f"-12 + {sn(B, amp=2)}", 0, 6]}, "foot_l": {"r": [f"-12 + {sn(B, amp=2)}", 0, -6]},
+        "torso": {"r": [f"6 + {sn(B, 40, 2.5)}", sn(65, 30, -5), 0]},
+        "chest": {"r": [sn(B, 80, 2.5), sn(55, amp=7), sn(65, 60, 3)]},
+        "head": {"r": [sn(110, amp=5), sn(47, amp=18), sn(37, amp=7)]},
+        "jaw": {"r": [f"8 + {sn(220, amp=6)}", 0, 0]},
+        "arm_r": {"r": [f"-14 + {sn(B, amp=5)}", sn(65, amp=6), f"-10 + {sn(B, 60, 3)}"]}, "farm_r": {"r": [f"-24 + {sn(B, 40, 6)}", 0, 0]},
+        "trident": {"r": [0, f"{sn(80, amp=25)}", sn(65, amp=4)]},
+        "arm_l": {"r": [f"-10 + {sn(B, 90, 6)}", 0, f"14 + {sn(B, 120, 4)}"]}, "farm_l": {"r": [f"-34 + {sn(B, 140, 10)}", 0, 0]},
+        "kanjiak_r": {"r": [0, 0, sn(B, amp=4)]}, "kanjiak_l": {"r": [0, 0, sn(B, 60, -4)]},
+        "epaul_r": {"r": [0, 0, sn(B, 30, -2)]}, "epaul_l": {"r": [0, 0, sn(B, 30, 2)]},
+        "apron": {"r": [f"{sn(B, amp=6)} + {sn(65, amp=4)}", 0, sn(55, amp=4)]},
+        "flap_r": {"r": [sn(B, 40, 6), 0, sn(65, amp=4)]}, "flap_l": {"r": [sn(B, 120, 6), 0, sn(65, 90, -4)]},
+        "tail_tip": {"r": [sn(190, amp=16), sn(140, amp=20), 0]},
     }
     for i in range(6):
-        idle[f"tail{i}"] = {"r": [sn(60, -i * 40, 3 + i), sn(45, -i * 50, 4 + i * 2), 0]}
+        idle[f"tail{i}"] = {"r": [sn(120, -i * 45, 5 + i * 1.5), sn(85, -i * 55, 7 + i * 2.5), 0]}
+    for i in (3, 4, 5):
+        idle[f"tailfire{i}"] = {"s": f"1 + {sn(500, i * 70, 0.18)}"}
+    idle["tailfire_tip"] = {"s": f"1 + {sn(560, amp=0.22)}"}
     for nm in XARMS:
-        idle[f"xarm_{nm}"] = {"r": [sn(70, len(nm) * 40 + int(nm[1]) * 50, 4), 0, sn(55, int(nm[1]) * 60, 5)]}
+        k = int(nm[1])
+        idle[f"xarm_{nm}"] = {"r": [sn(110, k * 50 + (0 if nm[0] == "r" else 90), 8), sn(70, k * 40, 6), sn(90, k * 60, 8)]}
     w = "variable.dist * 70"
     walk = {
-        "leg_r": {"r": [f"math.sin({w}) * 28", 0, 0]}, "leg_l": {"r": [f"math.sin({w} + 180) * 28", 0, 0]},
-        "shin_r": {"r": [f"math.max(0, math.sin({w} + 90)) * 34", 0, 0]}, "shin_l": {"r": [f"math.max(0, math.sin({w} + 270)) * 34", 0, 0]},
-        "arm_r": {"r": [f"math.sin({w} + 180) * 18", 0, 0]}, "arm_l": {"r": [f"math.sin({w}) * 22", 0, 0]},
-        "hips": {"p": [0, f"math.abs(math.cos({w})) * 1.2", 0], "r": [0, f"math.sin({w}) * 8", 0]},
-        "chest": {"r": [0, f"math.sin({w}) * -10", 0]},
-        "tail0": {"r": [0, f"math.sin({w}) * 10", 0]},
+        "leg_r": {"r": [f"math.sin({w}) * 36", 0, 0]}, "leg_l": {"r": [f"math.sin({w} + 180) * 36", 0, 0]},
+        "shin_r": {"r": [f"math.max(0, math.sin({w} + 90)) * 48", 0, 0]}, "shin_l": {"r": [f"math.max(0, math.sin({w} + 270)) * 48", 0, 0]},
+        "arm_r": {"r": [f"math.sin({w} + 180) * 24", 0, 0]}, "arm_l": {"r": [f"math.sin({w}) * 30", 0, 0]},
+        "farm_l": {"r": [f"-20 + math.sin({w}) * 14", 0, 0]},
+        "hips": {"p": [0, f"math.abs(math.cos({w})) * 2.0", 0], "r": [f"6", f"math.sin({w}) * 10", f"math.sin({w}) * 3"]},
+        "chest": {"r": [f"math.abs(math.cos({w})) * 3", f"math.sin({w}) * -12", 0]},
+        "head": {"r": [f"math.abs(math.cos({w})) * -3", f"math.sin({w}) * 6", 0]},
+        "tail0": {"r": [0, f"math.sin({w}) * 14", 0]}, "tail2": {"r": [0, f"math.sin({w} - 60) * 12", 0]}, "tail4": {"r": [0, f"math.sin({w} - 120) * 12", 0]},
     }
     size = {"root": {"s": "variable.size"}}
     divine = {   # phase III: the eight arms fan out, weapons raised
         **{f"xarm_{nm}": {"r": [0, 0, ("-" if nm[0] == "r" else "") + "10"]} for nm in XARMS},
         "chest": {"r": [-4, 0, 0]},
     }
-    return {"idle": loop(idle), "walk": loop(walk), "size": loop(size), "divine": loop(divine)}
+    flinch = {"torso": {"r": [-10, 0, 4]}, "chest": {"r": [-6, 8, 0]}, "head": {"r": [-12, -10, 6]}, "hips": {"p": [0, -0.8, 1.5]}}
+    return {"idle": loop(idle), "walk": loop(walk), "size": loop(size), "divine": loop(divine), "flinch": loop(flinch)}
 
 
 def acts():
@@ -440,6 +450,46 @@ def acts():
     return out
 
 
+FX = lambda n: f"legends:fx_{n}"
+LOCATORS = [
+    ("trident", "trident_tip", (-11.7, 70, -2.2)), ("head", "mouth", (0, 46.5, -8.5)), ("chest", "chest", (0, 40, -5)),
+    ("tail_tip", "tail_end", (0, 49, 28)), ("foot_r", "foot_r", (-6.2, 0, -2)), ("foot_l", "foot_l", (6.2, 0, -2)),
+    ("hand_l", "hand_l", (11.7, 21, -2.2)), ("root", "ground", (0, 0, -2)),
+]
+AURAS = {
+    "p1": [(FX("wind_feathers"), "chest")],
+    "p2": [(FX("wind_feathers"), "chest"), (FX("tail_fire"), "tail_end"), (FX("tail_embers"), "tail_end")],
+    "p3": [(FX("tail_fire"), "tail_end"), (FX("tail_embers"), "tail_end"), (FX("divine_stars"), "chest")],
+    "dying": [(FX("wind_feathers"), "chest")],
+}
+ACT_FX = {
+    "descend": [(7, FX("dust"), "ground"), (7, FX("debris"), "ground"), (7, FX("slash_wind"), "trident_tip"), (7, FX("feather_burst"), "chest")],
+    "taunt": [(22, FX("slash_wind"), "trident_tip"), (34, FX("slash_wind"), "trident_tip")],
+    "combo": [(9, FX("slash_wind"), "trident_tip"), (20, FX("slash_wind"), "trident_tip"), (33, FX("dust"), "trident_tip"),
+              (33, FX("debris"), "ground"), (33, FX("flash"), "trident_tip")],
+    "jump": [(7, FX("dust"), "ground"), (7, FX("feather_burst"), "ground")],
+    "air": [(10, FX("feather_burst"), "chest")],
+    "slam": [(3, FX("dust"), "ground"), (3, FX("debris"), "ground"), (3, FX("flash"), "trident_tip")],
+    "tail_whip": [(16, FX("slash_wind"), "tail_end"), (16, FX("dust"), "ground")],
+    "dash": [(0, FX("feather_burst"), "chest"), (6, FX("slash_wind"), "trident_tip")],
+    "guard": [(0, FX("star_burst"), "chest"), (26, FX("star_burst"), "chest")],
+    "counter": [(5, FX("slash_gold"), "trident_tip"), (5, FX("flash"), "trident_tip")],
+    "ignite": [(24, FX("fire_burst"), "tail_end"), (24, FX("flash"), "tail_end")],
+    "fire_spin": [(16, FX("fire_burst"), "tail_end"), (16, FX("fire_burst"), "trident_tip"), (16, FX("dust"), "ground")],
+    "grow": [(21, FX("dust"), "ground"), (21, FX("debris"), "ground"), (21, FX("fire_burst"), "chest")],
+    "awaken": [(30, FX("star_burst"), "chest"), (52, FX("star_burst"), "chest"), (52, FX("flash"), "chest"), (52, FX("dust"), "ground")],
+    "yawn": [(32, FX("star_burst"), "mouth"), (32, FX("flash"), "mouth"), (60, FX("star_burst"), "mouth")]
+            + [(m, FX("slash_gold"), "trident_tip") for m in (112, 136, 160, 184)]
+            + [(228, FX("dust"), "ground"), (228, FX("feather_burst"), "chest"), (228, FX("flash"), "chest")],
+    "barrage": [(m, FX("slash_gold"), "chest") for m in (10, 16, 22, 28, 34, 40)],
+    "discus": [(12, FX("slash_gold"), "chest"), (12, FX("star_burst"), "chest")],
+    "mountain": [(4, FX("debris"), "ground"), (18, FX("dust"), "ground"), (40, FX("dust"), "hand_l"), (40, FX("feather_burst"), "chest")],
+    "collapse": [(14, FX("dust"), "ground")],
+    "revive": [(40, FX("feather_burst"), "chest"), (40, FX("flash"), "chest"), (40, FX("dust"), "ground")],
+    "death": [(20, FX("dust"), "ground"), (68, FX("vanish"), "chest"), (72, FX("feather_burst"), "chest")],
+}
+
+
 def entity_cfg():
     return {
         "scale": SCALE,
@@ -449,7 +499,7 @@ def entity_cfg():
             "variable.size = math.lerp(variable.size ?? 1.0, query.property('legends:var') == 1 ? 0.35 : (variable.ph >= 3 ? 1.4 : 1.0), 0.1);",
             "variable.walkw = variable.mv * variable.calm;",
         ],
-        "animate": [{"idle": "variable.calm + 0.15"}, {"walk": "variable.walkw"}, "size", {"divine": "variable.divine"}, "ctrl_act"],
+        "animate": [{"idle": "variable.calm + 0.15"}, {"walk": "variable.walkw"}, "size", {"divine": "variable.divine"}, {"flinch": "variable.hit"}, "ctrl_act"],
         "visibility": [
             {"face_r": "variable.ph >= 3"}, {"face_l": "variable.ph >= 3"}, {"face_b": "variable.ph >= 3"},
             *[{f"xarm_{nm}": "variable.ph >= 3"} for nm in XARMS],

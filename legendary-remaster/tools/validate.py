@@ -148,6 +148,47 @@ for p in walk(os.path.join(RP, "entity"), ".json"):
                 if mk.split(".")[-1] not in desc["materials"]:
                     err(f"{ident}: material {mk} not declared")
 
+# ------------------------------------------------------------------ particles: effects, locators
+rp_particles = {}
+for pp in walk(os.path.join(RP, "particles"), ".json"):
+    pe = jsons[pp]["particle_effect"]
+    rp_particles[pe["description"]["identifier"]] = pe
+    tex = pe["description"]["basic_render_parameters"]["texture"]
+    if not os.path.exists(os.path.join(RP, tex + ".png")):
+        err(f"particle {pe['description']['identifier']}: texture {tex} missing")
+locs_of = {}
+for gid, g in geos.items():
+    locs_of[gid] = set()
+for pp in walk(os.path.join(RP, "models"), ".json"):
+    for g in jsons[pp].get("minecraft:geometry", []):
+        for bn in g.get("bones", []):
+            locs_of[g["description"]["identifier"]] |= set(bn.get("locators", {}).keys())
+fx_refs = 0
+for ident, desc in client.items():
+    pmap = desc.get("particle_effects", {})
+    for short, pid in pmap.items():
+        if pid not in rp_particles:
+            err(f"{ident}: particle effect {pid} not defined")
+    locs = set()
+    for gid in desc.get("geometry", {}).values():
+        locs |= locs_of.get(gid, set())
+    def check(effs, where):
+        global fx_refs
+        for e in effs:
+            fx_refs += 1
+            if e.get("effect") not in pmap:
+                err(f"{ident}: {where} uses effect '{e.get('effect')}' missing from particle_effects")
+            if e.get("locator") and e["locator"] not in locs:
+                err(f"{ident}: {where} uses unknown locator '{e['locator']}'")
+    for aid in desc.get("animations", {}).values():
+        if aid.startswith("controller."):
+            for sn_, st in ctrls.get(aid, {}).get("states", {}).items():
+                check(st.get("particle_effects", []), f"{aid}:{sn_}")
+        else:
+            for tkey, effs in anims.get(aid, {}).get("particle_effects", {}).items():
+                check(effs if isinstance(effs, list) else [effs], f"{aid}@{tkey}")
+notes.append(f"{len(rp_particles)} particle effects, {fx_refs} effect references checked")
+
 bp_entities = {}
 for p in walk(os.path.join(BP, "entities"), ".json"):
     e = jsons[p]["minecraft:entity"]
