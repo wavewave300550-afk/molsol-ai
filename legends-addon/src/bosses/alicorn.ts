@@ -60,7 +60,7 @@ export class Alicorn extends Boss {
   }
 
   horn(): Vector3 {
-    return ahead(this, 4.2, 4.4);
+    return ahead(this, 5.2, 5.5);
   }
 
   idle(): void {
@@ -216,12 +216,12 @@ export class Alicorn extends Boss {
     this.hue(HUE.red);
     const a = this.act("stomp");
     const c = this.ground(ahead(this, 2));
-    teleCircle(this.dim, c, 5, a.marks[0]);
+    teleCircle(this.dim, c, 6, a.marks[0]);
     sound(this.dim, "mob.horse.angry", this.pos, 3, 0.6);
     yield a.marks[0];
     sound(this.dim, "random.anvil_land", c, 3, 0.6);
     shake(this.audience(), 0.35, 0.5);
-    strike(this, c, 6, (p) => inCircle(p, c, 5), 17, { knock: 1.2, up: 0.6, from: c });
+    strike(this, c, 7, (p) => inCircle(p, c, 6), 17, { knock: 1.2, up: 0.6, from: c });
     shock(this.dim, c, 14, 10, C.aurora);
     const hit = new Set<string>();
     for (let k = 1; k <= 10; k++) {

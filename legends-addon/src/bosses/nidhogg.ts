@@ -54,7 +54,7 @@ export class Nidhogg extends Boss {
   }
 
   mouth(): Vector3 {
-    return this.flying ? ahead(this, 7, 1.0) : ahead(this, 7.5, 2.6);
+    return this.flying ? ahead(this, 8, 1.2) : ahead(this, 8.6, 3.0);
   }
 
   hover(t: Player): Vector3 {
@@ -153,11 +153,11 @@ export class Nidhogg extends Boss {
     this.faceNow(t.location);
     const a = this.act("bite");
     const dir = dirOfYaw(this.yaw);
-    teleLine(this.dim, this.ground(this.pos), dir, 11, 3.4, a.marks[0]);
+    teleLine(this.dim, this.ground(this.pos), dir, 12.5, 3.6, a.marks[0]);
     yield a.marks[0];
     this.place(this.ground(add(this.pos, scale(dir, 2.5))), this.yaw);
     sound(this.dim, "mob.ravager.bite", this.pos, 3, 0.6);
-    strike(this, this.pos, 13, (p) => inLine(p, this.pos, dir, 11, 3.4), 16, { knock: 1.0, up: 0.3, effects: [POISON()] });
+    strike(this, this.pos, 14, (p) => inLine(p, this.pos, dir, 12.5, 3.6), 16, { knock: 1.0, up: 0.3, effects: [POISON()] });
     yield a.ticks - a.marks[0];
   }
 

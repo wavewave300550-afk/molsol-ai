@@ -20,10 +20,10 @@ from __future__ import annotations
 
 import math
 
-from .common import COMMON_PRE, Creature, chain, kf, mrot, ring_cubes, scale_subtree, wave
+from .common import COMMON_PRE, Creature, chain, ellipsoid, kf, mrot, obox, ring_cubes, scale_subtree, tuft, wave
 from mk.geo import Model
 from mk.paint import (C, bake, cloth, crystal, d_center_gem, d_pixels, eyes_band, feathers, flame, glowball, glyphs,
-                      gold, hx, marble, mix, shade, solid, fur, horn, bone_mat, metal)
+                      gold, hx, marble, mix, shade, solid, fur, horn, bone_mat, metal, plush)
 
 GOLD = gold("f3cf5c", "8e6412", "fff7cf", sparkle=0.05)
 GOLD_D = gold("d8ac3c", "70480c", "f8e3a0", sparkle=0.03)
@@ -38,8 +38,8 @@ SEAL = solid("a3122a", 0.08)
 
 
 def build_logos() -> Creature:
-    m = Model("geometry.legends.logos", seed=606)
-    m.bounds = (10.0, 10.0, 4.0)
+    m = Model("geometry.legends.logos", seed=606, density=1.5)
+    m.bounds = (12.0, 12.0, 4.5)
     root = m.bone("root", (0, 0, 0))
     body = m.bone("body", (0, 44, 0), "root")
     body.loc("eye", (0, 44, -8))
@@ -67,6 +67,17 @@ def build_logos() -> Creature:
         a = math.radians(k * 30)
         px, py = math.cos(a) * 26.5, 44 + math.sin(a) * 26.5
         gh.add((px - 1.2, py - 3, 6.4), (2.4, 6, 1.2), LIGHT, pivot=(px, py, 7), rotation=(0, 0, -(k * 30 - 90)))
+    # ---------------------------------------------------------- gyroscope rings around the core + an outer halo
+    RUNE = glyphs("f5d470", "7a4a0c", rows=2, seed=41, margin=0)
+    ga = m.bone("gyro_a", (0, 44, 0), "body")
+    ring_cubes(ga, (0, 44, 0), 13.5, 22, 1.4, 1.6, RUNE, plane="yz")
+    gb_ = m.bone("gyro_b", (0, 44, 0), "body")
+    ring_cubes(gb_, (0, 44, 0), 15.5, 26, 1.2, 1.4, RUNE, plane="xz")
+    ho = m.bone("glow_halo_outer", (0, 44, 9), "halo")
+    for k in range(24):
+        a = math.radians(k * 15 + 7.5)
+        px, py = math.cos(a) * 31, 44 + math.sin(a) * 31
+        ho.add((px - 0.6, py - 1.8, 8.6), (1.2, 3.6 + (k % 2) * 2, 0.8), LIGHT, pivot=(px, py, 9), rotation=(0, 0, -(k * 15 + 7.5 - 90)))
     # ---------------------------------------------------------- four page-wings (unfold in chains)
     for name, base, rz in (("wing_ur", (-6, 50, 2), 35), ("wing_ul", (6, 50, 2), -35),
                            ("wing_dr", (-6, 38, 2), -30), ("wing_dl", (6, 38, 2), 30)):
@@ -78,12 +89,16 @@ def build_logos() -> Creature:
         names = chain(m, name, "body", base, d, lens, [(10, 1.4), (9, 1.3), (7.5, 1.2)],
                       [rot0, (0, 0, 8 * (-s if name.startswith("wing_u") else s)), (0, 0, 10 * (-s if name.startswith("wing_u") else s))],
                       mats, share=f"page{name[-2]}", mirror=s > 0)
-        for nb in names:
+        for j, nb in enumerate(names):
             b = m.get(nb)
             x, y, z = b.pivot
-            L = lens[names.index(nb)]
+            L = lens[j]
             b.add((x + (-L if s < 0 else 0), y - 5.6, z - 1.1), (L, 0.8, 2.2), GOLD, mirror=s > 0)
             b.add((x + (-L if s < 0 else 0), y + 4.8, z - 1.1), (L, 0.8, 2.2), GOLD, mirror=s > 0)
+            gg = m.bone(f"glow_script_{name}{j}", b.pivot, nb)                       # luminous lines of script
+            for row in (-2.6, 0, 2.6):
+                gg.add((x + (-L + 1 if s < 0 else 1), y + row - 0.3, z - 0.95), (L - 2, 0.6, 0.25),
+                       glyphs("fff3c4", "d79a2a", rows=2, seed=j + 3, margin=0, light=False), density=2)
     # ---------------------------------------------------------- seven seals orbiting
     seals = m.bone("seals", (0, 44, 0), "body")
     for i in range(7):
@@ -110,7 +125,7 @@ def build_logos() -> Creature:
         chain(m, f"veil{k}_", "body", (x, 31, 1), "-y", [ln, ln, ln - 1, ln - 2], [(3.6, 0.8), (3.4, 0.8), (3.0, 0.8), (2.6, 0.8)],
               [(8, 0, 0), (6, 0, 0), (6, 0, 0), (6, 0, 0)], VEIL, share=f"veil{k}")
 
-    c = Creature("logos", m, scale=1.6, description="The Word of God")
+    c = Creature("logos", m, scale=2.0, description="The Word of God")
     c.preview_props = {"legends:var": 0}
     c.pre = COMMON_PRE + [
         "variable.open = math.lerp(variable.open ?? 0.0, variable.ph >= 3 ? 1.0 : (variable.ph >= 2 ? 0.55 : 0.0), 0.04)",
@@ -126,6 +141,9 @@ def build_logos() -> Creature:
     idle.rot("halo", [0, 0, f"{t} * 12"])
     idle.rot("seals", [wave(6, 30), f"{t} * 40", 0])
     idle.rot("crown", [0, f"-{t} * 30", 0])
+    idle.rot("gyro_a", [f"{t} * 35", 0, f"{t} * 12"])
+    idle.rot("gyro_b", [f"{t} * 10", f"-{t} * 28", 0])
+    idle.rot("glow_halo_outer", [0, 0, f"-{t} * 20"])
     idle.rot("core", [0, wave(10, 25), 0])
     idle.scl("glow_core", [f"1.0 + {wave(0.08, 200)}", f"1.0 + {wave(0.08, 200)}", f"1.0 + {wave(0.08, 200)}"])
     for name in ("wing_ur", "wing_ul", "wing_dr", "wing_dl"):
@@ -205,45 +223,51 @@ def build_logos() -> Creature:
 # =========================================================================== SERAPH
 
 def build_seraph() -> Creature:
-    m = Model("geometry.legends.seraph", seed=707)
-    m.bounds = (6.0, 5.0, 1.6)
+    m = Model("geometry.legends.seraph", seed=707, density=2.0)
+    m.bounds = (8.0, 7.0, 2.0)
     FIRE = flame("fffbe0", "ffa52e", "e8361b", cut=False)
-    FEATH = feathers("ffd9a0", "ff5a1f", "ffe9c4", row=2, tip_from=0.45)
-    FEATH_IN = feathers("fff2d6", "ffb347", "fff7e6", row=2, tip_from=0.6, ragged=False)
+    FEATH = feathers("fff4d0", "ff3a12", "ffe6a8", row=3, tip_from=0.3, axis="v")
+    FEATH_IN = feathers("fffbea", "ff9a2a", "fff4dc", row=3, tip_from=0.4, ragged=False, axis="v")
+    GOLD_F = gold("ffd36a", "a8620e", "fff6d0", sparkle=0.08)
     root = m.bone("root", (0, 0, 0))
     body = m.bone("body", (0, 22, 0), "root")
-    body.add((-3.5, 12, -3.5), (7, 18, 7), FIRE)
-    body.add((-2.5, 9, -2.5), (5, 4, 5), FIRE)
+    ellipsoid(body, (0, 21, 0), (3.8, 9, 3.8), FIRE, layers=4)
+    obox(body, (-2.4, 8, -2.4), (4.8, 5, 4.8), FIRE)
     gb = m.bone("glow_body", (0, 22, 0), "body")
-    gb.add((-2, 14, -2.2), (4, 13, 4.4), glowball("ffffff", "ffcf6a"))
-    gb.add((-2.8, 28, -2.8), (5.6, 5.6, 5.6), glowball("ffffff", "ffd98a"))                # the veiled head-light
+    ellipsoid(gb, (0, 21.5, 0), (2.4, 6.5, 2.4), glowball("ffffff", "ffd36a"), layers=3)
+    gb.add((-3, 28, -3), (6, 6, 6), glowball("ffffff", "ffe9a8"))                     # the veiled head-light
+    gh = m.bone("glow_halo", (0, 36, 0), "body")
+    ring_cubes(gh, (0, 36, 1), 5, 14, 0.9, 0.6, glowball("fffbe0", "ffc84a"), plane="xy")
 
-    def wing(name, pivot, base_rot, length, width, mat, n=4):
+    def wing(name, pivot, base_rz, length, n, mat, chord, z_off=0.0):
+        """A wing in the frontal plane: arm along X, feathers hanging along -Y and fanning toward the tip."""
         s = -1 if name.endswith("_r") else 1
-        b = m.bone(name, pivot, "body", base_rot)
+        b = m.bone(name, pivot, "body", (0, 0, base_rz * -s))
         x, y, z = pivot
-        b.add((x + (-length if s < 0 else 0), y - 1, z - 1), (length, 2, 2.4), FIRE, mirror=s > 0)
+        z += z_off
+        x0 = x + (-length if s < 0 else 0)
+        obox(b, (x0, y - 1.2, z - 1.2), (length, 2.4, 2.4), FIRE, axis="x", mirror=s > 0)
+        b.add((x0, y + 1.0, z - 0.6), (length, 0.8, 1.2), GOLD_F, mirror=s > 0)
         for k in range(n):
-            fx = x + s * (length * (k + 0.6) / n)
-            b.add((fx - width / 2, y - 0.25, z), (width, 0.5, 9 + k * 2.2), mat, pivot=(fx, y, z),
-                  rotation=(0, s * (6 + k * 7), 0), share=f"{name[:-2]}{k}", mirror=s > 0)
+            fx = x + s * (length * (k + 0.5) / n)
+            L = chord + k * 2.2
+            b.add((fx - 1.8, y - L, z - 0.3 - k * 0.05), (3.6, L, 0.6), mat, pivot=(fx, y, z),
+                  rotation=(0, 0, s * (k * 5)), mirror=s > 0)
         return b
-    # two wings veil the face, two fly, two veil the feet
     for side in ("r", "l"):
         s = -1 if side == "r" else 1
-        wing(f"wing_face_{side}", (s * 2.5, 31, -2), (-70, s * 60, 0), 9, 3.2, FEATH_IN)
-        wing(f"wing_fly_{side}", (s * 3, 26, 2), (0, 0, 0), 15, 3.6, FEATH, n=5)
-        wing(f"wing_feet_{side}", (s * 2.5, 13, -1), (70, s * 55, 0), 8, 3.0, FEATH_IN)
-    # arm with tongs holding the live coal
+        wing(f"wing_face_{side}", (s * 2, 33, -2.6), 52, 13, 5, FEATH_IN, 7, z_off=-0.6)    # crossing above: veil the face
+        wing(f"wing_fly_{side}", (s * 3, 27, 0), 4, 21, 7, FEATH, 9)                       # spread wide: fly
+        wing(f"wing_feet_{side}", (s * 2, 15, -2.4), -50, 11, 5, FEATH_IN, 6, z_off=-0.6)   # crossing below: veil the feet
     arm = m.bone("arm", (-3, 20, -2), "body", (-50, 0, 10))
-    arm.add((-4, 11, -3), (2, 10, 2), FIRE)
-    arm.add((-3.6, 4, -2.6), (0.6, 8, 0.6), GOLD_D)
-    arm.add((-2.6, 4, -2.6), (0.6, 8, 0.6), GOLD_D)
+    obox(arm, (-4.2, 11, -3.2), (2.4, 10, 2.4), FIRE)
+    arm.add((-3.8, 3.5, -2.8), (0.6, 8, 0.6), GOLD_F)
+    arm.add((-2.6, 3.5, -2.8), (0.6, 8, 0.6), GOLD_F)
     coal = m.bone("glow_coal", (-3, 3.5, -2.3), "arm")
-    coal.add((-4.2, 2, -3.5), (2.4, 2.4, 2.4), glowball("fff1c0", "ff4a14"))
+    coal.add((-4.4, 1.6, -3.7), (2.8, 2.8, 2.8), glowball("fff1c0", "ff4a14"))
     m.get("body").loc("coal", (-3, 3, -10))
 
-    c = Creature("seraph", m, scale=1.15, description="Seraph of the Burning Choir")
+    c = Creature("seraph", m, scale=1.5, description="Seraph of the Burning Choir")
     c.pre = COMMON_PRE[:]
     t = "q.life_time"
     idle = c.loop("idle")
@@ -255,6 +279,7 @@ def build_seraph() -> Creature:
         idle.rot(f"wing_face_{side}", [wave(3, 300, -60), 0, 0])
         idle.rot(f"wing_feet_{side}", [wave(3, 300, -120), 0, 0])
     idle.scl("glow_body", [f"1 + {wave(0.06, 500)}", f"1 + {wave(0.08, 430)}", f"1 + {wave(0.06, 500)}"])
+    idle.rot("glow_halo", [0, 0, f"{t} * 40"])
 
     def P(a, bone, frames, ch="rot"):
         (a.rot if ch == "rot" else a.pos if ch == "pos" else a.scl)(bone, kf(frames))
@@ -285,80 +310,89 @@ def build_seraph() -> Creature:
 # =========================================================================== CHERUB
 
 def build_cherub() -> Creature:
-    m = Model("geometry.legends.cherub", seed=808)
-    m.bounds = (6.0, 6.0, 2.0)
-    BRONZE = gold("c98a3c", "5c3412", "f3c98a", sparkle=0.06)
-    BRONZE_D = gold("a26a2a", "4a2a0e", "dca064", sparkle=0.03)
-    SKIN = solid("e7c9a0", 0.04)
-    LION = fur("d9a441", "8a5a1c", "f3cf7a", streak=1.2)
-    OX = fur("6b4a32", "3a2416", "8f6a4a", streak=1.0)
-    EAGLE = feathers("efe6d6", "6b4a2a", "f9f3e8", row=2, tip_from=0.6, ragged=False)
-    FEATH = feathers("f6efe2", "c9a24f", "fff7e8", row=2, tip_from=0.5)
-    STEEL = solid("e8edf3", 0.03)
-    FIRE = flame("fffbe0", "ffa52e", "ff4a1a", cut=False)
-    HOOF = solid("c98a3c", 0.06)
+    m = Model("geometry.legends.cherub", seed=808, density=2.0)
+    m.bounds = (8.0, 7.0, 2.2)
+    BRONZE = gold("d39a46", "5c3412", "f8d79a", sparkle=0.06)
+    BRONZE_D = gold("a8702e", "4a2a0e", "e2ad70", sparkle=0.03)
+    GOLDP = gold("f5d470", "8f6413", "fffae0", sparkle=0.08)
+    SKIN = solid("ecd2ac", 0.04)
+    LION = plush("dda846", "8a5a1c", "f6d27e")
+    OX = plush("6f4c33", "3a2416", "93704f")
+    EAGLE = feathers("f2eadb", "6b4a2a", "fbf6ec", row=2, tip_from=0.6, ragged=False)
+    FEATH = feathers("fffaf0", "e0b450", "fff4dc", row=3, tip_from=0.45)
+    STEEL = solid("eef2f7", 0.03)
+    HOOF = gold("c98a3c", "6a4214", "e8b880")
+    GEM = d_pixels([".RR.", "RWWR", "RWWR", ".RR."], {"R": "c4182c", "W": "ffb0b8"}, center=True)
 
     root = m.bone("root", (0, 0, 0))
     body = m.bone("body", (0, 22, 0), "root")
-    body.add((-5, 22, -3), (10, 13, 6), BRONZE, inflate=0.2)
-    body.add((-4, 16, -2.5), (8, 6, 5), BRONZE_D)
-    body.add((-5.4, 30, -3.4), (10.8, 2, 6.8), GOLD)
-    # straight fused legs with calf's hooves
-    body.add((-3.2, 4, -2.2), (6.4, 12.5, 4.4), BRONZE)
-    body.add((-3.6, 0, -3), (3.2, 4, 5), HOOF)
-    body.add((0.4, 0, -3), (3.2, 4, 5), HOOF)
-    for s in (-1, 1):
-        body.add((s * 1.6 - 0.3, 0, -3.2), (0.6, 4, 0.6), solid("3b220c"))
-    # hands of a man under the wings
-    for s in (-1, 1):
-        body.add((s * 6 - 1.2, 18, -1.2), (2.4, 9, 2.4), SKIN, pivot=(s * 6, 27, 0), rotation=(-25, 0, 8 * s))
+    ellipsoid(body, (0, 29, 0), (5.6, 6.5, 3.8), BRONZE, layers=3)                    # cuirass
+    body.add((-2, 30, -4.4), (4, 4, 1), GOLDP, decals={"north": GEM})
+    obox(body, (-6, 34, -3.5), (12, 2, 7), GOLDP)                                    # collar
+    for s_ in (-1, 1):
+        ellipsoid(body, (s_ * 6.2, 33, 0), (2.6, 2.4, 3.2), GOLDP, layers=2)        # pauldrons
+    obox(body, (-4.6, 21, -3), (9.2, 3, 6), BRONZE_D)                               # belt
+    for k, (w, y) in enumerate(((10, 18), (11, 15), (12, 12))):                      # layered skirt plates
+        obox(body, (-w / 2, y, -3.6 - k * 0.3), (w, 3.4, 7.2 + k * 0.6), BRONZE if k % 2 == 0 else BRONZE_D)
+    obox(body, (-3.4, 4, -2.3), (6.8, 8.5, 4.6), BRONZE)                             # straight fused legs
+    for s_ in (-1, 1):
+        obox(body, (s_ * 1.9 - 1.7, 0, -3.2), (3.4, 4, 5), HOOF, axis="z")            # calf's hooves
+        body.add((s_ * 1.9 - 0.3, 0, -3.4), (0.6, 4, 0.6), solid("3b220c"))
+        obox(body, (s_ * 6.5 - 1.3, 19, -1.3), (2.6, 9, 2.6), SKIN)                    # hands of a man
+        obox(body, (s_ * 6.5 - 1.6, 21, -1.6), (3.2, 2, 3.2), GOLDP)
     # head with four faces: man (front), lion (right = east), ox (left = west), eagle (back)
-    head = m.bone("head", (0, 35, 0), "body")
-    head.add((-4, 35, -4), (8, 8, 8), SKIN,
-             decals={"north": d_pixels(["........", ".KK..KK.", "........", "...SS...", "..R..R..", "...RR..."],
-                                       {"K": "2a2014", "S": "c9a77e", "R": "8a3a2a"}, center=True)},
-             face_mats={"east": LION, "west": OX, "south": EAGLE})
-    head.add((-4.8, 34, -3), (1, 9, 7), LION)                                       # lion's mane (right)
-    head.add((-5.4, 35, -2), (1, 7, 5), shade_mat("b8822a"))
-    head.add((-5.2, 38, -1), (0.4, 1.2, 1.2), solid("1a1208"))
-    head.add((3.8, 40, -1), (1.4, 1.4, 2), OX)                                       # ox horns (left)
-    head.add((5, 41, -0.6), (4, 1.2, 1.2), bone_mat("efe6cf", "a89a7a"), pivot=(5, 41.6, 0), rotation=(0, 0, 25))
-    head.add((-1, 41, -0.6), (1, 1, 1), OX)
-    head.add((4.0, 36, -2.5), (1.8, 2.4, 3), OX)                                     # ox muzzle
-    head.add((-1.2, 37.5, 4), (2.4, 2, 3), GOLD)                                     # eagle beak (back)
-    head.add((-0.8, 36.6, 6.6), (1.6, 1.2, 1.2), GOLD_D)
-    head.add((-4.4, 43, -4.4), (8.8, 1.2, 8.8), GOLD)
-    gh = m.bone("glow_eyes", (0, 39, 0), "head")
-    gh.add((-2.6, 39.6, -4.2), (1.6, 0.8, 0.4), LIGHT)
-    gh.add((1.0, 39.6, -4.2), (1.6, 0.8, 0.4), LIGHT)
-    gh.add((-4.25, 39.4, -2.6), (0.4, 0.8, 1.4), LIGHT)
-    gh.add((3.85, 39.4, -2.6), (0.4, 0.8, 1.4), LIGHT)
+    head = m.bone("head", (0, 37, 0), "body")
+    obox(head, (-4.2, 37, -4.2), (8.4, 8.4, 8.4), SKIN, axis="y",
+         face_mats={"east": LION, "west": OX, "south": EAGLE})
+    head.add((-3.6, 39, -4.5), (7.2, 5, 0.5), SKIN, decals={"north": d_pixels(
+        ["........", ".KK..KK.", "........", "...SS...", "..R..R..", "...RR..."], {"K": "2a2014", "S": "c9a77e", "R": "8a3a2a"}, center=True)})
+    for k in range(6):                                                                 # lion's mane (right)
+        tuft(head, (-4.8, 37.5 + k * 1.4, -1 + (k % 2)), (1.4, 3, 7), LION, roll=-20 + k * 8, yaw=0)
+    head.add((-5.4, 40, -3.2), (1.2, 2.6, 3), plush("c08a2c", "7a4a14", "e0b050"))     # lion snout
+    head.add((4.2, 39, -3.4), (2, 3, 3.6), OX)                                        # ox muzzle (left)
+    for s_ in (1,):
+        tuft(head, (6.5, 44.5, 0), (5, 1.4, 1.4), bone_mat("efe6cf", "a89a7a"), roll=30)
+        tuft(head, (5.5, 44, -1.5), (1.4, 1.4, 1.4), OX)
+    tuft(head, (0, 40.5, 5.4), (2.6, 2.2, 3.4), GOLDP, pitch=20)                      # eagle beak (back)
+    obox(head, (-4.8, 45.2, -4.8), (9.6, 1.4, 9.6), GOLDP)
+    for k in range(8):                                                                 # crown points
+        a = math.radians(k * 45)
+        tuft(head, (math.cos(a) * 4, 47.2, math.sin(a) * 4), (1.2, 2.6, 1.2), GOLDP)
+    gh = m.bone("glow_eyes", (0, 40, 0), "head")
+    gh.add((-2.6, 40.6, -4.75), (1.6, 0.8, 0.4), LIGHT)
+    gh.add((1.0, 40.6, -4.75), (1.6, 0.8, 0.4), LIGHT)
+    gh.add((-4.45, 40.4, -2.6), (0.4, 0.8, 1.4), LIGHT)
+    gh.add((4.05, 40.4, -2.6), (0.4, 0.8, 1.4), LIGHT)
     # four wings: two spread upward, two folded down covering the body
     for side in ("r", "l"):
         s = -1 if side == "r" else 1
-        up = m.bone(f"wing_up_{side}", (s * 4, 33, 3), "body", (0, 0, -55 * s))
-        up.add((s * 4 + (-16 if s < 0 else 0), 32, 2), (16, 2, 2), BRONZE, mirror=s > 0)
+        up = m.bone(f"wing_up_{side}", (s * 4.5, 34, 3), "body", (0, 0, -55 * s))
+        x0 = s * 4.5 + (-19 if s < 0 else 0)
+        obox(up, (x0, 32.9, 1.9), (19, 2.2, 2.4), BRONZE, axis="x", mirror=s > 0)
+        up.add((x0, 34.3, 1.6), (19, 0.8, 1), GOLDP, mirror=s > 0)
+        for k in range(7):
+            fx = s * (4.5 + 19 * (k + 0.5) / 7)
+            up.add((fx - 1.7, 33.6, 3), (3.4, 0.5, 9 + k * 1.4), FEATH, pivot=(fx, 34, 3), rotation=(0, s * (4 + k * 5), 0),
+                   mirror=s > 0)
+        dn = m.bone(f"wing_dn_{side}", (s * 4.5, 31, 2.5), "body", (-75, s * 20, 60 * s))
+        x1 = s * 4.5 + (-14 if s < 0 else 0)
+        obox(dn, (x1, 30, 1.5), (14, 2, 2), BRONZE, axis="x", mirror=s > 0)
         for k in range(5):
-            fx = s * (4 + 16 * (k + 0.6) / 5)
-            up.add((fx - 1.6, 32.6, 3), (3.2, 0.5, 8 + k * 1.5), FEATH, pivot=(fx, 33, 3), rotation=(0, s * (4 + k * 6), 0),
-                   share=f"cwu{k}", mirror=s > 0)
-        dn = m.bone(f"wing_dn_{side}", (s * 4, 30, 2.5), "body", (-75, s * 20, 60 * s))
-        dn.add((s * 4 + (-12 if s < 0 else 0), 29, 1.5), (12, 2, 2), BRONZE, mirror=s > 0)
-        for k in range(4):
-            fx = s * (4 + 12 * (k + 0.6) / 4)
-            dn.add((fx - 1.6, 29.6, 2.5), (3.2, 0.5, 7 + k * 1.4), FEATH, pivot=(fx, 30, 2.5), rotation=(0, s * (4 + k * 5), 0),
-                   share=f"cwd{k}", mirror=s > 0)
+            fx = s * (4.5 + 14 * (k + 0.5) / 5)
+            dn.add((fx - 1.7, 30.6, 2.5), (3.4, 0.5, 8 + k * 1.2), FEATH, pivot=(fx, 31, 2.5), rotation=(0, s * (4 + k * 5), 0),
+                   mirror=s > 0)
     # the flaming sword that turns every way (orbits the Cherub)
     orbit = m.bone("sword_orbit", (0, 26, 0), "root")
     sw = m.bone("sword", (0, 26, -13), "sword_orbit", (90, 0, 0))
     sw.add((-0.8, 24.5, -14.5), (1.6, 4, 3), GOLD)
     sw.add((-2.6, 28, -14), (5.2, 1, 2), GOLD)
-    sw.add((-0.6, 29, -13.6), (1.2, 16, 1.2), STEEL)
-    gsw = m.bone("glow_sword", (0, 36, -13), "sword")
-    gsw.add((-1.3, 29, -14.1), (2.6, 16, 2.2), glowball("fffbe0", "ff7a1a"))
+    sw.add((-0.7, 29, -13.7), (1.4, 22, 1.4), STEEL)
+    gsw = m.bone("glow_sword", (0, 38, -13), "sword")
+    gsw.add((-1.5, 29, -14.3), (3, 22, 2.6), glowball("fffbe0", "ff7a1a"))
+    gsw.add((-0.9, 51, -13.7), (1.8, 3, 1.4), glowball("ffffff", "ffb04a"))
     m.get("root").loc("sword_tip", (0, 26, -30))
 
-    c = Creature("cherub", m, scale=1.2, description="Cherub of the Eastern Gate")
+    c = Creature("cherub", m, scale=1.5, description="Cherub of the Eastern Gate")
     c.pre = COMMON_PRE[:]
     t = "q.life_time"
     idle = c.loop("idle")
@@ -424,7 +458,7 @@ def build_ophan() -> Creature:
     for k in range(6):
         sp.add((-0.6, 24, -0.6), (1.2, 12, 1.2), glowball("fff6d0", "ffb03a"), pivot=(0, 24, 0), rotation=(0, 0, k * 60))
 
-    c = Creature("ophan", m, scale=1.15, description="Ophan of the Thrones")
+    c = Creature("ophan", m, scale=1.5, description="Ophan of the Thrones")
     c.pre = COMMON_PRE[:]
     t = "q.life_time"
     idle = c.loop("idle")

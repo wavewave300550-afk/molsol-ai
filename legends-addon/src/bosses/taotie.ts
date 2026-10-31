@@ -25,7 +25,7 @@ import { Boss } from "./boss.js";
 import { ahead, lead, strike } from "./kit.js";
 
 const A = TAOTIE_ACTS;
-const SCALE = 1.3;
+const SCALE = 1.6;
 
 export class Taotie extends Boss {
   readonly acts = A;
@@ -67,7 +67,7 @@ export class Taotie extends Boss {
       this.fly({ x: p.x, y: g + 3.2, z: p.z }, 0.22);
       this.face(t.location, 12);
     } else {
-      this.walk(t.location, this.walkSpeed, 4.5);
+      this.walk(t.location, this.walkSpeed, 5.5);
     }
   }
 
@@ -177,10 +177,10 @@ export class Taotie extends Boss {
   }
 
   *claw(t: Player): Co {
-    yield* this.approach(t, 5.5, 20);
+    yield* this.approach(t, 6.5, 20);
     this.faceNow(t.location);
     const a = this.act("claw");
-    const reach = 6.8;
+    const reach = 8;
     teleCone(this.dim, this.ground(this.pos), dirOfYaw(this.yaw), 110, reach, a.marks[0]);
     yield a.marks[0];
     sound(this.dim, "mob.ravager.bite", this.pos, 2, 0.7);

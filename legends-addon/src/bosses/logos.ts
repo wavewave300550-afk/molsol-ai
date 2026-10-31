@@ -135,7 +135,7 @@ class Seraph extends Choir {
   readonly acts = SERAPH_ACTS;
   readonly walkSpeed = 0.4;
   constructor(e: Entity, owner: Logos) {
-    super(e, "seraph", owner, 9, 6, 2.2, 0);
+    super(e, "seraph", owner, 11, 7.5, 2.2, 0);
     this.signatureAt = 300;
   }
   kit(): ((t: Player) => Co)[] {
@@ -242,7 +242,7 @@ class Cherub extends Choir {
   readonly walkSpeed = 0.35;
   warding = 0;
   constructor(e: Entity, owner: Logos) {
-    super(e, "cherub", owner, 6, 1.5, 1.2, 120);
+    super(e, "cherub", owner, 8, 1.5, 1.2, 120);
   }
   kit(): ((t: Player) => Co)[] {
     return [(t) => this.sweep(t), () => this.ward(), (t) => this.gaze4(t)];
@@ -317,7 +317,7 @@ class Ophan extends Choir {
   readonly acts = OPHAN_ACTS;
   readonly walkSpeed = 0.35;
   constructor(e: Entity, owner: Logos) {
-    super(e, "ophan", owner, 11, 3, -1.6, 240);
+    super(e, "ophan", owner, 13.5, 3.5, -1.6, 240);
     this.signatureAt = 500;
   }
   kit(): ((t: Player) => Co)[] {
@@ -491,7 +491,7 @@ export class Logos extends Boss {
       this.fly({ x: this.home.x, y: g + 1, z: this.home.z }, 0.25);
       return;
     }
-    const want = add(t.location, scale(flatDir(t.location, this.pos), 10));
+    const want = add(t.location, scale(flatDir(t.location, this.pos), 12));
     this.fly({ x: want.x, y: g + 1, z: want.z }, 0.12, 0, 6);
     this.face(t.location, 4);
   }
@@ -586,7 +586,7 @@ export class Logos extends Boss {
   }
 
   eye(): Vector3 {
-    return add(this.pos, { x: 0, y: 4.4, z: 0 });
+    return add(this.pos, { x: 0, y: 5.5, z: 0 });
   }
 
   *fiat(t: Player): Co {

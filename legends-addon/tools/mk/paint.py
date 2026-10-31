@@ -240,19 +240,26 @@ def feathers(base, tip, shaft=None, row=3, tip_from=0.45, ragged=True, axis="u",
     return p
 
 
-def membrane(base, vein, holes=0.0, dark=None) -> Painter:
-    """Wing membrane with branching veins (and tears)."""
+def membrane(base, vein, holes=0.0, dark=None, scallop=0.0, glowvein=None) -> Painter:
+    """Wing membrane with branching veins, tears and an optional scalloped trailing edge (v -> 1)."""
     b, vn = C(base), C(vein)
     dk = C(dark) if dark else shade(b, -0.35)
+    gv = C(glowvein) if glowvein else None
 
     def p(f: FaceCtx) -> RGBA:
         x, y, z = f.p
+        if scallop and f.face in ("up", "down"):
+            edge = 1 - scallop * (0.35 + 0.65 * abs(math.sin(f.u * math.pi * 3)))
+            if f.v > edge:
+                return TRANSPARENT
+            if f.v > edge - 0.05:
+                return shade(dk, -0.3)
         n = fbm(x * 0.25, y * 0.25, z * 0.25, 4)
         c = mix(dk, b, 0.4 + n * 0.8)
         # veins: ridges of a low frequency noise
         r = abs(vnoise(x * 0.09 + 3, y * 0.09, z * 0.09) - 0.5)
         if r < 0.035:
-            c = vn
+            c = gv if (gv is not None and f.variant >= 1) else vn
         elif r < 0.06:
             c = mix(c, vn, 0.4)
         if holes > 0:
@@ -262,6 +269,28 @@ def membrane(base, vein, holes=0.0, dark=None) -> Painter:
             if hn > 1 - holes - 0.04:
                 c = shade(dk, -0.3)
         return c
+    return p
+
+
+def plush(base, dark=None, light=None, var=0.07, tip=None, tip_axis=None) -> Painter:
+    """Soft, fluffy fur: low-frequency light and shade with only a hint of strands (no wood-grain)."""
+    b = C(base)
+    d = C(dark) if dark else shade(b, -0.22)
+    l = C(light) if light else shade(b, 0.22)
+    tp = C(tip) if tip else None
+
+    def p(f: FaceCtx) -> RGBA:
+        x, y, z = f.p
+        n = fbm(x * 0.09, y * 0.09, z * 0.09, 3)
+        c = mix(d, l, 0.25 + n * 0.75)
+        c = mix(c, b, 0.4)
+        c = shade(c, (vnoise(x * 0.9, y * 0.45, z * 0.9) - 0.5) * var)
+        if tp is not None and tip_axis is not None:
+            t = f.p[tip_axis[0]]
+            k = (t - tip_axis[1]) / max(1e-6, tip_axis[2] - tip_axis[1])
+            if k > 0:
+                c = mix(c, tp, min(1.0, k))
+        return bake(c, f, edge=-0.03, top=0.08, bottom=-0.12)
     return p
 
 

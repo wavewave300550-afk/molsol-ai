@@ -62,7 +62,8 @@ def main():
         c.model.paint()
         tiles = [shot(c, p, a, t, v) for _, p, a, t, v in shots]
         sheet(1, 4, tiles, [s[0] for s in shots], c.description, 360).save(os.path.join(OUT, f"{key}.png"))
-        heroes.append(shot(c, shots[0][1], None, 0, 0, size=330))
+        hs = shots[1] if key == "nidhogg" else shots[0]
+        heroes.append(shot(c, hs[1], hs[2], hs[3], hs[4], size=330))
         print("rendered", key)
     names = [registry.ALL[k]().description for k in SHOTS]
     sheet(2, 3, heroes, names, "Legendary & Divine Beings — the six extra bosses", 330).save(os.path.join(OUT, "bosses.png"))

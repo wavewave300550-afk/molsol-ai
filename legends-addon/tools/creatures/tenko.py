@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import math
 
-from .common import COMMON_PRE, Creature, chain, kf, mrot, scale_subtree, wave
+from .common import COMMON_PRE, Creature, chain, ellipsoid, kf, mrot, obox, scale_subtree, tuft, wave
 from mk.geo import Model
-from mk.paint import (C, bake, cloth, d_pixels, fbm, fur, glowball, gold, h2, hx, mix, shade, solid)
+from mk.paint import (C, bake, cloth, d_pixels, fbm, fur, glowball, gold, h2, hx, mix, plush, shade, solid)
 
 TAILS = 10
 
@@ -47,103 +47,131 @@ def moon_fur():
 
 
 def build() -> Creature:
-    m = Model("geometry.legends.tenko", seed=505)
-    m.bounds = (8.0, 7.0, 2.4)
+    m = Model("geometry.legends.tenko", seed=505, density=2.0)
+    m.bounds = (9.0, 8.0, 2.6)
 
-    FUR = marked_fur("f6dfa6", "d4a65a", "fff3d2")
-    FUR_LEG = marked_fur("f6dfa6", "d4a65a", "fff3d2", stripes=lambda f: f.side and int(f.p[1]) % 6 == 0)
-    WHITE = fur("fffaf0", "e6dccb", "ffffff", streak=1.2, var=0.04)
-    TAILF = fur("f8e3ad", "d9a24f", "fff5d8", streak=1.0, var=0.07)
-    TAIL_WHITE = fur("fffaf0", "e9dfcf", "ffffff", streak=1.0, var=0.05)
+    FUR = plush("f6dca0", "d6a556", "fff3d0")
+    FUR_LEG = plush("f6dca0", "d6a556", "fff3d0")
+    WHITE = plush("fffaf0", "e6dac6", "ffffff", var=0.04)
+    TAILF = plush("f8e2a8", "d8a04c", "fff4d4")
+    TAIL_WHITE = plush("fffaf0", "e9dfcd", "ffffff", var=0.04)
     MOON = moon_fur()
     RED = solid("c8102e", 0.06)
     BLACK = solid("1b1414", 0.05)
     NOSE = solid("2a1a1a", 0.04)
-    ROPE = cloth("e9d6a8", None, fold=0.12)
+    ROPE = cloth("eedcac", None, fold=0.14)
     PAPER = solid("fbfbf6", 0.02)
-    GOLD = gold("f2c14e", "8c5a12", "fff2c0")
+    GOLD = gold("f5c851", "8c5a12", "fff4c8", sparkle=0.07)
     EYE = glowball("fffbe0", "ffb11f")
+    MARK = glowball("ffd0a0", "ff2a3a")
     FOXFIRE = glowball("e8fbff", "38a8ff")
     JEWEL = glowball("ffffff", "8fd6ff")
+    shide = d_pixels(["##..", ".##.", "..##", ".##.", "##..", ".##.", "..##"], {"#": "e9e9df"}, center=True)
 
     root = m.bone("root", (0, 0, 0))
     body = m.bone("body", (0, 26, 0), "root")
-    body.add((-6, 19, -14), (12, 12, 28), FUR, inflate=0.3, face_mats={"down": WHITE})
-    body.add((-6.5, 18, -16), (13, 13, 7), WHITE, inflate=0.3)                     # chest ruff
-    body.add((-5, 17, -17.5), (10, 8, 3), WHITE)
-    # shimenawa rope collar + shide paper
-    body.add((-7, 27, -16.6), (14, 2.4, 9), ROPE)
-    for s in (-1, 1):
-        body.add((s * 3 - 1, 22, -17.4), (2, 5, 0.4), PAPER, decals={"north": d_pixels(["#.", ".#", "#.", ".#", "#."], {"#": "d8d8d0"})})
-    body.add((-1, 21.5, -17.6), (2, 5.5, 0.4), PAPER)
-    body.add((-2.5, 25.5, -17.8), (5, 3, 1), GOLD)                                  # bell-knot
+    ellipsoid(body, (0, 25, 0), (6.4, 6.6, 14.5), FUR, layers=5, axis="z")
+    ellipsoid(body, (0, 23.5, -12.5), (6.8, 7.5, 5), WHITE, layers=3)                   # chest
+    ellipsoid(body, (0, 24.5, -15.5), (6.2, 6.4, 3.6), WHITE, layers=3)                 # soft chest ruff
+    ellipsoid(body, (0, 20.5, -14.8), (4.4, 3.4, 3.2), WHITE, layers=2)
+    for z in (-6, 0, 6, 11):                                                              # back fur crest
+        tuft(body, (0, 31.4, z), (2.4, 2.4, 5), FUR, pitch=30)
+    # shimenawa rope (twisted), shide papers and a golden bell
+    for k in range(9):
+        a = -80 + k * 20
+        tuft(body, (math.sin(math.radians(a)) * 7.4, 28.5 - abs(math.sin(math.radians(a))) * 1.5, -15.5 + abs(math.sin(math.radians(a))) * 4.8),
+             (3.2, 2.6, 2.6), ROPE, yaw=a, roll=25 * (1 if k % 2 else -1))
+    for x in (-4, 0, 4):
+        body.add((x - 1.1, 19.5, -18.3), (2.2, 7, 0.4), PAPER, decals={"north": shide})
+    obox(body, (-2, 24.5, -19.4), (4, 4, 3), GOLD, axis="z")
+    gm = m.bone("glow_marks", (0, 26, 0), "body")
+    for s_ in (-1, 1):                                                                    # kumadori flank markings
+        for k, (z, y, ln) in enumerate(((-6, 27, 8), (2, 25.5, 7), (9, 27, 5))):
+            gm.add((s_ * 6.55 - 0.15, y, z), (0.3, 0.8, ln), MARK, pivot=(s_ * 6.5, y, z), rotation=(18 - k * 12, 0, 0))
 
     # ------------------------------------------------------------------ head
     neck = m.bone("neck", (0, 29, -14), "body", (-25, 0, 0))
-    neck.add((-4.5, 26, -20), (9, 9, 9), FUR)
+    obox(neck, (-4.6, 25.5, -21), (9.2, 9.5, 10), FUR, axis="z")
+    ellipsoid(neck, (0, 28.5, -17.5), (5.8, 5.6, 5), WHITE, layers=3)                   # mane collar
     head = m.bone("head", (0, 33, -19), "neck", (25, 0, 0))
-    head.loc("mouth", (0, 30, -32))
-    head.add((-4.5, 29, -25), (9, 8, 8), FUR, inflate=0.2)
-    head.add((-2.6, 28.5, -32), (5.2, 4, 7.5), FUR)                                  # snout
-    head.add((-2.4, 28, -31.5), (4.8, 1.4, 7), WHITE)                                # jaw
-    head.add((-1, 31.6, -32.3), (2, 1.2, 1), NOSE)
-    for s in (-1, 1):
-        head.add((s * 5 - 1.5, 28.5, -24), (3, 4.5, 4), WHITE, pivot=(s * 5, 31, -22), rotation=(0, 0, -25 * s))  # cheek fluff
-        # tall ears (3 tiers) with crimson insides
-        e = m.bone("ear_r" if s < 0 else "ear_l", (s * 3, 37, -21), "head", (0, 0, -12 * s))
-        e.add((s * 3 - 2, 36.5, -22), (4, 3, 2), FUR)
-        e.add((s * 3 - 1.5, 39.5, -22), (3, 3, 1.8), FUR)
-        e.add((s * 3 - 0.9, 42.5, -21.8), (1.8, 2.5, 1.4), BLACK)
-        e.add((s * 3 - 1.2, 37, -22.3), (2.4, 4.5, 0.4), RED)
-    # kumadori markings: brows, eye lines, muzzle stripes
-    face = d_pixels(["RR....RR", ".RR..RR.", "........", "........"], {"R": "c8102e"}, center=True)
-    head.add((-4.6, 33.5, -25.4), (9.2, 3.5, 0.4), FUR, decals={"north": face})
-    for s in (-1, 1):
-        head.add((s * 2.8 - 0.5, 30.5, -30), (1, 0.6, 4), RED)
-    ge = m.bone("glow_eyes", (0, 33, -25.5), "head")
-    for s in (-1, 1):
-        ge.add((s * 2.4 - 0.9, 32.6, -25.6), (1.8, 1.0, 0.4), EYE)
-    gj = m.bone("glow_jewel", (0, 39.5, -24), "head")                                    # hoshi-no-tama
-    gj.add((-1.2, 38.5, -25.2), (2.4, 2.4, 2.4), JEWEL, pivot=(0, 39.7, -24), rotation=(45, 0, 45))
+    head.loc("mouth", (0, 30, -34))
+    ellipsoid(head, (0, 33, -22), (4.8, 4.4, 4.8), FUR, layers=3)
+    obox(head, (-3, 29.3, -32), (6, 4.8, 8.5), FUR, axis="z")                           # snout
+    obox(head, (-1.9, 29, -36), (3.8, 3.4, 5), FUR, axis="z")                           # muzzle tip
+    obox(head, (-2.8, 28.2, -35), (5.6, 1.6, 10), WHITE, axis="z")                       # jaw
+    head.add((-1.1, 31.6, -36.6), (2.2, 1.6, 1.2), NOSE)
+    for s_ in (-1, 1):
+        for k in range(3):                                                                 # sweeping cheek fluff
+            tuft(head, (s_ * (5 + k * 0.6), 30.5 - k * 0.9, -21 + k * 1.2), (1.6, 3, 6), WHITE, yaw=-40 * s_, roll=-25 * s_ - k * 10 * s_)
+        e = m.bone("ear_r" if s_ < 0 else "ear_l", (s_ * 3, 37, -21), "head", (0, 0, -12 * s_))
+        for k, (w, h, d) in enumerate(((4.4, 3.2, 2.4), (3.4, 3.2, 2.2), (2.4, 3, 1.8), (1.4, 2.4, 1.2))):
+            e.add((s_ * 3 - w / 2, 36.5 + k * 3, -22.5 + k * 0.2), (w, h, d), FUR if k < 3 else BLACK)
+        e.add((s_ * 3 - 1.5, 37, -22.8), (3, 8, 0.4), RED)
+        e.add((s_ * 3 - 0.9, 39, -23), (1.8, 4, 0.4), WHITE)
+    ge = m.bone("glow_eyes", (0, 33, -26), "head")
+    for s_ in (-1, 1):
+        ge.add((s_ * 2.5 - 1.0, 32.8, -26.9), (2.0, 1.0, 0.4), EYE)
+        ge.add((s_ * 2.5 - 1.4, 34.2, -26.6), (2.8, 0.6, 0.4), MARK, pivot=(s_ * 2.5, 34.5, -26.4), rotation=(0, 0, 18 * s_))
+        ge.add((s_ * 2.1 - 0.3, 30.4, -33.2), (0.6, 0.5, 5), MARK)
+    ge.add((-0.6, 35.5, -26.8), (1.2, 2.6, 0.4), MARK)
+    gj = m.bone("glow_jewel", (0, 41, -24), "head")                                      # hoshi-no-tama
+    gj.add((-1.6, 39.4, -25.6), (3.2, 3.2, 3.2), JEWEL, pivot=(0, 41, -24), rotation=(45, 0, 45))
+    go = m.bone("glow_orbs", (0, 34, 0), "body")                                          # orbiting foxfire
+    for k in range(3):
+        a = math.radians(k * 120)
+        go.add((math.cos(a) * 13 - 1.3, 33, math.sin(a) * 13 - 1.3), (2.6, 2.6, 2.6), FOXFIRE,
+               pivot=(math.cos(a) * 13, 34.3, math.sin(a) * 13), rotation=(45, 45, 0))
 
     # ------------------------------------------------------------------ legs
-    for name, x, z in (("leg_fr", -3.6, -11), ("leg_fl", 3.6, -11), ("leg_br", -3.6, 10), ("leg_bl", 3.6, 10)):
+    for name, x, z in (("leg_fr", -3.6, -11), ("leg_fl", 3.6, -11), ("leg_br", -3.6, 10.5), ("leg_bl", 3.6, 10.5)):
         s = -1 if x < 0 else 1
+        hind = z > 0
         up = m.bone(name, (x, 21, z), "body")
-        up.add((x - 2.2, 11, z - 2.4), (4.4, 10.5, 4.8), FUR, mirror=s > 0)
+        if hind:
+            ellipsoid(up, (x, 17.5, z + 0.5), (2.8, 5, 3.4), FUR, layers=3, mirror=s > 0)
+        else:
+            obox(up, (x - 2.1, 11, z - 2.3), (4.2, 10.5, 4.6), FUR, mirror=s > 0)
+        tuft(up, (x, 13, z + 2.2), (2.6, 3.5, 2), WHITE, pitch=30)
         lo = m.bone(name + "1", (x, 11.5, z), name)
-        lo.add((x - 1.6, 2, z - 1.6), (3.2, 10, 3.2), FUR_LEG, mirror=s > 0)
-        lo.add((x - 2, 0, z - 3), (4, 2.4, 5), WHITE)
-        lo.add((x - 1.7, 6, z - 1.9), (3.4, 1, 3.8), RED)
+        obox(lo, (x - 1.5, 2, z - 1.5), (3, 10, 3), FUR_LEG, mirror=s > 0)
+        obox(lo, (x - 1.9, 0, z - 3), (3.8, 2.4, 5), WHITE, axis="z")
+        obox(lo, (x - 1.8, 5.5, z - 1.8), (3.6, 1, 3.6), RED)
+        obox(lo, (x - 1.8, 3.2, z - 1.8), (3.6, 0.8, 3.6), GOLD)
 
     # ------------------------------------------------------------------ ten tails
     tails = []
     for i in range(TAILS):
         if i == TAILS - 1:
-            ry, rx = 0.0, 52.0                                 # the tenth tail stands tall at the centre
+            ry, rx = 0.0, 52.0
         else:
             k = i - 4
             ry = k * 24.0
             rx = 40 - abs(k) * 5
         base = (0, 28, 13)
-        mat = MOON if i == TAILS - 1 else [TAILF, TAILF, TAILF, TAIL_WHITE]
-        names = chain(m, f"tail{i}_", "body", base, "+z", [6, 7, 7, 6],
-                      [(3.6, 3.6), (6.2, 6.2), (7, 7), (5.2, 5.2)],
-                      [(rx, ry, 0), (14, 0, 0), (16, 0, 0), (18, 0, 0)], mat, share="tail" if i < TAILS - 1 else None)
+        mat = MOON if i == TAILS - 1 else [TAILF, TAILF, TAILF, TAILF, TAIL_WHITE]
+
+        def fluff(bone, j, p, mat_=mat):
+            if j in (1, 2, 3):
+                mt = mat_ if not isinstance(mat_, list) else mat_[j]
+                for s_ in (-1, 1):
+                    tuft(bone, (p[0] + s_ * 3, p[1] + 1, p[2] + 3.5), (2.4, 4.5, 6), mt, yaw=15 * s_, roll=-20 * s_)
+        names = chain(m, f"tail{i}_", "body", base, "+z", [6, 7, 7.5, 7, 6],
+                      [(4.2, 4.2), (6.8, 6.8), (8.4, 8.4), (7.8, 7.8), (5.8, 5.8)],
+                      [(rx, ry, 0), (12, 0, 0), (14, 0, 0), (14, 0, 0), (16, 0, 0)], mat, extra=fluff, rounded=True)
         tails.append(names)
         tip = m.get(names[-1])
         x, y, z = tip.pivot
         g = m.bone(f"glow_fire{i}", tip.pivot, names[-1])
-        g.add((x - 2, y - 2, z + 5.4), (4, 4, 3.5), FOXFIRE)
-        g.add((x - 1.1, y - 1.1, z + 8.6), (2.2, 2.2, 2.2), FOXFIRE)
-    scale_subtree(m, "neck", 1.3)
-    # rope seal on the tenth tail (removed in phase III)
+        g.add((x - 2.4, y - 2.4, z + 5.6), (4.8, 4.8, 4.2), FOXFIRE)
+        g.add((x - 1.5, y - 1.5, z + 9.4), (3, 3, 3.2), FOXFIRE)
+        g.add((x - 0.8, y - 0.8, z + 12.2), (1.6, 1.6, 2.4), FOXFIRE)
+    scale_subtree(m, "neck", 1.25)
     seal = m.bone("tail_seal", m.get(tails[-1][1]).pivot, tails[-1][1])
     sx, sy, sz = seal.pivot
-    seal.add((sx - 3.6, sy - 3.6, sz + 2), (7.2, 7.2, 2.2), ROPE)
-    seal.add((sx - 0.6, sy - 6, sz + 2.4), (1.2, 3, 0.4), PAPER)
+    obox(seal, (sx - 4.4, sy - 4.4, sz + 2), (8.8, 8.8, 2.4), ROPE, axis="z")
+    seal.add((sx - 0.6, sy - 7.5, sz + 2.6), (1.2, 3.5, 0.4), PAPER)
 
-    c = Creature("tenko", m, scale=1.35, variants=2, variant_expr="variable.ph >= 3 ? 1 : 0",
+    c = Creature("tenko", m, scale=1.7, variants=2, variant_expr="variable.ph >= 3 ? 1 : 0",
                  description="Tenko, the Ten-Tailed Fox")
     c.pre = COMMON_PRE + [
         "variable.flare = math.lerp(variable.flare ?? 0.0, variable.act == 0 ? 0.0 : 1.0, 0.08)",
@@ -160,6 +188,8 @@ def build() -> Creature:
     idle.rot("ear_l", [0, 0, wave(-4, 50, 60)])
     idle.pos("glow_jewel", [0, wave(0.6, 120), 0])
     idle.rot("glow_jewel", [0, f"{t} * 90", 0])
+    idle.rot("glow_orbs", [0, f"{t} * 50", 0])
+    idle.pos("glow_orbs", [0, wave(1.2, 80), 0])
     for i, names in enumerate(tails):
         ph = i * 37
         spd = 70 + (i % 3) * 12

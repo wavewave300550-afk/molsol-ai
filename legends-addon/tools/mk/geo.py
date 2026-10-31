@@ -159,7 +159,8 @@ class Model:
 
     def _tex_dims(self, c: Cube, face: str) -> Tuple[int, int]:
         w, h = self.face_dims(c, face)
-        d = c.density if c.density is not None else self.density
+        # faces carrying hand-drawn decals keep 1 texel per unit so the pixel art stays legible
+        d = c.density if c.density is not None else (1.0 if c.decals else self.density)
         return max(1, int(math.ceil(w * d - 0.25))), max(1, int(math.ceil(h * d - 0.25)))
 
     def _visible_faces(self, c: Cube):

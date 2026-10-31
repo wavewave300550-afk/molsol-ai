@@ -102,7 +102,8 @@ def seg_box(start, direction: str, length: float, a: float, b: float, overlap: f
 def chain(m: Model, name: str, parent: str, start, direction: str, lengths: Sequence[float],
           sections: Sequence[Tuple[float, float]], rots: Sequence[Optional[Tuple[float, float, float]]],
           mat, extra: Optional[Callable[[Bone, int, Tuple[float, float, float]], None]] = None,
-          overlap: float = 0.6, inflate: float = 0.0, share: Optional[str] = None, mirror=False) -> List[str]:
+          overlap: float = 0.6, inflate: float = 0.0, share: Optional[str] = None, mirror=False,
+          rounded: bool = False) -> List[str]:
     """Chain of bones (tail, neck, horn...).  Bone i's pivot is the end of segment i-1."""
     d = AXES[direction]
     names = []
@@ -112,8 +113,11 @@ def chain(m: Model, name: str, parent: str, start, direction: str, lengths: Sequ
         bn = f"{name}{i}"
         bone = m.bone(bn, p, par, rots[i] if i < len(rots) else None)
         o, s = seg_box(p, direction, L, sections[i][0], sections[i][1], overlap if i else 0.0)
-        bone.add(o, s, mat[i] if isinstance(mat, (list, tuple)) else mat, inflate=inflate,
-                 share=(f"{share}{i}" if share else None), mirror=mirror)
+        mt = mat[i] if isinstance(mat, (list, tuple)) else mat
+        if rounded:
+            obox(bone, o, s, mt, axis=direction[1], mirror=mirror)
+        else:
+            bone.add(o, s, mt, inflate=inflate, share=(f"{share}{i}" if share else None), mirror=mirror)
         if extra:
             extra(bone, i, p)
         names.append(bn)
@@ -219,3 +223,49 @@ def translate_subtree(m: Model, name: str, d):
             if cb.pivot:
                 cb.pivot = tp(cb.pivot)
         b.locators = {n: tp(p) for n, p in b.locators.items()}
+
+
+# --------------------------------------------------------------------------- rounded forms
+def obox(bone: Bone, origin, size, mat, c=None, axis: str = "y", **kw):
+    """Box with chamfered edges (octagonal cross-section) along `axis`: two interlocking boxes.
+    The second box is pulled in slightly at the ends so no faces are coplanar (no z-fighting)."""
+    ox, oy, oz = origin
+    sx, sy, sz = size
+    i = {"x": 0, "y": 1, "z": 2}[axis]
+    cross = [k for k in range(3) if k != i]
+    if c is None:
+        c = min(size[cross[0]], size[cross[1]]) * 0.22
+    t = min(0.35, size[i] * 0.04)
+    o1, s1 = [ox, oy, oz], [sx, sy, sz]
+    o2, s2 = [ox, oy, oz], [sx, sy, sz]
+    o1[cross[0]] += c
+    s1[cross[0]] -= 2 * c
+    o2[cross[1]] += c
+    s2[cross[1]] -= 2 * c
+    o2[i] += t
+    s2[i] -= 2 * t
+    bone.add(tuple(o1), tuple(s1), mat, **kw)
+    bone.add(tuple(o2), tuple(s2), mat, **kw)
+
+
+def ellipsoid(bone: Bone, center, radii, mat, layers: int = 4, axis: str = "y", **kw):
+    """Rounded mass made of stacked chamfered slabs."""
+    cx, cy, cz = center
+    rx, ry, rz = radii
+    i = {"x": 0, "y": 1, "z": 2}[axis]
+    R = [rx, ry, rz]
+    for k in range(layers):
+        a = -1 + (2 * k + 1) / layers
+        f = math.sqrt(max(0.05, 1 - a * a))
+        h = 2 * R[i] / layers
+        sz = [R[0] * 2 * f, R[1] * 2 * f, R[2] * 2 * f]
+        sz[i] = h + 0.02
+        org = [cx - sz[0] / 2, cy - sz[1] / 2, cz - sz[2] / 2]
+        org[i] = [cx, cy, cz][i] - R[i] + k * h
+        obox(bone, tuple(org), tuple(sz), mat, axis=axis, **kw)
+
+
+def tuft(bone: Bone, at, size, mat, yaw=0.0, pitch=0.0, roll=0.0, **kw):
+    """A rotated tuft/plate centred at `at`."""
+    bone.add((at[0] - size[0] / 2, at[1] - size[1] / 2, at[2] - size[2] / 2), size, mat, pivot=at,
+             rotation=(pitch, yaw, roll), **kw)

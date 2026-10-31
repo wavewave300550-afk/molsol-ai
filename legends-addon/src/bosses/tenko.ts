@@ -195,21 +195,21 @@ export class Tenko extends Boss {
   *swipe(t: Player): Co {
     this.faceNow(t.location);
     const a = this.act("swipe");
-    teleCone(this.dim, this.ground(this.pos), dirOfYaw(this.yaw), 110, 5, a.marks[0]);
+    teleCone(this.dim, this.ground(this.pos), dirOfYaw(this.yaw), 110, 6, a.marks[0]);
     yield a.marks[0];
     sound(this.dim, "mob.fox.bite", this.pos, 2, 0.8);
-    strike(this, this.pos, 7, (p) => inCone(p, this.pos, dirOfYaw(this.yaw), 110, 5), 12, { knock: 0.8 });
+    strike(this, this.pos, 8, (p) => inCone(p, this.pos, dirOfYaw(this.yaw), 110, 6), 12, { knock: 0.8 });
     yield a.ticks - a.marks[0];
   }
 
   *lash(): Co {
     const a = this.act("tail_lash");
     const c = this.ground(this.pos);
-    teleCircle(this.dim, c, 6.5, a.marks[0]);
+    teleCircle(this.dim, c, 7.5, a.marks[0]);
     yield a.marks[0];
     sound(this.dim, "mob.breeze.whirl", c, 3, 1.1);
     shock(this.dim, c, 7, 8, C.fox);
-    strike(this, c, 8, (p) => inCircle(p, c, 6.5), 14, { knock: 1.5, up: 0.4, from: c });
+    strike(this, c, 9, (p) => inCircle(p, c, 7.5), 14, { knock: 1.5, up: 0.4, from: c });
     yield a.ticks - a.marks[0];
   }
 

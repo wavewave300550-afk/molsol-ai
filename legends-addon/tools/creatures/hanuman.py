@@ -11,7 +11,7 @@ discus, conch, sword, mace, bow and arrow.
 """
 from __future__ import annotations
 
-from .common import COMMON_PRE, Creature, chain, kf, mpt, mrot, wave
+from .common import COMMON_PRE, Creature, chain, ellipsoid, kf, mpt, mrot, obox, wave
 from mk.geo import Model
 from mk.paint import (C, bake, by_face, cloth, crystal, d_band, d_center_gem, d_combine, d_pixels, d_teeth, fbm, flame,
                       fur, glowball, gold, h2, hx, kanok, mix, shade, solid)
@@ -30,7 +30,7 @@ def diamond_fur(base="f4f1e8", dark="b9bccb", light="ffffff", spark="bfe9ff"):
 
 
 def build() -> Creature:
-    m = Model("geometry.legends.hanuman", seed=303)
+    m = Model("geometry.legends.hanuman", seed=303, density=2.0)
     m.bounds = (6.0, 6.5, 2.2)
 
     FUR = diamond_fur()
@@ -62,8 +62,18 @@ def build() -> Creature:
         waist.add((s * 5 - 1.5, 15, -4.9), (3, 10, 1), SAMPOT, pivot=(s * 5, 25, -4.5), rotation=(0, 0, 6 * s))  # ชายแครง
     waist.add((-7, 19, 3.6), (14, 8, 1), SAMPOT)
 
+    # flowing sashes (ชายผ้า) from the belt
+    for s_ in (-1, 1):
+        chain(m, "sash_r" if s_ < 0 else "sash_l", "waist", (s_ * 6, 27, -3), "-y", [5, 5, 5, 4],
+              [(3, 0.6), (3, 0.6), (2.8, 0.6), (2.6, 0.6)], [(-8, 0, -10 * s_), (6, 0, 0), (8, 0, 0), (6, 0, 0)],
+              [SAMPOT, KANOK, SAMPOT, KANOK])
     chest = m.bone("chest", (0, 29, 0), "waist")
-    chest.add((-8, 29, -4.5), (16, 15, 9), FUR, inflate=0.2)
+    obox(chest, (-8, 29, -4.5), (16, 15, 9), FUR)
+    for s_ in (-1, 1):
+        ellipsoid(chest, (s_ * 3.8, 39, -3.8), (3.4, 2.6, 1.4), FUR_SH, layers=2)        # pectorals
+    # kanok flame back ornament (กนกเปลว)
+    for k, (x, hgt, rz) in enumerate(((0, 14, 0), (-4, 11, 14), (4, 11, -14), (-7.5, 8, 30), (7.5, 8, -30))):
+        chest.add((x - 1.8, 38, 4.6), (3.6, hgt, 1), GOLD if k % 2 == 0 else KANOK, pivot=(x, 38, 5), rotation=(-12, 0, rz))
     chest.add((-6, 31, -4.9), (12, 6, 1), FUR_SH)                                         # abs
     # สังวาล crossed chains
     for s in (-1, 1):
@@ -155,6 +165,8 @@ def build() -> Creature:
     tri.add((-9.4, 19.5, 16.5), (1, 1, 3), TASSEL)
     tri.add((-12.6, 19.2, -22.5), (7.4, 1.6, 2), GOLD)                                     # cross guard
     tri.add((-9.9, 19.1, -30), (2, 1.8, 8), CRYSTAL)                                       # centre blade
+    gtri = m.bone("glow_trident", (-8.9, 20, -26), "trident")
+    gtri.add((-9.5, 19.5, -31), (1.2, 0.8, 6), glowball("ffffff", "8fe8ff"))
     for s in (-1, 1):
         tri.add((-8.9 + s * 3.2 - 0.6, 19.4, -27), (1.2, 1.2, 5), CRYSTAL, pivot=(-8.9 + s * 3.2, 20, -22),
                 rotation=(0, 10 * s, 0))
@@ -230,7 +242,7 @@ def build() -> Creature:
         fb.add((x - 2.2, y + 0.4, z + 0.5), (4.4, 4.5, 3.5), FIRE)
         fb.add((x - 1.4, y + 4, z + 1), (2.8, 3, 2.5), FIRE)
 
-    c = Creature("hanuman", m, scale=1.15, description="Hanuman, Son of the Wind")
+    c = Creature("hanuman", m, scale=1.5, description="Hanuman, Son of the Wind")
     c.pre = COMMON_PRE + [
         "variable.divine = math.lerp(variable.divine ?? 0.0, variable.ph >= 3 ? 1.0 : 0.0, 0.05)",
         "variable.size = math.lerp(variable.size ?? 1.0, query.property('legends:var') == 1 ? 0.35 : (variable.ph >= 3 ? 1.45 : 1.0), 0.1)",
@@ -250,6 +262,9 @@ def build() -> Creature:
 
     idle = c.loop("idle", "variable.calm")
     idle.pos("chest", [0, wave(0.35, 110), 0])
+    for side in ("r", "l"):
+        for j in range(4):
+            idle.rot(f"sash_{side}{j}", [wave(6 + j * 3, 90, -j * 40 + (0 if side == "r" else 70)), 0, wave(4 + j * 2, 70, -j * 35)])
     idle.rot("chest", [wave(1.5, 110), 0, 0])
     idle.rot("head", ["query.target_x_rotation * 0.7", "query.target_y_rotation * 0.7", 0])
     idle.rot("jaw", [f"math.max(0.0, {wave(8, 70)})", 0, 0])

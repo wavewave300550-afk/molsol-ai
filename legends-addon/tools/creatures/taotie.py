@@ -34,7 +34,7 @@ def molten(base_painter, crack="ff7a1a", hot="ffd36b"):
 
 
 def build() -> Creature:
-    m = Model("geometry.legends.taotie", seed=101)
+    m = Model("geometry.legends.taotie", seed=101, density=2.0)
     m.bounds = (8.0, 6.5, 2.0)
 
     BRZ = molten(bronze("4c6c54", "86c4a7", "c8a456", "1f2b24"))
@@ -155,6 +155,23 @@ def build() -> Creature:
     jaw.add((-6, 29.8, -47), (12, 1.5, 13), TONGUE)
     jaw.add((-14, 23.5, -33), (28, 9, 1), MOUTH)
 
+    # a halo of flame-scroll mane behind the mask (the bronze "fire" of ritual vessels)
+    mane = m.bone("mane", (0, 44, -26), "head")
+    import math as _m
+    for k in range(13):
+        a = _m.radians(10 + k * 160 / 12)
+        r = 27 + (k % 2) * 4
+        px, py = _m.cos(a) * r, 42 + _m.sin(a) * r * 0.85
+        ln = 11 + (k % 3) * 2.5
+        mane.add((px - 3, py - ln / 2, -27.5), (6, ln, 3.4), GOLD if k % 2 else BRZ, pivot=(px, py, -26),
+                 rotation=(0, 0, -(_m.degrees(a) - 90)))
+        mane.add((px - 1.6, py + ln / 2 - 1, -27), (3.2, 5.5, 2.4), GOLD, pivot=(px, py, -26),
+                 rotation=(0, 0, -(_m.degrees(a) - 90) + 28))
+    gmk = m.bone("glow_mask", (0, 46, -52), "head")                                # inlaid luminous mask lines
+    for s_ in (-1, 1):
+        gmk.add((s_ * 9.5 - 7.5, 51.6, -53.9), (15, 0.7, 0.4), glowball("ffd0a0", "ff4a1a"), pivot=(s_ * 9.5, 52, -53.7), rotation=(0, 0, 10 * s_))
+        gmk.add((s_ * 17 - 0.4, 36, -51.9), (0.8, 18, 0.4), glowball("ffd0a0", "ff4a1a"))
+    gmk.add((-0.4, 39, -56.1), (0.8, 16, 0.4), glowball("fff0c0", "ffb02a"))
     # C-curled ram horns (chains), the left one mirrored
     hl = [10, 10, 9, 8, 7, 6, 5]
     hs = [(11, 10), (10, 9), (9, 8), (7.5, 7), (6, 5.5), (4.5, 4), (3, 3)]
@@ -219,7 +236,7 @@ def build() -> Creature:
     gv.add((-1.5, 8, -1.5), (3, 14, 3), glowball("ffe08a", "ff5a10"))
 
     # ------------------------------------------------------------------ creature spec
-    c = Creature("taotie", m, scale=1.3, variants=2, variant_expr="variable.ph >= 2 ? 1 : 0",
+    c = Creature("taotie", m, scale=1.6, variants=2, variant_expr="variable.ph >= 2 ? 1 : 0",
                  description="Taotie, the Devouring Maw")
     c.pre = COMMON_PRE + [
         "variable.p3 = math.lerp(variable.p3 ?? 0.0, variable.ph >= 3 ? 1.0 : 0.0, 0.06)",
@@ -244,6 +261,7 @@ def build() -> Creature:
     idle.rot("tail0", [wave(6, 110), wave(14, 80), 0])
     idle.rot("tail1", [wave(8, 110, -40), 0, 0])
     idle.rot("horn_r0", [0, 0, wave(1.2, 60)])
+    idle.rot("mane", [0, 0, wave(2.5, 50)])
     idle.rot("horn_l0", [0, 0, wave(-1.2, 60)])
     idle.rot("vortex_a", [0, f"{t} * 160", 0])
     idle.rot("vortex_b", [0, f"-{t} * 230", 0])

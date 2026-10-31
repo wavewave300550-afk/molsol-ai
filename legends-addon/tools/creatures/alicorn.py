@@ -10,7 +10,7 @@ and lights her wingtips.
 """
 from __future__ import annotations
 
-from .common import COMMON_PRE, Creature, chain, kf, mrot, ring_cubes, scale_subtree, wave
+from .common import COMMON_PRE, Creature, chain, ellipsoid, kf, mrot, obox, ring_cubes, scale_subtree, tuft, wave
 from mk.geo import Model
 from mk.paint import (C, bake, crystal, d_pixels, fbm, feathers, fur, glowball, gold, hx, mix, ramp, shade,
                       solid)
@@ -42,124 +42,150 @@ def sheen(base_painter):
 
 
 def build() -> Creature:
-    m = Model("geometry.legends.alicorn", seed=404)
-    m.bounds = (7.0, 6.0, 2.0)
+    m = Model("geometry.legends.alicorn", seed=404, density=2.0)
+    m.bounds = (8.0, 7.0, 2.4)
 
-    COAT = sheen(fur("f7f3ff", "d5cbe8", "ffffff", streak=0.6, var=0.05))
-    COAT_SH = sheen(fur("ebe4f7", "c4b8dc", "f8f6ff", streak=0.6, var=0.05))
+    COAT = sheen(fur("f8f4ff", "d8cdea", "ffffff", streak=0.5, var=0.04))
+    COAT_SH = sheen(fur("ece5f8", "c6badf", "f8f6ff", streak=0.5, var=0.04))
     MANE = aurora()
     MANE2 = aurora(("c9a2ff", "8fd8ff", "ffd1f0", "fff1b8"), axis=1)
     HOOF = gold("f0c64a", "8a5d10", "fff6c8")
-    GOLD = gold("f2cf5b", "8f6413", "fff7cf")
-    FEATH = feathers("fbf8ff", "d9c9ff", "e8ddff", row=2, tip_from=0.55)
-    FEATH_P = feathers("f6f2ff", "a98bff", "dccfff", row=2, tip_from=0.4)
-    FEATH_C = feathers("ffffff", "efe6ff", "f1ebff", row=2, tip_from=0.7, ragged=False)
-    NOSE = solid("e8d9ee", 0.04)
+    GOLD = gold("f5d470", "8f6413", "fffae0", sparkle=0.08)
+    FEATH = feathers("fdfbff", "dcccff", "ece4ff", row=3, tip_from=0.5)
+    FEATH_P = feathers("fbf8ff", "b49cff", "e2d8ff", row=3, tip_from=0.35)
+    FEATH_C = feathers("ffffff", "f1eaff", "f6f2ff", row=3, tip_from=0.75, ragged=False)
+    NOSE = solid("e9dcf0", 0.03)
     EYE = glowball("ffffff", "a46bff")
-    HORN_W = crystal("e8f4ff", "ffffff", "a9c6f0", facet=2)
-    HORN_R = crystal("ff7a7a", "ffe0e0", "c02a3a", facet=2)
-    HORN_B = crystal("7ac8ff", "e0f6ff", "2a6ac0", facet=2)
-    HORN_G = crystal("ffd36a", "fff6d0", "c0861a", facet=2)
+    HORN_W = crystal("eef6ff", "ffffff", "a9c6f0", facet=2)
+    HORN_R = crystal("ff8a8a", "ffe6e6", "c02a3a", facet=2)
+    HORN_B = crystal("8ad0ff", "e6f8ff", "2a6ac0", facet=2)
+    HORN_G = crystal("ffd877", "fff8dc", "c0861a", facet=2)
     STAR = glowball("ffffff", "ffd86a")
     TIP = glowball("ffffff", "c7a6ff")
+    GEM = d_pixels([".PP.", "PWWP", "PWWP", ".PP."], {"P": "b07cff", "W": "f3e8ff"}, center=True)
 
     root = m.bone("root", (0, 0, 0))
     body = m.bone("body", (0, 30, 0), "root")
-    body.add((-7, 22, -15), (14, 14, 30), COAT, inflate=0.3, face_mats={"down": COAT_SH})
-    body.add((-7.5, 24, -17), (15, 13, 6), COAT)                                        # chest
-    body.add((-6.5, 23, 12), (13, 12, 5), COAT_SH)                                      # rump
-    body.add((-7.6, 30.5, -6), (15.2, 1.2, 2.5), GOLD)                                  # thin golden girth
     body.loc("horn_root", (0, 46, -26))
+    ellipsoid(body, (0, 30, 0), (7.4, 7.2, 15.5), COAT, layers=5, axis="z")         # barrel
+    ellipsoid(body, (0, 29.5, -11.5), (7.8, 8.4, 6.5), COAT, layers=3)               # deep chest
+    ellipsoid(body, (0, 31, 11.5), (7.6, 7.6, 7.2), COAT_SH, layers=3)               # haunches
+    obox(body, (-5.6, 22.4, -9), (11.2, 2, 18), COAT_SH, axis="z")                   # belly line
+    # golden barding: peytral with a gem, girth band and crupper ornament
+    body.add((-6.2, 24.6, -18.4), (12.4, 6.5, 1.4), GOLD, decals={"north": GEM})
+    for s_ in (-1, 1):
+        tuft(body, (s_ * 7, 29, -15.5), (1.2, 8, 6), GOLD, yaw=-25 * s_)
+        tuft(body, (s_ * 7.6, 33, 15), (1, 4, 6), GOLD, yaw=20 * s_)
+    obox(body, (-7.7, 25.5, -3.2), (15.4, 13, 2.2), GOLD, axis="x")
 
     # ------------------------------------------------------------------ neck, head, horn
     neck = m.bone("neck", (0, 34, -13), "body", (-38, 0, 0))
-    neck.add((-4.5, 30, -27), (9, 11, 16), COAT, inflate=0.2)
-    neck.add((-3.5, 28.5, -25), (7, 3, 12), COAT_SH)
+    obox(neck, (-4.6, 29, -28), (9.2, 12.5, 17), COAT, axis="z")
+    obox(neck, (-3.6, 27.5, -26), (7.2, 3, 13), COAT_SH, axis="z")
     head = m.bone("head", (0, 36, -26), "neck", (38, 0, 0))
-    head.loc("horn", (0, 46, -34))
-    head.add((-3.6, 32, -33), (7.2, 7, 8), COAT)                                         # skull
-    head.add((-3.0, 30, -43), (6, 6, 11), COAT)                                          # long face
-    head.add((-3.2, 29, -38), (6.4, 3, 6), COAT_SH)                                      # jaw line
-    head.add((-3.0, 29.2, -42.5), (6, 2.6, 4.5), NOSE,
-             decals={"north": d_pixels(["K....K"], {"K": "6b5a7a"}, center=True)})
-    for s in (-1, 1):
-        head.add((s * 3.4 - 0.6, 38.5, -29), (1.2, 3.2, 2), COAT_SH, pivot=(s * 3.4, 38.5, -28), rotation=(-10, 0, 12 * s))
-    ge = m.bone("glow_eyes", (0, 35.5, -32), "head")
-    ge.add((-3.75, 34.6, -32.5), (0.4, 1.4, 2), EYE)
-    ge.add((3.35, 34.6, -32.5), (0.4, 1.4, 2), EYE)
-    head.add((-2, 38.6, -33.6), (4, 1, 4), GOLD)                                         # circlet
-    # spiral horn, one glow bone per colour (visibility picks the colour)
+    head.loc("horn", (0, 48, -34))
+    ellipsoid(head, (0, 35.6, -30.5), (4.3, 4.4, 4.8), COAT, layers=3)              # skull
+    obox(head, (-3.1, 30.8, -44), (6.2, 6.4, 13), COAT, axis="z")                   # long face
+    obox(head, (-3.5, 30, -38), (7, 3.6, 7), COAT_SH, axis="z")                     # jowls
+    head.add((-2.8, 29.6, -46), (5.6, 3.8, 4.4), NOSE,
+             decals={"north": d_pixels(["K....K", "......", ".MMMM."], {"K": "6b5a7a", "M": "c9b0d6"}, center=True)})
+    for s_ in (-1, 1):
+        tuft(head, (s_ * 2.6, 41, -29.5), (1.6, 4.6, 2.2), COAT_SH, roll=-14 * s_, pitch=-8)   # ears
+        tuft(head, (s_ * 2.6, 41.4, -29.8), (0.9, 3.2, 0.4), NOSE, roll=-14 * s_, pitch=-8)
+        head.add((s_ * 4.25 - 0.3, 36.6, -34.6), (0.6, 0.5, 3), solid("3a2a48"))            # lashes
+    ge = m.bone("glow_eyes", (0, 35.5, -33), "head")
+    ge.add((-4.35, 34.6, -34.5), (0.5, 1.8, 2.6), EYE)
+    ge.add((3.85, 34.6, -34.5), (0.5, 1.8, 2.6), EYE)
+    obox(head, (-4.6, 38.4, -34.2), (9.2, 1.2, 6.6), GOLD, axis="y")                 # circlet
+    head.add((-1.1, 38.2, -35), (2.2, 2.4, 1), GOLD, decals={"north": d_pixels(["P"], {"P": "b07cff"}, center=True)})
     for name, mat in (("glow_horn_w", HORN_W), ("glow_horn_r", HORN_R), ("glow_horn_b", HORN_B), ("glow_horn_g", HORN_G)):
-        hb = m.bone(name, (0, 39, -34), "head", (-28, 0, 0))
-        for k in range(6):
-            sz = 2.6 - k * 0.38
-            hb.add((-sz / 2, 39 + k * 2.2, -34 - sz / 2), (sz, 2.4, sz), mat, pivot=(0, 39 + k * 2.2, -34),
-                   rotation=(0, k * 28, 0))
-    # flowing mane: two ribbons down the neck + forelock
-    mane_l = [5, 5, 5, 4]
-    chain(m, "mane_a", "neck", (0, 42.5, -27), "+z", mane_l, [(3, 6), (3, 6.5), (3, 6), (2.6, 5)],
-          [(-6, 0, 0), (4, 0, 0), (8, 0, 0), (14, 0, 0)], MANE)
-    chain(m, "mane_b", "neck", (-3.2, 40, -24), "+z", [5, 5, 5], [(1.6, 7), (1.6, 7), (1.4, 6)],
+        hb = m.bone(name, (0, 39.5, -34), "head", (-30, 0, 0))
+        for k in range(8):
+            sz = 3.0 - k * 0.32
+            hb.add((-sz / 2, 39.5 + k * 2.3, -34 - sz / 2), (sz, 2.6, sz), mat, pivot=(0, 39.5 + k * 2.3, -34),
+                   rotation=(0, k * 30, 0))
+    # forelock
+    tuft(head, (0, 38.6, -36.4), (3.4, 5, 1.4), MANE, pitch=28)
+    # flowing mane: a crest along the neck with locks cascading down both sides
+    def mane_lock(bone, i, p):
+        for s_ in (-1, 1):
+            tuft(bone, (s_ * 3.4, p[1] - 3.5, p[2] + 2), (1.4, 8 - i * 0.6, 4.6), MANE2 if (i + (s_ > 0)) % 2 else MANE,
+                 roll=-12 * s_, pitch=-10)
+    chain(m, "mane_a", "neck", (0, 42.5, -27.5), "+z", [5, 5, 5, 4], [(3.2, 6.5), (3.2, 7), (3, 6.5), (2.8, 5.5)],
+          [(-6, 0, 0), (4, 0, 0), (8, 0, 0), (14, 0, 0)], MANE, extra=mane_lock)
+    chain(m, "mane_b", "neck", (-3.4, 40, -24), "+z", [5, 5, 5], [(1.6, 8), (1.6, 8), (1.4, 7)],
           [(0, 0, 25), (10, 0, 5), (12, 0, 5)], MANE2)
-    head.add((-1.5, 37, -35.5), (3, 4, 2), MANE, pivot=(0, 39, -34), rotation=(30, 0, 0))
 
-    # ------------------------------------------------------------------ legs
-    for name, x, z in (("leg_fr", -4, -11), ("leg_fl", 4, -11), ("leg_br", -4, 10), ("leg_bl", 4, 10)):
+    # ------------------------------------------------------------------ legs: muscular above, slender below, feathered fetlocks
+    for name, x, z, hind in (("leg_fr", -4.4, -11.5, False), ("leg_fl", 4.4, -11.5, False),
+                             ("leg_br", -4.4, 11, True), ("leg_bl", 4.4, 11, True)):
         s = -1 if x < 0 else 1
-        up = m.bone(name, (x, 24, z), "body")
-        up.add((x - 2.4, 13, z - 2.6), (4.8, 12, 5.2), COAT, mirror=s > 0)
-        lo = m.bone(name + "1", (x, 13, z), name)
-        lo.add((x - 1.8, 3, z - 1.8), (3.6, 10.5, 3.6), COAT_SH, mirror=s > 0)
-        lo.add((x - 2.2, 3, z - 2.2), (4.4, 2.4, 4.4), solid("f4eefc", 0.03))            # feathered fetlock
-        lo.add((x - 2.1, 0, z - 2.1), (4.2, 3, 4.2), HOOF)
+        up = m.bone(name, (x, 25, z), "body")
+        if hind:
+            ellipsoid(up, (x, 21, z + 0.5), (3.4, 6, 3.8), COAT, layers=3, mirror=s > 0)
+        else:
+            obox(up, (x - 2.7, 13.5, z - 2.9), (5.4, 12, 5.8), COAT, mirror=s > 0)
+        lo = m.bone(name + "1", (x, 13.5, z), name)
+        obox(lo, (x - 1.8, 3.2, z - 1.8), (3.6, 10.6, 3.6), COAT_SH, mirror=s > 0)
+        obox(lo, (x - 2.3, 11.4, z - 2.3), (4.6, 2.6, 4.6), COAT_SH)                       # knee
+        tuft(lo, (x, 4.5, z + 2.2), (4.4, 5, 2.4), MANE, pitch=25)                       # feathering
+        obox(lo, (x - 2.4, 0, z - 2.5), (4.8, 3, 5), HOOF)
+        obox(lo, (x - 2.6, 2.6, z - 2.7), (5.2, 0.8, 5.4), GOLD)
 
-    # ------------------------------------------------------------------ tail
-    tails = chain(m, "tail", "body", (0, 34, 16), "+z", [5, 6, 7, 7, 6],
-                  [(4, 4), (5.5, 4.5), (6.5, 4.5), (6.5, 4), (5.5, 3.5)],
-                  [(-55, 0, 0), (-18, 0, 0), (-10, 0, 0), (-4, 0, 0), (12, 0, 0)], MANE)
+    # ------------------------------------------------------------------ tail: three flowing strands
+    def tail_strands(bone, i, p):
+        for s_ in (-1, 1):
+            tuft(bone, (p[0] + s_ * 2.6, p[1] - 0.5, p[2] + 2.8), (1.6, 3.4 + i * 0.4, 6.5), MANE2, yaw=10 * s_, roll=-10 * s_)
+    chain(m, "tail", "body", (0, 35, 16), "+z", [5, 6, 7, 7, 6],
+          [(4, 4), (5.6, 4.6), (6.6, 4.6), (6.6, 4.2), (5.6, 3.6)],
+          [(-55, 0, 0), (-18, 0, 0), (-10, 0, 0), (-4, 0, 0), (12, 0, 0)], MANE, extra=tail_strands)
 
-    # ------------------------------------------------------------------ wings
+    # ------------------------------------------------------------------ grand wings: coverts, secondaries, primaries
     def wing(side):
         s = -1 if side == "r" else 1
-        sh = m.bone(f"wing_{side}", (s * 6, 35, -9), "body")
-        sh.add((s * 6 + (-11 if s < 0 else 0), 33.8, -10.5), (11, 2.4, 4), COAT, mirror=s > 0)
-        sh.add((s * 6 + (-11 if s < 0 else 0), 34.4, -8), (11, 0.6, 8), FEATH_C, density=1, share="awc0", mirror=s > 0)
-        fa = m.bone(f"wing_{side}1", (s * 17, 35, -9), sh.name)
-        fa.add((s * 17 + (-12 if s < 0 else 0), 34, -10.2), (12, 2, 3.4), COAT, mirror=s > 0)
-        fa.add((s * 17 + (-12 if s < 0 else 0), 34.6, -8), (12, 0.6, 7), FEATH_C, share="awc1", mirror=s > 0)
-        # secondaries: a fan of long feathers along the forearm
+        sh = m.bone(f"wing_{side}", (s * 6, 36, -9), "body")
+        x0 = s * 6 + (-13 if s < 0 else 0)
+        obox(sh, (x0, 34.6, -10.8), (13, 2.8, 4.2), COAT, axis="x", mirror=s > 0)
+        sh.add((x0, 35.6, -11.2), (13, 1.4, 1.4), GOLD, mirror=s > 0)                      # gilded leading edge
+        for k in range(4):                                                                  # inner coverts + secondaries
+            fx = s * (7.5 + k * 3.2)
+            sh.add((fx - 1.7, 35.2, -9), (3.4, 0.5, 8), FEATH_C, pivot=(fx, 35.5, -9), rotation=(0, s * 4, 0), mirror=s > 0)
+            sh.add((fx - 1.6, 34.7, -6), (3.2, 0.5, 15 + k), FEATH, pivot=(fx, 35, -6), rotation=(0, s * (2 + k), 0), mirror=s > 0)
+        fa = m.bone(f"wing_{side}1", (s * 19, 36, -9), sh.name)
+        x1 = s * 19 + (-14 if s < 0 else 0)
+        obox(fa, (x1, 34.9, -10.5), (14, 2.3, 3.6), COAT, axis="x", mirror=s > 0)
+        fa.add((x1, 35.7, -11), (14, 1.2, 1.2), GOLD, mirror=s > 0)
         for k in range(5):
-            x0 = s * 8 + s * k * 4.2
-            fa_ = sh if k < 2 else fa
-            fa_.add((x0 - 1.6, 34.2, -6), (3.2, 0.5, 14 - abs(k - 2) * 0.8), FEATH, pivot=(x0, 34.5, -6),
-                    rotation=(0, s * (2 + k * 2), 0), share=f"aws{k}", mirror=s > 0)
-        hd = m.bone(f"wing_{side}2", (s * 29, 35, -9), fa.name)
-        hd.add((s * 29 + (-7 if s < 0 else 0), 34.2, -10), (7, 1.6, 2.8), COAT_SH, mirror=s > 0)
-        # primaries: long feathers fanning backwards from the hand
-        for k in range(6):
-            ang = 8 + k * 13
-            ln = 20 - k * 1.3
-            hd.add((s * 33 - 1.4, 34.3, -9), (2.8, 0.5, ln), FEATH_P, pivot=(s * 33, 34.5, -9),
-                   rotation=(0, s * ang, 0),
-                   share=f"awp{k}", mirror=s > 0)
-        tipb = m.bone(f"glow_tip_{side}", (s * 33, 34.5, -9), hd.name)
-        for k in range(6):
-            ang = 8 + k * 13
-            ln = 20 - k * 1.3
-            tipb.add((s * 33 - 1.5, 34.25, -9 + ln - 3.5), (3, 0.6, 3.5), TIP, pivot=(s * 33, 34.5, -9),
-                     rotation=(0, s * ang, 0))
+            fx = s * (20 + k * 2.8)
+            fa.add((fx - 1.6, 35.4, -9), (3.2, 0.5, 7.5), FEATH_C, pivot=(fx, 35.6, -9), rotation=(0, s * 6, 0), mirror=s > 0)
+            fa.add((fx - 1.6, 34.9, -6.5), (3.2, 0.5, 19 - k * 0.6), FEATH, pivot=(fx, 35.2, -6.5),
+                   rotation=(0, s * (6 + k * 2.5), 0), mirror=s > 0)
+        hd = m.bone(f"wing_{side}2", (s * 33, 36, -9), fa.name)
+        x2 = s * 33 + (-8 if s < 0 else 0)
+        obox(hd, (x2, 35.1, -10.3), (8, 1.9, 2.8), COAT_SH, axis="x", mirror=s > 0)
+        tuft(hd, (s * 41, 36, -10), (2.2, 1.6, 2.2), GOLD, yaw=45)
+        for k in range(9):                                                                  # primaries fanning back
+            ang = 4 + k * 10
+            ln = 26 - k * 1.2
+            hd.add((s * 37 - 1.6, 35.2, -9), (3.2, 0.5, ln), FEATH_P, pivot=(s * 37, 35.5, -9),
+                   rotation=(0, s * ang, 0), mirror=s > 0)
+        tipb = m.bone(f"glow_tip_{side}", (s * 37, 35.5, -9), hd.name)
+        for k in range(9):
+            ang = 4 + k * 10
+            ln = 26 - k * 1.2
+            tipb.add((s * 37 - 1.7, 35.15, -9 + ln - 4), (3.4, 0.6, 4), TIP, pivot=(s * 37, 35.5, -9), rotation=(0, s * ang, 0))
     wing("r")
     wing("l")
 
     # ------------------------------------------------------------------ phase III star crown
-    crown = m.bone("glow_crown", (0, 48, -30), "head")
+    crown = m.bone("glow_crown", (0, 50, -31), "head")
     import math as _m
-    for k in range(7):
-        a = _m.radians(k * 360 / 7)
-        px, pz = _m.cos(a) * 5.5, _m.sin(a) * 5.5 - 30
-        crown.add((px - 0.9, 47, pz - 0.9), (1.8, 1.8, 1.8), STAR, pivot=(px, 47.9, pz), rotation=(45, 0, 45))
+    for k in range(9):
+        a = _m.radians(k * 40)
+        px, pz = _m.cos(a) * 6.5, _m.sin(a) * 6.5 - 31
+        crown.add((px - 1, 49, pz - 1), (2, 2, 2), STAR, pivot=(px, 50, pz), rotation=(45, 0, 45))
 
-    c = Creature("alicorn", m, scale=1.3, description="Alicorn, Dawnstar Sovereign")
+    c = Creature("alicorn", m, scale=1.6, description="Alicorn, Dawnstar Sovereign")
     c.preview_props = {"legends:fly": 0}
     c.pre = COMMON_PRE + [
         "variable.fly = math.lerp(variable.fly ?? 0.0, query.property('legends:fly') == 1 ? 1.0 : 0.0, 0.08)",

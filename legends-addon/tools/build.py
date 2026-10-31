@@ -49,21 +49,21 @@ UUID = {
 # --------------------------------------------------------------------------- gameplay stats
 # hp / collision (w, h in blocks) / hitbox (w, h) / boss bar sky darkening / xp
 BOSSES = {
-    "taotie": dict(name="Taotie, the Devouring Maw", hp=1600, col=(3.0, 3.4), hit=(5.2, 4.6), darken=False, xp=1500),
-    "nidhogg": dict(name="Nidhogg, Gnawer of the World-Root", hp=2000, col=(3.0, 3.0), hit=(6.0, 4.2), darken=True, xp=1800),
-    "hanuman": dict(name="Hanuman, Son of the Wind", hp=1500, col=(1.4, 4.0), hit=(2.0, 4.4), darken=False, xp=1600,
-                    forms={"legends:form_divine": dict(col=(2.0, 5.6), hit=(2.8, 6.2)),
-                           "legends:form_tiny": dict(col=(0.6, 1.4), hit=(0.8, 1.6))}),
-    "alicorn": dict(name="Alicorn, Dawnstar Sovereign", hp=1400, col=(2.2, 3.4), hit=(3.2, 3.8), darken=False, xp=1500),
-    "tenko": dict(name="Tenko, the Ten-Tailed Fox", hp=1700, col=(2.2, 3.2), hit=(3.6, 3.8), darken=False, xp=1600),
-    "logos": dict(name="The Word of God", hp=2600, col=(4.0, 8.0), hit=(6.0, 8.5), darken=False, xp=3000),
+    "taotie": dict(name="Taotie, the Devouring Maw", hp=1600, col=(3.7, 4.2), hit=(6.4, 5.7), darken=False, xp=1500),
+    "nidhogg": dict(name="Nidhogg, Gnawer of the World-Root", hp=2000, col=(3.4, 3.4), hit=(6.9, 4.8), darken=True, xp=1800),
+    "hanuman": dict(name="Hanuman, Son of the Wind", hp=1500, col=(1.8, 5.2), hit=(2.6, 5.7), darken=False, xp=1600,
+                    forms={"legends:form_divine": dict(col=(2.6, 7.3), hit=(3.6, 8.0)),
+                           "legends:form_tiny": dict(col=(0.8, 1.8), hit=(1.0, 2.1))}),
+    "alicorn": dict(name="Alicorn, Dawnstar Sovereign", hp=1400, col=(2.7, 4.2), hit=(3.9, 4.7), darken=False, xp=1500),
+    "tenko": dict(name="Tenko, the Ten-Tailed Fox", hp=1700, col=(2.8, 4.0), hit=(4.5, 4.8), darken=False, xp=1600),
+    "logos": dict(name="The Word of God", hp=2600, col=(5.0, 10.0), hit=(7.5, 10.6), darken=False, xp=3000),
 }
 CHOIR = {
-    "seraph": dict(name="Seraph of the Burning Choir", hp=220, col=(1.6, 3.0)),
-    "cherub": dict(name="Cherub of the Eastern Gate", hp=300, col=(1.6, 3.4)),
-    "ophan": dict(name="Ophan of the Thrones", hp=260, col=(2.6, 3.4)),
+    "seraph": dict(name="Seraph of the Burning Choir", hp=220, col=(2.1, 3.9)),
+    "cherub": dict(name="Cherub of the Eastern Gate", hp=300, col=(2.0, 4.3)),
+    "ophan": dict(name="Ophan of the Thrones", hp=260, col=(3.4, 4.4)),
 }
-ILLUSIONS = {"tenko_illusion": dict(name="Foxfire Illusion", hp=1, col=(2.0, 3.0), model="tenko")}
+ILLUSIONS = {"tenko_illusion": dict(name="Foxfire Illusion", hp=1, col=(2.5, 3.8), model="tenko")}
 # props: hp (0 = invulnerable), collision, lifetime safety timer (s)
 PROPS = {
     "ding": dict(name="Ritual Ding", hp=0, col=(2.6, 2.6), life=60),

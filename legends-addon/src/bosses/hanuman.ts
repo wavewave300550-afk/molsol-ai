@@ -55,7 +55,7 @@ export class Hanuman extends Boss {
   }
 
   reach(): number {
-    return this.phase >= 3 ? 1.4 : 1;
+    return this.phase >= 3 ? 1.6 : 1.15;
   }
 
   form(ev: string): void {
@@ -88,7 +88,7 @@ export class Hanuman extends Boss {
   }
 
   protected onTick(): void {
-    if (this.phase >= 2 && this.t % 6 === 0) deco(this.dim, "flame", ahead(this, -2.5, 3.2), C.fire, 2, 0.6, 0.35, 0.6);
+    if (this.phase >= 2 && this.t % 6 === 0) deco(this.dim, "flame", ahead(this, -3.2, 4.2), C.fire, 2, 0.6, 0.35, 0.6);
     if (this.phase >= 3 && this.t % 10 === 0) mote(this.dim, add(this.pos, { x: randIn(-1.5, 1.5), y: randIn(1, 6), z: randIn(-1.5, 1.5) }), C.star, 0.25, 0.8);
   }
 
