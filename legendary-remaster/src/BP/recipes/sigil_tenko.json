@@ -1,0 +1,41 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "legends:sigil_tenko"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "BEB",
+      "LSL",
+      "BPB"
+    ],
+    "key": {
+      "B": {
+        "item": "minecraft:blaze_powder"
+      },
+      "E": {
+        "item": "minecraft:ender_eye"
+      },
+      "L": {
+        "item": "minecraft:soul_lantern"
+      },
+      "S": {
+        "item": "minecraft:nether_star"
+      },
+      "P": {
+        "item": "minecraft:glow_berries"
+      }
+    },
+    "result": {
+      "item": "legends:sigil_tenko"
+    },
+    "unlock": [
+      {
+        "item": "minecraft:nether_star"
+      }
+    ]
+  }
+}

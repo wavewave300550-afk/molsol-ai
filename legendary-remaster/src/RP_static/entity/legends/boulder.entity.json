@@ -1,0 +1,30 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "legends:boulder",
+      "materials": {
+        "default": "entity_alphatest",
+        "glow": "entity_emissive_alpha"
+      },
+      "textures": {
+        "default": "textures/entity/legends/boulder"
+      },
+      "geometry": {
+        "default": "geometry.legends.boulder"
+      },
+      "animations": {
+        "idle": "animation.legends.boulder.idle"
+      },
+      "scripts": {
+        "scale": "1.5",
+        "animate": [
+          "idle"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.legends.boulder"
+      ]
+    }
+  }
+}

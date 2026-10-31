@@ -1,0 +1,17 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.legends.discus.idle": {
+      "loop": true,
+      "bones": {
+        "disc": {
+          "rotation": [
+            0,
+            "q.life_time * 1440",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

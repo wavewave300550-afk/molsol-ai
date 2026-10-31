@@ -1,0 +1,30 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "legends:prism",
+      "materials": {
+        "default": "entity_alphatest",
+        "glow": "entity_emissive_alpha"
+      },
+      "textures": {
+        "default": "textures/entity/legends/prism"
+      },
+      "geometry": {
+        "default": "geometry.legends.prism"
+      },
+      "animations": {
+        "idle": "animation.legends.prism.idle"
+      },
+      "scripts": {
+        "scale": "1.3",
+        "animate": [
+          "idle"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.legends.prism"
+      ]
+    }
+  }
+}

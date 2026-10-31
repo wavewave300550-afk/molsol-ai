@@ -1,0 +1,41 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "legends:sigil_taotie"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "CGC",
+      "FSF",
+      "CBC"
+    ],
+    "key": {
+      "C": {
+        "item": "minecraft:copper_block"
+      },
+      "G": {
+        "item": "minecraft:gold_block"
+      },
+      "F": {
+        "item": "minecraft:cake"
+      },
+      "S": {
+        "item": "minecraft:nether_star"
+      },
+      "B": {
+        "item": "minecraft:golden_carrot"
+      }
+    },
+    "result": {
+      "item": "legends:sigil_taotie"
+    },
+    "unlock": [
+      {
+        "item": "minecraft:nether_star"
+      }
+    ]
+  }
+}

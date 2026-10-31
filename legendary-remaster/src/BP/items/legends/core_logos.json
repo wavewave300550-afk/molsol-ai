@@ -1,0 +1,28 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "legends:core_logos",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "legends_core_logos"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.legends:core_logos.name"
+      },
+      "minecraft:max_stack_size": 16,
+      "minecraft:glint": true,
+      "minecraft:tags": {
+        "tags": [
+          "legends:core"
+        ]
+      }
+    }
+  }
+}

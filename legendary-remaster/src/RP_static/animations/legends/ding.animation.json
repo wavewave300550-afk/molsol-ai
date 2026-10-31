@@ -1,0 +1,24 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.legends.ding.idle": {
+      "loop": true,
+      "bones": {
+        "root": {
+          "scale": [
+            "math.min(1.0, q.life_time * 4)",
+            "math.min(1.0, q.life_time * 4)",
+            "math.min(1.0, q.life_time * 4)"
+          ]
+        },
+        "body": {
+          "rotation": [
+            0,
+            0,
+            "query.property('legends:act') == 1 ? math.sin(q.life_time * 1600) * 6 : 0"
+          ]
+        }
+      }
+    }
+  }
+}

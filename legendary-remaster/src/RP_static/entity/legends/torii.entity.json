@@ -1,0 +1,30 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "legends:torii",
+      "materials": {
+        "default": "entity_alphatest",
+        "glow": "entity_emissive_alpha"
+      },
+      "textures": {
+        "default": "textures/entity/legends/torii"
+      },
+      "geometry": {
+        "default": "geometry.legends.torii"
+      },
+      "animations": {
+        "idle": "animation.legends.torii.idle"
+      },
+      "scripts": {
+        "scale": "1.25",
+        "animate": [
+          "idle"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.legends.torii"
+      ]
+    }
+  }
+}

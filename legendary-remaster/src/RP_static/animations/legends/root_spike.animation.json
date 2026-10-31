@@ -1,0 +1,31 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.legends.root_spike.idle": {
+      "loop": true,
+      "bones": {
+        "root": {
+          "scale": [
+            1,
+            "math.min(1.0, q.life_time * 5)",
+            1
+          ]
+        },
+        "r0_1": {
+          "rotation": [
+            "math.sin(q.life_time * 200) * 4",
+            0,
+            "math.sin(q.life_time * 160) * 4"
+          ]
+        },
+        "r0_2": {
+          "rotation": [
+            "math.sin(q.life_time * 200 - 60) * 6",
+            0,
+            "math.sin(q.life_time * 160 - 60) * 6"
+          ]
+        }
+      }
+    }
+  }
+}

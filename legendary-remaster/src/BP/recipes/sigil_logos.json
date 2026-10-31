@@ -1,0 +1,50 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "legends:sigil_logos"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "TNH",
+      "ASF",
+      "KBK"
+    ],
+    "key": {
+      "T": {
+        "item": "legends:core_taotie"
+      },
+      "N": {
+        "item": "legends:core_nidhogg"
+      },
+      "H": {
+        "item": "legends:core_hanuman"
+      },
+      "A": {
+        "item": "legends:core_alicorn"
+      },
+      "F": {
+        "item": "legends:core_tenko"
+      },
+      "S": {
+        "item": "minecraft:nether_star"
+      },
+      "B": {
+        "item": "minecraft:book"
+      },
+      "K": {
+        "item": "minecraft:gold_block"
+      }
+    },
+    "result": {
+      "item": "legends:sigil_logos"
+    },
+    "unlock": [
+      {
+        "item": "minecraft:nether_star"
+      }
+    ]
+  }
+}

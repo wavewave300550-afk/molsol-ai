@@ -1,0 +1,30 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "legends:discus",
+      "materials": {
+        "default": "entity_alphatest",
+        "glow": "entity_emissive_alpha"
+      },
+      "textures": {
+        "default": "textures/entity/legends/discus"
+      },
+      "geometry": {
+        "default": "geometry.legends.discus"
+      },
+      "animations": {
+        "idle": "animation.legends.discus.idle"
+      },
+      "scripts": {
+        "scale": "1.6",
+        "animate": [
+          "idle"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.legends.discus"
+      ]
+    }
+  }
+}

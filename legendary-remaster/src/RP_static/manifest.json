@@ -1,0 +1,45 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "pack.name",
+    "description": "pack.description",
+    "uuid": "e8d2f4a6-1b3c-4e5f-8a7b-2c4d6e8f0a11",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      60
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "e8d2f4a6-1b3c-4e5f-8a7b-2c4d6e8f0a12",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "b3a1c7e2-5d4f-4a8b-9c0e-7f1a2b3c4d51",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "metadata": {
+    "authors": [
+      "Legendary & Divine Beings"
+    ],
+    "product_type": "addon"
+  }
+}

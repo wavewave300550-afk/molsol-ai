@@ -1,0 +1,38 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "legends:sigil_hanuman"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "DDD",
+      "GSG",
+      " B "
+    ],
+    "key": {
+      "D": {
+        "item": "minecraft:diamond"
+      },
+      "G": {
+        "item": "minecraft:gold_block"
+      },
+      "S": {
+        "item": "minecraft:nether_star"
+      },
+      "B": {
+        "item": "minecraft:breeze_rod"
+      }
+    },
+    "result": {
+      "item": "legends:sigil_hanuman"
+    },
+    "unlock": [
+      {
+        "item": "minecraft:nether_star"
+      }
+    ]
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "legends:sigil_nidhogg",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "legends_sigil_nidhogg"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.legends:sigil_nidhogg.name"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:glint": true,
+      "minecraft:tags": {
+        "tags": [
+          "legends:sigil"
+        ]
+      }
+    }
+  }
+}

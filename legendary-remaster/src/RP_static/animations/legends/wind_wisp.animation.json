@@ -1,0 +1,31 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.legends.wind_wisp.idle": {
+      "loop": true,
+      "bones": {
+        "ring_a": {
+          "rotation": [
+            0,
+            "q.life_time * 400",
+            0
+          ]
+        },
+        "ring_b": {
+          "rotation": [
+            0,
+            0,
+            "-q.life_time * 500"
+          ]
+        },
+        "root": {
+          "position": [
+            0,
+            "math.sin(q.life_time * 180) * 1.2",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

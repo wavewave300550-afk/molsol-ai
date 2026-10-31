@@ -1,0 +1,17 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.legends.nid_meteor.idle": {
+      "loop": true,
+      "bones": {
+        "glow_fire": {
+          "scale": [
+            "1 + math.sin(q.life_time * 900) * 0.15",
+            "1 + math.sin(q.life_time * 700) * 0.15",
+            "1 + math.sin(q.life_time * 800) * 0.2"
+          ]
+        }
+      }
+    }
+  }
+}

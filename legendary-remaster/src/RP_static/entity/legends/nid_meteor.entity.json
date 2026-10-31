@@ -1,0 +1,30 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "legends:nid_meteor",
+      "materials": {
+        "default": "entity_alphatest",
+        "glow": "entity_emissive_alpha"
+      },
+      "textures": {
+        "default": "textures/entity/legends/nid_meteor"
+      },
+      "geometry": {
+        "default": "geometry.legends.nid_meteor"
+      },
+      "animations": {
+        "idle": "animation.legends.nid_meteor.idle"
+      },
+      "scripts": {
+        "scale": "1.6",
+        "animate": [
+          "idle"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.legends.nid_meteor"
+      ]
+    }
+  }
+}

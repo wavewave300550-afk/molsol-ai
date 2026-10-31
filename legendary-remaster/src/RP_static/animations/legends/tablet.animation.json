@@ -1,0 +1,17 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.legends.tablet.idle": {
+      "loop": true,
+      "bones": {
+        "slab": {
+          "rotation": [
+            "q.life_time * 90",
+            "q.life_time * 40",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

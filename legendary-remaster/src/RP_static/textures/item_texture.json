@@ -1,0 +1,45 @@
+{
+  "resource_pack_name": "legends",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "legends_sigil_taotie": {
+      "textures": "textures/items/legends/sigil_taotie"
+    },
+    "legends_sigil_nidhogg": {
+      "textures": "textures/items/legends/sigil_nidhogg"
+    },
+    "legends_sigil_hanuman": {
+      "textures": "textures/items/legends/sigil_hanuman"
+    },
+    "legends_sigil_alicorn": {
+      "textures": "textures/items/legends/sigil_alicorn"
+    },
+    "legends_sigil_tenko": {
+      "textures": "textures/items/legends/sigil_tenko"
+    },
+    "legends_sigil_logos": {
+      "textures": "textures/items/legends/sigil_logos"
+    },
+    "legends_core_taotie": {
+      "textures": "textures/items/legends/core_taotie"
+    },
+    "legends_core_nidhogg": {
+      "textures": "textures/items/legends/core_nidhogg"
+    },
+    "legends_core_hanuman": {
+      "textures": "textures/items/legends/core_hanuman"
+    },
+    "legends_core_alicorn": {
+      "textures": "textures/items/legends/core_alicorn"
+    },
+    "legends_core_tenko": {
+      "textures": "textures/items/legends/core_tenko"
+    },
+    "legends_core_logos": {
+      "textures": "textures/items/legends/core_logos"
+    },
+    "legends_codex": {
+      "textures": "textures/items/legends/codex"
+    }
+  }
+}

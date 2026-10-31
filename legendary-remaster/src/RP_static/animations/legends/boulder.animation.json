@@ -1,0 +1,17 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.legends.boulder.idle": {
+      "loop": true,
+      "bones": {
+        "rock": {
+          "rotation": [
+            "q.life_time * 40",
+            "q.life_time * 25",
+            0
+          ]
+        }
+      }
+    }
+  }
+}
