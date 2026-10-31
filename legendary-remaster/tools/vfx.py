@@ -16,7 +16,7 @@ import os
 
 ATLAS = "textures/particle/legends_fx"
 UV = {"glow": (0, 0), "star": (32, 0), "ring": (64, 0), "disc": (96, 0), "flame": (64, 32), "diamond": (96, 32),
-      "leaf": (0, 64), "rune": (32, 64), "smoke": (64, 64), "shard": (96, 64), "twinkle": (0, 96), "crescent": (32, 96),
+      "streak": (0, 32), "slash": (32, 32), "leaf": (0, 64), "rune": (32, 64), "smoke": (64, 64), "shard": (96, 64), "twinkle": (0, 96), "crescent": (32, 96),
       "drip": (64, 96), "spiral": (96, 96), "feather": (96, 32)}
 AGE = "(variable.particle_age / variable.particle_lifetime)"
 
@@ -131,11 +131,11 @@ _def("dust", tex="smoke", material="particles_blend", burst=26, shape=("disc", 1
 _def("debris", tex="shard", material="particles_blend", burst=14, shape=("sphere", 0.6, "outwards"), speed="6", accel=(0, -16, 0), drag=0.6,
      life="0.9", size=(0.45, 0.35), c0=(0.35, 0.3, 0.25, 1.0), c1=(0.25, 0.2, 0.18, 1.0), spin=True)
 _def("flash", tex="glow", burst=1, shape=("point", (0, 0, 0)), life="0.22", size=(2.6, 6.0), c0=(1.0, 1.0, 0.9, 1.0), c1=(1.0, 0.8, 0.4, 0.0))
-_def("slash_bronze", tex="crescent", burst=1, shape=("point", (0, 0, 0)), life="0.22", size=(2.4, 4.2), c0=(1.0, 0.85, 0.5, 1.0), c1=(1.0, 0.5, 0.2, 0.0), spin=True)
-_def("slash_venom", tex="crescent", burst=1, shape=("point", (0, 0, 0)), life="0.22", size=(2.4, 4.4), c0=(0.7, 1.0, 0.4, 1.0), c1=(0.2, 0.8, 0.1, 0.0), spin=True)
-_def("slash_wind", tex="crescent", burst=2, shape=("point", (0, 0, 0)), life="0.25", size=(2.0, 4.0), c0=(0.9, 1.0, 1.0, 1.0), c1=(0.6, 0.9, 1.0, 0.0), spin=True)
-_def("slash_gold", tex="crescent", burst=1, shape=("point", (0, 0, 0)), life="0.25", size=(2.4, 4.8), c0=(1.0, 0.95, 0.6, 1.0), c1=(1.0, 0.7, 0.2, 0.0), spin=True)
-_def("slash_fox", tex="crescent", burst=2, shape=("point", (0, 0, 0)), life="0.25", size=(2.0, 4.0), c0=(0.7, 0.85, 1.0, 1.0), c1=(1.0, 0.4, 0.3, 0.0), spin=True)
+_def("slash_bronze", tex="slash", burst=1, shape=("point", (0, 0, 0)), life="0.22", size=(2.4, 4.2), c0=(1.0, 0.85, 0.5, 1.0), c1=(1.0, 0.5, 0.2, 0.0), spin=True)
+_def("slash_venom", tex="slash", burst=1, shape=("point", (0, 0, 0)), life="0.22", size=(2.4, 4.4), c0=(0.7, 1.0, 0.4, 1.0), c1=(0.2, 0.8, 0.1, 0.0), spin=True)
+_def("slash_wind", tex="slash", burst=2, shape=("point", (0, 0, 0)), life="0.25", size=(2.0, 4.0), c0=(0.9, 1.0, 1.0, 1.0), c1=(0.6, 0.9, 1.0, 0.0), spin=True)
+_def("slash_gold", tex="slash", burst=1, shape=("point", (0, 0, 0)), life="0.25", size=(2.4, 4.8), c0=(1.0, 0.95, 0.6, 1.0), c1=(1.0, 0.7, 0.2, 0.0), spin=True)
+_def("slash_fox", tex="slash", burst=2, shape=("point", (0, 0, 0)), life="0.25", size=(2.0, 4.0), c0=(0.7, 0.85, 1.0, 1.0), c1=(1.0, 0.4, 0.3, 0.0), spin=True)
 _def("roar_vapor", tex="smoke", material="particles_blend", burst=30, shape=("sphere", 0.5, "outwards"), speed="7", drag=4.0,
      life="0.9", size=(0.6, 2.2), c0=(0.9, 0.9, 0.95, 0.6), c1=(0.7, 0.7, 0.8, 0.0), spin=True)
 _def("hunger_roar", tex="smoke", material="particles_blend", burst=30, shape=("sphere", 0.6, "outwards"), speed="7", drag=4.0,

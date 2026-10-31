@@ -55,7 +55,8 @@ def loop(bones: Dict[str, dict]) -> dict:
         jb = {}
         for ch, val in chans.items():
             if ch == "s":
-                jb["scale"] = val if isinstance(val, str) else f3(val)
+                v = val if isinstance(val, str) else f3(val)
+                jb["scale"] = [v, v, v]          # canonical: always a vector3
             else:
                 jb[CH_NAME[ch]] = vec(*val)
         out[b] = jb
@@ -123,9 +124,12 @@ class Act:
             jf = {}
             for tt in sorted(frames):
                 v = frames[tt]
-                sec = f"{tt / 20.0:.4f}".rstrip("0").rstrip(".") or "0"
+                sec = f"{tt / 20.0:.4f}".rstrip("0")
+                if sec.endswith("."):
+                    sec += "0"
                 if ch == "s":
-                    jf[sec] = f"{f3(v)} + ({ov})" if ov else f3(v)
+                    sv = f"{f3(v)} + ({ov})" if ov else f3(v)
+                    jf[sec] = [sv, sv, sv]
                 else:
                     if ov:
                         jf[sec] = [f"{f3(v[k])} + ({ov[k]})" if not (isinstance(ov[k], (int, float)) and ov[k] == 0) else f3(v[k]) for k in range(3)]
@@ -133,7 +137,7 @@ class Act:
                         jf[sec] = [f3(x) for x in v]
             if len(jf) == 1 and not ov:
                 jf = list(jf.values())[0]
-                if ch != "s" and isinstance(jf, list) and all(x == 0 for x in jf):
+                if ch != "s" and all(x == 0 for x in jf):
                     continue
             out.setdefault(b, {})[CH_NAME[ch]] = jf
         anim = {"bones": out}

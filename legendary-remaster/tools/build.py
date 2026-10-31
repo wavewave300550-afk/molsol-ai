@@ -26,7 +26,7 @@ BUILD = os.path.join(ROOT, "build")
 BP = os.path.join(BUILD, "Legends_BP")
 RP = os.path.join(BUILD, "Legends_RP")
 DIST = os.path.join(ROOT, "dist")
-VERSION = [2, 0, 1]
+VERSION = [2, 0, 2]
 
 MODULES = ["boss_taotie", "boss_nidhogg", "boss_hanuman", "boss_alicorn", "boss_tenko", "boss_logos", "choir_seraph", "choir_cherub", "choir_ophan", "props"]                 # remastered entities (module per entity family)
 ORIGINAL_ENTITIES = []      # every entity is remastered or kept as-is in src/RP_static (ding, root_spike, ...)
@@ -35,17 +35,26 @@ COMMON_PRE = [
     "variable.act = query.property('legends:act');",
     "variable.ph = query.property('legends:phase');",
     "variable.calm = math.lerp(variable.calm ?? 1.0, variable.act == 0 ? 1.0 : 0.3, 0.14);",
-    "variable.hit = math.lerp(variable.hit ?? 0.0, math.min(1.0, query.hurt_time * 0.12), 0.5);",
     "variable.mv = math.lerp(variable.mv ?? 0.0, query.property('legends:move'), 0.2);",
-    "variable.dist = (variable.dist ?? 0.0) + query.delta_time * variable.mv * 6.0;",
-    "variable.t = (variable.t ?? 0.0) + query.delta_time * (1.0 + 0.2 * math.max(0, variable.ph - 1));",
+    "variable.dist = query.life_time * 6.0;",
+    "variable.t = query.life_time;",
     "variable.fx = query.property('legends:fx');",
     "variable.ova = variable.fx == 0 ? 0.0 : (0.30 + math.sin(query.life_time * 540.0) * 0.12);",
     "variable.ovr = variable.fx == 3 ? 0.35 : 1.0;",
     "variable.ovg = variable.fx == 2 ? 0.25 : (variable.fx == 3 ? 0.65 : (variable.fx == 1 || variable.fx == 4 ? 0.82 : 1.0));",
     "variable.ovb = variable.fx == 2 ? 0.2 : (variable.fx == 3 ? 1.0 : (variable.fx == 1 || variable.fx == 4 ? 0.3 : 1.0));",
 ]
-PROP_PRE = ["variable.act = query.property('legends:act');", "variable.t = (variable.t ?? 0.0) + query.delta_time;"]
+PROP_PRE = ["variable.act = query.property('legends:act');", "variable.t = query.life_time;"]
+
+
+def split_init(pre):
+    """Move `variable.X ?? D` defaults into an initialize block (vanilla style, no null-coalescing)."""
+    init, out = {}, []
+    for line in pre:
+        for var, dflt in re.findall(r"(variable\.\w+) \?\? ([0-9.]+)", line):
+            init.setdefault(var, dflt)
+        out.append(re.sub(r"(variable\.\w+) \?\? [0-9.]+", r"\1", line))
+    return [f"{k} = {v};" for k, v in init.items()], out
 
 
 def wj(path, data, compact=False):
@@ -95,7 +104,8 @@ def gen_entity(mod, built_acts):
     # animations
     anims = {}
     for name, a in mod.loops().items():
-        anims[f"animation.legends.{key}.{name}"] = a
+        if name != "flinch":
+            anims[f"animation.legends.{key}.{name}"] = a
     acts = mod.acts() if hasattr(mod, "acts") and callable(getattr(mod, "acts")) else []
     act_fx = getattr(mod, "ACT_FX", {})
     auras = getattr(mod, "AURAS", {})
@@ -131,21 +141,24 @@ def gen_entity(mod, built_acts):
                                                        "textures": ["Texture.default"], "part_visibility": vis}
     wj(os.path.join(RP, "render_controllers", "legends", f"{key}.rc.json"), {"format_version": "1.8.0", "render_controllers": rcs})
     # client entity
-    anim_map = {name: f"animation.legends.{key}.{name}" for name in mod.loops()}
+    anim_map = {name: f"animation.legends.{key}.{name}" for name in mod.loops() if name != "flinch"}
     for a in acts:
         anim_map[f"a_{a.name}"] = f"animation.legends.{key}.act.{a.name}"
     if acts:
         anim_map["ctrl_act"] = f"controller.animation.legends.{key}.act"
     if acts and auras:
         anim_map["ctrl_fx"] = f"controller.animation.legends.{key}.fx"
+    init_lines, pre_lines = split_init((PROP_PRE if cfg.get("prop") else COMMON_PRE) + cfg.get("pre", []))
+    if not init_lines:
+        init_lines = ["variable.t = 0.0;"]
     desc = {
         "identifier": f"legends:{key}",
         "materials": {"default": cfg.get("material", "entity_alphatest"), "glow": "entity_beam_additive"},
         "textures": cfg["textures"],
         "geometry": {"default": geo_id, **({"glow": geo_id + ".glow"} if has_glow else {})},
         "animations": anim_map,
-        "scripts": {"scale": str(cfg["scale"]), "pre_animation": (PROP_PRE if cfg.get("prop") else COMMON_PRE) + cfg.get("pre", []),
-                    "animate": cfg["animate"] + (["ctrl_fx"] if (acts and auras) else [])},
+        "scripts": {"scale": str(cfg["scale"]), "initialize": init_lines, "pre_animation": pre_lines,
+                    "animate": [x for x in cfg["animate"] if not (isinstance(x, dict) and "flinch" in x)] + (["ctrl_fx"] if (acts and auras) else [])},
         "render_controllers": list(rcs.keys()),
     }
     fx_map = vfx.used_effects(auras, act_fx)
@@ -239,6 +252,8 @@ def main():
     for p in (os.path.join(BP, "texts", "en_US.lang"), os.path.join(RP, "texts", "en_US.lang")):
         set_lang(p)
     print(f"  {vfx.write_particles(RP)} client particle effects")
+    import fx_atlas
+    fx_atlas.paint(os.path.join(RP, "textures", "particle", "legends_fx.png"))
     rest = data_constants()
     built_acts = {}
     done = set()

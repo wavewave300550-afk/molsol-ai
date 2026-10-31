@@ -8,7 +8,7 @@
 
 - ไฟล์สำหรับนำเข้าเกม: [`dist/Legendary_and_Divine_Beings_Remastered.mcaddon`](dist/Legendary_and_Divine_Beings_Remastered.mcaddon)
 - ไฟล์ต้นฉบับที่ได้รับมา (สำรองไว้โดยไม่แก้ไข): `original_backup/Legendary_and_Divine_Beings.original.mcaddon`
-- ใช้ UUID เดิมและเพิ่มเวอร์ชันเป็น **2.0.1** จึงอัปเดตทับแพ็กเดิมในโลกที่มีอยู่ได้ทันที
+- ใช้ UUID เดิมและเพิ่มเวอร์ชันเป็น **2.0.2** จึงอัปเดตทับแพ็กเดิมในโลกที่มีอยู่ได้ทันที
 - **ไม่ได้แก้ไขแอดออนชุดก่อนหน้าในรีโพนี้** (`tribes-addon/`, `eleventh-addon/`, `final-bosses/`) งานทั้งหมดอยู่ในโฟลเดอร์ `legendary-remaster/` แยกต่างหาก
 
 ## วิธีเล่น
@@ -71,6 +71,23 @@
 ภาพพรีวิว: [Taotie](docs/preview_taotie.png) · [Nidhogg](docs/preview_nidhogg.png) · [Hanuman](docs/preview_hanuman.png) ·
 [Alicorn](docs/preview_alicorn.png) · [Tenko](docs/preview_tenko.png) · [พระวัจนะ](docs/preview_logos.png) · [คณะเทวทูต](docs/preview_choir.png) ·
 เฟรม QA ของแอนิเมชัน: [`docs/qa/`](docs/qa)
+
+## อัปเดต 2.0.2: แก้แอนิเมชันที่ไม่เล่นในเกม และเปลี่ยนภาพเอฟเฟกต์ใหม่
+
+ในเกมจริงโมเดลไม่ขยับเลย สาเหตุคือไฟล์แอนิเมชันที่สร้างอัตโนมัติมีรูปแบบที่ parser ของเกมไม่รับ เกมจึงข้ามไฟล์ทั้งไฟล์และแสดงโมเดลในท่านิ่ง สิ่งที่แก้:
+- ทุก keyframe และทุกค่า rotation/position/scale เขียนเป็นอาร์เรย์ 3 ค่า เดิมค่า scale เป็นตัวเลขเดี่ยว
+- เวลา keyframe เขียนแบบ `"0.0"`
+- ตัวแปรตั้งค่าเริ่มต้นใน `initialize` ตามแบบ vanilla และเลิกใช้ `??`
+- นาฬิกาแอนิเมชันใช้ `query.life_time` แทน `query.delta_time`
+- ตัด `query.hurt_time` ออก
+- ต้นไม้โลกของ Níðhöggr ใช้ animation controller กับ act แทนตัวนับเวลา
+- `tools/validate.py` ตรวจกฎเหล่านี้ทุกครั้งที่ build จะได้ไม่เกิดซ้ำ
+
+**ภาพเอฟเฟกต์:** วาด texture อนุภาคใหม่ทั้งชุดที่ความละเอียด 4 เท่า ได้แก่
+- แสงนุ่มมีแกนสว่าง ดาวแฉก
+- วงเวทย์ประดับสำหรับวงเตือนอันตรายและวงคลื่นกระแทก
+- ควันเป็นปุย เปลวไฟ ขนนกมีก้านขน
+- รอยฟันโค้ง เกล็ดคริสตัล ตรายันต์ และจันทร์เสี้ยว
 
 ## อัปเดต 2.0.1: แอนิเมชันมีชีวิตชีวาขึ้น และเอฟเฟกต์ติดตัวบอส
 

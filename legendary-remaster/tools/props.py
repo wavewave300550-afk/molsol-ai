@@ -156,13 +156,21 @@ def world_tree_build():
 
 
 def world_tree_loops():
-    # act 1: rises (0.6 s) - act 2: falls forward (0.9 s, ease-in) - act 3: crumbles into the ground
-    rise = f"math.min(1, {LT} * 1.7)"
-    fall = f"({ACT} >= 2 ? math.min(90, math.pow(math.max(0, variable.t2), 2) * 110) : 0)"
-    return {"idle": loop({
-        "root": {"p": [0, f"-130 * (1 - {rise})", 0], "s": f"{ACT} == 3 ? math.max(0.01, 1 - variable.t3 * 0.9) : 1"},
-        "trunk": {"r": [fall, 0, 0]},
-    })}
+    # the trunk sways slightly while standing; rise / fall / sink are acts (controller states)
+    return {"idle": loop({"trunk": {"r": [sn(60, amp=1.2, clock=LT), 0, sn(45, amp=1.2, clock=LT)]}})}
+
+
+def world_tree_acts():
+    from animkit import Act
+    rise = Act("rise", 20)                                   # act 1: bursts up out of the ground
+    rise.at(0, {"root": {"p": (0, -130, 0)}}).at(14, {"root": {"p": (0, 4, 0)}}, "out").at(20, {"root": {"p": (0, 0, 0)}})
+    fall = Act("fall", 22)                                   # act 2: topples forward, accelerating
+    fall.at(0, {"trunk": {"r": (0, 0, 0)}}).at(18, {"trunk": {"r": (90, 0, 0)}}, "in").at(20, {"trunk": {"r": (84, 0, 0)}}, "out")
+    fall.at(22, {"trunk": {"r": (90, 0, 0)}}, "in")
+    sink = Act("sink", 30)                                   # act 3: crumbles into the earth
+    sink.at(0, {"trunk": {"r": (90, 0, 0)}, "root": {"p": (0, 0, 0), "s": 1.0}})
+    sink.at(30, {"trunk": {"r": (90, 0, 0)}, "root": {"p": (0, -12, 0), "s": 0.02}}, "in")
+    return [rise, fall, sink]
 
 
 # --------------------------------------------------------------------------- lantern (Tenko procession)
@@ -202,7 +210,6 @@ ENTITIES = [
     _ns("lantern", lantern_build, lantern_loops, 1.3, (2, 3, 1.0)),
 ]
 WT = _ns("world_tree", world_tree_build, world_tree_loops, 2.5, (40, 40, 10))
-WT.entity_cfg = lambda: {**_prop_cfg("world_tree", 2.5, (40, 40, 10)), "pre": [
-    "variable.t2 = query.property('legends:act') >= 2 ? (variable.t2 ?? 0) + query.delta_time : 0;",
-    "variable.t3 = query.property('legends:act') == 3 ? (variable.t3 ?? 0) + query.delta_time : 0;"]}
+WT.acts = world_tree_acts
+WT.entity_cfg = lambda: {**_prop_cfg("world_tree", 2.5, (40, 40, 10)), "animate": ["idle", "ctrl_act"]}
 ENTITIES.append(WT)

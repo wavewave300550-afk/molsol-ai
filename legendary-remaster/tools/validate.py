@@ -189,6 +189,35 @@ for ident, desc in client.items():
                 check(effs if isinstance(effs, list) else [effs], f"{aid}@{tkey}")
 notes.append(f"{len(rp_particles)} particle effects, {fx_refs} effect references checked")
 
+# ------------------------------------------------------------------ strict client formats (what the game parses)
+def _vec3_ok(v):
+    return isinstance(v, list) and len(v) == 3 and all(isinstance(x, (int, float, str)) for x in v)
+for aid, an in anims.items():
+    for bone, chans in an.get("bones", {}).items():
+        for ch, val in chans.items():
+            if isinstance(val, dict):
+                for tk, kv in val.items():
+                    if "." not in tk:
+                        err(f"{aid}/{bone}/{ch}: keyframe time '{tk}' must be written like 0.0")
+                    v = kv.get("post", kv.get("pre")) if isinstance(kv, dict) else kv
+                    if not _vec3_ok(v):
+                        err(f"{aid}/{bone}/{ch}@{tk}: keyframe must be a vector3, got {json.dumps(v)[:60]}")
+            elif not _vec3_ok(val):
+                err(f"{aid}/{bone}/{ch}: value must be a vector3, got {json.dumps(val)[:60]}")
+for ident, desc in client.items():
+    for blk in ("initialize", "pre_animation"):
+        for line in desc.get("scripts", {}).get(blk, []):
+            if "??" in line or "delta_time" in line or "hurt_time" in line:
+                err(f"{ident}: avoid '??' / delta_time / hurt_time in scripts: {line[:60]}")
+            if not line.strip().endswith(";"):
+                err(f"{ident}: script line must end with ';': {line[:60]}")
+    for item in desc.get("scripts", {}).get("animate", []):
+        if isinstance(item, dict):
+            for k, w in item.items():
+                for v in re.findall(r"variable\.(\w+)", w):
+                    if not any(f"variable.{v} =" in l for l in desc["scripts"].get("pre_animation", []) + desc["scripts"].get("initialize", [])):
+                        err(f"{ident}: animate weight uses variable.{v} that is never set")
+
 bp_entities = {}
 for p in walk(os.path.join(BP, "entities"), ".json"):
     e = jsons[p]["minecraft:entity"]
