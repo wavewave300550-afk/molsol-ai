@@ -10,6 +10,8 @@ Output: build/Legends_BP, build/Legends_RP, dist/Legendary_and_Divine_Beings_Rem
 """
 import importlib
 import json
+
+import vfx
 import os
 import re
 import shutil
@@ -32,7 +34,8 @@ ORIGINAL_ENTITIES = []      # every entity is remastered or kept as-is in src/RP
 COMMON_PRE = [
     "variable.act = query.property('legends:act');",
     "variable.ph = query.property('legends:phase');",
-    "variable.calm = math.lerp(variable.calm ?? 1.0, variable.act == 0 ? 1.0 : 0.15, 0.14);",
+    "variable.calm = math.lerp(variable.calm ?? 1.0, variable.act == 0 ? 1.0 : 0.3, 0.14);",
+    "variable.hit = math.lerp(variable.hit ?? 0.0, math.min(1.0, query.hurt_time * 0.12), 0.5);",
     "variable.mv = math.lerp(variable.mv ?? 0.0, query.property('legends:move'), 0.2);",
     "variable.dist = (variable.dist ?? 0.0) + query.delta_time * variable.mv * 6.0;",
     "variable.t = (variable.t ?? 0.0) + query.delta_time * (1.0 + 0.2 * math.max(0, variable.ph - 1));",
@@ -65,6 +68,8 @@ def gen_entity(mod, built_acts):
     from modelkit import deflicker, island_report
     key = mod.KEY
     m = mod.build()
+    for bone, name, pos in getattr(mod, "LOCATORS", []):
+        m.locator(bone, name, pos)
     left = deflicker(m)
     isl = island_report(m)
     if left or isl:
@@ -92,8 +97,10 @@ def gen_entity(mod, built_acts):
     for name, a in mod.loops().items():
         anims[f"animation.legends.{key}.{name}"] = a
     acts = mod.acts() if hasattr(mod, "acts") and callable(getattr(mod, "acts")) else []
+    act_fx = getattr(mod, "ACT_FX", {})
+    auras = getattr(mod, "AURAS", {})
     for a in acts:
-        anims[f"animation.legends.{key}.act.{a.name}"] = a.to_json()
+        anims[f"animation.legends.{key}.act.{a.name}"] = vfx.add_act_fx(a.to_json(), act_fx.get(a.name, []))
     wj(os.path.join(RP, "animations", "legends", f"{key}.animation.json"), {"format_version": "1.8.0", "animations": anims}, compact=True)
     # act controller
     if acts:
@@ -101,8 +108,12 @@ def gen_entity(mod, built_acts):
         for i, a in enumerate(acts):
             states[a.name] = {"animations": [f"a_{a.name}"], "blend_transition": cfg.get("blend", 0.18),
                               "transitions": [{"default": f"variable.act != {i + 1}"}]}
+        ctrls = {f"controller.animation.legends.{key}.act": {"initial_state": "default", "states": states}}
+        if auras:
+            death_id = next((i + 1 for i, a in enumerate(acts) if a.name == "death"), None)
+            ctrls[f"controller.animation.legends.{key}.fx"] = vfx.fx_controller(key, auras, death_id)
         wj(os.path.join(RP, "animation_controllers", "legends", f"{key}.ac.json"),
-           {"format_version": "1.10.0", "animation_controllers": {f"controller.animation.legends.{key}.act": {"initial_state": "default", "states": states}}})
+           {"format_version": "1.10.0", "animation_controllers": ctrls})
         built_acts[key] = {a.name: {"id": i + 1, "ticks": a.ticks, "marks": a.marks} for i, a in enumerate(acts)}
     # render controllers
     vis = [{"*": True}] + cfg.get("visibility", [])
@@ -125,6 +136,8 @@ def gen_entity(mod, built_acts):
         anim_map[f"a_{a.name}"] = f"animation.legends.{key}.act.{a.name}"
     if acts:
         anim_map["ctrl_act"] = f"controller.animation.legends.{key}.act"
+    if acts and auras:
+        anim_map["ctrl_fx"] = f"controller.animation.legends.{key}.fx"
     desc = {
         "identifier": f"legends:{key}",
         "materials": {"default": cfg.get("material", "entity_alphatest"), "glow": "entity_beam_additive"},
@@ -132,9 +145,12 @@ def gen_entity(mod, built_acts):
         "geometry": {"default": geo_id, **({"glow": geo_id + ".glow"} if has_glow else {})},
         "animations": anim_map,
         "scripts": {"scale": str(cfg["scale"]), "pre_animation": (PROP_PRE if cfg.get("prop") else COMMON_PRE) + cfg.get("pre", []),
-                    "animate": cfg["animate"]},
+                    "animate": cfg["animate"] + (["ctrl_fx"] if (acts and auras) else [])},
         "render_controllers": list(rcs.keys()),
     }
+    fx_map = vfx.used_effects(auras, act_fx)
+    if fx_map:
+        desc["particle_effects"] = fx_map
     if cfg.get("spawn_egg"):
         desc["spawn_egg"] = cfg["spawn_egg"]
     wj(os.path.join(RP, "entity", "legends", f"{key}.entity.json"), {"format_version": "1.10.0", "minecraft:client_entity": {"description": desc}})
@@ -222,6 +238,7 @@ def main():
     bump_manifest(os.path.join(RP, "manifest.json"))
     for p in (os.path.join(BP, "texts", "en_US.lang"), os.path.join(RP, "texts", "en_US.lang")):
         set_lang(p)
+    print(f"  {vfx.write_particles(RP)} client particle effects")
     rest = data_constants()
     built_acts = {}
     done = set()

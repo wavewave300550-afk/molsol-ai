@@ -105,6 +105,7 @@ class Bone:
     rotation: Optional[Tuple[float, float, float]] = None
     cubes: List[Cube] = field(default_factory=list)
     floating: bool = False   # detached from its parent by design (masks, orbiting shards...)
+    locators: Dict[str, Tuple[float, float, float]] = field(default_factory=dict)
 
     def add(self, origin, size, mat, **kw) -> "Bone":
         self.cubes.append(Cube(tuple(float(x) for x in origin), tuple(float(x) for x in size), mat, **kw))
@@ -170,6 +171,16 @@ class Model:
         b = Bone(name, tuple(float(x) for x in pivot), parent, tuple(rotation) if rotation else None, floating=floating)
         self.bones.append(b)
         return b
+
+    def locator(self, bone: str, name: str, pos) -> None:
+        """Attach a named locator (particle / effect anchor) to a bone, in model space."""
+        for b in self.bones:
+            if any(name in x.locators for x in self.bones):
+                raise ValueError(f"duplicate locator {name}")
+            if b.name == bone:
+                b.locators[name] = tuple(float(v) for v in pos)
+                return
+        raise KeyError(bone)
 
     def get(self, name) -> Bone:
         for b in self.bones:
@@ -277,6 +288,8 @@ class Model:
                 cubes.append(jc)
             if cubes:
                 jb["cubes"] = cubes
+            if b.locators:
+                jb["locators"] = {k: [round(v, 3) for v in p] for k, p in b.locators.items()}
             bones.append(jb)
         return {"format_version": "1.16.0", "minecraft:geometry": [{
             "description": {"identifier": identifier or self.identifier, "texture_width": W, "texture_height": H,

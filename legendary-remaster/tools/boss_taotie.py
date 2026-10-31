@@ -216,45 +216,54 @@ W = "variable.dist * 60"                                # stride clock (deg)
 
 
 def loops():
+    B = 150     # breathing (deg/s): ~2.4 s per breath
     idle = {
-        "hull": {"p": [0, sn(70, amp=0.5), 0], "r": [sn(70, amp=0.5), 0, 0]},
-        "neck": {"r": [sn(45, amp=2), sn(22, amp=5), 0]},
-        "head": {"r": [sn(45, 40, 2), sn(28, amp=3), sn(19, amp=1.5)]},
-        "jaw": {"r": [f"3 + {sn(110, amp=3)}", 0, 0]},
-        "tail0": {"r": [sn(50, amp=4), sn(33, amp=10), 0]},
-        "tail1": {"r": [sn(50, 40, 6), sn(33, 50, 14), 0]},
-        "tail2": {"r": [sn(50, 80, 6), sn(33, 100, 16), 0]},
-        "pitglow_r": {"s": f"1 + {sn(160, amp=0.07)}"}, "pitglow_l": {"s": f"1 + {sn(160, 90, 0.07)}"},
-        "vortex_a": {"r": [0, f"{T} * 90", 0]}, "vortex_b": {"r": [0, f"-{T} * 140", 0]},
-        "vortex_c": {"r": [0, f"{T} * 220", 0]}, "vortex_core": {"s": f"1 + {sn(200, amp=0.12)}"},
-        "vortex": {"p": [sn(40, amp=1.2), sn(60, amp=1.5), 0], "r": [sn(30, amp=4), 0, cs(30, amp=4)]},
+        "hull": {"p": [0, sn(B, amp=0.9), 0], "r": [sn(B, amp=1.4), 0, sn(45, amp=1.2)]},
+        "neck": {"r": [sn(B, 40, 3), sn(38, amp=12), sn(27, amp=2)]},
+        "head": {"r": [f"{sn(B, 80, 3)} + {sn(61, amp=2)}", sn(47, 30, 7), sn(29, amp=4)]},
+        "jaw": {"r": [f"7 + {sn(B, 120, 6)} + {sn(530, amp=0.8)}", 0, 0]},
+        "shoulder_r": {"r": [sn(75, amp=3), 0, 0]}, "shoulder_l": {"r": [sn(75, 180, 3), 0, 0]},
+        "tail0": {"r": [sn(120, amp=6), sn(80, amp=14), 0]},
+        "tail1": {"r": [sn(120, -50, 8), sn(80, -60, 18), 0]},
+        "tail2": {"r": [sn(120, -100, 10), sn(80, -120, 22), 0]},
+        "horn_r": {"r": [0, 0, sn(B, 60, 1.2)]}, "horn_l": {"r": [0, 0, sn(B, 60, -1.2)]},
+        "cheek_r": {"r": [0, sn(B, 100, 3), 0]}, "cheek_l": {"r": [0, sn(B, 100, -3), 0]},
+        "pitglow_r": {"s": f"1 + {sn(360, amp=0.12)}"}, "pitglow_l": {"s": f"1 + {sn(360, 90, 0.12)}"},
+        "vortex_a": {"r": [0, f"{T} * 160", 0]}, "vortex_b": {"r": [0, f"-{T} * 230", 0]},
+        "vortex_c": {"r": [0, f"{T} * 320", 0]}, "vortex_core": {"s": f"1 + {sn(300, amp=0.18)}"},
+        "vortex": {"p": [sn(80, amp=1.5), sn(120, amp=2), 0], "r": [sn(60, amp=6), 0, cs(60, amp=6)]},
     }
+    for i in range(6):
+        idle[f"flange{i}"] = {"r": [0, 0, sn(200, i * 45, 1.6)]}
     for k in range(4):
         for sd in ("r", "l"):
-            idle[f"fing_{sd}{k}"] = {"r": [sn(70, k * 30, 4), 0, 0]}
+            idle[f"fing_{sd}{k}"] = {"r": [sn(90, k * 25, 9), 0, 0]}
     w = W
     walk = {
-        "hull": {"p": [0, f"math.cos(({w}) * 2) * 0.9", 0], "r": [0, 0, f"math.sin({w}) * 1.6"]},
-        "neck": {"r": [f"math.cos(({w}) * 2) * -2", f"math.sin({w}) * 3", 0]},
-        "shoulder_r": {"r": [f"math.sin({w} + 90) * 17", 0, 0]},
-        "fore_r": {"r": [f"math.max(0, math.sin({w} + 180)) * -26", 0, 0]},
-        "hand_r": {"r": [f"math.sin({w} + 90) * -17 + math.max(0, math.sin({w} + 180)) * 22", 0, 0]},
-        "shoulder_l": {"r": [f"math.sin({w} + 270) * 17", 0, 0]},
-        "fore_l": {"r": [f"math.max(0, math.sin({w})) * -26", 0, 0]},
-        "hand_l": {"r": [f"math.sin({w} + 270) * -17 + math.max(0, math.sin({w})) * 22", 0, 0]},
-        "thigh_r": {"r": [f"math.sin({w}) * 16", 0, 0]},
-        "shin_r": {"r": [f"math.max(0, math.sin({w} + 90)) * 18", 0, 0]},
-        "cannon_r": {"r": [f"math.max(0, math.sin({w} + 90)) * -14", 0, 0]},
-        "thigh_l": {"r": [f"math.sin({w} + 180) * 16", 0, 0]},
-        "shin_l": {"r": [f"math.max(0, math.sin({w} + 270)) * 18", 0, 0]},
-        "cannon_l": {"r": [f"math.max(0, math.sin({w} + 270)) * -14", 0, 0]},
-        "tail0": {"r": [0, f"math.sin({w}) * 9", 0]},
+        "hull": {"p": [0, f"math.cos(({w}) * 2) * 1.5", 0], "r": [f"math.cos(({w}) * 2) * 1.5", f"math.sin({w}) * 3", f"math.sin({w}) * 2.8"]},
+        "neck": {"r": [f"math.cos(({w}) * 2) * -3.5", f"math.sin({w}) * -5", 0]},
+        "head": {"r": [f"math.cos(({w}) * 2 + 60) * 3", 0, f"math.sin({w}) * -2"]},
+        "shoulder_r": {"r": [f"math.sin({w} + 90) * 24", 0, 0]},
+        "fore_r": {"r": [f"math.max(0, math.sin({w} + 180)) * -34", 0, 0]},
+        "hand_r": {"r": [f"math.sin({w} + 90) * -22 + math.max(0, math.sin({w} + 180)) * 30", 0, 0]},
+        "shoulder_l": {"r": [f"math.sin({w} + 270) * 24", 0, 0]},
+        "fore_l": {"r": [f"math.max(0, math.sin({w})) * -34", 0, 0]},
+        "hand_l": {"r": [f"math.sin({w} + 270) * -22 + math.max(0, math.sin({w})) * 30", 0, 0]},
+        "thigh_r": {"r": [f"math.sin({w}) * 22", 0, 0]},
+        "shin_r": {"r": [f"math.max(0, math.sin({w} + 90)) * 26", 0, 0]},
+        "cannon_r": {"r": [f"math.max(0, math.sin({w} + 90)) * -20", 0, 0]},
+        "thigh_l": {"r": [f"math.sin({w} + 180) * 22", 0, 0]},
+        "shin_l": {"r": [f"math.max(0, math.sin({w} + 270)) * 26", 0, 0]},
+        "cannon_l": {"r": [f"math.max(0, math.sin({w} + 270)) * -20", 0, 0]},
+        "tail0": {"r": [0, f"math.sin({w} - 40) * 14", 0]}, "tail1": {"r": [0, f"math.sin({w} - 90) * 16", 0]},
     }
     form3 = {   # phase III: the body is gone, the head flies on the vortex
-        "neck": {"p": [0, -11, 34]},
-        "head": {"r": [6, 0, 0]},
+        "neck": {"p": [0, f"-11 + {sn(110, amp=1.6)}", 34]},
+        "head": {"r": [f"6 + {sn(110, 60, 4)}", sn(55, amp=10), sn(70, amp=6)]},
+        "jaw": {"r": [f"10 + {sn(200, amp=8)}", 0, 0]},
     }
-    return {"idle": loop(idle), "walk": loop(walk), "form3": loop(form3)}
+    flinch = {"hull": {"r": [-4, 0, 2], "p": [0, 0, 1.5]}, "neck": {"r": [-7, 0, 0]}, "head": {"r": [-8, 6, 5]}, "jaw": {"r": [14, 0, 0]}}
+    return {"idle": loop(idle), "walk": loop(walk), "form3": loop(form3), "flinch": loop(flinch)}
 
 
 def tremble(a: Act, bone="root", amp=0.4, f=2400):
@@ -425,6 +434,44 @@ def acts():
     return out
 
 
+# =========================================================================== effects (client particles)
+FX = lambda n: f"legends:fx_{n}"
+LOCATORS = [
+    ("head", "mouth", (0, 30, -62)), ("head", "eye_r", (-9.8, 46, -63)), ("head", "eye_l", (9.8, 46, -63)),
+    ("hand_r", "hand_r", (-18, 1, -32)), ("hand_l", "hand_l", (18, 1, -32)),
+    ("hoof_r", "foot_rb", (-13, 0, 13)), ("hoof_l", "foot_lb", (13, 0, 13)),
+    ("torso", "back", (0, 54, 0)), ("pit_r", "pit_r", (-19.5, 31, -15)), ("pit_l", "pit_l", (19.5, 31, -15)),
+    ("vortex_core", "vortex", (0, 4, -12)), ("root", "ground", (0, 0, -18)),
+]
+AURAS = {
+    "p1": [(FX("hunger_smoke"), "mouth")],
+    "p2": [(FX("hunger_smoke"), "mouth"), (FX("maw_embers"), "mouth"), (FX("eye_fire"), "pit_r"), (FX("eye_fire"), "pit_l"),
+           (FX("bronze_steam"), "back")],
+    "p3": [(FX("vortex_swirl"), "vortex"), (FX("hunger_smoke"), "mouth"), (FX("maw_embers"), "mouth")],
+    "dying": [(FX("hunger_smoke"), "mouth")],
+}
+ACT_FX = {
+    "emerge": [(20, FX("dust"), "ground"), (40, FX("debris"), "ground"), (48, FX("dust"), "ground"), (48, FX("hunger_roar"), "mouth")],
+    "roar": [(14, FX("hunger_roar"), "mouth"), (14, FX("flash"), "pit_r"), (14, FX("flash"), "pit_l")],
+    "claw": [(10, FX("slash_bronze"), "hand_r"), (10, FX("dust"), "hand_r"), (18, FX("slash_bronze"), "hand_l"), (18, FX("dust"), "hand_l")],
+    "charge": [(0, FX("dust"), "foot_rb"), (10, FX("dust"), "hand_l")],
+    "windup": [(8, FX("dust"), "hand_r"), (16, FX("dust"), "hand_r")],
+    "inhale": [(10, FX("hunger_roar"), "mouth"), (55, FX("flash"), "mouth"), (55, FX("bronze_sparks"), "mouth")],
+    "quake": [(20, FX("dust"), "hand_r"), (20, FX("dust"), "hand_l"), (20, FX("debris"), "ground"), (20, FX("bronze_sparks"), "ground")],
+    "gaze": [(16, FX("flash"), "pit_r"), (16, FX("flash"), "pit_l")],
+    "summon": [(12, FX("hunger_roar"), "mouth")],
+    "pounce": [(7, FX("dust"), "foot_rb"), (21, FX("dust"), "hand_r"), (21, FX("dust"), "hand_l"), (21, FX("debris"), "ground")],
+    "spit": [(12, FX("venom_spray"), "mouth")],
+    "devour": [(20, FX("bronze_sparks"), "mouth"), (36, FX("bronze_sparks"), "mouth"), (52, FX("bronze_sparks"), "mouth"),
+               (66, FX("bronze_sparks"), "mouth"), (66, FX("hunger_roar"), "mouth"), (78, FX("debris"), "back")],
+    "maw": [(36, FX("hunger_roar"), "mouth"), (168, FX("flash"), "mouth"), (168, FX("bronze_sparks"), "mouth"), (168, FX("hunger_roar"), "mouth")],
+    "ram": [(11, FX("bronze_sparks"), "mouth"), (11, FX("flash"), "mouth")],
+    "bites": [(7, FX("bronze_sparks"), "mouth"), (16, FX("bronze_sparks"), "mouth"), (25, FX("bronze_sparks"), "mouth")],
+    "spiral": [(10, FX("hunger_roar"), "mouth")],
+    "death": [(10, FX("hunger_roar"), "mouth"), (40, FX("bronze_sparks"), "mouth"), (72, FX("vanish"), "vortex"), (76, FX("flash"), "vortex")],
+}
+
+
 # =========================================================================== client entity / render controller
 def entity_cfg():
     return {
@@ -434,7 +481,7 @@ def entity_cfg():
             "variable.p3 = math.lerp(variable.p3 ?? 0.0, variable.ph >= 3 ? 1.0 : 0.0, 0.06);",
             "variable.walkw = variable.mv * (1.0 - variable.p3) * variable.calm;",
         ],
-        "animate": [{"idle": "variable.calm + 0.15"}, {"walk": "variable.walkw"}, {"form3": "variable.p3"}, "ctrl_act"],
+        "animate": [{"idle": "variable.calm + 0.15"}, {"walk": "variable.walkw"}, {"form3": "variable.p3"}, {"flinch": "variable.hit"}, "ctrl_act"],
         "texture_expr": "Array.skins[variable.ph >= 2 ? 1 : 0]",
         "skins": ["Texture.default", "Texture.v1"],
         "visibility": [
