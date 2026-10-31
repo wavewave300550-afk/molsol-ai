@@ -48,7 +48,7 @@ export class Nidhogg extends Boss {
         this.prop("var", on ? 1 : 0);
     }
     mouth() {
-        return this.flying ? ahead(this, 8, 1.2) : ahead(this, 8.6, 3.0);
+        return this.flying ? ahead(this, 9.6, 2.2) : ahead(this, 9.6, 2.6);
     }
     hover(t) {
         const g = this.ground(t.location).y;

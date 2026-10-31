@@ -117,7 +117,7 @@ export class Taotie extends Boss {
             shake(this.audience(), 0.45, 1.0);
             shock(this.dim, this.pos, 16, 14, C.ember);
             for (const s of [-1, 1])
-                glint(this.dim, ahead(this, 1.2 * SCALE, 2.2, s * 2.6), C.ember, 2.5);
+                glint(this.dim, ahead(this, 1.5, 3.1, s * 1.9), C.ember, 2.5);
             yield a.ticks - a.marks[0];
             this.endAct();
             return;
@@ -317,7 +317,7 @@ export class Taotie extends Boss {
         for (let k = 0; k < sweep; k++) {
             const ang = 30 + (120 * k) / sweep;
             for (const s of [-1, 1]) {
-                const eye = ahead(this, 1.2 * SCALE, 1.9, s * 2.6);
+                const eye = ahead(this, 1.5, 3.1, s * 1.9);   // Paoxiao's armpit eyes
                 const dir = dirOfYaw(this.yaw + s * ang);
                 const end = add(eye, scale(dir, 17));
                 if (k % 2 === 0)

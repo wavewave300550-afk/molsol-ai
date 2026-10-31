@@ -40,6 +40,15 @@ for (const [pkg, file] of [["server", "mock-server.mjs"], ["server-ui", "mock-se
   fs.writeFileSync(path.join(dir, "package.json"), JSON.stringify({ name: `@minecraft/${pkg}`, type: "module", exports: "./index.mjs" }));
 }
 const url = (...p) => pathToFileURL(path.join(tmp, ...p)).href;
+// deterministic runs: seeded PRNG (mulberry32)
+let seed = Number(process.env.SEED ?? 20261031) >>> 0;
+Math.random = () => {
+  seed = (seed + 0x6d2b79f5) >>> 0;
+  let t = seed;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
 const mc = await import(url("node_modules", "@minecraft", "server", "index.mjs"));
 const { world, system, Player, __tick, __issues } = mc;
 const warnings = [];
@@ -78,6 +87,10 @@ const aimAt = (p, target) => {
   p.__rotation = { x: 0, y: (Math.atan2(-dx, dz) * 180) / Math.PI };
 };
 const report = [];
+const bossHp = (e, f) => {
+  const h = e.getComponent("minecraft:health");
+  h.setCurrentValue(Math.max(1, h.effectiveMax * f));
+};
 
 for (const key of ["taotie", "nidhogg", "hanuman", "alicorn", "tenko", "logos"]) {
   registry.clearAll();
@@ -92,8 +105,69 @@ for (const key of ["taotie", "nidhogg", "hanuman", "alicorn", "tenko", "logos"])
   const boss = dim.getEntities({ type: `legends:${key}` })[0];
   expect(!!boss, `${key}: summoned`);
   if (!boss) continue;
-  const b = registry.bossOf(boss.id);
+  let b = registry.bossOf(boss.id);
   expect(!!b, `${key}: controlled`);
+  // ---- skill drill: every skill of every phase is forced to run once to completion
+  for (let k = 0; k < 400 && b.phase < 1; k++) await tick(1);
+  const drilled = [];
+  for (const sk of b.skills()) {
+    const ph = sk.phases[sk.phases.length - 1];
+    b.setPhase(ph);
+    if (key === "taotie") { b.flying = ph >= 3; b.prop("fly", ph >= 3 ? 1 : 0); }
+    if (key === "nidhogg") {
+      b.takeWing(ph === 2);
+      if (sk.when && !sk.when()) b.takeWing(!b.flying);
+    }
+    if (key === "alicorn") {
+      b.wings(ph >= 2);
+      if (sk.name === "heal") bossHp(boss, 0.45);
+      if (sk.name === "prism") b.prisms = [];
+    }
+    if (key === "logos" && sk.name === "reforge") {
+      const s = b.alive("seraph");
+      if (s) { s.entity.remove(); s.dispose(); }
+    }
+    if (sk.name === "tail") {
+      // stand behind the wyrm
+      const back = { x: boss.location.x - Math.sin((-b.yaw * Math.PI) / 180) * -6, y: 64, z: boss.location.z - Math.cos((b.yaw * Math.PI) / 180) * 6 };
+      P1.location = back;
+      P2.location = back;
+      b.refreshArena();
+      b.target = P1;
+    }
+    if (sk.when && !sk.when()) {
+      report.push(`${key.padEnd(8)} drill skipped ${sk.name} (condition)`);
+      continue;
+    }
+    if (sk.name !== "tail") {
+      P1.location = { x: boss.location.x + 6, y: 64, z: boss.location.z + 2 };
+      P2.location = { x: boss.location.x - 7, y: 64, z: boss.location.z - 3 };
+      b.refreshArena();
+      b.pickTarget();
+    }
+    b.interrupt();
+    b.start(sk.name, sk.run(b.target ?? P1));
+    let n = 0;
+    while (b.co && n < 700) {
+      await tick(1);
+      n++;
+      for (const p of [P1, P2]) p.getComponent("minecraft:health").setCurrentValue(20);
+    }
+    expect(!b.co, `${key}: skill ${sk.name} completes (${n} ticks)`);
+    drilled.push(sk.name);
+    await tick(10);
+  }
+  report.push(`${key.padEnd(8)} drilled ${drilled.length} skills: ${drilled.join(",")}`);
+  registry.clearAll();
+  for (const e of dim.getEntities()) if (!(e instanceof Player)) e.remove();
+  await tick(3);
+  commands["legends:summon"]({ sourceEntity: P1 }, key);
+  await tick(3);
+  const fresh = dim.getEntities({ type: `legends:${key}` })[0];
+  expect(!!fresh, `${key}: summoned again for the fight`);
+  if (!fresh) continue;
+  const bossRef = fresh;
+  b = registry.bossOf(bossRef.id);
   const acts = new Set();
   const cos = new Set();
   const phases = new Set();
@@ -111,10 +185,10 @@ for (const key of ["taotie", "nidhogg", "hanuman", "alicorn", "tenko", "logos"])
   let revived = false;
   let t = 0;
   const hurt0 = { p1: P1.__hurtLog.length, p2: P2.__hurtLog.length };
-  while (boss.isValid && t < 16000) {
+  while (bossRef.isValid && t < 16000) {
     await tick(1, () => {
       t++;
-      const bl = boss.isValid ? boss.location : { x: 0, y: 64, z: 0 };
+      const bl = bossRef.isValid ? bossRef.location : { x: 0, y: 64, z: 0 };
       const ang = t * 0.02;
       const r1 = t % 900 < 450 ? 5 : 14;
       P1.location = { x: bl.x + Math.cos(ang) * r1, y: 64, z: bl.z + Math.sin(ang) * r1 };
@@ -128,8 +202,8 @@ for (const key of ["taotie", "nidhogg", "hanuman", "alicorn", "tenko", "logos"])
       if (b.coName === "ultimate" && lastCo !== "ultimate") ultimates++;
       lastCo = b.coName;
       phases.add(b.phase);
-      if (boss.isValid) {
-        const a = boss.getProperty("legends:act");
+      if (bossRef.isValid) {
+        const a = bossRef.getProperty("legends:act");
         if (a) acts.add(idToAct(key, a));
       }
       for (const e of dim.getEntities({ families: ["legends_prop"] })) props.add(e.typeId);
@@ -164,9 +238,9 @@ for (const key of ["taotie", "nidhogg", "hanuman", "alicorn", "tenko", "logos"])
           maxText = Math.max(maxText, txt.replace(/§./g, "").length);
         }
       }
-      if (t % 10 === 0 && !b.dying && boss.isValid) {
-        boss.applyDamage(5, { cause: t % 40 === 0 ? "projectile" : "entityAttack", damagingEntity: P1 });
-        boss.isValid && boss.applyDamage(4, { cause: "entityAttack", damagingEntity: P2 });
+      if (t % 10 === 0 && !b.dying && bossRef.isValid) {
+        bossRef.applyDamage(5, { cause: t % 40 === 0 ? "projectile" : "entityAttack", damagingEntity: P1 });
+        bossRef.isValid && bossRef.applyDamage(4, { cause: "entityAttack", damagingEntity: P2 });
       }
       for (const p of [P1, P2]) {
         const h = p.getComponent("minecraft:health");
@@ -176,7 +250,7 @@ for (const key of ["taotie", "nidhogg", "hanuman", "alicorn", "tenko", "logos"])
   }
   const newWarn = warnings.slice(w0);
   const newIssues = __issues.slice(i0);
-  expect(!boss.isValid, `${key}: defeated within the time limit (t=${t})`);
+  expect(!bossRef.isValid, `${key}: defeated within the time limit (t=${t})`);
   expect(phases.has(3), `${key}: reached phase III`);
   expect(ultimates >= 1, `${key}: used its ultimate`);
   expect(acts.has("death"), `${key}: played its death animation`);

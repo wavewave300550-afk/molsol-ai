@@ -6,7 +6,7 @@ a skull crowned by gnarled antlers that look like torn roots of Yggdrasil, venom
 veins, a pale bone belly, tattered membranes and a serpentine tail ending in a tuft of root
 tendrils. Rest geometry = wings spread (flight). The ground stance is the `fold` loop (IK-solved).
 
-Scale 2.3 -> ~7 model units per block. Faces -Z. Ground mouth ~ (0, 21, -66).
+Scale 1.8 -> ~8.9 model units per block. Faces -Z. Mouth ~ (0, 23, -86): 9.7 blocks ahead, 2.6 up.
 """
 import math
 
@@ -17,7 +17,7 @@ import lmat as L
 
 ID = "geometry.legends.nidhogg"
 KEY = "nidhogg"
-SCALE = 2.3
+SCALE = 1.8
 VARIANTS = {"default": "default", "ragnarok": "v1"}
 _CACHE = {}
 
