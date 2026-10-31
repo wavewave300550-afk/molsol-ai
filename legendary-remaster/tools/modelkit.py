@@ -113,6 +113,26 @@ class Bone:
 
 
 # --------------------------------------------------------------------------- math
+# Authoring convention used by every builder, the IK and the preview renderer (in JSON
+# coordinates): right-handed (-rx, -ry, rz) applied X, Y, Z.  The game's real convention in
+# JSON coordinates (verified against Mojang's breeze rods) is right-handed (-rx, +ry, -rz), so
+# rotations are converted on export: R_author(rx, ry, rz) == R_game(rx, -ry, -rz).
+
+def _neg(v):
+    if isinstance(v, str):
+        return f"-({v})"
+    v = -round(v, 3)
+    return 0.0 if v == 0 else v
+
+
+def to_bedrock_rot(rot):
+    return [round(rot[0], 3) if not isinstance(rot[0], str) else rot[0], _neg(rot[1]), _neg(rot[2])]
+
+
+def game_rot_matrix(rot):
+    """The game's own convention (for verification): right-handed (-rx, +ry, -rz), X then Y then Z."""
+    return rot_matrix((rot[0], -rot[1], -rot[2]))
+
 
 def rot_matrix(rot):
     if not rot or not any(rot):
@@ -267,7 +287,7 @@ class Model:
             if b.parent:
                 jb["parent"] = b.parent
             if b.rotation and any(b.rotation):
-                jb["rotation"] = [round(v, 3) for v in b.rotation]
+                jb["rotation"] = to_bedrock_rot(b.rotation)
             cubes = []
             for ci, c in enumerate(b.cubes):
                 if glow is not None and c.glow != glow:
@@ -277,7 +297,7 @@ class Model:
                     jc["inflate"] = c.inflate
                 if c.rotation and any(c.rotation):
                     jc["pivot"] = [round(v, 4) for v in (c.pivot or c.origin)]
-                    jc["rotation"] = [round(v, 3) for v in c.rotation]
+                    jc["rotation"] = to_bedrock_rot(c.rotation)
                 uv = {}
                 for face in FACES:
                     key = (bi, ci, face)

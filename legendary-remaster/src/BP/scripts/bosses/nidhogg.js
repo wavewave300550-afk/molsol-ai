@@ -17,7 +17,7 @@
 import { EntityDamageCause } from "@minecraft/server";
 import { NIDHOGG_ACTS } from "../generated/data.js";
 import { effect, fightersNear, hurt, inCircle, inCone, inLine, inRingBand } from "../core/combat.js";
-import { burst, C, deco, flash, shake, shock, sound, spiralMark, teleCircle, teleCone, teleLine, teleSafe, bullet, glint, mote } from "../core/fx.js";
+import { chargeUp, magicCircle, nova, orb, burst, C, deco, flash, shake, shock, sound, spiralMark, teleCircle, teleCone, teleLine, teleSafe, bullet, glint, mote } from "../core/fx.js";
 import { fire, moveProp, propAct, removeProp, spawnProp, zone } from "../core/hazards.js";
 import { addTask } from "../core/tasks.js";
 import { add, angleDiff, dirOfYaw, dist, flatDir, flatDist, norm, randIn, rotY, scale, sub, yawOf } from "../core/vec.js";
@@ -38,6 +38,7 @@ export class Nidhogg extends Boss {
         this.ultPhase = 3;
         this.ultCooldown = 1000;
         this.sigil = "legends:sigil_nidhogg";
+        this.vfxColor = C.venom;
     }
     onInit() {
         if (this.phase >= 2)
@@ -202,6 +203,7 @@ export class Nidhogg extends Boss {
             { up: 0.5, from: c, once: hit, effects: [["slowness", 40, 3], POISON()] });
         teleCircle(this.dim, c, 4.2, 26);
         spiralMark(this.dim, c, C.venom, 4, 26);
+        magicCircle(this.dim, c, 6, 30, C.venom);
         for (let k = 0; k < 26; k++) {
             if (k % 6 === 0)
                 for (const p of ringPts)
@@ -212,6 +214,7 @@ export class Nidhogg extends Boss {
         shake(this.audience(), 0.4, 0.6);
         shock(this.dim, c, 8, 10, C.venom);
         burst(this.dim, add(c, { x: 0, y: 1, z: 0 }), C.venom, 30, 6, 0.4, 2.5);
+        nova(this.dim, add(c, { x: 0, y: 1.5, z: 0 }), C.venom, 6);
         strike(this, c, 6, (p) => inCircle(p, c, 4.2, 6), 24, { knock: 0.8, up: 1.2, from: c, effects: [POISON(2)] });
         zone(this.dim, c, 3.4, 100, { dmg: 3, every: 10, col: C.venom, owner: this.entity, kind: "venom" });
         addTask("cage", (age) => {
@@ -234,6 +237,8 @@ export class Nidhogg extends Boss {
         for (const s of spots)
             teleCircle(this.dim, s.p, 1.5, 22 + Math.round(s.d * 2.5));
         sound(this.dim, "mob.enderdragon.growl", this.pos, 4, 1.4);
+        magicCircle(this.dim, c, 14, 60, C.venom);
+        chargeUp(this.dim, add(c, { x: 0, y: 14, z: 0 }), C.venom, 20, 6);
         addTask("nightfall", (age) => {
             for (const s of spots) {
                 const land = 22 + Math.round(s.d * 2.5);
@@ -242,6 +247,7 @@ export class Nidhogg extends Boss {
                 if (age === land) {
                     burst(this.dim, s.p, C.venom, 10, 3, 0.3, 0.4);
                     shock(this.dim, s.p, 3, 6, C.venom);
+                    orb(this.dim, add(s.p, { x: 0, y: 1, z: 0 }), C.venom, 2.6, 6);
                     strike(this, s.p, 3, (p) => inCircle(p, s.p, 1.6, 4), 14, { up: 0.4, from: s.p, effects: [POISON(1)] });
                     if (s.d === 0)
                         sound(this.dim, "random.explode", s.p, 2, 1.2);
@@ -409,6 +415,7 @@ export class Nidhogg extends Boss {
         const base = this.yaw;
         teleCone(this.dim, { x: this.pos.x, y: g, z: this.pos.z }, dirOfYaw(base), 90, 17, a.marks[0], C.danger);
         sound(this.dim, "mob.enderdragon.growl", this.pos, 3, 1.3);
+        chargeUp(this.dim, this.mouth(), C.venom, a.marks[0], 5);
         yield a.marks[0];
         const sweep = a.ticks - a.marks[0] - 8;
         const hit = new Map();
@@ -463,6 +470,7 @@ export class Nidhogg extends Boss {
         const spot = this.ground(lead(t, 12));
         const a = this.act("dive");
         teleCircle(this.dim, spot, 4.2, a.marks[0]);
+        magicCircle(this.dim, spot, 5.5, a.marks[0] + 4, C.venom);
         this.faceNow(spot);
         const wind = a.marks[0] - 10;
         yield wind;
@@ -475,6 +483,7 @@ export class Nidhogg extends Boss {
         sound(this.dim, "random.explode", spot, 3, 0.7);
         shake(this.audience(), 0.5, 0.7);
         shock(this.dim, spot, 9, 10, C.venom);
+        nova(this.dim, add(spot, { x: 0, y: 1, z: 0 }), C.venom, 7);
         strike(this, spot, 6, (p) => inCircle(p, spot, 4.2, 5), 24, { knock: 1.6, up: 0.7, from: spot, effects: [POISON(1)] });
         this.place(this.pos, this.yaw, 0);
         yield a.ticks - a.marks[0];

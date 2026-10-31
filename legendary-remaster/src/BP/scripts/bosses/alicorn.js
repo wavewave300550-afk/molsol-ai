@@ -17,7 +17,7 @@
 import { EntityDamageCause } from "@minecraft/server";
 import { ALICORN_ACTS } from "../generated/data.js";
 import { effect, fightersNear, grounded, hurt, inCircle, inRingBand, knock } from "../core/combat.js";
-import { beam, bullet, burst, C, deco, flash, glint, pillar, shake, shock, sound, teleCircle, teleCone, teleLine, teleSafe, mote } from "../core/fx.js";
+import { chargeUp, magicCircle, nova, orb, beam, bullet, burst, C, deco, flash, glint, pillar, shake, shock, sound, teleCircle, teleCone, teleLine, teleSafe, mote } from "../core/fx.js";
 import { fire, moveProp, removeProp, spawnProp } from "../core/hazards.js";
 import { addTask } from "../core/tasks.js";
 import { add, dirOfYaw, dist, flatDir, flatDist, norm, randIn, rotY, scale, sub, yawOf } from "../core/vec.js";
@@ -39,6 +39,7 @@ export class Alicorn extends Boss {
         this.ultPhase = 3;
         this.ultCooldown = 1000;
         this.sigil = "legends:sigil_alicorn";
+        this.vfxColor = C.aurora;
         this.prisms = [];
         this.channelDmg = 0;
     }
@@ -216,12 +217,14 @@ export class Alicorn extends Boss {
         const a = this.act("stomp");
         const c = this.ground(ahead(this, 2));
         teleCircle(this.dim, c, 6, a.marks[0]);
+        magicCircle(this.dim, c, 7.5, a.marks[0] + 8, C.aurora);
         sound(this.dim, "mob.horse.angry", this.pos, 3, 0.6);
         yield a.marks[0];
         sound(this.dim, "random.anvil_land", c, 3, 0.6);
         shake(this.audience(), 0.35, 0.5);
         strike(this, c, 7, (p) => inCircle(p, c, 6), 17, { knock: 1.2, up: 0.6, from: c });
         shock(this.dim, c, 14, 10, C.aurora);
+        nova(this.dim, add(c, { x: 0, y: 1, z: 0 }), C.aurora, 7);
         const hit = new Set();
         for (let k = 1; k <= 10; k++) {
             const r = 5 + k * 0.9;
@@ -235,6 +238,7 @@ export class Alicorn extends Boss {
         this.hue(HUE.blue);
         const a = this.act("lance");
         glint(this.dim, this.horn(), C.sky, 2);
+        chargeUp(this.dim, this.horn(), C.sky, a.marks[0], 3.5);
         sound(this.dim, "beacon.power", this.pos, 2, 1.8);
         yield a.marks[0];
         const tgts = this.fighters.length ? this.fighters : [];
@@ -336,6 +340,7 @@ export class Alicorn extends Boss {
         const spot = this.ground(lead(t, 12));
         const a = this.act("comet");
         teleCircle(this.dim, spot, 4.5, a.marks[0]);
+        magicCircle(this.dim, spot, 6, a.marks[0] + 4, C.gold);
         this.faceNow(spot);
         yield a.marks[0] - 8;
         const from = { ...this.pos };
@@ -348,6 +353,7 @@ export class Alicorn extends Boss {
         shake(this.audience(), 0.45, 0.6);
         shock(this.dim, spot, 9, 10, C.gold);
         burst(this.dim, spot, C.star, 24, 6, 0.35, 0.6);
+        nova(this.dim, add(spot, { x: 0, y: 1, z: 0 }), C.gold, 8);
         strike(this, spot, 6, (p) => inCircle(p, spot, 4.5, 5), 22, { knock: 1.6, up: 0.6, from: spot });
         this.place(this.pos, this.yaw, 0);
         this.hue(HUE.none);
@@ -356,6 +362,7 @@ export class Alicorn extends Boss {
     *prism() {
         const a = this.act("barrier");
         sound(this.dim, "chime.amethyst_block", this.pos, 4, 0.6);
+        chargeUp(this.dim, this.centre(3), C.aurora, a.marks[0], 5);
         yield a.marks[0];
         const c = this.ground(this.home);
         const base = randIn(0, 360);
@@ -365,6 +372,7 @@ export class Alicorn extends Boss {
             if (e)
                 this.prisms.push(e);
             pillar(this.dim, p, 12, 1.5, 20, C.aurora);
+            magicCircle(this.dim, p, 3, 80, C.aurora);
         }
         yield a.ticks - a.marks[0];
     }
@@ -374,12 +382,14 @@ export class Alicorn extends Boss {
         this.channelDmg = 0;
         const limit = 50 + 25 * this.maxFighters;
         sound(this.dim, "beacon.ambient", this.pos, 4, 1.2);
+        magicCircle(this.dim, this.ground(this.pos), 6, a.ticks, C.sky);
         for (let k = 0; k < a.ticks; k++) {
             if (k % 10 === 0) {
                 const h = this.entity.getComponent("minecraft:health");
                 if (h)
                     h.setCurrentValue(Math.min(h.effectiveMax, this.gateCap(h.currentValue + this.maxHp * 0.007)));
                 deco(this.dim, "rune", add(this.pos, { x: 0, y: 0.5, z: 0 }), C.sky, 4, 2.5, 0.35, 0.8);
+                orb(this.dim, add(this.pos, { x: 0, y: 2.5, z: 0 }), C.sky, 3, 10);
             }
             if (this.channelDmg >= limit) {
                 // interrupted: staggered and vulnerable

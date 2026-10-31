@@ -16,7 +16,7 @@
 import { EntityDamageCause } from "@minecraft/server";
 import { TAOTIE_ACTS } from "../generated/data.js";
 import { effect, fightersNear, grounded, hurt, inCircle, inCone, inLine, inRingBand, knock } from "../core/combat.js";
-import { burst, C, deco, flash, glint, mote, shake, shock, sound, teleCircle, teleCone, teleLine, beam, bullet } from "../core/fx.js";
+import { chargeUp, magicCircle, nova, orb, burst, C, deco, flash, glint, mote, shake, shock, sound, teleCircle, teleCone, teleLine, beam, bullet } from "../core/fx.js";
 import { fire, moveProp, particleBullet, propAct, removeProp, spawnProp, zone } from "../core/hazards.js";
 import { blocked } from "../core/terrain.js";
 import { add, dirOfYaw, dist, flatDir, flatDist, lerp, norm, randIn, scale, segDist, sub } from "../core/vec.js";
@@ -37,6 +37,7 @@ export class Taotie extends Boss {
         this.ultPhase = 3;
         this.ultCooldown = 920;
         this.sigil = "legends:sigil_taotie";
+        this.vfxColor = C.ember;
         this.dings = [];
     }
     onInit() {
@@ -247,6 +248,8 @@ export class Taotie extends Boss {
         const m0 = this.mouth();
         teleCircle(this.dim, this.ground(m0), 4.2, a.marks[0]);
         sound(this.dim, "mob.warden.sonic_charge", this.pos, 3, 0.5);
+        chargeUp(this.dim, m0, C.hunger, a.marks[0], 9);
+        magicCircle(this.dim, this.ground(m0), 5, a.marks[0], C.hunger);
         for (let k = 0; k < a.marks[0]; k++) {
             const mouth = this.mouth();
             if (k > 8) {
@@ -270,6 +273,7 @@ export class Taotie extends Boss {
         sound(this.dim, "mob.ravager.bite", mouth, 4, 0.5);
         shake(this.audience(), 0.35, 0.5);
         burst(this.dim, mouth, C.hunger, 24, 5, 0.35, 1);
+        nova(this.dim, mouth, C.ember, 5);
         strike(this, mouth, 6, (p) => flatDist(p.location, mouth) <= 4.2 && Math.abs(p.location.y - mouth.y) < 4, 26, { knock: 1.4, up: 0.5, effects: [["hunger", 200, 2]] });
         yield a.ticks - a.marks[0];
     }
@@ -277,10 +281,12 @@ export class Taotie extends Boss {
         const a = this.act("quake");
         const c = this.ground(ahead(this, 2.5));
         teleCircle(this.dim, c, 4.5, a.marks[0]);
+        magicCircle(this.dim, c, 6, a.marks[0] + 8, C.bronze);
         yield a.marks[0];
         sound(this.dim, "mob.warden.attack", c, 4, 0.5);
         shake(this.audience(), 0.5, 0.8);
         shock(this.dim, c, 15, 12, C.bronze);
+        nova(this.dim, add(c, { x: 0, y: 1, z: 0 }), C.bronze, 6);
         strike(this, c, 6, (p) => inCircle(p, c, 4.5), 18, { knock: 1.2, up: 0.6, from: c });
         const hit = new Set();
         // expanding shockwave ring: jump over it!
@@ -300,6 +306,7 @@ export class Taotie extends Boss {
         sound(this.dim, "mob.ravager.roar", this.pos, 2, 1.2);
         yield* this.leap(dest, 14, 4.5);
         shock(this.dim, dest, 7, 10, C.bronze);
+        nova(this.dim, add(dest, { x: 0, y: 1, z: 0 }), C.ember, 4);
         shake(this.audience(), 0.35, 0.5);
         strike(this, dest, 5, (p) => inCircle(p, dest, 3.6), 16, { knock: 1.2, up: 0.5, from: dest });
         yield Math.max(4, a.ticks - a.marks[0] - 14);
@@ -312,6 +319,8 @@ export class Taotie extends Boss {
         for (const s of [-1, 1])
             teleCone(this.dim, this.ground(this.pos), dirOfYaw(this.yaw + s * 95), 130, 17, start, C.warn);
         sound(this.dim, "mob.elderguardian.curse", this.pos, 3, 0.8);
+        for (const s of [-1, 1])
+            orb(this.dim, ahead(this, 1.5, 3.1, s * 1.9), C.ember, 2.2, start);
         yield start;
         const hit = new Map();
         for (let k = 0; k < sweep; k++) {

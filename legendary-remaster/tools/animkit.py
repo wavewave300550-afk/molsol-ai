@@ -195,3 +195,18 @@ def sym(pose_r: dict) -> dict:
 def acts_table(acts: List[Act]) -> Dict[str, dict]:
     """{name: {id, ticks, marks}} with ids in declaration order (1-based)."""
     return {a.name: {"id": i + 1, "ticks": a.ticks, "marks": a.marks} for i, a in enumerate(acts)}
+
+
+def anim_to_bedrock(anim):
+    """Convert an animation authored in the authoring convention to the game's rotation convention
+    (negate Y and Z of every rotation value / keyframe)."""
+    from modelkit import _neg
+    for bone, chans in anim.get("bones", {}).items():
+        r = chans.get("rotation")
+        if r is None:
+            continue
+        if isinstance(r, dict):
+            chans["rotation"] = {k: [v[0], _neg(v[1]), _neg(v[2])] for k, v in r.items()}
+        else:
+            chans["rotation"] = [r[0], _neg(r[1]), _neg(r[2])]
+    return anim

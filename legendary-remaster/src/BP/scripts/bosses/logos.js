@@ -23,7 +23,7 @@
 import { EntityDamageCause } from "@minecraft/server";
 import { CHERUB_ACTS, LOGOS_ACTS, OPHAN_ACTS, SERAPH_ACTS } from "../generated/data.js";
 import { effect, fightersNear, grounded, hurt, inCircle, inCone, inLine, inRingBand, knock } from "../core/combat.js";
-import { beam, bullet, burst, C, deco, flash, glint, mote, pillar, shake, shock, sound, spiralMark, teleCircle, teleCone, teleLine, teleSafe } from "../core/fx.js";
+import { chargeUp, magicCircle, nova, orb, beam, bullet, burst, C, deco, flash, glint, mote, pillar, shake, shock, sound, spiralMark, teleCircle, teleCone, teleLine, teleSafe } from "../core/fx.js";
 import { fire, moveProp, removeProp, spawnProp, zone } from "../core/hazards.js";
 import { notify, Pri } from "../core/notice.js";
 import { addTask } from "../core/tasks.js";
@@ -243,6 +243,7 @@ class Seraph extends Choir {
             const c = this.ground(this.pos);
             sound(this.dim, "mob.blaze.shoot", c, 3, 0.7);
             shock(this.dim, c, maxR, 14, C.fire);
+            nova(this.dim, add(c, { x: 0, y: 1.5, z: 0 }), C.fire, Math.min(6, maxR * 0.45));
             const hit = new Set();
             addTask("seraph-ring", (age) => {
                 const r = 1 + age * (maxR / 14);
@@ -261,6 +262,8 @@ class Seraph extends Choir {
         // TRISAGION: holy, holy, holy — three great rings, jump each one
         const a = this.act("trisagion");
         sound(this.dim, "mob.evocation_illager.prepare_attack", this.pos, 4, 0.6);
+        magicCircle(this.dim, this.ground(this.pos), 8, a.ticks, C.fire);
+        chargeUp(this.dim, add(this.pos, { x: 0, y: 1.5, z: 0 }), C.fire, a.marks[0], 5);
         yield* this.rings(a.marks, 15, 14);
         yield a.ticks - a.marks[a.marks.length - 1];
     }
@@ -352,6 +355,8 @@ class Cherub extends Choir {
         const a = this.act("gate");
         yield a.marks[0];
         sound(this.dim, "item.trident.thunder", spot, 4, 0.9);
+        nova(this.dim, add(spot, { x: 0, y: 1.5, z: 0 }), C.fire, 7);
+        magicCircle(this.dim, spot, 6, 60, C.fire);
         yield a.ticks - a.marks[0];
     }
 }
@@ -427,7 +432,10 @@ class Ophan extends Choir {
         const a = this.act("wheels");
         const c = this.ground(this.pos);
         teleCircle(this.dim, c, 9, a.marks[0]);
+        magicCircle(this.dim, c, 10, a.ticks, C.ember);
+        chargeUp(this.dim, add(c, { x: 0, y: 2, z: 0 }), C.ember, a.marks[0], 9);
         yield a.marks[0];
+        orb(this.dim, add(c, { x: 0, y: 2, z: 0 }), C.ember, 4, a.ticks - a.marks[0]);
         const lastHit = new Map();
         for (let k = 0; k < a.ticks - a.marks[0] - 4; k++) {
             for (const p of fightersNear(this.dim, c, 12))
@@ -471,6 +479,7 @@ export class Logos extends Boss {
         this.ultCooldown = 1100;
         this.arena = 46;
         this.sigil = "legends:sigil_logos";
+        this.vfxColor = C.holy;
         this.choir = new Map();
         this.seals = 0;
         this.veiled = 0;
@@ -688,6 +697,8 @@ export class Logos extends Boss {
         for (const cell of cells)
             teleCircle(this.dim, cell.p, 1.5, cell.w === 0 ? 26 : 50);
         sound(this.dim, "beacon.activate", c, 3, 1.6);
+        magicCircle(this.dim, c, 9, 54, C.holy);
+        chargeUp(this.dim, this.eye(), C.holy, 26, 5);
         for (let wave = 0; wave < 2; wave++) {
             yield wave === 0 ? 26 : 24;
             sound(this.dim, "random.orb", c, 3, 0.6 + wave * 0.3);
@@ -702,6 +713,7 @@ export class Logos extends Boss {
     }
     *lances() {
         const a = this.act("lances");
+        chargeUp(this.dim, this.eye(), C.holy, a.marks[0], 4.5);
         yield a.marks[0];
         const n = 8;
         const hunted = this.hunted();
@@ -730,6 +742,8 @@ export class Logos extends Boss {
         let p = this.ground(t.location);
         spiralMark(this.dim, p, C.holy, 3, a.marks[0]);
         teleCircle(this.dim, p, 2, a.marks[0]);
+        magicCircle(this.dim, p, 3, a.ticks, C.holy);
+        chargeUp(this.dim, this.eye(), C.holy, a.marks[0], 4);
         sound(this.dim, "beacon.power", this.pos, 3, 0.6);
         yield a.marks[0];
         const lastHit = new Map();
@@ -743,6 +757,8 @@ export class Logos extends Boss {
                 beam(this.dim, this.eye(), add(p, { x: 0, y: 0.2, z: 0 }), C.holy, 0.55);
             if (k % 6 === 0)
                 zone(this.dim, p, 1.4, 60, { dmg: 3, every: 10, col: C.holy, owner: this.entity, kind: "holy" });
+            if (k % 8 === 0)
+                orb(this.dim, add(p, { x: 0, y: 0.6, z: 0 }), C.holy, 2.2, 8);
             for (const pl of fightersNear(this.dim, p, 3)) {
                 if (inCircle(pl, p, 1.8, 4) && (lastHit.get(pl.id) ?? -99) < k - 10) {
                     lastHit.set(pl.id, k);
@@ -763,6 +779,8 @@ export class Logos extends Boss {
             sound(this.dim, "note.bell", c, 5, 0.5);
             sound(this.dim, "mob.warden.sonic_boom", c, 2, 1.6);
             shock(this.dim, c, 17, 15, C.gold);
+            nova(this.dim, add(c, { x: 0, y: 2, z: 0 }), C.gold, 7);
+            magicCircle(this.dim, c, 9, 20, C.gold);
             const hit = new Set();
             addTask("trumpet", (age) => {
                 const r = 2 + age * 1.05;
@@ -777,6 +795,8 @@ export class Logos extends Boss {
         yield a.marks[0];
         sound(this.dim, "mob.evocation_illager.cast_spell", this.pos, 4, 0.7);
         const from = add(this.pos, { x: 0, y: 1.4, z: 0 });
+        magicCircle(this.dim, this.ground(this.pos), 8, a.ticks - a.marks[0], C.gold);
+        orb(this.dim, from, C.holy, 3.5, a.ticks - a.marks[0]);
         for (let k = 0; k < a.ticks - a.marks[0] - 6; k += 2) {
             for (let arm = 0; arm < 3; arm++) {
                 const d = dirOfYaw(k * 6.5 + arm * 120);

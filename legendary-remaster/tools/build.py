@@ -11,6 +11,7 @@ Output: build/Legends_BP, build/Legends_RP, dist/Legendary_and_Divine_Beings_Rem
 import importlib
 import json
 
+import animkit
 import vfx
 import os
 import re
@@ -26,7 +27,7 @@ BUILD = os.path.join(ROOT, "build")
 BP = os.path.join(BUILD, "Legends_BP")
 RP = os.path.join(BUILD, "Legends_RP")
 DIST = os.path.join(ROOT, "dist")
-VERSION = [2, 0, 2]
+VERSION = [2, 0, 3]
 
 MODULES = ["boss_taotie", "boss_nidhogg", "boss_hanuman", "boss_alicorn", "boss_tenko", "boss_logos", "choir_seraph", "choir_cherub", "choir_ophan", "props"]                 # remastered entities (module per entity family)
 ORIGINAL_ENTITIES = []      # every entity is remastered or kept as-is in src/RP_static (ding, root_spike, ...)
@@ -105,12 +106,12 @@ def gen_entity(mod, built_acts):
     anims = {}
     for name, a in mod.loops().items():
         if name != "flinch":
-            anims[f"animation.legends.{key}.{name}"] = a
+            anims[f"animation.legends.{key}.{name}"] = animkit.anim_to_bedrock(json.loads(json.dumps(a)))
     acts = mod.acts() if hasattr(mod, "acts") and callable(getattr(mod, "acts")) else []
     act_fx = getattr(mod, "ACT_FX", {})
     auras = getattr(mod, "AURAS", {})
     for a in acts:
-        anims[f"animation.legends.{key}.act.{a.name}"] = vfx.add_act_fx(a.to_json(), act_fx.get(a.name, []))
+        anims[f"animation.legends.{key}.act.{a.name}"] = vfx.add_act_fx(animkit.anim_to_bedrock(a.to_json()), act_fx.get(a.name, []))
     wj(os.path.join(RP, "animations", "legends", f"{key}.animation.json"), {"format_version": "1.8.0", "animations": anims}, compact=True)
     # act controller
     if acts:

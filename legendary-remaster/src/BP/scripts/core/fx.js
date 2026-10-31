@@ -57,6 +57,8 @@ export function teleCircle(dim, center, radius, ticks, col = C.danger) {
     const life = Math.max(0.1, ticks / 20);
     spawn(dim, "legends:tele_ring", lift(center), vars(col, { size: radius, life }));
     spawn(dim, "legends:tele_fill", lift(center, 0.05), vars(col, { size: radius, life }));
+    if (radius >= 2.5)
+        spawn(dim, "legends:circle", lift(center, 0.07), vars(col, { size: radius, life }));
 }
 export const teleSafe = (dim, center, radius, ticks) => teleCircle(dim, center, radius, ticks, C.safe);
 /** Rectangular strip (line attacks) drawn as a dotted floor marking. */
@@ -106,24 +108,58 @@ export function teleRing(dim, center, inner, outer, ticks, col = C.danger) {
 const FX_SIZE = 1.7;
 const FX_COUNT = 1.5;
 const n = (c) => Math.min(60, Math.round(c * FX_COUNT));
-/** Ground impact: expanding shock ring, plus dust, flying debris and a flash for the big ones. */
+/** Ground impact: double shock ring, a flash of the magic circle, sparks, dust, debris and light. */
 export function shock(dim, center, radius, ticks, col) {
-    spawn(dim, "legends:shock", lift(center, 0.12), vars(col, { size: radius, life: Math.max(0.1, ticks / 20) }));
-    if (radius >= 5)
+    const life = Math.max(0.1, ticks / 20);
+    spawn(dim, "legends:shock", lift(center, 0.12), vars(col, { size: radius, life }));
+    if (radius >= 4)
+        spawn(dim, "legends:shock", lift(center, 0.14), vars(C.white, { size: radius * 0.62, life: life * 0.7 }));
+    if (radius >= 5) {
         spawn(dim, "legends:fx_dust", lift(center, 0.3));
-    if (radius >= 8)
+        spawn(dim, "legends:spark", lift(center, 0.4), vars(col, { count: Math.min(40, Math.round(radius * 2.5)), speed: 4 + radius * 0.6, size: 0.45, radius: 0 }));
+    }
+    if (radius >= 8) {
         spawn(dim, "legends:fx_debris", lift(center, 0.5));
+        spawn(dim, "legends:circle", lift(center, 0.1), vars(col, { size: radius * 1.1, life: 0.7 }));
+        spawn(dim, "legends:orb", lift(center, 1.0), vars(col, { size: Math.min(9, radius * 0.6), life: 0.35 }));
+    }
     if (radius >= 12)
         spawn(dim, "legends:fx_flash", lift(center, 1.2));
 }
 export function pillar(dim, base, height, width, ticks, col) {
     spawn(dim, "legends:pillar", base, vars(col, { size: width * 1.3, height, life: Math.max(0.1, ticks / 20) }));
     spawn(dim, "legends:burst", lift(base, 0.3), vars(col, { count: 10, speed: 3, size: 0.5, radius: width * 0.6 }));
+    spawn(dim, "legends:orb", lift(base, 0.6), vars(col, { size: width * 2.4, life: Math.min(1.2, Math.max(0.2, ticks / 20)) }));
 }
 export function burst(dim, at, col, count = 16, speed = 4, size = 0.22, radius = 0.25) {
     spawn(dim, "legends:burst", at, vars(col, { count: n(count), speed: speed * 1.2, size: size * FX_SIZE, radius }));
+    if (count >= 16)
+        spawn(dim, "legends:spark", at, vars(col, { count: Math.min(30, count), speed: speed * 1.6, size: 0.35, radius: 0 }));
     if (count >= 24)
         spawn(dim, "legends:glint", at, vars(col, { count: 1, speed: 0, size: 2.4 + radius, radius: 0 }));
+}
+// ------------------------------------------------------------------ spectacle (ultimates, phases, deaths)
+/** A rotating rune circle on the ground. */
+export function magicCircle(dim, at, radius, ticks, col) {
+    spawn(dim, "legends:circle", lift(at, 0.09), vars(col, { size: radius, life: Math.max(0.2, ticks / 20) }));
+}
+/** A growing orb of light. */
+export function orb(dim, at, col, size, ticks) {
+    spawn(dim, "legends:orb", at, vars(col, { size, life: Math.max(0.1, ticks / 20) }));
+}
+/** Energy streaming in from a sphere of `radius` into `at` over `ticks`, with a swelling core. */
+export function chargeUp(dim, at, col, ticks, radius = 4) {
+    const life = Math.max(0.3, ticks / 20);
+    spawn(dim, "legends:converge", at, vars(col, { count: 48, radius, speed: radius / (life * 0.6), size: 0.45, life }));
+    spawn(dim, "legends:orb", at, vars(col, { size: Math.min(3.2, Math.max(1.2, radius * 0.45)), life: life + 0.1 }));
+}
+/** A detonation of light: core flash, sparks, burst and a double ring. */
+export function nova(dim, at, col, radius = 6) {
+    spawn(dim, "legends:orb", at, vars(col, { size: radius * 1.1, life: 0.4 }));
+    spawn(dim, "legends:orb", at, vars(C.white, { size: radius * 0.6, life: 0.25 }));
+    spawn(dim, "legends:burst", at, vars(col, { count: 50, speed: radius * 1.6, size: 0.8, radius: 0.5 }));
+    spawn(dim, "legends:spark", at, vars(col, { count: 40, speed: radius * 2.2, size: 0.5, radius: 0 }));
+    spawn(dim, "legends:shock", lift(at, -0.5), vars(col, { size: radius * 1.6, life: 0.7 }));
 }
 export function mote(dim, at, col, size = 0.18, life = 0.6) {
     spawn(dim, "legends:mote", at, vars(col, { count: 1, speed: 0.1, size: size * FX_SIZE, radius: 0, life }));

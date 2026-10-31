@@ -19,7 +19,7 @@
 import { EntityDamageCause } from "@minecraft/server";
 import { HANUMAN_ACTS } from "../generated/data.js";
 import { fightersNear, grounded, hurt, inCircle, inCone, inLine, knock, setHealth } from "../core/combat.js";
-import { burst, C, deco, flash, glint, pillar, shake, shock, sound, teleCircle, teleCone, teleLine, bullet, mote } from "../core/fx.js";
+import { chargeUp, magicCircle, nova, orb, burst, C, deco, flash, glint, pillar, shake, shock, sound, teleCircle, teleCone, teleLine, bullet, mote } from "../core/fx.js";
 import { fire, moveProp, removeProp, spawnProp, zone } from "../core/hazards.js";
 import { addTask } from "../core/tasks.js";
 import { add, dirOfYaw, dist, flatDir, flatDist, flatSegDist, lerp, randIn, rotY, scale, sub, yawOf } from "../core/vec.js";
@@ -40,6 +40,7 @@ export class Hanuman extends Boss {
         this.ultPhase = 3;
         this.ultCooldown = 900;
         this.sigil = "legends:sigil_hanuman";
+        this.vfxColor = C.gold;
         this.guarding = false;
         this.revived = false;
         this.wrath = 1;
@@ -192,6 +193,7 @@ export class Hanuman extends Boss {
         const dest = this.ground(lead(t, 16));
         const r = 4.2 * this.reach();
         teleCircle(this.dim, dest, r, j.marks[0] + 20);
+        magicCircle(this.dim, dest, r + 1.5, j.marks[0] + 24, this.phase >= 2 ? C.fire : C.wind);
         yield j.marks[0];
         sound(this.dim, "mob.breeze.jump", this.pos, 3, 0.6);
         this.act("air");
@@ -205,6 +207,7 @@ export class Hanuman extends Boss {
         sound(this.dim, "random.explode", dest, 2, 1.0);
         shake(this.audience(), 0.45, 0.6);
         shock(this.dim, dest, 9 * this.reach(), 10, this.phase >= 2 ? C.fire : C.wind);
+        nova(this.dim, add(dest, { x: 0, y: 1, z: 0 }), this.phase >= 2 ? C.fire : C.gold, 6 * this.reach());
         strike(this, dest, r + 2, (p) => inCircle(p, dest, r), this.dmg(18), { knock: 1.3, up: 0.8, from: dest });
         yield s.ticks - s.marks[0];
     }
@@ -273,9 +276,12 @@ export class Hanuman extends Boss {
         const a = this.act("fire_spin");
         const c = this.ground(this.pos);
         teleCircle(this.dim, c, 6.3, a.marks[0]);
+        chargeUp(this.dim, this.centre(3), C.fire, a.marks[0], 6);
+        magicCircle(this.dim, c, 7, a.marks[0] + 10, C.fire);
         yield a.marks[0];
         sound(this.dim, "mob.blaze.shoot", c, 3, 0.7);
         shock(this.dim, c, 7, 8, C.fire);
+        nova(this.dim, this.centre(2), C.fire, 7);
         strike(this, c, 8, (p) => inCircle(p, c, 6.3), this.dmg(16), { knock: 1.3, up: 0.4, from: c, fire: 4 });
         zone(this.dim, c, 6.3, 100, { dmg: 3, every: 10, col: C.fire, owner: this.entity, kind: "fire", cause: EntityDamageCause.fire });
         yield a.ticks - a.marks[0];
@@ -287,6 +293,7 @@ export class Hanuman extends Boss {
             pts.push(this.ground(add(t.location, scale(dirOfYaw(base + i * 120), 7))));
         for (const p of pts) {
             teleCircle(this.dim, p, 3, 26);
+            magicCircle(this.dim, p, 3.6, 40, C.fire);
             const j = this.act("jump");
             yield j.marks[0];
             this.act("air");
@@ -410,6 +417,7 @@ export class Hanuman extends Boss {
         const lift = add(this.pos, { x: 0, y: 9, z: 0 });
         const e = spawnProp(this.dim, "boulder", add(this.pos, { x: 0, y: -2, z: 0 }), 0, this.entity);
         sound(this.dim, "mob.warden.emerge", this.pos, 4, 0.8);
+        chargeUp(this.dim, add(this.pos, { x: 0, y: 9, z: 0 }), C.gold, 18, 7);
         for (let k = 0; k < 18; k++) {
             moveProp(e, add(this.pos, { x: 0, y: -2 + (11 * (k + 1)) / 18, z: 0 }));
             if (k % 3 === 0)
@@ -418,6 +426,7 @@ export class Hanuman extends Boss {
         }
         const spot = this.ground(lead(t, 20));
         teleCircle(this.dim, spot, 6, a.marks[0] - 18 + 18);
+        magicCircle(this.dim, spot, 7.5, a.marks[0] + 18, C.gold);
         yield a.marks[0] - 18;
         sound(this.dim, "mob.ravager.roar", this.pos, 3, 1.2);
         const T = 18;
@@ -429,6 +438,7 @@ export class Hanuman extends Boss {
                 sound(this.dim, "random.explode", spot, 4, 0.6);
                 shake(this.audience(), 0.7, 1.0);
                 shock(this.dim, spot, 11, 12, C.root);
+                nova(this.dim, add(spot, { x: 0, y: 1.5, z: 0 }), C.gold, 9);
                 deco(this.dim, "shard", add(spot, { x: 0, y: 1, z: 0 }), C.root, 24, 3, 0.45, 8);
                 strike(this, spot, 8, (p) => inCircle(p, spot, 6, 5), this.dmg(24), { knock: 1.8, up: 0.8, from: spot });
             },

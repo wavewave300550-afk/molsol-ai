@@ -10,7 +10,7 @@
  */
 import { EntityDamageCause, ItemStack } from "@minecraft/server";
 import { allPlayersNear, fightersNear } from "../core/combat.js";
-import { burst, C, flash, sound } from "../core/fx.js";
+import { burst, C, chargeUp, flash, magicCircle, nova, sound } from "../core/fx.js";
 import { clearProps } from "../core/hazards.js";
 import { notify, Pri } from "../core/notice.js";
 import { dist, flatDist } from "../core/vec.js";
@@ -99,10 +99,18 @@ export class Boss extends Being {
         this.prop("phase", n);
     }
     // ---------------------------------------------------------------- sequences
+    /** Signature colour of the boss's light (ultimates, phase changes, death). */
+    get aura() {
+        return this.vfxColor ?? C.gold;
+    }
+    centre(h = 3) {
+        return { x: this.pos.x, y: this.pos.y + h, z: this.pos.z };
+    }
     *wrapEntrance() {
         this.invuln = true;
         this.fx(0);
         yield* this.entrance();
+        nova(this.dim, this.centre(), this.aura, 7);
         this.setPhase(1);
         this.invuln = false;
         this.rest = 30;
@@ -111,7 +119,10 @@ export class Boss extends Being {
         this.invuln = true;
         this.fx(1);
         this.say(`§c◆ ${this.phaseNames[to] ?? ""}`, Pri.Phase);
+        chargeUp(this.dim, this.centre(), this.aura, 30, 6);
+        magicCircle(this.dim, this.ground(this.pos), 9, 60, this.aura);
         yield* this.transition(to);
+        nova(this.dim, this.centre(), this.aura, 9);
         this.setPhase(to);
         this.fx(0);
         this.invuln = false;
@@ -122,7 +133,11 @@ export class Boss extends Being {
     *wrapUlt() {
         this.ultAt = this.t + this.ultCooldown;      // set first: an interrupted ultimate never loops
         this.say(`§4⚠ ${this.ultName}`, Pri.Ultimate);
+        chargeUp(this.dim, this.centre(4), this.aura, 40, 9);
+        magicCircle(this.dim, this.ground(this.pos), 12, 80, this.aura);
+        magicCircle(this.dim, this.ground(this.pos), 7, 80, C.white);
         yield* this.ultimate();
+        nova(this.dim, this.centre(), this.aura, 8);
         this.ultAt = this.t + this.ultCooldown;
         this.rest = 40;
     }
@@ -140,10 +155,15 @@ export class Boss extends Being {
         this.say(this.defeatText, Pri.Ultimate);
         const a = this.act("death");
         sound(this.dim, "mob.enderdragon.death", this.pos, 3, 0.8);
+        magicCircle(this.dim, this.ground(this.pos), 10, a.ticks, this.aura);
         for (let k = 0; k < a.ticks; k += 10) {
-            burst(this.dim, { x: this.pos.x, y: this.pos.y + 2, z: this.pos.z }, C.holy, 14, 5, 0.3, 1.2);
+            burst(this.dim, { x: this.pos.x, y: this.pos.y + 2, z: this.pos.z }, C.holy, 18, 5, 0.3, 1.2);
+            if (k === a.ticks - 30)
+                chargeUp(this.dim, this.centre(), this.aura, 30, 7);
             yield 10;
         }
+        nova(this.dim, this.centre(), this.aura, 12);
+        nova(this.dim, this.centre(1), C.white, 6);
         flash(this.audience(), C.white);
         burst(this.dim, { x: this.pos.x, y: this.pos.y + 2, z: this.pos.z }, C.gold, 40, 9, 0.4, 1.5);
         clearProps(this.id);
