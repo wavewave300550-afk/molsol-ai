@@ -18,11 +18,11 @@
  */
 import { EntityDamageCause } from "@minecraft/server";
 import { HANUMAN_ACTS } from "../generated/data.js";
-import { fightersNear, hurt, inCircle, inCone, inLine, knock, setHealth } from "../core/combat.js";
+import { fightersNear, grounded, hurt, inCircle, inCone, inLine, knock, setHealth } from "../core/combat.js";
 import { burst, C, deco, flash, glint, pillar, shake, shock, sound, teleCircle, teleCone, teleLine, bullet, mote } from "../core/fx.js";
 import { fire, moveProp, removeProp, spawnProp, zone } from "../core/hazards.js";
 import { addTask } from "../core/tasks.js";
-import { add, dirOfYaw, dist, flatDir, flatDist, flatSegDist, randIn, rotY, scale, sub, yawOf } from "../core/vec.js";
+import { add, dirOfYaw, dist, flatDir, flatDist, flatSegDist, lerp, randIn, rotY, scale, sub, yawOf } from "../core/vec.js";
 import { Boss } from "./boss.js";
 import { ahead, lead, strike } from "./kit.js";
 import { Pri } from "../core/notice.js";
@@ -108,7 +108,6 @@ export class Hanuman extends Boss {
         sound(this.dim, "mob.evocation_illager.prepare_attack", g, 3, 0.8);
         yield tt.ticks;
         this.endAct();
-        this.say("§fหนุมาน Hanuman descends", 0);
     }
     *transition(to) {
         if (to === 2) {
@@ -437,73 +436,68 @@ export class Hanuman extends Boss {
         yield a.ticks - a.marks[0];
     }
     // ---------------------------------------------------------------- ultimate
+    /**
+     * หาวเป็นดาวเป็นเดือน - Yawning Stars and Moon.
+     * He bounds to the centre and yawns out the night: a spiral of falling stars sweeps in from the
+     * rim, then four crescent moons fly across the whole arena - a LOW moon must be jumped, a HIGH
+     * moon must be ducked (sneak). Finally the Wind-Father's breath pulls everyone in and bursts.
+     */
     *ultimate() {
-        const center = this.ground(this.pos);
+        const center = this.ground(this.home);
         const a = this.act("yawn");
+        const from = { ...this.pos };
+        const perch = add(center, { x: 0, y: 3.5, z: 0 });
         for (let k = 0; k < 24; k++) {
-            this.place(add(center, { x: 0, y: (3 * (k + 1)) / 24, z: 0 }), this.yaw);
+            const s = (k + 1) / 24;
+            const p = lerp(from, perch, s);
+            p.y += Math.sin(s * Math.PI) * 5;
+            this.place(p, this.yaw);
+            if (k % 3 === 0)
+                deco(this.dim, "feather", this.pos, C.wind, 3, 0.6, 0.3, 0.6);
             yield 1;
         }
         sound(this.dim, "mob.evocation_illager.prepare_summon", center, 4, 0.6);
         yield a.marks[0] - 24;
-        // stars pour out
+        // the yawn: night pours out of his mouth
+        const mouth = ahead(this, 1.2, 4.6);
+        sound(this.dim, "mob.breeze.inhale", mouth, 5, 0.4);
+        sound(this.dim, "beacon.activate", mouth, 4, 0.5);
+        flash(this.audience(), { red: 0.05, green: 0.07, blue: 0.22 });
+        burst(this.dim, mouth, C.star, 40, 8, 0.45, 1.5);
+        // starfall: a spiral of stars sweeping from the rim towards the centre
         let tick = a.marks[0];
         let i = 0;
-        while (tick < a.marks[1] - 8) {
-            const tgt = this.fighters.length && i % 2 === 0 ? this.fighters[i % this.fighters.length].location
-                : add(center, scale(dirOfYaw(randIn(0, 360)), randIn(2, 14)));
+        while (tick < a.marks[1]) {
+            const f = (tick - a.marks[0]) / (a.marks[1] - a.marks[0]);
+            const tgt = this.fighters.length && i % 3 === 0 ? this.fighters[i % this.fighters.length].location
+                : add(center, scale(dirOfYaw(i * 47), 16 * (1 - f) + 2.5));
             const spot = this.ground(tgt);
             teleCircle(this.dim, spot, 2.2, 16);
             bullet(this.dim, add(spot, { x: 0, y: 14, z: 0 }), { x: 0, y: -1, z: 0 }, 17, 16, C.star, 0.8);
-            const s = { ...spot };
+            const st = { ...spot };
             addTask("star", (age) => {
                 if (age < 16)
                     return true;
-                glint(this.dim, add(s, { x: 0, y: 0.5, z: 0 }), C.star, 1.8);
-                sound(this.dim, "random.orb", s, 1, 0.5);
-                strike(this, s, 3.5, (p) => inCircle(p, s, 2.2), this.dmg(12), { cause: EntityDamageCause.magic, up: 0.3, from: s });
+                glint(this.dim, add(st, { x: 0, y: 0.5, z: 0 }), C.star, 1.8);
+                sound(this.dim, "random.orb", st, 1, 0.5);
+                strike(this, st, 3.5, (p) => inCircle(p, st, 2.2), this.dmg(12), { cause: EntityDamageCause.magic, up: 0.3, from: st });
                 return false;
             });
             i++;
-            tick += 4;
-            yield 4;
+            tick += 3;
+            yield 3;
         }
-        yield Math.max(1, a.marks[1] - tick);
-        // two crescent blades sweep around him
-        const moons = [spawnProp(this.dim, "crescent", center, 0, this.entity), spawnProp(this.dim, "crescent", center, 180, this.entity)];
-        const sweepT = a.marks[2] - a.marks[1] - 24;
-        let ang = randIn(0, 360);
-        for (const off of [0, 180])
-            teleLine(this.dim, center, dirOfYaw(ang + off), 16, 1.6, 14);
-        sound(this.dim, "beacon.activate", center, 4, 0.6);
-        const lastHit = new Map();
-        for (let k = 0; k < sweepT; k++) {
-            ang += 2.2;
-            moons.forEach((m, j) => {
-                const dir = dirOfYaw(ang + j * 180);
-                moveProp(m, add(add(center, scale(dir, 9)), { x: 0, y: 1.5, z: 0 }), ang + j * 180 + 90);
-                if (k % 3 === 0)
-                    bullet(this.dim, add(add(center, scale(dir, 3)), { x: 0, y: 1, z: 0 }), dir, 40, 7, C.moon, 0.5);
-                if (k < 14)
-                    return;
-                for (const p of fightersNear(this.dim, center, 18)) {
-                    const end = add(center, scale(dir, 16));
-                    const sd = flatSegDist(p.location, center, end);
-                    if (sd.d < 0.9 && sd.t * 16 > 2.5 && Math.abs(p.location.y - center.y) < 3 && (lastHit.get(p.id) ?? -99) < k - 10) {
-                        lastHit.set(p.id, k);
-                        hurt(p, this.dmg(10), this.entity, EntityDamageCause.magic);
-                        knock(p, center, 0.8, 0.3);
-                    }
-                }
-            });
-            yield 1;
-        }
-        moons.forEach((m) => removeProp(m));
+        // four crescent moons sweep the arena: LOW (jump) or HIGH (sneak)
+        const kinds = ["low", "high", Math.random() < 0.5 ? "low" : "high", Math.random() < 0.5 ? "high" : "low"];
+        const yaw0 = randIn(0, 360);
+        a.marks.slice(2, 6).forEach((m, n) => this.moonPass(center, kinds[n], yaw0 + n * 112, m - tick));
+        yield Math.max(1, a.marks[6] - 32 - tick);
+        tick = a.marks[6] - 32;
         // the Wind-Father's breath
-        teleCircle(this.dim, center, 9, 24);
+        teleCircle(this.dim, center, 9, 32);
         sound(this.dim, "mob.breeze.inhale", center, 5, 0.5);
-        for (let k = 0; k < 24; k++) {
-            if (k > 14)
+        for (let k = 0; k < 32; k++) {
+            if (k > 10)
                 for (const p of fightersNear(this.dim, center, 14))
                     knock(p, center, -0.3, 0);
             yield 1;
@@ -512,11 +506,72 @@ export class Hanuman extends Boss {
         shake(this.audience(), 0.7, 1.0);
         shock(this.dim, center, 16, 14, C.wind);
         strike(this, center, 11, (p) => inCircle(p, center, 9, 6), this.dmg(26), { knock: 2.6, up: 0.8, from: center });
-        yield Math.max(1, a.ticks - a.marks[2]);
+        yield Math.max(1, a.ticks - a.marks[6] - 10);
         for (let k = 0; k < 10; k++) {
             this.place(add(this.pos, { x: 0, y: (center.y - this.pos.y) * 0.4, z: 0 }), this.yaw);
             yield 1;
         }
+    }
+    /** One crescent pass, scheduled `delay` ticks from now (the blades appear 14 ticks earlier as the warning). */
+    moonPass(center, kind, yaw, delay) {
+        const dir = dirOfYaw(yaw);
+        const across = rotY(dir, 90);
+        const L = 18;
+        const h = kind === "low" ? 0.35 : 1.55;
+        const lead = 14;
+        const travel = 14;
+        let blades = [];
+        const hit = new Set();
+        const pos = (s, off) => {
+            const p = add(add(center, scale(dir, s)), scale(across, off));
+            return { x: p.x, y: center.y + h, z: p.z };
+        };
+        addTask("moon", (age) => {
+            const k = age - (delay - lead);
+            if (k < 0)
+                return this.valid;
+            if (k === 0) {
+                blades = [-11.25, -3.75, 3.75, 11.25].map((off) => spawnProp(this.dim, "crescent", pos(-L, off), yaw, this.entity));
+                sound(this.dim, kind === "low" ? "note.bass" : "note.pling", center, 5, kind === "low" ? 0.5 : 2.0);
+                this.hint(`moon_${kind}`, kind === "low" ? "§e⬆ Jump the low moon" : "§b⬇ Sneak under the high moon");
+            }
+            if (k < lead) {
+                if (k % 3 === 0)
+                    for (let off = -15; off <= 15; off += 1.5)
+                        mote(this.dim, pos(-L + 0.5, off), kind === "low" ? C.gold : C.moon, 0.35, 0.3);
+                return this.valid;
+            }
+            const j = k - lead;
+            const s0 = -L + (2 * L * j) / travel;
+            const s1 = -L + (2 * L * (j + 1)) / travel;
+            blades.forEach((b, n) => moveProp(b, pos(s1, [-11.25, -3.75, 3.75, 11.25][n]), yaw));
+            for (const p of fightersNear(this.dim, center, L + 6)) {
+                if (hit.has(p.id))
+                    continue;
+                const rel = sub(p.location, center);
+                const along = rel.x * dir.x + rel.z * dir.z;
+                const side = rel.x * across.x + rel.z * across.z;
+                if (along < s0 - 0.6 || along > s1 + 0.6 || Math.abs(side) > 15.5 || Math.abs(p.location.y - center.y) > 4)
+                    continue;
+                const safe = kind === "low" ? !grounded(p) && p.location.y > center.y + 0.45 : p.isSneaking === true;
+                hit.add(p.id);
+                if (safe) {
+                    glint(this.dim, add(p.location, { x: 0, y: 1.2, z: 0 }), C.safe, 0.8);
+                    continue;
+                }
+                hurt(p, this.dmg(16), this.entity, EntityDamageCause.magic);
+                knock(p, sub(p.location, dir), 1.2, 0.3);
+            }
+            if (j >= travel - 1) {
+                blades.forEach((b) => {
+                    if (b && b.isValid)
+                        burst(this.dim, b.location, C.moon, 10, 3);
+                    removeProp(b);
+                });
+                return false;
+            }
+            return this.valid;
+        });
     }
     // ---------------------------------------------------------------- Vayu's breath (one revival chance)
     beforeDeath() {
@@ -531,7 +586,7 @@ export class Hanuman extends Boss {
         const c = this.act("collapse");
         sound(this.dim, "mob.breeze.death", this.pos, 4, 0.5);
         yield c.ticks;
-        this.say("§bThe wind gathers… break the wisps!", Pri.Ultimate);
+        this.say("§b◆ Break the wind wisps", Pri.Ultimate);
         const center = { ...this.pos };
         const wisps = [];
         for (let i = 0; i < 4; i++)
@@ -564,7 +619,6 @@ export class Hanuman extends Boss {
         flash(this.audience(), { red: 0.75, green: 1, blue: 0.9 });
         sound(this.dim, "mob.breeze.charge", this.pos, 5, 0.5);
         shock(this.dim, this.pos, 16, 12, C.wind);
-        this.say("§c◆ Vayu's Breath — Hanuman rises!", Pri.Phase);
         yield r.ticks - r.marks[0];
         this.invuln = false;
         this.ultAt = this.t + 200;

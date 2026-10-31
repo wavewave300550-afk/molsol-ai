@@ -79,9 +79,13 @@ export function adoptOrphans() {
                 continue;
             }
             const owner = e.getDynamicProperty("legends:owner");
-            const ownerAlive = typeof owner === "string" && beings.has(owner);
-            if (ownerAlive)
+            const ownerBeing = typeof owner === "string" ? beings.get(owner) : undefined;
+            if (ownerBeing) {
+                // a Choir member that loaded after its Word was adopted: bind it (or drop a duplicate)
+                if (e.matches({ families: ["legends_choir"] }) && typeof ownerBeing.adoptChoir === "function")
+                    ownerBeing.adoptChoir(e);
                 continue;
+            }
             if (e.matches({ families: ["legends_choir"] }))
                 continue; // re-bound by the Word when it is adopted
             try {

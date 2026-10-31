@@ -16,9 +16,10 @@
  */
 import { EntityDamageCause } from "@minecraft/server";
 import { ALICORN_ACTS } from "../generated/data.js";
-import { grounded, hurt, inCircle, inRingBand } from "../core/combat.js";
+import { effect, fightersNear, grounded, hurt, inCircle, inRingBand, knock } from "../core/combat.js";
 import { beam, bullet, burst, C, deco, flash, glint, pillar, shake, shock, sound, teleCircle, teleCone, teleLine, teleSafe, mote } from "../core/fx.js";
-import { fire, spawnProp } from "../core/hazards.js";
+import { fire, moveProp, removeProp, spawnProp } from "../core/hazards.js";
+import { addTask } from "../core/tasks.js";
 import { add, dirOfYaw, dist, flatDir, flatDist, norm, randIn, rotY, scale, sub, yawOf } from "../core/vec.js";
 import { Boss } from "./boss.js";
 import { ahead, lead, strike } from "./kit.js";
@@ -120,7 +121,6 @@ export class Alicorn extends Boss {
             yield 1;
         }
         this.endAct();
-        this.say("§dThe Dawnstar Alicorn descends", 0);
     }
     *transition(to) {
         if (to === 2) {
@@ -448,10 +448,17 @@ export class Alicorn extends Boss {
         yield 6;
     }
     // ---------------------------------------------------------------- ultimate
+    /**
+     * Dawnbreak Nova.
+     *   Aurora Stampede - three waves of spectral steeds gallop across the arena down RED lanes;
+     *                     the GOLD gaps between the lanes are safe, and they move every wave.
+     *   Dawnbreak       - she rises as a second sun; at the flash, anyone LOOKING at her is struck
+     *                     and blinded. Turn your back to the dawn.
+     */
     *ultimate() {
         const center = this.ground(this.home);
         yield* this.rise(6);
-        const top = { x: center.x, y: center.y + 12, z: center.z };
+        const top = { x: center.x, y: center.y + 9, z: center.z };
         for (let k = 0; k < 30 && dist(this.pos, top) > 0.5; k++) {
             this.fly(top, 0.5, 0, 30);
             yield 1;
@@ -459,49 +466,124 @@ export class Alicorn extends Boss {
         this.hue(HUE.gold);
         const a = this.act("nova");
         sound(this.dim, "beacon.activate", center, 6, 0.5);
-        yield a.marks[0];
-        const n = Math.max(3, Math.min(6, this.fighters.length + 2));
-        const sigils = [];
-        const base = randIn(0, 360);
-        for (let i = 0; i < n; i++)
-            sigils.push(this.ground(add(center, scale(dirOfYaw(base + (i * 360) / n), randIn(6, 14)))));
-        const life = a.marks[1] - a.marks[0];
-        for (const s of sigils) {
-            teleSafe(this.dim, s, 2.6, life);
-            pillar(this.dim, s, 10, 1.2, 30, C.safe);
-        }
-        sound(this.dim, "chime.amethyst_block", center, 5, 0.8);
-        for (let k = 0; k < life; k++) {
-            if (k % 3 === 0) {
-                const p = add(center, scale(dirOfYaw(randIn(0, 360)), randIn(0, 18)));
-                const from = { x: p.x, y: center.y + 16, z: p.z };
-                bullet(this.dim, from, { x: 0, y: -1, z: 0 }, 12, 26, RAINBOW[k % 5], 0.45);
-                fire({ dim: this.dim, pos: from, vel: { x: 0, y: -0.6, z: 0 }, life: 26, radius: 0.8, dmg: 5, owner: this.entity, cause: EntityDamageCause.magic });
+        const yaw0 = randIn(0, 360);
+        let tick = 0;
+        const lead = 18;
+        for (let w = 0; w < 3; w++) {
+            const at = a.marks[w];
+            if (at - lead > tick) {
+                yield at - lead - tick;
+                tick = at - lead;
             }
-            if (k === life - 40)
-                teleCircle(this.dim, center, 24, 40);
-            if (k % 30 === 0)
-                for (const s of sigils)
-                    pillar(this.dim, s, 10, 1.2, 30, C.safe);
-            if (k > life - 40 && k % 4 === 0)
-                glint(this.dim, this.horn(), C.white, 3 + (k - life + 40) * 0.1);
+            this.stampede(center, yaw0 + [0, 90, 45][w], lead, w);
+            yield lead;
+            tick = at;
+        }
+        // Dawnbreak
+        yield Math.max(1, a.marks[3] - tick);
+        tick = a.marks[3];
+        this.hint("dawn", "§6☀ Turn your back to the dawn!");
+        sound(this.dim, "beacon.power", center, 6, 0.6);
+        const flashAt = a.marks[4];
+        for (let k = tick; k < flashAt; k++) {
+            const f = (k - tick) / (flashAt - tick);
+            if (k % 4 === 0) {
+                glint(this.dim, this.horn(), C.white, 2 + f * 5);
+                for (let r = 0; r < 6; r++) {
+                    const g = this.ground(add(center, scale(dirOfYaw(r * 60 + k * 3), 18 * (1 - f) + 3)));
+                    beam(this.dim, add(g, { x: 0, y: 0.3, z: 0 }), this.horn(), C.gold, 0.35);
+                }
+            }
+            if (k % 10 === 0)
+                sound(this.dim, "beacon.ambient", this.pos, 4, 0.8 + f * 1.2);
+            if (k === flashAt - 20)
+                sound(this.dim, "mob.warden.sonic_charge", this.pos, 6, 1.6);
             yield 1;
         }
+        flash(this.audience(), C.white);
         sound(this.dim, "random.explode", center, 6, 1.5);
         sound(this.dim, "beacon.deactivate", center, 6, 0.6);
-        flash(this.audience(), C.white);
-        shake(this.audience(), 0.7, 1.0);
+        shake(this.audience(), 0.6, 1.0);
         shock(this.dim, center, 28, 16, C.safe);
+        const eye = this.horn();
         for (const p of this.fighters) {
-            const safe = sigils.some((s) => flatDist(s, p.location) <= 2.7);
-            if (safe) {
-                glint(this.dim, add(p.location, { x: 0, y: 1, z: 0 }), C.safe, 1.2);
+            let looking = true;
+            try {
+                const head = p.getHeadLocation();
+                const v = p.getViewDirection();
+                const to = norm(sub(eye, head));
+                looking = v.x * to.x + v.y * to.y + v.z * to.z > 0.35;
+            }
+            catch {
+                looking = true;
+            }
+            if (!looking) {
+                glint(this.dim, add(p.location, { x: 0, y: 1.2, z: 0 }), C.safe, 1.2);
                 continue;
             }
-            hurt(p, 50, this.entity);
-            hurt(p, 15, this.entity, EntityDamageCause.magic);
+            hurt(p, 30, this.entity);
+            hurt(p, 10, this.entity, EntityDamageCause.magic);
+            effect(p, "blindness", 50, 0);
+            effect(p, "slowness", 50, 1);
         }
         this.hue(HUE.none);
-        yield a.ticks - a.marks[1];
+        yield Math.max(1, a.ticks - flashAt);
+    }
+    /** Telegraph `lead` ticks, then five spectral steeds gallop down the lanes (runs as a task). */
+    stampede(center, yaw, lead, w) {
+        const dir = dirOfYaw(yaw);
+        const across = rotY(dir, 90);
+        const L = 20;
+        const shift = randIn(-1.6, 1.6);
+        const offs = [-12, -6, 0, 6, 12].map((o) => o + shift);
+        const lane = (s, o) => this.ground(add(add(center, scale(dir, s)), scale(across, o)));
+        for (const o of offs)
+            teleLine(this.dim, lane(-L, o), dir, 2 * L, 3.6, lead);
+        for (let g = 0; g < offs.length - 1; g++)
+            teleSafe(this.dim, lane(0, (offs[g] + offs[g + 1]) / 2), 1.0, lead + 22);
+        sound(this.dim, "mob.horse.angry", center, 5, 1.4 - w * 0.15);
+        glint(this.dim, this.horn(), C.gold, 3);
+        let steeds = [];
+        const hit = new Set();
+        const T = 22;
+        addTask("stampede", (age) => {
+            const k = age - lead;
+            if (k < 0)
+                return this.valid;
+            if (k === 0) {
+                steeds = offs.map((o) => spawnProp(this.dim, "aurora_steed", add(lane(-L, o), { x: 0, y: 0.2, z: 0 }), yaw, this.entity));
+                sound(this.dim, "mob.horse.gallop", center, 6, 0.8);
+            }
+            const s = -L + (2 * L * (k + 1)) / T;
+            steeds.forEach((e, n) => moveProp(e, add(lane(s, offs[n]), { x: 0, y: 0.2, z: 0 }), yaw));
+            if (k % 2 === 0)
+                for (const o of offs)
+                    mote(this.dim, add(lane(s - 1.5, o), { x: 0, y: 1.2, z: 0 }), RAINBOW[(((k + Math.round(o)) % 5) + 5) % 5], 0.5, 0.5);
+            if (k % 6 === 0)
+                sound(this.dim, "mob.horse.gallop", lane(s, 0), 3, 1.2);
+            for (const p of fightersNear(this.dim, center, L + 6)) {
+                if (hit.has(p.id))
+                    continue;
+                const rel = sub(p.location, center);
+                const along = rel.x * dir.x + rel.z * dir.z;
+                const side = rel.x * across.x + rel.z * across.z;
+                if (Math.abs(along - s) > 2.0 || Math.abs(p.location.y - center.y) > 4)
+                    continue;
+                if (!offs.some((o) => Math.abs(side - o) < 1.8))
+                    continue;
+                hit.add(p.id);
+                hurt(p, 16, this.entity, EntityDamageCause.magic);
+                knock(p, sub(p.location, dir), 1.6, 0.5);
+            }
+            if (k >= T - 1) {
+                steeds.forEach((e) => {
+                    if (e && e.isValid)
+                        burst(this.dim, add(e.location, { x: 0, y: 2, z: 0 }), C.aurora, 14, 4);
+                    removeProp(e);
+                });
+                return false;
+            }
+            return this.valid;
+        });
     }
 }

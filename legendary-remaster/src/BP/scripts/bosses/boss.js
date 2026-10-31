@@ -74,6 +74,14 @@ export class Boss extends Being {
     say(text, pri) {
         notify(this.audience(), text, pri);
     }
+    /** A very short first-time hint for a brand-new mechanic (once per fight). */
+    hint(key, text) {
+        this.hinted ??= new Set();
+        if (this.hinted.has(key))
+            return;
+        this.hinted.add(key);
+        notify(this.audience(), text, Pri.Phase);
+    }
     // ---------------------------------------------------------------- damage model
     /** Lowest HP the boss may currently be brought to. */
     gateHp() {
@@ -112,6 +120,7 @@ export class Boss extends Being {
         this.rest = 20;
     }
     *wrapUlt() {
+        this.ultAt = this.t + this.ultCooldown;      // set first: an interrupted ultimate never loops
         this.say(`§4⚠ ${this.ultName}`, Pri.Ultimate);
         yield* this.ultimate();
         this.ultAt = this.t + this.ultCooldown;

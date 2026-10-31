@@ -226,7 +226,12 @@ export class Being {
             this.onCoDone();
         }
         else {
-            this.wait = Math.max(0, (typeof r.value === "number" ? r.value : 1) - 1);
+            let w = typeof r.value === "number" ? r.value : 1;
+            if (!Number.isFinite(w)) {
+                console.warn(`[legends] ${this.entity.typeId} ${this.coName}: bad wait ${w}`);
+                w = 1;
+            }
+            this.wait = Math.max(0, w - 1);
         }
     }
     onCoDone() { }

@@ -14,7 +14,7 @@
 import { EntityDamageCause } from "@minecraft/server";
 import { TENKO_ACTS } from "../generated/data.js";
 import { fightersNear, grounded, hurt, inCircle, inCone, inLine, inRingBand, knock } from "../core/combat.js";
-import { bullet, burst, C, deco, flash, glint, shake, shock, sound, spiralMark, teleCircle, teleCone, teleLine, mote } from "../core/fx.js";
+import { bullet, burst, C, deco, flash, glint, shake, shock, sound, spiralMark, teleCircle, teleCone, teleLine, teleSafe, mote } from "../core/fx.js";
 import { fire, moveProp, removeProp, spawnProp } from "../core/hazards.js";
 import { addTask } from "../core/tasks.js";
 import { add, dirOfYaw, flatDir, flatDist, norm, randIn, rotY, scale, sub, yawOf } from "../core/vec.js";
@@ -130,7 +130,6 @@ export class Tenko extends Boss {
             yield 3;
         }
         this.endAct();
-        this.say("§bThe Ten-Tailed Fox manifests", 0);
     }
     *transition(to) {
         if (to === 2) {
@@ -171,6 +170,7 @@ export class Tenko extends Boss {
             { name: "torii", phases: [2, 3], cd: 300, weight: 3, run: (t) => this.torii(t) },
             { name: "spikes", phases: [2, 3], cd: 220, weight: 3, run: (t) => this.spikes(t) },
             { name: "kagura", phases: [3], cd: 300, weight: 4, run: () => this.kagura() },
+            { name: "procession", phases: [3], cd: 340, weight: 4, run: (t) => this.procession(t) },
         ];
     }
     *pounce(t) {
@@ -372,6 +372,72 @@ export class Tenko extends Boss {
             });
         }
         yield a.ticks - last;
+    }
+    /**
+     * Kitsune no yomeiri - the fox wedding. A row of lanterns marches across the arena with one gap
+     * (gold); a sun-shower falls on the march. When the bell rings, every lantern bursts.
+     */
+    *procession(t) {
+        const a = this.act("procession");
+        const dir = dirOfYaw(randIn(0, 360));
+        const side = rotY(dir, 90);
+        const c = this.ground(t.location);
+        const L = 16;
+        const gapIdx = 1 + Math.floor(Math.random() * 5);
+        const offs = [-7.5, -5, -2.5, 0, 2.5, 5, 7.5].filter((_, i) => i !== gapIdx);
+        const gapOff = [-7.5, -5, -2.5, 0, 2.5, 5, 7.5][gapIdx];
+        const at = (s, o) => this.ground(add(add(c, scale(dir, s)), scale(side, o)));
+        for (const o of offs)
+            teleLine(this.dim, at(-L, o), dir, 2 * L, 1.6, a.marks[0] + 10);
+        teleSafe(this.dim, at(-L * 0.5, gapOff), 1.1, a.marks[0] + 34);
+        teleSafe(this.dim, at(L * 0.5, gapOff), 1.1, a.marks[0] + 34);
+        sound(this.dim, "note.bell", c, 4, 0.7);
+        yield a.marks[0];
+        const lanterns = offs.map((o) => spawnProp(this.dim, "lantern", at(-L, o), yawOf(dir), this.entity));
+        sound(this.dim, "note.bell", c, 4, 1.0);
+        const hit = new Set();
+        const T = a.marks[1] - a.marks[0];
+        for (let k = 0; k < T; k++) {
+            const s = -L + (2 * L * (k + 1)) / T;
+            lanterns.forEach((e, n) => moveProp(e, at(s, offs[n]), yawOf(dir)));
+            if (k % 3 === 0) {
+                const rp = add(at(s + randIn(-2, 4), randIn(-9, 9)), { x: 0, y: 10, z: 0 });
+                bullet(this.dim, rp, { x: 0, y: -1, z: 0 }, 22, 10, C.sky, 0.25);
+            }
+            for (const p of fightersNear(this.dim, c, L + 6)) {
+                if (hit.has(p.id))
+                    continue;
+                const rel = sub(p.location, c);
+                const along = rel.x * dir.x + rel.z * dir.z;
+                const across = rel.x * side.x + rel.z * side.z;
+                if (Math.abs(along - s) > 1.6 || Math.abs(p.location.y - c.y) > 3)
+                    continue;
+                if (!offs.some((o) => Math.abs(across - o) < 1.4))
+                    continue;
+                hit.add(p.id);
+                hurt(p, 14, this.entity, EntityDamageCause.magic);
+                try {
+                    p.setOnFire(3, true);
+                }
+                catch {
+                    // ignore
+                }
+            }
+            if (k % 8 === 0)
+                sound(this.dim, "note.bell", at(s, 0), 2, 0.8 + k * 0.01);
+            yield 1;
+        }
+        // the bell: every lantern bursts
+        sound(this.dim, "note.bell", c, 5, 0.5);
+        for (const e of lanterns) {
+            if (!e || !e.isValid)
+                continue;
+            const p = { ...e.location };
+            burst(this.dim, add(p, { x: 0, y: 1, z: 0 }), C.fox, 16, 4, 0.35, 0.6);
+            strike(this, p, 3, (pl) => inCircle(pl, p, 2.2), 12, { up: 0.4, from: p, fire: 3 });
+            removeProp(e);
+        }
+        yield Math.max(1, a.ticks - a.marks[1]);
     }
     // ---------------------------------------------------------------- ultimate
     *ultimate() {

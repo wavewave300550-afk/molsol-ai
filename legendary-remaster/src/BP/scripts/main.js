@@ -5,7 +5,7 @@
  * Fox and The Word of God with its Seraph, Cherub and Ophan), each a scripted
  * multi-phase fight with an ultimate.
  */
-import { CommandPermissionLevel, CustomCommandParamType, CustomCommandStatus, Player, system, world, } from "@minecraft/server";
+import { CommandPermissionLevel, CustomCommandParamType, CustomCommandStatus, EntityDamageCause, Player, system, world, } from "@minecraft/server";
 import { beings } from "./bosses/being.js";
 import { Boss } from "./bosses/boss.js";
 import { Taotie } from "./bosses/taotie.js";
@@ -138,6 +138,16 @@ world.beforeEvents.entityHurt.subscribe((ev) => {
         return;
     }
     let d = ev.damage * b.takenMul;
+    // the Seraph's veil: projectiles burn up before they reach the Word
+    if (b.veiled > 0 && ev.damageSource.cause === EntityDamageCause.projectile) {
+        ev.cancel = true;
+        return;
+    }
+    // Choir members play their death instead of dropping dead (deferred to the next tick)
+    if (!(b instanceof Boss) && typeof b.lethal === "function" && b.lethal(d)) {
+        ev.cancel = true;
+        return;
+    }
     if (b instanceof Boss) {
         d *= b.partyMul();
         const floor = b.gateHp();

@@ -19,7 +19,7 @@ import { effect, fightersNear, grounded, hurt, inCircle, inCone, inLine, inRingB
 import { burst, C, deco, flash, glint, mote, shake, shock, sound, teleCircle, teleCone, teleLine, beam, bullet } from "../core/fx.js";
 import { fire, moveProp, particleBullet, propAct, removeProp, spawnProp, zone } from "../core/hazards.js";
 import { blocked } from "../core/terrain.js";
-import { add, dirOfYaw, dist, flatDir, flatDist, norm, randIn, scale, segDist, sub } from "../core/vec.js";
+import { add, dirOfYaw, dist, flatDir, flatDist, lerp, norm, randIn, scale, segDist, sub } from "../core/vec.js";
 import { Boss } from "./boss.js";
 import { ahead, lead, strike } from "./kit.js";
 const A = TAOTIE_ACTS;
@@ -107,7 +107,6 @@ export class Taotie extends Boss {
             yield 4;
         }
         this.endAct();
-        this.say("§6饕餮 Taotie awakens", 0);
     }
     *transition(to) {
         if (to === 2) {
@@ -218,6 +217,26 @@ export class Taotie extends Boss {
                 return true;
         }
         return blocked(this.dim, from, add(p.location, { x: 0, y: 1, z: 0 }));
+    }
+    /** The ding that currently shelters the most fighters from `mouth`. */
+    pickDingToEat(mouth) {
+        let best;
+        let bc = -1;
+        for (const d of this.dings) {
+            if (!d.isValid)
+                continue;
+            let c = 0;
+            for (const p of this.fighters) {
+                const s = segDist(d.location, mouth, p.location);
+                if (s.t > 0.05 && s.t < 0.98 && flatDist(d.location, add(mouth, scale(sub(p.location, mouth), s.t))) < 1.9)
+                    c++;
+            }
+            if (c > bc) {
+                bc = c;
+                best = d;
+            }
+        }
+        return best;
     }
     *inhale(t) {
         this.faceNow(t.location);
@@ -450,7 +469,7 @@ export class Taotie extends Boss {
         sound(this.dim, "mob.wither.spawn", this.pos, 4, 0.5);
         shake(this.audience(), 0.4, 2);
         // dings rain down: the only shelter
-        const n = Math.max(3, Math.min(6, this.fighters.length + 2));
+        const n = Math.max(4, Math.min(6, this.fighters.length + 3));
         for (let i = 0; i < n; i++) {
             const ang = (i / n) * 360 + randIn(-20, 20);
             const p = this.ground(add(center, scale(dirOfYaw(ang), randIn(7, 13))));
@@ -458,10 +477,50 @@ export class Taotie extends Boss {
             this.dropDing(p);
         }
         const snap = a.marks[0];
+        // the maw also eats its shelters: twice, the ding hiding the most players is marked, then dragged in
+        const eatAt = [72, 124];
+        let marked;
+        let dragging;
+        let dragFrom;
+        let dragK = 0;
         for (let k = 0; k < snap; k++) {
             const mouth = this.mouth();
             if (k === 30)
                 teleCircle(this.dim, this.ground(mouth), 7, snap - 30);
+            for (const at of eatAt) {
+                if (k === at - 24 && this.dings.filter((d) => d.isValid).length > 1) {
+                    marked = this.pickDingToEat(mouth);
+                    if (marked) {
+                        teleCircle(this.dim, this.ground(marked.location), 2.8, 24);
+                        sound(this.dim, "mob.warden.heartbeat", marked.location, 3, 0.6);
+                    }
+                }
+                if (k === at && marked && marked.isValid) {
+                    dragging = marked;
+                    dragFrom = { ...marked.location };
+                    dragK = 0;
+                    marked = undefined;
+                    sound(this.dim, "mob.warden.sonic_charge", dragging.location, 3, 1.4);
+                }
+            }
+            if (marked && marked.isValid && k % 6 === 0)
+                glint(this.dim, add(marked.location, { x: 0, y: 2.8, z: 0 }), C.danger, 1.4);
+            if (dragging) {
+                dragK++;
+                const s = Math.min(1, dragK / 12);
+                if (dragging.isValid)
+                    moveProp(dragging, lerp(dragFrom, mouth, s * s), randIn(0, 360));
+                if (dragK % 2 === 0)
+                    deco(this.dim, "shard", dragging.location, C.bronze, 4, 0.6, 0.3, 2);
+                if (s >= 1) {
+                    burst(this.dim, mouth, C.bronze, 24, 5, 0.35, 1);
+                    sound(this.dim, "random.anvil_break", mouth, 3, 0.6);
+                    const gone = dragging;
+                    this.dings = this.dings.filter((d) => d !== gone);
+                    removeProp(gone);
+                    dragging = undefined;
+                }
+            }
             if (k > 30) {
                 const pull = 0.12 + 0.3 * ((k - 30) / (snap - 30));
                 for (const p of fightersNear(this.dim, mouth, 30)) {
@@ -484,6 +543,8 @@ export class Taotie extends Boss {
                 sound(this.dim, "mob.warden.sonic_charge", mouth, 3, 0.5);
             yield 1;
         }
+        if (dragging)
+            removeProp(dragging);
         const mouth = this.mouth();
         sound(this.dim, "mob.ravager.bite", mouth, 6, 0.35);
         sound(this.dim, "random.explode", mouth, 4, 0.6);

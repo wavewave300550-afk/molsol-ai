@@ -22,12 +22,12 @@
  */
 import { EntityDamageCause } from "@minecraft/server";
 import { CHERUB_ACTS, LOGOS_ACTS, OPHAN_ACTS, SERAPH_ACTS } from "../generated/data.js";
-import { fightersNear, grounded, hurt, inCircle, inCone, inLine, inRingBand, knock } from "../core/combat.js";
+import { effect, fightersNear, grounded, hurt, inCircle, inCone, inLine, inRingBand, knock } from "../core/combat.js";
 import { beam, bullet, burst, C, deco, flash, glint, mote, pillar, shake, shock, sound, spiralMark, teleCircle, teleCone, teleLine, teleSafe } from "../core/fx.js";
 import { fire, moveProp, removeProp, spawnProp, zone } from "../core/hazards.js";
 import { notify, Pri } from "../core/notice.js";
 import { addTask } from "../core/tasks.js";
-import { add, dirOfYaw, dist, flatDir, flatDist, norm, randIn, scale, sub, yawOf } from "../core/vec.js";
+import { add, dirOfYaw, dist, flatDir, flatDist, norm, randIn, rotY, scale, sub, yawOf } from "../core/vec.js";
 import { Being, beings } from "./being.js";
 import { Boss } from "./boss.js";
 import { lead, strike } from "./kit.js";
@@ -75,14 +75,25 @@ class Choir extends Being {
         this.t++;
         this.pos = { ...this.entity.location };
         this.fighters = this.owner.fighters;
-        this.invuln = this.owner.invuln && this.owner.phase === 0;
+        if (this.pendingDeath && !this.dying) {
+            this.pendingDeath = false;
+            this.dying = true;
+            this.invuln = true;
+            this.interrupt();
+            this.start("death", this.deathCo());
+        }
+        if (!this.dying)
+            this.invuln = this.owner.invuln && this.owner.phase === 0;
         this.pickTarget();
-        if (this.command && !this.co) {
+        if (this.command && !this.co && !this.dying) {
             this.start("command", this.command);
             this.command = undefined;
         }
-        if (!this.co && !this.owner.dying) {
-            this.fly(this.orbitPoint(), 0.45, 0, 20);
+        if (!this.co && !this.owner.dying && !this.dying) {
+            // glide on the orbit; catch up quickly when far behind (the Word moves, teleports, rises)
+            const goal = this.orbitPoint();
+            const gap = dist(this.pos, goal);
+            this.fly(goal, Math.min(1.6, 0.16 + gap * 0.2), 0, 24);
             if (this.target)
                 this.face(this.target.location, 10);
             const t = this.target;
@@ -101,6 +112,54 @@ class Choir extends Being {
         }
         this.stepCo();
         this.syncMove();
+    }
+    /** Lethal damage is intercepted (beforeEvents): the member plays its death instead of vanishing. */
+    lethal(damage) {
+        if (this.dying || this.pendingDeath)
+            return true;
+        let hp = 1;
+        try {
+            hp = this.entity.getComponent("minecraft:health").currentValue;
+        }
+        catch {
+            hp = 1;
+        }
+        if (hp - damage > 1)
+            return false;
+        this.pendingDeath = true;
+        return true;
+    }
+    *deathCo() {
+        const a = this.act("death");
+        sound(this.dim, "mob.blaze.death", this.pos, 3, 0.7);
+        for (let k = 0; k < a.ticks; k += 4) {
+            burst(this.dim, add(this.pos, { x: 0, y: 2, z: 0 }), C.holy, 6, 3, 0.3, 0.6);
+            yield 4;
+        }
+        burst(this.dim, add(this.pos, { x: 0, y: 2, z: 0 }), C.gold, 30, 6, 0.4, 1.2);
+        sound(this.dim, "random.totem", this.pos, 2, 1.6);
+        try {
+            this.dim.spawnEntity("minecraft:xp_orb", this.pos);
+        }
+        catch {
+            // ignore
+        }
+        try {
+            this.entity.remove();
+        }
+        catch {
+            // gone
+        }
+        this.dispose();
+    }
+    /** Concord: delay, then the member's part of the Choir's joint attack. */
+    *concord(t, delay) {
+        yield delay;
+        if (t && t.isValid)
+            yield* this.concordPart(t);
+    }
+    *concordPart(t) {
+        yield* this.kit()[0](t);
     }
     /** Fly to a point (keeps orbiting height), returns when close. */
     *goTo(p, speed = 0.6, max = 40) {
@@ -121,7 +180,20 @@ class Seraph extends Choir {
         this.signatureAt = 300;
     }
     kit() {
-        return [(t) => this.dive(t), (t) => this.coal(t), () => this.sanctus()];
+        const k = [(t) => this.dive(t), (t) => this.coal(t), () => this.sanctus()];
+        if (this.owner.veiled <= 0 && this.owner.phase >= 2)
+            k.push(() => this.veil());
+        return k;
+    }
+    /** Six-winged veil: the Seraph wraps its wings around the Word - arrows and tridents burn up. */
+    *veil() {
+        const above = add(this.owner.pos, { x: 0, y: 12, z: 0 });
+        yield* this.goTo(above, 0.9, 40);
+        const a = this.act("veil");
+        sound(this.dim, "mob.blaze.breathe", this.pos, 4, 0.6);
+        yield a.marks[0];
+        this.owner.veiled = 160;
+        yield a.ticks - a.marks[0];
     }
     *dive(t) {
         const g = this.ground(t.location);
@@ -188,7 +260,6 @@ class Seraph extends Choir {
     *signature() {
         // TRISAGION: holy, holy, holy — three great rings, jump each one
         const a = this.act("trisagion");
-        notify(this.owner.audience(), "§6Seraph: Trisagion", Pri.Phase);
         sound(this.dim, "mob.evocation_illager.prepare_attack", this.pos, 4, 0.6);
         yield* this.rings(a.marks, 15, 14);
         yield a.ticks - a.marks[a.marks.length - 1];
@@ -292,7 +363,19 @@ class Ophan extends Choir {
         this.signatureAt = 500;
     }
     kit() {
-        return [(t) => this.roll(t), () => this.eyes(), () => this.restore()];
+        return [(t) => this.roll(t), () => this.eyes(), () => this.restore(), (t) => this.mark(t)];
+    }
+    /** Eyes of the Throne: singles out a player - the Word's lances and judgement hunt them. */
+    *mark(t) {
+        const a = this.act("mark");
+        yield a.marks[0];
+        if (!t.isValid)
+            return;
+        beam(this.dim, this.pos, add(t.location, { x: 0, y: 1, z: 0 }), C.beryl, 0.5);
+        sound(this.dim, "mob.elderguardian.curse", t.location, 2, 1.6);
+        this.owner.marked = t;
+        this.owner.markedUntil = this.owner.t + 160;
+        yield a.ticks - a.marks[0];
     }
     *roll(t) {
         const g = this.ground(t.location);
@@ -342,7 +425,6 @@ class Ophan extends Choir {
     *signature() {
         // WHEELS WITHIN WHEELS: gravity well of fiery spokes
         const a = this.act("wheels");
-        notify(this.owner.audience(), "§bOphan: Wheels within Wheels", Pri.Phase);
         const c = this.ground(this.pos);
         teleCircle(this.dim, c, 9, a.marks[0]);
         yield a.marks[0];
@@ -391,6 +473,31 @@ export class Logos extends Boss {
         this.sigil = "legends:sigil_logos";
         this.choir = new Map();
         this.seals = 0;
+        this.veiled = 0;
+        this.markedUntil = 0;
+    }
+    /** A Choir entity found without a controller (chunk reload): bind it, or remove a duplicate. */
+    adoptChoir(e) {
+        const role = e.typeId.split(":")[1];
+        const cur = this.alive(role);
+        if (cur && cur.entity.id !== e.id) {
+            try {
+                e.remove();
+            }
+            catch {
+                // gone
+            }
+            return;
+        }
+        if (!cur)
+            this.choir.set(role, this.makeChoir(role, e));
+    }
+    /** The player singled out by the Ophan's eyes, if still marked. */
+    hunted() {
+        const m = this.marked;
+        if (m && m.isValid && this.t < this.markedUntil && this.fighters.some((p) => p.id === m.id))
+            return m;
+        return undefined;
     }
     onInit(adopted) {
         this.flying = true;
@@ -468,6 +575,21 @@ export class Logos extends Boss {
     onTick() {
         const cherub = this.alive("cherub");
         this.takenMul = cherub && cherub.warding > 0 ? 0.5 : 1;
+        const hunted = this.hunted();
+        if (hunted && this.t % 5 === 0) {
+            // the mark: a ring of beryl eyes circling above the hunted player's head
+            for (let i = 0; i < 4; i++)
+                glint(this.dim, add(hunted.location, add(scale(dirOfYaw(i * 90 + this.t * 9), 0.9), { x: 0, y: 2.5, z: 0 })), C.beryl, 0.5);
+        }
+        if (this.veiled > 0) {
+            this.veiled--;
+            if (this.t % 6 === 0)
+                for (let i = 0; i < 10; i++)
+                    deco(this.dim, "flame", add(this.pos, add(scale(dirOfYaw(i * 36 + this.t * 6), 4.5), { x: 0, y: 3 + (i % 3) * 2, z: 0 })), C.fire, 1, 0.2, 0.4, 0.6);
+            const seraph = this.alive("seraph");
+            if (!seraph)
+                this.veiled = 0;
+        }
         if (this.t % 12 === 0)
             deco(this.dim, "rune", add(this.pos, { x: 0, y: 3, z: 0 }), C.holy, 2, 3, 0.35, 0.4);
     }
@@ -510,7 +632,6 @@ export class Logos extends Boss {
             this.speak(role);
             yield 10;
         }
-        this.say("§fThe Word is spoken", 0);
     }
     *transition(to) {
         if (to === 2) {
@@ -550,6 +671,8 @@ export class Logos extends Boss {
             { name: "babel", phases: [2, 3], cd: 260, weight: 3, run: () => this.babel() },
             { name: "unseal", phases: [2], cd: 300, weight: 4, when: () => this.seals < 6, run: () => this.unseal() },
             { name: "reforge", phases: [3], cd: 800, weight: 5, when: () => deadChoir() !== undefined, run: () => this.reforge(deadChoir()) },
+            { name: "alpha_omega", phases: [3], cd: 340, weight: 4, run: (t) => this.alphaOmega(t) },
+            { name: "concord", phases: [2, 3], cd: 520, weight: 3, when: () => ["seraph", "cherub", "ophan"].filter((r) => this.alive(r)).length >= 2, run: (t) => this.concordSkill(t) },
         ];
     }
     eye() {
@@ -581,8 +704,9 @@ export class Logos extends Boss {
         const a = this.act("lances");
         yield a.marks[0];
         const n = 8;
+        const hunted = this.hunted();
         for (let i = 0; i < n; i++) {
-            const tg = this.fighters.length ? this.fighters[i % this.fighters.length] : undefined;
+            const tg = hunted ?? (this.fighters.length ? this.fighters[i % this.fighters.length] : undefined);
             if (!tg)
                 break;
             const from = add(this.eye(), scale(dirOfYaw(this.yaw + 90 + i * 22.5), 3.5));
@@ -601,6 +725,7 @@ export class Logos extends Boss {
         yield Math.max(1, a.ticks - a.marks[0] - n * 4);
     }
     *judgement(t) {
+        t = this.hunted() ?? t;
         const a = this.act("gaze");
         let p = this.ground(t.location);
         spiralMark(this.dim, p, C.holy, 3, a.marks[0]);
@@ -687,6 +812,68 @@ export class Logos extends Boss {
         }
         yield a.ticks - a.marks[0];
     }
+    /**
+     * Alpha and Omega - the Word writes. Two glyph-heads (the Beginning and the End) chase a player
+     * from opposite sides, each laying a trail of letters that detonate in the order they were
+     * written. Keep moving, never cross a fresh trail.
+     */
+    *alphaOmega(t) {
+        const a = this.act("alpha_omega");
+        const tgts = [t, this.fighters.length > 1 ? this.fighters.find((p) => p.id !== t.id) ?? t : t];
+        const heads = [-1, 1].map((sx, i) => {
+            const side = rotY(flatDir(this.pos, tgts[i].location), 90 * sx);
+            return { p: this.ground(add(tgts[i].location, scale(side, 11))), tg: tgts[i] };
+        });
+        for (const h of heads)
+            teleCircle(this.dim, h.p, 1.6, a.marks[0]);
+        sound(this.dim, "beacon.power", this.pos, 4, 1.8);
+        yield a.marks[0];
+        const mines = [];
+        const writeT = a.marks[1] - a.marks[0];
+        for (let k = 0; k < writeT; k++) {
+            heads.forEach((h, i) => {
+                if (h.tg.isValid) {
+                    const d = flatDist(h.p, h.tg.location);
+                    h.p = this.ground(add(h.p, scale(flatDir(h.p, h.tg.location), Math.min(0.62, d))));
+                }
+                if (k % 2 === 0) {
+                    mines.push({ p: { ...h.p }, at: k + 26 });
+                    teleCircle(this.dim, h.p, 1.25, 26);
+                    deco(this.dim, "rune", add(h.p, { x: 0, y: 0.6, z: 0 }), i ? C.aurora : C.gold, 2, 0.4, 0.35, 0.3);
+                }
+            });
+            this.detonate(mines, k);
+            if (k % 6 === 0)
+                sound(this.dim, "random.orb", heads[0].p, 1, 0.5 + k * 0.03);
+            yield 1;
+        }
+        for (let k = writeT; k < writeT + 28; k++) {
+            this.detonate(mines, k);
+            yield 1;
+        }
+        yield Math.max(1, a.ticks - a.marks[1] - 28);
+    }
+    detonate(mines, k) {
+        for (const m of mines) {
+            if (m.at !== k)
+                continue;
+            pillar(this.dim, m.p, 5, 0.9, 8, C.holy);
+            strike(this, m.p, 2.5, (p) => inCircle(p, m.p, 1.3, 4), 10, { cause: EntityDamageCause.magic, up: 0.35, from: m.p });
+        }
+    }
+    /** Concord: the Word conducts and the Choir strikes one player from three sides, one after another. */
+    *concordSkill(t) {
+        const a = this.act("concord");
+        const roles = ["seraph", "ophan", "cherub"].filter((r) => this.alive(r));
+        roles.forEach((r, i) => {
+            const c = this.alive(r);
+            c.interrupt();
+            const ch = c.acts.chorus ? c.act("chorus") : undefined;
+            c.command = c.concord(t, (ch ? 8 : 0) + i * 14);
+        });
+        sound(this.dim, "random.totem", this.pos, 3, 1.4);
+        yield a.ticks;
+    }
     *reforge(role) {
         if (!role)
             return;
@@ -697,7 +884,6 @@ export class Logos extends Boss {
             yield 6;
         }
         this.speak(role);
-        notify(this.audience(), "§fThe Word speaks again", Pri.Phase);
         yield a.ticks - a.marks[0];
     }
     // ---------------------------------------------------------------- ultimate
@@ -736,8 +922,6 @@ export class Logos extends Boss {
         pillar(this.dim, eden, 14, 2.2, 40, C.safe);
         const edenLife = finalAt - edenAt;
         teleSafe(this.dim, eden, 3.6, edenLife);
-        if (!cherub)
-            notify(this.audience(), "§6Seek the flaming sword", Pri.Phase);
         for (let k = edenAt; k < finalAt; k++) {
             if ((k - edenAt) % 40 === 0)
                 pillar(this.dim, eden, 14, 2.2, 40, C.safe);

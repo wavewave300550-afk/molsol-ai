@@ -16,9 +16,9 @@
  */
 import { EntityDamageCause } from "@minecraft/server";
 import { NIDHOGG_ACTS } from "../generated/data.js";
-import { effect, fightersNear, hurt, inCircle, inCone, inLine } from "../core/combat.js";
-import { burst, C, deco, flash, shake, shock, sound, spiralMark, teleCircle, teleCone, teleLine, bullet, glint } from "../core/fx.js";
-import { fire, moveProp, removeProp, spawnProp, zone } from "../core/hazards.js";
+import { effect, fightersNear, hurt, inCircle, inCone, inLine, inRingBand } from "../core/combat.js";
+import { burst, C, deco, flash, shake, shock, sound, spiralMark, teleCircle, teleCone, teleLine, teleSafe, bullet, glint, mote } from "../core/fx.js";
+import { fire, moveProp, propAct, removeProp, spawnProp, zone } from "../core/hazards.js";
 import { addTask } from "../core/tasks.js";
 import { add, angleDiff, dirOfYaw, dist, flatDir, flatDist, norm, randIn, rotY, scale, sub, yawOf } from "../core/vec.js";
 import { Boss } from "./boss.js";
@@ -95,7 +95,6 @@ export class Nidhogg extends Boss {
             yield 4;
         }
         this.endAct();
-        this.say("§2Níðhöggr rises from the roots", 0);
     }
     *transition(to) {
         if (to === 2) {
@@ -126,17 +125,131 @@ export class Nidhogg extends Boss {
     skills() {
         const behind = () => !!this.target &&
             Math.abs(angleDiff(this.yaw, yawOf(flatDir(this.pos, this.target.location)))) > 100 && flatDist(this.pos, this.target.location) < 13;
+        const air = () => this.flying;
+        const ground = () => !this.flying;
+        // Phase III (Ragnarök) is a hybrid: it lands for savage ground combos, then takes to the sky again.
         return [
-            { name: "bite", phases: [1], cd: 50, weight: 4, max: 10, run: (t) => this.bite(t) },
-            { name: "tail", phases: [1], cd: 70, weight: 6, when: behind, run: () => this.tail() },
+            { name: "bite", phases: [1, 3], cd: 50, weight: 4, max: 10, when: ground, run: (t) => this.bite(t) },
+            { name: "tail", phases: [1, 3], cd: 70, weight: 6, when: () => ground() && behind(), run: () => this.tail() },
             { name: "snare", phases: [1, 3], cd: 220, weight: 3, run: () => this.snare() },
             { name: "burrow", phases: [1], cd: 320, weight: 3, min: 6, run: (t) => this.burrow(t) },
-            { name: "coil", phases: [1], cd: 260, weight: 2, max: 14, run: (t) => this.coil(t) },
-            { name: "strafe", phases: [2, 3], cd: 220, weight: 3, run: (t) => this.strafe(t) },
-            { name: "breath", phases: [2, 3], cd: 200, weight: 3, run: (t) => this.breath(t) },
-            { name: "gale", phases: [2, 3], cd: 220, weight: 2, max: 20, run: (t) => this.gale(t) },
-            { name: "dive", phases: [2, 3], cd: 120, weight: 4, run: (t) => this.dive(t) },
+            { name: "coil", phases: [1, 3], cd: 260, weight: 2, max: 14, when: ground, run: (t) => this.coil(t) },
+            { name: "strafe", phases: [2, 3], cd: 220, weight: 3, when: air, run: (t) => this.strafe(t) },
+            { name: "breath", phases: [2, 3], cd: 200, weight: 3, when: air, run: (t) => this.breath(t) },
+            { name: "gale", phases: [2, 3], cd: 220, weight: 2, max: 20, when: air, run: (t) => this.gale(t) },
+            { name: "dive", phases: [2, 3], cd: 120, weight: 4, when: air, run: (t) => this.dive(t) },
+            { name: "descend", phases: [3], cd: 420, weight: 3, when: air, run: () => this.descend() },
+            { name: "soar", phases: [3], cd: 260, weight: 2, when: ground, run: () => this.soar() },
+            { name: "cage", phases: [3], cd: 340, weight: 3, run: (t) => this.rootCage(t) },
+            { name: "nightfall", phases: [3], cd: 300, weight: 3, when: air, run: (t) => this.nightfall(t) },
         ];
+    }
+    /** Phase III: crash down to fight on the ground for a while. */
+    *descend() {
+        const g = this.ground(this.target ? this.target.location : this.pos);
+        const spot = this.ground(add(g, scale(dirOfYaw(randIn(0, 360)), 7)));
+        teleCircle(this.dim, spot, 5, 22);
+        const a = this.act("dive");
+        yield 10;
+        const from = { ...this.pos };
+        for (let k = 1; k <= 12; k++) {
+            this.place(add(from, scale(sub(spot, from), k / 12)), this.yaw, 30);
+            yield 1;
+        }
+        this.takeWing(false);
+        this.place(spot, this.yaw, 0);
+        sound(this.dim, "random.explode", spot, 3, 0.6);
+        shake(this.audience(), 0.5, 0.6);
+        shock(this.dim, spot, 10, 10, C.venom);
+        strike(this, spot, 7, (p) => inCircle(p, spot, 5, 4), 20, { knock: 1.4, up: 0.6, from: spot, effects: [POISON(1)] });
+        const l = this.act("land");
+        yield l.ticks;
+    }
+    /** Phase III: back into the sky. */
+    *soar() {
+        const a = this.act("takeoff");
+        yield a.marks[0];
+        this.takeWing(true);
+        const g = this.ground(this.pos).y;
+        for (let k = 0; k < a.ticks - a.marks[0]; k++) {
+            this.place({ x: this.pos.x, y: this.pos.y + (g + 7 - this.pos.y) * 0.15, z: this.pos.z });
+            if (k % 5 === 0)
+                shock(this.dim, { x: this.pos.x, y: g, z: this.pos.z }, 9, 8, C.wind);
+            yield 1;
+        }
+    }
+    /** Root cage: a ring of Yggdrasil roots springs up around a player - leave through the gold gap before the venom geyser. */
+    *rootCage(t) {
+        const c = this.ground(t.location);
+        const gap = randIn(0, 360);
+        const a = this.act(this.flying ? "roar" : "root_snare");
+        const ringPts = [];
+        for (let i = 0; i < 14; i++) {
+            const ang = i * (360 / 14);
+            if (Math.abs(angleDiff(ang, gap)) < 24)
+                continue;
+            const p = this.ground(add(c, scale(dirOfYaw(ang), 5)));
+            ringPts.push(p);
+            teleCircle(this.dim, p, 1.1, 14);
+        }
+        teleSafe(this.dim, this.ground(add(c, scale(dirOfYaw(gap), 5.2))), 1.7, 44);
+        sound(this.dim, "mob.warden.dig", c, 4, 0.7);
+        yield 14;
+        const spikes = ringPts.map((p) => spawnProp(this.dim, "root_spike", p, randIn(0, 360), this.entity));
+        sound(this.dim, "mob.evocation_fangs.attack", c, 4, 0.6);
+        const hit = new Set();
+        strike(this, c, 7, (p) => inRingBand(p, c, 4.0, 6.0, 3) && Math.abs(angleDiff(yawOf(flatDir(c, p.location)), gap)) > 24, 12,
+            { up: 0.5, from: c, once: hit, effects: [["slowness", 40, 3], POISON()] });
+        teleCircle(this.dim, c, 4.2, 26);
+        spiralMark(this.dim, c, C.venom, 4, 26);
+        for (let k = 0; k < 26; k++) {
+            if (k % 6 === 0)
+                for (const p of ringPts)
+                    deco(this.dim, "drip", add(p, { x: 0, y: 2, z: 0 }), C.venom, 1, 0.3, 0.3, 0.2);
+            yield 1;
+        }
+        sound(this.dim, "mob.enderdragon.growl", c, 4, 1.1);
+        shake(this.audience(), 0.4, 0.6);
+        shock(this.dim, c, 8, 10, C.venom);
+        burst(this.dim, add(c, { x: 0, y: 1, z: 0 }), C.venom, 30, 6, 0.4, 2.5);
+        strike(this, c, 6, (p) => inCircle(p, c, 4.2, 6), 24, { knock: 0.8, up: 1.2, from: c, effects: [POISON(2)] });
+        zone(this.dim, c, 3.4, 100, { dmg: 3, every: 10, col: C.venom, owner: this.entity, kind: "venom" });
+        addTask("cage", (age) => {
+            if (age < 30)
+                return true;
+            spikes.forEach((e) => removeProp(e));
+            return false;
+        });
+        yield Math.max(4, a.ticks - 14);
+    }
+    /** Nightfall: corpse-fire falls in a cross centred on a player, from the centre outwards. */
+    *nightfall(t) {
+        const c = this.ground(t.location);
+        const yaw0 = randIn(0, 360);
+        const a = this.act("roar");
+        const spots = [{ p: c, d: 0 }];
+        for (const arm of [0, 90, 180, 270])
+            for (let r = 2.6; r <= 13; r += 2.6)
+                spots.push({ p: this.ground(add(c, scale(dirOfYaw(yaw0 + arm), r))), d: r });
+        for (const s of spots)
+            teleCircle(this.dim, s.p, 1.5, 22 + Math.round(s.d * 2.5));
+        sound(this.dim, "mob.enderdragon.growl", this.pos, 4, 1.4);
+        addTask("nightfall", (age) => {
+            for (const s of spots) {
+                const land = 22 + Math.round(s.d * 2.5);
+                if (age === land - 10)
+                    bullet(this.dim, add(s.p, { x: randIn(-1, 1), y: 14, z: randIn(-1, 1) }), { x: 0, y: -1, z: 0 }, 14, 10, C.venom, 0.7);
+                if (age === land) {
+                    burst(this.dim, s.p, C.venom, 10, 3, 0.3, 0.4);
+                    shock(this.dim, s.p, 3, 6, C.venom);
+                    strike(this, s.p, 3, (p) => inCircle(p, s.p, 1.6, 4), 14, { up: 0.4, from: s.p, effects: [POISON(1)] });
+                    if (s.d === 0)
+                        sound(this.dim, "random.explode", s.p, 2, 1.2);
+                }
+            }
+            return age < 60 && this.valid;
+        });
+        yield a.ticks;
     }
     *bite(t) {
         for (let k = 0; k < 20 && flatDist(this.pos, t.location) > 8; k++) {
@@ -390,6 +503,35 @@ export class Nidhogg extends Boss {
             yield Math.floor((rg.ticks - 10) / meteors);
         }
         yield 10;
+        // the World-Tree falls: a colossal trunk crashes across the arena - get out of its shadow
+        {
+            const yawT = randIn(0, 360);
+            const dirT = dirOfYaw(yawT);
+            const base = this.ground(add(center, scale(dirT, -9)));
+            const tree = spawnProp(this.dim, "world_tree", base, yawT, this.entity);
+            propAct(tree, 1);
+            teleLine(this.dim, base, dirT, 21, 6.5, 44);
+            sound(this.dim, "mob.warden.emerge", base, 5, 0.5);
+            shake(this.audience(), 0.3, 1.4);
+            yield 26;
+            propAct(tree, 2);
+            sound(this.dim, "mob.ravager.stun", base, 5, 0.4);
+            yield 18;
+            sound(this.dim, "random.explode", add(base, scale(dirT, 10)), 6, 0.5);
+            shake(this.audience(), 0.8, 1.0);
+            for (let s = 2; s <= 20; s += 3)
+                shock(this.dim, this.ground(add(base, scale(dirT, s))), 4, 8, C.root);
+            strike(this, add(base, scale(dirT, 10)), 13, (p) => inLine(p, base, dirT, 21, 6.5, 6), 34,
+                { knock: 1.4, up: 0.9, effects: [POISON(1), ["slowness", 60, 2]] });
+            yield 12;
+            propAct(tree, 3);
+            addTask("tree", (age) => {
+                if (age < 34)
+                    return true;
+                removeProp(tree);
+                return false;
+            });
+        }
         // the rupture: run out of the great circle
         const ru = this.act("rupture");
         teleCircle(this.dim, center, 10, ru.marks[0]);
