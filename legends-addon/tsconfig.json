@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",
+    "module": "ES2020",
+    "moduleResolution": "node",
+    "lib": ["ES2021"],
+    "strict": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+    "removeComments": false,
+    "outDir": "build/Legends_BP/scripts",
+    "rootDir": "src",
+    "skipLibCheck": false
+  },
+  "include": ["src/**/*.ts"]
+}

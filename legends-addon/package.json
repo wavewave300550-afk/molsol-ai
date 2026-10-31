@@ -1,0 +1,21 @@
+{
+  "name": "legendary-divine-beings",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Minecraft Bedrock add-on: six god-tier extra bosses (Taotie, Nidhogg, Hanuman, Alicorn, Ten-Tailed Fox, The Word of God with Seraphim, Cherubim and Thrones)",
+  "scripts": {
+    "build": "python3 tools/build.py",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "validate": "python3 tools/validate.py",
+    "smoke": "node tools/smoke/smoke.mjs",
+    "preview": "python3 tools/preview.py",
+    "docs": "python3 tools/docs_images.py",
+    "test": "npm run build && npm run typecheck && npm run validate && npm run smoke"
+  },
+  "devDependencies": {
+    "@minecraft/server": "2.11.0",
+    "@minecraft/server-ui": "2.3.0",
+    "@minecraft/vanilla-data": "1.26.60",
+    "typescript": "5.6.3"
+  }
+}
