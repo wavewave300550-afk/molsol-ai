@@ -70,7 +70,7 @@ async function tick(n = 1, each) {
 }
 const commands = {};
 system.beforeEvents.startup.fire({ customCommandRegistry: { registerEnum() {}, registerCommand(def, cb) { commands[def.name] = cb; } } });
-expect(Object.keys(commands).length === 5, "5 custom commands registered");
+expect(Object.keys(commands).length === 6, "6 custom commands registered");
 await tick(2);
 const dim = world.getDimension("minecraft:overworld");
 const P1 = new Player("Alice", dim, { x: 0, y: 64, z: 0 });
@@ -167,12 +167,14 @@ for (const key of ["taotie", "nidhogg", "hanuman", "alicorn", "tenko", "logos"])
   expect(!!fresh, `${key}: summoned again for the fight`);
   if (!fresh) continue;
   const bossRef = fresh;
+  mc.particlePeak();
   b = registry.bossOf(bossRef.id);
   const acts = new Set();
   const cos = new Set();
   const phases = new Set();
   const props = new Set();
   let ultimates = 0;
+  const cam0 = P1.cams ?? 0;
   let lastCo = "";
   let choirMax = 0;
   let choirDeathAct = false;
@@ -217,8 +219,8 @@ for (const key of ["taotie", "nidhogg", "hanuman", "alicorn", "tenko", "logos"])
         choirMax = Math.max(choirMax, choir.length);
         if (b.veiled > 0) veiledSeen = true;
         if (b.hunted()) markedSeen = true;
-        // kill one member of the choir in phase II and watch it play its death
-        if (b.phase === 2 && t % 400 === 0) {
+        // once the Seraph has veiled the Word in phase II, kill it and watch it play its death
+        if (b.phase === 2 && t % 400 === 0 && veiledSeen) {
           const s = choir.find((c) => c.typeId === "legends:seraph");
           if (s) s.applyDamage(400, { cause: "entityAttack", damagingEntity: P1 });
         }
@@ -267,6 +269,9 @@ for (const key of ["taotie", "nidhogg", "hanuman", "alicorn", "tenko", "logos"])
   const p2hits = P2.__hurtLog.length - hurt0.p2;
   const extra = { taotie: `dings eaten in ult ${dingsEaten}`, logos: `choir max ${choirMax}, choir death anim ${choirDeathAct}, veil ${veiledSeen}, mark ${markedSeen}`, hanuman: `revived ${revived}` }[key] ?? "";
   if (key === "taotie") expect(dingsEaten >= 1, "taotie: the maw devoured a ding during its ultimate");
+  const cams = (P1.cams ?? 0) - (cam0 ?? 0);
+  expect(cams >= 2, `${key}: the ultimate cut-in took and returned the camera (${cams})`);
+  expect(!P1.camOn && !P2.camOn, `${key}: every camera was handed back`);
   if (key === "logos") {
     expect(choirMax === 3, "logos: the three Choir members fight beside the Word");
     expect(choirDeathAct, "logos: a slain Choir member plays its death animation");
@@ -286,6 +291,8 @@ for (const key of ["taotie", "nidhogg", "hanuman", "alicorn", "tenko", "logos"])
     expect(moonP2 >= 1, `hanuman: a moon pass hit the player who neither jumped nor ducked (${moonP2})`);
   }
   if (key === "tenko") expect(props.has("legends:lantern"), "tenko: the fox-wedding procession marched");
+  const fxPeak = mc.particlePeak(20);
+  report.push(`${key.padEnd(8)} fx peak ${fxPeak} emitters/s (${mc.peakMix})`);
   report.push(`${key.padEnd(8)} t=${String(t).padStart(5)} phases=${[...phases].join("")} ults=${ultimates} acts ${acts.size}/${all.length} (unseen: ${missing.join(",") || "-"}) hits p1=${p1hits} p2=${p2hits} ${extra}\n         skills: ${[...cos].filter(Boolean).join(",")}\n         props: ${[...props].join(",")}\n         texts: ${[...texts].join(" | ")}`);
   void remaining;
 }

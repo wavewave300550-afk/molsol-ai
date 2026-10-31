@@ -1,4 +1,5 @@
 import { fightersNear, healthOf, isFighter } from "../core/combat.js";
+import { sigil } from "../core/fx.js";
 import { groundY } from "../core/terrain.js";
 import { add, angleDiff, clamp, dist, flatDir, flatDist, lerp, norm, scale, sub, yawOf, pitchOf } from "../core/vec.js";
 export const beings = new Map();
@@ -48,6 +49,10 @@ export class Being {
         catch {
             // entity gone
         }
+    }
+    /** A rune circle on the ground (followers wear their master's sigil; bosses override). */
+    rune(at, radius, ticks, col, spin = 24) {
+        sigil(this.dim, at, "logos", radius, ticks, col, spin);
     }
     act(name) {
         const a = this.acts[name];

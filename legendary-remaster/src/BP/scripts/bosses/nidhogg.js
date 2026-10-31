@@ -17,7 +17,7 @@
 import { EntityDamageCause } from "@minecraft/server";
 import { NIDHOGG_ACTS } from "../generated/data.js";
 import { effect, fightersNear, hurt, inCircle, inCone, inLine, inRingBand } from "../core/combat.js";
-import { chargeUp, magicCircle, nova, orb, burst, C, deco, flash, shake, shock, sound, spiralMark, teleCircle, teleCone, teleLine, teleSafe, bullet, glint, mote } from "../core/fx.js";
+import { chargeUp, nova, orb, ascend, crack, dome, flare, lightning, petals, rays, starRain, vortex, burst, C, deco, flash, shake, shock, sound, spiralMark, teleCircle, teleCone, teleLine, teleSafe, bullet, glint, mote } from "../core/fx.js";
 import { fire, moveProp, propAct, removeProp, spawnProp, zone } from "../core/hazards.js";
 import { addTask } from "../core/tasks.js";
 import { add, angleDiff, dirOfYaw, dist, flatDir, flatDist, norm, randIn, rotY, scale, sub, yawOf } from "../core/vec.js";
@@ -203,7 +203,7 @@ export class Nidhogg extends Boss {
             { up: 0.5, from: c, once: hit, effects: [["slowness", 40, 3], POISON()] });
         teleCircle(this.dim, c, 4.2, 26);
         spiralMark(this.dim, c, C.venom, 4, 26);
-        magicCircle(this.dim, c, 6, 30, C.venom);
+        this.rune(c, 6, 30, C.venom);
         for (let k = 0; k < 26; k++) {
             if (k % 6 === 0)
                 for (const p of ringPts)
@@ -237,7 +237,7 @@ export class Nidhogg extends Boss {
         for (const s of spots)
             teleCircle(this.dim, s.p, 1.5, 22 + Math.round(s.d * 2.5));
         sound(this.dim, "mob.enderdragon.growl", this.pos, 4, 1.4);
-        magicCircle(this.dim, c, 14, 60, C.venom);
+        this.rune(c, 14, 60, C.venom);
         chargeUp(this.dim, add(c, { x: 0, y: 14, z: 0 }), C.venom, 20, 6);
         addTask("nightfall", (age) => {
             for (const s of spots) {
@@ -470,7 +470,7 @@ export class Nidhogg extends Boss {
         const spot = this.ground(lead(t, 12));
         const a = this.act("dive");
         teleCircle(this.dim, spot, 4.2, a.marks[0]);
-        magicCircle(this.dim, spot, 5.5, a.marks[0] + 4, C.venom);
+        this.rune(spot, 5.5, a.marks[0] + 4, C.venom);
         this.faceNow(spot);
         const wind = a.marks[0] - 10;
         yield wind;
@@ -502,6 +502,10 @@ export class Nidhogg extends Boss {
         const rg = this.act("ragnarok");
         shake(this.audience(), 0.3, 3);
         sound(this.dim, "ambient.weather.thunder", center, 5, 0.5);
+        // Ragnarök sky: the rune circle of the roots, poison stars and lightning
+        this.rune(center, 19, rg.ticks + 80, C.venom, 9);
+        this.rune(center, 11, rg.ticks + 80, C.frost, -16);
+        starRain(this.dim, center, C.venom, 19, rg.ticks, 14, 28, 28);
         const meteors = 16;
         for (let i = 0; i < meteors; i++) {
             const tgt = this.fighters.length && i % 2 === 0 ? this.fighters[i % this.fighters.length].location
@@ -509,6 +513,10 @@ export class Nidhogg extends Boss {
             const spot = this.ground(tgt);
             teleCircle(this.dim, spot, 3, 24);
             this.meteor(spot);
+            if (i % 3 === 1) {
+                lightning(this.dim, this.ground(add(center, scale(dirOfYaw(randIn(0, 360)), randIn(6, 18)))), C.frost, 26);
+                sound(this.dim, "ambient.weather.lightning.impact", center, 3, 0.9);
+            }
             yield Math.floor((rg.ticks - 10) / meteors);
         }
         yield 10;
@@ -530,6 +538,8 @@ export class Nidhogg extends Boss {
             shake(this.audience(), 0.8, 1.0);
             for (let s = 2; s <= 20; s += 3)
                 shock(this.dim, this.ground(add(base, scale(dirT, s))), 4, 8, C.root);
+            crack(this.dim, this.ground(add(base, scale(dirT, 10))), 12, C.venom, 110);
+            nova(this.dim, add(this.ground(add(base, scale(dirT, 12))), { x: 0, y: 1.5, z: 0 }), C.root, 9);
             strike(this, add(base, scale(dirT, 10)), 13, (p) => inLine(p, base, dirT, 21, 6.5, 6), 34,
                 { knock: 1.4, up: 0.9, effects: [POISON(1), ["slowness", 60, 2]] });
             yield 12;
@@ -546,6 +556,8 @@ export class Nidhogg extends Boss {
         teleCircle(this.dim, center, 10, ru.marks[0]);
         spiralMark(this.dim, center, C.venom, 10, ru.marks[0]);
         sound(this.dim, "mob.warden.sonic_charge", center, 6, 0.4);
+        vortex(this.dim, center, C.venom, 11, 16, ru.marks[0], 44, 320);
+        ascend(this.dim, center, C.venom, 10, 14, ru.marks[0], 10);
         const from = { ...this.pos };
         for (let k = 1; k <= ru.marks[0]; k++) {
             const s = Math.max(0, (k - (ru.marks[0] - 10)) / 10);
@@ -557,6 +569,10 @@ export class Nidhogg extends Boss {
         flash(this.audience(), { red: 0.2, green: 0.6, blue: 0.15 });
         shake(this.audience(), 0.9, 1.5);
         shock(this.dim, center, 20, 18, C.venom);
+        nova(this.dim, add(center, { x: 0, y: 2, z: 0 }), C.venom, 15);
+        crack(this.dim, center, 16, C.venom, 160);
+        for (let i = 0; i < 10; i++)
+            lightning(this.dim, this.ground(add(center, scale(dirOfYaw(i * 36), 10.5))), C.frost, 24);
         strike(this, center, 12, (p) => inCircle(p, center, 10, 8), 38, { knock: 1.6, up: 1.2, from: center, effects: [POISON(2), ["wither", 60, 0]] });
         this.rootRing(center, 9, 11);
         yield ru.ticks - ru.marks[0];
@@ -595,6 +611,8 @@ export class Nidhogg extends Boss {
                 sound(this.dim, "random.explode", spot, 2, 1.1);
                 burst(this.dim, spot, C.venom, 20, 6, 0.35, 0.5);
                 shock(this.dim, spot, 5, 8, C.venom);
+                nova(this.dim, add(spot, { x: 0, y: 1, z: 0 }), C.venom, 3.5);
+                crack(this.dim, spot, 3.6, C.venom, 70);
                 strike(this, spot, 4.5, (p) => inCircle(p, spot, 3, 5), 18, { knock: 0.8, up: 0.5, from: spot, effects: [POISON(1)] });
                 zone(this.dim, spot, 2.4, 100, { dmg: 3, every: 10, col: C.venom, owner: this.entity, kind: "venom" });
             },

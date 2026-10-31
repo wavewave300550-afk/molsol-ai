@@ -14,7 +14,7 @@
 import { EntityDamageCause } from "@minecraft/server";
 import { TENKO_ACTS } from "../generated/data.js";
 import { fightersNear, grounded, hurt, inCircle, inCone, inLine, inRingBand, knock } from "../core/combat.js";
-import { chargeUp, magicCircle, nova, orb, bullet, burst, C, deco, flash, glint, shake, shock, sound, spiralMark, teleCircle, teleCone, teleLine, teleSafe, mote } from "../core/fx.js";
+import { chargeUp, nova, orb, ascend, crack, dome, flare, lightning, petals, rays, starRain, vortex, bullet, burst, C, deco, flash, glint, shake, shock, sound, spiralMark, teleCircle, teleCone, teleLine, teleSafe, mote } from "../core/fx.js";
 import { fire, moveProp, removeProp, spawnProp } from "../core/hazards.js";
 import { addTask } from "../core/tasks.js";
 import { add, dirOfYaw, flatDir, flatDist, norm, randIn, rotY, scale, sub, yawOf } from "../core/vec.js";
@@ -214,7 +214,7 @@ export class Tenko extends Boss {
         for (let i = 0; i < 5; i++)
             orbs.push(spawnProp(this.dim, "foxfire", add(this.pos, { x: 0, y: 3, z: 0 }), 0, this.entity));
         sound(this.dim, "mob.blaze.shoot", this.pos, 2, 1.6);
-        magicCircle(this.dim, this.ground(this.pos), 4, 30, C.fox);
+        this.rune(this.ground(this.pos), 4, 30, C.fox);
         chargeUp(this.dim, add(this.pos, { x: 0, y: 3, z: 0 }), C.fox, 26, 4);
         for (let k = 0; k < 26; k++) {
             orbs.forEach((o, i) => moveProp(o, add(this.pos, add(scale(dirOfYaw(i * 72 + k * 9), 3), { x: 0, y: 3.2 + Math.sin(k * 0.3 + i) * 0.4, z: 0 }))));
@@ -312,7 +312,7 @@ export class Tenko extends Boss {
             const p = this.ground(add(start, scale(dir, i * 4.5)));
             gates.push(spawnProp(this.dim, "torii", p, yawOf(dir) + 90, this.entity));
             sound(this.dim, "note.bell", p, 2, 0.5 + i * 0.12);
-            magicCircle(this.dim, p, 2.6, 50, C.crimson);
+            this.rune(p, 2.6, 50, C.crimson);
             orb(this.dim, add(p, { x: 0, y: 3, z: 0 }), C.fox, 2, 8);
             yield 4;
         }
@@ -360,7 +360,7 @@ export class Tenko extends Boss {
     *kagura() {
         const a = this.act("kagura");
         const c = this.ground(this.pos);
-        magicCircle(this.dim, c, 8, a.ticks, C.fox);
+        this.rune(c, 8, a.ticks, C.fox);
         let last = 0;
         for (const m of a.marks) {
             // the bell rings just before each beat: jump on the ring!
@@ -372,6 +372,7 @@ export class Tenko extends Boss {
             last = m;
             shock(this.dim, c, 16, 14, C.fox);
             nova(this.dim, add(c, { x: 0, y: 1.5, z: 0 }), C.fox, 6);
+            petals(this.dim, add(c, { x: 0, y: 1.5, z: 0 }), C.pink, 2, 6, 40, 9);
             const hit = new Set();
             addTask("kagura-ring", (age) => {
                 const r = 1 + age * 1.1;
@@ -453,6 +454,11 @@ export class Tenko extends Boss {
         const center = this.ground(this.pos);
         const a = this.act("eclipse");
         sound(this.dim, "note.bell", center, 5, 0.4);
+        // the eclipse: a black-gold sun behind her, two turning circles and a storm of blossoms
+        this.rune(center, 15, a.ticks, C.fox, 30);
+        this.rune(center, 8, a.ticks, C.moon, -52);
+        rays(this.dim, add(center, { x: 0, y: 6, z: 0 }), C.moon, 12, a.marks[1], 6);
+        petals(this.dim, add(center, { x: 0, y: 4, z: 0 }), C.pink, 7, a.marks[1], 22, 5);
         for (let k = 0; k < a.marks[0]; k++) {
             this.place(add(center, { x: 0, y: (3 * Math.min(1, (k + 1) / 20)), z: 0 }), this.yaw);
             if (k % 6 === 0)
@@ -469,6 +475,7 @@ export class Tenko extends Boss {
             if (k === reverseAt - 12) {
                 sound(this.dim, "note.bell", center, 5, 2.0);
                 glint(this.dim, add(this.pos, { x: 0, y: 4, z: 0 }), C.white, 3);
+                nova(this.dim, add(this.pos, { x: 0, y: 4, z: 0 }), C.moon, 6);
             }
             if (k === reverseAt)
                 speed = -2.1;
@@ -501,6 +508,8 @@ export class Tenko extends Boss {
         }
         // implosion
         sound(this.dim, "mob.warden.sonic_charge", center, 5, 0.6);
+        vortex(this.dim, center, C.fox, 13, 8, 16, 60, -540);
+        chargeUp(this.dim, origin, C.fox, 16, 13);
         for (let k = 0; k < 16; k++) {
             for (const p of fightersNear(this.dim, center, 14))
                 knock(p, center, -0.28, 0);
@@ -511,6 +520,9 @@ export class Tenko extends Boss {
         shake(this.audience(), 0.7, 1.0);
         shock(this.dim, center, 14, 12, C.moon);
         burst(this.dim, origin, C.fox, 40, 8, 0.45, 1.5);
+        nova(this.dim, origin, C.fox, 12);
+        crack(this.dim, center, 11, C.fox, 110);
+        petals(this.dim, origin, C.pink, 3, 8, 90, 14);
         strike(this, center, 9, (p) => inCircle(p, center, 6.5, 5), 34, { knock: 2.2, up: 0.8, from: center });
         yield Math.max(1, a.ticks - a.marks[1]);
         for (let k = 0; k < 10; k++) {

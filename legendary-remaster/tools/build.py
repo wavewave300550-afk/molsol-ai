@@ -27,7 +27,7 @@ BUILD = os.path.join(ROOT, "build")
 BP = os.path.join(BUILD, "Legends_BP")
 RP = os.path.join(BUILD, "Legends_RP")
 DIST = os.path.join(ROOT, "dist")
-VERSION = [2, 0, 3]
+VERSION = [2, 0, 4]
 
 MODULES = ["boss_taotie", "boss_nidhogg", "boss_hanuman", "boss_alicorn", "boss_tenko", "boss_logos", "choir_seraph", "choir_cherub", "choir_ophan", "props"]                 # remastered entities (module per entity family)
 ORIGINAL_ENTITIES = []      # every entity is remastered or kept as-is in src/RP_static (ding, root_spike, ...)
@@ -255,6 +255,10 @@ def main():
     print(f"  {vfx.write_particles(RP)} client particle effects")
     import fx_atlas
     fx_atlas.paint(os.path.join(RP, "textures", "particle", "legends_fx.png"))
+    import fx_atlas2
+    import vfx2
+    fx_atlas2.paint(os.path.join(RP, "textures", "particle", "legends_fx2.png"))
+    print(f"  {vfx2.write_particles(RP)} spectacle particle effects")
     rest = data_constants()
     built_acts = {}
     done = set()

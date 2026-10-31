@@ -13,6 +13,7 @@ import { adoptOrphans, clearAll, tickBeings } from "./bosses/registry.js";
 import { stepShots } from "./core/hazards.js";
 import { flushNotices, forget } from "./core/notice.js";
 import { runTasks } from "./core/tasks.js";
+import { tickCinema, toggleCinematics } from "./core/cinema.js";
 import { giveItem, SIGILS, summonNow, useSigil } from "./summon.js";
 import { openCodex } from "./ui.js";
 const CODEX = "legends:codex";
@@ -66,6 +67,13 @@ system.beforeEvents.startup.subscribe((ev) => {
                 b.phase = target - 1;
             });
             return { status: CustomCommandStatus.Success };
+        });
+        reg.registerCommand({ name: "legends:cinematic", description: "Turn ultimate camera cut-ins on or off for yourself", permissionLevel: CommandPermissionLevel.Any, cheatsRequired: false }, (origin) => {
+            const p = origin.sourceEntity;
+            if (!(p instanceof Player))
+                return { status: CustomCommandStatus.Failure, message: "Players only." };
+            const on = toggleCinematics(p);
+            return { status: CustomCommandStatus.Success, message: on ? "Cut-ins on" : "Cut-ins off" };
         });
         reg.registerCommand({ name: "legends:clear", description: "Remove every legend, follower and hazard", permissionLevel: CommandPermissionLevel.GameDirectors, cheatsRequired: true }, () => {
             system.run(() => clearAll());
@@ -186,6 +194,7 @@ let tick = 0;
 system.runInterval(() => {
     tick++;
     runTasks();
+    tickCinema();
     stepShots();
     tickBeings();
     flushNotices();

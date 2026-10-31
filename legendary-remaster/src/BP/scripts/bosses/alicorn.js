@@ -17,7 +17,7 @@
 import { EntityDamageCause } from "@minecraft/server";
 import { ALICORN_ACTS } from "../generated/data.js";
 import { effect, fightersNear, grounded, hurt, inCircle, inRingBand, knock } from "../core/combat.js";
-import { chargeUp, magicCircle, nova, orb, beam, bullet, burst, C, deco, flash, glint, pillar, shake, shock, sound, teleCircle, teleCone, teleLine, teleSafe, mote } from "../core/fx.js";
+import { chargeUp, nova, orb, ascend, crack, dome, flare, lightning, petals, rays, starRain, vortex, beam, bullet, burst, C, deco, flash, glint, pillar, shake, shock, sound, teleCircle, teleCone, teleLine, teleSafe, mote } from "../core/fx.js";
 import { fire, moveProp, removeProp, spawnProp } from "../core/hazards.js";
 import { addTask } from "../core/tasks.js";
 import { add, dirOfYaw, dist, flatDir, flatDist, norm, randIn, rotY, scale, sub, yawOf } from "../core/vec.js";
@@ -217,7 +217,7 @@ export class Alicorn extends Boss {
         const a = this.act("stomp");
         const c = this.ground(ahead(this, 2));
         teleCircle(this.dim, c, 6, a.marks[0]);
-        magicCircle(this.dim, c, 7.5, a.marks[0] + 8, C.aurora);
+        this.rune(c, 7.5, a.marks[0] + 8, C.aurora);
         sound(this.dim, "mob.horse.angry", this.pos, 3, 0.6);
         yield a.marks[0];
         sound(this.dim, "random.anvil_land", c, 3, 0.6);
@@ -268,6 +268,7 @@ export class Alicorn extends Boss {
         teleCone(this.dim, this.ground(this.pos), dirOfYaw(this.yaw), 70, 15, a.marks[0], C.warn);
         yield a.marks[0];
         sound(this.dim, "mob.enderdragon.flap", this.pos, 3, 1.3);
+        vortex(this.dim, this.ground(this.pos), C.sky, 5, 9, 20, 34, 520);
         for (let w = 0; w < 2; w++) {
             for (let i = 0; i < 9; i++) {
                 const d = rotY(dirOfYaw(this.yaw), -35 + i * 8.75 + (w ? 4 : 0));
@@ -340,7 +341,7 @@ export class Alicorn extends Boss {
         const spot = this.ground(lead(t, 12));
         const a = this.act("comet");
         teleCircle(this.dim, spot, 4.5, a.marks[0]);
-        magicCircle(this.dim, spot, 6, a.marks[0] + 4, C.gold);
+        this.rune(spot, 6, a.marks[0] + 4, C.gold);
         this.faceNow(spot);
         yield a.marks[0] - 8;
         const from = { ...this.pos };
@@ -372,7 +373,7 @@ export class Alicorn extends Boss {
             if (e)
                 this.prisms.push(e);
             pillar(this.dim, p, 12, 1.5, 20, C.aurora);
-            magicCircle(this.dim, p, 3, 80, C.aurora);
+            this.rune(p, 3, 80, C.aurora);
         }
         yield a.ticks - a.marks[0];
     }
@@ -382,7 +383,7 @@ export class Alicorn extends Boss {
         this.channelDmg = 0;
         const limit = 50 + 25 * this.maxFighters;
         sound(this.dim, "beacon.ambient", this.pos, 4, 1.2);
-        magicCircle(this.dim, this.ground(this.pos), 6, a.ticks, C.sky);
+        this.rune(this.ground(this.pos), 6, a.ticks, C.sky);
         for (let k = 0; k < a.ticks; k++) {
             if (k % 10 === 0) {
                 const h = this.entity.getComponent("minecraft:health");
@@ -476,6 +477,9 @@ export class Alicorn extends Boss {
         this.hue(HUE.gold);
         const a = this.act("nova");
         sound(this.dim, "beacon.activate", center, 6, 0.5);
+        this.rune(center, 21, a.ticks, C.aurora, 7);
+        this.rune(center, 12, a.ticks, C.sky, -14);
+        starRain(this.dim, center, C.aurora, 21, a.marks[3], 10, 26, 18);
         const yaw0 = randIn(0, 360);
         let tick = 0;
         const lead = 18;
@@ -495,6 +499,8 @@ export class Alicorn extends Boss {
         this.hint("dawn", "§6☀ Turn your back to the dawn!");
         sound(this.dim, "beacon.power", center, 6, 0.6);
         const flashAt = a.marks[4];
+        chargeUp(this.dim, this.horn(), C.gold, flashAt - tick, 22);
+        ascend(this.dim, center, C.gold, 14, 18, flashAt - tick, 12);
         for (let k = tick; k < flashAt; k++) {
             const f = (k - tick) / (flashAt - tick);
             if (k % 4 === 0) {
@@ -504,6 +510,8 @@ export class Alicorn extends Boss {
                     beam(this.dim, add(g, { x: 0, y: 0.3, z: 0 }), this.horn(), C.gold, 0.35);
                 }
             }
+            if (k % 12 === 0)
+                rays(this.dim, this.horn(), C.gold, 6 + f * 18, 16, 24);
             if (k % 10 === 0)
                 sound(this.dim, "beacon.ambient", this.pos, 4, 0.8 + f * 1.2);
             if (k === flashAt - 20)
@@ -515,6 +523,10 @@ export class Alicorn extends Boss {
         sound(this.dim, "beacon.deactivate", center, 6, 0.6);
         shake(this.audience(), 0.6, 1.0);
         shock(this.dim, center, 28, 16, C.safe);
+        nova(this.dim, this.horn(), C.gold, 16);
+        flare(this.dim, this.horn(), C.white, 44, 24);
+        dome(this.dim, this.horn(), C.white, 28, 20);
+        crack(this.dim, center, 18, C.gold, 140);
         const eye = this.horn();
         for (const p of this.fighters) {
             let looking = true;

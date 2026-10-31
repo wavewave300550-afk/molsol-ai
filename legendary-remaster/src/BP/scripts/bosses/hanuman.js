@@ -19,7 +19,7 @@
 import { EntityDamageCause } from "@minecraft/server";
 import { HANUMAN_ACTS } from "../generated/data.js";
 import { fightersNear, grounded, hurt, inCircle, inCone, inLine, knock, setHealth } from "../core/combat.js";
-import { chargeUp, magicCircle, nova, orb, burst, C, deco, flash, glint, pillar, shake, shock, sound, teleCircle, teleCone, teleLine, bullet, mote } from "../core/fx.js";
+import { chargeUp, nova, orb, ascend, crack, dome, flare, lightning, petals, rays, starRain, vortex, burst, C, deco, flash, glint, pillar, shake, shock, sound, teleCircle, teleCone, teleLine, bullet, mote } from "../core/fx.js";
 import { fire, moveProp, removeProp, spawnProp, zone } from "../core/hazards.js";
 import { addTask } from "../core/tasks.js";
 import { add, dirOfYaw, dist, flatDir, flatDist, flatSegDist, lerp, randIn, rotY, scale, sub, yawOf } from "../core/vec.js";
@@ -193,7 +193,7 @@ export class Hanuman extends Boss {
         const dest = this.ground(lead(t, 16));
         const r = 4.2 * this.reach();
         teleCircle(this.dim, dest, r, j.marks[0] + 20);
-        magicCircle(this.dim, dest, r + 1.5, j.marks[0] + 24, this.phase >= 2 ? C.fire : C.wind);
+        this.rune(dest, r + 1.5, j.marks[0] + 24, this.phase >= 2 ? C.fire : C.wind);
         yield j.marks[0];
         sound(this.dim, "mob.breeze.jump", this.pos, 3, 0.6);
         this.act("air");
@@ -233,6 +233,7 @@ export class Hanuman extends Boss {
         }
         sound(this.dim, "mob.breeze.charge", t.location, 3, 1.2);
         deco(this.dim, "feather", add(behind, { x: 0, y: 1, z: 0 }), C.wind, 6, 0.8, 0.3, 1.2);
+        vortex(this.dim, behind, C.wind, 2.4, 6, 14, 30, 620);
         teleCircle(this.dim, behind, 1.4, 12, C.warn);
         yield 12;
         deco(this.dim, "feather", add(this.pos, { x: 0, y: 1, z: 0 }), C.wind, 8, 1, 0.3, 1.5);
@@ -277,7 +278,7 @@ export class Hanuman extends Boss {
         const c = this.ground(this.pos);
         teleCircle(this.dim, c, 6.3, a.marks[0]);
         chargeUp(this.dim, this.centre(3), C.fire, a.marks[0], 6);
-        magicCircle(this.dim, c, 7, a.marks[0] + 10, C.fire);
+        this.rune(c, 7, a.marks[0] + 10, C.fire);
         yield a.marks[0];
         sound(this.dim, "mob.blaze.shoot", c, 3, 0.7);
         shock(this.dim, c, 7, 8, C.fire);
@@ -293,7 +294,7 @@ export class Hanuman extends Boss {
             pts.push(this.ground(add(t.location, scale(dirOfYaw(base + i * 120), 7))));
         for (const p of pts) {
             teleCircle(this.dim, p, 3, 26);
-            magicCircle(this.dim, p, 3.6, 40, C.fire);
+            this.rune(p, 3.6, 40, C.fire);
             const j = this.act("jump");
             yield j.marks[0];
             this.act("air");
@@ -426,7 +427,7 @@ export class Hanuman extends Boss {
         }
         const spot = this.ground(lead(t, 20));
         teleCircle(this.dim, spot, 6, a.marks[0] - 18 + 18);
-        magicCircle(this.dim, spot, 7.5, a.marks[0] + 18, C.gold);
+        this.rune(spot, 7.5, a.marks[0] + 18, C.gold);
         yield a.marks[0] - 18;
         sound(this.dim, "mob.ravager.roar", this.pos, 3, 1.2);
         const T = 18;
@@ -474,6 +475,11 @@ export class Hanuman extends Boss {
         sound(this.dim, "beacon.activate", mouth, 4, 0.5);
         flash(this.audience(), { red: 0.05, green: 0.07, blue: 0.22 });
         burst(this.dim, mouth, C.star, 40, 8, 0.45, 1.5);
+        nova(this.dim, mouth, C.star, 8);
+        rays(this.dim, mouth, C.moon, 14, a.marks[1] - a.marks[0], 8);
+        this.rune(center, 18, a.ticks, C.star, 10);
+        this.rune(center, 10, a.ticks, C.gold, -18);
+        starRain(this.dim, center, C.star, 19, a.marks[1] - a.marks[0] + 20, 16, 26, 24);
         // starfall: a spiral of stars sweeping from the rim towards the centre
         let tick = a.marks[0];
         let i = 0;
@@ -489,6 +495,8 @@ export class Hanuman extends Boss {
                 if (age < 16)
                     return true;
                 glint(this.dim, add(st, { x: 0, y: 0.5, z: 0 }), C.star, 1.8);
+                nova(this.dim, add(st, { x: 0, y: 0.8, z: 0 }), C.star, 2.6);
+                crack(this.dim, st, 2.6, C.gold, 40);
                 sound(this.dim, "random.orb", st, 1, 0.5);
                 strike(this, st, 3.5, (p) => inCircle(p, st, 2.2), this.dmg(12), { cause: EntityDamageCause.magic, up: 0.3, from: st });
                 return false;
@@ -506,6 +514,8 @@ export class Hanuman extends Boss {
         // the Wind-Father's breath
         teleCircle(this.dim, center, 9, 32);
         sound(this.dim, "mob.breeze.inhale", center, 5, 0.5);
+        vortex(this.dim, center, C.wind, 13, 16, 32, 56, -460);
+        ascend(this.dim, center, C.wind, 9, 12, 32, 10);
         for (let k = 0; k < 32; k++) {
             if (k > 10)
                 for (const p of fightersNear(this.dim, center, 14))
@@ -515,6 +525,8 @@ export class Hanuman extends Boss {
         sound(this.dim, "breeze_wind_charge.burst", center, 5, 0.5);
         shake(this.audience(), 0.7, 1.0);
         shock(this.dim, center, 16, 14, C.wind);
+        nova(this.dim, add(center, { x: 0, y: 1.5, z: 0 }), C.wind, 12);
+        crack(this.dim, center, 11, C.gold, 100);
         strike(this, center, 11, (p) => inCircle(p, center, 9, 6), this.dmg(26), { knock: 2.6, up: 0.8, from: center });
         yield Math.max(1, a.ticks - a.marks[6] - 10);
         for (let k = 0; k < 10; k++) {

@@ -16,7 +16,7 @@
 import { EntityDamageCause } from "@minecraft/server";
 import { TAOTIE_ACTS } from "../generated/data.js";
 import { effect, fightersNear, grounded, hurt, inCircle, inCone, inLine, inRingBand, knock } from "../core/combat.js";
-import { chargeUp, magicCircle, nova, orb, burst, C, deco, flash, glint, mote, shake, shock, sound, teleCircle, teleCone, teleLine, beam, bullet } from "../core/fx.js";
+import { chargeUp, nova, orb, ascend, crack, dome, flare, lightning, petals, rays, starRain, vortex, burst, C, deco, flash, glint, mote, shake, shock, sound, teleCircle, teleCone, teleLine, beam, bullet } from "../core/fx.js";
 import { fire, moveProp, particleBullet, propAct, removeProp, spawnProp, zone } from "../core/hazards.js";
 import { blocked } from "../core/terrain.js";
 import { add, dirOfYaw, dist, flatDir, flatDist, lerp, norm, randIn, scale, segDist, sub } from "../core/vec.js";
@@ -249,7 +249,7 @@ export class Taotie extends Boss {
         teleCircle(this.dim, this.ground(m0), 4.2, a.marks[0]);
         sound(this.dim, "mob.warden.sonic_charge", this.pos, 3, 0.5);
         chargeUp(this.dim, m0, C.hunger, a.marks[0], 9);
-        magicCircle(this.dim, this.ground(m0), 5, a.marks[0], C.hunger);
+        this.rune(this.ground(m0), 5, a.marks[0], C.hunger);
         for (let k = 0; k < a.marks[0]; k++) {
             const mouth = this.mouth();
             if (k > 8) {
@@ -281,7 +281,7 @@ export class Taotie extends Boss {
         const a = this.act("quake");
         const c = this.ground(ahead(this, 2.5));
         teleCircle(this.dim, c, 4.5, a.marks[0]);
-        magicCircle(this.dim, c, 6, a.marks[0] + 8, C.bronze);
+        this.rune(c, 6, a.marks[0] + 8, C.bronze);
         yield a.marks[0];
         sound(this.dim, "mob.warden.attack", c, 4, 0.5);
         shake(this.audience(), 0.5, 0.8);
@@ -477,6 +477,11 @@ export class Taotie extends Boss {
         const a = this.act("maw");
         sound(this.dim, "mob.wither.spawn", this.pos, 4, 0.5);
         shake(this.audience(), 0.4, 2);
+        // the devouring whirlpool: the whole arena turns around the maw
+        this.rune(center, 17, a.marks[0] + 30, C.hunger, -12);
+        this.rune(center, 9, a.marks[0] + 30, C.ember, 26);
+        vortex(this.dim, center, C.hunger, 16, 9, a.marks[0], 46, -280);
+        vortex(this.dim, center, C.ember, 9, 12, a.marks[0], 24, -420);
         // dings rain down: the only shelter
         const n = Math.max(4, Math.min(6, this.fighters.length + 3));
         for (let i = 0; i < n; i++) {
@@ -548,8 +553,10 @@ export class Taotie extends Boss {
                 off.y = center.y + randIn(0.5, 4);
                 bullet(this.dim, off, norm(sub(mouth, off)), 22, 16, k % 4 ? C.hunger : C.gold, 0.4);
             }
-            if (k % 20 === 0)
+            if (k % 20 === 0) {
                 sound(this.dim, "mob.warden.sonic_charge", mouth, 3, 0.5);
+                chargeUp(this.dim, mouth, k % 40 ? C.hunger : C.ember, 20, 16);
+            }
             yield 1;
         }
         if (dragging)
@@ -560,6 +567,11 @@ export class Taotie extends Boss {
         shake(this.audience(), 0.8, 1.2);
         flash(this.audience(), { red: 0.25, green: 0.12, blue: 0.3 });
         burst(this.dim, mouth, C.gold, 40, 8, 0.45, 2);
+        nova(this.dim, mouth, C.ember, 13);
+        crack(this.dim, center, 15, C.ember, 140);
+        shock(this.dim, center, 22, 16, C.hunger);
+        for (let i = 0; i < 8; i++)
+            lightning(this.dim, this.ground(add(center, scale(dirOfYaw(i * 45 + 20), 12))), C.ember, 18);
         for (const p of fightersNear(this.dim, mouth, 26)) {
             if (this.sheltered(p, mouth))
                 continue;

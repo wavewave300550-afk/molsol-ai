@@ -51,6 +51,30 @@ export class MolangVariableMap {
 
 // ------------------------------------------------------------------ scheduler
 let currentTick = 0;
+const PTICKS = new Map();
+const PIDS = [];
+export let peakMix = "";
+/** Peak number of particle emitters spawned within any `win`-tick window since the last call. */
+export function particlePeak(win = 20) {
+  const ks = [...PTICKS.keys()].sort((x, y) => x - y);
+  let best = 0;
+  let j = 0;
+  let sum = 0;
+  for (let i = 0; i < ks.length; i++) {
+    sum += PTICKS.get(ks[i]);
+    while (ks[i] - ks[j] >= win) sum -= PTICKS.get(ks[j++]);
+    if (sum > best) {
+      best = sum;
+      const lo = ks[j], hi = ks[i];
+      const mix = {};
+      for (const [tk, pid] of PIDS) if (tk >= lo && tk <= hi) mix[pid] = (mix[pid] ?? 0) + 1;
+      peakMix = Object.entries(mix).sort((x, y) => y[1] - x[1]).slice(0, 4).map(([k, v]) => `${k.replace("legends:", "")}×${v}`).join(" ");
+    }
+  }
+  PTICKS.clear();
+  PIDS.length = 0;
+  return best;
+}
 let nextId = 1;
 const timers = new Map();
 function schedule(fn, delay, interval) {
@@ -445,7 +469,19 @@ export class Player extends Entity {
         self.fades++;
       },
       addShake() {},
-      clear() {},
+      setCamera(preset, o) {
+        if (preset !== "minecraft:free") issue(`unexpected camera preset ${preset}`);
+        for (const k of ["location", "facingLocation"]) if (o?.[k]) finite(o[k], `setCamera.${k}`);
+        if (o?.rotation && ![o.rotation.x, o.rotation.y].every(Number.isFinite)) issue("setCamera rotation not finite");
+        const e = o?.easeOptions;
+        if (e && (!(e.easeTime >= 0 && e.easeTime <= 10) || !["Linear", "InOutSine", "OutSine", "InSine", "OutQuad", "InOutQuad"].includes(e.easeType))) issue(`bad ease ${JSON.stringify(e)}`);
+        if (!o?.location) issue("setCamera without location");
+        self.cams = (self.cams ?? 0) + 1;
+        self.camOn = true;
+      },
+      clear() {
+        self.camOn = false;
+      },
     };
   }
   runCommand(cmd) {
@@ -519,6 +555,8 @@ class Dimension {
     finite(loc, "particle");
     if (vars && !(vars instanceof MolangVariableMap)) issue("molang vars must be a MolangVariableMap");
     this.particles++;
+    PTICKS.set(currentTick, (PTICKS.get(currentTick) ?? 0) + 1);
+    PIDS.push([currentTick, id]);
   }
   __blockAt(x, y, z) {
     const k = `${Math.floor(x)}|${Math.floor(y)}|${Math.floor(z)}`;

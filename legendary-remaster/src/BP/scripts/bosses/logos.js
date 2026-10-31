@@ -23,7 +23,7 @@
 import { EntityDamageCause } from "@minecraft/server";
 import { CHERUB_ACTS, LOGOS_ACTS, OPHAN_ACTS, SERAPH_ACTS } from "../generated/data.js";
 import { effect, fightersNear, grounded, hurt, inCircle, inCone, inLine, inRingBand, knock } from "../core/combat.js";
-import { chargeUp, magicCircle, nova, orb, beam, bullet, burst, C, deco, flash, glint, mote, pillar, shake, shock, sound, spiralMark, teleCircle, teleCone, teleLine, teleSafe } from "../core/fx.js";
+import { chargeUp, dome, nova, orb, ascend, crack, flare, lightning, rays, starRain, vortex, beam, bullet, burst, C, deco, flash, glint, mote, pillar, shake, shock, sound, spiralMark, teleCircle, teleCone, teleLine, teleSafe } from "../core/fx.js";
 import { fire, moveProp, removeProp, spawnProp, zone } from "../core/hazards.js";
 import { notify, Pri } from "../core/notice.js";
 import { addTask } from "../core/tasks.js";
@@ -181,8 +181,9 @@ class Seraph extends Choir {
     }
     kit() {
         const k = [(t) => this.dive(t), (t) => this.coal(t), () => this.sanctus()];
-        if (this.owner.veiled <= 0 && this.owner.phase >= 2)
-            k.push(() => this.veil());
+        // from phase II the veil is the Seraph's first duty whenever it is ready
+        if (this.owner.veiled <= 0 && this.owner.phase >= 2 && this.cdReady("veil"))
+            return [() => this.veil()];
         return k;
     }
     /** Six-winged veil: the Seraph wraps its wings around the Word - arrows and tridents burn up. */
@@ -193,6 +194,9 @@ class Seraph extends Choir {
         sound(this.dim, "mob.blaze.breathe", this.pos, 4, 0.6);
         yield a.marks[0];
         this.owner.veiled = 160;
+        this.setCd("veil", 520);
+        this.rune(this.ground(this.owner.pos), 5.5, 160, C.fire, 40);
+        dome(this.dim, add(this.owner.pos, { x: 0, y: 3, z: 0 }), C.fire, 6, 16);
         yield a.ticks - a.marks[0];
     }
     *dive(t) {
@@ -262,7 +266,7 @@ class Seraph extends Choir {
         // TRISAGION: holy, holy, holy — three great rings, jump each one
         const a = this.act("trisagion");
         sound(this.dim, "mob.evocation_illager.prepare_attack", this.pos, 4, 0.6);
-        magicCircle(this.dim, this.ground(this.pos), 8, a.ticks, C.fire);
+        this.rune(this.ground(this.pos), 8, a.ticks, C.fire);
         chargeUp(this.dim, add(this.pos, { x: 0, y: 1.5, z: 0 }), C.fire, a.marks[0], 5);
         yield* this.rings(a.marks, 15, 14);
         yield a.ticks - a.marks[a.marks.length - 1];
@@ -356,7 +360,7 @@ class Cherub extends Choir {
         yield a.marks[0];
         sound(this.dim, "item.trident.thunder", spot, 4, 0.9);
         nova(this.dim, add(spot, { x: 0, y: 1.5, z: 0 }), C.fire, 7);
-        magicCircle(this.dim, spot, 6, 60, C.fire);
+        this.rune(spot, 6, 60, C.fire);
         yield a.ticks - a.marks[0];
     }
 }
@@ -432,7 +436,7 @@ class Ophan extends Choir {
         const a = this.act("wheels");
         const c = this.ground(this.pos);
         teleCircle(this.dim, c, 9, a.marks[0]);
-        magicCircle(this.dim, c, 10, a.ticks, C.ember);
+        this.rune(c, 10, a.ticks, C.ember);
         chargeUp(this.dim, add(c, { x: 0, y: 2, z: 0 }), C.ember, a.marks[0], 9);
         yield a.marks[0];
         orb(this.dim, add(c, { x: 0, y: 2, z: 0 }), C.ember, 4, a.ticks - a.marks[0]);
@@ -697,11 +701,12 @@ export class Logos extends Boss {
         for (const cell of cells)
             teleCircle(this.dim, cell.p, 1.5, cell.w === 0 ? 26 : 50);
         sound(this.dim, "beacon.activate", c, 3, 1.6);
-        magicCircle(this.dim, c, 9, 54, C.holy);
+        this.rune(c, 9, 54, C.holy);
         chargeUp(this.dim, this.eye(), C.holy, 26, 5);
         for (let wave = 0; wave < 2; wave++) {
             yield wave === 0 ? 26 : 24;
             sound(this.dim, "random.orb", c, 3, 0.6 + wave * 0.3);
+            lightning(this.dim, c, C.holy, 24);
             for (const cell of cells) {
                 if (cell.w !== wave)
                     continue;
@@ -742,7 +747,7 @@ export class Logos extends Boss {
         let p = this.ground(t.location);
         spiralMark(this.dim, p, C.holy, 3, a.marks[0]);
         teleCircle(this.dim, p, 2, a.marks[0]);
-        magicCircle(this.dim, p, 3, a.ticks, C.holy);
+        this.rune(p, 3, a.ticks, C.holy);
         chargeUp(this.dim, this.eye(), C.holy, a.marks[0], 4);
         sound(this.dim, "beacon.power", this.pos, 3, 0.6);
         yield a.marks[0];
@@ -780,7 +785,7 @@ export class Logos extends Boss {
             sound(this.dim, "mob.warden.sonic_boom", c, 2, 1.6);
             shock(this.dim, c, 17, 15, C.gold);
             nova(this.dim, add(c, { x: 0, y: 2, z: 0 }), C.gold, 7);
-            magicCircle(this.dim, c, 9, 20, C.gold);
+            this.rune(c, 9, 20, C.gold);
             const hit = new Set();
             addTask("trumpet", (age) => {
                 const r = 2 + age * 1.05;
@@ -795,7 +800,7 @@ export class Logos extends Boss {
         yield a.marks[0];
         sound(this.dim, "mob.evocation_illager.cast_spell", this.pos, 4, 0.7);
         const from = add(this.pos, { x: 0, y: 1.4, z: 0 });
-        magicCircle(this.dim, this.ground(this.pos), 8, a.ticks - a.marks[0], C.gold);
+        this.rune(this.ground(this.pos), 8, a.ticks - a.marks[0], C.gold);
         orb(this.dim, from, C.holy, 3.5, a.ticks - a.marks[0]);
         for (let k = 0; k < a.ticks - a.marks[0] - 6; k += 2) {
             for (let arm = 0; arm < 3; arm++) {
@@ -916,6 +921,11 @@ export class Logos extends Boss {
             this.fly({ x: center.x, y: center.y + 1, z: center.z }, 0.5, 0, 8);
             yield 1;
         }
+        // the heavens open: the Word's sigil spans the arena, light falls like rain
+        this.rune(center, 25, a.ticks, C.holy, 5);
+        this.rune(center, 15, a.ticks, C.gold, -9);
+        rays(this.dim, add(this.pos, { x: 0, y: 4, z: 0 }), C.holy, 18, a.ticks - 30, 5);
+        starRain(this.dim, center, C.holy, 23, a.marks[2], 9, 30, 20);
         const eden = this.ground(add(center, scale(dirOfYaw(randIn(0, 360)), randIn(7, 12))));
         const cherub = this.alive("cherub");
         const seraph = this.alive("seraph");
@@ -942,6 +952,8 @@ export class Logos extends Boss {
         pillar(this.dim, eden, 14, 2.2, 40, C.safe);
         const edenLife = finalAt - edenAt;
         teleSafe(this.dim, eden, 3.6, edenLife);
+        this.rune(eden, 4.2, edenLife, C.safe, 40);
+        ascend(this.dim, eden, C.safe, 3.4, 14, edenLife, 4);
         for (let k = edenAt; k < finalAt; k++) {
             if ((k - edenAt) % 40 === 0)
                 pillar(this.dim, eden, 14, 2.2, 40, C.safe);
@@ -949,6 +961,13 @@ export class Logos extends Boss {
                 teleCircle(this.dim, center, 26, 44);
             if (k > a.marks[1] && k % 6 === 0)
                 pillar(this.dim, this.ground(add(center, scale(dirOfYaw(randIn(0, 360)), randIn(4, 22)))), 8, 1, 10, C.holy);
+            if (k > a.marks[1] && k % 15 === 0) {
+                const at = this.ground(add(center, scale(dirOfYaw(randIn(0, 360)), randIn(5, 22))));
+                if (flatDist(at, eden) > 5)
+                    lightning(this.dim, at, C.holy, 26);
+            }
+            if (k === finalAt - 30)
+                chargeUp(this.dim, this.eye(), C.white, 30, 22);
             if (k > finalAt - 30 && k % 5 === 0)
                 glint(this.dim, this.eye(), C.white, 3 + (k - finalAt + 30) * 0.15);
             yield 1;
@@ -959,6 +978,12 @@ export class Logos extends Boss {
         flash(this.audience(), C.white);
         shake(this.audience(), 0.9, 1.4);
         shock(this.dim, center, 28, 18, C.holy);
+        nova(this.dim, this.eye(), C.holy, 20);
+        flare(this.dim, this.eye(), C.white, 50, 26);
+        dome(this.dim, add(center, { x: 0, y: 2, z: 0 }), C.holy, 30, 24);
+        crack(this.dim, center, 20, C.holy, 160);
+        for (let i = 0; i < 12; i++)
+            lightning(this.dim, this.ground(add(center, scale(dirOfYaw(i * 30), 22))), C.holy, 28);
         for (const p of this.fighters) {
             if (flatDist(p.location, eden) <= 3.7) {
                 glint(this.dim, add(p.location, { x: 0, y: 1, z: 0 }), C.safe, 1.2);

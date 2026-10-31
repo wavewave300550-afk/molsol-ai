@@ -10,11 +10,14 @@
  */
 import { EntityDamageCause, ItemStack } from "@minecraft/server";
 import { allPlayersNear, fightersNear } from "../core/combat.js";
-import { burst, C, chargeUp, flash, magicCircle, nova, sound } from "../core/fx.js";
+import { cutIn, cutOut } from "../core/cinema.js";
+import { ascend, burst, C, chargeUp, crack, dome, flare, flash, lightning, nova, rays, sigil, sound, starRain, vortex } from "../core/fx.js";
 import { clearProps } from "../core/hazards.js";
 import { notify, Pri } from "../core/notice.js";
-import { dist, flatDist } from "../core/vec.js";
+import { add, dirOfYaw, dist, flatDist, scale } from "../core/vec.js";
 import { Being } from "./being.js";
+/** The pose each legend strikes during its ultimate cut-in. */
+const CUT_ACT = { taotie: "roar", nidhogg: "roar", hanuman: "taunt", alicorn: "rear", tenko: "howl", logos: "speak" };
 export class Boss extends Being {
     constructor(entity, key) {
         super(entity);
@@ -109,8 +112,14 @@ export class Boss extends Being {
     *wrapEntrance() {
         this.invuln = true;
         this.fx(0);
+        const g0 = this.ground(this.pos);
+        this.rune(g0, 9, 90, this.aura, 18);
+        ascend(this.dim, g0, this.aura, 5, 14, 70, 9);
         yield* this.entrance();
+        const g = this.ground(this.pos);
         nova(this.dim, this.centre(), this.aura, 7);
+        crack(this.dim, g, 8, this.aura, 70);
+        this.rune(g, 11, 50, this.aura, -30);
         this.setPhase(1);
         this.invuln = false;
         this.rest = 30;
@@ -119,10 +128,21 @@ export class Boss extends Being {
         this.invuln = true;
         this.fx(1);
         this.say(`§c◆ ${this.phaseNames[to] ?? ""}`, Pri.Phase);
+        const g = this.ground(this.pos);
         chargeUp(this.dim, this.centre(), this.aura, 30, 6);
-        magicCircle(this.dim, this.ground(this.pos), 9, 60, this.aura);
+        this.rune(g, 10, 90, this.aura, 26);
+        this.rune(g, 6, 90, C.white, -44);
+        ascend(this.dim, g, this.aura, 6, 16, 70, 12);
+        vortex(this.dim, g, this.aura, 7, 14, 60, 26);
         yield* this.transition(to);
-        nova(this.dim, this.centre(), this.aura, 9);
+        const c = this.centre();
+        nova(this.dim, c, this.aura, 9);
+        crack(this.dim, this.ground(this.pos), 10, this.aura, 80);
+        rays(this.dim, c, this.aura, 16, 30, 16);
+        flash(this.audience(), this.aura);
+        for (let i = 0; i < 6; i++)
+            lightning(this.dim, this.ground(add(this.pos, scale(dirOfYaw(i * 60 + this.t * 7), 9))), this.aura, 20);
+        sound(this.dim, "ambient.weather.thunder", this.pos, 3, 1.1);
         this.setPhase(to);
         this.fx(0);
         this.invuln = false;
@@ -133,13 +153,55 @@ export class Boss extends Being {
     *wrapUlt() {
         this.ultAt = this.t + this.ultCooldown;      // set first: an interrupted ultimate never loops
         this.say(`§4⚠ ${this.ultName}`, Pri.Ultimate);
-        chargeUp(this.dim, this.centre(4), this.aura, 40, 9);
-        magicCircle(this.dim, this.ground(this.pos), 12, 80, this.aura);
-        magicCircle(this.dim, this.ground(this.pos), 7, 80, C.white);
+        yield* this.ultCutIn();
         yield* this.ultimate();
         nova(this.dim, this.centre(), this.aura, 8);
         this.ultAt = this.t + this.ultCooldown;
         this.rest = 40;
+    }
+    /**
+     * Ultimate cut-in (about 2 s): the legend roars inside its own unfolding sigil while the
+     * camera frames it; light, wind and lightning gather; then a detonation and the view returns.
+     */
+    *ultCutIn() {
+        const was = this.invuln;
+        this.invuln = true;
+        const T = 38;
+        const g = this.ground(this.pos);
+        const cut = CUT_ACT[this.key];
+        if (cut && this.acts[cut])
+            this.act(cut);
+        const shot = cutIn(this, this.audience(), T);
+        sound(this.dim, "beacon.activate", this.pos, 4, 0.6);
+        sound(this.dim, "mob.warden.roar", this.pos, 3, 0.7);
+        chargeUp(this.dim, this.centre(4), this.aura, T, 10);
+        this.rune(g, 14, 140, this.aura, 18);
+        this.rune(g, 8.5, 140, C.white, -34);
+        ascend(this.dim, g, this.aura, 7, 18, T + 10, 12);
+        vortex(this.dim, g, this.aura, 9, 16, T, 36);
+        rays(this.dim, this.centre(4), this.aura, 12, T + 6, 10);
+        for (let k = 0; k < T; k++) {
+            if (k % 9 === 4) {
+                const a = k * 47 + this.t;
+                lightning(this.dim, this.ground(add(this.pos, scale(dirOfYaw(a), 7 + (k % 3) * 3))), this.aura, 22);
+                sound(this.dim, "ambient.weather.lightning.impact", this.pos, 2, 1.2);
+            }
+            yield 1;
+        }
+        const c = this.centre(3);
+        nova(this.dim, c, this.aura, 10);
+        dome(this.dim, c, C.white, 12, 12);
+        flare(this.dim, c, C.white, 18, 14);
+        crack(this.dim, g, 12, this.aura, 120);
+        flash(this.audience(), this.aura);
+        sound(this.dim, "ambient.weather.thunder", this.pos, 4, 0.8);
+        cutOut(shot);
+        this.invuln = was;
+        yield 6;
+    }
+    /** The legend's own rune circle on the ground. */
+    rune(at, radius, ticks, col, spin = 24) {
+        sigil(this.dim, at, this.key, radius, ticks, col, spin);
     }
     /** Hook: return a coroutine to run instead of dying (Hanuman's revival). */
     beforeDeath() {
@@ -155,15 +217,24 @@ export class Boss extends Being {
         this.say(this.defeatText, Pri.Ultimate);
         const a = this.act("death");
         sound(this.dim, "mob.enderdragon.death", this.pos, 3, 0.8);
-        magicCircle(this.dim, this.ground(this.pos), 10, a.ticks, this.aura);
+        const g = this.ground(this.pos);
+        this.rune(g, 11, a.ticks + 20, this.aura, 14);
+        this.rune(g, 6, a.ticks + 20, C.white, -30);
+        ascend(this.dim, g, C.holy, 5, 22, a.ticks, 14);
+        vortex(this.dim, g, this.aura, 6, 18, a.ticks, 22, 220);
         for (let k = 0; k < a.ticks; k += 10) {
             burst(this.dim, { x: this.pos.x, y: this.pos.y + 2, z: this.pos.z }, C.holy, 18, 5, 0.3, 1.2);
             if (k === a.ticks - 30)
                 chargeUp(this.dim, this.centre(), this.aura, 30, 7);
+            if (k % 20 === 0)
+                rays(this.dim, this.centre(), this.aura, 8 + k * 0.06, 14, 20);
             yield 10;
         }
         nova(this.dim, this.centre(), this.aura, 12);
         nova(this.dim, this.centre(1), C.white, 6);
+        flare(this.dim, this.centre(), C.white, 26, 18);
+        starRain(this.dim, g, C.holy, 10, 40, 24);
+        crack(this.dim, g, 12, this.aura, 100);
         flash(this.audience(), C.white);
         burst(this.dim, { x: this.pos.x, y: this.pos.y + 2, z: this.pos.z }, C.gold, 40, 9, 0.4, 1.5);
         clearProps(this.id);
@@ -242,8 +313,20 @@ export class Boss extends Being {
             }
         }
         this.stepCo();
+        this.phaseAura();
         this.onTick();
         this.syncMove();
+    }
+    /** From phase II the legend stands inside its own turning sigil (re-laid when it has settled). */
+    phaseAura() {
+        if (this.phase < 2 || this.dying || this.t % 50 !== 0)
+            return;
+        const here = this.ground(this.pos);
+        const last = this.runeAt;
+        this.runeAt = here;
+        if (last && flatDist(last, here) > 2.5)
+            return;
+        this.rune(here, this.phase >= 3 ? 7.5 : 5.5, 56, this.aura, this.phase >= 3 ? 40 : 24);
     }
     /** Per-tick extra behaviour (auras, followers...). */
     onTick() { }
