@@ -1,0 +1,573 @@
+{
+  "format_version": "1.20.20",
+  "sound_definitions": {
+    "mob.dod.red_dragon.ambient": {
+      "category": "hostile",
+      "max_distance": 48,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/mob/ravager/idle1",
+          "pitch": 0.5,
+          "volume": 0.9
+        },
+        {
+          "name": "sounds/mob/ravager/idle2",
+          "pitch": 0.5,
+          "volume": 0.9
+        },
+        {
+          "name": "sounds/mob/ravager/idle3",
+          "pitch": 0.5,
+          "volume": 0.9
+        },
+        {
+          "name": "sounds/mob/ravager/idle4",
+          "pitch": 0.5,
+          "volume": 0.9
+        },
+        {
+          "name": "sounds/mob/ravager/idle5",
+          "pitch": 0.5,
+          "volume": 0.9
+        },
+        {
+          "name": "sounds/mob/ravager/idle6",
+          "pitch": 0.5,
+          "volume": 0.9
+        },
+        {
+          "name": "sounds/mob/ravager/idle7",
+          "pitch": 0.5,
+          "volume": 0.9
+        },
+        {
+          "name": "sounds/mob/ravager/idle8",
+          "pitch": 0.5,
+          "volume": 0.9
+        }
+      ]
+    },
+    "mob.dod.red_dragon.growl": {
+      "category": "hostile",
+      "max_distance": 48,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/mob/enderdragon/growl1",
+          "pitch": 0.85,
+          "volume": 0.7
+        },
+        {
+          "name": "sounds/mob/enderdragon/growl2",
+          "pitch": 0.85,
+          "volume": 0.7
+        },
+        {
+          "name": "sounds/mob/enderdragon/growl3",
+          "pitch": 0.85,
+          "volume": 0.7
+        },
+        {
+          "name": "sounds/mob/enderdragon/growl4",
+          "pitch": 0.85,
+          "volume": 0.7
+        }
+      ]
+    },
+    "mob.dod.red_dragon.roar": {
+      "category": "hostile",
+      "max_distance": 96,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/mob/enderdragon/growl1",
+          "pitch": 0.62,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/enderdragon/growl2",
+          "pitch": 0.62,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/enderdragon/growl3",
+          "pitch": 0.62,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/enderdragon/growl4",
+          "pitch": 0.62,
+          "volume": 1.0
+        }
+      ]
+    },
+    "mob.dod.red_dragon.roar_layer": {
+      "category": "hostile",
+      "max_distance": 96,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/mob/ravager/roar1",
+          "pitch": 0.55,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/ravager/roar2",
+          "pitch": 0.55,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/ravager/roar3",
+          "pitch": 0.55,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/ravager/roar4",
+          "pitch": 0.55,
+          "volume": 1.0
+        }
+      ]
+    },
+    "mob.dod.red_dragon.sniff": {
+      "category": "hostile",
+      "max_distance": 32,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/mob/sniffer/scenting1",
+          "pitch": 0.6,
+          "volume": 0.8
+        },
+        {
+          "name": "sounds/mob/sniffer/scenting2",
+          "pitch": 0.6,
+          "volume": 0.8
+        },
+        {
+          "name": "sounds/mob/sniffer/scenting3",
+          "pitch": 0.6,
+          "volume": 0.8
+        }
+      ]
+    },
+    "mob.dod.red_dragon.hurt": {
+      "category": "hostile",
+      "max_distance": 48,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/mob/enderdragon/hit1",
+          "pitch": 0.75,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/enderdragon/hit2",
+          "pitch": 0.75,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/enderdragon/hit3",
+          "pitch": 0.75,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/enderdragon/hit4",
+          "pitch": 0.75,
+          "volume": 1.0
+        }
+      ]
+    },
+    "mob.dod.red_dragon.death": {
+      "category": "hostile",
+      "max_distance": 96,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/mob/ravager/death1",
+          "pitch": 0.5,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/ravager/death2",
+          "pitch": 0.5,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/ravager/death3",
+          "pitch": 0.5,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/enderdragon/growl1",
+          "pitch": 0.48,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/enderdragon/growl2",
+          "pitch": 0.48,
+          "volume": 1.0
+        }
+      ]
+    },
+    "mob.dod.red_dragon.death_thud": {
+      "category": "hostile",
+      "max_distance": 64,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/item/mace/smash_ground_heavy",
+          "pitch": 0.55,
+          "volume": 1.0
+        }
+      ]
+    },
+    "mob.dod.red_dragon.step": {
+      "category": "hostile",
+      "max_distance": 32,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/mob/ravager/step1",
+          "pitch": 0.6,
+          "volume": 0.75
+        },
+        {
+          "name": "sounds/mob/ravager/step2",
+          "pitch": 0.6,
+          "volume": 0.75
+        },
+        {
+          "name": "sounds/mob/ravager/step3",
+          "pitch": 0.6,
+          "volume": 0.75
+        },
+        {
+          "name": "sounds/mob/ravager/step4",
+          "pitch": 0.6,
+          "volume": 0.75
+        },
+        {
+          "name": "sounds/mob/ravager/step5",
+          "pitch": 0.6,
+          "volume": 0.75
+        }
+      ]
+    },
+    "mob.dod.red_dragon.flap": {
+      "category": "hostile",
+      "max_distance": 64,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/mob/enderdragon/wings1",
+          "pitch": 0.8,
+          "volume": 0.95
+        },
+        {
+          "name": "sounds/mob/enderdragon/wings2",
+          "pitch": 0.8,
+          "volume": 0.95
+        },
+        {
+          "name": "sounds/mob/enderdragon/wings3",
+          "pitch": 0.8,
+          "volume": 0.95
+        },
+        {
+          "name": "sounds/mob/enderdragon/wings4",
+          "pitch": 0.8,
+          "volume": 0.95
+        },
+        {
+          "name": "sounds/mob/enderdragon/wings5",
+          "pitch": 0.8,
+          "volume": 0.95
+        },
+        {
+          "name": "sounds/mob/enderdragon/wings6",
+          "pitch": 0.8,
+          "volume": 0.95
+        }
+      ]
+    },
+    "mob.dod.red_dragon.wing_unfold": {
+      "category": "hostile",
+      "max_distance": 32,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/mob/enderdragon/wings1",
+          "pitch": 1.15,
+          "volume": 0.45
+        },
+        {
+          "name": "sounds/mob/enderdragon/wings2",
+          "pitch": 1.15,
+          "volume": 0.45
+        },
+        {
+          "name": "sounds/mob/enderdragon/wings3",
+          "pitch": 1.15,
+          "volume": 0.45
+        },
+        {
+          "name": "sounds/mob/enderdragon/wings4",
+          "pitch": 1.15,
+          "volume": 0.45
+        },
+        {
+          "name": "sounds/mob/enderdragon/wings5",
+          "pitch": 1.15,
+          "volume": 0.45
+        },
+        {
+          "name": "sounds/mob/enderdragon/wings6",
+          "pitch": 1.15,
+          "volume": 0.45
+        }
+      ]
+    },
+    "mob.dod.red_dragon.glide": {
+      "category": "hostile",
+      "max_distance": 32,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/elytra/elytra_loop",
+          "pitch": 0.55,
+          "volume": 0.35
+        }
+      ]
+    },
+    "mob.dod.red_dragon.takeoff": {
+      "category": "hostile",
+      "max_distance": 64,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/mob/enderdragon/wings1",
+          "pitch": 0.65,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/enderdragon/wings2",
+          "pitch": 0.65,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/enderdragon/wings3",
+          "pitch": 0.65,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/enderdragon/wings4",
+          "pitch": 0.65,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/enderdragon/wings5",
+          "pitch": 0.65,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/enderdragon/wings6",
+          "pitch": 0.65,
+          "volume": 1.0
+        }
+      ]
+    },
+    "mob.dod.red_dragon.land": {
+      "category": "hostile",
+      "max_distance": 64,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/item/mace/smash_ground_heavy",
+          "pitch": 0.6,
+          "volume": 0.9
+        }
+      ]
+    },
+    "mob.dod.red_dragon.bite": {
+      "category": "hostile",
+      "max_distance": 48,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/mob/ravager/bite1",
+          "pitch": 0.7,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/ravager/bite2",
+          "pitch": 0.7,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/ravager/bite3",
+          "pitch": 0.7,
+          "volume": 1.0
+        }
+      ]
+    },
+    "mob.dod.red_dragon.swipe": {
+      "category": "hostile",
+      "max_distance": 48,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/item/mace/smash_air1",
+          "pitch": 0.6,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/item/mace/smash_air2",
+          "pitch": 0.6,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/item/mace/smash_air3",
+          "pitch": 0.6,
+          "volume": 1.0
+        }
+      ]
+    },
+    "mob.dod.red_dragon.hit": {
+      "category": "hostile",
+      "max_distance": 48,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/item/mace/smash_ground1",
+          "pitch": 0.9,
+          "volume": 0.9
+        },
+        {
+          "name": "sounds/item/mace/smash_ground2",
+          "pitch": 0.9,
+          "volume": 0.9
+        },
+        {
+          "name": "sounds/item/mace/smash_ground3",
+          "pitch": 0.9,
+          "volume": 0.9
+        },
+        {
+          "name": "sounds/item/mace/smash_ground4",
+          "pitch": 0.9,
+          "volume": 0.9
+        }
+      ]
+    },
+    "mob.dod.red_dragon.tail_slam": {
+      "category": "hostile",
+      "max_distance": 64,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/item/mace/smash_ground_heavy",
+          "pitch": 0.72,
+          "volume": 1.0
+        }
+      ]
+    },
+    "mob.dod.red_dragon.buffet": {
+      "category": "hostile",
+      "max_distance": 64,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/mob/breeze/wind_burst1",
+          "pitch": 0.55,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/breeze/wind_burst2",
+          "pitch": 0.55,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/breeze/wind_burst3",
+          "pitch": 0.55,
+          "volume": 1.0
+        }
+      ]
+    },
+    "mob.dod.red_dragon.fire_charge": {
+      "category": "hostile",
+      "max_distance": 64,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/mob/blaze/breathe1",
+          "pitch": 0.5,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/blaze/breathe2",
+          "pitch": 0.5,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/blaze/breathe3",
+          "pitch": 0.5,
+          "volume": 1.0
+        },
+        {
+          "name": "sounds/mob/blaze/breathe4",
+          "pitch": 0.5,
+          "volume": 1.0
+        }
+      ]
+    },
+    "mob.dod.red_dragon.fire_charge_layer": {
+      "category": "hostile",
+      "max_distance": 64,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/mob/ghast/charge",
+          "pitch": 0.6,
+          "volume": 0.8
+        }
+      ]
+    },
+    "mob.dod.red_dragon.fire_breath": {
+      "category": "hostile",
+      "max_distance": 96,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/mob/ghast/fireball4",
+          "pitch": 0.5,
+          "volume": 1.0
+        }
+      ]
+    },
+    "mob.dod.red_dragon.fire_loop": {
+      "category": "hostile",
+      "max_distance": 64,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/fire/fire",
+          "pitch": 0.7,
+          "volume": 1.0
+        }
+      ]
+    },
+    "mob.dod.red_dragon.fire_hit": {
+      "category": "hostile",
+      "max_distance": 32,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/fire/ignite",
+          "pitch": 0.8,
+          "volume": 0.8
+        }
+      ]
+    }
+  }
+}

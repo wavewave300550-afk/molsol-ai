@@ -1,0 +1,43 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.dod.red_dragon": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.dod.red_dragon_fire": {
+      "geometry": "Geometry.fire",
+      "materials": [
+        {
+          "*": "Material.fire"
+        }
+      ],
+      "textures": [
+        "Texture.fire"
+      ],
+      "uv_anim": {
+        "offset": [
+          0.0,
+          "q.life_time * -1.8"
+        ],
+        "scale": [
+          1.0,
+          1.0
+        ]
+      },
+      "is_hurt_color": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+      }
+    }
+  }
+}

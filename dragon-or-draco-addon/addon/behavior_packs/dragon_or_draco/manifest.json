@@ -1,0 +1,63 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Dragon or Draco",
+    "description": "Behavior Pack - Phase 1: Red Dragon (v1.0.0)",
+    "uuid": "e8c0e8b7-eae9-4c52-9bac-763f33ef1fe0",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      60
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "ed65d847-165e-4ac9-9986-08604562bcf9",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "d90eac34-2b34-4a94-8717-f07d6c4712c9",
+      "version": [
+        1,
+        0,
+        0
+      ],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "8b9eb730-6d68-4b25-91c3-98c7f103bf03",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": [
+        2,
+        11,
+        0
+      ]
+    }
+  ],
+  "metadata": {
+    "authors": [
+      "Dragon or Draco team"
+    ]
+  }
+}

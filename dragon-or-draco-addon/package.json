@@ -1,0 +1,20 @@
+{
+  "name": "dragon-or-draco-addon",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Minecraft Bedrock add-on: Dragon or Draco - Phase 1: Red Dragon",
+  "scripts": {
+    "assets": "python3 tools/gen_entity.py && python3 tools/gen_model.py && python3 tools/gen_animations.py && python3 tools/gen_fx.py && python3 tools/gen_sounds.py && python3 tools/gen_offsets.py && python3 tools/icons.py",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "compile": "tsc -p tsconfig.json",
+    "smoke": "node tools/smoke/smoke.mjs",
+    "validate": "node tools/validate.mjs",
+    "package": "node tools/package.mjs",
+    "preview": "python3 tools/render_preview.py",
+    "build": "npm run assets && npm run compile && npm run validate && npm run smoke && npm run package"
+  },
+  "devDependencies": {
+    "@minecraft/server": "2.11.0",
+    "typescript": "5.6.3"
+  }
+}

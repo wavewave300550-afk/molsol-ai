@@ -1,0 +1,103 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "dod:red_dragon",
+      "materials": {
+        "default": "entity_emissive",
+        "fire": "entity_beam_additive"
+      },
+      "textures": {
+        "default": "textures/entity/red_dragon",
+        "fire": "textures/entity/red_dragon_fire"
+      },
+      "geometry": {
+        "default": "geometry.dod.red_dragon",
+        "fire": "geometry.dod.red_dragon_fire"
+      },
+      "scripts": {
+        "pre_animation": [
+          "v.moving = math.clamp(q.modified_move_speed * 3.0, 0.0, 1.0);",
+          "v.run_w = q.property('dod:run') ? v.moving : 0.0;",
+          "v.walk_w = v.moving - v.run_w;"
+        ],
+        "animate": [
+          "breathe",
+          "move_controller",
+          "action_controller",
+          "look_controller",
+          "hurt_controller"
+        ],
+        "should_update_bones_and_effects_offscreen": "1.0"
+      },
+      "animations": {
+        "idle": "animation.dod.red_dragon.idle",
+        "breathe": "animation.dod.red_dragon.breathe",
+        "look_around": "animation.dod.red_dragon.look_around",
+        "look_at_target": "animation.dod.red_dragon.look_at_target",
+        "walk": "animation.dod.red_dragon.walk",
+        "run": "animation.dod.red_dragon.run",
+        "wing_spread": "animation.dod.red_dragon.wing_spread",
+        "wing_fold": "animation.dod.red_dragon.wing_fold",
+        "wing_stretch": "animation.dod.red_dragon.wing_stretch",
+        "takeoff": "animation.dod.red_dragon.takeoff",
+        "fly": "animation.dod.red_dragon.fly",
+        "glide": "animation.dod.red_dragon.glide",
+        "landing": "animation.dod.red_dragon.landing",
+        "roar": "animation.dod.red_dragon.roar",
+        "bite": "animation.dod.red_dragon.bite",
+        "claw": "animation.dod.red_dragon.claw",
+        "tail_smash": "animation.dod.red_dragon.tail_smash",
+        "wing_buffet": "animation.dod.red_dragon.wing_buffet",
+        "fire_charge": "animation.dod.red_dragon.fire_charge",
+        "fire_breath": "animation.dod.red_dragon.fire_breath",
+        "hurt": "animation.dod.red_dragon.hurt",
+        "death": "animation.dod.red_dragon.death",
+        "move_controller": "controller.animation.dod.red_dragon.move",
+        "action_controller": "controller.animation.dod.red_dragon.action",
+        "look_controller": "controller.animation.dod.red_dragon.look",
+        "hurt_controller": "controller.animation.dod.red_dragon.hurt"
+      },
+      "particle_effects": {
+        "fire_charge_glow": "dod:fire_charge_glow",
+        "fire_mouth_burst": "dod:fire_mouth_burst",
+        "nostril_smoke": "dod:nostril_smoke",
+        "roar_breath": "dod:roar_breath",
+        "dust_ring": "dod:dust_ring",
+        "claw_slash": "dod:claw_slash",
+        "wind_burst": "dod:wind_burst",
+        "death_embers": "dod:death_embers",
+        "fire_charge_core": "dod:fire_charge_core"
+      },
+      "sound_effects": {
+        "bite": "mob.dod.red_dragon.bite",
+        "buffet": "mob.dod.red_dragon.buffet",
+        "death": "mob.dod.red_dragon.death",
+        "fire_breath": "mob.dod.red_dragon.fire_breath",
+        "fire_charge": "mob.dod.red_dragon.fire_charge",
+        "fire_charge_layer": "mob.dod.red_dragon.fire_charge_layer",
+        "flap": "mob.dod.red_dragon.flap",
+        "glide": "mob.dod.red_dragon.glide",
+        "growl": "mob.dod.red_dragon.growl",
+        "land": "mob.dod.red_dragon.land",
+        "roar": "mob.dod.red_dragon.roar",
+        "roar_layer": "mob.dod.red_dragon.roar_layer",
+        "sniff": "mob.dod.red_dragon.sniff",
+        "swipe": "mob.dod.red_dragon.swipe",
+        "tail_slam": "mob.dod.red_dragon.tail_slam",
+        "takeoff": "mob.dod.red_dragon.takeoff",
+        "wing_unfold": "mob.dod.red_dragon.wing_unfold"
+      },
+      "render_controllers": [
+        "controller.render.dod.red_dragon",
+        {
+          "controller.render.dod.red_dragon_fire": "q.property('dod:action') == 'fire_breath'"
+        }
+      ],
+      "spawn_egg": {
+        "texture": "dod_red_dragon_spawn_egg"
+      },
+      "enable_attachables": false
+    }
+  }
+}
