@@ -3,7 +3,7 @@ import { Dimension, Entity, Player, system, Vector3 } from "@minecraft/server";
 import { awaken, restore } from "./awaken.js";
 import { addBleed, bodyCenter, enemiesNear, hurt, push, spawnFx } from "./combat.js";
 import { ANIM, OATH_GRIZZLY_ID, SHADE_ID, SKILLS, TUNING } from "./config.js";
-import { BLACK, DEEP_RED, HOT, RED, clawFlash, clawStreak, ember, glow, ring, shard, slash, smoke, sound, spark } from "./fx.js";
+import { BLACK, BLACK_FLAME, DEEP_RED, HOT, RED, WHITE_HOT, blood, emit, clawFlash, crack, dust, ember, flame, glow, ring, shard, slash, smoke, sound, sparks, star, streak } from "./fx.js";
 import { PlayerState, now, state } from "./state.js";
 import { add, cross, dist, distToSegment, flat, lerp, mul, norm, rightOf, rotY, up, v } from "./vec.js";
 
@@ -65,6 +65,16 @@ export function healthRatio(p: Player): number {
 
 // ============================================================ basic attack: Frontier Cleave
 
+function emitAfterglow(dim: Dimension, at: Vector3, rot: number): void {
+  // faint, wider dark-red smear behind the slash (anime motion blur)
+  emit(dim, "slash", at, (m) => {
+    m.setFloat("variable.size", 0.85);
+    m.setFloat("variable.rot", rot - 8);
+    m.setFloat("variable.life", 0.26);
+    m.setColorRGBA("variable.color", { red: 0.55, green: 0.02, blue: 0.04, alpha: 0.55 });
+  });
+}
+
 /** Heavy alternating slash with a red arc in the aimed direction (every attack swing). */
 export function frontierCleave(p: Player): void {
   const st = state(p);
@@ -79,15 +89,18 @@ export function frontierCleave(p: Player): void {
   const u = norm(cross(r, d)); // screen-space up
   // Kept 2.6 blocks out and below the crosshair so the first-person view stays clear.
   const c = add(add(eye, mul(d, 2.6)), mul(u, -0.35));
-  slash(dim, add(c, mul(r, fromRight ? 0.25 : -0.25)), 0.42, fromRight ? 35 : 145, RED);
-  // thin energy trail along the blade path: upper-right -> lower-left, or the mirror
-  for (let k = 0; k <= 8; k++) {
-    const t = k / 8;
+  const arcAt = add(c, mul(r, fromRight ? 0.2 : -0.2));
+  slash(dim, arcAt, 0.6, fromRight ? 35 : 145, RED, 0.2);
+  emitAfterglow(dim, arcAt, fromRight ? 35 : 145);
+  // energy wisps following the blade path: upper-right -> lower-left, or the mirror
+  let prev = c;
+  for (let k = 0; k <= 6; k++) {
+    const t = k / 6;
     const x = fromRight ? 1 - 2 * t : -1 + 2 * t;
     const y = 0.55 - 1.1 * t;
-    const bulge = Math.sin(Math.PI * t) * 0.3;
-    const pos = add(add(add(c, mul(r, x * 0.8)), mul(u, y * 0.6)), mul(d, bulge));
-    glow(dim, pos, 0.06 + 0.04 * Math.sin(Math.PI * t), 0.2, k % 3 === 1 ? HOT : RED);
+    const pos = add(add(add(c, mul(r, x * 0.85)), mul(u, y * 0.6)), mul(d, Math.sin(Math.PI * t) * 0.3));
+    if (k > 0) streak(dim, pos, norm(add(pos, mul(prev, -1))), 0.32, 0.05, k % 2 ? HOT : RED, 0.18);
+    prev = pos;
   }
   sound(dim, "grizzly_oath.cleave_swing", eye, 0.6, 1);
 }
@@ -96,9 +109,10 @@ export function frontierCleave(p: Player): void {
 export function cleaveImpact(p: Player, target: Entity): void {
   const dim = target.dimension;
   const at = bodyCenter(target);
-  spark(dim, at);
-  slash(dim, at, 0.45, Math.random() * 360, HOT);
-  glow(dim, at, 0.2, 0.14, RED);
+  star(dim, at, 0.4, HOT);
+  sparks(dim, at, 10, 1);
+  slash(dim, at, 0.42, Math.random() * 360, RED, 0.16);
+  blood(dim, at);
   sound(dim, "grizzly_oath.cleave_hit", at, 0.9, 0.95 + Math.random() * 0.15);
   sound(dim, "game.player.attack.strong", at, 0.8, 0.8);
 }
@@ -119,7 +133,9 @@ function grizzlyRend(p: Player): void {
   sound(dim, "grizzly_oath.growl", origin, 0.9, 1);
   const eye = p.getHeadLocation();
   const screenUp = norm(cross(right, view));
-  clawFlash(dim, add(add(eye, mul(view, 3.2)), mul(screenUp, -0.45)), 0.5, 0, RED);
+  const flashAt = add(add(eye, mul(view, 3.2)), mul(screenUp, -0.45));
+  clawFlash(dim, flashAt, 0.6, 0, RED);
+  clawFlash(dim, flashAt, 0.45, 0, WHITE_HOT);
 
   const lines = [-1, 0, 1].map((i) => {
     const ldir = rotY(dir, i * T.fanDegrees);
@@ -135,9 +151,19 @@ function grizzlyRend(p: Player): void {
         const a = t * T.blocksPerTick;
         const b = Math.min((t + 1) * T.blocksPerTick, L.max);
         if (a >= L.max) continue;
-        for (let s = a; s < b; s += 0.6) clawStreak(dim, up(add(L.start, mul(L.dir, s)), ground), L.dir, RED, 0.5);
         const head = add(L.start, mul(L.dir, b));
-        glow(dim, up(head, ground + 0.15), 0.22, 0.22, HOT);
+        const low = (q: Vector3) => up(q, ground);
+        // glowing claw scar left on the ground behind the racing claw head
+        for (let s = a + 0.5; s < b; s += 1.0) {
+          const at = low(add(L.start, mul(L.dir, s)));
+          streak(dim, at, L.dir, 1.0, 0.3, DEEP_RED, 0.9); // dark-red under-glow of the scar
+          streak(dim, up(at, 0.02), L.dir, 0.95, 0.12, RED, 0.8); // the glowing gash
+        }
+        streak(dim, up(head, ground + 0.3), L.dir, 1.9, 0.5, RED, 0.2); // the racing claw
+        streak(dim, up(head, ground + 0.3), L.dir, 1.6, 0.2, WHITE_HOT, 0.16);
+        glow(dim, up(head, ground + 0.3), 0.45, 0.2, RED);
+        if (t % 2 === 0) sparks(dim, up(head, ground + 0.2), 3, 0.6);
+        if (t % 2 === 1) smoke(dim, low(head), 0.35, BLACK);
         const segA = add(L.start, mul(L.dir, a));
         for (const e of enemiesNear(p, lerp(segA, head, 0.5), (b - a) / 2 + 2)) {
           if (hit.has(e.id)) continue;
@@ -147,8 +173,10 @@ function grizzlyRend(p: Player): void {
           hurt(p, e, T.damage);
           addBleed(p, e);
           push(e, p.location, 0.35, 0.15);
-          spark(dim, c);
-          clawFlash(dim, c, 0.3, Math.random() * 360, RED);
+          clawFlash(dim, c, 0.45, Math.random() * 360, RED);
+          star(dim, c, 0.3, HOT);
+          sparks(dim, c, 8, 1);
+          blood(dim, c);
         }
       }
     });
@@ -168,6 +196,8 @@ function relentlessPursuit(p: Player): void {
 
   playAnim(p, ANIM.pursuit);
   sound(dim, "grizzly_oath.dash", start, 1, 1);
+  for (const side of [-1, 1]) dust(dim, up(add(start, mul(right, side * 0.4)), 0.05), norm(add(mul(fwd, -1), mul(right, side * 0.6))), 3, 0.45);
+  flame(dim, up(start, 0.05), 0.5, DEEP_RED);
   let prev = start;
   for (let i = 1; i <= T.dashTicks; i++) {
     later(i, () => {
@@ -178,15 +208,16 @@ function relentlessPursuit(p: Player): void {
       } catch {
         // ignore
       }
-      // trail stays behind the player and low, so the camera never flies through it
+      // afterimage trail stays behind the player and low, so the camera never flies through it
       const tail = add(pos, mul(fwd, -0.9));
-      for (let s = 0; s < 1; s += 0.34) {
-        const pt = up(lerp(prev, tail, s), 0.55);
-        glow(dim, pt, 0.18, 0.35, RED);
-        smoke(dim, up(pt, -0.3), 0.3, BLACK);
-        clawStreak(dim, add(pt, mul(right, 0.5)), fwd, DEEP_RED, 0.35);
-        clawStreak(dim, add(pt, mul(right, -0.5)), fwd, BLACK, 0.35);
-      }
+      const mid = lerp(prev, tail, 0.5);
+      streak(dim, up(mid, 0.6), fwd, 2.2, 0.7, DEEP_RED, 0.4); // body afterimage
+      streak(dim, up(mid, 0.6), fwd, 2.0, 0.24, RED, 0.3);
+      streak(dim, up(add(mid, mul(right, 0.4)), 1.1), fwd, 1.8, 0.3, BLACK, 0.35);
+      streak(dim, up(add(mid, mul(right, -0.4)), 0.25), fwd, 1.6, 0.16, HOT, 0.25);
+      glow(dim, up(mid, 0.6), 0.35, 0.25, RED);
+      flame(dim, up(mid, 0.05), 0.35, i % 2 ? BLACK_FLAME : DEEP_RED);
+      dust(dim, up(tail, 0.05), mul(fwd, -1), 2.5, 0.35);
       prev = tail;
     });
   }
@@ -201,16 +232,22 @@ function relentlessPursuit(p: Player): void {
     const c = add(here, mul(fwd, 1.4));
     for (const e of enemiesNear(p, c, T.slamRadius)) {
       hurt(p, e, T.damage);
-      spark(dim, bodyCenter(e));
+      sparks(dim, bodyCenter(e), 8, 1);
+      star(dim, bodyCenter(e), 0.28, HOT);
     }
     for (const e of enemiesNear(p, here, T.waveRadius)) push(e, here, T.knockback, T.lift);
-    ring(dim, up(add(here, mul(fwd, 0.8)), 0.15), T.waveRadius, 0.35, RED);
-    later(2, () => ring(dim, up(here, 0.12), T.waveRadius * 0.7, 0.3, DEEP_RED));
     const impact = add(here, mul(fwd, 2.2));
-    shard(dim, up(impact, 0.2));
-    spark(dim, up(impact, 0.4));
-    slash(dim, up(impact, 0.45), 0.7, 90, RED);
-    glow(dim, up(impact, 0.3), 0.6, 0.18, HOT);
+    crack(dim, up(impact, 0.06), 2.3, DEEP_RED, 1.3);
+    ring(dim, up(impact, 0.12), T.waveRadius, 0.4, RED);
+    later(2, () => ring(dim, up(impact, 0.1), T.waveRadius * 0.65, 0.3, HOT));
+    for (let k = 0; k < 10; k++) dust(dim, up(impact, 0.1), rotY(fwd, k * 36), 4, 0.55);
+    shard(dim, up(impact, 0.2), 10);
+    star(dim, up(impact, 0.35), 0.9, HOT, 0.18);
+    sparks(dim, up(impact, 0.3), 14, 1.2);
+    slash(dim, up(impact, 0.55), 0.8, 90, RED, 0.22);
+    later(3, () => {
+      for (let k = 0; k < 6; k++) ember(dim, up(add(impact, v(Math.random() - 0.5, 0, Math.random() - 0.5)), 0.2));
+    });
     sound(dim, "grizzly_oath.heavy_slam", c, 1, 1);
     sound(dim, "grizzly_oath.shockwave", c, 0.45, 1.1);
     shake(p, 0.35, 0.35, 12);
@@ -229,14 +266,19 @@ function unbrokenWill(p: Player, st: PlayerState): void {
   playAnim(p, ANIM.will);
   sound(dim, "grizzly_oath.roar", p.location, 1, 1);
   sound(dim, "grizzly_oath.heartbeat", p.location, 1, 1);
-  spawnFx(p, SHADE_ID, add(p.location, mul(fwd, -1.8)), yaw, T.shadeTicks);
+  spawnFx(p, SHADE_ID, add(p.location, mul(fwd, -2.3)), yaw, T.shadeTicks);
   ring(dim, up(p.location, 0.1), 2.6, 0.45, DEEP_RED);
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2;
-    const at = add(p.location, v(Math.cos(a) * 1.2, 0.15, Math.sin(a) * 1.2));
-    smoke(dim, at, 0.45, BLACK);
+  crack(dim, up(p.location, 0.05), 1.7, DEEP_RED, 1.4);
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2;
+    const at = add(p.location, v(Math.cos(a) * 1.1, 0.05, Math.sin(a) * 1.1));
+    flame(dim, at, 0.45, i % 2 ? BLACK_FLAME : DEEP_RED);
     ember(dim, at);
   }
+  // roar shockwave
+  later(6, () => {
+    if (p.isValid) ring(dim, up(p.location, 0.15), 3.8, 0.5, { red: 1, green: 0.1, blue: 0.07, alpha: 0.6 });
+  });
   // Instant mending scales with how close to death the survivor is.
   heal(p, 2 + Math.round(6 * (1 - healthRatio(p))));
   st.willUntil = t + T.durationTicks;
@@ -257,10 +299,9 @@ export function tickWill(p: Player, st: PlayerState, t: number): void {
   if (t % 2 === 0) {
     // aura hugs the body from the feet to the waist (never in front of the eyes)
     const a = Math.random() * Math.PI * 2;
-    const h = 0.05 + Math.random() * 0.8;
-    const at = add(p.location, v(Math.cos(a) * 0.85, h, Math.sin(a) * 0.85));
-    ember(dim, at);
-    if (t % 6 === 0) smoke(dim, up(at, -0.2), 0.28, BLACK);
+    const at = add(p.location, v(Math.cos(a) * 0.8, 0.05 + Math.random() * 0.3, Math.sin(a) * 0.8));
+    ember(dim, up(at, Math.random() * 0.5));
+    if (t % 4 === 0) flame(dim, at, 0.28, (t / 4) % 2 ? BLACK_FLAME : DEEP_RED);
   }
   if (t >= st.nextPulse) {
     st.nextPulse = t + TUNING.will.pulseTicks;
@@ -294,31 +335,36 @@ function oathOfTheGrizzly(p: Player, st: PlayerState): void {
   sound(dim, "grizzly_oath.charge", p.location, 1, 1);
   ring(dim, up(p.location, 0.1), 1.8, 0.6, RED);
 
-  // the raised axe burns brighter until the slam
-  for (let k = 0; k < T.slamTick; k += 3) {
+  crack(dim, up(p.location, 0.05), 1.6, DEEP_RED, 2.2);
+  // charge-up: a spiral of crimson flames and embers climbs around the survivor, the raised axe
+  // burns brighter (overhead, outside the first-person view) until the slam
+  for (let k = 0; k < T.slamTick; k += 2) {
     later(k, () => {
       if (!p.isValid) return;
-      const axe = add(add(up(p.getHeadLocation(), 1.0), mul(right, 0.55)), mul(fwd, 0.3)); // above the screen in first person
-      glow(dim, axe, 0.18 + k * 0.006, 0.22, RED, 0.5);
-      ember(dim, axe);
-      if (k % 9 === 0) {
-        const a = Math.random() * Math.PI * 2;
-        ember(dim, add(p.location, v(Math.cos(a) * 1.2, 0.2, Math.sin(a) * 1.2)));
-      }
+      const ang = k * 0.55;
+      const h = Math.min(1.3, k * 0.035);
+      const at = add(p.location, v(Math.cos(ang) * 1.15, h, Math.sin(ang) * 1.15));
+      if (k % 4 === 0) flame(dim, at, 0.35, (k / 4) % 2 ? BLACK_FLAME : DEEP_RED);
+      ember(dim, at);
+      const axe = add(add(up(p.getHeadLocation(), 1.0), mul(right, 0.55)), mul(fwd, 0.3));
+      if (k % 4 === 0) glow(dim, axe, 0.18 + k * 0.006, 0.25, RED, 0.5);
     });
   }
 
-  let bearPos = add(p.location, mul(fwd, -3.2));
+  let bearPos = add(p.location, mul(fwd, -6.0));
   later(T.spawnDelay, () => {
     if (!p.isValid) return;
-    bearPos = add(p.location, mul(fwd, -3.2));
+    bearPos = add(p.location, mul(fwd, -6.0));
     spawnFx(p, OATH_GRIZZLY_ID, bearPos, yaw, T.grizzlyTicks);
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2;
-      smoke(dim, add(bearPos, v(Math.cos(a) * 1.6, 0.4, Math.sin(a) * 1.6)), 1.3, BLACK);
+    crack(dim, up(bearPos, 0.05), 3.2, DEEP_RED, 2.6);
+    ring(dim, up(bearPos, 0.1), 3.6, 0.55, DEEP_RED);
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * Math.PI * 2;
+      const at = add(bearPos, v(Math.cos(a) * 1.8, 0.05, Math.sin(a) * 1.8));
+      flame(dim, at, 0.9, i % 2 ? BLACK_FLAME : DEEP_RED);
+      if (i % 2 === 0) smoke(dim, up(at, 0.3), 1.0, BLACK);
     }
-    shard(dim, up(bearPos, 0.2));
-    ring(dim, up(bearPos, 0.1), 3.5, 0.5, DEEP_RED);
+    shard(dim, up(bearPos, 0.2), 10);
     sound(dim, "grizzly_oath.shockwave", bearPos, 0.4, 0.5);
   });
 
@@ -327,6 +373,8 @@ function oathOfTheGrizzly(p: Player, st: PlayerState): void {
     sound(dim, "grizzly_oath.titan_roar", bearPos, 1, 1);
     sound(dim, "grizzly_oath.roar", bearPos, 1, 0.8);
     sound(dim, "grizzly_oath.thunder", bearPos, 0.6, 1);
+    ring(dim, up(bearPos, 0.15), 6, 0.6, { red: 1, green: 0.1, blue: 0.07, alpha: 0.55 });
+    for (let k = 0; k < 8; k++) dust(dim, up(bearPos, 0.1), rotY(fwd, k * 45), 3.5, 0.7);
     shake(p, 0.25, 0.9, 20);
   });
 
@@ -342,20 +390,39 @@ function oathOfTheGrizzly(p: Player, st: PlayerState): void {
       } catch {
         // ignore
       }
-      spark(dim, bodyCenter(e));
+      sparks(dim, bodyCenter(e), 8, 1);
+      star(dim, bodyCenter(e), 0.28, HOT);
     }
-    const ground = up(center, 0.15);
+    const ground = up(center, 0.12);
+    crack(dim, up(center, 0.05), 6.5, DEEP_RED, 2.2);
+    // where the grizzly's paws land, behind the survivor
+    const paws = up(add(bearPos, mul(fwd, 2.3)), 0.05);
+    crack(dim, paws, 3.2, DEEP_RED, 1.8);
+    for (let k = 0; k < 6; k++) dust(dim, paws, rotY(fwd, k * 60), 4.5, 0.8);
+    shard(dim, up(paws, 0.2), 10);
     ring(dim, ground, T.radius, 0.55, RED);
     later(2, () => ring(dim, ground, T.radius * 0.6, 0.4, HOT));
-    later(4, () => ring(dim, up(center, 0.1), T.radius + 0.5, 0.7, DEEP_RED));
-    for (let k = 0; k < 10; k++) {
-      const dir = rotY(fwd, k * 36);
-      for (const s of [1.5, 3, 4.5, 6]) clawStreak(dim, add(ground, mul(dir, s)), dir, RED, 0.6);
+    later(4, () => ring(dim, up(center, 0.1), T.radius + 0.5, 0.75, DEEP_RED));
+    for (let k = 0; k < 12; k++) {
+      const dir = rotY(fwd, k * 30);
+      streak(dim, add(ground, mul(dir, 1.8)), dir, 2.4, 0.22, k % 2 ? HOT : RED, 0.4);
+      streak(dim, add(ground, mul(dir, 4.6)), dir, 2.0, 0.16, RED, 0.5);
+      if (k % 3 === 0) dust(dim, add(ground, mul(dir, 1.5)), dir, 6, 0.9);
     }
-    for (let k = 0; k < 4; k++) shard(dim, up(add(center, mul(rotY(fwd, k * 90 + 45), 2.5)), 0.2));
+    for (let k = 0; k < 6; k++) shard(dim, up(add(center, mul(rotY(fwd, k * 60 + 30), 2.4)), 0.2), 8);
     const flashAt = add(p.location, mul(fwd, 2.6));
-    spark(dim, up(flashAt, 0.4));
-    glow(dim, up(flashAt, 0.3), 1.0, 0.2, HOT);
+    star(dim, up(flashAt, 0.4), 1.4, WHITE_HOT, 0.2);
+    sparks(dim, up(flashAt, 0.3), 20, 1.5);
+    for (let k = 0; k < 4; k++) {
+      later(3 + k * 3, () => {
+        for (let i = 0; i < 4; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const at = add(center, v(Math.cos(a) * (2 + Math.random() * 4), 0.05, Math.sin(a) * (2 + Math.random() * 4)));
+          ember(dim, at);
+          if (i === 0) flame(dim, at, 0.5, DEEP_RED);
+        }
+      });
+    }
     sound(dim, "grizzly_oath.shockwave", center, 1, 1);
     sound(dim, "grizzly_oath.heavy_slam", center, 1, 0.8);
     shake(p, 0.8, 0.6, 24);

@@ -11,7 +11,7 @@
     "components": {
       "minecraft:emitter_lifetime_once": {},
       "minecraft:emitter_rate_instant": {
-        "num_particles": 10
+        "num_particles": "(v.count ?? 8)"
       },
       "minecraft:emitter_shape_point": {
         "direction": [
@@ -38,26 +38,26 @@
       },
       "minecraft:particle_appearance_billboard": {
         "size": [
-          0.12,
-          0.12
+          0.11,
+          0.11
         ],
         "facing_camera_mode": "lookat_xyz",
         "uv": {
-          "texture_width": 128,
-          "texture_height": 128,
+          "texture_width": 256,
+          "texture_height": 256,
           "uv": [
-            96,
-            32
+            192,
+            0
           ],
           "uv_size": [
-            32,
-            32
+            64,
+            64
           ]
         }
       },
       "minecraft:particle_appearance_tinting": {
         "color": [
-          "0.18 + 0.3 * v.particle_random_1",
+          "0.16 + 0.25 * v.particle_random_1",
           0.05,
           0.05,
           "1 - (v.particle_age / v.particle_lifetime) * (v.particle_age / v.particle_lifetime)"

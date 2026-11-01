@@ -2,3 +2,6 @@ node_modules/
 addon/.mct/previews/
 __pycache__/
 *.pyc
+tools/fx_preview/.scenes.json
+tools/fx_preview/.run/
+tools/smoke/.run/

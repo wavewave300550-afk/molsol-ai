@@ -115,7 +115,7 @@ section("Frontier Cleave (basic attack)");
   const t2 = M.__now();
   M.world.afterEvents.entityHitEntity.fire({ damagingEntity: p, hitEntity: z });
   check(since(L.sounds, t2).some((s) => s.id === "grizzly_oath.cleave_hit"), "impact sound on hit");
-  check(since(L.particles, t2).some((x) => x.id === "grizzly_oath:spark"), "impact sparks on hit");
+  check(since(L.particles, t2).some((x) => x.id === "grizzly_oath:sparks"), "impact sparks on hit");
   check(L.anims.filter((a) => a.tick >= t2).length === 0, "basic attack does not cast a special skill");
   clearMobs();
 }
@@ -137,7 +137,7 @@ section("Skill 1 - Grizzly Rend");
   check(dmgTo(behind, t0).length === 0 && dmgTo(side, t0).length === 0, "nothing behind or to the side");
   check(dmgTo(villager, t0).length === 0, "villagers are never hurt");
   check(since(L.anims, t0).some((a) => a.name === "animation.grizzly_oath.player.rend"), "rend animation");
-  const streaks = since(L.particles, t0).filter((x) => x.id === "grizzly_oath:claw_streak");
+  const streaks = since(L.particles, t0).filter((x) => x.id === "grizzly_oath:streak");
   const xs = streaks.map((s) => s.loc.x);
   check(streaks.length >= 30, "three claw lines drawn");
   check(streaks.every((s) => s.loc.z > 0 && s.loc.z < 13.5), "claw lines travel forward up to ~12 blocks");
@@ -170,7 +170,7 @@ section("Skill 1 - Grizzly Rend");
   use(p);
   tick(10);
   check(dmgTo(hidden, t3).length === 0, "claws do not pass through walls");
-  check(since(L.particles, t3).filter((x) => x.id === "grizzly_oath:claw_streak").every((s) => s.loc.z < 3.2), "claw FX stop at the wall");
+  check(since(L.particles, t3).filter((x) => x.id === "grizzly_oath:streak").every((s) => s.loc.z < 3.2), "claw FX stop at the wall");
   clearMobs();
   tick(140);
   reset(p, 0, 0, { x: -1, y: 0, z: 0 }, 90);
@@ -211,7 +211,7 @@ section("Skill 2 - Relentless Pursuit");
   check(Math.abs(p.location.z - 7) < 0.05 && p.location.x === 0, `dashed ~7 blocks forward (z=${p.location.z.toFixed(2)})`);
   check(dmgTo(target, t0).some((d) => d.amount === 10), "heavy slam damage at the end of the dash");
   check(since(L.knockback, t0).some((k) => k.target === bystander), "shockwave pushes nearby enemies");
-  check(since(L.particles, t0).some((x) => x.id === "grizzly_oath:ring") && since(L.particles, t0).some((x) => x.id === "grizzly_oath:smoke"), "red-black trail + shockwave ring");
+  check(["ring", "crack", "streak", "flame", "dust", "star"].every((id) => since(L.particles, t0).some((x) => x.id === `grizzly_oath:${id}`)), "red-black afterimage trail, ground cracks + shockwave ring");
   check(since(L.commands, t0).length === 1, "camera shake");
   clearMobs();
   tick(260);
@@ -252,7 +252,7 @@ section("Skill 3 - Unbroken Will");
   const t2 = M.__now();
   tick(40);
   check(since(L.effects, t2).filter((e) => e.target === p).length === 0, "buff over after 8 s");
-  check(since(L.particles, t0).some((x) => x.id === "grizzly_oath:ember") && since(L.particles, t0).some((x) => x.id === "grizzly_oath:smoke"), "red-black aura");
+  check(since(L.particles, t0).some((x) => x.id === "grizzly_oath:ember") && since(L.particles, t0).some((x) => x.id === "grizzly_oath:flame"), "red-black flame aura");
   tick(400);
 }
 
@@ -360,13 +360,16 @@ section("Safety, cleanup, interaction");
   const near = (x) => Math.min(...x.eyes.map((e) => Math.hypot(x.loc.x - e.x, x.loc.y - e.y, x.loc.z - e.z)));
   const size = (x) => x.vars["variable.size"] ?? 0;
   const aboveView = (x) => x.eyes.every((e) => x.loc.y - e.y > 0.6 && Math.hypot(x.loc.x - e.x, x.loc.z - e.z) < 0.8);
+  const behind = (x) => x.eyes.every((e) => (x.loc.x - e.x) * e.view.x + (x.loc.y - e.y) * e.view.y + (x.loc.z - e.z) * e.view.z < 0);
   const bad = L.particles.filter((x) => {
     const d = near(x);
+    if (behind(x)) return false; // behind the camera: invisible in first person
     if (aboveView(x)) return false; // straight overhead: outside the first-person view
     if (x.id === "grizzly_oath:slash" || x.id === "grizzly_oath:claw_flash") return d < 2.0 && size(x) > 0.3;
     if (x.id === "grizzly_oath:glow") return d < 1.5 && size(x) > 0.2;
     if (x.id === "grizzly_oath:smoke") return d < 1.0;
-    if (x.id === "grizzly_oath:claw_streak") return d < 1.0;
+    if (x.id === "grizzly_oath:streak") return d < 1.0;
+    if (x.id === "grizzly_oath:star") return d < 1.6 && size(x) > 0.3;
     return false;
   });
   for (const b of bad.slice(0, 6)) console.log("   near-eye:", b.id, "tick", b.tick, "size", size(b), "dist", near(b).toFixed(2));

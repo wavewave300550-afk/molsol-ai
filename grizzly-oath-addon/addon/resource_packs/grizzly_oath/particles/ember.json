@@ -39,22 +39,22 @@
         ],
         "facing_camera_mode": "lookat_xyz",
         "uv": {
-          "texture_width": 128,
-          "texture_height": 128,
+          "texture_width": 256,
+          "texture_height": 256,
           "uv": [
             0,
             0
           ],
           "uv_size": [
-            32,
-            32
+            64,
+            64
           ]
         }
       },
       "minecraft:particle_appearance_tinting": {
         "color": [
           1,
-          "0.35 - 0.25 * (v.particle_age / v.particle_lifetime)",
+          "0.4 - 0.3 * (v.particle_age / v.particle_lifetime)",
           0.15,
           "1 - (v.particle_age / v.particle_lifetime) * (v.particle_age / v.particle_lifetime)"
         ]

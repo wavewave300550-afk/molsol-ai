@@ -13,6 +13,7 @@
 import json
 import math
 import os
+import sys
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
@@ -63,14 +64,10 @@ def sample(keys, t):
 
 
 def pose_from_animation(anim, t):
-    pose = {}
-    for bone, ch in anim.get("bones", {}).items():
-        p = {}
-        for key in ("rotation", "position", "scale"):
-            if key in ch:
-                p[key] = sample(ch[key], t)
-        pose[bone] = p
-    return pose
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import anim_sample
+
+    return anim_sample.pose(anim, t)
 
 
 def bone_matrices(geo, pose):
