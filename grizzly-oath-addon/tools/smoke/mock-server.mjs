@@ -367,7 +367,8 @@ export class Dimension {
         if (!text.includes(`v.${short}`) && !text.includes(`variable.${short}`)) issue(`particle ${id} never reads ${name}`);
       }
     }
-    __log.particles.push({ tick, id, loc: { ...loc }, vars: molang ? { ...molang.vars } : {} });
+    const eyes = [...this.entities].filter((e) => e instanceof Player && e.isValid && e.name === "Hugh").map((e) => e.getHeadLocation());
+    __log.particles.push({ tick, id, loc: { ...loc }, vars: molang ? { ...molang.vars } : {}, eyes });
     __log.perTick.set(tick, (__log.perTick.get(tick) ?? 0) + 1);
   }
   playSound(id, loc, opts) {

@@ -15,6 +15,29 @@
 
 ![Grizzly's Oath](docs/preview/grizzlys_oath_axe.png)
 
+### เวอร์ชัน 1.0.1 (แก้จากผลทดสอบบน iPhone)
+* **ขวานบังกลางจอ:** สาเหตุคือไฟล์ geometry ที่ `designModel` สร้างเป็น `format_version` 1.12.0 ซึ่งยังไม่รองรับ `binding`
+  ขวานจึงไม่ถูกผูกกับมือ และถูกวาดตั้งตรงกลางตัวผู้เล่นทะลุกล้อง
+  ตอนนี้เปลี่ยนเป็น 1.16.0 (แบบเดียวกับ trident ของ Mojang) และเพิ่มกฎใน `npm run validate` ไว้ป้องกันไม่ให้เกิดซ้ำ
+* **ตำแหน่งในมือ:** คำนวณจากข้อมูลจริงของ Mojang ได้แก่ท่าแขน `first_person.empty_hand` และ `holding` ของผู้เล่น
+  จุดผูกเทียบกับโล่และ trident ของ Mojang และ attachable ตัวอย่างของ Microsoft
+  * มุมบุคคลที่ 1: ขวานอยู่มุมขวาล่าง กากบาทกลางจอโล่ง
+  * มุมบุคคลที่ 3: ถือขวานชี้ไปข้างหน้า ใบขวานอยู่ด้านล่าง
+* **ท่าฟันและท่าสกิล:** แยกค่ามุมบุคคลที่ 1 กับที่ 3 ออกจากกัน
+  * มุมบุคคลที่ 1 ขวานจะฟันเป็นแนวทแยงที่ด้านขวาของจอ และไม่หมุนลำตัว (ถ้าหมุน แขนจะกวาดทั้งจอ)
+  * มุมบุคคลที่ 3 ยังเป็นท่ายกขวานเหนือหัวแล้วฟันลงเต็มแขน
+* **เอฟเฟกต์:** เอฟเฟกต์ใหญ่ทุกชิ้นย้ายออกห่างจากกล้องและลดขนาดลง
+  * แสงฟันและแฟลชกรงเล็บเล็กลง และอยู่ไกลออกไป 2.6 ถึง 3.2 บล็อก ต่ำกว่ากากบาท
+  * รอยกรงเล็บวิ่งเลียดพื้น
+  * เส้นพลังตอนพุ่งอยู่ด้านหลังตัว
+  * ออร่า Unbroken Will อยู่ระดับเท้าถึงเอว
+  * smoke test มีข้อตรวจเพิ่มว่าไม่มีเอฟเฟกต์ใหญ่อยู่หน้าตาผู้ร่าย
+* เลขเวอร์ชันแพ็กเป็น 1.0.1 เพื่อให้ iPhone นำเข้าทับของเดิมได้
+
+| มุมบุคคลที่ 1 (จำลอง) | มุมบุคคลที่ 3 (จำลอง) |
+|---|---|
+| ![FP](docs/preview/hold_first_person.png) | ![TP](docs/preview/hold_third_person.png) |
+
 ---
 
 ## ติดตั้งบน iPhone
@@ -81,7 +104,8 @@ grizzly-oath-addon/
 ├─ addon/           ← โปรเจกต์ Minecraft Creator Tools (behavior_packs/ + resource_packs/)
 ├─ scripts-src/     ← สคริปต์ TypeScript (compile ไปที่ addon/behavior_packs/grizzly_oath/scripts)
 ├─ art/             ← ผลลัพธ์ดิบจาก designModel + design_packs สำหรับแก้โมเดลต่อ
-├─ tools/           ← post-process, animations, sounds, validate, smoke test, package, preview
+├─ tools/           ← post-process, animations, sounds, validate, smoke test, package, preview,
+│                     hold_sim.py (จำลองภาพมือถือขวานมุมบุคคลที่ 1/3)
 └─ docs/preview/    ← ภาพพรีวิวที่เรนเดอร์จากโมเดลจริง
 ```
 
@@ -123,7 +147,7 @@ python3 tools/render_preview.py   # ภาพพรีวิว (ต้องม
    * UV ไม่เกินขอบ texture และ texture เป็น power-of-two
    * attachable, client entity, render controller, ไอคอน และชื่อไอเท็มเชื่อมกันครบ
    * ไฟล์เสียง vanilla ทั้ง 40 ไฟล์มีอยู่จริงใน bedrock-samples 1.26.60
-4. Smoke test ผ่าน **81/81** โดยรันสคริปต์ที่ compile แล้วบน mock ของ `@minecraft/server` แบบเข้มงวด ถ้าเรียก id ของ particle, เสียง, แอนิเมชัน, entity, effect หรือตัวแปร Molang ผิด จะนับว่า fail ครอบคลุม
+4. Smoke test ผ่าน **82/82** โดยรันสคริปต์ที่ compile แล้วบน mock ของ `@minecraft/server` แบบเข้มงวด ถ้าเรียก id ของ particle, เสียง, แอนิเมชัน, entity, effect หรือตัวแปร Molang ผิด จะนับว่า fail ครอบคลุม
    * การตีปกติ: สลับซ้ายขวา และเอฟเฟกต์ตามทิศที่เล็ง
    * สกิลครบทั้ง 4: ระยะ, ดาเมจ, เลือดไหล, คูลดาวน์, ไม่ทะลุกำแพง, พุ่งหยุดก่อนกำแพง, ระดับบัฟตาม HP, จังหวะตะปบของหมีตรงกับฟาดขวาน
    * การลบโมเดลและการคืนขวานพร้อมข้อมูลไอเท็ม
@@ -132,7 +156,7 @@ python3 tools/render_preview.py   # ภาพพรีวิว (ต้องม
 
 **ยังไม่ได้ทดสอบในเกมจริง:** สภาพแวดล้อม cloud ไม่มีตัวเกม Minecraft และการเปิด Bedrock Dedicated Server ผ่าน MCP ต้องให้ผู้ใช้ยอมรับ EULA ด้วยตัวเองก่อน
 ส่วนที่ควรตรวจในเกม:
-* **ตำแหน่งและมุมของขวานในมือ** ทั้งมุมมองบุคคลที่ 1 และที่ 3 ใช้รูปแบบเดียวกับตัวอย่าง attachable ของ Microsoft แต่ยังไม่เคยเห็นจริง ถ้าเพี้ยน ให้แก้ค่า `rotation`/`scale` ใน `animations/grizzlys_oath.attachable.animation.json`
+* **ตำแหน่งและมุมของขวานในมือ** ได้มาจากตัวจำลอง `tools/hold_sim.py` ที่สร้างจากข้อมูลของ Mojang ถ้าในเกมยังเพี้ยน ให้แก้ `rotation`, `position` และ `scale` ใน `animations/grizzlys_oath.attachable.animation.json` แล้วรัน `python3 tools/hold_sim.py` เพื่อดูภาพก่อน
 * ความสว่างของส่วนเรืองแสง (material `entity_emissive`), ทิศของรอยกรงเล็บและวงคลื่นบนพื้น (particle แบบ `direction_y`) และขนาดเอฟเฟกต์จริง
-* ความรู้สึกของท่าทางผู้เล่นที่เล่นผ่าน `playAnimation` โดยเฉพาะในมุมบุคคลที่ 1 ที่ตั้งให้ขยับเบาลง
+* ความรู้สึกของท่าทางผู้เล่นที่เล่นผ่าน `playAnimation` (ท่ามุมบุคคลที่ 1 ปรับจากภาพจำลอง ยังไม่ได้เห็นในเกม)
 * การแตะจอ iPhone แล้วร่ายสกิล รวมถึงแรงผลัก เสียง และกล้องสั่น ว่าถูกใจหรือต้องปรับตัวเลข (ตัวเลขทั้งหมดอยู่ใน `scripts-src/config.ts`)

@@ -7,19 +7,19 @@
         "rightArm": {
           "rotation": {
             "0.00": [
-              "-150 * (v.is_first_person ? 0.35 : 1.0)",
-              "-10 * (v.is_first_person ? 0.35 : 1.0)",
-              "35 * (v.is_first_person ? 0.35 : 1.0)"
+              "v.is_first_person ? -15 : -150",
+              "v.is_first_person ? -22 : -10",
+              "v.is_first_person ? -8 : 35"
             ],
-            "0.08": [
-              "-165 * (v.is_first_person ? 0.35 : 1.0)",
-              "-5 * (v.is_first_person ? 0.35 : 1.0)",
-              "30 * (v.is_first_person ? 0.35 : 1.0)"
+            "0.06": [
+              "v.is_first_person ? -18 : -165",
+              "v.is_first_person ? -25 : -5",
+              "v.is_first_person ? -10 : 30"
             ],
-            "0.20": [
-              "-25 * (v.is_first_person ? 0.35 : 1.0)",
-              "35 * (v.is_first_person ? 0.35 : 1.0)",
-              "-30 * (v.is_first_person ? 0.35 : 1.0)"
+            "0.16": [
+              "v.is_first_person ? 35 : -25",
+              "v.is_first_person ? 10 : 35",
+              "v.is_first_person ? 35 : -30"
             ],
             "0.40": [
               0,
@@ -32,12 +32,12 @@
           "rotation": {
             "0.00": [
               0,
-              "-15 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : -15",
               0
             ],
-            "0.20": [
+            "0.16": [
               0,
-              "25 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : 25",
               0
             ],
             "0.40": [
@@ -55,19 +55,19 @@
         "rightArm": {
           "rotation": {
             "0.00": [
-              "-120 * (v.is_first_person ? 0.35 : 1.0)",
-              "40 * (v.is_first_person ? 0.35 : 1.0)",
-              "-35 * (v.is_first_person ? 0.35 : 1.0)"
+              "v.is_first_person ? -35 : -120",
+              "v.is_first_person ? 0 : 40",
+              "v.is_first_person ? -25 : -35"
             ],
-            "0.08": [
-              "-135 * (v.is_first_person ? 0.35 : 1.0)",
-              "45 * (v.is_first_person ? 0.35 : 1.0)",
-              "-40 * (v.is_first_person ? 0.35 : 1.0)"
+            "0.06": [
+              "v.is_first_person ? -38 : -135",
+              "v.is_first_person ? 2 : 45",
+              "v.is_first_person ? -28 : -40"
             ],
-            "0.20": [
-              "-35 * (v.is_first_person ? 0.35 : 1.0)",
-              "-35 * (v.is_first_person ? 0.35 : 1.0)",
-              "35 * (v.is_first_person ? 0.35 : 1.0)"
+            "0.16": [
+              "v.is_first_person ? 20 : -35",
+              "v.is_first_person ? 40 : -35",
+              "v.is_first_person ? 20 : 35"
             ],
             "0.40": [
               0,
@@ -80,12 +80,12 @@
           "rotation": {
             "0.00": [
               0,
-              "20 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : 20",
               0
             ],
-            "0.20": [
+            "0.16": [
               0,
-              "-25 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : -25",
               0
             ],
             "0.40": [
@@ -103,19 +103,19 @@
         "rightArm": {
           "rotation": {
             "0.00": [
-              "-95 * (v.is_first_person ? 0.35 : 1.0)",
-              "70 * (v.is_first_person ? 0.35 : 1.0)",
-              0
+              "v.is_first_person ? -5 : -95",
+              "v.is_first_person ? -28 : 70",
+              "v.is_first_person ? -5 : 0"
             ],
             "0.12": [
-              "-100 * (v.is_first_person ? 0.35 : 1.0)",
-              "75 * (v.is_first_person ? 0.35 : 1.0)",
-              0
+              "v.is_first_person ? -8 : -100",
+              "v.is_first_person ? -30 : 75",
+              "v.is_first_person ? -8 : 0"
             ],
             "0.25": [
-              "-80 * (v.is_first_person ? 0.35 : 1.0)",
-              "-75 * (v.is_first_person ? 0.35 : 1.0)",
-              0
+              "v.is_first_person ? -35 : -80",
+              "v.is_first_person ? 0 : -75",
+              "v.is_first_person ? -25 : 0"
             ],
             "0.55": [
               0,
@@ -127,9 +127,9 @@
         "leftArm": {
           "rotation": {
             "0.00": [
-              "-20 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : -20",
               0,
-              "-20 * (v.is_first_person ? 0.35 : 1.0)"
+              "v.is_first_person ? 0 : -20"
             ],
             "0.55": [
               0,
@@ -142,12 +142,12 @@
           "rotation": {
             "0.00": [
               0,
-              "35 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : 35",
               0
             ],
             "0.25": [
               0,
-              "-40 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : -40",
               0
             ],
             "0.55": [
@@ -165,19 +165,19 @@
         "rightArm": {
           "rotation": {
             "0.00": [
-              "-170 * (v.is_first_person ? 0.35 : 1.0)",
-              0,
-              "15 * (v.is_first_person ? 0.35 : 1.0)"
+              "v.is_first_person ? 15 : -170",
+              "v.is_first_person ? -10 : 0",
+              "v.is_first_person ? -40 : 15"
             ],
             "0.28": [
-              "-175 * (v.is_first_person ? 0.35 : 1.0)",
-              0,
-              "15 * (v.is_first_person ? 0.35 : 1.0)"
+              "v.is_first_person ? 15 : -175",
+              "v.is_first_person ? -10 : 0",
+              "v.is_first_person ? -40 : 15"
             ],
             "0.36": [
-              "-20 * (v.is_first_person ? 0.35 : 1.0)",
-              0,
-              0
+              "v.is_first_person ? 40 : -20",
+              "v.is_first_person ? 5 : 0",
+              "v.is_first_person ? 30 : 0"
             ],
             "0.75": [
               0,
@@ -189,14 +189,14 @@
         "leftArm": {
           "rotation": {
             "0.00": [
-              "40 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : 40",
               0,
-              "-10 * (v.is_first_person ? 0.35 : 1.0)"
+              "v.is_first_person ? 0 : -10"
             ],
             "0.36": [
-              "-30 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : -30",
               0,
-              "-10 * (v.is_first_person ? 0.35 : 1.0)"
+              "v.is_first_person ? 0 : -10"
             ],
             "0.75": [
               0,
@@ -208,17 +208,17 @@
         "body": {
           "rotation": {
             "0.00": [
-              "10 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : 10",
               0,
               0
             ],
             "0.28": [
-              "15 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : 15",
               0,
               0
             ],
             "0.36": [
-              "35 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : 35",
               0,
               0
             ],
@@ -242,14 +242,14 @@
               0
             ],
             "0.20": [
-              "-175 * (v.is_first_person ? 0.35 : 1.0)",
-              0,
-              "10 * (v.is_first_person ? 0.35 : 1.0)"
+              "v.is_first_person ? 15 : -175",
+              "v.is_first_person ? -10 : 0",
+              "v.is_first_person ? -40 : 10"
             ],
             "1.05": [
-              "-175 * (v.is_first_person ? 0.35 : 1.0)",
-              0,
-              "10 * (v.is_first_person ? 0.35 : 1.0)"
+              "v.is_first_person ? 15 : -175",
+              "v.is_first_person ? -10 : 0",
+              "v.is_first_person ? -40 : 10"
             ],
             "1.30": [
               0,
@@ -266,14 +266,14 @@
               0
             ],
             "0.20": [
-              "-15 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : -15",
               0,
-              "-25 * (v.is_first_person ? 0.35 : 1.0)"
+              "v.is_first_person ? 0 : -25"
             ],
             "1.05": [
-              "-15 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : -15",
               0,
-              "-25 * (v.is_first_person ? 0.35 : 1.0)"
+              "v.is_first_person ? 0 : -25"
             ],
             "1.30": [
               0,
@@ -290,12 +290,12 @@
               0
             ],
             "0.20": [
-              "-25 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : -25",
               0,
               0
             ],
             "1.05": [
-              "-25 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : -25",
               0,
               0
             ],
@@ -314,12 +314,12 @@
               0
             ],
             "0.20": [
-              "-8 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : -8",
               0,
               0
             ],
             "1.05": [
-              "-8 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : -8",
               0,
               0
             ],
@@ -343,19 +343,19 @@
               0
             ],
             "0.30": [
-              "-175 * (v.is_first_person ? 0.35 : 1.0)",
-              0,
-              "10 * (v.is_first_person ? 0.35 : 1.0)"
+              "v.is_first_person ? 15 : -175",
+              "v.is_first_person ? -10 : 0",
+              "v.is_first_person ? -40 : 10"
             ],
             "1.70": [
-              "-185 * (v.is_first_person ? 0.35 : 1.0)",
-              0,
-              "15 * (v.is_first_person ? 0.35 : 1.0)"
+              "v.is_first_person ? 12 : -185",
+              "v.is_first_person ? -12 : 0",
+              "v.is_first_person ? -45 : 15"
             ],
             "1.95": [
-              "-15 * (v.is_first_person ? 0.35 : 1.0)",
-              0,
-              0
+              "v.is_first_person ? 40 : -15",
+              "v.is_first_person ? 5 : 0",
+              "v.is_first_person ? 30 : 0"
             ],
             "2.50": [
               0,
@@ -372,19 +372,19 @@
               0
             ],
             "0.30": [
-              "-30 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : -30",
               0,
-              "-30 * (v.is_first_person ? 0.35 : 1.0)"
+              "v.is_first_person ? 0 : -30"
             ],
             "1.70": [
-              "-30 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : -30",
               0,
-              "-30 * (v.is_first_person ? 0.35 : 1.0)"
+              "v.is_first_person ? 0 : -30"
             ],
             "1.95": [
-              "-50 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : -50",
               0,
-              "-10 * (v.is_first_person ? 0.35 : 1.0)"
+              "v.is_first_person ? 0 : -10"
             ],
             "2.50": [
               0,
@@ -401,17 +401,17 @@
               0
             ],
             "0.30": [
-              "-20 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : -20",
               0,
               0
             ],
             "1.70": [
-              "-20 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : -20",
               0,
               0
             ],
             "1.95": [
-              "5 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : 5",
               0,
               0
             ],
@@ -430,12 +430,12 @@
               0
             ],
             "1.70": [
-              "-10 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : -10",
               0,
               0
             ],
             "1.95": [
-              "30 * (v.is_first_person ? 0.35 : 1.0)",
+              "v.is_first_person ? 0 : 30",
               0,
               0
             ],

@@ -355,6 +355,24 @@ section("Safety, cleanup, interaction");
   check(p.inventory.getItem(3).typeId === AXE, "stray awakened axe restored");
 }
 
+// Screen safety: nothing big may appear right in front of the caster's eyes (first-person view).
+{
+  const near = (x) => Math.min(...x.eyes.map((e) => Math.hypot(x.loc.x - e.x, x.loc.y - e.y, x.loc.z - e.z)));
+  const size = (x) => x.vars["variable.size"] ?? 0;
+  const aboveView = (x) => x.eyes.every((e) => x.loc.y - e.y > 0.6 && Math.hypot(x.loc.x - e.x, x.loc.z - e.z) < 0.8);
+  const bad = L.particles.filter((x) => {
+    const d = near(x);
+    if (aboveView(x)) return false; // straight overhead: outside the first-person view
+    if (x.id === "grizzly_oath:slash" || x.id === "grizzly_oath:claw_flash") return d < 2.0 && size(x) > 0.3;
+    if (x.id === "grizzly_oath:glow") return d < 1.5 && size(x) > 0.2;
+    if (x.id === "grizzly_oath:smoke") return d < 1.0;
+    if (x.id === "grizzly_oath:claw_streak") return d < 1.0;
+    return false;
+  });
+  for (const b of bad.slice(0, 6)) console.log("   near-eye:", b.id, "tick", b.tick, "size", size(b), "dist", near(b).toFixed(2));
+  check(bad.length === 0, `no large FX in front of the caster's eyes (${bad.length} found${bad.length ? ": " + [...new Set(bad.map((b) => b.id))].join(", ") : ""})`);
+}
+
 const peak = Math.max(...L.perTick.values());
 console.log(`\nparticles spawned: ${L.particles.length}, peak per tick: ${peak}`);
 check(peak <= 120, `particle budget per tick (peak ${peak})`);

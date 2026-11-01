@@ -48,8 +48,19 @@ if (!process.argv.includes("--skip-ct")) {
 
 // ---------------------------------------------------------------- 2) cross references
 const geos = new Map();
+const verAtLeast = (v, min) => {
+  const a = String(v).split(".").map(Number);
+  for (let i = 0; i < min.length; i++) if ((a[i] ?? 0) !== min[i]) return (a[i] ?? 0) > min[i];
+  return true;
+};
 for (const f of files(path.join(RP, "models"), ".json")) {
-  for (const g of json(f)["minecraft:geometry"]) geos.set(g.description.identifier, g);
+  const doc = json(f);
+  for (const g of doc["minecraft:geometry"]) {
+    geos.set(g.description.identifier, g);
+    // bone "binding" (held items) is ignored below geometry format 1.16.0: the item is then drawn
+    // unattached at the player's feet/eyes instead of in the hand
+    if (g.bones.some((b) => b.binding)) ok(verAtLeast(doc.format_version, [1, 16, 0]), `${g.description.identifier}: binding needs format_version >= 1.16.0 (is ${doc.format_version})`);
+  }
 }
 const anims = new Map();
 for (const f of files(path.join(RP, "animations"), ".json")) for (const [k, a] of Object.entries(json(f).animations)) anims.set(k, a);

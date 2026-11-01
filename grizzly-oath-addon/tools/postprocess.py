@@ -103,9 +103,11 @@ def build_axe():
     g["description"]["visible_bounds_width"] = 4
     g["description"]["visible_bounds_height"] = 4
     g["description"]["visible_bounds_offset"] = [0, 1, 0]
+    geo["format_version"] = "1.16.0"  # bone "binding" needs geometry format 1.16.0+ (as vanilla trident)
     for bone in g["bones"]:
         if bone["name"] == "grizzlys_oath":
             bone["binding"] = "q.item_slot_to_bone_name(c.item_slot)"
+            bone["pivot"] = [0, -1, 0]  # the hand grips the leather wrap here
         if bone["name"] == "blade":
             bone["locators"] = {
                 "blade_top": [0, 23, -13],
@@ -141,6 +143,7 @@ def build_axe():
 
 def build_grizzly():
     geo = json.load(open(p(RAW, "oath_grizzly.geo.json")))
+    geo["format_version"] = "1.16.0"
     g = geo["minecraft:geometry"][0]
     tex = pad_pow2(Image.open(p(RAW, "oath_grizzly.png")).convert("RGBA"))
     g["description"]["texture_width"], g["description"]["texture_height"] = tex.size
@@ -360,7 +363,7 @@ def build_particle_defs():
             **instant(1),
             "minecraft:emitter_shape_point": {},
             "minecraft:particle_lifetime_expression": {"max_lifetime": "(v.life ?? 0.5)"},
-            **billboard([0.28, 1.2], (0, 1), "direction_y", ["(v.dir.x ?? 0)", "(v.dir.y ?? 0)", "(v.dir.z ?? 1)"]),
+            **billboard([0.14, 0.6], (0, 1), "direction_y", ["(v.dir.x ?? 0)", "(v.dir.y ?? 0)", "(v.dir.z ?? 1)"]),
             **fade(),
         }),
         # flat ground shockwave ring that grows to v.radius over v.life

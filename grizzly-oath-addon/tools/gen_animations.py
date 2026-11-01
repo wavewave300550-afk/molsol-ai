@@ -7,28 +7,42 @@ Timings here must stay in sync with scripts-src/config.ts:
   * Relentless Pursuit: the dash takes 5 ticks (0.25 s), the slam lands at 0.35 s.
 
 Player animations are played from script with Entity.playAnimation(), so nothing overrides the
-vanilla player. In first person the swings are scaled down so the arm stays on screen.
+vanilla player. First-person and third-person keyframes are separate (Molang v.is_first_person).
 """
 import json
 import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ANIM = os.path.join(ROOT, "addon", "resource_packs", "grizzly_oath", "animations")
-F = "(v.is_first_person ? 0.35 : 1.0)"
-
-
-def f(v):
-    """Scale an angle by the first-person factor."""
-    return 0 if v == 0 else f"{v} * {F}"
-
-
-def rot(*keys):
-    """keys: (time, x, y, z) -> scaled rotation keyframes."""
-    return {"rotation": {f"{t:.2f}": [f(x), f(y), f(z)] for t, x, y, z in keys}}
+FP = "v.is_first_person"
 
 
 def raw_rot(*keys):
     return {"rotation": {f"{t:.2f}": [x, y, z] for t, x, y, z in keys}}
+
+
+def val(fp, tp):
+    """Keyframe component: first-person value vs third-person value."""
+    if fp == tp:
+        return fp
+    return f"{FP} ? {fp} : {tp}"
+
+
+def arm(*keys):
+    """keys: (time, fp_xyz, tp_xyz). First-person poses were tuned with tools/hold_sim.py so the axe
+    stays in the lower-right of the screen and never covers the crosshair."""
+    return {"rotation": {f"{t:.2f}": [val(a, b) for a, b in zip(fp, tp)] for t, fp, tp in keys}}
+
+
+def tp_only(*keys):
+    """Body / head / left arm move in third person only (rotating them in first person would swing
+    the whole first-person arm across the screen)."""
+    return {"rotation": {f"{t:.2f}": [val(0, v) for v in xyz] for t, xyz in keys}}
+
+
+Z = (0, 0, 0)
+RAISED_FP = (15, -10, -40)  # axe lifted at the right of the screen
+SLAM_FP = (40, 5, 30)  # axe driven down out of the bottom-right
 
 
 def player_animations():
@@ -37,53 +51,58 @@ def player_animations():
     a["animation.grizzly_oath.player.cleave_r"] = {
         "animation_length": 0.4,
         "bones": {
-            "rightArm": rot((0.0, -150, -10, 35), (0.08, -165, -5, 30), (0.2, -25, 35, -30), (0.4, 0, 0, 0)),
-            "body": rot((0.0, 0, -15, 0), (0.2, 0, 25, 0), (0.4, 0, 0, 0)),
+            "rightArm": arm((0.0, (-15, -22, -8), (-150, -10, 35)), (0.06, (-18, -25, -10), (-165, -5, 30)),
+                            (0.16, (35, 10, 35), (-25, 35, -30)), (0.4, Z, Z)),
+            "body": tp_only((0.0, (0, -15, 0)), (0.16, (0, 25, 0)), (0.4, Z)),
         },
     }
     a["animation.grizzly_oath.player.cleave_l"] = {
         "animation_length": 0.4,
         "bones": {
-            "rightArm": rot((0.0, -120, 40, -35), (0.08, -135, 45, -40), (0.2, -35, -35, 35), (0.4, 0, 0, 0)),
-            "body": rot((0.0, 0, 20, 0), (0.2, 0, -25, 0), (0.4, 0, 0, 0)),
+            "rightArm": arm((0.0, (-35, 0, -25), (-120, 40, -35)), (0.06, (-38, 2, -28), (-135, 45, -40)),
+                            (0.16, (20, 40, 20), (-35, -35, 35)), (0.4, Z, Z)),
+            "body": tp_only((0.0, (0, 20, 0)), (0.16, (0, -25, 0)), (0.4, Z)),
         },
     }
     # Grizzly Rend: wide horizontal sweep.
     a["animation.grizzly_oath.player.rend"] = {
         "animation_length": 0.55,
         "bones": {
-            "rightArm": rot((0.0, -95, 70, 0), (0.12, -100, 75, 0), (0.25, -80, -75, 0), (0.55, 0, 0, 0)),
-            "leftArm": rot((0.0, -20, 0, -20), (0.55, 0, 0, 0)),
-            "body": rot((0.0, 0, 35, 0), (0.25, 0, -40, 0), (0.55, 0, 0, 0)),
+            "rightArm": arm((0.0, (-5, -28, -5), (-95, 70, 0)), (0.12, (-8, -30, -8), (-100, 75, 0)),
+                            (0.25, (-35, 0, -25), (-80, -75, 0)), (0.55, Z, Z)),
+            "leftArm": tp_only((0.0, (-20, 0, -20)), (0.55, Z)),
+            "body": tp_only((0.0, (0, 35, 0)), (0.25, (0, -40, 0)), (0.55, Z)),
         },
     }
     # Relentless Pursuit: axe cocked overhead during the dash, then a crushing overhead slam.
     a["animation.grizzly_oath.player.pursuit"] = {
         "animation_length": 0.75,
         "bones": {
-            "rightArm": rot((0.0, -170, 0, 15), (0.28, -175, 0, 15), (0.36, -20, 0, 0), (0.75, 0, 0, 0)),
-            "leftArm": rot((0.0, 40, 0, -10), (0.36, -30, 0, -10), (0.75, 0, 0, 0)),
-            "body": rot((0.0, 10, 0, 0), (0.28, 15, 0, 0), (0.36, 35, 0, 0), (0.75, 0, 0, 0)),
+            "rightArm": arm((0.0, RAISED_FP, (-170, 0, 15)), (0.28, RAISED_FP, (-175, 0, 15)),
+                            (0.36, SLAM_FP, (-20, 0, 0)), (0.75, Z, Z)),
+            "leftArm": tp_only((0.0, (40, 0, -10)), (0.36, (-30, 0, -10)), (0.75, Z)),
+            "body": tp_only((0.0, (10, 0, 0)), (0.28, (15, 0, 0)), (0.36, (35, 0, 0)), (0.75, Z)),
         },
     }
     # Unbroken Will: axe raised to the sky, chest out, head up.
     a["animation.grizzly_oath.player.will"] = {
         "animation_length": 1.3,
         "bones": {
-            "rightArm": rot((0.0, 0, 0, 0), (0.2, -175, 0, 10), (1.05, -175, 0, 10), (1.3, 0, 0, 0)),
-            "leftArm": rot((0.0, 0, 0, 0), (0.2, -15, 0, -25), (1.05, -15, 0, -25), (1.3, 0, 0, 0)),
-            "head": rot((0.0, 0, 0, 0), (0.2, -25, 0, 0), (1.05, -25, 0, 0), (1.3, 0, 0, 0)),
-            "body": rot((0.0, 0, 0, 0), (0.2, -8, 0, 0), (1.05, -8, 0, 0), (1.3, 0, 0, 0)),
+            "rightArm": arm((0.0, Z, Z), (0.2, RAISED_FP, (-175, 0, 10)), (1.05, RAISED_FP, (-175, 0, 10)), (1.3, Z, Z)),
+            "leftArm": tp_only((0.0, Z), (0.2, (-15, 0, -25)), (1.05, (-15, 0, -25)), (1.3, Z)),
+            "head": tp_only((0.0, Z), (0.2, (-25, 0, 0)), (1.05, (-25, 0, 0)), (1.3, Z)),
+            "body": tp_only((0.0, Z), (0.2, (-8, 0, 0)), (1.05, (-8, 0, 0)), (1.3, Z)),
         },
     }
     # Oath of the Grizzly: raise the burning axe, hold while the grizzly roars, slam at 1.95 s.
     a["animation.grizzly_oath.player.ult"] = {
         "animation_length": 2.5,
         "bones": {
-            "rightArm": rot((0.0, 0, 0, 0), (0.3, -175, 0, 10), (1.7, -185, 0, 15), (1.95, -15, 0, 0), (2.5, 0, 0, 0)),
-            "leftArm": rot((0.0, 0, 0, 0), (0.3, -30, 0, -30), (1.7, -30, 0, -30), (1.95, -50, 0, -10), (2.5, 0, 0, 0)),
-            "head": rot((0.0, 0, 0, 0), (0.3, -20, 0, 0), (1.7, -20, 0, 0), (1.95, 5, 0, 0), (2.5, 0, 0, 0)),
-            "body": rot((0.0, 0, 0, 0), (1.7, -10, 0, 0), (1.95, 30, 0, 0), (2.5, 0, 0, 0)),
+            "rightArm": arm((0.0, Z, Z), (0.3, RAISED_FP, (-175, 0, 10)), (1.7, (12, -12, -45), (-185, 0, 15)),
+                            (1.95, SLAM_FP, (-15, 0, 0)), (2.5, Z, Z)),
+            "leftArm": tp_only((0.0, Z), (0.3, (-30, 0, -30)), (1.7, (-30, 0, -30)), (1.95, (-50, 0, -10)), (2.5, Z)),
+            "head": tp_only((0.0, Z), (0.3, (-20, 0, 0)), (1.7, (-20, 0, 0)), (1.95, (5, 0, 0)), (2.5, Z)),
+            "body": tp_only((0.0, Z), (1.7, (-10, 0, 0)), (1.95, (30, 0, 0)), (2.5, Z)),
         },
     }
     return a

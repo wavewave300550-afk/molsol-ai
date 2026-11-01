@@ -5,8 +5,9 @@
       "loop": true,
       "bones": {
         "grizzlys_oath": {
-          "rotation": [ 125, 0, 0 ],
-          "scale": 0.85
+          "rotation": [ 75, 0, 0 ],
+          "position": [ 0, 25, 0 ],
+          "scale": 0.7
         }
       }
     },
@@ -14,8 +15,9 @@
       "loop": true,
       "bones": {
         "grizzlys_oath": {
-          "rotation": [ 125, 0, 0 ],
-          "scale": 0.6
+          "rotation": [ 125, 0, 32 ],
+          "position": [ 0, 25, 2 ],
+          "scale": 0.42
         }
       }
     },
