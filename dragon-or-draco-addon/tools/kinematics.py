@@ -56,7 +56,8 @@ def affine(R=None, t=None):
 # --------------------------------------------------------------------------- molang
 
 class Molang:
-    """Evaluates the Molang subset the generated animations use."""
+    """Evaluates Molang expressions used by the animations (precedence parser: ternary, ??, ||,
+    &&, comparisons, + -, * /, unary, calls to math.*, q.* / v.* lookups, q.property('...'))."""
 
     FUNCS = {
         "math.sin": lambda d: math.sin(math.radians(d)),
@@ -69,35 +70,104 @@ class Molang:
         "math.pow": pow,
         "math.sqrt": math.sqrt,
         "math.floor": math.floor,
+        "math.exp": math.exp,
         "math.mod": lambda a, b: math.fmod(a, b),
+        "math.random": lambda a, b: (a + b) / 2,
         "math.pi": math.pi,
     }
+    TOK = re.compile(r"\s*(?:(\d+\.?\d*|\.\d+)|('[^']*')|([A-Za-z_][A-Za-z_0-9.]*)|(\?\?|&&|\|\||[<>=!]=|[-+*/()<>!?:,]))")
+    PREC = {"?": 1, "??": 2, "||": 3, "&&": 4, "==": 5, "!=": 5, "<": 6, "<=": 6, ">": 6, ">=": 6, "+": 7, "-": 7,
+            "*": 8, "/": 8}
 
     def __init__(self, env: Dict[str, float]):
         self.env = env
         self.cache = {}
+
+    def _tokens(self, s):
+        out, pos = [], 0
+        s = s.strip().rstrip(";")
+        while pos < len(s):
+            m = self.TOK.match(s, pos)
+            if not m or m.end() == pos:
+                if s[pos:].strip() == "":
+                    break
+                raise SyntaxError(f"molang: cannot parse at {s[pos:]!r}")
+            out.append(next(g for g in m.groups() if g is not None))
+            pos = m.end()
+        return out
+
+    def _compile(self, expr):
+        toks = self._tokens(expr)
+        k = [0]
+
+        def peek():
+            return toks[k[0]] if k[0] < len(toks) else None
+
+        def take():
+            k[0] += 1
+            return toks[k[0] - 1]
+
+        def primary():
+            t = take()
+            if t == "(":
+                e = parse(0)
+                take()  # )
+                return f"({e})"
+            if t == "-":
+                return f"(-{parse(9)})"
+            if t == "!":
+                return f"(not {parse(9)})"
+            if t[0].isdigit() or t[0] == ".":
+                return t
+            if t[0] == "'":
+                return t
+            name = t.replace("query.", "q.").replace("variable.", "v.").replace("Math.", "math.")
+            if peek() == "(":
+                take()
+                args = []
+                while peek() != ")":
+                    args.append(parse(0))
+                    if peek() == ",":
+                        take()
+                take()
+                if name == "q.property":
+                    return f"E.get('prop:' + {args[0]}, 0.0)"
+                return f"F['{name}']({', '.join(args)})"
+            if name == "math.pi":
+                return str(math.pi)
+            return f"E.get('{name}', 0.0)"
+
+        def parse(minp):
+            left = primary()
+            while True:
+                op = peek()
+                if op not in self.PREC or self.PREC[op] < minp or (op == "?" and minp > 1):
+                    if op == "?" and minp <= 1:
+                        pass
+                    else:
+                        return left
+                take()
+                if op == "?":
+                    a = parse(1)
+                    take()  # :
+                    b = parse(1)
+                    left = f"(({a}) if ({left}) else ({b}))"
+                    continue
+                right = parse(self.PREC[op] + 1)
+                pyop = {"&&": "and", "||": "or", "??": "or"}.get(op, op)
+                left = f"({left} {pyop} {right})"
+
+        src = parse(0)
+        return compile(src, "<molang>", "eval")
 
     def eval(self, expr):
         if isinstance(expr, (int, float)):
             return float(expr)
         src = self.cache.get(expr)
         if src is None:
-            s = expr.strip().rstrip(";")
-            s = s.replace("query.", "q.").replace("variable.", "v.")
-            s = re.sub(r"q\.property\('([^']+)'\)", lambda m: f"E.get('prop:{m.group(1)}', 0.0)", s)
-            s = re.sub(r"\bmath\.pi\b", "PI", s)
-            s = re.sub(r"\bmath\.(\w+)", lambda m: f"F['math.{m.group(1)}']", s)
-            s = re.sub(r"\b([qv])\.(\w+)", lambda m: f"E.get('{m.group(1)}.{m.group(2)}', 0.0)", s)
-            s = s.replace("&&", " and ").replace("||", " or ")
-            s = re.sub(r"!(?!=)", " not ", s)
-            # ternary a ? b : c  (single level)
-            if "?" in s:
-                c, rest = s.split("?", 1)
-                a, b = rest.split(":", 1)
-                s = f"(({a}) if ({c}) else ({b}))"
-            src = compile(s, "<molang>", "eval")
+            src = self._compile(expr)
             self.cache[expr] = src
-        return float(eval(src, {"F": self.FUNCS, "E": self.env, "PI": math.pi}))
+        return float(eval(src, {"F": self.FUNCS, "E": self.env}))
 
 
 # --------------------------------------------------------------------------- animation sampling

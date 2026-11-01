@@ -2,24 +2,21 @@
  "format_version": "1.10.0",
  "animation_controllers": {
   "controller.animation.dod.red_dragon.move": {
-   "initial_state": "ground",
+   "initial_state": "idle",
    "states": {
-    "ground": {
+    "idle": {
      "animations": [
-      "idle",
-      {
-       "walk": "v.walk_w"
-      },
-      {
-       "run": "v.run_w"
-      }
+      "idle_breathe"
      ],
      "transitions": [
       {
        "dead": "q.property('dod:action') == 'death' || !q.is_alive"
       },
       {
-       "takeoff": "q.property('dod:flight') == 'takeoff'"
+       "pre_takeoff": "q.property('dod:flight') == 'takeoff'"
+      },
+      {
+       "launch": "q.property('dod:flight') == 'launch'"
       },
       {
        "fly": "q.property('dod:flight') == 'fly'"
@@ -29,17 +26,44 @@
       },
       {
        "landing": "q.property('dod:flight') == 'landing'"
+      },
+      {
+       "touchdown": "q.property('dod:flight') == 'touchdown'"
+      },
+      {
+       "rest": "q.property('dod:idle') == 'rest'"
+      },
+      {
+       "step_back": "q.property('dod:action') == 'step_back'"
+      },
+      {
+       "run_start": "v.spd > 0.45 && q.property('dod:run')"
+      },
+      {
+       "walk_start": "v.spd > 0.45"
+      },
+      {
+       "turn_left": "v.turn < -25"
+      },
+      {
+       "turn_right": "v.turn > 25"
       }
      ],
-     "blend_transition": 0.35
+     "blend_transition": 0.3
     },
-    "takeoff": {
+    "walk_start": {
      "animations": [
-      "takeoff"
+      "walk_start"
      ],
      "transitions": [
       {
        "dead": "q.property('dod:action') == 'death' || !q.is_alive"
+      },
+      {
+       "pre_takeoff": "q.property('dod:flight') == 'takeoff'"
+      },
+      {
+       "launch": "q.property('dod:flight') == 'launch'"
       },
       {
        "fly": "q.property('dod:flight') == 'fly'"
@@ -51,14 +75,434 @@
        "landing": "q.property('dod:flight') == 'landing'"
       },
       {
-       "ground": "q.property('dod:flight') == 'ground'"
+       "touchdown": "q.property('dod:flight') == 'touchdown'"
+      },
+      {
+       "walk_stop": "v.spd < 0.3"
+      },
+      {
+       "run_start": "q.property('dod:run') && v.spd > 1.6"
+      },
+      {
+       "walk": "q.all_animations_finished"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "walk": {
+     "animations": [
+      "walk_loop"
+     ],
+     "transitions": [
+      {
+       "dead": "q.property('dod:action') == 'death' || !q.is_alive"
+      },
+      {
+       "pre_takeoff": "q.property('dod:flight') == 'takeoff'"
+      },
+      {
+       "launch": "q.property('dod:flight') == 'launch'"
+      },
+      {
+       "fly": "q.property('dod:flight') == 'fly'"
+      },
+      {
+       "glide": "q.property('dod:flight') == 'glide'"
+      },
+      {
+       "landing": "q.property('dod:flight') == 'landing'"
+      },
+      {
+       "touchdown": "q.property('dod:flight') == 'touchdown'"
+      },
+      {
+       "walk_stop": "v.spd < 0.3"
+      },
+      {
+       "run_start": "q.property('dod:run') && v.spd > 1.6"
+      },
+      {
+       "step_back": "q.property('dod:action') == 'step_back'"
       }
      ],
      "blend_transition": 0.25
     },
+    "walk_stop": {
+     "animations": [
+      "walk_stop"
+     ],
+     "transitions": [
+      {
+       "dead": "q.property('dod:action') == 'death' || !q.is_alive"
+      },
+      {
+       "pre_takeoff": "q.property('dod:flight') == 'takeoff'"
+      },
+      {
+       "launch": "q.property('dod:flight') == 'launch'"
+      },
+      {
+       "fly": "q.property('dod:flight') == 'fly'"
+      },
+      {
+       "glide": "q.property('dod:flight') == 'glide'"
+      },
+      {
+       "landing": "q.property('dod:flight') == 'landing'"
+      },
+      {
+       "touchdown": "q.property('dod:flight') == 'touchdown'"
+      },
+      {
+       "walk_start": "v.spd > 0.6"
+      },
+      {
+       "idle": "q.all_animations_finished"
+      }
+     ],
+     "blend_transition": 0.3
+    },
+    "run_start": {
+     "animations": [
+      "run_start"
+     ],
+     "transitions": [
+      {
+       "dead": "q.property('dod:action') == 'death' || !q.is_alive"
+      },
+      {
+       "pre_takeoff": "q.property('dod:flight') == 'takeoff'"
+      },
+      {
+       "launch": "q.property('dod:flight') == 'launch'"
+      },
+      {
+       "fly": "q.property('dod:flight') == 'fly'"
+      },
+      {
+       "glide": "q.property('dod:flight') == 'glide'"
+      },
+      {
+       "landing": "q.property('dod:flight') == 'landing'"
+      },
+      {
+       "touchdown": "q.property('dod:flight') == 'touchdown'"
+      },
+      {
+       "run_stop": "v.spd < 0.5"
+      },
+      {
+       "run": "q.all_animations_finished"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "run": {
+     "animations": [
+      "run_loop"
+     ],
+     "transitions": [
+      {
+       "dead": "q.property('dod:action') == 'death' || !q.is_alive"
+      },
+      {
+       "pre_takeoff": "q.property('dod:flight') == 'takeoff'"
+      },
+      {
+       "launch": "q.property('dod:flight') == 'launch'"
+      },
+      {
+       "fly": "q.property('dod:flight') == 'fly'"
+      },
+      {
+       "glide": "q.property('dod:flight') == 'glide'"
+      },
+      {
+       "landing": "q.property('dod:flight') == 'landing'"
+      },
+      {
+       "touchdown": "q.property('dod:flight') == 'touchdown'"
+      },
+      {
+       "run_stop": "v.spd < 0.9 || !q.property('dod:run')"
+      }
+     ],
+     "blend_transition": 0.25
+    },
+    "run_stop": {
+     "animations": [
+      "run_stop"
+     ],
+     "transitions": [
+      {
+       "dead": "q.property('dod:action') == 'death' || !q.is_alive"
+      },
+      {
+       "pre_takeoff": "q.property('dod:flight') == 'takeoff'"
+      },
+      {
+       "launch": "q.property('dod:flight') == 'launch'"
+      },
+      {
+       "fly": "q.property('dod:flight') == 'fly'"
+      },
+      {
+       "glide": "q.property('dod:flight') == 'glide'"
+      },
+      {
+       "landing": "q.property('dod:flight') == 'landing'"
+      },
+      {
+       "touchdown": "q.property('dod:flight') == 'touchdown'"
+      },
+      {
+       "run_start": "q.property('dod:run') && v.spd > 2.0"
+      },
+      {
+       "walk": "q.all_animations_finished && v.spd >= 0.45"
+      },
+      {
+       "idle": "q.all_animations_finished && v.spd < 0.45"
+      }
+     ],
+     "blend_transition": 0.3
+    },
+    "turn_left": {
+     "animations": [
+      "turn_left"
+     ],
+     "transitions": [
+      {
+       "dead": "q.property('dod:action') == 'death' || !q.is_alive"
+      },
+      {
+       "pre_takeoff": "q.property('dod:flight') == 'takeoff'"
+      },
+      {
+       "launch": "q.property('dod:flight') == 'launch'"
+      },
+      {
+       "fly": "q.property('dod:flight') == 'fly'"
+      },
+      {
+       "glide": "q.property('dod:flight') == 'glide'"
+      },
+      {
+       "landing": "q.property('dod:flight') == 'landing'"
+      },
+      {
+       "touchdown": "q.property('dod:flight') == 'touchdown'"
+      },
+      {
+       "walk_start": "v.spd > 0.6"
+      },
+      {
+       "turn_right": "v.turn > 25"
+      },
+      {
+       "idle": "v.turn > -10"
+      }
+     ],
+     "blend_transition": 0.3
+    },
+    "turn_right": {
+     "animations": [
+      "turn_right"
+     ],
+     "transitions": [
+      {
+       "dead": "q.property('dod:action') == 'death' || !q.is_alive"
+      },
+      {
+       "pre_takeoff": "q.property('dod:flight') == 'takeoff'"
+      },
+      {
+       "launch": "q.property('dod:flight') == 'launch'"
+      },
+      {
+       "fly": "q.property('dod:flight') == 'fly'"
+      },
+      {
+       "glide": "q.property('dod:flight') == 'glide'"
+      },
+      {
+       "landing": "q.property('dod:flight') == 'landing'"
+      },
+      {
+       "touchdown": "q.property('dod:flight') == 'touchdown'"
+      },
+      {
+       "walk_start": "v.spd > 0.6"
+      },
+      {
+       "turn_left": "v.turn < -25"
+      },
+      {
+       "idle": "v.turn < 10"
+      }
+     ],
+     "blend_transition": 0.3
+    },
+    "step_back": {
+     "animations": [
+      "step_backward"
+     ],
+     "transitions": [
+      {
+       "dead": "q.property('dod:action') == 'death' || !q.is_alive"
+      },
+      {
+       "pre_takeoff": "q.property('dod:flight') == 'takeoff'"
+      },
+      {
+       "launch": "q.property('dod:flight') == 'launch'"
+      },
+      {
+       "fly": "q.property('dod:flight') == 'fly'"
+      },
+      {
+       "glide": "q.property('dod:flight') == 'glide'"
+      },
+      {
+       "landing": "q.property('dod:flight') == 'landing'"
+      },
+      {
+       "touchdown": "q.property('dod:flight') == 'touchdown'"
+      },
+      {
+       "idle": "q.property('dod:action') != 'step_back'"
+      }
+     ],
+     "blend_transition": 0.3
+    },
+    "rest": {
+     "animations": [
+      "rest_lower",
+      "rest_breathe"
+     ],
+     "transitions": [
+      {
+       "dead": "q.property('dod:action') == 'death' || !q.is_alive"
+      },
+      {
+       "pre_takeoff": "q.property('dod:flight') == 'takeoff'"
+      },
+      {
+       "launch": "q.property('dod:flight') == 'launch'"
+      },
+      {
+       "fly": "q.property('dod:flight') == 'fly'"
+      },
+      {
+       "glide": "q.property('dod:flight') == 'glide'"
+      },
+      {
+       "landing": "q.property('dod:flight') == 'landing'"
+      },
+      {
+       "touchdown": "q.property('dod:flight') == 'touchdown'"
+      },
+      {
+       "rest_rise": "q.property('dod:idle') != 'rest'"
+      }
+     ],
+     "blend_transition": 0.4
+    },
+    "rest_rise": {
+     "animations": [
+      "rest_rise"
+     ],
+     "transitions": [
+      {
+       "dead": "q.property('dod:action') == 'death' || !q.is_alive"
+      },
+      {
+       "pre_takeoff": "q.property('dod:flight') == 'takeoff'"
+      },
+      {
+       "launch": "q.property('dod:flight') == 'launch'"
+      },
+      {
+       "fly": "q.property('dod:flight') == 'fly'"
+      },
+      {
+       "glide": "q.property('dod:flight') == 'glide'"
+      },
+      {
+       "landing": "q.property('dod:flight') == 'landing'"
+      },
+      {
+       "touchdown": "q.property('dod:flight') == 'touchdown'"
+      },
+      {
+       "rest": "q.property('dod:idle') == 'rest'"
+      },
+      {
+       "idle": "q.all_animations_finished"
+      }
+     ],
+     "blend_transition": 0.35
+    },
+    "pre_takeoff": {
+     "animations": [
+      "pre_takeoff"
+     ],
+     "transitions": [
+      {
+       "dead": "q.property('dod:action') == 'death' || !q.is_alive"
+      },
+      {
+       "launch": "q.property('dod:flight') == 'launch'"
+      },
+      {
+       "fly": "q.property('dod:flight') == 'fly'"
+      },
+      {
+       "glide": "q.property('dod:flight') == 'glide'"
+      },
+      {
+       "idle": "q.property('dod:flight') == 'ground'"
+      }
+     ],
+     "blend_transition": 0.15
+    },
+    "launch": {
+     "animations": [
+      "launch"
+     ],
+     "transitions": [
+      {
+       "dead": "q.property('dod:action') == 'death' || !q.is_alive"
+      },
+      {
+       "fly": "q.property('dod:flight') == 'fly'"
+      },
+      {
+       "glide": "q.property('dod:flight') == 'glide'"
+      },
+      {
+       "landing": "q.property('dod:flight') == 'landing'"
+      },
+      {
+       "idle": "q.property('dod:flight') == 'ground'"
+      }
+     ],
+     "blend_transition": 0.2
+    },
     "fly": {
      "animations": [
-      "fly"
+      {
+       "flight_flap": "1.0 - v.climb"
+      },
+      {
+       "flight_ascend": "v.climb"
+      },
+      {
+       "flight_bank_left": "v.bank_l"
+      },
+      {
+       "flight_bank_right": "v.bank_r"
+      }
      ],
      "transitions": [
       {
@@ -71,17 +515,31 @@
        "landing": "q.property('dod:flight') == 'landing'"
       },
       {
-       "ground": "q.property('dod:flight') == 'ground'"
+       "touchdown": "q.property('dod:flight') == 'touchdown'"
       },
       {
-       "takeoff": "q.property('dod:flight') == 'takeoff'"
+       "pre_takeoff": "q.property('dod:flight') == 'takeoff'"
+      },
+      {
+       "idle": "q.property('dod:flight') == 'ground'"
       }
      ],
      "blend_transition": 0.4
     },
     "glide": {
      "animations": [
-      "glide"
+      {
+       "flight_glide": "1.0 - v.dive"
+      },
+      {
+       "flight_descend": "v.dive"
+      },
+      {
+       "flight_bank_left": "v.bank_l"
+      },
+      {
+       "flight_bank_right": "v.bank_r"
+      }
      ],
      "transitions": [
       {
@@ -94,36 +552,59 @@
        "landing": "q.property('dod:flight') == 'landing'"
       },
       {
-       "ground": "q.property('dod:flight') == 'ground'"
+       "touchdown": "q.property('dod:flight') == 'touchdown'"
       },
       {
-       "takeoff": "q.property('dod:flight') == 'takeoff'"
+       "pre_takeoff": "q.property('dod:flight') == 'takeoff'"
+      },
+      {
+       "idle": "q.property('dod:flight') == 'ground'"
       }
      ],
      "blend_transition": 0.5
     },
     "landing": {
      "animations": [
-      "landing"
+      "landing_approach"
      ],
      "transitions": [
       {
        "dead": "q.property('dod:action') == 'death' || !q.is_alive"
       },
       {
-       "ground": "q.property('dod:flight') == 'ground'"
-      },
-      {
-       "takeoff": "q.property('dod:flight') == 'takeoff'"
+       "touchdown": "q.property('dod:flight') == 'touchdown'"
       },
       {
        "fly": "q.property('dod:flight') == 'fly'"
       },
       {
        "glide": "q.property('dod:flight') == 'glide'"
+      },
+      {
+       "idle": "q.property('dod:flight') == 'ground'"
       }
      ],
-     "blend_transition": 0.3
+     "blend_transition": 0.2
+    },
+    "touchdown": {
+     "animations": [
+      "landing_impact"
+     ],
+     "transitions": [
+      {
+       "dead": "q.property('dod:action') == 'death' || !q.is_alive"
+      },
+      {
+       "pre_takeoff": "q.property('dod:flight') == 'takeoff'"
+      },
+      {
+       "fly": "q.property('dod:flight') == 'fly'"
+      },
+      {
+       "idle": "q.property('dod:flight') == 'ground'"
+      }
+     ],
+     "blend_transition": 0.35
     },
     "dead": {
      "animations": [
@@ -131,7 +612,297 @@
      ],
      "transitions": [
       {
-       "ground": "q.property('dod:action') != 'death' && q.is_alive"
+       "idle": "q.property('dod:action') != 'death' && q.is_alive"
+      }
+     ],
+     "blend_transition": 0.25
+    }
+   }
+  },
+  "controller.animation.dod.red_dragon.idle": {
+   "initial_state": "default",
+   "states": {
+    "default": {
+     "transitions": [
+      {
+       "look_left": "q.property('dod:idle') == 'look_left' && q.property('dod:flight') == 'ground'"
+      },
+      {
+       "look_right": "q.property('dod:idle') == 'look_right' && q.property('dod:flight') == 'ground'"
+      },
+      {
+       "sniff": "q.property('dod:idle') == 'sniff' && q.property('dod:flight') == 'ground'"
+      },
+      {
+       "scratch": "q.property('dod:idle') == 'scratch' && q.property('dod:flight') == 'ground'"
+      },
+      {
+       "tail_sway": "q.property('dod:idle') == 'tail_sway' && q.property('dod:flight') == 'ground'"
+      },
+      {
+       "wing_adjust": "q.property('dod:idle') == 'wing_adjust' && q.property('dod:flight') == 'ground'"
+      },
+      {
+       "stretch": "q.property('dod:idle') == 'stretch' && q.property('dod:flight') == 'ground'"
+      },
+      {
+       "yawn": "q.property('dod:idle') == 'yawn' && q.property('dod:flight') == 'ground'"
+      }
+     ],
+     "blend_transition": 0.3
+    },
+    "look_left": {
+     "animations": [
+      "idle_look_left"
+     ],
+     "transitions": [
+      {
+       "look_right": "q.property('dod:idle') == 'look_right'"
+      },
+      {
+       "sniff": "q.property('dod:idle') == 'sniff'"
+      },
+      {
+       "scratch": "q.property('dod:idle') == 'scratch'"
+      },
+      {
+       "tail_sway": "q.property('dod:idle') == 'tail_sway'"
+      },
+      {
+       "wing_adjust": "q.property('dod:idle') == 'wing_adjust'"
+      },
+      {
+       "stretch": "q.property('dod:idle') == 'stretch'"
+      },
+      {
+       "yawn": "q.property('dod:idle') == 'yawn'"
+      },
+      {
+       "default": "q.property('dod:idle') != 'look_left'"
+      }
+     ],
+     "blend_transition": 0.3
+    },
+    "look_right": {
+     "animations": [
+      "idle_look_right"
+     ],
+     "transitions": [
+      {
+       "look_left": "q.property('dod:idle') == 'look_left'"
+      },
+      {
+       "sniff": "q.property('dod:idle') == 'sniff'"
+      },
+      {
+       "scratch": "q.property('dod:idle') == 'scratch'"
+      },
+      {
+       "tail_sway": "q.property('dod:idle') == 'tail_sway'"
+      },
+      {
+       "wing_adjust": "q.property('dod:idle') == 'wing_adjust'"
+      },
+      {
+       "stretch": "q.property('dod:idle') == 'stretch'"
+      },
+      {
+       "yawn": "q.property('dod:idle') == 'yawn'"
+      },
+      {
+       "default": "q.property('dod:idle') != 'look_right'"
+      }
+     ],
+     "blend_transition": 0.3
+    },
+    "sniff": {
+     "animations": [
+      "idle_sniff"
+     ],
+     "transitions": [
+      {
+       "look_left": "q.property('dod:idle') == 'look_left'"
+      },
+      {
+       "look_right": "q.property('dod:idle') == 'look_right'"
+      },
+      {
+       "scratch": "q.property('dod:idle') == 'scratch'"
+      },
+      {
+       "tail_sway": "q.property('dod:idle') == 'tail_sway'"
+      },
+      {
+       "wing_adjust": "q.property('dod:idle') == 'wing_adjust'"
+      },
+      {
+       "stretch": "q.property('dod:idle') == 'stretch'"
+      },
+      {
+       "yawn": "q.property('dod:idle') == 'yawn'"
+      },
+      {
+       "default": "q.property('dod:idle') != 'sniff'"
+      }
+     ],
+     "blend_transition": 0.3
+    },
+    "scratch": {
+     "animations": [
+      "idle_ground_scratch"
+     ],
+     "transitions": [
+      {
+       "look_left": "q.property('dod:idle') == 'look_left'"
+      },
+      {
+       "look_right": "q.property('dod:idle') == 'look_right'"
+      },
+      {
+       "sniff": "q.property('dod:idle') == 'sniff'"
+      },
+      {
+       "tail_sway": "q.property('dod:idle') == 'tail_sway'"
+      },
+      {
+       "wing_adjust": "q.property('dod:idle') == 'wing_adjust'"
+      },
+      {
+       "stretch": "q.property('dod:idle') == 'stretch'"
+      },
+      {
+       "yawn": "q.property('dod:idle') == 'yawn'"
+      },
+      {
+       "default": "q.property('dod:idle') != 'scratch'"
+      }
+     ],
+     "blend_transition": 0.3
+    },
+    "tail_sway": {
+     "animations": [
+      "idle_tail_sway"
+     ],
+     "transitions": [
+      {
+       "look_left": "q.property('dod:idle') == 'look_left'"
+      },
+      {
+       "look_right": "q.property('dod:idle') == 'look_right'"
+      },
+      {
+       "sniff": "q.property('dod:idle') == 'sniff'"
+      },
+      {
+       "scratch": "q.property('dod:idle') == 'scratch'"
+      },
+      {
+       "wing_adjust": "q.property('dod:idle') == 'wing_adjust'"
+      },
+      {
+       "stretch": "q.property('dod:idle') == 'stretch'"
+      },
+      {
+       "yawn": "q.property('dod:idle') == 'yawn'"
+      },
+      {
+       "default": "q.property('dod:idle') != 'tail_sway'"
+      }
+     ],
+     "blend_transition": 0.3
+    },
+    "wing_adjust": {
+     "animations": [
+      "idle_wing_adjust"
+     ],
+     "transitions": [
+      {
+       "look_left": "q.property('dod:idle') == 'look_left'"
+      },
+      {
+       "look_right": "q.property('dod:idle') == 'look_right'"
+      },
+      {
+       "sniff": "q.property('dod:idle') == 'sniff'"
+      },
+      {
+       "scratch": "q.property('dod:idle') == 'scratch'"
+      },
+      {
+       "tail_sway": "q.property('dod:idle') == 'tail_sway'"
+      },
+      {
+       "stretch": "q.property('dod:idle') == 'stretch'"
+      },
+      {
+       "yawn": "q.property('dod:idle') == 'yawn'"
+      },
+      {
+       "default": "q.property('dod:idle') != 'wing_adjust'"
+      }
+     ],
+     "blend_transition": 0.3
+    },
+    "stretch": {
+     "animations": [
+      "idle_stretch"
+     ],
+     "transitions": [
+      {
+       "look_left": "q.property('dod:idle') == 'look_left'"
+      },
+      {
+       "look_right": "q.property('dod:idle') == 'look_right'"
+      },
+      {
+       "sniff": "q.property('dod:idle') == 'sniff'"
+      },
+      {
+       "scratch": "q.property('dod:idle') == 'scratch'"
+      },
+      {
+       "tail_sway": "q.property('dod:idle') == 'tail_sway'"
+      },
+      {
+       "wing_adjust": "q.property('dod:idle') == 'wing_adjust'"
+      },
+      {
+       "yawn": "q.property('dod:idle') == 'yawn'"
+      },
+      {
+       "default": "q.property('dod:idle') != 'stretch'"
+      }
+     ],
+     "blend_transition": 0.3
+    },
+    "yawn": {
+     "animations": [
+      "idle_yawn"
+     ],
+     "transitions": [
+      {
+       "look_left": "q.property('dod:idle') == 'look_left'"
+      },
+      {
+       "look_right": "q.property('dod:idle') == 'look_right'"
+      },
+      {
+       "sniff": "q.property('dod:idle') == 'sniff'"
+      },
+      {
+       "scratch": "q.property('dod:idle') == 'scratch'"
+      },
+      {
+       "tail_sway": "q.property('dod:idle') == 'tail_sway'"
+      },
+      {
+       "wing_adjust": "q.property('dod:idle') == 'wing_adjust'"
+      },
+      {
+       "stretch": "q.property('dod:idle') == 'stretch'"
+      },
+      {
+       "default": "q.property('dod:idle') != 'yawn'"
       }
      ],
      "blend_transition": 0.3
@@ -142,6 +913,38 @@
    "initial_state": "default",
    "states": {
     "default": {
+     "transitions": [
+      {
+       "alert": "q.property('dod:action') == 'alert' && q.is_alive"
+      },
+      {
+       "roar": "q.property('dod:action') == 'roar' && q.is_alive"
+      },
+      {
+       "bite": "q.property('dod:action') == 'bite' && q.is_alive"
+      },
+      {
+       "claw": "q.property('dod:action') == 'claw' && q.is_alive"
+      },
+      {
+       "tail": "q.property('dod:action') == 'tail' && q.is_alive"
+      },
+      {
+       "buffet": "q.property('dod:action') == 'buffet' && q.is_alive"
+      },
+      {
+       "fire_charge": "q.property('dod:action') == 'fire_charge' && q.is_alive"
+      },
+      {
+       "fire_breath": "q.property('dod:action') == 'fire_breath' && q.is_alive"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "alert": {
+     "animations": [
+      "alert"
+     ],
      "transitions": [
       {
        "roar": "q.property('dod:action') == 'roar'"
@@ -165,19 +968,19 @@
        "fire_breath": "q.property('dod:action') == 'fire_breath'"
       },
       {
-       "look": "q.property('dod:action') == 'look'"
-      },
-      {
-       "stretch": "q.property('dod:action') == 'stretch'"
+       "default": "q.property('dod:action') != 'alert'"
       }
      ],
-     "blend_transition": 0.22
+     "blend_transition": 0.18
     },
     "roar": {
      "animations": [
       "roar"
      ],
      "transitions": [
+      {
+       "alert": "q.property('dod:action') == 'alert'"
+      },
       {
        "bite": "q.property('dod:action') == 'bite'"
       },
@@ -195,12 +998,6 @@
       },
       {
        "fire_breath": "q.property('dod:action') == 'fire_breath'"
-      },
-      {
-       "look": "q.property('dod:action') == 'look'"
-      },
-      {
-       "stretch": "q.property('dod:action') == 'stretch'"
       },
       {
        "default": "q.property('dod:action') != 'roar'"
@@ -214,6 +1011,9 @@
      ],
      "transitions": [
       {
+       "alert": "q.property('dod:action') == 'alert'"
+      },
+      {
        "roar": "q.property('dod:action') == 'roar'"
       },
       {
@@ -232,12 +1032,6 @@
        "fire_breath": "q.property('dod:action') == 'fire_breath'"
       },
       {
-       "look": "q.property('dod:action') == 'look'"
-      },
-      {
-       "stretch": "q.property('dod:action') == 'stretch'"
-      },
-      {
        "default": "q.property('dod:action') != 'bite'"
       }
      ],
@@ -245,9 +1039,12 @@
     },
     "claw": {
      "animations": [
-      "claw"
+      "claw_swipe"
      ],
      "transitions": [
+      {
+       "alert": "q.property('dod:action') == 'alert'"
+      },
       {
        "roar": "q.property('dod:action') == 'roar'"
       },
@@ -265,12 +1062,6 @@
       },
       {
        "fire_breath": "q.property('dod:action') == 'fire_breath'"
-      },
-      {
-       "look": "q.property('dod:action') == 'look'"
-      },
-      {
-       "stretch": "q.property('dod:action') == 'stretch'"
       },
       {
        "default": "q.property('dod:action') != 'claw'"
@@ -284,6 +1075,9 @@
      ],
      "transitions": [
       {
+       "alert": "q.property('dod:action') == 'alert'"
+      },
+      {
        "roar": "q.property('dod:action') == 'roar'"
       },
       {
@@ -300,12 +1094,6 @@
       },
       {
        "fire_breath": "q.property('dod:action') == 'fire_breath'"
-      },
-      {
-       "look": "q.property('dod:action') == 'look'"
-      },
-      {
-       "stretch": "q.property('dod:action') == 'stretch'"
       },
       {
        "default": "q.property('dod:action') != 'tail'"
@@ -319,6 +1107,9 @@
      ],
      "transitions": [
       {
+       "alert": "q.property('dod:action') == 'alert'"
+      },
+      {
        "roar": "q.property('dod:action') == 'roar'"
       },
       {
@@ -335,12 +1126,6 @@
       },
       {
        "fire_breath": "q.property('dod:action') == 'fire_breath'"
-      },
-      {
-       "look": "q.property('dod:action') == 'look'"
-      },
-      {
-       "stretch": "q.property('dod:action') == 'stretch'"
       },
       {
        "default": "q.property('dod:action') != 'buffet'"
@@ -350,9 +1135,12 @@
     },
     "fire_charge": {
      "animations": [
-      "fire_charge"
+      "fire_breath_charge"
      ],
      "transitions": [
+      {
+       "alert": "q.property('dod:action') == 'alert'"
+      },
       {
        "roar": "q.property('dod:action') == 'roar'"
       },
@@ -370,12 +1158,6 @@
       },
       {
        "fire_breath": "q.property('dod:action') == 'fire_breath'"
-      },
-      {
-       "look": "q.property('dod:action') == 'look'"
-      },
-      {
-       "stretch": "q.property('dod:action') == 'stretch'"
       },
       {
        "default": "q.property('dod:action') != 'fire_charge'"
@@ -385,9 +1167,12 @@
     },
     "fire_breath": {
      "animations": [
-      "fire_breath"
+      "fire_breath_release"
      ],
      "transitions": [
+      {
+       "alert": "q.property('dod:action') == 'alert'"
+      },
       {
        "roar": "q.property('dod:action') == 'roar'"
       },
@@ -405,85 +1190,9 @@
       },
       {
        "fire_charge": "q.property('dod:action') == 'fire_charge'"
-      },
-      {
-       "look": "q.property('dod:action') == 'look'"
-      },
-      {
-       "stretch": "q.property('dod:action') == 'stretch'"
       },
       {
        "default": "q.property('dod:action') != 'fire_breath'"
-      }
-     ],
-     "blend_transition": 0.18
-    },
-    "look": {
-     "animations": [
-      "look_around"
-     ],
-     "transitions": [
-      {
-       "roar": "q.property('dod:action') == 'roar'"
-      },
-      {
-       "bite": "q.property('dod:action') == 'bite'"
-      },
-      {
-       "claw": "q.property('dod:action') == 'claw'"
-      },
-      {
-       "tail": "q.property('dod:action') == 'tail'"
-      },
-      {
-       "buffet": "q.property('dod:action') == 'buffet'"
-      },
-      {
-       "fire_charge": "q.property('dod:action') == 'fire_charge'"
-      },
-      {
-       "fire_breath": "q.property('dod:action') == 'fire_breath'"
-      },
-      {
-       "stretch": "q.property('dod:action') == 'stretch'"
-      },
-      {
-       "default": "q.property('dod:action') != 'look'"
-      }
-     ],
-     "blend_transition": 0.18
-    },
-    "stretch": {
-     "animations": [
-      "wing_stretch"
-     ],
-     "transitions": [
-      {
-       "roar": "q.property('dod:action') == 'roar'"
-      },
-      {
-       "bite": "q.property('dod:action') == 'bite'"
-      },
-      {
-       "claw": "q.property('dod:action') == 'claw'"
-      },
-      {
-       "tail": "q.property('dod:action') == 'tail'"
-      },
-      {
-       "buffet": "q.property('dod:action') == 'buffet'"
-      },
-      {
-       "fire_charge": "q.property('dod:action') == 'fire_charge'"
-      },
-      {
-       "fire_breath": "q.property('dod:action') == 'fire_breath'"
-      },
-      {
-       "look": "q.property('dod:action') == 'look'"
-      },
-      {
-       "default": "q.property('dod:action') != 'stretch'"
       }
      ],
      "blend_transition": 0.18
@@ -499,7 +1208,7 @@
      ],
      "transitions": [
       {
-       "off": "!(q.property('dod:action') == 'none' && q.property('dod:flight') == 'ground' && q.is_alive)"
+       "off": "!((q.property('dod:action') == 'none' || q.property('dod:action') == 'alert') && q.property('dod:idle') == 'none' && q.property('dod:flight') == 'ground' && q.is_alive)"
       }
      ],
      "blend_transition": 0.4
@@ -507,10 +1216,33 @@
     "off": {
      "transitions": [
       {
-       "on": "q.property('dod:action') == 'none' && q.property('dod:flight') == 'ground' && q.is_alive"
+       "on": "(q.property('dod:action') == 'none' || q.property('dod:action') == 'alert') && q.property('dod:idle') == 'none' && q.property('dod:flight') == 'ground' && q.is_alive"
       }
      ],
      "blend_transition": 0.4
+    }
+   }
+  },
+  "controller.animation.dod.red_dragon.blink": {
+   "initial_state": "open",
+   "states": {
+    "open": {
+     "transitions": [
+      {
+       "blink": "v.blink && q.property('dod:idle') != 'yawn' && q.property('dod:idle') != 'rest' && q.property('dod:idle') != 'rise' && q.is_alive"
+      }
+     ]
+    },
+    "blink": {
+     "animations": [
+      "idle_blink"
+     ],
+     "transitions": [
+      {
+       "open": "q.all_animations_finished && !v.blink"
+      }
+     ],
+     "blend_transition": 0.05
     }
    }
   },
@@ -533,7 +1265,7 @@
        "default": "q.all_animations_finished"
       }
      ],
-     "blend_transition": 0.1
+     "blend_transition": 0.12
     }
    }
   }

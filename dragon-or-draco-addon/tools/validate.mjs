@@ -204,6 +204,71 @@ for (const [id, c] of ctrls) {
     for (const tr of st.transitions ?? []) for (const dst of Object.keys(tr)) ok(dst in c.states, `${id}.${sn}: transition to ${dst}`);
   }
 }
+// ---------------------------------------------------------------- 5b) V2 animation system
+// every animation in the file is used (no orphan or filler clips): mapped in the client entity and
+// played by a controller state
+const mapped = new Map(Object.entries(ce.animations).map(([k, v]) => [v, k]));
+const played = new Set();
+for (const c of ctrls.values()) for (const st of Object.values(c.states)) {
+  for (const a of st.animations ?? []) played.add(typeof a === "string" ? a : Object.keys(a)[0]);
+}
+for (const id of anims.keys()) {
+  ok(mapped.has(id), `animation ${id} is not mapped in the client entity (orphan)`);
+  ok(played.has(mapped.get(id)), `animation ${id} is never played by a controller state`);
+}
+// every animation state value the scripts can set has a controller transition that reacts to it
+for (const key of ["dod:flight", "dod:action", "dod:idle"]) {
+  const def = props[key];
+  ok(def && def.type === "enum" && def.client_sync, `${key} is a client-synced enum`);
+  for (const v of def.values) {
+    if (v === def.default) continue;
+    // 'rise' is reached by leaving the rest state (dod:idle != 'rest'), so a client that joins mid-rise
+    // keeps standing instead of popping down to the ground first
+    const handled = molang.includes(`q.property('${key}') == '${v}'`) ||
+      (key === "dod:idle" && v === "rise" && molang.includes("q.property('dod:idle') != 'rest'"));
+    ok(handled, `${key} = '${v}' has no controller transition`);
+    ok(new RegExp(`["']${v}["']`).test(js), `${key} = '${v}' is never set by the scripts`);
+  }
+}
+// controller graphs: every state reachable, smooth (blend_transition), and nothing can get stuck:
+// a state whose animations end must have a way out
+for (const [id, c] of ctrls) {
+  const seen = new Set([c.initial_state ?? "default"]);
+  const todo = [...seen];
+  while (todo.length) {
+    const sn = todo.pop();
+    for (const tr of c.states[sn]?.transitions ?? []) for (const dst of Object.keys(tr)) if (!seen.has(dst)) {
+      seen.add(dst);
+      todo.push(dst);
+    }
+  }
+  for (const sn of Object.keys(c.states)) ok(seen.has(sn), `${id}: state ${sn} is unreachable`);
+  for (const [sn, st] of Object.entries(c.states)) {
+    // leaving a state that plays something must cross-fade (empty states hand over to clips that start from rest)
+    if ((st.animations ?? []).length) ok(typeof st.blend_transition === "number" && st.blend_transition > 0, `${id}.${sn}: no blend_transition (would snap)`);
+    if (sn !== "dead") ok((st.transitions ?? []).length > 0, `${id}.${sn}: dead-end state (could stay stuck)`);
+  }
+}
+// looping clips close their loop (first key == last key, keys at 0 and at animation_length)
+for (const [id, a] of anims) {
+  if (a.loop !== true) continue;
+  for (const [bone, chans] of Object.entries(a.bones ?? {})) for (const [kind, ch] of Object.entries(chans)) {
+    if (typeof ch !== "object" || Array.isArray(ch)) continue;
+    const ks = Object.keys(ch).sort((x, y) => Number(x) - Number(y));
+    const val = (k) => (Array.isArray(ch[k]) ? ch[k] : ch[k].post ?? ch[k].pre);
+    const f = val(ks[0]);
+    const l = val(ks[ks.length - 1]);
+    const closed = Number(ks[0]) < 1e-3 && Math.abs(Number(ks[ks.length - 1]) - a.animation_length) < 1e-3 &&
+      f.every((x, i) => typeof x !== "number" || Math.abs(x - l[i]) <= 0.02);
+    ok(closed, `${id}: ${bone}.${kind} loop seam is open`);
+  }
+}
+// rig V2 bones (added without changing existing cubes: tools/rig_v2.py asserts that at build time)
+for (const b of ["toes_fl", "toes_fr", "toes_hl", "toes_hr", "eyelid_l", "eyelid_r"]) ok(allBones.has(b), `rig V2 bone ${b} present`);
+// project identity is preserved across versions
+ok(bpm.header.uuid === "e8c0e8b7-eae9-4c52-9bac-763f33ef1fe0" && rpm.header.uuid === "8b9eb730-6d68-4b25-91c3-98c7f103bf03",
+  "original pack UUIDs kept");
+
 const rcs = new Map();
 for (const f of files(path.join(RP, "render_controllers"), ".json")) for (const [k, r] of Object.entries(json(f).render_controllers)) rcs.set(k, r);
 for (const r of ce.render_controllers) ok(rcs.has(typeof r === "string" ? r : Object.keys(r)[0]), `render controller ${JSON.stringify(r)} missing`);

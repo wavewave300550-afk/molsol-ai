@@ -10,15 +10,7 @@
         "events": {
           "ambient": "mob.dod.red_dragon.ambient",
           "hurt": "mob.dod.red_dragon.hurt",
-          "death": "mob.dod.red_dragon.death_thud",
-          "step": {
-            "sound": "mob.dod.red_dragon.step",
-            "volume": 0.8,
-            "pitch": [
-              0.9,
-              1.1
-            ]
-          }
+          "death": "mob.dod.red_dragon.death_thud"
         }
       }
     }

@@ -36,7 +36,9 @@ const D = await import(pathToFileURL(path.join(RUN, "dragon.js")).href);
 
 let pass = 0;
 let fail = 0;
+const VERBOSE = process.env.SMOKE_VERBOSE === "1";
 const check = (cond, msg) => {
+  if (VERBOSE && cond) console.log("  ok:", msg);
   if (cond) pass++;
   else {
     fail++;
@@ -50,6 +52,8 @@ const now = () => M.__now();
 const sec = (s) => Math.round(s * 20);
 const actions = (e, t0 = 0) => L.props.filter((p) => p.entity === e && p.key === "dod:action" && p.tick >= t0);
 const flights = (e, t0 = 0) => L.props.filter((p) => p.entity === e && p.key === "dod:flight" && p.tick >= t0);
+const idles = (e, t0 = 0) => L.props.filter((p) => p.entity === e && p.key === "dod:idle" && p.tick >= t0);
+const BP_DEF = JSON.parse(fs.readFileSync(path.join(ADDON, "behavior_packs", "dragon_or_draco", "entities", "red_dragon.json"), "utf8"))["minecraft:entity"];
 const dmgTo = (e, t0 = 0) => L.damage.filter((d) => d.target === e && d.tick >= t0);
 const state = (e) => D.dragons.get(e.id);
 const fwdOf = (e) => {
@@ -65,15 +69,21 @@ const norm = (a) => {
 let ox = 0;
 const area = () => (ox += 2000);
 const cleanup = (...es) => es.forEach((e) => e.isValid && e.remove());
-/** sequence of action values must go through "none" between attacks (charge -> breath is the only direct switch) */
+/** sequence of action values must go through "none" between attacks; the only direct switches are the
+ *  designed chains charge -> breath and alert -> roar (and death interrupting anything) */
+const CHAINS = new Set(["fire_charge>fire_breath", "alert>roar"]);
 function noOverlap(e, t0) {
   const seq = actions(e, t0).map((a) => a.value);
   for (let i = 1; i < seq.length; i++) {
     const a = seq[i - 1];
     const b = seq[i];
-    if (a !== "none" && b !== "none" && !(a === "fire_charge" && b === "fire_breath") && b !== "death") return `${a} -> ${b}`;
+    if (a !== "none" && b !== "none" && !CHAINS.has(`${a}>${b}`) && b !== "death") return `${a} -> ${b}`;
   }
   return null;
+}
+/** [{value, tick, dur}] runs of a property */
+function runs(list, endTick) {
+  return list.map((p, i) => ({ value: p.value, tick: p.tick, dur: (i + 1 < list.length ? list[i + 1].tick : endTick) - p.tick }));
 }
 function readyAll(e) {
   const s = state(e);
@@ -98,42 +108,104 @@ section("spawn: groups, synced properties, home");
 }
 
 // ------------------------------------------------------------------------------------------ 2 idle
-section("idle: look around / wing stretch / patrol flight, always back to none");
+section("living behaviour: occasional idle animations from real triggers, always back to none (20 min)");
 {
   const x = area();
   const d = M.__spawnDragon({ x, y: 64, z: 0 });
+  const s = state(d);
   const t0 = now();
-  tick(sec(150));
-  const seen = new Set(actions(d, t0).map((a) => a.value));
-  const flew = flights(d, t0).some((f) => f.value === "takeoff");
-  check(seen.has("look") || seen.has("stretch") || flew, `idle actions happened (${[...seen]}, flew=${flew})`);
-  check(d.props["dod:action"] === "none" || state(d).run, "no stuck idle action");
-  check(noOverlap(d, t0) === null, `idle overlap ${noOverlap(d, t0)}`);
-  if (flew) check(flights(d, t0).some((f) => f.value === "landing"), "patrol flight landed");
+  let unlockedIdle = 0;
+  let idleInAir = 0;
+  for (let i = 0; i < sec(20 * 60); i++) {
+    tick(1);
+    if (s.idle && !d.groups.has("dod:locked")) unlockedIdle++;
+    if (s.idle && s.flight !== "ground") idleInAir++;
+  }
+  const list = idles(d, t0);
+  const kinds = new Set(list.map((p) => p.value));
+  const want = ["look_left", "look_right", "sniff", "scratch", "tail_sway", "wing_adjust", "stretch", "yawn", "rest", "rise"];
+  check(want.every((k) => kinds.has(k)), `every living behaviour occurs (${want.filter((k) => !kinds.has(k))} missing)`);
+  let chained = null;
+  for (let i = 1; i < list.length; i++) {
+    const p = list[i - 1].value;
+    const q = list[i].value;
+    if (p !== "none" && q !== "none" && !(p === "rest" && q === "rise")) chained = `${p} -> ${q}`;
+  }
+  check(chained === null, `behaviours never chain into each other except rest -> rise (${chained})`);
+  const R = runs(list, now()).filter((r) => r.value !== "none");
+  const last = R[R.length - 1];
+  const finished = R.filter((r) => r !== last || d.props["dod:idle"] === "none");
+  const badLen = finished.filter((r) => (r.value === "rest" ? r.dur < D.IDLE_TICKS.rest + sec(20) || r.dur > D.IDLE_TICKS.rest + sec(45) + 1
+    : r.dur !== D.IDLE_TICKS[r.value]));
+  check(badLen.length === 0, `each behaviour lasts exactly its animation (rest 20-45 s) (${badLen.map((r) => `${r.value}:${r.dur}`)})`);
+  check(R.every((r, i) => r.value !== "rest" || R[i + 1] === undefined || R[i + 1].value === "rise"), "every rest ends with rest_rise");
+  const starts = R.filter((r) => r.value !== "rise").map((r) => r.tick);
+  const minGap = Math.min(...starts.slice(1).map((t, i) => t - starts[i]));
+  check(minGap >= sec(BAL.idle.action_interval_min), `occasional, not constant (min ${(minGap / 20).toFixed(1)} s between behaviours)`);
+  const perMin = starts.length / 20;
+  check(perMin >= 1.5 && perMin <= 4.5, `about every ${BAL.idle.action_interval_min}-${BAL.idle.action_interval_max} s (${perMin.toFixed(1)}/min)`);
+  const rests = R.filter((r) => r.value === "rest").map((r) => r.tick);
+  check(rests.every((t, i) => i === 0 || t - rests[i - 1] >= sec(90)), "rests at most once per 90 s");
+  check(unlockedIdle === 0, `movement locked while a behaviour plays (${unlockedIdle} ticks unlocked)`);
+  check(idleInAir === 0, "no ground behaviour while flying");
+  check(noOverlap(d, t0) === null, `no overlapping actions (${noOverlap(d, t0)})`);
+  const fl = flights(d, t0).map((f) => f.value);
+  check(fl.includes("takeoff") && fl.includes("touchdown"), `occasional patrol flight that lands again (${fl.filter((f) => f === "takeoff").length} flights)`);
   cleanup(d);
   tick(1);
 }
 
 // ------------------------------------------------------------------------------------------ 3 warning
-section("territory: warning roar, then attack if the player stays");
+section("territory: notice -> alert -> warning roar (no damage), then attack if the player stays");
 {
   const x = area();
   const d = M.__spawnDragon({ x, y: 64, z: 0 }, 90);
   tick(5);
   const p = M.__spawnPlayer("Intruder", { x, y: 64, z: 20 });
   const t0 = now();
-  tick(sec(1));
-  const roar = actions(d, t0).find((a) => a.value === "roar");
-  check(!!roar, "warning roar when a player enters warn radius");
-  check(Math.abs(((d.rotation.y % 360) + 360) % 360) < 1 || Math.abs((((d.rotation.y % 360) + 360) % 360) - 360) < 1,
-    `turns to face the intruder (yaw ${d.rotation.y.toFixed(1)})`);
-  tick(sec(3));
+  const yaws = [];
+  for (let i = 0; i < sec(5); i++) {
+    tick(1);
+    yaws.push(d.rotation.y);
+  }
+  const seq = actions(d, t0).map((a) => a.value);
+  check(seq[0] === "alert" && seq[1] === "roar" && seq[2] === "none", `alert flows straight into the warning roar (${seq.slice(0, 3)})`);
+  const al = actions(d, t0).find((a) => a.value === "alert");
+  const ro = actions(d, t0).find((a) => a.value === "roar");
+  check(al && ro && ro.tick - al.tick === D.ACTION_TICKS.alert, "roar starts when the alert animation ends");
+  const y = ((d.rotation.y % 360) + 360) % 360;
+  check(Math.min(y, 360 - y) < 1, `turns to face the intruder (yaw ${d.rotation.y.toFixed(1)})`);
+  const steps = yaws.slice(1).map((v, i) => Math.abs(v - yaws[i]));
+  check(Math.max(...steps) <= 5.01, `turn is gradual, no snapping (max ${Math.max(...steps).toFixed(1)} deg/tick)`);
   check(dmgTo(p, t0).length === 0, "warning does no damage");
   check(d.props["dod:action"] === "none", "roar finished and reset");
   const t1 = now();
   tick(sec(BAL.territory.linger_before_attack + 6));
   check(L.events.some((ev) => ev.entity === d && ev.name === "dod:enrage" && ev.tick >= t1), "lingering intruder enrages the dragon");
   check(dmgTo(p, t1).length > 0, "then it attacks");
+  cleanup(d, p);
+  tick(1);
+}
+
+section("rest: a lying dragon gets up (rest_rise) when a player comes near, then warns");
+{
+  const x = area();
+  const d = M.__spawnDragon({ x, y: 64, z: 0 }, 0);
+  tick(3);
+  const s = state(d);
+  const B = await import(pathToFileURL(path.join(RUN, "brain.js")).href);
+  B.startIdle(s, "rest");
+  tick(sec(6));
+  check(d.props["dod:idle"] === "rest" && d.groups.has("dod:locked"), "lies down and stays down");
+  const p = M.__spawnPlayer("Hiker", { x, y: 64, z: 22 });
+  const t0 = now();
+  tick(6);
+  check(d.props["dod:idle"] === "rise", "a player in range makes it get up first");
+  check(actions(d, t0).length === 0, "no roar while still lying down / rising");
+  tick(D.IDLE_TICKS.rise + 2);
+  check(d.props["dod:idle"] === "none", "rise ends, back to standing");
+  tick(sec(2));
+  check(actions(d, t0).some((a) => a.value === "alert"), "then the territorial warning starts");
   cleanup(d, p);
   tick(1);
 }
@@ -306,6 +378,78 @@ section("crowd in front: wing buffet pushes everyone back");
   tick(1);
 }
 
+// ------------------------------------------------------------------------------------------ 7b step back / turn
+section("pressed against the chest: step back (travel matches the step_backward animation)");
+{
+  const x = area();
+  const d = M.__spawnDragon({ x, y: 64, z: 0 }, 0);
+  tick(3);
+  const p = M.__spawnPlayer("Pest", { x: x + 0.2, y: 64, z: 3 });
+  p.health = { currentValue: 100000, effectiveMax: 100000 };
+  const s = state(d);
+  tick(1);
+  s.target = p;
+  s.combatRoarPending = false;
+  s.lastTargetSeen = now();
+  readyAll(d);
+  s.nextStepBack = 0;
+  const t0 = now();
+  let z0 = null;
+  let st = null;
+  for (let i = 0; i < sec(12) && !st; i++) {
+    const zb = d.location.z;
+    tick(1);
+    if (d.props["dod:action"] === "step_back") {
+      z0 = zb;
+      st = now();
+    }
+  }
+  check(!!st, "step back used when the target is too close in front");
+  if (st) {
+    while (d.props["dod:action"] === "step_back" && now() - st < sec(3)) tick(1);
+    const moved = z0 - d.location.z;
+    check(Math.abs(moved - 22 / 16) < 0.12, `travels ${moved.toFixed(2)} blocks back (animation: ${(22 / 16).toFixed(2)})`);
+    check(now() - st === D.ACTION_TICKS.step_back, "lasts exactly the step_backward animation");
+    const sb = actions(d, t0).filter((a) => a.value === "step_back").map((a) => a.tick);
+    check(sb.every((t, i) => i === 0 || t - sb[i - 1] >= sec(7)), "step back has a cooldown");
+    check(!L.damage.some((h) => h.target === p && h.tick >= st && h.tick < st + D.ACTION_TICKS.step_back), "step back is a manoeuvre, not an attack");
+  }
+  cleanup(d, p);
+  tick(1);
+}
+
+section("target at the side, nothing in range: turns in place gradually (client plays turn_left/right)");
+{
+  const x = area();
+  const d = M.__spawnDragon({ x, y: 64, z: 0 }, 0);
+  tick(3);
+  const p = M.__spawnPlayer("Flanker", { x: x - 9, y: 64, z: 0.5 });
+  p.health = { currentValue: 100000, effectiveMax: 100000 };
+  const s = state(d);
+  tick(1);
+  s.target = p;
+  s.combatRoarPending = false;
+  s.lastTargetSeen = now();
+  readyAll(d);
+  for (const k of Object.keys(s.ready)) s.ready[k] = 1e9;
+  const yaws = [d.rotation.y];
+  let lockedWhileTurning = true;
+  for (let i = 0; i < sec(3); i++) {
+    tick(1);
+    if (Math.abs(d.rotation.y - yaws[yaws.length - 1]) > 0.01 && !d.groups.has("dod:locked")) lockedWhileTurning = false;
+    yaws.push(d.rotation.y);
+  }
+  const steps = yaws.slice(1).map((v, i) => Math.abs(v - yaws[i])).filter((v) => v > 0.01);
+  const fwd = fwdOf(d);
+  const to = norm(sub(p.location, d.location));
+  check(steps.length > 5 && Math.max(...steps) <= 3.51, `turns ${steps.length} ticks at <= 3.5 deg/tick (= ${(3.5 * 20).toFixed(0)} deg/s, above the client's 25 deg/s turn threshold)`);
+  check(dot(fwd, to) > Math.cos((52 * Math.PI) / 180), "ends up facing the target");
+  check(lockedWhileTurning, "feet planted by the AI while turning (movement locked)");
+  check(d.props["dod:action"] === "none", "turning is not an action");
+  cleanup(d, p);
+  tick(1);
+}
+
 // ------------------------------------------------------------------------------------------ 8 flight
 section("target out of reach on a pillar: takeoff, fly, fight from the air, land");
 {
@@ -341,14 +485,24 @@ section("target out of reach on a pillar: takeoff, fly, fight from the air, land
     s.lastTargetSeen = now();
   }
   const fl = flights(d, t0).map((f) => f.value);
-  check(fl[0] === "takeoff", `takes off (${fl.slice(0, 6)})`);
+  check(fl[0] === "takeoff" && fl[1] === "launch", `takes off: pre_takeoff -> launch (${fl.slice(0, 6)})`);
+  const OK = new Set(["takeoff>launch", "launch>fly", "launch>glide", "fly>glide", "glide>fly", "glide>landing", "fly>landing",
+    "landing>touchdown", "touchdown>ground", "ground>takeoff"]);
+  const badPair = fl.slice(1).map((f, i) => `${fl[i]}>${f}`).filter((k) => !OK.has(k));
+  check(badPair.length === 0, `flight phases only in designed order (${badPair})`);
+  const R = runs(flights(d, t0), now());
+  check(R.filter((r) => r.value === "launch").every((r) => r.dur === D.ACTION_TICKS.takeoff - D.ACTION_TICKS.pre_takeoff), "launch lasts the launch animation");
+  check(R.filter((r) => r.value === "touchdown").every((r) => r.dur === D.ACTION_TICKS.touchdown), "touchdown lasts the landing_impact animation");
+  const td = L.events.find((ev) => ev.entity === d && ev.name === "dod:to_ground" && ev.tick >= t0);
+  const tdp = flights(d, t0).find((f) => f.value === "touchdown");
+  check(td && tdp && td.tick === tdp.tick, "gravity returns at the touch-down frame");
   const toAir = L.events.find((ev) => ev.entity === d && ev.name === "dod:to_air" && ev.tick >= t0);
   const take = flights(d, t0).find((f) => f.value === "takeoff");
   check(toAir && take && toAir.tick - take.tick === 11, "gravity switches off at the leap frame (0.55 s)");
   check(maxY > 74, `climbs above the target (max y ${maxY.toFixed(1)})`);
   check(fl.includes("fly"), "flaps in the air");
   check(actions(d, t0).some((a) => a.value === "fire_breath"), "breathes fire from the air");
-  check(fl.includes("landing") && landedAt > 0, `lands again (${fl.slice(0, 8)})`);
+  check(fl.includes("landing") && fl.includes("touchdown") && landedAt > 0, `lands again (${fl.slice(0, 8)})`);
   check(restoredAfterLanding, "ground physics restored after landing");
   check(longest <= sec(BAL.flight.max_air_time) + sec(8), `each flight is capped (longest ${(longest / 20).toFixed(1)} s)`);
   const takeoffs = flights(d, t0).filter((f) => f.value === "takeoff").map((f) => f.tick);
@@ -361,7 +515,7 @@ section("target out of reach on a pillar: takeoff, fly, fight from the air, land
 }
 
 // ------------------------------------------------------------------------------------------ 9 death
-section("death: lethal hit -> 2.8 s death animation (no damage meanwhile) -> dies");
+section("death: lethal hit -> death animation (no damage meanwhile) -> dies");
 {
   const x = area();
   const d = M.__spawnDragon({ x, y: 64, z: 0 }, 0);
@@ -414,11 +568,12 @@ section("reload mid-flight: always reset to a safe ground state");
   d.groups = new Set(["dod:air", "dod:locked", "dod:territorial"]);
   d.props["dod:flight"] = "fly";
   d.props["dod:action"] = "fire_breath";
+  d.props["dod:idle"] = "rest";
   D.dragons.delete(d.id);
   const t0 = now();
   for (const s of M.world.afterEvents.entityLoad.subs) s.fn({ entity: d });
   tick(1);
-  check(d.props["dod:flight"] === "ground" && d.props["dod:action"] === "none", "properties reset");
+  check(d.props["dod:flight"] === "ground" && d.props["dod:action"] === "none" && d.props["dod:idle"] === "none", "properties reset");
   check(d.groups.has("dod:ground") && d.groups.has("dod:free") && !d.groups.has("dod:air"), `groups reset (${[...d.groups]})`);
   tick(sec(3));
   check(d.location.y < 64.5, "falls back to the ground");
@@ -456,6 +611,15 @@ section("creative players are ignored; removal mid-attack is safe; other dragons
   check(!threw && !D.dragons.has(d.id), "removed dragon cleaned up without errors");
   cleanup(d2, c, p);
   tick(1);
+}
+
+// ------------------------------------------------------------------------------------------ 12 coverage
+section("trigger coverage: every animation state value is really produced by the scripts");
+for (const key of ["dod:flight", "dod:action", "dod:idle"]) {
+  const def = BP_DEF.description.properties[key];
+  const seen = new Set([def.default, ...L.props.filter((p) => p.key === key).map((p) => p.value)]);
+  const missing = def.values.filter((v) => !seen.has(v));
+  check(missing.length === 0, `${key}: all ${def.values.length} values triggered (${missing.length ? "missing " + missing : "ok"})`);
 }
 
 // ------------------------------------------------------------------------------------------ summary

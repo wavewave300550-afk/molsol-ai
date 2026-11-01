@@ -36,7 +36,9 @@ EVENTS = {
     "death": (v("sounds/mob/ravager/death", 3, 0.5, 1.0) + v("sounds/mob/enderdragon/growl", 2, 0.48, 1.0), 96),
     "death_thud": (one("sounds/item/mace/smash_ground_heavy", 0.55, 1.0), 64),
     # body and wings
-    "step": (v("sounds/mob/ravager/step", 5, 0.6, 0.75), 32),
+    "step": (v("sounds/mob/ravager/step", 5, 0.6, 0.75), 32),  # footfalls are timed by the animations
+    "scratch": (v("sounds/dig/gravel", 4, 0.7, 0.8), 24),
+    "yawn": (v("sounds/mob/enderdragon/growl", 4, 0.45, 0.55), 32),
     "flap": (v("sounds/mob/enderdragon/wings", 6, 0.8, 0.95), 64),
     "wing_unfold": (v("sounds/mob/enderdragon/wings", 6, 1.15, 0.45), 32),
     "glide": (one("sounds/elytra/elytra_loop", 0.55, 0.35), 32),
@@ -76,7 +78,6 @@ def main():
                         "ambient": D + "ambient",
                         "hurt": D + "hurt",
                         "death": D + "death_thud",
-                        "step": {"sound": D + "step", "volume": 0.8, "pitch": [0.9, 1.1]},
                     },
                 }
             }

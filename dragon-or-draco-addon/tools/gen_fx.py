@@ -268,6 +268,20 @@ PARTICLES["dust_ring"] = effect("dod:dust_ring", "particles_alpha", {
     "minecraft:particle_appearance_lighting": {},
 })
 
+# 7b) small dust puff where a foot lands or a claw rakes the ground (horizontal disc, yaw independent)
+PARTICLES["dust_puff"] = effect("dod:dust_puff", "particles_alpha", {
+    "minecraft:emitter_lifetime_once": {},
+    "minecraft:emitter_rate_instant": {"num_particles": 5},
+    "minecraft:emitter_shape_disc": {"radius": 0.5, "plane_normal": "y", "direction": "outwards"},
+    "minecraft:particle_lifetime_expression": {"max_lifetime": "math.random(0.5, 0.9)"},
+    "minecraft:particle_initial_speed": "math.random(0.8, 1.8)",
+    "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, 0.5, 0], "linear_drag_coefficient": 2.8},
+    "minecraft:particle_appearance_billboard": billboard(["0.35 + v.particle_age * 0.9", "0.35 + v.particle_age * 0.9"],
+                                                         DUST, (16, 16), flip=4),
+    "minecraft:particle_appearance_tinting": tint({"0.0": "#A09A8670", "1.0": "#005A4E44"}),
+    "minecraft:particle_appearance_lighting": {},
+})
+
 # 8) claw slash sparks + dust at the swiping foot
 PARTICLES["claw_slash"] = effect("dod:claw_slash", "particles_add", {
     "minecraft:emitter_lifetime_once": {},
@@ -309,28 +323,27 @@ PARTICLES["death_embers"] = effect("dod:death_embers", "particles_add", {
 
 # ----------------------------------------------------------------------------- client entity + render controllers
 
-ANIMS = {
-    "idle": "idle", "breathe": "breathe", "look_around": "look_around", "look_at_target": "look_at_target",
-    "walk": "walk", "run": "run", "wing_spread": "wing_spread", "wing_fold": "wing_fold",
-    "wing_stretch": "wing_stretch", "takeoff": "takeoff", "fly": "fly", "glide": "glide", "landing": "landing",
-    "roar": "roar", "bite": "bite", "claw": "claw", "tail_smash": "tail_smash", "wing_buffet": "wing_buffet",
-    "fire_charge": "fire_charge", "fire_breath": "fire_breath", "hurt": "hurt", "death": "death",
+PFX = {"fire_charge_glow": "dod:fire_charge_glow", "fire_charge_core": "dod:fire_charge_core",
+       "fire_mouth_burst": "dod:fire_mouth_burst", "nostril_smoke": "dod:nostril_smoke", "roar_breath": "dod:roar_breath",
+       "dust_ring": "dod:dust_ring", "dust_puff": "dod:dust_puff", "claw_slash": "dod:claw_slash",
+       "wind_burst": "dod:wind_burst", "death_embers": "dod:death_embers"}
+CONTROLLER_KEYS = {
+    "move_controller": "controller.animation.dod.red_dragon.move",
+    "idle_controller": "controller.animation.dod.red_dragon.idle",
+    "action_controller": "controller.animation.dod.red_dragon.action",
+    "look_controller": "controller.animation.dod.red_dragon.look",
+    "blink_controller": "controller.animation.dod.red_dragon.blink",
+    "hurt_controller": "controller.animation.dod.red_dragon.hurt",
 }
-SOUND_KEYS = ["bite", "buffet", "death", "fire_breath", "fire_charge", "fire_charge_layer", "flap", "glide", "growl",
-              "land", "roar", "roar_layer", "sniff", "swipe", "tail_slam", "takeoff", "wing_unfold"]
-PFX = {"fire_charge_glow": "dod:fire_charge_glow", "fire_mouth_burst": "dod:fire_mouth_burst",
-       "nostril_smoke": "dod:nostril_smoke", "roar_breath": "dod:roar_breath", "dust_ring": "dod:dust_ring",
-       "claw_slash": "dod:claw_slash", "wind_burst": "dod:wind_burst", "death_embers": "dod:death_embers"}
 
 
 def client_entity():
-    anims = {k: f"animation.dod.red_dragon.{v}" for k, v in ANIMS.items()}
-    anims.update({
-        "move_controller": "controller.animation.dod.red_dragon.move",
-        "action_controller": "controller.animation.dod.red_dragon.action",
-        "look_controller": "controller.animation.dod.red_dragon.look",
-        "hurt_controller": "controller.animation.dod.red_dragon.hurt",
-    })
+    man = json.load(open(os.path.join(ROOT, "tools", "anim_manifest.json")))
+    prefix = "animation.dod.red_dragon."
+    anims = {a[len(prefix):]: a for a in man["animations"]}
+    anims.update(CONTROLLER_KEYS)
+    missing = [k for k in man["particle_keys"] if k not in PFX]
+    assert not missing, f"particle keys without an effect: {missing}"
     return {
         "format_version": "1.10.0",
         "minecraft:client_entity": {
@@ -340,18 +353,13 @@ def client_entity():
                 "textures": {"default": "textures/entity/red_dragon", "fire": "textures/entity/red_dragon_fire"},
                 "geometry": {"default": "geometry.dod.red_dragon", "fire": "geometry.dod.red_dragon_fire"},
                 "scripts": {
-                    "pre_animation": [
-                        "v.moving = math.clamp(q.modified_move_speed * 3.0, 0.0, 1.0);",
-                        "v.run_w = q.property('dod:run') ? v.moving : 0.0;",
-                        "v.walk_w = v.moving - v.run_w;",
-                    ],
-                    "animate": ["breathe", "move_controller", "action_controller", "look_controller",
-                                "hurt_controller"],
+                    "pre_animation": man["pre_animation"],
+                    "animate": list(CONTROLLER_KEYS),
                     "should_update_bones_and_effects_offscreen": "1.0",
                 },
                 "animations": anims,
-                "particle_effects": PFX | {"fire_charge_core": "dod:fire_charge_core"},
-                "sound_effects": {k: f"mob.dod.red_dragon.{k}" for k in SOUND_KEYS},
+                "particle_effects": PFX,
+                "sound_effects": {k: f"mob.dod.red_dragon.{k}" for k in man["sound_keys"]},
                 "render_controllers": [
                     "controller.render.dod.red_dragon",
                     {"controller.render.dod.red_dragon_fire": "q.property('dod:action') == 'fire_breath'"},

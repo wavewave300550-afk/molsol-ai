@@ -4,18 +4,32 @@ import { ANIM_LENGTH } from "./offsets.js";
 export const DRAGON_ID = "dod:red_dragon";
 export const DRAGON_FAMILY = "red_dragon";
 export const sec = (s) => Math.round(s * 20);
-/** Length (ticks) of the client animation that belongs to each action. */
+/** Length (ticks) of the client animation that belongs to each action (read from the animation file). */
 export const ACTION_TICKS = {
+    alert: sec(ANIM_LENGTH.alert),
     roar: sec(ANIM_LENGTH.roar),
     bite: sec(ANIM_LENGTH.bite),
-    claw: sec(ANIM_LENGTH.claw),
+    claw: sec(ANIM_LENGTH.claw_swipe),
     tail: sec(ANIM_LENGTH.tail_smash),
     buffet: sec(ANIM_LENGTH.wing_buffet),
-    look: sec(ANIM_LENGTH.look_around),
-    stretch: sec(ANIM_LENGTH.wing_stretch),
+    step_back: sec(ANIM_LENGTH.step_backward),
     death: sec(ANIM_LENGTH.death),
-    takeoff: sec(ANIM_LENGTH.takeoff),
-    landing: sec(ANIM_LENGTH.landing),
+    pre_takeoff: sec(ANIM_LENGTH.pre_takeoff),
+    takeoff: sec(ANIM_LENGTH.pre_takeoff) + sec(ANIM_LENGTH.launch),
+    touchdown: sec(ANIM_LENGTH.landing_impact),
+};
+/** Living-behaviour animations played between other activities (dod:idle). */
+export const IDLE_TICKS = {
+    look_left: sec(ANIM_LENGTH.idle_look_left),
+    look_right: sec(ANIM_LENGTH.idle_look_right),
+    sniff: sec(ANIM_LENGTH.idle_sniff),
+    scratch: sec(ANIM_LENGTH.idle_ground_scratch),
+    tail_sway: sec(ANIM_LENGTH.idle_tail_sway),
+    wing_adjust: sec(ANIM_LENGTH.idle_wing_adjust),
+    stretch: sec(ANIM_LENGTH.idle_stretch),
+    yawn: sec(ANIM_LENGTH.idle_yawn),
+    rest: sec(ANIM_LENGTH.rest_lower),
+    rise: sec(ANIM_LENGTH.rest_rise),
 };
 /** Damage frames inside the attack animations (seconds -> ticks). */
 export const IMPACT_TICK = { bite: sec(0.45), claw: sec(0.55), tail: sec(0.72), buffet: sec(0.7) };
@@ -61,6 +75,10 @@ export function newState(e) {
         dyingTick: 0,
         allowKill: false,
         props: {},
+        queue: [],
+        turnTicks: 0,
+        nextStepBack: t,
+        restSince: 0,
     };
 }
 export function safe(f) {
@@ -100,6 +118,9 @@ export function setFlight(s, f) {
 }
 export function setAction(s, a) {
     setProp(s, "dod:action", a);
+}
+export function setIdle(s, i) {
+    setProp(s, "dod:idle", i);
 }
 export function face(s, yaw, pitch = 0) {
     s.yaw = yaw;

@@ -24,8 +24,8 @@ function register(e) {
     // normalise after a reload: always back on the ground, unlocked, no half-finished action
     event(s, "dod:to_ground");
     event(s, "dod:unlock");
-    for (const [k, v] of [["dod:flight", "ground"], ["dod:action", "none"], ["dod:aim", 0], ["dod:run", false],
-        ["dod:jet", 12]]) {
+    for (const [k, v] of [["dod:flight", "ground"], ["dod:action", "none"], ["dod:idle", "none"], ["dod:aim", 0],
+        ["dod:run", false], ["dod:jet", 12]]) {
         s.props[k] = "__unset__";
         setProp(s, k, v);
     }
@@ -107,7 +107,10 @@ system.runInterval(() => {
             // never let one bad tick kill the loop; reset the dragon to a safe state
             console.warn(`[Dragon or Draco] ${String(err)}`);
             s.run = undefined;
+            s.idle = undefined;
+            s.queue = [];
             setProp(s, "dod:action", "none");
+            setProp(s, "dod:idle", "none");
         }
     }
 }, 1);

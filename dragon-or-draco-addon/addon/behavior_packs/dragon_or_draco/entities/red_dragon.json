@@ -11,9 +11,11 @@
           "values": [
             "ground",
             "takeoff",
+            "launch",
             "fly",
             "glide",
-            "landing"
+            "landing",
+            "touchdown"
           ],
           "default": "ground",
           "client_sync": true
@@ -22,6 +24,7 @@
           "type": "enum",
           "values": [
             "none",
+            "alert",
             "roar",
             "bite",
             "claw",
@@ -29,9 +32,26 @@
             "buffet",
             "fire_charge",
             "fire_breath",
-            "look",
-            "stretch",
+            "step_back",
             "death"
+          ],
+          "default": "none",
+          "client_sync": true
+        },
+        "dod:idle": {
+          "type": "enum",
+          "values": [
+            "none",
+            "look_left",
+            "look_right",
+            "sniff",
+            "scratch",
+            "tail_sway",
+            "wing_adjust",
+            "stretch",
+            "yawn",
+            "rest",
+            "rise"
           ],
           "default": "none",
           "client_sync": true

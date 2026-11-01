@@ -10,9 +10,9 @@ import { add, clamp, hdist, mul, turnToward, v3, yawDir, yawTo } from "./vec.js"
  * and a reload always puts it back on the ground, so it can never stay stuck in the air.
  */
 const FL = BALANCE.flight;
-const LEAP_TICK = 11;
-const TAKEOFF_TICKS = ACTION_TICKS.takeoff;
-const LANDING_TICKS = ACTION_TICKS.landing;
+const LEAP_TICK = ACTION_TICKS.pre_takeoff; // crouch/anticipation length (0.55 s)
+const LAUNCH_TICKS = ACTION_TICKS.takeoff - LEAP_TICK; // leap + climbing strokes (1.05 s)
+const TOUCHDOWN_TICKS = ACTION_TICKS.touchdown; // landing impact + wing fold (1.4 s)
 export function groundY(s, at, maxDown = 48) {
     const hit = safe(() => s.entity.dimension.getBlockFromRay(at, v3(0, -1, 0), {
         maxDistance: maxDown, includeLiquidBlocks: true, includePassableBlocks: false,
@@ -73,36 +73,42 @@ export function tickFlight(s) {
     const t = s.flightPhaseTick;
     const pos = e.location;
     if (s.flight === "takeoff") {
-        if (t === LEAP_TICK) {
+        // pre-takeoff crouch on the ground; the leap happens exactly when the client starts "launch"
+        if (t >= LEAP_TICK) {
             event(s, "dod:to_air");
             s.inAir = true;
             s.locked = true;
             s.airSince = now();
+            setFlight(s, "launch");
         }
-        if (t >= LEAP_TICK) {
-            const k = (t - LEAP_TICK) / (TAKEOFF_TICKS - LEAP_TICK);
-            if (isLiving(s.target))
-                face(s, turnToward(s.yaw, yawTo(pos, s.target.location), 3), 0);
-            applyVelocity(s, add(mul(yawDir(s.yaw), 0.05 + 0.25 * k), v3(0, 0.62 - 0.32 * k, 0)));
-        }
-        if (t >= TAKEOFF_TICKS)
+        return;
+    }
+    if (s.flight === "launch") {
+        const k = Math.min(1, t / LAUNCH_TICKS);
+        if (isLiving(s.target))
+            face(s, turnToward(s.yaw, yawTo(pos, s.target.location), 3), 0);
+        applyVelocity(s, add(mul(yawDir(s.yaw), 0.05 + 0.25 * k), v3(0, 0.62 - 0.32 * k, 0)));
+        if (t >= LAUNCH_TICKS)
             setFlight(s, "fly");
         return;
     }
     if (s.flight === "landing") {
+        // final approach (flare); on contact gravity comes back and the touch-down animation plays
         const gy = groundY(s, add(pos, v3(0, 1, 0)), 16);
         const h = gy === undefined ? 99 : pos.y - gy;
-        if (s.inAir) {
-            if (h < 0.4 || e.isOnGround || t > 60) {
-                event(s, "dod:to_ground");
-                s.inAir = false;
-                applyVelocity(s, v3(0, -0.1, 0));
-            }
-            else {
-                applyVelocity(s, add(mul(yawDir(s.yaw), 0.1), v3(0, -clamp(h * 0.1, 0.08, 0.24), 0)));
-            }
+        if (h < 0.4 || e.isOnGround || t > 60) {
+            event(s, "dod:to_ground");
+            s.inAir = false;
+            applyVelocity(s, v3(0, -0.1, 0));
+            setFlight(s, "touchdown");
         }
-        if (!s.inAir && t >= LANDING_TICKS) {
+        else {
+            applyVelocity(s, add(mul(yawDir(s.yaw), 0.1), v3(0, -clamp(h * 0.1, 0.08, 0.24), 0)));
+        }
+        return;
+    }
+    if (s.flight === "touchdown") {
+        if (t >= TOUCHDOWN_TICKS) {
             s.landingGoal = undefined;
             setFlight(s, "ground");
             s.airFires = 0;

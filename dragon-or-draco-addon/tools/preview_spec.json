@@ -1,0 +1,581 @@
+[
+ {
+  "name": "idle_breathe",
+  "title": "1. idle_breathe",
+  "layers": [
+   [
+    "idle_breathe",
+    1.0
+   ]
+  ]
+ },
+ {
+  "name": "idle_look_left",
+  "title": "2. idle_look_left",
+  "layers": [
+   [
+    "idle_breathe",
+    1.0
+   ],
+   [
+    "idle_look_left",
+    1.0
+   ]
+  ],
+  "length": 2.6
+ },
+ {
+  "name": "idle_look_right",
+  "title": "3. idle_look_right",
+  "layers": [
+   [
+    "idle_breathe",
+    1.0
+   ],
+   [
+    "idle_look_right",
+    1.0
+   ]
+  ],
+  "length": 2.9
+ },
+ {
+  "name": "idle_sniff",
+  "title": "4. idle_sniff",
+  "layers": [
+   [
+    "idle_breathe",
+    1.0
+   ],
+   [
+    "idle_sniff",
+    1.0
+   ]
+  ],
+  "length": 3.2
+ },
+ {
+  "name": "idle_blink",
+  "title": "5. idle_blink",
+  "layers": [
+   [
+    "idle_breathe",
+    1.0
+   ],
+   [
+    "idle_blink",
+    1.0
+   ]
+  ],
+  "target": [
+   0,
+   58,
+   -100
+  ],
+  "scale": 4.0,
+  "length": 0.6
+ },
+ {
+  "name": "idle_ground_scratch",
+  "title": "6. idle_ground_scratch",
+  "layers": [
+   [
+    "idle_breathe",
+    1.0
+   ],
+   [
+    "idle_ground_scratch",
+    1.0
+   ]
+  ],
+  "length": 2.8
+ },
+ {
+  "name": "idle_tail_sway",
+  "title": "7. idle_tail_sway",
+  "layers": [
+   [
+    "idle_breathe",
+    1.0
+   ],
+   [
+    "idle_tail_sway",
+    1.0
+   ]
+  ],
+  "length": 3.6
+ },
+ {
+  "name": "idle_wing_adjust",
+  "title": "8. idle_wing_adjust",
+  "layers": [
+   [
+    "idle_breathe",
+    1.0
+   ],
+   [
+    "idle_wing_adjust",
+    1.0
+   ]
+  ],
+  "length": 3.0
+ },
+ {
+  "name": "idle_stretch",
+  "title": "9. idle_stretch",
+  "layers": [
+   [
+    "idle_breathe",
+    1.0
+   ],
+   [
+    "idle_stretch",
+    1.0
+   ]
+  ],
+  "length": 3.4
+ },
+ {
+  "name": "idle_yawn",
+  "title": "10. idle_yawn",
+  "layers": [
+   [
+    "idle_breathe",
+    1.0
+   ],
+   [
+    "idle_yawn",
+    1.0
+   ]
+  ],
+  "length": 2.8
+ },
+ {
+  "name": "rest_lower",
+  "title": "11. rest_lower",
+  "layers": [
+   [
+    "rest_lower",
+    1.0
+   ]
+  ]
+ },
+ {
+  "name": "rest_rise",
+  "title": "12. rest_rise",
+  "layers": [
+   [
+    "rest_rise",
+    1.0
+   ]
+  ]
+ },
+ {
+  "name": "walk_start",
+  "title": "13. walk_start",
+  "layers": [
+   [
+    "walk_start",
+    1.0
+   ]
+  ],
+  "speed": 0.9375
+ },
+ {
+  "name": "walk_loop",
+  "title": "14. walk_loop",
+  "layers": [
+   [
+    "walk_loop",
+    1.0
+   ]
+  ],
+  "speed": 1.875
+ },
+ {
+  "name": "walk_stop",
+  "title": "15. walk_stop",
+  "layers": [
+   [
+    "walk_stop",
+    1.0
+   ]
+  ]
+ },
+ {
+  "name": "run_start",
+  "title": "16. run_start",
+  "layers": [
+   [
+    "run_start",
+    1.0
+   ]
+  ],
+  "speed": 1.4
+ },
+ {
+  "name": "run_loop",
+  "title": "17. run_loop",
+  "layers": [
+   [
+    "run_loop",
+    1.0
+   ]
+  ],
+  "speed": 3.4999999999999996
+ },
+ {
+  "name": "run_stop",
+  "title": "18. run_stop",
+  "layers": [
+   [
+    "run_stop",
+    1.0
+   ]
+  ]
+ },
+ {
+  "name": "turn_left",
+  "title": "19. turn_left",
+  "layers": [
+   [
+    "turn_left",
+    1.0
+   ]
+  ]
+ },
+ {
+  "name": "turn_right",
+  "title": "20. turn_right",
+  "layers": [
+   [
+    "turn_right",
+    1.0
+   ]
+  ]
+ },
+ {
+  "name": "step_backward",
+  "title": "21. step_backward",
+  "layers": [
+   [
+    "step_backward",
+    1.0
+   ]
+  ]
+ },
+ {
+  "name": "pre_takeoff",
+  "title": "22. pre_takeoff",
+  "layers": [
+   [
+    "pre_takeoff",
+    1.0
+   ]
+  ]
+ },
+ {
+  "name": "launch",
+  "title": "23. launch",
+  "layers": [
+   [
+    "launch",
+    1.0
+   ]
+  ]
+ },
+ {
+  "name": "flight_flap",
+  "title": "24. flight_flap",
+  "layers": [
+   [
+    "flight_flap",
+    1.0
+   ]
+  ],
+  "target": [
+   0,
+   56,
+   0
+  ]
+ },
+ {
+  "name": "flight_glide",
+  "title": "25. flight_glide",
+  "layers": [
+   [
+    "flight_glide",
+    1.0
+   ]
+  ],
+  "target": [
+   0,
+   56,
+   0
+  ]
+ },
+ {
+  "name": "flight_bank_left",
+  "title": "26. flight_bank_left",
+  "layers": [
+   [
+    "flight_glide",
+    1.0
+   ],
+   [
+    "flight_bank_left",
+    1.0
+   ]
+  ],
+  "target": [
+   0,
+   56,
+   0
+  ],
+  "length": 2.0
+ },
+ {
+  "name": "flight_bank_right",
+  "title": "27. flight_bank_right",
+  "layers": [
+   [
+    "flight_glide",
+    1.0
+   ],
+   [
+    "flight_bank_right",
+    1.0
+   ]
+  ],
+  "target": [
+   0,
+   56,
+   0
+  ],
+  "length": 2.0
+ },
+ {
+  "name": "flight_ascend",
+  "title": "28. flight_ascend",
+  "layers": [
+   [
+    "flight_ascend",
+    1.0
+   ]
+  ],
+  "target": [
+   0,
+   56,
+   0
+  ]
+ },
+ {
+  "name": "flight_descend",
+  "title": "29. flight_descend",
+  "layers": [
+   [
+    "flight_descend",
+    1.0
+   ]
+  ],
+  "target": [
+   0,
+   56,
+   0
+  ]
+ },
+ {
+  "name": "landing_approach",
+  "title": "30. landing_approach",
+  "layers": [
+   [
+    "landing_approach",
+    1.0
+   ]
+  ],
+  "target": [
+   0,
+   50,
+   0
+  ]
+ },
+ {
+  "name": "landing_impact",
+  "title": "31. landing_impact",
+  "layers": [
+   [
+    "landing_impact",
+    1.0
+   ]
+  ]
+ },
+ {
+  "name": "alert",
+  "title": "32. alert",
+  "layers": [
+   [
+    "idle_breathe",
+    1.0
+   ],
+   [
+    "alert",
+    1.0
+   ]
+  ],
+  "length": 1.4
+ },
+ {
+  "name": "roar",
+  "title": "33. roar",
+  "layers": [
+   [
+    "idle_breathe",
+    1.0
+   ],
+   [
+    "roar",
+    1.0
+   ]
+  ],
+  "length": 2.4
+ },
+ {
+  "name": "bite",
+  "title": "34. bite",
+  "layers": [
+   [
+    "idle_breathe",
+    1.0
+   ],
+   [
+    "bite",
+    1.0
+   ]
+  ],
+  "length": 0.95
+ },
+ {
+  "name": "claw_swipe",
+  "title": "35. claw_swipe",
+  "layers": [
+   [
+    "idle_breathe",
+    1.0
+   ],
+   [
+    "claw_swipe",
+    1.0
+   ]
+  ],
+  "length": 1.15
+ },
+ {
+  "name": "tail_smash",
+  "title": "36. tail_smash",
+  "layers": [
+   [
+    "idle_breathe",
+    1.0
+   ],
+   [
+    "tail_smash",
+    1.0
+   ]
+  ],
+  "length": 1.35
+ },
+ {
+  "name": "wing_buffet",
+  "title": "37. wing_buffet",
+  "layers": [
+   [
+    "idle_breathe",
+    1.0
+   ],
+   [
+    "wing_buffet",
+    1.0
+   ]
+  ],
+  "length": 1.45
+ },
+ {
+  "name": "fire_breath_charge",
+  "title": "38. fire_breath_charge",
+  "layers": [
+   [
+    "idle_breathe",
+    1.0
+   ],
+   [
+    "fire_breath_charge",
+    1.0
+   ]
+  ],
+  "length": 1.3
+ },
+ {
+  "name": "fire_breath_release",
+  "title": "39. fire_breath_release",
+  "layers": [
+   [
+    "idle_breathe",
+    1.0
+   ],
+   [
+    "fire_breath_charge",
+    0.0
+   ],
+   [
+    "fire_breath_release",
+    1.0
+   ]
+  ],
+  "length": 3.2,
+  "fire": true,
+  "env": {
+   "prop:dod:aim": 0,
+   "prop:dod:jet": 12
+  }
+ },
+ {
+  "name": "hurt",
+  "title": "40. hurt",
+  "layers": [
+   [
+    "idle_breathe",
+    1.0
+   ],
+   [
+    "hurt",
+    1.0
+   ]
+  ],
+  "length": 0.5
+ },
+ {
+  "name": "death",
+  "title": "41. death",
+  "layers": [
+   [
+    "death",
+    1.0
+   ]
+  ]
+ },
+ {
+  "name": "rest_breathe",
+  "title": "utility: rest_breathe",
+  "layers": [
+   [
+    "rest_lower",
+    1.0
+   ],
+   [
+    "rest_breathe",
+    1.0
+   ]
+  ],
+  "length": 5.0
+ }
+]

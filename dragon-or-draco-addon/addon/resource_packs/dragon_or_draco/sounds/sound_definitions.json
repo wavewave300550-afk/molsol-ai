@@ -254,6 +254,60 @@
         }
       ]
     },
+    "mob.dod.red_dragon.scratch": {
+      "category": "hostile",
+      "max_distance": 24,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/dig/gravel1",
+          "pitch": 0.7,
+          "volume": 0.8
+        },
+        {
+          "name": "sounds/dig/gravel2",
+          "pitch": 0.7,
+          "volume": 0.8
+        },
+        {
+          "name": "sounds/dig/gravel3",
+          "pitch": 0.7,
+          "volume": 0.8
+        },
+        {
+          "name": "sounds/dig/gravel4",
+          "pitch": 0.7,
+          "volume": 0.8
+        }
+      ]
+    },
+    "mob.dod.red_dragon.yawn": {
+      "category": "hostile",
+      "max_distance": 32,
+      "min_distance": 4.0,
+      "sounds": [
+        {
+          "name": "sounds/mob/enderdragon/growl1",
+          "pitch": 0.45,
+          "volume": 0.55
+        },
+        {
+          "name": "sounds/mob/enderdragon/growl2",
+          "pitch": 0.45,
+          "volume": 0.55
+        },
+        {
+          "name": "sounds/mob/enderdragon/growl3",
+          "pitch": 0.45,
+          "volume": 0.55
+        },
+        {
+          "name": "sounds/mob/enderdragon/growl4",
+          "pitch": 0.45,
+          "volume": 0.55
+        }
+      ]
+    },
     "mob.dod.red_dragon.flap": {
       "category": "hostile",
       "max_distance": 64,

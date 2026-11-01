@@ -76,14 +76,13 @@ export function rayClear(s: DragonState, from: Vector3, dir: Vector3, maxD: numb
 
 // ------------------------------------------------------------------------------------------------ actions
 
-/** Start an action (attack, roar, idle animation). The caller guarantees nothing else is running. */
+/** Start an action (alert, roar, attack, step back). The caller guarantees nothing else is running.
+ *  The dragon turns toward `faceTarget` gradually while the action plays (the client then plays the
+ *  turn naturally) instead of snapping to it. */
 export function startAction(s: DragonState, kind: Action, faceTarget?: Entity): void {
   lock(s);
-  if (faceTarget) {
-    face(s, yawTo(s.entity.location, faceTarget.location), 0);
-  }
   const length = kind === "fire_charge" ? sec(BALANCE.fire.charge_time) : ACTION_TICKS[kind] ?? 40;
-  s.run = { kind, tick: 0, length, impactDone: false };
+  s.run = { kind, tick: 0, length, impactDone: false, face: faceTarget };
   setAction(s, kind);
   if (kind === "roar") sound(s.entity.dimension, SND.roarLayer, s.entity.location, 1.0, 0.9);
   if (kind === "fire_charge") {
@@ -92,14 +91,32 @@ export function startAction(s: DragonState, kind: Action, faceTarget?: Entity): 
   }
 }
 
-/** Called once the run finished or must be aborted: clears the property and starts the global gap. */
+/** Called once the run finished or must be aborted: clears the property and starts the global gap.
+ *  A queued follow-up (alert -> roar) starts straight away so the two flow into each other. */
 export function endAction(s: DragonState): void {
   s.run = undefined;
-  setAction(s, "none");
   setProp(s, "dod:aim", 0);
+  const next = s.queue.shift();
+  if (next && !s.dying) {
+    startAction(s, next, isLiving(s.target) ? s.target : undefined);
+    return;
+  }
+  setAction(s, "none");
   s.gapUntil = now() + sec(BALANCE.global_attack_gap);
   unlock(s);
 }
+
+/** step_backward animation: 22 model units (x entity scale) of travel in 1.15 s. */
+const STEP_BACK_BLOCKS = (22 / 16) * SCALE;
+const STEP_BACK_TICKS = sec(1.15);
+const smoother = (u: number): number => {
+  const x = clamp(u, 0, 1);
+  return x * x * x * (x * (x * 6 - 15) + 10);
+};
+
+/** Turn rate (deg/tick) while an action plays, and until which tick. */
+const TURN: Record<string, [number, number]> = { alert: [5, 28], roar: [4, 10], bite: [6, 7], claw: [6, 9], buffet: [4, 12],
+  step_back: [3, 20] };
 
 /** Advance the running action by one tick. */
 export function tickAction(s: DragonState): void {
@@ -107,11 +124,10 @@ export function tickAction(s: DragonState): void {
   if (!r) return;
   r.tick++;
   const e = s.entity;
-  // bite / claw / buffet keep turning toward the target until just before the hit lands
-  // (the tail smash must not: it sweeps the arc behind the dragon)
-  if (s.target && (r.kind === "bite" || r.kind === "claw" || r.kind === "buffet") && r.tick < IMPACT_TICK[r.kind] - 2) {
-    if (isLiving(s.target)) face(s, turnToward(s.yaw, yawTo(e.location, s.target.location), 6), 0);
-  }
+  // turn toward the target gradually (the tail smash must not: it sweeps the arc behind the dragon)
+  const tr = TURN[r.kind];
+  const who = r.face ?? s.target;
+  if (tr && r.tick <= tr[1] && isLiving(who)) face(s, turnToward(s.yaw, yawTo(e.location, who.location), tr[0]), 0);
   switch (r.kind) {
     case "bite":
     case "claw":
@@ -122,6 +138,19 @@ export function tickAction(s: DragonState): void {
         impact(s, r.kind);
       }
       break;
+    case "step_back": {
+      // two backward steps: the body travels STEP_BACK_BLOCKS over 1.15 s with the same smootherstep
+      // profile the step_backward animation uses for its planted feet (so they do not slide)
+      if (r.tick <= STEP_BACK_TICKS) {
+        const ds = STEP_BACK_BLOCKS * (smoother(r.tick / STEP_BACK_TICKS) - smoother((r.tick - 1) / STEP_BACK_TICKS));
+        const back = mul(aimDir(s.yaw, 0), -ds);
+        safe(() => {
+          e.clearVelocity();
+          e.applyImpulse(back);
+        });
+      }
+      break;
+    }
     case "fire_charge":
       tickFireAim(s, r, true);
       if (r.tick >= r.length) {
@@ -335,6 +364,11 @@ export function chooseAttack(s: DragonState, t: Entity, hostilesNear: number): A
 export function startAttack(s: DragonState, k: AttackKind): void {
   if (k === "fire") startFire(s);
   else startAction(s, k, k === "tail" ? undefined : s.target);
+}
+
+/** Back off when the target is pressed against the chest: makes room for a bite. */
+export function startStepBack(s: DragonState): void {
+  startAction(s, "step_back", s.target);
 }
 
 export { angleDiff };

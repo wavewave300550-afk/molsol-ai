@@ -14,7 +14,7 @@ P = "animation.dod.red_dragon."
 
 
 def main():
-    pose = R.pose_of([P + "idle", P + "breathe", P + "roar"], 1.0, {})
+    pose = R.pose_of([P + "idle_breathe", P + "roar"], 1.15, {})
     mouth = K.locator_world(R.GEO, pose, "head", "mouth")
     cam = K.Camera((mouth[0] + 2, mouth[1] + 4, mouth[2] + 18), 38, 8, scale=5.2, size=(512, 512))
     img = R.draw(cam, pose, ground=False)

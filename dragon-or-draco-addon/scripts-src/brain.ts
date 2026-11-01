@@ -1,15 +1,17 @@
 import { Entity, Player } from "@minecraft/server";
 import { BALANCE } from "./balance.js";
 import {
-  chooseAttack, centerOf, endAction, isProtectedPlayer, lineOfSight, startAction, startAttack, tickAction, victims,
+  chooseAttack, centerOf, isProtectedPlayer, lineOfSight, startAction, startAttack, startStepBack, tickAction, victims,
 } from "./combat.js";
 import {
-  ACTION_TICKS, DragonState, event, isLiving, lock, now, safe, sec, setAction, setFlight, setProp,
+  ACTION_TICKS, DragonState, IDLE_TICKS, Idle, event, face, isLiving, lock, now, safe, sec, setAction, setFlight,
+  setIdle, setProp, unlock,
 } from "./dragon.js";
-import { beginLanding, canTakeOff, startTakeoff, tickFlight } from "./flight.js";
-import { add, dist, hdist, v3 } from "./vec.js";
+import { canTakeOff, startTakeoff, tickFlight } from "./flight.js";
+import { add, bearing, dist, hdist, turnToward, v3, yawTo } from "./vec.js";
 
 const TR = BALANCE.territory;
+const BUSY_FLIGHT = new Set(["takeoff", "launch", "landing", "touchdown"]);
 
 /** One tick of a dragon's life. */
 export function think(s: DragonState): void {
@@ -18,12 +20,14 @@ export function think(s: DragonState): void {
     return;
   }
   const t = now();
-  if ((t + s.id.length) % 5 === 0) perceive(s);
   if (s.run) tickAction(s);
+  if (s.idle) tickIdle(s);
   if (s.flight !== "ground") tickFlight(s);
+  // perceive after advancing: anything it starts begins on the next tick, exactly like attacks do
+  if ((t + s.id.length) % 5 === 0) perceive(s);
   updateRunFlag(s);
-  if (s.run || t < s.gapUntil) return;
-  if (s.flight === "takeoff" || s.flight === "landing") return;
+  if (s.run || s.idle || t < s.gapUntil) return;
+  if (BUSY_FLIGHT.has(s.flight)) return;
   const target = isLiving(s.target) ? s.target : undefined;
   if (target) combat(s, target);
   else if (s.flight === "ground") idle(s);
@@ -44,7 +48,6 @@ function perceive(s: DragonState): void {
   const pos = e.location;
   const t = now();
 
-  // keep or drop the current target
   if (s.target) {
     const tg = s.target;
     const valid = isLiving(tg) && tg.dimension.id === e.dimension.id && !isProtectedPlayer(tg);
@@ -59,19 +62,25 @@ function perceive(s: DragonState): void {
   if (!s.target && near.length) {
     const p = near[0];
     const d = dist(p.location, pos);
-    const eye = add(pos, v3(0, 4, 0));
-    const seen = lineOfSight(s, eye, centerOf(p));
+    const seen = lineOfSight(s, add(pos, v3(0, 4, 0)), centerOf(p));
+    // anyone in range wakes a resting dragon: it gets up before anything else
+    if (s.idle?.kind === "rest") {
+      startRise(s);
+      return;
+    }
     if (d <= TR.danger_radius && seen) {
       becomeHostile(s, p);
-    } else if (seen && s.flight === "ground" && !s.run) {
+    } else if (seen && s.flight === "ground" && !s.run && s.idle?.kind !== "rise") {
       const warnedAt = s.warned.get(p.id);
       if (warnedAt !== undefined && t - warnedAt >= sec(TR.linger_before_attack) && t - warnedAt < sec(TR.warn_cooldown * 2)) {
         becomeHostile(s, p);
       } else if (t - s.lastWarn >= sec(TR.warn_cooldown) && t >= s.gapUntil) {
-        // warning roar: face the intruder and roar, no damage
+        // notice -> alert (head snaps up, tense) -> warning roar; no damage
+        stopIdle(s);
         s.lastWarn = t;
         s.warned.set(p.id, t);
-        startAction(s, "roar", p);
+        s.queue = ["roar"];
+        startAction(s, "alert", p);
       }
     }
   }
@@ -90,6 +99,8 @@ export function becomeHostile(s: DragonState, who: Entity): void {
     s.enraged = true;
     event(s, "dod:enrage");
   }
+  if (s.idle?.kind === "rest") startRise(s);
+  else stopIdle(s);
   if (fresh && s.flight === "ground" && !s.run) s.combatRoarPending = true;
 }
 
@@ -108,7 +119,7 @@ function updateRunFlag(s: DragonState): void {
   setProp(s, "dod:run", run);
 }
 
-// ------------------------------------------------------------------------------------------------ decisions
+// ------------------------------------------------------------------------------------------------ combat
 
 function combat(s: DragonState, target: Entity): void {
   const pos = s.entity.location;
@@ -120,11 +131,11 @@ function combat(s: DragonState, target: Entity): void {
     if (s.combatRoarPending && t - s.lastCombatRoar >= sec(BALANCE.roar.combat_roar_cooldown) && d > 5) {
       s.combatRoarPending = false;
       s.lastCombatRoar = t;
-      startAction(s, "roar", target);
+      s.queue = ["roar"];
+      startAction(s, "alert", target); // alert -> roar flows into the fight
       return;
     }
     s.combatRoarPending = false;
-    // out of reach on foot: on a ledge / in the air, or no progress while chasing
     if (d > 9) {
       if (d < s.chaseBest - 1) {
         s.chaseBest = d;
@@ -141,15 +152,38 @@ function combat(s: DragonState, target: Entity): void {
         s.chaseBestTick = t;
         return;
       }
-      s.chaseBestTick = t; // cannot fly here: keep trying on foot
+      s.chaseBestTick = t;
     }
-    const k = chooseAttack(s, target, nearCountCache.get(s.id) ?? 0);
-    if (!k) return;
-    if (k === "fire" && d > 12 && Math.random() < 0.3 && canTakeOff(s)) {
-      startTakeoff(s, "combat"); // fight from the air for a while
+    const b = bearing(pos, s.yaw, target.location);
+    // pressed against the chest: back off a couple of steps to make room for the jaws
+    if (d < 4 && b < 60 && t >= s.nextStepBack && Math.random() < 0.35) {
+      s.nextStepBack = t + sec(7);
+      startStepBack(s);
       return;
     }
-    startAttack(s, k);
+    const k = chooseAttack(s, target, nearCountCache.get(s.id) ?? 0);
+    if (k) {
+      s.turnTicks = 0;
+      if (k === "fire" && d > 12 && Math.random() < 0.3 && canTakeOff(s)) {
+        startTakeoff(s, "combat");
+        return;
+      }
+      startAttack(s, k);
+      return;
+    }
+    // close but not facing it and nothing fits: turn in place toward it (the client plays turn_left/right)
+    if (d < 12 && b > 50 && s.turnTicks < 40) {
+      lock(s);
+      s.turnTicks++;
+      face(s, turnToward(s.yaw, yawTo(pos, target.location), 3.5), 0);
+      return;
+    }
+    if (s.turnTicks > 0) {
+      s.turnTicks = b > 50 && s.turnTicks >= 40 ? -60 : 0; // give the walking AI a go before turning again
+      unlock(s);
+    } else if (s.turnTicks < 0) {
+      s.turnTicks++;
+    }
     return;
   }
   if (s.flight === "fly" || s.flight === "glide") {
@@ -159,30 +193,88 @@ function combat(s: DragonState, target: Entity): void {
   }
 }
 
+// ------------------------------------------------------------------------------------------------ living behaviour
+
+const IDLE_WEIGHTS: [Idle, number][] = [
+  ["look_left", 14], ["look_right", 14], ["sniff", 13], ["scratch", 10], ["tail_sway", 12], ["wing_adjust", 10],
+  ["stretch", 8], ["yawn", 8], ["rest", 7],
+];
+
 function idle(s: DragonState): void {
   const t = now();
   if (t < s.nextIdle) return;
   const I = BALANCE.idle;
   s.nextIdle = t + sec(I.action_interval_min + Math.random() * (I.action_interval_max - I.action_interval_min));
-  const r = Math.random();
-  const fly = BALANCE.flight.patrol_flight_chance;
-  if (r < fly) {
-    if (canTakeOff(s)) startTakeoff(s, "patrol");
-  } else if (r < fly + 0.35) {
-    startAction(s, "look");
-  } else if (r < fly + 0.6) {
-    startAction(s, "stretch");
+  if (Math.random() < BALANCE.flight.patrol_flight_chance && canTakeOff(s)) {
+    startTakeoff(s, "patrol");
+    return;
   }
+  const quiet = players(s, 40).length === 0;
+  const options = IDLE_WEIGHTS.filter(([k]) => k !== "rest" || (quiet && t - s.restSince > sec(90)));
+  let sum = 0;
+  for (const [, w] of options) sum += w;
+  let r = Math.random() * sum;
+  for (const [k, w] of options) {
+    r -= w;
+    if (r <= 0) {
+      startIdle(s, k);
+      return;
+    }
+  }
+}
+
+export function startIdle(s: DragonState, kind: Idle): void {
+  lock(s);
+  const length = kind === "rest" ? IDLE_TICKS.rest + sec(20 + Math.random() * 25) : IDLE_TICKS[kind] ?? 40;
+  s.idle = { kind, tick: 0, length };
+  if (kind === "rest") s.restSince = now();
+  setIdle(s, kind);
+}
+
+function startRise(s: DragonState): void {
+  if (s.idle?.kind !== "rest") return;
+  s.idle = { kind: "rise", tick: 0, length: IDLE_TICKS.rise };
+  setIdle(s, "rise");
+}
+
+/** Interrupt a living behaviour (a resting dragon must get up first). */
+function stopIdle(s: DragonState): void {
+  if (!s.idle) return;
+  if (s.idle.kind === "rest") {
+    startRise(s);
+    return;
+  }
+  if (s.idle.kind === "rise") return;
+  s.idle = undefined;
+  setIdle(s, "none");
+  unlock(s);
+}
+
+function tickIdle(s: DragonState): void {
+  const r = s.idle;
+  if (!r) return;
+  r.tick++;
+  if (r.tick < r.length) return;
+  if (r.kind === "rest") {
+    startRise(s);
+    return;
+  }
+  s.idle = undefined;
+  setIdle(s, "none");
+  s.gapUntil = now() + sec(0.6);
+  unlock(s);
 }
 
 // ------------------------------------------------------------------------------------------------ death
 
-/** Called (deferred) when a hit would kill the dragon: play the 2.8 s death, then really die. */
+/** Called (deferred) when a hit would kill the dragon: play the death animation, then really die. */
 export function beginDying(s: DragonState): void {
   if (s.dying) return;
   s.dying = true;
   s.dyingTick = now();
   s.run = undefined;
+  s.idle = undefined;
+  s.queue = [];
   s.target = undefined;
   s.landingGoal = undefined;
   event(s, "dod:dying");
@@ -191,6 +283,7 @@ export function beginDying(s: DragonState): void {
   setFlight(s, "ground");
   setProp(s, "dod:aim", 0);
   setProp(s, "dod:run", false);
+  setIdle(s, "none");
   setAction(s, "death");
   safe(() => s.entity.clearVelocity());
 }
@@ -202,4 +295,4 @@ function tickDying(s: DragonState): void {
   }
 }
 
-export { lock, endAction, beginLanding };
+export { unlock };

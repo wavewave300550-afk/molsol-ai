@@ -5,25 +5,43 @@ import { ANIM_LENGTH } from "./offsets.js";
 export const DRAGON_ID = "dod:red_dragon";
 export const DRAGON_FAMILY = "red_dragon";
 
-export type Flight = "ground" | "takeoff" | "fly" | "glide" | "landing";
+export type Flight = "ground" | "takeoff" | "launch" | "fly" | "glide" | "landing" | "touchdown";
 export type Action =
-  | "none" | "roar" | "bite" | "claw" | "tail" | "buffet" | "fire_charge" | "fire_breath" | "look" | "stretch" | "death";
+  | "none" | "alert" | "roar" | "bite" | "claw" | "tail" | "buffet" | "fire_charge" | "fire_breath" | "step_back" | "death";
+export type Idle =
+  | "none" | "look_left" | "look_right" | "sniff" | "scratch" | "tail_sway" | "wing_adjust" | "stretch" | "yawn" | "rest"
+  | "rise";
 export type AttackKind = "bite" | "claw" | "tail" | "buffet" | "fire";
 
 export const sec = (s: number): number => Math.round(s * 20);
 
-/** Length (ticks) of the client animation that belongs to each action. */
+/** Length (ticks) of the client animation that belongs to each action (read from the animation file). */
 export const ACTION_TICKS: Record<string, number> = {
+  alert: sec(ANIM_LENGTH.alert),
   roar: sec(ANIM_LENGTH.roar),
   bite: sec(ANIM_LENGTH.bite),
-  claw: sec(ANIM_LENGTH.claw),
+  claw: sec(ANIM_LENGTH.claw_swipe),
   tail: sec(ANIM_LENGTH.tail_smash),
   buffet: sec(ANIM_LENGTH.wing_buffet),
-  look: sec(ANIM_LENGTH.look_around),
-  stretch: sec(ANIM_LENGTH.wing_stretch),
+  step_back: sec(ANIM_LENGTH.step_backward),
   death: sec(ANIM_LENGTH.death),
-  takeoff: sec(ANIM_LENGTH.takeoff),
-  landing: sec(ANIM_LENGTH.landing),
+  pre_takeoff: sec(ANIM_LENGTH.pre_takeoff),
+  takeoff: sec(ANIM_LENGTH.pre_takeoff) + sec(ANIM_LENGTH.launch),
+  touchdown: sec(ANIM_LENGTH.landing_impact),
+};
+
+/** Living-behaviour animations played between other activities (dod:idle). */
+export const IDLE_TICKS: Record<string, number> = {
+  look_left: sec(ANIM_LENGTH.idle_look_left),
+  look_right: sec(ANIM_LENGTH.idle_look_right),
+  sniff: sec(ANIM_LENGTH.idle_sniff),
+  scratch: sec(ANIM_LENGTH.idle_ground_scratch),
+  tail_sway: sec(ANIM_LENGTH.idle_tail_sway),
+  wing_adjust: sec(ANIM_LENGTH.idle_wing_adjust),
+  stretch: sec(ANIM_LENGTH.idle_stretch),
+  yawn: sec(ANIM_LENGTH.idle_yawn),
+  rest: sec(ANIM_LENGTH.rest_lower),
+  rise: sec(ANIM_LENGTH.rest_rise),
 };
 
 /** Damage frames inside the attack animations (seconds -> ticks). */
@@ -34,13 +52,26 @@ export interface ActionRun {
   tick: number; // ticks since start
   length: number;
   impactDone: boolean;
+  /** turn gradually toward this entity while the action plays (no instant snapping) */
+  face?: Entity;
   /** fire breath only */
   fireYaw?: number;
   firePitch?: number;
 }
 
+export interface IdleRun {
+  kind: Idle;
+  tick: number;
+  length: number; // for rest: how long to stay down (lowering + resting)
+}
+
 export interface DragonState {
   id: string;
+  idle?: IdleRun;
+  queue: Action[];
+  turnTicks: number;
+  nextStepBack: number;
+  restSince: number;
   entity: Entity;
   flight: Flight;
   inAir: boolean; // dod:air component group active
@@ -125,6 +156,10 @@ export function newState(e: Entity): DragonState {
     dyingTick: 0,
     allowKill: false,
     props: {},
+    queue: [],
+    turnTicks: 0,
+    nextStepBack: t,
+    restSince: 0,
   };
 }
 
@@ -169,6 +204,10 @@ export function setFlight(s: DragonState, f: Flight): void {
 
 export function setAction(s: DragonState, a: Action): void {
   setProp(s, "dod:action", a);
+}
+
+export function setIdle(s: DragonState, i: Idle): void {
+  setProp(s, "dod:idle", i);
 }
 
 export function face(s: DragonState, yaw: number, pitch = 0): void {
