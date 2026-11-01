@@ -1,0 +1,27 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "grizzly_oath:oath_grizzly",
+      "materials": {
+        "default": "entity_emissive"
+      },
+      "textures": {
+        "default": "textures/entity/oath_grizzly"
+      },
+      "geometry": {
+        "default": "geometry.oath_grizzly"
+      },
+      "animations": {
+        "ultimate": "animation.oath_grizzly.ultimate"
+      },
+      "scripts": {
+        "animate": [ "ultimate" ]
+      },
+      "render_controllers": [
+        "controller.render.grizzly_oath.oath_grizzly"
+      ],
+      "enable_attachables": false
+    }
+  }
+}

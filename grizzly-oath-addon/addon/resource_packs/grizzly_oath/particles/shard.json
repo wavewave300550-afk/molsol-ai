@@ -1,0 +1,68 @@
+{
+  "format_version": "1.10.0",
+  "particle_effect": {
+    "description": {
+      "identifier": "grizzly_oath:shard",
+      "basic_render_parameters": {
+        "material": "particles_blend",
+        "texture": "textures/particle/grizzly_oath_fx"
+      }
+    },
+    "components": {
+      "minecraft:emitter_lifetime_once": {},
+      "minecraft:emitter_rate_instant": {
+        "num_particles": 10
+      },
+      "minecraft:emitter_shape_point": {
+        "direction": [
+          "math.random(-1, 1)",
+          "math.random(0.8, 1.6)",
+          "math.random(-1, 1)"
+        ]
+      },
+      "minecraft:particle_lifetime_expression": {
+        "max_lifetime": "math.random(0.6, 0.9)"
+      },
+      "minecraft:particle_initial_speed": "math.random(4, 8)",
+      "minecraft:particle_motion_dynamic": {
+        "linear_acceleration": [
+          0,
+          -22,
+          0
+        ],
+        "linear_drag_coefficient": 0.5
+      },
+      "minecraft:particle_initial_spin": {
+        "rotation": "math.random(0, 360)",
+        "rotation_rate": "math.random(-360, 360)"
+      },
+      "minecraft:particle_appearance_billboard": {
+        "size": [
+          0.12,
+          0.12
+        ],
+        "facing_camera_mode": "lookat_xyz",
+        "uv": {
+          "texture_width": 128,
+          "texture_height": 128,
+          "uv": [
+            96,
+            32
+          ],
+          "uv_size": [
+            32,
+            32
+          ]
+        }
+      },
+      "minecraft:particle_appearance_tinting": {
+        "color": [
+          "0.18 + 0.3 * v.particle_random_1",
+          0.05,
+          0.05,
+          "1 - (v.particle_age / v.particle_lifetime) * (v.particle_age / v.particle_lifetime)"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "format_version": "1.10.0",
+  "particle_effect": {
+    "description": {
+      "identifier": "grizzly_oath:claw_streak",
+      "basic_render_parameters": {
+        "material": "particles_blend",
+        "texture": "textures/particle/grizzly_oath_fx"
+      }
+    },
+    "components": {
+      "minecraft:emitter_lifetime_once": {},
+      "minecraft:emitter_rate_instant": {
+        "num_particles": 1
+      },
+      "minecraft:emitter_shape_point": {},
+      "minecraft:particle_lifetime_expression": {
+        "max_lifetime": "(v.life ?? 0.5)"
+      },
+      "minecraft:particle_appearance_billboard": {
+        "size": [
+          0.28,
+          1.2
+        ],
+        "facing_camera_mode": "direction_y",
+        "uv": {
+          "texture_width": 128,
+          "texture_height": 128,
+          "uv": [
+            0,
+            32
+          ],
+          "uv_size": [
+            32,
+            32
+          ]
+        },
+        "direction": {
+          "mode": "custom",
+          "custom_direction": [
+            "(v.dir.x ?? 0)",
+            "(v.dir.y ?? 0)",
+            "(v.dir.z ?? 1)"
+          ]
+        }
+      },
+      "minecraft:particle_appearance_tinting": {
+        "color": [
+          "(v.color.r ?? 1)",
+          "(v.color.g ?? 0.15)",
+          "(v.color.b ?? 0.1)",
+          "(v.color.a ?? 1) * (1 - (v.particle_age / v.particle_lifetime))"
+        ]
+      }
+    }
+  }
+}

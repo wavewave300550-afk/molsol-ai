@@ -1,0 +1,452 @@
+{
+  "format_version": "1.10.0",
+  "animations": {
+    "animation.grizzly_oath.player.cleave_r": {
+      "animation_length": 0.4,
+      "bones": {
+        "rightArm": {
+          "rotation": {
+            "0.00": [
+              "-150 * (v.is_first_person ? 0.35 : 1.0)",
+              "-10 * (v.is_first_person ? 0.35 : 1.0)",
+              "35 * (v.is_first_person ? 0.35 : 1.0)"
+            ],
+            "0.08": [
+              "-165 * (v.is_first_person ? 0.35 : 1.0)",
+              "-5 * (v.is_first_person ? 0.35 : 1.0)",
+              "30 * (v.is_first_person ? 0.35 : 1.0)"
+            ],
+            "0.20": [
+              "-25 * (v.is_first_person ? 0.35 : 1.0)",
+              "35 * (v.is_first_person ? 0.35 : 1.0)",
+              "-30 * (v.is_first_person ? 0.35 : 1.0)"
+            ],
+            "0.40": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "body": {
+          "rotation": {
+            "0.00": [
+              0,
+              "-15 * (v.is_first_person ? 0.35 : 1.0)",
+              0
+            ],
+            "0.20": [
+              0,
+              "25 * (v.is_first_person ? 0.35 : 1.0)",
+              0
+            ],
+            "0.40": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    },
+    "animation.grizzly_oath.player.cleave_l": {
+      "animation_length": 0.4,
+      "bones": {
+        "rightArm": {
+          "rotation": {
+            "0.00": [
+              "-120 * (v.is_first_person ? 0.35 : 1.0)",
+              "40 * (v.is_first_person ? 0.35 : 1.0)",
+              "-35 * (v.is_first_person ? 0.35 : 1.0)"
+            ],
+            "0.08": [
+              "-135 * (v.is_first_person ? 0.35 : 1.0)",
+              "45 * (v.is_first_person ? 0.35 : 1.0)",
+              "-40 * (v.is_first_person ? 0.35 : 1.0)"
+            ],
+            "0.20": [
+              "-35 * (v.is_first_person ? 0.35 : 1.0)",
+              "-35 * (v.is_first_person ? 0.35 : 1.0)",
+              "35 * (v.is_first_person ? 0.35 : 1.0)"
+            ],
+            "0.40": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "body": {
+          "rotation": {
+            "0.00": [
+              0,
+              "20 * (v.is_first_person ? 0.35 : 1.0)",
+              0
+            ],
+            "0.20": [
+              0,
+              "-25 * (v.is_first_person ? 0.35 : 1.0)",
+              0
+            ],
+            "0.40": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    },
+    "animation.grizzly_oath.player.rend": {
+      "animation_length": 0.55,
+      "bones": {
+        "rightArm": {
+          "rotation": {
+            "0.00": [
+              "-95 * (v.is_first_person ? 0.35 : 1.0)",
+              "70 * (v.is_first_person ? 0.35 : 1.0)",
+              0
+            ],
+            "0.12": [
+              "-100 * (v.is_first_person ? 0.35 : 1.0)",
+              "75 * (v.is_first_person ? 0.35 : 1.0)",
+              0
+            ],
+            "0.25": [
+              "-80 * (v.is_first_person ? 0.35 : 1.0)",
+              "-75 * (v.is_first_person ? 0.35 : 1.0)",
+              0
+            ],
+            "0.55": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "leftArm": {
+          "rotation": {
+            "0.00": [
+              "-20 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              "-20 * (v.is_first_person ? 0.35 : 1.0)"
+            ],
+            "0.55": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "body": {
+          "rotation": {
+            "0.00": [
+              0,
+              "35 * (v.is_first_person ? 0.35 : 1.0)",
+              0
+            ],
+            "0.25": [
+              0,
+              "-40 * (v.is_first_person ? 0.35 : 1.0)",
+              0
+            ],
+            "0.55": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    },
+    "animation.grizzly_oath.player.pursuit": {
+      "animation_length": 0.75,
+      "bones": {
+        "rightArm": {
+          "rotation": {
+            "0.00": [
+              "-170 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              "15 * (v.is_first_person ? 0.35 : 1.0)"
+            ],
+            "0.28": [
+              "-175 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              "15 * (v.is_first_person ? 0.35 : 1.0)"
+            ],
+            "0.36": [
+              "-20 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              0
+            ],
+            "0.75": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "leftArm": {
+          "rotation": {
+            "0.00": [
+              "40 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              "-10 * (v.is_first_person ? 0.35 : 1.0)"
+            ],
+            "0.36": [
+              "-30 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              "-10 * (v.is_first_person ? 0.35 : 1.0)"
+            ],
+            "0.75": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "body": {
+          "rotation": {
+            "0.00": [
+              "10 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              0
+            ],
+            "0.28": [
+              "15 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              0
+            ],
+            "0.36": [
+              "35 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              0
+            ],
+            "0.75": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    },
+    "animation.grizzly_oath.player.will": {
+      "animation_length": 1.3,
+      "bones": {
+        "rightArm": {
+          "rotation": {
+            "0.00": [
+              0,
+              0,
+              0
+            ],
+            "0.20": [
+              "-175 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              "10 * (v.is_first_person ? 0.35 : 1.0)"
+            ],
+            "1.05": [
+              "-175 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              "10 * (v.is_first_person ? 0.35 : 1.0)"
+            ],
+            "1.30": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "leftArm": {
+          "rotation": {
+            "0.00": [
+              0,
+              0,
+              0
+            ],
+            "0.20": [
+              "-15 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              "-25 * (v.is_first_person ? 0.35 : 1.0)"
+            ],
+            "1.05": [
+              "-15 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              "-25 * (v.is_first_person ? 0.35 : 1.0)"
+            ],
+            "1.30": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "head": {
+          "rotation": {
+            "0.00": [
+              0,
+              0,
+              0
+            ],
+            "0.20": [
+              "-25 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              0
+            ],
+            "1.05": [
+              "-25 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              0
+            ],
+            "1.30": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "body": {
+          "rotation": {
+            "0.00": [
+              0,
+              0,
+              0
+            ],
+            "0.20": [
+              "-8 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              0
+            ],
+            "1.05": [
+              "-8 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              0
+            ],
+            "1.30": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    },
+    "animation.grizzly_oath.player.ult": {
+      "animation_length": 2.5,
+      "bones": {
+        "rightArm": {
+          "rotation": {
+            "0.00": [
+              0,
+              0,
+              0
+            ],
+            "0.30": [
+              "-175 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              "10 * (v.is_first_person ? 0.35 : 1.0)"
+            ],
+            "1.70": [
+              "-185 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              "15 * (v.is_first_person ? 0.35 : 1.0)"
+            ],
+            "1.95": [
+              "-15 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              0
+            ],
+            "2.50": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "leftArm": {
+          "rotation": {
+            "0.00": [
+              0,
+              0,
+              0
+            ],
+            "0.30": [
+              "-30 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              "-30 * (v.is_first_person ? 0.35 : 1.0)"
+            ],
+            "1.70": [
+              "-30 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              "-30 * (v.is_first_person ? 0.35 : 1.0)"
+            ],
+            "1.95": [
+              "-50 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              "-10 * (v.is_first_person ? 0.35 : 1.0)"
+            ],
+            "2.50": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "head": {
+          "rotation": {
+            "0.00": [
+              0,
+              0,
+              0
+            ],
+            "0.30": [
+              "-20 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              0
+            ],
+            "1.70": [
+              "-20 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              0
+            ],
+            "1.95": [
+              "5 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              0
+            ],
+            "2.50": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "body": {
+          "rotation": {
+            "0.00": [
+              0,
+              0,
+              0
+            ],
+            "1.70": [
+              "-10 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              0
+            ],
+            "1.95": [
+              "30 * (v.is_first_person ? 0.35 : 1.0)",
+              0,
+              0
+            ],
+            "2.50": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    }
+  }
+}
