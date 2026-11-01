@@ -101,11 +101,9 @@ class Model:
         o = [center[i] - size[i] / 2 for i in range(3)]
         return self.cube(bone, o, size, mat, **kw)
 
-    def locator(self, bone, name, offset, rotation=None):
-        loc = {"offset": [round(v, 4) for v in offset]}
-        if rotation:
-            loc["rotation"] = list(rotation)
-        self.bones[bone].locators[name] = loc
+    def locator(self, bone, name, offset):
+        """Locators are written as plain [x, y, z] arrays (the form every vanilla model uses)."""
+        self.bones[bone].locators[name] = [r4(v) for v in offset]
 
     # ------------------------------------------------------------------ mirroring
     def mirror(self, src_tag="_l_", dst_tag="_r_"):
@@ -133,12 +131,7 @@ class Model:
                 m.cubes.append(Cube((-(ox + sx), oy, oz), (sx, sy, sz), mat, faces, c.inflate, rot, piv, params,
                                     c.share_updown))
             for ln, loc in b.locators.items():
-                o = loc["offset"]
-                nl = {"offset": [-o[0], o[1], o[2]]}
-                if "rotation" in loc:
-                    r = loc["rotation"]
-                    nl["rotation"] = [r[0], -r[1], -r[2]]
-                m.locators[ln.replace(src_tag, dst_tag)] = nl
+                m.locators[ln.replace(src_tag, dst_tag)] = [-loc[0], loc[1], loc[2]]
 
     # ------------------------------------------------------------------ uv packing
     def pack(self, width: int, pad: int = 1, skip=lambda bone, cube: False) -> int:
@@ -190,7 +183,12 @@ class Model:
         return img
 
     # ------------------------------------------------------------------ export
-    def to_json(self, tex_w, tex_h, visible_w, visible_h, visible_off, fmt="1.16.0"):
+    def to_json(self, tex_w, tex_h, visible_w, visible_h, visible_off, fmt="1.12.0"):
+        names = set(self.bones)
+        locs = [ln for b in self.bones.values() for ln in b.locators]
+        clash = [ln for ln in locs if ln in names]
+        assert not clash, f"locator names must not match bone names: {clash}"
+        assert len(locs) == len(set(locs)), "duplicate locator names"
         bones = []
         for bn in self.order:
             b = self.bones[bn]

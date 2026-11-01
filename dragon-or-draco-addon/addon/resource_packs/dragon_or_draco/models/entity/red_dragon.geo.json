@@ -1,16 +1,16 @@
 {
- "format_version": "1.16.0",
+ "format_version": "1.12.0",
  "minecraft:geometry": [
   {
    "description": {
     "identifier": "geometry.dod.red_dragon",
     "texture_width": 512,
     "texture_height": 512,
-    "visible_bounds_width": 24,
-    "visible_bounds_height": 10,
+    "visible_bounds_width": 26,
+    "visible_bounds_height": 12,
     "visible_bounds_offset": [
      0,
-     3.5,
+     4,
      0
     ]
    },
@@ -23,13 +23,11 @@
       0
      ],
      "locators": {
-      "ground": {
-       "offset": [
-        0,
-        0,
-        0
-       ]
-      }
+      "ground": [
+       0,
+       0,
+       0
+      ]
      }
     },
     {
@@ -1816,13 +1814,11 @@
       }
      ],
      "locators": {
-      "chest": {
-       "offset": [
-        0,
-        40,
-        -30
-       ]
-      }
+      "chest_front": [
+       0,
+       40,
+       -30
+      ]
      }
     },
     {
@@ -5756,41 +5752,31 @@
       }
      ],
      "locators": {
-      "mouth": {
-       "offset": [
-        0,
-        44.5,
-        -127
-       ]
-      },
-      "throat": {
-       "offset": [
-        0,
-        44,
-        -104
-       ]
-      },
-      "nostril_l": {
-       "offset": [
-        4.5,
-        51,
-        -130
-       ]
-      },
-      "nostril_r": {
-       "offset": [
-        -4.5,
-        51,
-        -130
-       ]
-      },
-      "eyes": {
-       "offset": [
-        0,
-        51,
-        -106
-       ]
-      }
+      "mouth": [
+       0,
+       44.5,
+       -127
+      ],
+      "throat": [
+       0,
+       44,
+       -104
+      ],
+      "nostril_l": [
+       4.5,
+       51,
+       -130
+      ],
+      "nostril_r": [
+       -4.5,
+       51,
+       -130
+      ],
+      "eyes": [
+       0,
+       51,
+       -106
+      ]
      }
     },
     {
@@ -8002,13 +7988,11 @@
       }
      ],
      "locators": {
-      "foot_fl": {
-       "offset": [
-        22,
-        0,
-        -30
-       ]
-      }
+      "claw_fl": [
+       22,
+       0,
+       -30
+      ]
      }
     },
     {
@@ -9141,13 +9125,11 @@
       }
      ],
      "locators": {
-      "foot_hl": {
-       "offset": [
-        19,
-        -14,
-        30
-       ]
-      }
+      "claw_hl": [
+       19,
+       -14,
+       30
+      ]
      }
     },
     {
@@ -10472,13 +10454,11 @@
       }
      ],
      "locators": {
-      "wing_l_tip": {
-       "offset": [
-        182,
-        56,
-        -22
-       ]
-      }
+      "wing_l_tip": [
+       182,
+       56,
+       -22
+      ]
      }
     },
     {
@@ -11203,11 +11183,6 @@
       56,
       -22
      ],
-     "rotation": [
-      0,
-      14,
-      0
-     ],
      "cubes": [
       {
        "origin": [
@@ -11491,11 +11466,6 @@
       56,
       -22
      ],
-     "rotation": [
-      0,
-      -16,
-      0
-     ],
      "cubes": [
       {
        "origin": [
@@ -11778,11 +11748,6 @@
       110,
       56,
       -22
-     ],
-     "rotation": [
-      0,
-      -44,
-      0
      ],
      "cubes": [
       {
@@ -15055,13 +15020,11 @@
       }
      ],
      "locators": {
-      "tail_tip": {
-       "offset": [
-        0,
-        46,
-        145
-       ]
-      }
+      "tail_tip": [
+       0,
+       46,
+       145
+      ]
      }
     },
     {
@@ -16730,13 +16693,11 @@
       }
      ],
      "locators": {
-      "wing_r_tip": {
-       "offset": [
-        -182,
-        56,
-        -22
-       ]
-      }
+      "wing_r_tip": [
+       -182,
+       56,
+       -22
+      ]
      }
     },
     {
@@ -17461,11 +17422,6 @@
       56,
       -22
      ],
-     "rotation": [
-      0,
-      -14,
-      0
-     ],
      "cubes": [
       {
        "origin": [
@@ -17749,11 +17705,6 @@
       56,
       -22
      ],
-     "rotation": [
-      0,
-      16,
-      0
-     ],
      "cubes": [
       {
        "origin": [
@@ -18036,11 +17987,6 @@
       -110,
       56,
       -22
-     ],
-     "rotation": [
-      0,
-      44,
-      0
      ],
      "cubes": [
       {
@@ -19357,13 +19303,11 @@
       }
      ],
      "locators": {
-      "foot_fr": {
-       "offset": [
-        -22,
-        0,
-        -30
-       ]
-      }
+      "claw_fr": [
+       -22,
+       0,
+       -30
+      ]
      }
     },
     {
@@ -20496,13 +20440,11 @@
       }
      ],
      "locators": {
-      "foot_hr": {
-       "offset": [
-        -19,
-        -14,
-        30
-       ]
-      }
+      "claw_hr": [
+       -19,
+       -14,
+       30
+      ]
      }
     }
    ]

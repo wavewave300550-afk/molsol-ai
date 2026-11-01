@@ -149,6 +149,19 @@ for (const b of fire.bones) {
     `fire geometry bone ${b.name} matches the main skeleton`);
 }
 const allBones = new Set([...main.bones, ...fire.bones].map((b) => b.name));
+// geometry hygiene that the game is stricter about than schema tools (an invisible model on
+// iPhone was traced to these): plain-array locators whose names never repeat a bone name
+for (const [id, g] of geos) {
+  const docVer = json(files(path.join(RP, "models"), ".json").find((f) => json(f)["minecraft:geometry"].some((x) => x.description.identifier === id))).format_version;
+  ok(docVer === "1.12.0", `${id}: geometry format_version 1.12.0 (is ${docVer})`);
+  const boneNames = new Set(g.bones.map((b) => b.name));
+  for (const b of g.bones) {
+    for (const [ln, lv] of Object.entries(b.locators ?? {})) {
+      ok(Array.isArray(lv) && lv.length === 3 && lv.every((v) => typeof v === "number"), `${id}: locator ${ln} must be a plain [x, y, z] array`);
+      ok(!boneNames.has(ln), `${id}: locator ${ln} has the same name as a bone`);
+    }
+  }
+}
 const locators = new Set(main.bones.flatMap((b) => Object.keys(b.locators ?? {})));
 // rig requirements from the brief
 const need = ["head", "jaw", "neck_1", "neck_2", "neck_3", "neck_4", "chest", "body", "pelvis", "leg_fl_upper", "leg_fl_lower",

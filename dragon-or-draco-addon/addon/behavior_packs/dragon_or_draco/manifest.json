@@ -2,12 +2,12 @@
   "format_version": 2,
   "header": {
     "name": "Dragon or Draco",
-    "description": "Behavior Pack - Phase 1: Red Dragon (v1.0.0)",
+    "description": "Behavior Pack - Phase 1: Red Dragon (v1.0.1)",
     "uuid": "e8c0e8b7-eae9-4c52-9bac-763f33ef1fe0",
     "version": [
       1,
       0,
-      0
+      1
     ],
     "min_engine_version": [
       1,
@@ -22,7 +22,7 @@
       "version": [
         1,
         0,
-        0
+        1
       ]
     },
     {
@@ -32,7 +32,7 @@
       "version": [
         1,
         0,
-        0
+        1
       ],
       "entry": "scripts/main.js"
     }
@@ -43,7 +43,7 @@
       "version": [
         1,
         0,
-        0
+        1
       ]
     },
     {

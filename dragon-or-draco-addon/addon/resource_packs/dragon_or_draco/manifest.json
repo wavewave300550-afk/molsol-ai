@@ -2,12 +2,12 @@
   "format_version": 2,
   "header": {
     "name": "Dragon or Draco",
-    "description": "Resource Pack - Phase 1: Red Dragon (v1.0.0)",
+    "description": "Resource Pack - Phase 1: Red Dragon (v1.0.1)",
     "uuid": "8b9eb730-6d68-4b25-91c3-98c7f103bf03",
     "version": [
       1,
       0,
-      0
+      1
     ],
     "min_engine_version": [
       1,
@@ -22,7 +22,7 @@
       "version": [
         1,
         0,
-        0
+        1
       ]
     }
   ],

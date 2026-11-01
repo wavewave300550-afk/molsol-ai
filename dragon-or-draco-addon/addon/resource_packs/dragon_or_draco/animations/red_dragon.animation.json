@@ -10991,7 +10991,7 @@
    "particle_effects": {
     "0.55": {
      "effect": "claw_slash",
-     "locator": "foot_fr"
+     "locator": "claw_fr"
     }
    }
   },
@@ -12948,7 +12948,7 @@
     "0.7": [
      {
       "effect": "wind_burst",
-      "locator": "chest"
+      "locator": "chest_front"
      },
      {
       "effect": "dust_ring",
@@ -15746,7 +15746,7 @@
     },
     "1.7": {
      "effect": "death_embers",
-     "locator": "chest"
+     "locator": "chest_front"
     }
    }
   }

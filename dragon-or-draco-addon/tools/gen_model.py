@@ -459,7 +459,7 @@ def build() -> Model:
         m.cube("foot_fl", (x, 0, -36), (3, 3, 6), "scales_fine")
         m.cube("foot_fl", (x + 0.25, -0.5, -39.5), (2.5, 3, 4), "claw", rotation=(18, 0, 0), pivot=(x + 1.5, 2, -36))
     m.cube("foot_fl", (19, 1, -19.5), (2.5, 2.5, 3), "claw")  # dew claw
-    m.locator("foot_fl", "foot_fl", (22, 0, -30))
+    m.locator("foot_fl", "claw_fl", (22, 0, -30))
 
     # ------------------------------------------------------------------ hind legs (left)
     m.bone("leg_hl_thigh", "pelvis", (19, 44, 32), (-48, 0, -3))
@@ -477,7 +477,7 @@ def build() -> Model:
         m.cube("foot_hl", (x, -14, 18), (3, 3, 6), "scales_fine")
         m.cube("foot_hl", (x + 0.25, -14.5, 14.5), (2.5, 3, 4), "claw", rotation=(18, 0, 0), pivot=(x + 1.5, -12, 18))
     m.cube("foot_hl", (17.75, -13, 36.5), (2.5, 2.5, 3.5), "claw")  # back toe
-    m.locator("foot_hl", "foot_hl", (19, -14, 30))
+    m.locator("foot_hl", "claw_hl", (19, -14, 30))
 
     # ------------------------------------------------------------------ wings (left): spread T-pose in the XZ plane
     wy = 56
@@ -522,7 +522,8 @@ def build() -> Model:
         _, ang2, length2 = fingers[i + 1]
         delta = math.radians(ang - ang2)
         mb = f"wing_l_mem_{name}"
-        m.bone(mb, f"wing_l_{name}", (110, wy, -22), (0, ang, 0))
+        # child of the finger: it already inherits the finger's rotation (no extra angle here)
+        m.bone(mb, f"wing_l_{name}", (110, wy, -22))
         steps = 8
         depths = []
         tip2 = (length2 * math.cos(delta), length2 * math.sin(delta))
@@ -581,7 +582,7 @@ def build() -> Model:
     m.cube(tip, (-1, 46, tz - 2), (2, 7, 3), "horn", rotation=(-35, 0, 0), pivot=(0, 47, tz), tip=0.5)
     m.locator(tip, "tail_tip", (0, 46, tz + 10))
 
-    m.locator("chest", "chest", (0, 40, -30))
+    m.locator("chest", "chest_front", (0, 40, -30))
     m.locator("root", "ground", (0, 0, 0))
 
     # mirror every left bone to the right side: wings/horns (_l_), front legs (_fl), hind legs (_hl)
@@ -604,7 +605,7 @@ def build_fire(main: Model):
     for n in CHAIN:
         b = main.bones[n]
         f.bone(n, b.parent if n != "root" else None, b.pivot, b.rotation)
-    mouth = main.bones["head"].locators["mouth"]["offset"]
+    mouth = main.bones["head"].locators["mouth"]
     mx, my, mz = mouth
     f.bone("fire_jet", "head", (mx, my, mz))
     segs = 8
@@ -691,7 +692,7 @@ def main():
     assert used <= H <= 1024, used
     img = dilate(m.paint(W, H, PAINTERS, seed=3))
 
-    geo = m.to_json(W, H, visible_w=24, visible_h=10, visible_off=[0, 3.5, 0])
+    geo = m.to_json(W, H, visible_w=26, visible_h=12, visible_off=[0, 4, 0])
     os.makedirs(os.path.join(RP, "models", "entity"), exist_ok=True)
     os.makedirs(os.path.join(RP, "textures", "entity"), exist_ok=True)
     with open(os.path.join(RP, "models", "entity", "red_dragon.geo.json"), "w") as fh:

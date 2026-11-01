@@ -488,7 +488,7 @@ a.rot("head", {0: ZERO, 0.4: [-4, 6, 0], 0.55: [4, -6, 0], 1.15: ZERO}, mirror=F
 a.rot("jaw", {0: ZERO, 0.35: [14, 0, 0], 0.6: [20, 0, 0], 0.9: [4, 0, 0], 1.15: ZERO}, mirror=False)
 a.rot("wing_l_upper", {0: ZERO, 0.45: [0, 0, -10], 1.15: ZERO})
 a.sound(0.4, "mob.dod.red_dragon.swipe")
-a.particle(0.55, "claw_slash", "foot_fr")
+a.particle(0.55, "claw_slash", "claw_fr")
 
 # ----------------------------------------------------------------------------- 13. tail smash  (impact 0.72 s, sweeps the rear arc)
 
@@ -527,7 +527,7 @@ a.rot("head", {0: ZERO, 0.45: [-6, 0, 0], 0.7: [10, 0, 0], 1.45: ZERO}, mirror=F
 a.rot("jaw", {0: ZERO, 0.6: [26, 0, 0], 0.9: [20, 0, 0], 1.45: ZERO}, mirror=False)
 a.sound(0.3, "mob.dod.red_dragon.wing_unfold")
 a.sound(0.62, "mob.dod.red_dragon.buffet")
-a.particle(0.7, "wind_burst", "chest")
+a.particle(0.7, "wind_burst", "chest_front")
 a.particle(0.7, "dust_ring", "ground")
 
 # ----------------------------------------------------------------------------- 15. fire breath charge  16. release
@@ -623,7 +623,7 @@ for i, t in enumerate(TAIL):
     a.rot(t, {0: ZERO, 0.6: [4, 0, 0], 1.6: [TAIL_DEATH[i], 5 + i, 0], 2.8: [TAIL_DEATH[i], 6 + i, 0]}, mirror=False)
 a.sound(0.35, "mob.dod.red_dragon.death")
 a.particle(1.6, "dust_ring", "ground")
-a.particle(1.7, "death_embers", "chest")
+a.particle(1.7, "death_embers", "chest_front")
 
 
 # ----------------------------------------------------------------------------- controllers
