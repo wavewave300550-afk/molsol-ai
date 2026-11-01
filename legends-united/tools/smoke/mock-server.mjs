@@ -331,7 +331,7 @@ export class Entity {
     if (!this.__health) return false;
     const before = world.beforeEvents.entityHurt.fire({ hurtEntity: this, damage: amount, cancel: false, damageSource: { cause: opts?.cause ?? "entityAttack", damagingEntity: opts?.damagingEntity } });
     if (before.cancel) return false;
-    this.__hurtLog.push({ amount: before.damage, cause: opts?.cause, by: opts?.damagingEntity?.typeId });
+    this.__hurtLog.push({ amount: before.damage, cause: opts?.cause, by: opts?.damagingEntity?.typeId, byId: opts?.damagingEntity?.id });
     this.__health.currentValue -= before.damage;
     world.afterEvents.entityHurt.fire({ hurtEntity: this, damage: before.damage, damageSource: { cause: opts?.cause ?? "entityAttack", damagingEntity: opts?.damagingEntity } });
     if (this.__health.currentValue <= 0) {

@@ -13,8 +13,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "../..");
-const BP = path.join(ROOT, "build", "Legends_United_BP");
-const RP = path.join(ROOT, "build", "Legends_United_RP");
+const BP = path.join(ROOT, "build", "Clash_of_Legends_BP");
+const RP = path.join(ROOT, "build", "Clash_of_Legends_RP");
 const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)]));
 
 const ref = JSON.parse(fs.readFileSync(path.join(ROOT, "tools", "vanilla", "reference.json"), "utf8"));
@@ -24,6 +24,7 @@ const entities = {
   "minecraft:item": { families: [], events: [] },
   "minecraft:xp_orb": { families: [], events: [] },
   "minecraft:player": { families: ["player"], events: [], health: 20 },
+  "minecraft:cow": { families: ["cow", "mob"], events: [], health: 10 },
 };
 for (const f of walk(path.join(BP, "entities"))) {
   const e = JSON.parse(fs.readFileSync(f, "utf8"))["minecraft:entity"];
@@ -75,9 +76,9 @@ async function tick(n = 1, each) {
 }
 const commands = {};
 system.beforeEvents.startup.fire({ customCommandRegistry: { registerEnum() {}, registerCommand(def, cb) { commands[def.name] = cb; } } });
-const hosts = { dim11: 0, fb: 0, legends: 0, united: 0 };
+const hosts = { dim11: 0, fb: 0, legends: 0, clash: 0 };
 for (const n of Object.keys(commands)) hosts[n.split(":")[0]] = (hosts[n.split(":")[0]] ?? 0) + 1;
-expect(hosts.dim11 >= 3 && hosts.fb >= 3 && hosts.legends >= 6 && hosts.united === 1, `commands of all hosts registered ${JSON.stringify(hosts)}`);
+expect(hosts.dim11 >= 3 && hosts.fb >= 3 && hosts.legends >= 6 && hosts.clash === 1, `commands of all hosts registered ${JSON.stringify(hosts)}`);
 world.afterEvents.worldLoad.fire({});
 await tick(3);
 const dim = world.getDimension("minecraft:overworld");
@@ -101,6 +102,10 @@ const hatch = (id, at) => {
   return e;
 };
 const report = [];
+const SELF = [];
+world.afterEvents.entityHurt.subscribe((ev) => {
+  if (ev.damageSource.damagingEntity && ev.damageSource.damagingEntity.id === ev.hurtEntity.id) SELF.push(ev.hurtEntity.typeId);
+});
 
 // ------------------------------------------------------------------ 1. spawn eggs
 for (const id of united.EGGS) {
@@ -112,7 +117,14 @@ for (const id of united.EGGS) {
   expect(e.isValid && !!ctl(e), `${id}: hatched from its egg and taken over by its engine`);
 }
 const lang = fs.readFileSync(path.join(RP, "texts", "en_US.lang"), "utf8");
-for (const id of united.EGGS) expect(lang.includes(`item.spawn_egg.entity.${id}.name=`), `${id}: spawn egg has a name`);
+const itemTex = JSON.parse(fs.readFileSync(path.join(RP, "textures", "item_texture.json"), "utf8")).texture_data;
+for (const id of united.EGGS) {
+  const [host, k] = id.split(":");
+  expect((lang.match(new RegExp(`item\\.spawn_egg\\.entity\\.${id}\\.name=`, "g")) ?? []).length === 1, `${id}: spawn egg has exactly one name`);
+  const egg = JSON.parse(fs.readFileSync(path.join(RP, "entity", host, `${k}.entity.json`), "utf8"))["minecraft:client_entity"].description.spawn_egg;
+  const tex = itemTex[egg?.texture]?.textures;
+  expect(!!tex && fs.existsSync(path.join(RP, `${tex}.png`)), `${id}: spawn egg has its own picture`);
+}
 
 // ------------------------------------------------------------------ 2. clashes between hosts
 const hpOf = (e) => (e.isValid ? e.getComponent("minecraft:health").currentValue : 0);
@@ -164,10 +176,30 @@ for (const ids of CLASHES) {
   expect(r.firstDeath >= 0, `clash ${ids.join(" vs ")}: a boss fell`);
 }
 
-// ------------------------------------------------------------------ 3. allies stay allies
-for (const pair of [["legends:taotie", "legends:tenko"], ["fb:titan", "fb:void_emperor"], ["dim11:archon", "dim11:sovereign"]]) {
-  const r = await clash(pair, 400);
-  expect(r.hitBy.every((s) => s.size === 0) && r.targeted.every((s) => s.size === 0), `${pair.join(" + ")} stay allies`);
+// ------------------------------------------------------------------ 3. no allies: bosses of the same add-on fight too
+for (const pair of [["legends:taotie", "legends:tenko"], ["fb:titan", "fb:void_emperor"], ["dim11:archon", "dim11:sovereign"], ["legends:hanuman", "legends:hanuman"]]) {
+  const r = await clash(pair, 2400);
+  pair.forEach((id, i) => {
+    expect(r.targeted[i].has(pair[1 - i]), `${id} (with ${pair[1 - i]}): targets the other boss`);
+    expect(r.hitBy[i].has(pair[1 - i]), `${id} (with ${pair[1 - i]}): is struck by the other boss`);
+  });
+}
+// the Word never fights its own Choir, nobody strikes itself, ordinary mobs are left alone
+{
+  clearWorld();
+  await tick(2);
+  const logos = hatch("legends:logos", { x: 0, y: 64, z: 0 });
+  const titan = hatch("fb:titan", { x: 10, y: 64, z: 0 });
+  const cows = [0, 1, 2].map((i) => dim.spawnEntity("minecraft:cow", { x: 4 + i * 2, y: 64, z: 3 }));
+  await tick(1500, () => {
+    for (const e of [logos, titan]) if (e.isValid && Math.hypot(e.location.x, e.location.z) > 30) e.location = { x: 0, y: 64, z: 0 };
+    for (const c of cows) if (c.isValid) c.location = { x: titan.isValid ? titan.location.x - 2 : 2, y: 64, z: 2 };
+  });
+  const choirHits = logos.__hurtLog.filter((h) => /seraph|cherub|ophan/.test(h.by ?? "")).length;
+  expect(choirHits === 0, `the Word is never struck by its own Choir (${choirHits})`);
+  const choir = dim.getEntities({ families: ["legends_choir"] });
+  expect(choir.every((c) => !c.__hurtLog.some((h) => h.by === "legends:logos" || /seraph|cherub|ophan/.test(h.by ?? ""))), "the Choir is never struck by the Word or each other");
+  expect(cows.every((c) => c.isValid && c.__hurtLog.length === 0), "ordinary mobs are left alone");
 }
 
 // ------------------------------------------------------------------ 4. players are still fought
@@ -213,6 +245,8 @@ expect(P1.messages.length === 0, `no chat text (${P1.messages.slice(0, 3).join("
 expect(P1.onScreenDisplay.titles.length === 0, `no titles (${P1.onScreenDisplay.titles.slice(0, 3).map((t) => t.t).join(" | ")})`);
 expect(P1.onScreenDisplay.actionbar === "", `no action-bar text (${P1.onScreenDisplay.actionbar})`);
 
+// ------------------------------------------------------------------ results
+expect(SELF.length === 0, `no boss ever struck itself (${SELF.slice(0, 3).join(", ")})`);
 // ------------------------------------------------------------------ results
 const issues = __issues;
 expect(issues.length === 0, `mock issues: ${issues.slice(0, 8).join(" | ")}`);

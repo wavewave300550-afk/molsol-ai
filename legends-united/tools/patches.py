@@ -51,23 +51,43 @@ def targets_patches(team, ignore=None):
     return out
 
 
+# bosses fight bosses and players - nothing else (no pets, villagers or ordinary mobs)
+VICTIM = ('''    if (IGNORED_TYPES.has(e.typeId) || e.typeId.startsWith("dim11:"))
+        return false;
+    if (!e.getComponent(EntityHealthComponent.componentId))
+        return false;
+    for (const f of IGNORED_FAMILIES)
+        if (e.matches({ families: [f] }))
+            return false;
+    return true;
+}''', '''    return isRivalOf(TEAM, e); // Clash of Legends: bosses fight bosses and players, nothing else
+}''')
+
+
+def acting(call, depth):
+    rel = "../" * depth + "shared/rivals.js"
+    return [("^", f'import {{ setActing }} from "{rel}";\n'),
+            (f"            {call}\n", f"            setActing(b.entity);\n            try {{\n                {call}\n            }}\n            finally {{\n                setActing(undefined);\n            }}\n")]
+
+
+def guard(old, depth=1):
+    rel = "../" * depth + "shared/rivals.js"
+    return [("^", f'import {{ bossDuel }} from "{rel}";\n'), (old, old.replace(") {", " && !bossDuel(src, victim)) {") if "victim.typeId" in old else old.replace(") {", " && !bossDuel(src, ev.hurtEntity)) {"))]
+
+
 TITLE = [("    p.onScreenDisplay.setTitle(main, {", "    p.onScreenDisplay?.setTitle(main, {")]
 
 PATCHES = {
-    "dim11/core/targets.js": targets_patches("dim11"),
+    "dim11/core/targets.js": targets_patches("dim11", [VICTIM]),
     "dim11/core/fx.js": TITLE,
-    "dim11/engine.js": engine_patches("dim11", "        const players = playersNear(this.dim, here, 56);",
+    "dim11/engine.js": acting("b.tick(t);", 1) + engine_patches("dim11", "        const players = playersNear(this.dim, here, 56);",
                                       "            if (t - this.lastTargetCall > 300) {",
                                       "        if (by instanceof Player)"),
     "dim11/beings/archon.js": [("${target.name}.", '${target.name ?? "intruder"}.')],
 
-    "fb/core/targets.js": targets_patches("fb", [
-        ('const IGNORED_FAMILIES = new Set(["dim11_being", "dim11_minion", "dim11_illusion", "inanimate"]);',
-         'const IGNORED_FAMILIES = new Set(["fb_boss", "fb_illusion", "inanimate"]);'),
-        ('e.typeId.startsWith("dim11:")', 'e.typeId.startsWith("fb:")'),
-    ]),
+    "fb/core/targets.js": targets_patches("fb", [VICTIM]),
     "fb/core/fx.js": TITLE,
-    "fb/engine.js": engine_patches("fb", "        const players = playersNear(this.dim, here, 64);",
+    "fb/engine.js": acting("b.tick(t);", 1) + engine_patches("fb", "        const players = playersNear(this.dim, here, 64);",
                                    "            if (t - this.lastTaunt > 400) {",
                                    "        if (attacker instanceof Player)"),
     "fb/bosses/emperor.js": [("${target.name}.", '${target.name ?? "pretender"}.')],
@@ -89,7 +109,10 @@ PATCHES = {
         ("        this.maxFighters = Math.max(this.maxFighters, this.fighters.length);",
          "        this.maxFighters = Math.max(this.maxFighters, this.fighters.filter((p) => p instanceof Player).length);"),
     ],
-    "legends/main.js": [
+    "dim11/main.js": guard('    if (src && src.typeId.startsWith("dim11:") && victim.typeId.startsWith("dim11:")) {'),
+    "fb/main.js": guard('    if (src && src.typeId.startsWith("fb:") && victim.typeId.startsWith("fb:")) {'),
+    "legends/bosses/registry.js": acting("b.tick();", 2),
+    "legends/main.js": guard('    if (src && src.typeId.startsWith("legends:")) {') + [
         ('import { adoptOrphans, clearAll, tickBeings } from "./bosses/registry.js";',
          'import { adoptOrphans, BOSS_IDS, clearAll, controlBoss, tickBeings } from "./bosses/registry.js";'),
         ("// --------------------------------------------------------------------------- main loop\n",
@@ -116,6 +139,10 @@ def apply(scripts_dir):
         path = os.path.join(scripts_dir, rel)
         s = open(path, encoding="utf-8").read()
         for old, new in reps:
+            if old == "^":
+                s = new + s
+                n += 1
+                continue
             c = s.count(old)
             if c != 1:
                 raise SystemExit(f"patch {rel}: expected 1 match, found {c}: {old[:80]!r}")

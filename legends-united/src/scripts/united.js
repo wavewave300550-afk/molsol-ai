@@ -7,7 +7,7 @@ export const EGGS = [
 ];
 system.beforeEvents.startup.subscribe((ev) => {
     try {
-        ev.customCommandRegistry.registerCommand({ name: "united:eggs", description: "Receive the spawn egg of every boss", permissionLevel: CommandPermissionLevel.GameDirectors, cheatsRequired: true }, (origin) => {
+        ev.customCommandRegistry.registerCommand({ name: "clash:eggs", description: "Receive the spawn egg of every boss", permissionLevel: CommandPermissionLevel.GameDirectors, cheatsRequired: true }, (origin) => {
             const p = origin.sourceEntity;
             if (!(p instanceof Player))
                 return { status: CustomCommandStatus.Failure, message: "Players only." };
@@ -18,7 +18,7 @@ system.beforeEvents.startup.subscribe((ev) => {
                         inv?.addItem(new ItemStack(`${id}_spawn_egg`, 1));
                     }
                     catch (e) {
-                        console.warn(`[united] no spawn egg for ${id}: ${e}`);
+                        console.warn(`[clash] no spawn egg for ${id}: ${e}`);
                     }
                 }
             });
@@ -26,6 +26,6 @@ system.beforeEvents.startup.subscribe((ev) => {
         });
     }
     catch (e) {
-        console.warn(`[united] commands unavailable: ${e}`);
+        console.warn(`[clash] commands unavailable: ${e}`);
     }
 });

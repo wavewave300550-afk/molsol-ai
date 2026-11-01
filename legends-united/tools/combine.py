@@ -19,6 +19,7 @@ ROOT = os.path.dirname(HERE)
 REPO = os.path.dirname(ROOT)
 sys.path.insert(0, HERE)
 import patches  # noqa: E402
+import eggs as eggmod  # noqa: E402
 
 # No on-screen text: every chat line, title, subtitle and action-bar text the hosts send becomes a
 # no-op (`x.__quiet?.(...)` evaluates its arguments and does nothing). Menus the player opens
@@ -49,8 +50,8 @@ def silence(scripts):
                 open(path, "w", encoding="utf-8").write(out)
     return n
 
-VERSION = [1, 0, 0]
-NAME = "Legends United"
+VERSION = [1, 1, 0]
+NAME = "Clash of Legends"
 HOSTS = [  # key, release, BP folder, RP folder, title
     ("dim11", "eleventh-addon/dist/Eleventh_Dimension.mcaddon", "Dim11_BP", "Dim11_RP", "Intelligent Beings of the 11th Dimension"),
     ("fb", "final-bosses/dist/Five_Final_Bosses.mcaddon", "FinalBosses_BP", "FinalBosses_RP", "Five Final Bosses"),
@@ -59,9 +60,9 @@ HOSTS = [  # key, release, BP folder, RP folder, title
 UUID = {"bp": "8f8b51af-2416-4983-adab-54cd58085862", "bp_data": "cda777fb-618f-4408-8da5-09e61d1b17f8",
         "bp_script": "33ab7ade-a9c3-46c0-8da8-062dc1a1196d", "rp": "3607d547-1bd2-4f81-847b-b6610c3c8d71"}
 BUILD = os.path.join(ROOT, "build")
-BP = os.path.join(BUILD, "Legends_United_BP")
-RP = os.path.join(BUILD, "Legends_United_RP")
-DIST = os.path.join(ROOT, "dist", "Legends_United.mcaddon")
+BP = os.path.join(BUILD, "Clash_of_Legends_BP")
+RP = os.path.join(BUILD, "Clash_of_Legends_RP")
+DIST = os.path.join(ROOT, "dist", "Clash_of_Legends.mcaddon")
 
 # Spawn eggs for the Legendary bosses (the other hosts already ship theirs).
 LEGEND_EGGS = {
@@ -117,13 +118,13 @@ def merged_item_textures(paths):
             if k in data and data[k] != v:
                 raise SystemExit(f"item texture clash: {k}")
             data[k] = v
-    return {"resource_pack_name": "legends_united", "texture_name": "atlas.items", "texture_data": data}
+    return {"resource_pack_name": "clash_of_legends", "texture_name": "atlas.items", "texture_data": data}
 
 
 def manifests():
     bp = {
         "format_version": 2,
-        "header": {"name": NAME, "description": "Three hosts of bosses in one pack - and they fight each other.\n11th Dimension · Final Bosses · Legendary Beings",
+        "header": {"name": NAME, "description": "§614 bosses, one battlefield - every boss fights every boss.\n§711th Dimension · Final Bosses · Legendary Beings",
                    "uuid": UUID["bp"], "version": VERSION, "min_engine_version": [1, 26, 60]},
         "modules": [{"type": "data", "uuid": UUID["bp_data"], "version": VERSION},
                     {"type": "script", "language": "javascript", "uuid": UUID["bp_script"], "version": VERSION, "entry": "scripts/main.js"}],
@@ -133,7 +134,7 @@ def manifests():
     }
     rp = {
         "format_version": 2,
-        "header": {"name": NAME, "description": "Models, textures and effects of Legends United", "uuid": UUID["rp"], "version": VERSION, "min_engine_version": [1, 26, 60]},
+        "header": {"name": NAME, "description": "Models, textures, effects and spawn eggs of Clash of Legends", "uuid": UUID["rp"], "version": VERSION, "min_engine_version": [1, 26, 60]},
         "modules": [{"type": "resources", "uuid": "a31a8e62-6d36-4c3a-9d43-3f5f0b2d6e71", "version": VERSION}],
         "dependencies": [{"uuid": UUID["bp"], "version": VERSION}],
     }
@@ -160,10 +161,8 @@ def legend_eggs():
         json.dump(d, open(bpf, "w", encoding="utf-8"), indent=2)
         rpf = os.path.join(RP, "entity", "legends", f"{key}.entity.json")
         c = json.load(open(rpf, encoding="utf-8"))
-        c["minecraft:client_entity"]["description"]["spawn_egg"] = {"base_color": base, "overlay_color": over}
         json.dump(c, open(rpf, "w", encoding="utf-8"), indent=2)
-        lines.append(f"item.spawn_egg.entity.legends:{key}.name=Spawn {title}")
-    return "\n## ---- legends spawn eggs\n" + "\n".join(lines) + "\n"
+    return ""
 
 
 def zipdir(z, folder, arc):
@@ -195,16 +194,32 @@ def main():
         lang = merged_lang([(k, os.path.join(ins[k][idx], "texts", "en_US.lang")) for k in ins], eggs if pack is RP else "")
         open(os.path.join(pack, "texts", "en_US.lang"), "w", encoding="utf-8").write(lang)
         json.dump(["en_US"], open(os.path.join(pack, "texts", "languages.json"), "w"))
-        icon([os.path.join(ins[k][idx], "pack_icon.png") for k in ins], os.path.join(pack, "pack_icon.png"))
-    json.dump(merged_item_textures([(k, os.path.join(ins[k][1], "textures", "item_texture.json")) for k in ins]),
+    # spawn eggs: one portrait egg per boss, named after the boss and its add-on
+    egg_tex, portraits = eggmod.write_eggs(RP)
+    for eid in eggmod.BOSSES:
+        host, k = eid.split(":")
+        rpf = os.path.join(RP, "entity", host, f"{k}.entity.json")
+        c = json.load(open(rpf, encoding="utf-8"))
+        c["minecraft:client_entity"]["description"]["spawn_egg"] = {"texture": f"clash_egg_{eggmod.key(eid)}", "texture_index": 0}
+        json.dump(c, open(rpf, "w", encoding="utf-8"), indent=2)
+    lang_path = os.path.join(RP, "texts", "en_US.lang")
+    lines = [ln for ln in open(lang_path, encoding="utf-8").read().splitlines() if not ln.startswith("item.spawn_egg.entity.")]
+    open(lang_path, "w", encoding="utf-8").write("\n".join(lines + ["## ---- spawn eggs"] + eggmod.lang_lines()) + "\n")
+    for pack in (BP, RP):
+        eggmod.pack_icon(portraits, os.path.join(pack, "pack_icon.png"))
+    eggmod.pack_icon(portraits, os.path.join(ROOT, "docs", "pack_icon.png"))
+    eggmod.showcase(portraits, os.path.join(ROOT, "docs", "eggs.png"))
+    item_tex = merged_item_textures([(k, os.path.join(ins[k][1], "textures", "item_texture.json")) for k in ins])
+    item_tex["texture_data"].update(egg_tex)
+    json.dump(item_tex,
               open(os.path.join(RP, "textures", "item_texture.json"), "w"), indent=1)
     bpm, rpm = manifests()
     json.dump(bpm, open(os.path.join(BP, "manifest.json"), "w"), indent=2)
     json.dump(rpm, open(os.path.join(RP, "manifest.json"), "w"), indent=2)
     os.makedirs(os.path.dirname(DIST), exist_ok=True)
     with zipfile.ZipFile(DIST, "w", zipfile.ZIP_DEFLATED) as z:
-        zipdir(z, BP, "Legends_United_BP")
-        zipdir(z, RP, "Legends_United_RP")
+        zipdir(z, BP, "Clash_of_Legends_BP")
+        zipdir(z, RP, "Clash_of_Legends_RP")
     print(f"{len(owners_bp)} BP files, {len(owners_rp)} RP files, {n} script patches, {quiet} on-screen texts removed")
     print(f"wrote {DIST} {os.path.getsize(DIST) // 1024} KB")
 
