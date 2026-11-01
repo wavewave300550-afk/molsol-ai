@@ -186,9 +186,32 @@ for (const id of ["dim11:archon", "fb:titan", "legends:taotie"]) {
   expect(aimed, `${id}: still targets players`);
   expect(P1.__hurtLog.slice(h0).some((h) => h.by === id), `${id}: still hurts players`);
 }
+// ------------------------------------------------------------------ 5. free-for-all with a player in the middle
+{
+  clearWorld();
+  await tick(2);
+  P1.location = { x: 0, y: 64, z: 0 };
+  const ids = ["dim11:sovereign", "fb:titan", "legends:hanuman", "legends:alicorn", "fb:choir", "dim11:observer"];
+  const es = ids.map((id, i) => hatch(id, { x: Math.cos(i) * 12, y: 64, z: Math.sin(i) * 12 }));
+  const hit = new Set();
+  const h0 = es.map((e) => e.__hurtLog.length);
+  await tick(3000, () => {
+    if (P1.getComponent("minecraft:health").currentValue < 8) P1.getComponent("minecraft:health").setCurrentValue(20);
+    es.forEach((e) => {
+      if (e.isValid && Math.hypot(e.location.x, e.location.z) > 30) e.location = { x: e.location.x * 0.5, y: 64, z: e.location.z * 0.5 };
+    });
+  });
+  es.forEach((e, i) => { for (const h of e.__hurtLog.slice(h0[i])) if (h.by && TEAM(h.by) !== TEAM(ids[i])) hit.add(ids[i]); });
+  expect(hit.size >= 5, `free-for-all: ${hit.size}/6 bosses struck by rivals`);
+  report.push(`free-for-all (6 bosses + 1 player, 3000t): ${ids.map((id, i) => `${id.split(":")[1]} ${es[i].isValid ? "alive" : "down"}`).join(", ")}`);
+}
 P1.location = { ...FAR };
 clearWorld();
 await tick(40);
+// ------------------------------------------------------------------ 6. nothing written on screen
+expect(P1.messages.length === 0, `no chat text (${P1.messages.slice(0, 3).join(" | ")})`);
+expect(P1.onScreenDisplay.titles.length === 0, `no titles (${P1.onScreenDisplay.titles.slice(0, 3).map((t) => t.t).join(" | ")})`);
+expect(P1.onScreenDisplay.actionbar === "", `no action-bar text (${P1.onScreenDisplay.actionbar})`);
 
 // ------------------------------------------------------------------ results
 const issues = __issues;

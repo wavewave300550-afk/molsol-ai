@@ -20,6 +20,35 @@ REPO = os.path.dirname(ROOT)
 sys.path.insert(0, HERE)
 import patches  # noqa: E402
 
+# No on-screen text: every chat line, title, subtitle and action-bar text the hosts send becomes a
+# no-op (`x.__quiet?.(...)` evaluates its arguments and does nothing). Menus the player opens
+# (codex, bestiary) and replies to typed commands are unaffected.
+QUIET = [(".sendMessage(", ".__quiet?.("),
+         ("onScreenDisplay.setActionBar(", "onScreenDisplay?.__quiet?.("),
+         ("onScreenDisplay?.setTitle(", "onScreenDisplay?.__quiet?.("),
+         ("onScreenDisplay.setTitle(", "onScreenDisplay?.__quiet?.("),
+         ("onScreenDisplay.updateSubtitle(", "onScreenDisplay?.__quiet?.(")]
+
+
+def silence(scripts):
+    n = 0
+    for dp, _, fs in os.walk(scripts):
+        for f in fs:
+            if not f.endswith(".js"):
+                continue
+            path = os.path.join(dp, f)
+            src = open(path, encoding="utf-8").read()
+            out = src
+            for a, b in QUIET:
+                n += out.count(a)
+                out = out.replace(a, b)
+            for a in ("sendMessage(", "setActionBar(", "setTitle(", "updateSubtitle("):
+                if a in out:
+                    raise SystemExit(f"text output left in {path}: {a}")
+            if out != src:
+                open(path, "w", encoding="utf-8").write(out)
+    return n
+
 VERSION = [1, 0, 0]
 NAME = "Legends United"
 HOSTS = [  # key, release, BP folder, RP folder, title
@@ -159,6 +188,7 @@ def main():
     # shared scripts and entry point
     shutil.copytree(os.path.join(ROOT, "src", "scripts"), os.path.join(BP, "scripts"), dirs_exist_ok=True)
     n = patches.apply(os.path.join(BP, "scripts"))
+    quiet = silence(os.path.join(BP, "scripts"))
     eggs = legend_eggs()
     for pack, idx in ((BP, 0), (RP, 1)):
         os.makedirs(os.path.join(pack, "texts"), exist_ok=True)
@@ -175,7 +205,7 @@ def main():
     with zipfile.ZipFile(DIST, "w", zipfile.ZIP_DEFLATED) as z:
         zipdir(z, BP, "Legends_United_BP")
         zipdir(z, RP, "Legends_United_RP")
-    print(f"{len(owners_bp)} BP files, {len(owners_rp)} RP files, {n} script patches")
+    print(f"{len(owners_bp)} BP files, {len(owners_rp)} RP files, {n} script patches, {quiet} on-screen texts removed")
     print(f"wrote {DIST} {os.path.getsize(DIST) // 1024} KB")
 
 
