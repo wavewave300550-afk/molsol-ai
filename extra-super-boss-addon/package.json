@@ -1,7 +1,7 @@
 {
   "name": "extra-super-boss-addon",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Minecraft Bedrock add-on: Extra Super Boss - Boss 1: Leonardo da Vinci",
   "scripts": {
     "assets": "python3 tools/gen_model.py && python3 tools/gen_art.py && python3 tools/gen_entity.py && python3 tools/gen_animations.py && python3 tools/gen_fx.py && python3 tools/gen_offsets.py",

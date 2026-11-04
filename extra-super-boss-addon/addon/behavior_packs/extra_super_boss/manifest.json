@@ -2,12 +2,12 @@
   "format_version": 2,
   "header": {
     "name": "Extra Super Boss",
-    "description": "Boss 1: Leonardo da Vinci, the Clockwork Maestro / บอสที่ 1: เลโอนาร์โด ดา วินชี (v1.0.0)",
+    "description": "Boss 1: Leonardo da Vinci, the Clockwork Maestro / บอสที่ 1: เลโอนาร์โด ดา วินชี (v1.0.1)",
     "uuid": "6e5d1038-8b6d-4289-bbd5-0042510ea511",
     "version": [
       1,
       0,
-      0
+      1
     ],
     "min_engine_version": [
       1,
@@ -22,7 +22,7 @@
       "version": [
         1,
         0,
-        0
+        1
       ]
     },
     {
@@ -32,7 +32,7 @@
       "version": [
         1,
         0,
-        0
+        1
       ],
       "entry": "scripts/main.js"
     }
@@ -43,7 +43,7 @@
       "version": [
         1,
         0,
-        0
+        1
       ]
     },
     {

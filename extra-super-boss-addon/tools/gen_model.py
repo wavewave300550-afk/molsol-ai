@@ -167,51 +167,98 @@ def p_skin(ctx: FaceCtx):
     rgb = rgb * vgrad(ctx, 1.03, 0.93)[..., None]
     if ctx.p.get("face") and ctx.face == "north":
         return paint_face(rgb)
+    if ctx.p.get("chin"):
+        return tile_of(paint_chin(rgb, ctx.face) * FACE_LIGHT[ctx.face])
     if ctx.face == "down":
         rgb = mix(rgb, SKIN_SH, 0.5)
     return tile_of(outline(rgb, 0.88) * FACE_LIGHT[ctx.face])
 
 
-# Face, 28 x 28 px (7 x 7 units at 4 px/unit) - the head's north face.
-#  H hair  h hair shadow  B brow  K lash/eye line  W eye white  A iris  a iris dark  P pupil  G glint
-#  s skin shadow  n nose shadow  N nostril  m mouth  l lip shadow  E ear/temple shadow
-FACE_ART = [
-    "HHHHHHHHHHHHHHHHHHHHHHHHHHHH",
-    "HHHHHHHHHHHHHHHHHHHHHHHHHHHH",
-    "HHHHHHHHHHHHHHHHHHHHHHHHHHHH",
-    "HHHHHHHHHHHHHHHHHHHHHHHHHHHH",
-    "HHHHHHHHHHHHhHHHHHHHHHHHHHHH",
-    "HHHHHHHHHHHh.hHHHHHHHhHHHHHH",
-    "HHHHHhHHHHh...hHHHHHh.hHHHHH",
-    "HHHHh.hHHh.....hHHHh...hHHHH",
-    "HHHh...hh.......hHh.....hHHH",
-    "HHh..............h.......hHH",
-    "Hh.......................shH",
-    "h..sBBBBB.........BBBBBs..h",
-    "h.BBBssss.........sssBBBB..h",
-    "h..s.................... ..h",
-    "h...KKKKKKK.....KKKKKKK....h",
-    "h..KKWGaPAWK...KWGaPAWKK...h",
-    "h...WWAPPAW.....WAPPAWW....h",
-    "h....sAaaAs.....sAaaAs.....h",
-    "h.....ssss.......ssss......h",
-    "h............n.............h",
-    "hs...........n.............h",
-    "hs..........snN............h",
-    "hs.........................h",
-    "hss........................h",
-    "hss.......lmmmmml.........sh",
-    "Hhs.........lll..........shH",
-    "HHhs....................shHH",
-    "HHHhss................sshHHH",
-]
+# Face, 28 x 28 px (7 x 7 units at 4 px/unit) - the head's north face.  A man's face in the anime style
+# of the art: narrow almond eyes under heavy, angled brows, a long nose with a shaded bridge, a thin mouth
+# with a slight smirk, cheekbone contour and a jaw that narrows to the chin (the chin itself is a
+# separate cube under the head).  Rows 0-8 sit under the hair cap.
+#  H hair  h hair shadow  B brow  K lid line  k soft lid  W eye white  A iris  a iris dark  P pupil
+#  G glint  s skin shadow  S deep contour  n nose shadow  N nostril  m mouth  l lip shadow
+def face_grid():
+    W = H = 28
+    g = [["." for _ in range(W)] for _ in range(H)]
+
+    def put(x, y, ch):
+        if 0 <= x < W and 0 <= y < H:
+            g[y][x] = ch
+
+    def mirror(x, y, ch, ch_r=None):
+        put(x, y, ch)
+        put(W - 1 - x, y, ch_r or ch)
+
+    for y in range(0, 9):
+        for x in range(W):
+            put(x, y, "H")
+    # uneven hairline: a few strands reach the forehead, parted toward his left
+    for x, d in ((0, 3), (1, 3), (2, 2), (3, 2), (4, 1), (8, 1), (9, 1), (16, 1), (17, 2), (18, 2), (19, 1),
+                 (24, 1), (25, 2), (26, 3), (27, 3)):
+        for k in range(d):
+            put(x, 9 + k, "h" if k == d - 1 else "H")
+    # temples / sideburns
+    for y in range(9, 17):
+        mirror(0, y, "h")
+    for y in range(12, 15):
+        mirror(1, y, "s")
+    # heavy brows: thick, straight, the inner ends lowered (a stern look)
+    for x in range(3, 11):
+        mirror(x, 10 if x < 8 else 11, "B")
+    for x in range(4, 10):
+        mirror(x, 11 if x < 8 else 12, "B")
+    mirror(10, 12, "s")
+    # eyes: narrow almond, dark upper lid, amber iris, small glint (same side on both eyes)
+    for x in range(4, 11):
+        mirror(x, 13, "K")
+    put(4, 14, "K"); put(23, 14, "K")
+    for x, ch in zip(range(5, 11), "WGPaWs"):
+        put(x, 14, ch)
+    for x, ch in zip(range(17, 23), "sWGPaW"):
+        put(x, 14, ch)
+    for x, ch in zip(range(5, 11), "kAaAks"):
+        put(x, 15, ch)
+    for x, ch in zip(range(17, 23), "skAaAk"):
+        put(x, 15, ch)
+    for x in range(6, 10):
+        mirror(x, 16, "s")
+    # cheekbones and the jaw line narrowing toward the chin
+    for y in range(17, 28):
+        depth = 1 + max(0, (y - 19)) // 2
+        for x in range(depth):
+            mirror(x, y, "S" if x < depth - 1 else "s")
+    for y in range(17, 20):
+        mirror(3, y, "s")
+    # nose: shaded bridge on one side, tip and nostrils
+    for y in range(14, 20):
+        put(14, y, "n")
+    put(15, 19, "n")
+    put(12, 20, "N"); put(13, 20, "n"); put(14, 20, "n"); put(15, 20, "N")
+    put(13, 21, "s"); put(14, 21, "s")
+    # mouth: thin line with the left corner lifted (smirk), lower-lip shadow, chin shadow
+    for x in range(10, 17):
+        put(x, 23, "m")
+    put(17, 22, "m")
+    for x in range(11, 16):
+        put(x, 24, "l")
+    for x in range(12, 16):
+        put(x, 26, "s")
+    for x in range(11, 17):
+        put(x, 27, "s")
+    return ["".join(r) for r in g]
+
+
+FACE_ART = face_grid()
 FACE_COL = {
-    "H": HAIR, "h": HAIR_SH, "B": hexrgb("#4A2A18"), "K": hexrgb("#24150C"), "W": hexrgb("#F6F0E6"),
-    "A": hexrgb("#C99A35"), "a": hexrgb("#8E5F1B"), "P": hexrgb("#3A220E"), "G": hexrgb("#FFF8DF"),
-    "s": SKIN_SH, "n": hexrgb("#E2B395"), "N": hexrgb("#C98F74"), "m": hexrgb("#B76D63"),
-    "l": hexrgb("#D59C86"), "E": SKIN_SH,
+    "H": HAIR, "h": HAIR_SH, "B": hexrgb("#3E2314"), "K": hexrgb("#24150C"), "k": hexrgb("#7A5A48"),
+    "W": hexrgb("#EDE4D8"), "A": hexrgb("#C99A35"), "a": hexrgb("#8E5F1B"), "P": hexrgb("#3A220E"), "G": hexrgb("#FFF3D0"),
+    "s": SKIN_SH, "S": hexrgb("#C38F72"), "n": hexrgb("#DDAA8C"), "N": hexrgb("#B98068"), "m": hexrgb("#9A5A4E"),
+    "l": hexrgb("#D59C86"),
 }
-EYE_GLOW = {"A": 150, "a": 150, "G": 120}
+EYE_GLOW = {"A": 170, "a": 170}
 
 
 def paint_face(rgb):
@@ -228,6 +275,22 @@ def paint_face(rgb):
                 if ch in EYE_GLOW:
                     out[y, x, 3] = EYE_GLOW[ch]
     return out  # RGBA: the eye glow lives in alpha
+
+
+def paint_chin(rgb, face):
+    """The chin cube under the head: jaw contour on the sides, shadow underneath."""
+    h, w = rgb.shape[:2]
+    out = rgb.copy()
+    if face == "north":
+        out[:, :2] = hexrgb("#C38F72")
+        out[:, -2:] = hexrgb("#C38F72")
+        out[-1, :] = SKIN_SH
+        out[0, w // 2 - 2:w // 2 + 2] = SKIN_SH
+    elif face in ("east", "west"):
+        out[:] = mix(out, SKIN_SH, 0.45)
+    elif face == "down":
+        out[:] = SKIN_SH * 0.85
+    return out
 
 
 def p_hair(ctx: FaceCtx):
@@ -712,23 +775,27 @@ def build() -> Model:
 
     # ---------------------------------------------------------------- head & hair
     m.bone("head", "torso", (0, 29, 0))
-    m.cube("head", (-1.25, 27.75, -1.25), (2.5, 2.25, 2.5), "skin")  # neck
+    m.cube("head", (-1.5, 27.75, -1.5), (3.0, 2.25, 3.0), "skin")  # neck
     m.cube("head", (-3.5, 29.5, -3.5), (7, 7, 7), "skin", face=True)
-    m.cube("head", (-3.75, 33.5, -3.75), (7.5, 3.5, 7.5), "hair", shine=True)  # cap
-    m.cube("head", (-3.9, 26.75, 1.5), (7.8, 7.25, 2.5), "hair", shine=True, tips=True)  # back mass
-    m.cube("head", (3.0, 27.25, -2.75), (1.25, 6.5, 4.5), "hair", tips=True)  # side lock (left)
-    m.cube("head", (-4.25, 27.25, -2.75), (1.25, 6.5, 4.5), "hair", tips=True)  # side lock (right)
-    m.cube("head", (2.6, 27.75, -3.9), (1.0, 6.25, 1.0), "hair", tips=True, rotation=(0, 0, -6), pivot=(3.1, 34, -3.4))
-    m.cube("head", (-3.6, 27.75, -3.9), (1.0, 6.25, 1.0), "hair", tips=True, rotation=(0, 0, 6), pivot=(-3.1, 34, -3.4))
-    # swept bangs (end above the eyes, one strand falls between them)
-    for x, ln, rz in ((-3.4, 2.5, -20), (-2.25, 2.75, -14), (-1.0, 3.25, -8), (0.1, 2.5, 4), (1.15, 2.25, 12),
-                      (2.25, 2.5, 20)):
-        m.cube("head", (x, 36.25 - ln, -3.95), (1.25, ln, 0.6), "hair", rotation=(0, 0, rz), pivot=(x + 0.625, 36.25, -3.65))
-    # volume on top and waves at the ends of the side hair
-    m.cube("head", (-3.5, 36.25, -3.0), (3.25, 0.75, 6.0), "hair", rotation=(0, 0, 9), pivot=(-1.75, 36.5, 0))
-    m.cube("head", (0.25, 36.25, -3.25), (3.25, 0.75, 6.25), "hair", rotation=(0, 0, -7), pivot=(1.75, 36.5, 0))
-    m.cube("head", (3.5, 25.5, -2.25), (1.25, 2.5, 3.5), "hair", tips=True, rotation=(0, 0, -10), pivot=(3.9, 27.5, 0))
-    m.cube("head", (-4.75, 25.5, -2.25), (1.25, 2.5, 3.5), "hair", tips=True, rotation=(0, 0, 10), pivot=(-3.9, 27.5, 0))
+    m.cube("head", (-2.5, 28.75, -3.45), (5.0, 1.0, 4.5), "skin", chin=True)  # chin / jaw
+    m.cube("head", (3.45, 31.25, -1.5), (0.45, 1.75, 1.0), "skin")  # ears
+    m.cube("head", (-3.9, 31.25, -1.5), (0.45, 1.75, 1.0), "skin")
+    m.cube("head", (-3.75, 34.25, -3.75), (7.5, 3.0, 7.5), "hair", shine=True)  # cap (above the brows)
+    m.cube("head", (-3.9, 26.75, 1.5), (7.8, 7.5, 2.5), "hair", shine=True, tips=True)  # back mass
+    m.cube("head", (3.15, 27.5, -0.5), (1.25, 7.0, 3.0), "hair", tips=True)  # side hair behind the ears
+    m.cube("head", (-4.4, 27.5, -0.5), (1.25, 7.0, 3.0), "hair", tips=True)
+    m.cube("head", (3.0, 32.75, -3.0), (0.9, 1.75, 2.75), "hair")  # temples
+    m.cube("head", (-3.9, 32.75, -3.0), (0.9, 1.75, 2.75), "hair")
+    # swept-back fringe: a parting toward his left, one loose strand falls over his right brow
+    m.cube("head", (-3.6, 32.75, -3.95), (1.0, 3.75, 0.6), "hair", tips=True, rotation=(0, 0, 10), pivot=(-3.1, 36.5, -3.65))
+    m.cube("head", (-2.4, 34.0, -3.95), (2.25, 2.25, 0.6), "hair", rotation=(0, 0, -24), pivot=(-1.3, 36.25, -3.65))
+    m.cube("head", (0.4, 34.25, -3.95), (2.0, 2.0, 0.6), "hair", rotation=(0, 0, 18), pivot=(1.4, 36.25, -3.65))
+    m.cube("head", (2.4, 33.75, -3.95), (1.25, 2.5, 0.6), "hair", rotation=(0, 0, -8), pivot=(3.0, 36.25, -3.65))
+    # volume swept back over the top and waves at the ends of the side hair
+    m.cube("head", (-3.5, 36.75, -3.25), (3.25, 0.75, 6.75), "hair", rotation=(8, 0, 9), pivot=(-1.75, 37, 0))
+    m.cube("head", (0.25, 36.75, -3.25), (3.25, 0.75, 6.75), "hair", rotation=(8, 0, -7), pivot=(1.75, 37, 0))
+    m.cube("head", (3.4, 25.25, -0.25), (1.25, 2.5, 3.0), "hair", tips=True, rotation=(0, 0, -10), pivot=(3.9, 27.5, 1))
+    m.cube("head", (-4.65, 25.25, -0.25), (1.25, 2.5, 3.0), "hair", tips=True, rotation=(0, 0, 10), pivot=(-3.9, 27.5, 1))
     m.cube("head", (-4.0, 25.25, 1.75), (8.0, 2.0, 2.0), "hair", tips=True, rotation=(-8, 0, 0), pivot=(0, 27, 2.75))
     # half-up ponytail
     m.bone("hair_tail", "head", (0, 32.5, 3.75))

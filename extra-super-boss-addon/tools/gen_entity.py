@@ -21,7 +21,7 @@ SRC = os.path.join(ROOT, "scripts-src")
 BAL = json.load(open(os.path.join(ROOT, "balance.json")))
 B = BAL["boss"]
 
-VERSION = [1, 0, 0]
+VERSION = [1, 0, 1]
 ENGINE = [1, 26, 60]
 SERVER_API = [2, 11, 0]
 UUID = {
@@ -33,7 +33,7 @@ UUID = {
 }
 ENTITY_FMT = "1.21.90"
 PACK_NAME = "Extra Super Boss"
-PACK_DESC = "Boss 1: Leonardo da Vinci, the Clockwork Maestro / บอสที่ 1: เลโอนาร์โด ดา วินชี (v1.0.0)"
+PACK_DESC = "Boss 1: Leonardo da Vinci, the Clockwork Maestro / บอสที่ 1: เลโอนาร์โด ดา วินชี (v1.0.1)"
 
 
 def write(path, data):
