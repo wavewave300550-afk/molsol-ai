@@ -17,6 +17,32 @@ export function safe(fn) {
         return undefined;
     }
 }
+export function newUlt(p) {
+    return { center: { ...p }, peak: { ...p }, extras: [], sanctuaries: [], wave: 0, bulbs: [], strikes: [], bolts: [] };
+}
+/** Remove everything an ultimate spawned. */
+export function clearUlt(s) {
+    const u = s.ult;
+    if (!u)
+        return;
+    s.ult = undefined;
+    for (const e of [...u.extras, ...u.bulbs, ...u.bolts.map((b) => b.e), ...u.strikes.map((x) => x.marker)]) {
+        if (e && e.isValid)
+            safe(() => e.remove());
+    }
+}
+/** Screen shake for players (the camerashake command). */
+export function shake(players, intensity, seconds) {
+    for (const p of players)
+        safe(() => p.runCommand(`camerashake add @s ${intensity} ${seconds} positional`));
+}
+export function title(players, titleKey, subtitleKey) {
+    for (const p of players) {
+        safe(() => p.onScreenDisplay.setTitle({ rawtext: [{ translate: titleKey }] }, {
+            subtitle: { rawtext: [{ translate: subtitleKey }] }, fadeInDuration: 6, stayDuration: 50, fadeOutDuration: 16,
+        }));
+    }
+}
 export const bosses = new Map();
 export function newState(e, kind = "da_vinci") {
     const t = now();
@@ -26,8 +52,8 @@ export function newState(e, kind = "da_vinci") {
         id: e.id,
         phase: 1,
         ready: kind === "edison"
-            ? { bulb_toss: t + sec(2), vanish: t + sec(4), overload: t + sec(8), chair: t + sec(6) }
-            : { gear_volley: t + sec(3), quake: t + sec(2), vitruvian: t + sec(8), dive: t + sec(4) },
+            ? { bulb_toss: t + sec(2), vanish: t + sec(4), overload: t + sec(8), chair: t + sec(6), ultimate: 0 }
+            : { gear_volley: t + sec(3), quake: t + sec(2), vitruvian: t + sec(8), dive: t + sec(4), ultimate: 0 },
         gapUntil: t,
         nextDecision: t,
         locked: false,

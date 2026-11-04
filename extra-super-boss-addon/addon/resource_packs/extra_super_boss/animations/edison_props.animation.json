@@ -150,6 +150,87 @@
     }
    }
   },
+  "animation.esb.sun_bulb.float": {
+   "loop": true,
+   "animation_length": 1.0,
+   "bones": {
+    "root": {
+     "scale": "math.min(1, 0.1 + q.life_time * 1.6)",
+     "position": [
+      0,
+      "math.sin(q.life_time * 140) * 1.2",
+      0
+     ]
+    },
+    "spin": {
+     "rotation": [
+      0,
+      "q.life_time * 60",
+      "math.sin(q.life_time * 90) * 8"
+     ]
+    }
+   },
+   "particle_effects": {
+    "0.0": {
+     "effect": "trail",
+     "locator": "loc_bulb_p"
+    },
+    "0.5": {
+     "effect": "trail",
+     "locator": "loc_bulb_p"
+    }
+   }
+  },
+  "animation.esb.volt_marker.grow": {
+   "loop": true,
+   "animation_length": 4.0,
+   "bones": {
+    "root": {
+     "scale": [
+      "q.property('esb:radius') * math.min(1, 0.2 + q.life_time * 3)",
+      1,
+      "q.property('esb:radius') * math.min(1, 0.2 + q.life_time * 3)"
+     ]
+    },
+    "ring": {
+     "rotation": [
+      0,
+      "q.life_time * 90",
+      0
+     ]
+    },
+    "glyph": {
+     "rotation": [
+      0,
+      "q.life_time * -200",
+      0
+     ],
+     "scale": [
+      "1 + math.sin(q.life_time * 900) * 0.12",
+      1,
+      "1 + math.sin(q.life_time * 900) * 0.12"
+     ]
+    }
+   }
+  },
+  "animation.esb.arc_bolt.flicker": {
+   "loop": true,
+   "animation_length": 0.5,
+   "bones": {
+    "bolt": {
+     "rotation": [
+      0,
+      "q.life_time * 2200",
+      0
+     ],
+     "scale": [
+      "1 + math.sin(q.life_time * 4000) * 0.35",
+      1,
+      "1 + math.cos(q.life_time * 3500) * 0.35"
+     ]
+    }
+   }
+  },
   "animation.esb.volt_bulb.spin": {
    "loop": true,
    "animation_length": 0.25,

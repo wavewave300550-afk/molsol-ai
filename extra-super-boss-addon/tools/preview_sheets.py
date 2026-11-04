@@ -246,12 +246,95 @@ def props_sheet(name="edison_props.png", size=(420, 460)):
     print("wrote", p)
 
 
+# ------------------------------------------------------------------------------ ULTIMATES
+HALO_GEO = R.load_geo("da_vinci_halo")
+SIGIL_GEO = R.load_geo("vitruvian_sigil")
+SIGIL_TEX = R.load_tex("vitruvian_sigil")
+AURA_GEO = R.load_geo("edison_aura")
+AURA_TEX = R.load_tex("edison_aura")
+BULB_GEO = R.load_geo("volt_bulb")
+BULB_TEX = R.load_tex("volt_bulb")
+MARK_GEO = R.load_geo("volt_marker")
+MARK_TEX = R.load_tex("volt_marker")
+DV_SCALE = 1.6
+
+
+def _place(offset, scale):
+    sc = np.array(scale if hasattr(scale, "__len__") else (scale, scale, scale), dtype=float)
+    return {"root": {"rotation": np.zeros(3), "position": np.array(offset, dtype=float), "scale": sc}}
+
+
+def ultimates_sheet(name="ultimates.png", size=(760, 640)):
+    """Showcase: Opus Magnum over the arena sigil, Let There Be Light among the Sun Bulbs."""
+    import json as _j
+    bal = _j.load(open(os.path.join(R.ROOT, "balance.json")))
+    U, UE = bal["ultimate"], bal["edison"]["ultimate"]
+    um = spec.ACTIONS["ultimate"]["moments"]
+    # Da Vinci: in the air during the spin, halo behind him, arena sigil + sanctuaries below
+    t = 2.2
+    pose = scaled(layered_pose("ultimate", t, 2, "wings_flap", life=1.0), DV_SCALE, (0, U["height"] * 16, 0))
+    extra = [(HALO_GEO, SIGIL_TEX, pose, True), (SIGIL_GEO, SIGIL_TEX, _place((0, 0, 0), (U["radius"] * 0.5, 1, U["radius"] * 0.5)), True)]
+    d = U["radius"] * 0.62 * 16
+    for sx, sz in ((d, d), (-d, d), (d, -d), (-d, -d)):
+        extra.append((SIGIL_GEO, SIGIL_TEX, _place((sx, 0.5, sz), (1.5, 1, 1.5)), True))
+    cam = K.Camera((0, 64, 0), 25, 30, scale=size[1] / 430, size=size)
+    a = R.draw(cam, pose, ground=True, extra=extra)
+    ImageDraw.Draw(a).text((14, 10), "ULTIMATE - OPUS MAGNUM", fill=(255, 215, 130), font=R.font(24))
+    ImageDraw.Draw(a).text((14, 40), "stand in a golden sanctuary", fill=(240, 220, 190), font=R.font(16))
+    # Edison: hovering as a sun, six Sun Bulbs, two strike marks
+    em = spec.EDISON_ACTIONS["ultimate"]["moments"]
+    pose = scaled(edison_pose("ultimate", 3.6, 2, life=1.0), E_SCALE, (0, UE["hover"] * 16, 0))
+    extra = [(AURA_GEO, AURA_TEX, pose, True)]
+    R16 = UE["ring_radius"] * 16
+    for i in range(UE["bulbs"]):
+        ang = np.radians(i * 360 / UE["bulbs"])
+        extra.append((BULB_GEO, BULB_TEX, _place((-np.sin(ang) * R16, 1.6 * 16, np.cos(ang) * R16), 4.5), False))
+    for (mx, mz) in ((-60, -70), (90, -30)):
+        extra.append((MARK_GEO, MARK_TEX, _place((mx, 0, mz), 3), True))
+    cam = K.Camera((0, 46, 0), 20, 22, scale=size[1] / 270, size=size)
+    b = R.draw(cam, pose, ground=True, geo=E_GEO, tex=E_TEX2, extra=extra)
+    ImageDraw.Draw(b).text((14, 10), "ULTIMATE - LET THERE BE LIGHT", fill=(170, 225, 255), font=R.font(24))
+    ImageDraw.Draw(b).text((14, 40), "smash the bulbs, hide from the light", fill=(220, 235, 245), font=R.font(16))
+    out = Image.new("RGB", (size[0] * 2, size[1]))
+    out.paste(a, (0, 0))
+    out.paste(b, (size[0], 0))
+    pth = os.path.join(R.OUT, name)
+    out.save(pth)
+    print("wrote", pth)
+
+
+def ultimate_gifs(fps=12, size=(300, 360)):
+    os.makedirs(ANIM_DIR, exist_ok=True)
+    for name, boss in (("ultimate_opus_magnum", "da_vinci"), ("ultimate_let_there_be_light", "edison")):
+        frames = []
+        dur = spec.ACTIONS["ultimate"]["length"] if boss == "da_vinci" else spec.EDISON_ACTIONS["ultimate"]["length"]
+        for i in range(int(dur * fps)):
+            t = i / fps
+            if boss == "da_vinci":
+                pose = scaled(layered_pose("ultimate", t, 2, "wings_flap", life=t), DV_SCALE)
+                img = R.draw(K.Camera((0, 34, 0), 25, 6, scale=size[1] / 110, size=size), pose, bg=flat_bg(size), ground=False,
+                             extra=[(HALO_GEO, SIGIL_TEX, pose, True)])
+            else:
+                pose = scaled(edison_pose("ultimate", t, 2, life=t), E_SCALE)
+                img = R.draw(K.Camera((0, 30, 0), 25, 6, scale=size[1] / 100, size=size), pose, bg=flat_bg(size), ground=False,
+                             geo=E_GEO, tex=E_TEX2, extra=[(AURA_GEO, AURA_TEX, pose, True)])
+            ImageDraw.Draw(img).text((8, 6), name.replace("_", " "), fill=(245, 225, 190), font=R.font(13))
+            frames.append(img)
+        pal = frames[len(frames) // 3].convert("P", palette=Image.ADAPTIVE, colors=160)
+        frames = [f.quantize(palette=pal, dither=Image.Dither.NONE) for f in frames]
+        pth = os.path.join(ANIM_DIR, f"{name}.gif")
+        frames[0].save(pth, save_all=True, append_images=frames[1:], duration=int(1000 / fps), loop=0, disposal=2)
+        print("wrote", pth)
+
+
 def run_all():
     sheet()
     gifs()
     edison_sheet()
     props_sheet()
     edison_gifs()
+    ultimates_sheet()
+    ultimate_gifs()
 
 
 if __name__ == "__main__":
@@ -259,6 +342,7 @@ if __name__ == "__main__":
         sheet()
         edison_sheet()
         props_sheet()
+        ultimates_sheet()
     elif "--gif" in sys.argv:
         gifs([a for a in sys.argv[2:]] or None)
     else:

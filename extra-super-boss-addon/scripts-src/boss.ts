@@ -53,6 +53,18 @@ export interface Chair {
   seat: { x: number; y: number; z: number };
 }
 
+/** State of a running ultimate (both bosses). */
+export interface Ult {
+  center: Vector3;
+  peak: Vector3;
+  extras: Entity[]; // sigils, sanctuaries, sun bulbs, markers... removed when the ultimate ends
+  sanctuaries: Vector3[];
+  wave: number;
+  bulbs: Entity[];
+  strikes: { pos: Vector3; at: number; marker?: Entity; from?: Vector3 }[];
+  bolts: { e: Entity; until: number }[];
+}
+
 export interface BossState {
   kind: BossKind;
   entity: Entity;
@@ -83,6 +95,34 @@ export interface BossState {
   blinksLeft: number;
   stunUntil: number;
   hop?: { from: Vector3; to: Vector3 };
+  ult?: Ult;
+}
+
+export function newUlt(p: Vector3): Ult {
+  return { center: { ...p }, peak: { ...p }, extras: [], sanctuaries: [], wave: 0, bulbs: [], strikes: [], bolts: [] };
+}
+
+/** Remove everything an ultimate spawned. */
+export function clearUlt(s: BossState): void {
+  const u = s.ult;
+  if (!u) return;
+  s.ult = undefined;
+  for (const e of [...u.extras, ...u.bulbs, ...u.bolts.map((b) => b.e), ...u.strikes.map((x) => x.marker)]) {
+    if (e && e.isValid) safe(() => e.remove());
+  }
+}
+
+/** Screen shake for players (the camerashake command). */
+export function shake(players: Player[], intensity: number, seconds: number): void {
+  for (const p of players) safe(() => p.runCommand(`camerashake add @s ${intensity} ${seconds} positional`));
+}
+
+export function title(players: Player[], titleKey: string, subtitleKey: string): void {
+  for (const p of players) {
+    safe(() => p.onScreenDisplay.setTitle({ rawtext: [{ translate: titleKey }] }, {
+      subtitle: { rawtext: [{ translate: subtitleKey }] }, fadeInDuration: 6, stayDuration: 50, fadeOutDuration: 16,
+    }));
+  }
 }
 
 export const bosses = new Map<string, BossState>();
@@ -95,8 +135,8 @@ export function newState(e: Entity, kind: BossKind = "da_vinci"): BossState {
     id: e.id,
     phase: 1,
     ready: kind === "edison"
-      ? { bulb_toss: t + sec(2), vanish: t + sec(4), overload: t + sec(8), chair: t + sec(6) }
-      : { gear_volley: t + sec(3), quake: t + sec(2), vitruvian: t + sec(8), dive: t + sec(4) },
+      ? { bulb_toss: t + sec(2), vanish: t + sec(4), overload: t + sec(8), chair: t + sec(6), ultimate: 0 }
+      : { gear_volley: t + sec(3), quake: t + sec(2), vitruvian: t + sec(8), dive: t + sec(4), ultimate: 0 },
     gapUntil: t,
     nextDecision: t,
     locked: false,

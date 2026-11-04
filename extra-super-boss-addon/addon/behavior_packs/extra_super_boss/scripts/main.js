@@ -9,7 +9,7 @@
 import { EntityDamageCause, EntityInitializationCause, system, world } from "@minecraft/server";
 import { beginDying, endAction, forceGround, removeSigil, startAction } from "./abilities.js";
 import { think } from "./brain.js";
-import { BOSS_IDS, bosses, event, isBoss, newState, safe, setProp } from "./boss.js";
+import { BOSS_IDS, bosses, clearUlt, event, isBoss, newState, safe, setProp } from "./boss.js";
 import { beginDyingE, bulbBurst, endE, isStunned, onDynamoDestroyed, releaseChair, startIntroE } from "./edison.js";
 import { fxTick } from "./fx.js";
 import { registerItems } from "./items.js";
@@ -23,6 +23,7 @@ function dying(s) {
 }
 function cleanup(s) {
     removeSigil(s);
+    clearUlt(s);
     if (s.kind === "edison") {
         releaseChair(s);
         if (s.dynamo?.isValid)

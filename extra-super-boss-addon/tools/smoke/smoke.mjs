@@ -365,7 +365,7 @@ section("soak: 3 minutes of fighting two players, every action ends cleanly");
     tick();
   }
   const seen = new Set(actions(e, t0));
-  for (const k of ["gear_volley", "quake", "vitruvian", "transform", "dive_rise", "dive_hover", "dive_strike"]) {
+  for (const k of ["gear_volley", "quake", "vitruvian", "transform", "dive_rise", "dive_hover", "dive_strike", "ultimate"]) {
     check(seen.has(k), `soak used ${k}`);
   }
   const s = st(e);
@@ -377,6 +377,10 @@ section("soak: 3 minutes of fighting two players, every action ends cleanly");
 
 // ================================================================================================ Boss 2: Edison
 const EA = SPEC.EDISON_ACTIONS;
+const EM = (m) => ACT.ultimate.moments[m];
+const EM_LEN = () => ACT.ultimate.length;
+const EEM = (m) => SPEC.EDISON_ACTIONS.ultimate.moments[m];
+const EE_LEN = () => SPEC.EDISON_ACTIONS.ultimate.length;
 const EB = BAL.edison;
 const spawnE = (loc, yaw = 0, load = false) => M.__spawnBoss(loc, yaw, { load, type: "esb:edison" });
 const dynamos = () => M.__entities("esb:dynamo");
@@ -660,16 +664,130 @@ section("Edison soak: 3 minutes vs two players, Dynamo broken mid-fight");
     c.location = { x: X + Math.cos(-ang * 0.7) * 15, y: 64, z: Math.sin(-ang * 0.7) * 15 };
     a.health.currentValue = 20;
     c.health.currentValue = 20;
-    if (i % 40 === 0 && !st(e)?.dying && !st(e)?.invulnerable) e.applyDamage(3, { cause: "entityAttack", damagingEntity: i % 80 === 0 ? a : c });
+    if (i % 40 === 0 && !st(e)?.dying && !st(e)?.invulnerable) e.applyDamage(4, { cause: "entityAttack", damagingEntity: i % 80 === 0 ? a : c });
     if (i === sec(40)) dynamos().forEach((d) => d.applyDamage(1000, { cause: "entityAttack", damagingEntity: c }));
     tick();
   }
   const seen = new Set(actions(e, t0));
-  for (const k of ["intro", "bulb_toss", "vanish", "backstab", "overload", "chair", "stunned", "transform"]) check(seen.has(k), `soak used ${k}`);
+  for (const k of ["intro", "bulb_toss", "vanish", "backstab", "overload", "chair", "stunned", "transform", "ultimate"]) check(seen.has(k), `soak used ${k}`);
   check(!st(e)?.hidden && !st(e)?.inAir, "not stuck invisible or in the air");
   check(chairs().length <= 1 && dynamos().length <= 1, "no leftover chairs / dynamos");
   check(FX.fxStats.maxPerTick <= FX.FX_BUDGET_PER_TICK, `particle budget respected (max ${FX.fxStats.maxPerTick}/tick)`);
   [a, c, e].forEach((x) => x.remove());
+}
+
+// ================================================================================================ ULTIMATES
+const UD = BAL.ultimate;
+const UE = EB.ultimate;
+function onlyUlt(e) {
+  const s = st(e);
+  for (const k of Object.keys(s.ready)) s.ready[k] = k === "ultimate" ? 0 : FAR;
+  s.gapUntil = 0;
+  s.nextDecision = 0;
+}
+
+section("ULTIMATE Opus Magnum: rises over an arena sigil, gear spiral, the slam spares the 4 sanctuaries");
+{
+  const X = 60000;
+  const e = M.__spawnBoss({ x: X, y: 64, z: 0 }, 0, { load: true });
+  e.props["esb:phase"] = 2;
+  const d = UD.radius * 0.62;
+  const safeP = M.__spawnPlayer("Sheltered", { x: X + d + 0.5, y: 64, z: d - 0.5 });
+  const open = M.__spawnPlayer("Exposed", { x: X + 5, y: 64, z: 3 });
+  const far = M.__spawnPlayer("Faraway", { x: X + UD.radius + 6, y: 64, z: 0 });
+  for (const p of [safeP, open, far]) p.health = { currentValue: 1000, effectiveMax: 1000 };
+  tick(2);
+  st(e).phase = 2;
+  e.health.currentValue = e.health.effectiveMax * 0.3;
+  onlyUlt(e);
+  st(e).target = open;
+  const t0 = now();
+  check(waitFor(() => st(e).run?.kind === "ultimate", 40), "Opus Magnum starts below 35% health");
+  const start = actionTick(e, "ultimate", t0);
+  check(!e.applyDamage(50, { cause: "entityAttack", damagingEntity: open }), "invulnerable during the ultimate");
+  tick(sec(EM("sigil")) + 3);
+  const sig = L.spawned.filter((x) => x.typeId === "esb:vitruvian_sigil" && x.tick >= start).map((x) => x.entity);
+  check(sig.length === 5 && sig.filter((x) => x.props["esb:radius"] === UD.radius).length === 1, "arena sigil (radius 16) + 4 sanctuaries");
+  check(L.titles.some((x) => x.target === open && x.t.rawtext[0].translate === "esb.title.opus"), "OPUS MAGNUM title");
+  check(e.location.y > 64 + UD.height - 0.6, `rises into the air (y ${e.location.y.toFixed(1)})`);
+  tick(sec(EM("land")) - sec(EM("sigil")) - 3);
+  const gears = L.shots.filter((x) => x.tick >= start && x.gear.typeId === "esb:brass_gear");
+  const waves = Math.ceil((sec(EM("barrage_end")) - sec(EM("barrage"))) / UD.wave_every_ticks);
+  check(gears.length === waves * UD.gears_per_wave, `gear spiral: ${gears.length} gears in ${waves} waves`);
+  const dirs = new Set(gears.slice(0, 9).map((g) => Math.round(Math.atan2(g.velocity.x, g.velocity.z) * 10)));
+  check(dirs.size === 9, "each wave rotates (spiral)");
+  tick(2);
+  const land = start + sec(EM("land"));
+  check(dmgTo(open, t0).some((x) => x.tick === land && x.amount === UD.damage), `exposed player takes ${UD.damage} on the slam`);
+  check(dmgTo(safeP, t0).length === 0, "player in a sanctuary is safe");
+  check(dmgTo(far, t0).length === 0, "player outside the sigil is safe");
+  check(L.commands.some((c) => c.tick === land && c.target === open), "screen shake on the slam");
+  check(Math.abs(e.location.y - 64) < 0.05 && !st(e).inAir, "back on the ground");
+  tick(sec(EM_LEN()) + 2);
+  check(e.props["esb:action"] === "none" && sig.every((x) => !x.isValid), "ends cleanly, sigils removed");
+  const ended = actionTick(e, "none", start);
+  check(ended === start + sec(EM_LEN()) && st(e).ready.ultimate === ended + sec(UD.cooldown) && !st(e).invulnerable,
+    "ends after 9 s, 45 s cooldown, vulnerable again");
+  [safeP, open, far, e].forEach((x) => x.remove());
+}
+
+section("ULTIMATE Let There Be Light: darkness, Sun Bulbs, marked strikes, a flash weakened by broken bulbs");
+{
+  const X = 62000;
+  const e = spawnE({ x: X, y: 64, z: 0 }, 0, true);
+  e.props["esb:phase"] = 2;
+  const a = M.__spawnPlayer("Open", { x: X, y: 64, z: 14 });
+  const h = M.__spawnPlayer("Hider", { x: X, y: 64, z: -14 });
+  M.__solids.push({ min: { x: X - 6, y: 64, z: -10 }, max: { x: X + 6, y: 80, z: -9 } }); // cover
+  for (const p of [a, h]) p.health = { currentValue: 1000, effectiveMax: 1000 };
+  tick(2);
+  st(e).phase = 2;
+  e.health.currentValue = e.health.effectiveMax * 0.3;
+  onlyUlt(e);
+  st(e).target = a;
+  const t0 = now();
+  check(waitFor(() => st(e).run?.kind === "ultimate", 40), "Let There Be Light starts below 35% health");
+  const start = actionTick(e, "ultimate", t0);
+  tick(sec(EEM("snap")) + 1);
+  check(a.hasEffect("darkness") && h.hasEffect("darkness"), "the world goes dark");
+  check(L.titles.some((x) => x.target === a && x.t.rawtext[0].translate === "esb.title.light"), "LET THERE BE LIGHT title");
+  tick(sec(EEM("bulbs")) - sec(EEM("snap")) + 1);
+  const bulbs = M.__entities("esb:sun_bulb");
+  check(bulbs.length === UE.bulbs, `${UE.bulbs} Sun Bulbs rise around him`);
+  check(bulbs.every((b) => Math.abs(Math.hypot(b.location.x - X, b.location.z) - UE.ring_radius) < 0.01), "in a ring");
+  check(e.location.y > 64 + UE.hover - 0.6, `hovers like a sun (y ${e.location.y.toFixed(1)})`);
+  check(!e.applyDamage(50, { cause: "entityAttack", damagingEntity: a }), "invulnerable during the ultimate");
+  tick(sec(EEM("strikes")) - sec(EEM("bulbs")) + UE.strike_delay_ticks + 2);
+  check(M.__entities("esb:volt_marker").length >= 1 || L.spawned.some((x) => x.typeId === "esb:volt_marker" && x.tick >= start), "strike marks appear under players");
+  // smash 3 of the 6 bulbs
+  for (const b of bulbs.slice(0, 3)) b.applyDamage(100, { cause: "entityAttack", damagingEntity: a });
+  tick(sec(EEM("strikes_end")) - sec(EEM("strikes")));
+  const strikes = dmgTo(a, start).filter((x) => x.amount === UE.strike_damage).length + dmgTo(h, start).filter((x) => x.amount === UE.strike_damage).length;
+  check(strikes >= 3, `lightning strikes hit the marked spots (${strikes})`);
+  check(L.spawned.some((x) => x.typeId === "esb:arc_bolt" && x.tick >= start), "lightning bolts drawn");
+  tick(sec(EEM("flash")) - sec(EEM("strikes_end")) + 1);
+  const flash = start + sec(EEM("flash"));
+  const fa = dmgTo(a, t0).filter((x) => x.tick === flash);
+  check(fa.length === 1 && Math.abs(fa[0].amount - UE.flash_damage * 3 / UE.bulbs) < 1e-6, `flash halved by 3 broken bulbs (${fa[0]?.amount})`);
+  check(a.hasEffect("blindness"), "blinding flash");
+  check(dmgTo(h, t0).filter((x) => x.tick === flash).length === 0, "the player behind cover is safe from the flash");
+  check(M.__entities("esb:sun_bulb").length === 0, "bulbs shatter after the flash");
+  check(L.commands.some((c) => c.tick === flash), "screen shake on the flash");
+  tick(sec(EE_LEN()) - sec(EEM("flash")) + 2);
+  check(Math.abs(e.location.y - 64) < 0.05 && !st(e).inAir && e.props["esb:action"] === "none", "lands and recovers");
+  check(M.__entities("esb:volt_marker").length === 0 && M.__entities("esb:arc_bolt").length === 0, "no marks or bolts left behind");
+  // second cast with every bulb broken: the light fizzles
+  onlyUlt(e);
+  st(e).ready.ultimate = 0;
+  const t1 = now();
+  waitFor(() => st(e).run?.kind === "ultimate", 40);
+  const s1 = actionTick(e, "ultimate", t1);
+  tick(sec(EEM("bulbs")) + 1);
+  for (const b of M.__entities("esb:sun_bulb")) b.applyDamage(100, { cause: "entityAttack", damagingEntity: a });
+  tick(sec(EEM("flash")) - sec(EEM("bulbs")) + 1);
+  check(dmgTo(a, t1).filter((x) => x.tick === s1 + sec(EEM("flash"))).length === 0, "all bulbs broken: no flash damage");
+  check(L.messages.some((m) => m.target === a && m.m.rawtext[0].translate === "esb.msg.light_fizzle" && m.tick >= t1), "players told the light fizzled");
+  [a, h, e].forEach((x) => x.remove());
 }
 
 // ------------------------------------------------------------------------------------------ global checks

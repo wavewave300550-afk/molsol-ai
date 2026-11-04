@@ -121,6 +121,34 @@ export const BALANCE = {
         "shiv": {
             "bonus_damage": 3,
             "proc_chance": 0.3
+        },
+        "ultimate": {
+            "hp_threshold": 0.35,
+            "cooldown": 45,
+            "bulbs": 6,
+            "ring_radius": 9,
+            "bulb_health": 16,
+            "hover": 5,
+            "strike_every_ticks": 10,
+            "strike_delay_ticks": 18,
+            "strike_radius": 2.5,
+            "strike_damage": 8,
+            "flash_radius": 40,
+            "flash_damage": 30,
+            "darkness_seconds": 10
         }
+    },
+    "ultimate": {
+        "hp_threshold": 0.35,
+        "cooldown": 45,
+        "radius": 16,
+        "sanctuary_radius": 2.6,
+        "damage": 26,
+        "lift": 1.2,
+        "height": 7,
+        "wave_every_ticks": 5,
+        "gears_per_wave": 3,
+        "gear_speed": 0.7,
+        "spiral_step_deg": 23
     }
 };

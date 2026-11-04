@@ -9,12 +9,13 @@
 import { Entity, EntityDamageCause, EntityProjectileComponent, Player, Vector3 } from "@minecraft/server";
 import { BALANCE } from "./balance.js";
 import {
-  BossState, EdisonAbility, actionBar, at, centerOf, event, groundBelow, health, hpFrac, isLiving, isProtectedPlayer,
-  knockFrom, lock, message, now, playersNear, rayClear, safe, sec, setAction, setProp, turnTo, unlock, victims,
+  BossState, EdisonAbility, actionBar, at, centerOf, clearUlt, event, groundBelow, health, hpFrac, isLiving, isProtectedPlayer,
+  knockFrom, lock, message, newUlt, now, playersNear, rayClear, safe, sec, setAction, setProp, shake, title, turnTo, unlock,
+  victims,
 } from "./boss.js";
 import { PFX, SND, particle, sound } from "./fx.js";
 import { CHAIR_SEAT, DYNAMO_TOP, E_BULB_REST, E_BULB_THROW, E_CHEST, E_HEAD } from "./offsets.js";
-import { CHAIR_ID, DYNAMO_ID, EDISON_ACTIONS, EdisonAction, VOLT_BULB_ID } from "./spec.js";
+import { ARC_BOLT_ID, CHAIR_ID, DYNAMO_ID, EDISON_ACTIONS, EdisonAction, MARKER_ID, SUN_BULB_ID, VOLT_BULB_ID } from "./spec.js";
 import { DEG, add, dist, hdist, lerp, mul, norm, sub, v3, yawDir, yawTo } from "./vec.js";
 
 const E = BALANCE.edison;
@@ -37,7 +38,7 @@ export function startE(s: BossState, kind: Act): void {
   lock(s);
   s.run = { kind, tick: 0, length: ticksOf(kind), fired: new Set() };
   setAction(s, kind);
-  if (kind === "transform" || kind === "intro") s.invulnerable = true;
+  if (kind === "transform" || kind === "intro" || kind === "ultimate") s.invulnerable = true;
 }
 
 function fire(s: BossState, name: string): boolean {
@@ -51,7 +52,11 @@ function fire(s: BossState, name: string): boolean {
 export function endE(s: BossState, ability?: EdisonAbility): void {
   const kind = s.run?.kind;
   s.run = undefined;
-  if (kind === "intro" || kind === "transform") s.invulnerable = false;
+  if (kind === "intro" || kind === "transform" || kind === "ultimate") s.invulnerable = false;
+  if (kind === "ultimate") {
+    clearUlt(s);
+    s.ready.ultimate = now() + sec(E.ultimate.cooldown);
+  }
   if (kind === "flourish") s.nextFlourish = now() + sec(lerp(E.flourish.every_min, E.flourish.every_max, Math.random()));
   if (s.hidden) reveal(s);
   setAction(s, "none");
@@ -102,7 +107,7 @@ export function onDynamoDestroyed(s: BossState): void {
     particle(dim, PFX.smoke, add(p, v3(0, 1, 0)));
     sound(dim, SND.boom, p, 1, 1.3);
   }
-  if (s.dying || s.run?.kind === "intro" || s.run?.kind === "transform") return;
+  if (s.dying || s.run?.kind === "intro" || s.run?.kind === "transform" || s.run?.kind === "ultimate") return;
   if (s.hidden) reveal(s);
   if (s.inAir) {
     event(s, "esb:to_ground");
@@ -467,11 +472,158 @@ function tickTransformE(s: BossState): void {
   s.ready.vanish = now() + sec(2);
 }
 
+// ------------------------------------------------------------------------------------------ ULTIMATE: Let There Be Light
+
+/** Snaps the lights out, rises as a sun over a ring of giant Sun Bulbs that call lightning onto marked spots, then
+ *  a blinding flash hits everyone who can see him - weaker for every bulb the players smashed. */
+function startLight(s: BossState): void {
+  startE(s, "ultimate");
+  s.ult = newUlt(s.entity.location);
+}
+
+function aliveBulbs(s: BossState): Entity[] {
+  return (s.ult?.bulbs ?? []).filter((b) => b.isValid && isLiving(b));
+}
+
+function tickLight(s: BossState): void {
+  const u = s.ult;
+  if (!u) return;
+  const U = E.ultimate;
+  const dim = s.entity.dimension;
+  const run = s.run!;
+  const t = run.tick;
+  if (fire(s, "snap")) {
+    const ps = playersNear(s, 40).filter((p) => !isProtectedPlayer(p));
+    for (const p of ps) safe(() => p.addEffect("darkness", sec(U.darkness_seconds), { amplifier: 0, showParticles: false }));
+    title(playersNear(s, 64), "esb.title.light", "esb.subtitle.light");
+    message(playersNear(s, 64), "esb.msg.light");
+    sound(dim, SND.click, s.entity.location, 2, 0.6);
+    sound(dim, SND.portal, s.entity.location, 1.4, 0.5);
+  }
+  const r0 = moment("ultimate", "rise");
+  const r1 = r0 + 12;
+  if (t === r0) {
+    const head = add(u.center, v3(0, 3.2, 0));
+    const h = Math.min(U.hover, rayClear(s, head, v3(0, 1, 0), U.hover + 1) - 1);
+    if (h >= 2) {
+      event(s, "esb:to_air");
+      s.inAir = true;
+      s.locked = true;
+      u.peak = add(u.center, v3(0, h, 0));
+    }
+  }
+  if (s.inAir && t > r0 && t <= r1) {
+    const k = (t - r0) / (r1 - r0);
+    safe(() => s.entity.teleport(v3(u.center.x, lerp(u.center.y, u.peak.y, 1 - (1 - k) * (1 - k)), u.center.z),
+      { rotation: { x: 0, y: s.yaw }, keepVelocity: false }));
+  }
+  if (fire(s, "bulbs")) {
+    for (let i = 0; i < U.bulbs; i++) {
+      const a = (i * 360 / U.bulbs) * DEG;
+      const p = v3(u.center.x - Math.sin(a) * U.ring_radius, u.center.y + 4, u.center.z + Math.cos(a) * U.ring_radius);
+      const y = groundBelow(s, p, 10) ?? u.center.y;
+      const b = safe(() => dim.spawnEntity(SUN_BULB_ID, v3(p.x, y + 1.6, p.z)));
+      if (b) {
+        u.bulbs.push(b);
+        particle(dim, PFX.pillar, v3(p.x, y, p.z));
+      }
+    }
+    sound(dim, SND.charge, u.center, 2, 1.3);
+  }
+  // strikes: a mark under a player, then lightning from the nearest bulb (no bulbs left, no strikes)
+  const st0 = moment("ultimate", "strikes");
+  const st1 = moment("ultimate", "strikes_end");
+  if (t >= st0 && t < st1 && (t - st0) % U.strike_every_ticks === 0) {
+    const bulbs = aliveBulbs(s);
+    const ps = playersNear(s, 40).filter((p) => !isProtectedPlayer(p) && dist(p.location, u.center) <= 32);
+    if (bulbs.length && ps.length) {
+      const p = ps[Math.floor(Math.random() * ps.length)];
+      const y = groundBelow(s, add(p.location, v3(0, 1, 0)), 4) ?? p.location.y;
+      const pos = v3(p.location.x, y, p.location.z);
+      const m = safe(() => dim.spawnEntity(MARKER_ID, v3(pos.x, pos.y + 0.03, pos.z)));
+      if (m) safe(() => m.setProperty("esb:radius", Math.round(U.strike_radius)));
+      const from = bulbs.sort((a, b) => dist(a.location, pos) - dist(b.location, pos))[0];
+      u.strikes.push({ pos, at: now() + U.strike_delay_ticks, marker: m, from: add(from.location, v3(0, 0.8, 0)) });
+      sound(dim, SND.fizz, pos, 1, 1.8);
+    }
+  }
+  for (const st of [...u.strikes]) {
+    if (now() < st.at) continue;
+    u.strikes.splice(u.strikes.indexOf(st), 1);
+    if (st.marker?.isValid) safe(() => st.marker!.remove());
+    const bolt3 = safe(() => dim.spawnEntity(ARC_BOLT_ID, st.pos));
+    if (bolt3) u.bolts.push({ e: bolt3, until: now() + 7 });
+    if (st.from) bolt(s, st.from, add(st.pos, v3(0, 0.5, 0)));
+    for (const v of victims(s, st.pos, U.strike_radius, 2, 3)) {
+      if (hurtBy(s, v, U.strike_damage)) safe(() => v.addEffect("slowness", 30, { amplifier: 1, showParticles: false }));
+    }
+    particle(dim, PFX.voltSpark, add(st.pos, v3(0, 0.3, 0)), undefined, 1);
+    particle(dim, PFX.dust, add(st.pos, v3(0, 0.2, 0)));
+    sound(dim, SND.thunder, st.pos, 0.9, 1.1);
+  }
+  for (const b of [...u.bolts]) {
+    if (now() >= b.until) {
+      u.bolts.splice(u.bolts.indexOf(b), 1);
+      if (b.e.isValid) safe(() => b.e.remove());
+    }
+  }
+  if (fire(s, "charge")) {
+    actionBar(playersNear(s, U.flash_radius + 8), "esb.msg.light_charge");
+    sound(dim, SND.charge, s.entity.location, 2, 0.5);
+  }
+  if (t > moment("ultimate", "charge") && t < moment("ultimate", "flash") && t % 5 === 0) {
+    for (const b of aliveBulbs(s)) bolt(s, add(b.location, v3(0, 0.8, 0)), add(s.entity.location, v3(0, 2, 0)));
+  }
+  if (fire(s, "flash")) {
+    const alive = aliveBulbs(s);
+    const dmg = (U.flash_damage * alive.length) / U.bulbs;
+    const eye = add(s.entity.location, v3(0, 2.2, 0));
+    if (dmg > 0) {
+      for (const v of victims(s, eye, U.flash_radius, 40, 40)) {
+        const c = centerOf(v);
+        const d = sub(c, eye);
+        const l = Math.sqrt(d.x * d.x + d.y * d.y + d.z * d.z);
+        if (rayClear(s, eye, norm(d), l) < l - 0.8) continue; // hidden behind cover
+        if (hurtBy(s, v, dmg)) safe(() => v.addEffect("blindness", 40, { amplifier: 0, showParticles: false }));
+      }
+    } else {
+      message(playersNear(s, 64), "esb.msg.light_fizzle");
+    }
+    for (const b of u.bulbs) {
+      if (!b.isValid) continue;
+      particle(dim, PFX.glass, add(b.location, v3(0, 0.8, 0)));
+      safe(() => b.remove());
+    }
+    u.bulbs = [];
+    for (const st of u.strikes) if (st.marker?.isValid) safe(() => st.marker!.remove());
+    u.strikes = [];
+    particle(dim, PFX.voltSpark, eye, undefined, 1);
+    particle(dim, PFX.shockwave, add(u.center, v3(0, 0.2, 0)), U.ring_radius + 3);
+    shake(playersNear(s, 64), 0.9, 1.2);
+    sound(dim, SND.thunder, eye, 2, 0.7);
+    sound(dim, SND.glass, eye, 2, 0.6);
+    sound(dim, SND.totem, eye, 1, 1.4);
+  }
+  const fl = moment("ultimate", "flash");
+  const ld = moment("ultimate", "land");
+  if (s.inAir && t > fl && t <= ld) {
+    const k = (t - fl) / Math.max(1, ld - fl);
+    safe(() => s.entity.teleport(v3(u.center.x, lerp(u.peak.y, u.center.y, k * k), u.center.z),
+      { rotation: { x: 0, y: s.yaw }, keepVelocity: false }));
+  }
+  if (fire(s, "land") && s.inAir) {
+    event(s, "esb:to_ground");
+    s.inAir = false;
+    particle(dim, PFX.dust, add(s.entity.location, v3(0, 0.2, 0)));
+  }
+}
+
 // ------------------------------------------------------------------------------------------ death
 
 export function beginDyingE(s: BossState): void {
   if (s.dying) return;
   releaseChair(s);
+  clearUlt(s);
   if (s.hidden) reveal(s);
   if (s.inAir) {
     event(s, "esb:to_ground");
@@ -579,6 +731,9 @@ function tickRunE(s: BossState): void {
     case "flourish":
       if (fire(s, "catch")) zap(s, PFX.voltSpark, at(s, E_BULB_REST));
       break;
+    case "ultimate":
+      tickLight(s);
+      break;
     default:
       break;
   }
@@ -611,6 +766,12 @@ export function thinkEdison(s: BossState): void {
   }
   if (now() < s.gapUntil || now() < s.nextDecision) return;
   s.nextDecision = now() + DECIDE_EVERY;
+  // ULTIMATE: Let There Be Light below 35% health, then on its own long cooldown
+  if (hpFrac(s) <= E.ultimate.hp_threshold && now() >= s.ready.ultimate) {
+    if (s.hidden) reveal(s);
+    startLight(s);
+    return;
+  }
   const d = hdist(t.location, s.entity.location);
   const options: [EdisonAbility, number][] = [];
   if (d <= E.vanish.range && ready(s, "vanish")) options.push(["vanish", 3]);

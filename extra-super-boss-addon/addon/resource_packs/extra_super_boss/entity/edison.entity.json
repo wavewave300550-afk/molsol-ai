@@ -4,17 +4,23 @@
   "description": {
    "identifier": "esb:edison",
    "materials": {
-    "default": "entity_emissive"
+    "default": "entity_emissive",
+    "aura": "entity_beam_additive"
    },
    "textures": {
     "default": "textures/entity/edison",
-    "charged": "textures/entity/edison_charged"
+    "charged": "textures/entity/edison_charged",
+    "aura": "textures/entity/edison_aura"
    },
    "geometry": {
-    "default": "geometry.esb.edison"
+    "default": "geometry.esb.edison",
+    "aura": "geometry.esb.edison_aura"
    },
    "render_controllers": [
-    "controller.render.esb.edison"
+    "controller.render.esb.edison",
+    {
+     "controller.render.esb.edison_aura": "q.property('esb:action') == 'ultimate'"
+    }
    ],
    "spawn_egg": {
     "base_color": "#5D6A44",
@@ -26,10 +32,10 @@
     "animate": [
      "idle",
      {
-      "walk": "!q.property('esb:action') == 'intro'"
+      "walk": "!(q.property('esb:action') == 'intro' || q.property('esb:action') == 'ultimate')"
      },
      {
-      "look": "!(q.property('esb:action') == 'death' || q.property('esb:action') == 'intro' || q.property('esb:action') == 'transform' || q.property('esb:action') == 'stunned')"
+      "look": "!(q.property('esb:action') == 'death' || q.property('esb:action') == 'intro' || q.property('esb:action') == 'transform' || q.property('esb:action') == 'stunned' || q.property('esb:action') == 'ultimate')"
      },
      "attack_controller",
      "action_controller"
@@ -51,6 +57,7 @@
     "shank": "animation.esb.edison.shank",
     "stunned": "animation.esb.edison.stunned",
     "transform": "animation.esb.edison.transform",
+    "ultimate": "animation.esb.edison.ultimate",
     "vanish": "animation.esb.edison.vanish",
     "walk": "animation.esb.edison.walk"
    },

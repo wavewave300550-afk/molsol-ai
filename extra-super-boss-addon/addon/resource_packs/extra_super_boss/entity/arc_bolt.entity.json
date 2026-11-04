@@ -1,0 +1,28 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "esb:arc_bolt",
+   "materials": {
+    "default": "entity_beam_additive"
+   },
+   "textures": {
+    "default": "textures/entity/arc_bolt"
+   },
+   "geometry": {
+    "default": "geometry.esb.arc_bolt"
+   },
+   "render_controllers": [
+    "controller.render.esb.arc_bolt"
+   ],
+   "animations": {
+    "flicker": "animation.esb.arc_bolt.flicker"
+   },
+   "scripts": {
+    "animate": [
+     "flicker"
+    ]
+   }
+  }
+ }
+}

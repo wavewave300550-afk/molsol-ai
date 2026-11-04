@@ -4,7 +4,7 @@ export const GEAR_ID = "esb:brass_gear";
 export const SIGIL_ID = "esb:vitruvian_sigil";
 export const BLUEPRINT_ID = "esb:da_vinci_blueprint";
 export const CODEX_ID = "esb:leonardo_codex";
-export const ACTION_VALUES = ["none", "intro", "gear_volley", "quake", "vitruvian", "transform", "dive_rise", "dive_hover", "dive_strike", "flourish", "death"];
+export const ACTION_VALUES = ["none", "intro", "gear_volley", "quake", "vitruvian", "transform", "dive_rise", "dive_hover", "dive_strike", "flourish", "death", "ultimate"];
 /** Action lengths and named moments in seconds (identical to the animation files). */
 export const ACTIONS = {
     "intro": {
@@ -68,15 +68,30 @@ export const ACTIONS = {
             "kneel": 1.0,
             "pages": 3.4
         }
+    },
+    "ultimate": {
+        "length": 9.0,
+        "moments": {
+            "rise": 0.2,
+            "sigil": 1.0,
+            "barrage": 1.6,
+            "barrage_end": 5.4,
+            "gather": 5.6,
+            "slam": 7.0,
+            "land": 7.3
+        }
     }
 };
 export const EDISON_ID = "esb:edison";
+export const SUN_BULB_ID = "esb:sun_bulb";
+export const MARKER_ID = "esb:volt_marker";
+export const ARC_BOLT_ID = "esb:arc_bolt";
 export const DYNAMO_ID = "esb:dynamo";
 export const CHAIR_ID = "esb:electric_chair";
 export const VOLT_BULB_ID = "esb:volt_bulb";
 export const SHIV_ID = "esb:volt_shiv";
 export const PATENT_ID = "esb:edison_patent";
-export const EDISON_ACTION_VALUES = ["none", "intro", "bulb_toss", "vanish", "backstab", "overload", "chair", "transform", "stunned", "flourish", "death"];
+export const EDISON_ACTION_VALUES = ["none", "intro", "bulb_toss", "vanish", "backstab", "overload", "chair", "transform", "stunned", "flourish", "death", "ultimate"];
 export const EDISON_ACTIONS = {
     "intro": {
         "length": 4.4,
@@ -143,6 +158,19 @@ export const EDISON_ACTIONS = {
         "moments": {
             "kneel": 1.0,
             "fade": 3.0
+        }
+    },
+    "ultimate": {
+        "length": 10.0,
+        "moments": {
+            "snap": 0.3,
+            "rise": 0.6,
+            "bulbs": 1.0,
+            "strikes": 1.8,
+            "strikes_end": 6.8,
+            "charge": 7.0,
+            "flash": 8.5,
+            "land": 9.2
         }
     }
 };

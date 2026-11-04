@@ -35,6 +35,9 @@
       },
       {
        "death": "q.property('esb:action') == 'death'"
+      },
+      {
+       "ultimate": "q.property('esb:action') == 'ultimate'"
       }
      ]
     },
@@ -156,6 +159,18 @@
      "transitions": [
       {
        "default": "q.property('esb:action') != 'death'"
+      }
+     ],
+     "blend_transition": 0.15,
+     "blend_via_shortest_path": true
+    },
+    "ultimate": {
+     "animations": [
+      "ultimate"
+     ],
+     "transitions": [
+      {
+       "default": "q.property('esb:action') != 'ultimate'"
       }
      ],
      "blend_transition": 0.15,

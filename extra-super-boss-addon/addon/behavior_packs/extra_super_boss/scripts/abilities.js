@@ -1,6 +1,6 @@
 import { EntityDamageCause } from "@minecraft/server";
 import { BALANCE } from "./balance.js";
-import { actionBar, at, centerOf, event, face, groundBelow, hurt, isLiving, knockFrom, lock, message, now, playersNear, rayClear, safe, sec, setAction, setProp, turnTo, unlock, victims, } from "./boss.js";
+import { actionBar, at, centerOf, clearUlt, event, face, groundBelow, hurt, isLiving, knockFrom, lock, message, newUlt, now, playersNear, rayClear, safe, sec, setAction, setProp, shake, title, turnTo, unlock, victims, } from "./boss.js";
 import { PFX, SND, particle, sound } from "./fx.js";
 import { CHEST, CORE, PALM_DIVE, PALM_QUAKE, PALM_SHOT } from "./offsets.js";
 import { ACTIONS, GEAR_ID, SIGIL_ID } from "./spec.js";
@@ -49,8 +49,12 @@ export function endAction(s, ability) {
     const kind = s.run?.kind;
     s.run = undefined;
     removeSigil(s);
-    if (kind === "intro" || kind === "transform")
+    if (kind === "intro" || kind === "transform" || kind === "ultimate")
         s.invulnerable = false;
+    if (kind === "ultimate") {
+        clearUlt(s);
+        s.ready.ultimate = now() + sec(BALANCE.ultimate.cooldown);
+    }
     if (kind === "flourish")
         s.nextFlourish = now() + sec(lerp(BALANCE.flourish.every_min, BALANCE.flourish.every_max, Math.random()));
     setAction(s, "none");
@@ -99,6 +103,9 @@ export function tickRun(s) {
             tickDive(s);
             return; // the dive manages its own end
         case "flourish":
+            break;
+        case "ultimate":
+            tickOpus(s);
             break;
         default:
             break;
@@ -204,7 +211,7 @@ export function vitruvianRadius(s) {
 function spawnSigil(s, p, radius) {
     const e = safe(() => s.entity.dimension.spawnEntity(SIGIL_ID, p));
     if (e)
-        safe(() => e.setProperty("esb:radius", Math.round(clamp(radius, 1, 12))));
+        safe(() => e.setProperty("esb:radius", Math.round(clamp(radius, 1, 20))));
     return e;
 }
 export function removeSigil(s) {
@@ -396,11 +403,122 @@ export function forceGround(s) {
     removeSigil(s);
     s.dive = undefined;
 }
+// ------------------------------------------------------------------------------------------ ULTIMATE: Opus Magnum
+/** Rises in the Vitruvian pose with a giant halo over an arena-sized sigil with four golden sanctuaries, spins
+ *  spraying a spiral of gears, gathers, then slams down: everything inside the sigil but outside the sanctuaries is hit. */
+export function startOpus(s) {
+    startAction(s, "ultimate");
+    s.invulnerable = true;
+    s.ult = newUlt(s.entity.location);
+    sound(s.entity.dimension, SND.summon, s.entity.location, 1.6, 0.6);
+}
+function tickOpus(s) {
+    const u = s.ult;
+    const run = s.run;
+    if (!u)
+        return;
+    const U = BALANCE.ultimate;
+    const dim = s.entity.dimension;
+    const t = run.tick;
+    const rise0 = moment("ultimate", "rise");
+    const rise1 = moment("ultimate", "sigil") + 4;
+    if (t === rise0) {
+        const head = add(u.center, v3(0, 3.6, 0));
+        const h = Math.min(U.height, rayClear(s, head, v3(0, 1, 0), U.height + 1) - 1);
+        if (h >= 3) {
+            event(s, "esb:to_air");
+            s.inAir = true;
+            s.locked = true;
+            u.peak = add(u.center, v3(0, h, 0));
+        }
+        message(playersNear(s, 64), "esb.msg.opus");
+    }
+    if (s.inAir && t > rise0 && t <= rise1) {
+        const k = (t - rise0) / (rise1 - rise0);
+        teleport(s, v3(u.center.x, lerp(u.center.y, u.peak.y, 1 - (1 - k) * (1 - k)), u.center.z));
+    }
+    if (fire(s, "sigil")) {
+        const gy = (groundBelow(s, add(u.center, v3(0, 1, 0)), 6) ?? u.center.y) + 0.02;
+        const big = spawnSigil(s, v3(u.center.x, gy, u.center.z), U.radius);
+        if (big)
+            u.extras.push(big);
+        const d = U.radius * 0.62;
+        for (const [sx, sz] of [[d, d], [-d, d], [d, -d], [-d, -d]]) {
+            const p = v3(u.center.x + sx, u.center.y + 3, u.center.z + sz);
+            const y = groundBelow(s, p, 10) ?? u.center.y;
+            const q = v3(p.x, y + 0.03, p.z);
+            u.sanctuaries.push(q);
+            const e = spawnSigil(s, q, 3);
+            if (e)
+                u.extras.push(e);
+            particle(dim, PFX.pillar, q);
+        }
+        const ps = playersNear(s, 64);
+        title(ps, "esb.title.opus", "esb.subtitle.opus");
+        shake(ps, 0.25, 1.0);
+        sound(dim, SND.bell, u.center, 2, 0.5);
+    }
+    const b0 = moment("ultimate", "barrage");
+    const b1 = moment("ultimate", "barrage_end");
+    if (t >= b0 && t < b1 && (t - b0) % U.wave_every_ticks === 0) {
+        u.wave++;
+        const from = add(s.entity.location, v3(0, 2.4, 0));
+        const base = u.wave * U.spiral_step_deg;
+        for (let k = 0; k < U.gears_per_wave; k++) {
+            const a = (base + (k * 360) / U.gears_per_wave) * DEG;
+            const dir = norm(v3(-Math.sin(a), s.inAir ? -0.33 : 0.02, Math.cos(a)));
+            shootGear(s, from, mul(dir, U.gear_speed));
+        }
+        if (u.wave % 2 === 0)
+            sound(dim, SND.click, from, 1, 1.4);
+        if (u.wave % 3 === 0)
+            particle(dim, PFX.spark, from);
+    }
+    if (fire(s, "gather")) {
+        actionBar(playersNear(s, U.radius + 10), "esb.msg.opus_judgement");
+        sound(dim, SND.charge, s.entity.location, 2, 0.6);
+    }
+    const slam = moment("ultimate", "slam");
+    const land = moment("ultimate", "land");
+    if (t > moment("ultimate", "gather") && t < slam && t % 6 === 0) {
+        particle(dim, PFX.sigilEdge, add(u.center, v3(0, 0.1, 0)), U.radius);
+        for (const q of u.sanctuaries)
+            particle(dim, PFX.sigilEdge, add(q, v3(0, 0.1, 0)), 3);
+    }
+    if (s.inAir && t > slam && t <= land) {
+        const k = (t - slam) / Math.max(1, land - slam);
+        teleport(s, v3(u.center.x, lerp(u.peak.y, u.center.y, k * k), u.center.z));
+    }
+    if (fire(s, "land")) {
+        if (s.inAir) {
+            event(s, "esb:to_ground");
+            s.inAir = false;
+        }
+        const c = v3(u.center.x, u.center.y, u.center.z);
+        for (const v of victims(s, c, U.radius, 3, 8)) {
+            const safeSpot = u.sanctuaries.some((q) => hdist(v.location, q) <= U.sanctuary_radius);
+            if (safeSpot)
+                continue;
+            if (hurt(s, v, U.damage))
+                knockFrom(v, c, 0.8, U.lift);
+        }
+        particle(dim, PFX.sigilBurst, add(c, v3(0, 0.1, 0)), U.radius);
+        particle(dim, PFX.sigilBurst, add(c, v3(0, 0.1, 0)), U.radius * 0.5);
+        particle(dim, PFX.shockwave, add(c, v3(0, 0.15, 0)), U.radius);
+        particle(dim, PFX.dust, add(c, v3(0, 0.3, 0)));
+        particle(dim, PFX.pages, add(c, v3(0, 1.5, 0)));
+        shake(playersNear(s, 64), 0.8, 1.4);
+        sound(dim, SND.boom, c, 2, 0.6);
+        sound(dim, SND.totem, c, 1.2, 0.8);
+        sound(dim, SND.anvil, c, 1.4, 0.5);
+    }
+}
 // ------------------------------------------------------------------------------------------ death
 export function beginDying(s) {
     if (s.dying)
         return;
     forceGround(s);
+    clearUlt(s);
     s.run = undefined;
     s.dying = true;
     s.dyingTick = now();

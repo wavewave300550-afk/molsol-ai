@@ -174,91 +174,82 @@ def p_skin(ctx: FaceCtx):
     return tile_of(outline(rgb, 0.88) * FACE_LIGHT[ctx.face])
 
 
-# Face, 28 x 28 px (7 x 7 units at 4 px/unit) - the head's north face.  A man's face in the anime style
-# of the art: narrow almond eyes under heavy, angled brows, a long nose with a shaded bridge, a thin mouth
-# with a slight smirk, cheekbone contour and a jaw that narrows to the chin (the chin itself is a
-# separate cube under the head).  Rows 0-8 sit under the hair cap.
-#  H hair  h hair shadow  B brow  K lid line  k soft lid  W eye white  A iris  a iris dark  P pupil
-#  G glint  s skin shadow  S deep contour  n nose shadow  N nostril  m mouth  l lip shadow
-def face_grid():
+# Face, 28 x 28 px (7 x 7 units at 4 px/unit) - the head's north face, drawn as a handsome anime man:
+# large almond eyes close to the centre with a heavy upper lash line and a sharp outer corner, clean angled
+# brows, a minimal nose (only the shadow under the tip), a short firm mouth and a soft V-shaped jaw shadow.
+# Rows 0-8 sit under the hair cap.  style: "stern" (Da Vinci) or "sly" (Edison: one brow raised, smirk).
+#  H hair  h hair shadow  B brow  K lash line  k soft lid  W eye white  A iris  a iris dark  P pupil  G glint
+#  s skin shadow  j jaw shade  n nose shadow  m mouth  l lower lip  c chin light
+def handsome_face(style="stern"):
     W = H = 28
     g = [["." for _ in range(W)] for _ in range(H)]
 
     def put(x, y, ch):
-        if 0 <= x < W and 0 <= y < H:
+        if 0 <= x < W and 0 <= y < H and ch != " ":
             g[y][x] = ch
 
-    def mirror(x, y, ch, ch_r=None):
-        put(x, y, ch)
-        put(W - 1 - x, y, ch_r or ch)
+    def stamp(x0, y0, rows):
+        for dy, row in enumerate(rows):
+            for dx, ch in enumerate(row):
+                put(x0 + dx, y0 + dy, ch)
 
     for y in range(0, 9):
         for x in range(W):
             put(x, y, "H")
-    # uneven hairline: a few strands reach the forehead, parted toward his left
-    for x, d in ((0, 3), (1, 3), (2, 2), (3, 2), (4, 1), (8, 1), (9, 1), (16, 1), (17, 2), (18, 2), (19, 1),
-                 (24, 1), (25, 2), (26, 3), (27, 3)):
+    for x, d in ((0, 3), (1, 3), (2, 2), (3, 1), (7, 1), (12, 1), (17, 1), (22, 1), (24, 1), (25, 2), (26, 3), (27, 3)):
         for k in range(d):
             put(x, 9 + k, "h" if k == d - 1 else "H")
-    # temples / sideburns
-    for y in range(9, 17):
-        mirror(0, y, "h")
-    for y in range(12, 15):
-        mirror(1, y, "s")
-    # heavy brows: thick, straight, the inner ends lowered (a stern look)
-    for x in range(3, 11):
-        mirror(x, 10 if x < 8 else 11, "B")
-    for x in range(4, 10):
-        mirror(x, 11 if x < 8 else 12, "B")
-    mirror(10, 12, "s")
-    # eyes: narrow almond, dark upper lid, amber iris, small glint (same side on both eyes)
-    for x in range(4, 11):
-        mirror(x, 13, "K")
-    put(4, 14, "K"); put(23, 14, "K")
-    for x, ch in zip(range(5, 11), "WGPaWs"):
-        put(x, 14, ch)
-    for x, ch in zip(range(17, 23), "sWGPaW"):
-        put(x, 14, ch)
-    for x, ch in zip(range(5, 11), "kAaAks"):
-        put(x, 15, ch)
-    for x, ch in zip(range(17, 23), "skAaAk"):
-        put(x, 15, ch)
-    for x in range(6, 10):
-        mirror(x, 16, "s")
-    # cheekbones and the jaw line narrowing toward the chin
-    for y in range(17, 28):
-        depth = 1 + max(0, (y - 19)) // 2
-        for x in range(depth):
-            mirror(x, y, "S" if x < depth - 1 else "s")
-    for y in range(17, 20):
-        mirror(3, y, "s")
-    # nose: shaded bridge on one side, tip and nostrils
-    for y in range(14, 20):
-        put(14, y, "n")
-    put(15, 19, "n")
-    put(12, 20, "N"); put(13, 20, "n"); put(14, 20, "n"); put(15, 20, "N")
-    put(13, 21, "s"); put(14, 21, "s")
-    # mouth: thin line with the left corner lifted (smirk), lower-lip shadow, chin shadow
-    for x in range(10, 17):
-        put(x, 23, "m")
-    put(17, 22, "m")
-    for x in range(11, 16):
-        put(x, 24, "l")
-    for x in range(12, 16):
-        put(x, 26, "s")
+    for y in range(9, 19):  # sideburns
+        put(0, y, "h")
+        put(27, y, "h")
+    # brows: two pixels thick, the inner ends lower (stern) - Edison arches his left one (sly)
+    stamp(4, 10, ["BBBBBB  ", "   BBBBB"])
+    if style == "sly":
+        stamp(16, 9, ["  BBBBBB", "BBBB   B"])
+    else:
+        stamp(16, 10, ["  BBBBBB", "BBBBB   "])
+    # eyes: 7 x 5 almond with a heavy upper lash, a 4-px iris, pupil, glint on the upper left
+    stamp(5, 13, [" KKKKKK",
+                  "KKGaaaK",
+                  "KWAPPAW",
+                  " sAAAA ",
+                  "   ss  "])
+    stamp(16, 13, ["KKKKKK ",
+                   "KGaaaKK",
+                   "WAPPAWK",
+                   " AAAAs ",
+                   "  ss   "])
+    # nose: only the shadow under the tip
+    put(14, 19, "s")
+    put(13, 20, "n")
+    put(14, 20, "n")
+    # mouth
+    if style == "sly":
+        stamp(11, 22, ["     mm", "mmmmmm ", " llll  "])
+    else:
+        stamp(11, 23, ["mmmmmm", " llll "])
+    # a soft jaw: small shaded triangles in the lower corners, light on the chin
+    for y in range(23, 28):
+        for x in range(y - 22):
+            put(x, y, "s")
+            put(W - 1 - x, y, "s")
     for x in range(11, 17):
-        put(x, 27, "s")
+        put(x, 27, "c")
     return ["".join(r) for r in g]
+
+
+def face_grid():
+    return handsome_face("stern")
 
 
 FACE_ART = face_grid()
 FACE_COL = {
-    "H": HAIR, "h": HAIR_SH, "B": hexrgb("#3E2314"), "K": hexrgb("#24150C"), "k": hexrgb("#7A5A48"),
-    "W": hexrgb("#EDE4D8"), "A": hexrgb("#C99A35"), "a": hexrgb("#8E5F1B"), "P": hexrgb("#3A220E"), "G": hexrgb("#FFF3D0"),
-    "s": SKIN_SH, "S": hexrgb("#C38F72"), "n": hexrgb("#DDAA8C"), "N": hexrgb("#B98068"), "m": hexrgb("#9A5A4E"),
-    "l": hexrgb("#D59C86"),
+    "H": HAIR, "h": HAIR_SH, "B": hexrgb("#3E2314"), "K": hexrgb("#1E120A"), "k": hexrgb("#6E5040"),
+    "W": hexrgb("#F2EBE2"), "A": hexrgb("#D3A23E"), "a": hexrgb("#8E5F1B"), "P": hexrgb("#2E1A0A"), "G": hexrgb("#FFF6DA"),
+    "s": hexrgb("#E2B69A"), "j": hexrgb("#D7A587"), "n": hexrgb("#CF9C82"), "m": hexrgb("#A8665C"),
+    "l": hexrgb("#E4B09A"), "c": hexrgb("#F6D6BE"),
 }
-EYE_GLOW = {"A": 170, "a": 170}
+EYE_GLOW = {"A": 190, "a": 190}
 
 
 def paint_face(rgb):
@@ -777,7 +768,6 @@ def build() -> Model:
     m.bone("head", "torso", (0, 29, 0))
     m.cube("head", (-1.5, 27.75, -1.5), (3.0, 2.25, 3.0), "skin")  # neck
     m.cube("head", (-3.5, 29.5, -3.5), (7, 7, 7), "skin", face=True)
-    m.cube("head", (-2.5, 28.75, -3.45), (5.0, 1.0, 4.5), "skin", chin=True)  # chin / jaw
     m.cube("head", (3.45, 31.25, -1.5), (0.45, 1.75, 1.0), "skin")  # ears
     m.cube("head", (-3.9, 31.25, -1.5), (0.45, 1.75, 1.0), "skin")
     m.cube("head", (-3.75, 34.25, -3.75), (7.5, 3.0, 7.5), "hair", shine=True)  # cap (above the brows)

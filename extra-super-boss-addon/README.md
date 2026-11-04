@@ -12,15 +12,33 @@ no vanilla mob is replaced.
 
 | | |
 |---|---|
-| Pack version | **1.1.0** (adds Thomas Edison). Same pack UUIDs, so it imports over 1.0.x |
+| Pack version | **1.2.0**: an **Ultimate** for every boss and redrawn faces. Same pack UUIDs, so it imports over older versions |
 | Game version | Bedrock **1.26.60** or newer (iPhone / iPad / Android / Windows / consoles) |
 | Script API | `@minecraft/server` **2.11.0** (stable) |
 | Experimental toggles | **None needed** |
 
 > **Not yet tested in the real game.** The machine that built this has no Minecraft client (starting a Creator Tools test
 > server needs the user to accept the Minecraft EULA themselves). What was checked: Creator Tools validation **0 errors**,
-> **3244/3244** cross-file reference checks, and a smoke test that runs the real boss scripts against a mocked
-> `@minecraft/server`: **172/172** checks. Every image and GIF here is **rendered from the pack's own files**, not captured in-game.
+> **3543/3543** cross-file reference checks, and a smoke test that runs the real boss scripts against a mocked
+> `@minecraft/server`: **207/207** checks. Every image and GIF here is **rendered from the pack's own files**, not captured in-game.
+
+## Ultimates: every boss has one
+
+![Ultimates](docs/preview/ultimates.png)
+
+Each boss unleashes his **Ultimate** below **35% health**, and again every **45 s** after that. It's titled on
+screen, shakes the camera, and he is **invulnerable** while it plays: survive it.
+
+| Boss | Ultimate | What happens | How to survive |
+|---|---|---|---|
+| Da Vinci | **OPUS MAGNUM** (9 s) | Rises 7 blocks in the Vitruvian pose with a **giant spinning Vitruvian halo** behind him. An **arena-sized golden sigil** (radius 16) is drawn below with **4 small golden sanctuaries** at its corners. He spins twice like a gyroscope spraying a **spiral of brass gears** (48 gears), gathers power overhead, then **slams down**: everyone inside the sigil takes 26 damage and is launched | Dodge the gear spiral and **stand in a golden sanctuary** when he slams (or leave the sigil) |
+| Edison | **LET THERE BE LIGHT** (10 s) | Snaps his fingers: **darkness** falls. He rises as a blazing **sun** (additive aura) while **6 giant Sun Bulbs** float around the arena. Every half second a **strike mark** appears under a player, and 0.9 s later **lightning** from the nearest bulb hits it (8 + slowness). Then he charges and releases a **blinding flash**: 30 damage + blindness to everyone who can see him | **Smash the Sun Bulbs** (16 HP each): every broken bulb weakens the flash, and with all six gone it fizzles. **Hide behind a wall**, step out of the marks |
+
+GIFs: [`ultimate_opus_magnum`](docs/preview/anim/ultimate_opus_magnum.gif), [`ultimate_let_there_be_light`](docs/preview/anim/ultimate_let_there_be_light.gif)
+
+| Opus Magnum | Let There Be Light |
+|---|---|
+| ![opus](docs/preview/anim/ultimate_opus_magnum.gif) | ![light](docs/preview/anim/ultimate_let_there_be_light.gif) |
 
 ---
 
@@ -28,10 +46,10 @@ no vanilla mob is replaced.
 
 ![Da Vinci](docs/preview/hero.png)
 
-Long wavy brown hair tied half-up, a stern face with heavy brows, white shirt, brocade vest, crimson mantle with gold
+Long wavy brown hair tied half-up, a calm handsome face (anime-style eyes, firm brows), white shirt, brocade vest, crimson mantle with gold
 trim and a compass-rose emblem, tall boots. His **left arm is a brass clockwork gauntlet**; his **right hand holds a
 drafting compass** as a weapon. In phase 2 he unfolds **ornithopter wings** from his notebooks.
-500 HP, boss bar, about 3.7 blocks tall (40 bones, 115 cubes).
+500 HP, boss bar, about 3.7 blocks tall (40 bones, 114 cubes). **Ultimate: Opus Magnum** (above).
 
 | Ability | When | What happens | How to dodge |
 |---|---|---|---|
@@ -57,11 +75,11 @@ GIFs: [`intro`](docs/preview/anim/intro.gif), [`gear_volley`](docs/preview/anim/
 
 ![Edison](docs/preview/edison_hero.png)
 
-Messy black hair with a white streak, amber eyes and a smirk, rolled-up white shirt, olive work apron with black
+Messy black hair with a white streak, sharp amber eyes and a sly smirk, rolled-up white shirt, olive work apron with black
 leather straps and brass buckles, long black gloves, lace-up boots. He fights like an assassin with a **broken
 light bulb** as a shiv, and brings two machines to the fight: **the Dynamo** (his generator cabinet) and
 **the Electric Chair**. Phase 1 electricity is warm amber (DC); in phase 2, **the Current War**, it turns blue-white (AC).
-420 HP, boss bar, about 3.1 blocks tall, fast (movement 0.34, 0.40 in phase 2).
+420 HP, boss bar, about 3.1 blocks tall, fast (movement 0.34, 0.40 in phase 2). **Ultimate: Let There Be Light** (above).
 
 | Ability | When | What happens | How to counter |
 |---|---|---|---|
@@ -131,6 +149,8 @@ Bosses ignore Creative and Spectator players: use `/gamemode survival`, and `/ef
 | 7 | Bring him to half health | AC transformation: blue lightning textures, the Dynamo comes back, he blinks twice |
 | 8 | Kill him | Death sequence, the Dynamo powers down, Volt Shiv drops |
 | 9 | Da Vinci: `/summon esb:da_vinci ~ ~ ~8` | Intro, gear volley, quake, Vitruvian circle, wings at half health, dive |
+| 10 | Bring either boss below 35% health | The Ultimate: big title, camera shake, Da Vinci's halo + arena sigil + sanctuaries, or Edison's darkness + sun aura + Sun Bulbs |
+| 11 | Edison's Ultimate: break 3 bulbs, hide one friend behind a wall | The flash hits for half damage, and the hidden player takes none |
 
 Useful: `/kill @e[type=esb:edison]`, `/kill @e[type=esb:da_vinci]`, Settings → Creator → **Content Log GUI** for pack errors
 (screenshot any red line if something looks wrong).
@@ -142,6 +162,8 @@ Useful: `/kill @e[type=esb:edison]`, `/kill @e[type=esb:da_vinci]`, Settings →
 * The basic melee attacks are vanilla `minecraft:behavior.delayed_attack` (like the Ravager) with `q.is_delayed_attacking`.
 * Edison's invisibility relies on the vanilla `invisibility` effect hiding mobs; the Blackout uses the vanilla `darkness` effect.
 * Hitting gears back (`reflect_on_hurt`).
+* The Ultimates use the `camerashake` command (run by the script on each player) and extra additive render layers shown
+  through a Molang condition on the client entity (`render_controllers` with `{"controller": "q.property('esb:action') == 'ultimate'"}`).
 * Balance targets 1–2 players in diamond gear; tune everything in `balance.json` and rebuild.
 * In-game text is English: Bedrock has no Thai UI language, so a `th_TH.lang` would never load.
 
@@ -167,6 +189,9 @@ extra-super-boss-addon/
 | `npm run package` | Build `dist/Extra_Super_Boss_v1.mcaddon` |
 | `npm run build` | All of the above in order |
 | `npm run preview` | Render the pose sheets, GIFs and icons into `docs/preview/` |
+
+Rules for new bosses (every boss has an Ultimate, faces must look good, docs in English) are in
+[`CLAUDE.md`](CLAUDE.md); `npm run validate` fails if a boss has no Ultimate.
 
 Animation lengths and hit frames live in `tools/spec.py`, which generates both the animation files and
 `scripts-src/spec.ts`, so damage lands on the frame the client shows. Points the scripts use (Da Vinci's palm,

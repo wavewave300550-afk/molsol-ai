@@ -23,6 +23,9 @@ ACTIONS = {
     "dive_strike": {"length": 1.4, "moments": {"impact": 0.3}},
     "flourish": {"length": 2.6, "moments": {}},
     "death": {"length": 4.2, "moments": {"kneel": 1.0, "pages": 3.4}},
+    # ULTIMATE - Opus Magnum
+    "ultimate": {"length": 9.0, "moments": {"rise": 0.2, "sigil": 1.0, "barrage": 1.6, "barrage_end": 5.4, "gather": 5.6,
+                                            "slam": 7.0, "land": 7.3}},
 }
 ACTION_VALUES = ["none"] + list(ACTIONS)
 
@@ -30,6 +33,9 @@ ACTION_VALUES = ["none"] + list(ACTIONS)
 SLASH = {"length": 0.9, "hit_pct": 0.5}
 
 # ------------------------------------------------------------------------------ Boss 2: Thomas Edison
+SUN_BULB_ID = "esb:sun_bulb"
+MARKER_ID = "esb:volt_marker"
+ARC_BOLT_ID = "esb:arc_bolt"
 EDISON_ID = "esb:edison"
 DYNAMO_ID = "esb:dynamo"
 CHAIR_ID = "esb:electric_chair"
@@ -48,6 +54,9 @@ EDISON_ACTIONS = {
     "stunned": {"length": 3.0, "moments": {}},
     "flourish": {"length": 2.4, "moments": {"catch": 1.25}},
     "death": {"length": 4.0, "moments": {"kneel": 1.0, "fade": 3.0}},
+    # ULTIMATE - Let There Be Light
+    "ultimate": {"length": 10.0, "moments": {"snap": 0.3, "rise": 0.6, "bulbs": 1.0, "strikes": 1.8, "strikes_end": 6.8,
+                                             "charge": 7.0, "flash": 8.5, "land": 9.2}},
 }
 EDISON_ACTION_VALUES = ["none"] + list(EDISON_ACTIONS)
 SHANK = {"length": 0.6, "hit_pct": 0.5}

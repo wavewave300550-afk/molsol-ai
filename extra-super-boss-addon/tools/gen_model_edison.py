@@ -86,77 +86,13 @@ def arcs(t, ctx, density=1.0, color=None):
 # ------------------------------------------------------------------------------ face (male, sly smirk)
 
 def face_grid():
-    W = H = 28
-    g = [["." for _ in range(W)] for _ in range(H)]
-
-    def put(x, y, ch):
-        if 0 <= x < W and 0 <= y < H:
-            g[y][x] = ch
-
-    def mirror(x, y, ch):
-        put(x, y, ch)
-        put(W - 1 - x, y, ch)
-
-    for y in range(0, 8):
-        for x in range(W):
-            put(x, y, "H")
-    # messy fringe edge; the white streak falls on his right side (viewer's left)
-    for x, d in ((0, 4), (1, 4), (2, 3), (3, 2), (4, 3), (5, 2), (6, 1), (7, 2), (10, 1), (11, 2), (12, 1), (15, 1),
-                 (18, 2), (19, 1), (21, 2), (22, 3), (23, 2), (24, 2), (25, 3), (26, 4), (27, 4)):
-        for k in range(d):
-            put(x, 8 + k, "h" if k == d - 1 else "H")
-    for x in range(3, 8):
-        for y in range(0, 10 if x in (4, 6) else 9):
-            put(x, y, "X" if y < 9 else "x")
-    for y in range(8, 18):
-        mirror(0, y, "h")
-    # brows: dark, slightly arched, the right one raised (amused)
-    for x in range(3, 11):
-        put(x, 10 if 4 < x < 9 else 11, "B")
-    for x in range(17, 25):
-        put(x, 11 if 18 < x < 23 else 12, "B")
-    # eyes: half-lidded and sly, amber-orange, looking up toward his left
-    for x in range(4, 11):
-        put(x, 13, "K")
-    for x in range(17, 24):
-        put(x, 14, "K")
-    for x, ch in zip(range(5, 11), "WWaGAs"):
-        put(x, 14, ch)
-    put(4, 14, "K")
-    for x, ch in zip(range(17, 23), "sWaGAW"):
-        put(x, 15, ch)
-    put(23, 15, "K")
-    for x, ch in zip(range(5, 11), "kkAak."):
-        put(x, 15, ch)
-    for x, ch in zip(range(17, 23), ".kAakk"):
-        put(x, 16, ch)
-    # cheek and jaw contour
-    for y in range(17, 28):
-        depth = 1 + max(0, (y - 19)) // 2
-        for x in range(depth):
-            mirror(x, y, "S" if x < depth - 1 else "s")
-    # nose
-    for y in range(15, 20):
-        put(13, y, "n")
-    put(12, 20, "N"); put(13, 20, "n"); put(14, 20, "n"); put(15, 20, "N")
-    # a wide one-sided smirk
-    for x in range(10, 16):
-        put(x, 23, "m")
-    put(16, 22, "m"); put(17, 22, "m"); put(18, 21, "s")
-    for x in range(11, 15):
-        put(x, 24, "l")
-    for x in range(12, 16):
-        put(x, 26, "s")
-    return ["".join(r) for r in g]
+    return G.handsome_face("sly")
 
 
 FACE_ART = face_grid()
-FACE_COL = {
-    "H": HAIR_E, "h": HAIR_E_SH, "X": STREAK, "x": STREAK_SH, "B": hexrgb("#1A1214"), "K": hexrgb("#160D0B"),
-    "k": hexrgb("#6E5446"), "W": hexrgb("#EDE4D8"), "A": hexrgb("#E08A2A"), "a": hexrgb("#9A4E14"), "G": hexrgb("#FFF0C8"),
-    "s": G.SKIN_SH, "S": hexrgb("#C38F72"), "n": hexrgb("#DDAA8C"), "N": hexrgb("#B98068"), "m": hexrgb("#9A5A4E"),
-    "l": hexrgb("#D59C86"),
-}
+FACE_COL = dict(G.FACE_COL)
+FACE_COL.update({"H": HAIR_E, "h": HAIR_E_SH, "X": STREAK, "x": STREAK_SH, "B": hexrgb("#17101A"),
+                 "A": hexrgb("#E8902C"), "a": hexrgb("#9A4E14"), "G": hexrgb("#FFF0C8")})
 
 
 def paint_face(rgb):
@@ -428,7 +364,6 @@ def build_edison() -> Model:
     m.bone("head", "torso", (0, 29, 0))
     m.cube("head", (-1.5, 27.75, -1.5), (3.0, 2.25, 3.0), "skin")
     m.cube("head", (-3.5, 29.5, -3.5), (7, 7, 7), "skin", face=True)
-    m.cube("head", (-2.5, 28.75, -3.45), (5.0, 1.0, 4.5), "skin", chin=True)
     m.cube("head", (3.45, 31.25, -1.5), (0.45, 1.75, 1.0), "skin")
     m.cube("head", (-3.9, 31.25, -1.5), (0.45, 1.75, 1.0), "skin")
     m.cube("head", (-3.8, 34.5, -3.8), (7.6, 2.75, 7.6), "hair")

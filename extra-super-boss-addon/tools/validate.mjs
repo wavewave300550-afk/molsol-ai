@@ -176,7 +176,7 @@ for (const [id, ce] of ceFiles) {
   for (const [k, t] of Object.entries(ce.textures)) ok(texExists(t), `${id}: texture ${k}: ${t}.png missing`);
   for (const [k, g] of Object.entries(ce.geometry)) {
     ok(geos.has(g), `${id}: geometry ${k}: ${g} missing`);
-    const tex = path.join(RP, `${ce.textures.default}.png`);
+    const tex = path.join(RP, `${(ce.textures[k] ?? ce.textures.default)}.png`);
     if (geos.has(g) && fs.existsSync(tex)) {
       const s = pngSize(tex);
       ok(s.w === geos.get(g).description.texture_width && s.h === geos.get(g).description.texture_height,
@@ -189,7 +189,7 @@ const allBones = new Set(main.bones.map((b) => b.name));
 const locators = new Set(main.bones.flatMap((b) => Object.keys(b.locators ?? {})));
 for (const [id, c] of ceFiles) {
   for (const [k, t] of Object.entries(c.textures)) {
-    const g = geos.get(c.geometry.default);
+    const g = geos.get(c.geometry[k] ?? c.geometry.default);
     const f = path.join(RP, `${t}.png`);
     if (g && fs.existsSync(f)) ok(pngSize(f).w === g.description.texture_width && pngSize(f).h === g.description.texture_height, `${id}: ${k} texture matches the geometry size`);
   }
@@ -208,10 +208,13 @@ const particles = new Set(files(path.join(RP, "particles"), ".json").map((f) => 
 const ce = ceFiles.get("esb:da_vinci");
 // animation / controller name -> the entity that owns it ("animation.esb.<short>.x")
 const SHORT = { da_vinci: "esb:da_vinci", brass_gear: "esb:brass_gear", vitruvian_sigil: "esb:vitruvian_sigil", edison: "esb:edison",
-  dynamo: "esb:dynamo", electric_chair: "esb:electric_chair", volt_bulb: "esb:volt_bulb" };
+  dynamo: "esb:dynamo", electric_chair: "esb:electric_chair", volt_bulb: "esb:volt_bulb", sun_bulb: "esb:sun_bulb",
+  volt_marker: "esb:volt_marker", arc_bolt: "esb:arc_bolt" };
 const ownerOf = (id) => SHORT[id.replace(/^controller\./, "").split(".")[2]];
 for (const id of [...anims.keys(), ...ctrls.keys()]) ok(!!ownerOf(id), `${id}: unknown owner`);
 const geoOf = (ent) => geos.get(ceFiles.get(ent).geometry.default);
+// an entity can render several geometries (the ultimates add a halo / aura layer): animations may use any of them
+const geosOf = (ent) => Object.values(ceFiles.get(ent).geometry).map((g) => geos.get(g)).filter(Boolean);
 for (const [id, d] of ceFiles) {
   for (const [k, v] of Object.entries(d.animations ?? {})) {
     ok(anims.has(v) || ctrls.has(v), `${id}: animation ${k} -> ${v} missing`);
@@ -229,10 +232,10 @@ for (const [id, d] of ceFiles) {
 for (const [id, a] of anims) {
   const ent = ownerOf(id);
   if (!ent) continue;
-  const g = geoOf(ent);
   const owner = ceFiles.get(ent);
-  const bones = new Set(g.bones.map((b) => b.name));
-  const locs = new Set(g.bones.flatMap((b) => Object.keys(b.locators ?? {})));
+  const all = geosOf(ent);
+  const bones = new Set(all.flatMap((g) => g.bones.map((b) => b.name)));
+  const locs = new Set(all.flatMap((g) => g.bones.flatMap((b) => Object.keys(b.locators ?? {}))));
   for (const bone of Object.keys(a.bones ?? {})) ok(bones.has(bone), `${id}: bone ${bone} not in ${ent}'s geometry`);
   for (const pe of Object.values(a.particle_effects ?? {}).flat()) {
     ok(pe.effect in (owner.particle_effects ?? {}), `${id}: particle key ${pe.effect} not in client entity`);
@@ -272,6 +275,17 @@ for (const id of ["esb:edison", "esb:dynamo"]) {
   ok(rc && JSON.stringify(rc).includes("q.property('esb:phase')") && bpEntities.get(id).description.properties["esb:phase"]?.client_sync,
     `${id}: phase 2 texture switch reads a synced property`);
   ok(texExists(ceFiles.get(id).textures.charged), `${id}: charged texture exists`);
+}
+// RULE: every boss has an ULTIMATE (action value, animation, controller state, extra render layer, script trigger)
+for (const [id, e] of bpEntities) {
+  if (!e.components["minecraft:type_family"]?.family.includes("esb_boss")) continue;
+  const short = id.split(":")[1];
+  ok(e.description.properties["esb:action"].values.includes("ultimate"), `${id}: has an 'ultimate' action`);
+  ok(anims.has(`animation.esb.${short}.ultimate`), `${id}: has an ultimate animation`);
+  ok(!!ctrls.get(`controller.animation.esb.${short}.action`)?.states.ultimate, `${id}: ultimate controller state`);
+  ok((ceFiles.get(id).render_controllers ?? []).some((r) => typeof r === "object" && JSON.stringify(r).includes("'ultimate'")),
+    `${id}: an extra render layer shown only during the ultimate`);
+  ok(/hp_threshold/.test(js) && new RegExp(`["']ultimate["']`).test(js), `${id}: scripts trigger the ultimate`);
 }
 // every action value of each boss has a controller state and is set by the scripts
 for (const [short, values, ctrl] of [["da_vinci", actionValues, "controller.animation.esb.da_vinci.action"],

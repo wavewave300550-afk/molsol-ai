@@ -26,7 +26,7 @@ for (const f of fs.readdirSync(path.join(BP, "entities"))) {
 export const __issues = [];
 export const __log = {
   particles: [], sounds: [], damage: [], knockback: [], events: [], props: [], died: [], spawned: [], shots: [],
-  teleports: [], messages: [], titles: [], actionbars: [], effects: [],
+  teleports: [], messages: [], titles: [], actionbars: [], effects: [], commands: [],
 };
 const issue = (m) => {
   if (!__issues.includes(m)) __issues.push(m);
@@ -257,6 +257,12 @@ class Entity {
   }
   sendMessage(m) {
     __log.messages.push({ tick: tickNo, target: this, m });
+  }
+  runCommand(cmd) {
+    if (restricted) issue("runCommand in restricted mode");
+    if (!/^camerashake add @s [0-9.]+ [0-9.]+ positional$/.test(cmd)) issue(`unexpected command: ${cmd}`);
+    __log.commands.push({ tick: tickNo, target: this, cmd });
+    return { successCount: 1 };
   }
   applyDamage(amount, opts = {}) {
     if (restricted) issue("applyDamage in restricted mode");

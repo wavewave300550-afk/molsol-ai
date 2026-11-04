@@ -184,12 +184,17 @@ def sample_channel(chan, t, mol: Molang):
     if not isinstance(chan, dict):
         return _vec(chan, mol)
     keys = []
+    pres = {}
     for k, v in chan.items():
         mode = "linear"
+        pre = None
         if isinstance(v, dict):
             mode = v.get("lerp_mode", "linear")
+            pre = v.get("pre")
             v = v.get("post", v.get("pre"))
         keys.append((float(k), _vec(v, mol), mode))
+        if pre is not None:
+            pres[float(k)] = _vec(pre, mol)
     keys.sort(key=lambda x: x[0])
     if t <= keys[0][0]:
         return keys[0][1]
@@ -198,6 +203,7 @@ def sample_channel(chan, t, mol: Molang):
     for i in range(len(keys) - 1):
         t0, v0, m0 = keys[i]
         t1, v1, m1 = keys[i + 1]
+        v1 = pres.get(t1, v1)
         if t0 <= t <= t1:
             f = (t - t0) / (t1 - t0) if t1 > t0 else 0.0
             if m0 == "catmullrom" or m1 == "catmullrom":

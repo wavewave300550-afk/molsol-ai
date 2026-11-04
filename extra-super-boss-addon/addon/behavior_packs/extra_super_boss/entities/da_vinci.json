@@ -19,7 +19,8 @@
             "dive_hover",
             "dive_strike",
             "flourish",
-            "death"
+            "death",
+            "ultimate"
           ],
           "default": "none",
           "client_sync": true

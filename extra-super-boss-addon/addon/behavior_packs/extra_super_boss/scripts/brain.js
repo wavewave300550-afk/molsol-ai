@@ -1,5 +1,5 @@
 import { BALANCE } from "./balance.js";
-import { startAction, startDive, tickDying, tickRun, vitruvianRadius } from "./abilities.js";
+import { startAction, startDive, startOpus, tickDying, tickRun, vitruvianRadius } from "./abilities.js";
 import { centerOf, hpFrac, isLiving, isProtectedPlayer, now, playersNear, rayClear, safe, sec, } from "./boss.js";
 import { add, dist, hdist, norm, sub, v3 } from "./vec.js";
 import { thinkEdison } from "./edison.js";
@@ -78,6 +78,11 @@ export function think(s) {
     if (now() < s.gapUntil || now() < s.nextDecision)
         return;
     s.nextDecision = now() + DECIDE_EVERY;
+    // ULTIMATE: Opus Magnum below 35% health, then on its own long cooldown
+    if (hpFrac(s) <= BALANCE.ultimate.hp_threshold && now() >= s.ready.ultimate) {
+        startOpus(s);
+        return;
+    }
     const d = hdist(t.location, s.entity.location);
     const g = BALANCE.gear_volley;
     const options = [];
