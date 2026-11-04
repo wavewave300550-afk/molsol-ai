@@ -56,13 +56,15 @@ export interface Chair {
 /** State of a running ultimate (both bosses). */
 export interface Ult {
   center: Vector3;
-  peak: Vector3;
-  extras: Entity[]; // sigils, sanctuaries, sun bulbs, markers... removed when the ultimate ends
-  sanctuaries: Vector3[];
-  wave: number;
-  bulbs: Entity[];
-  strikes: { pos: Vector3; at: number; marker?: Entity; from?: Vector3 }[];
-  bolts: { e: Entity; until: number }[];
+  extras: Entity[]; // everything the ultimate spawned; removed when it ends
+  prop?: Entity; // Il Gran Cavallo / the phonograph
+  // Il Gran Cavallo
+  charge?: { from: Vector3; to: Vector3; start: number; end: number; hit: Set<string> };
+  shattered: boolean;
+  // Mary Had a Little Lamb
+  rings: { start: number; center: Vector3; hit: Set<string>; e?: Entity }[];
+  note: number;
+  horn?: { pos: Vector3; dir: Vector3 };
 }
 
 export interface BossState {
@@ -99,7 +101,7 @@ export interface BossState {
 }
 
 export function newUlt(p: Vector3): Ult {
-  return { center: { ...p }, peak: { ...p }, extras: [], sanctuaries: [], wave: 0, bulbs: [], strikes: [], bolts: [] };
+  return { center: { ...p }, extras: [], shattered: false, rings: [], note: 0 };
 }
 
 /** Remove everything an ultimate spawned. */
@@ -107,7 +109,7 @@ export function clearUlt(s: BossState): void {
   const u = s.ult;
   if (!u) return;
   s.ult = undefined;
-  for (const e of [...u.extras, ...u.bulbs, ...u.bolts.map((b) => b.e), ...u.strikes.map((x) => x.marker)]) {
+  for (const e of [...u.extras, u.prop, ...u.rings.map((r) => r.e)]) {
     if (e && e.isValid) safe(() => e.remove());
   }
 }

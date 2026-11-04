@@ -2,9 +2,22 @@
   "format_version": "1.21.90",
   "minecraft:entity": {
     "description": {
-      "identifier": "esb:arc_bolt",
+      "identifier": "esb:phonograph",
       "is_spawnable": false,
-      "is_summonable": true
+      "is_summonable": true,
+      "properties": {
+        "esb:state": {
+          "type": "enum",
+          "values": [
+            "assemble",
+            "play",
+            "blast",
+            "fold"
+          ],
+          "default": "assemble",
+          "client_sync": true
+        }
+      }
     },
     "component_groups": {
       "esb:expire": {
@@ -23,7 +36,7 @@
     "components": {
       "minecraft:type_family": {
         "family": [
-          "esb_fx",
+          "esb_phonograph",
           "esb_fx",
           "inanimate"
         ]
@@ -58,7 +71,7 @@
       "minecraft:fire_immune": true,
       "minecraft:timer": {
         "looping": false,
-        "time": 2,
+        "time": 18,
         "time_down_event": {
           "event": "esb:expire"
         }

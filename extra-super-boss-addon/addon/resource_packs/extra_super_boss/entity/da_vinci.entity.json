@@ -4,22 +4,16 @@
   "description": {
    "identifier": "esb:da_vinci",
    "materials": {
-    "default": "entity_emissive",
-    "halo": "entity_beam_additive"
+    "default": "entity_emissive"
    },
    "textures": {
-    "default": "textures/entity/da_vinci",
-    "halo": "textures/entity/vitruvian_sigil"
+    "default": "textures/entity/da_vinci"
    },
    "geometry": {
-    "default": "geometry.esb.da_vinci",
-    "halo": "geometry.esb.da_vinci_halo"
+    "default": "geometry.esb.da_vinci"
    },
    "render_controllers": [
-    "controller.render.esb.da_vinci",
-    {
-     "controller.render.esb.da_vinci_halo": "q.property('esb:action') == 'ultimate'"
-    }
+    "controller.render.esb.da_vinci"
    ],
    "spawn_egg": {
     "base_color": "#7E1F2A",
@@ -31,10 +25,10 @@
     "animate": [
      "idle",
      {
-      "walk": "!(q.property('esb:action') == 'dive_rise' || q.property('esb:action') == 'dive_hover' || q.property('esb:action') == 'dive_strike' || q.property('esb:action') == 'ultimate')"
+      "walk": "!(q.property('esb:action') == 'dive_rise' || q.property('esb:action') == 'dive_hover' || q.property('esb:action') == 'dive_strike' || q.property('esb:action') == 'ultimate' || q.property('esb:action') == 'lament')"
      },
      {
-      "look": "!(q.property('esb:action') == 'death' || q.property('esb:action') == 'transform' || q.property('esb:action') == 'intro' || q.property('esb:action') == 'ultimate')"
+      "look": "!(q.property('esb:action') == 'death' || q.property('esb:action') == 'transform' || q.property('esb:action') == 'intro' || q.property('esb:action') == 'lament')"
      },
      "wings_controller",
      "attack_controller",
@@ -53,6 +47,7 @@
     "gear_volley": "animation.esb.da_vinci.gear_volley",
     "idle": "animation.esb.da_vinci.idle",
     "intro": "animation.esb.da_vinci.intro",
+    "lament": "animation.esb.da_vinci.lament",
     "look": "animation.esb.da_vinci.look",
     "quake": "animation.esb.da_vinci.quake",
     "slash": "animation.esb.da_vinci.slash",

@@ -1,6 +1,6 @@
 import { Entity, Player } from "@minecraft/server";
 import { BALANCE } from "./balance.js";
-import { startAction, startDive, startOpus, tickDying, tickRun, vitruvianRadius } from "./abilities.js";
+import { startAction, startDive, startCavallo, tickDying, tickRun, vitruvianRadius } from "./abilities.js";
 import {
   Ability, BossState, centerOf, hpFrac, isLiving, isProtectedPlayer, now, playersNear, rayClear, safe, sec,
 } from "./boss.js";
@@ -83,9 +83,9 @@ export function think(s: BossState): void {
   if (now() < s.gapUntil || now() < s.nextDecision) return;
   s.nextDecision = now() + DECIDE_EVERY;
 
-  // ULTIMATE: Opus Magnum below 35% health, then on its own long cooldown
+  // ULTIMATE: Il Gran Cavallo below 35% health, then on its own long cooldown
   if (hpFrac(s) <= BALANCE.ultimate.hp_threshold && now() >= s.ready.ultimate) {
-    startOpus(s);
+    startCavallo(s);
     return;
   }
 

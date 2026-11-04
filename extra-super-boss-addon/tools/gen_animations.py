@@ -377,43 +377,37 @@ def actions():
 
 
 def ultimate():
-    """OPUS MAGNUM: rises in the Vitruvian pose with a giant halo, spins twice spraying gears, gathers, slams down."""
+    """IL GRAN CAVALLO: Leonardo sketches the Great Horse into being with his compass, presents it, sends it charging,
+    and reaches out to it as the unfired clay crumbles.  Plus 'lament' when the players shatter it."""
     m = M["ultimate"]
-    rise = merge(STANCE, {"arm_l": (0, 0, -40), "arm_r": (0, 0, 40), "head": (-16, 0, 0)})
-    vit = merge({"arm_l": (0, 0, -88), "arm_r": (0, 0, 88), "gauntlet_l": (0, 0, 0), "forearm_r": (0, 0, 0),
-                 "leg_l": (0, 0, -15), "leg_r": (0, 0, 15), "head": (-10, 0, 0), "torso": (-6, 0, 0),
-                 "cape_tail_l": (24, 0, -10), "cape_tail_r": (24, 0, 10), "hair_tail": (20, 0, 0),
-                 "coat_front_l": (0, 0, -16), "coat_front_r": (0, 0, 16), "robe_side_l": (0, 0, -12), "robe_side_r": (0, 0, 12),
-                 "compass": (60, 0, 0)}, spread(1.3))
-    sweep = merge(vit, {"arm_l": (-14, 0, -84), "arm_r": (14, 0, 84), "cape_tail_l": (40, 0, -16), "cape_tail_r": (40, 0, 16)})
-    gather = merge(vit, {"arm_l": (0, 0, -166), "arm_r": (0, 0, 166), "head": (-28, 0, 0), "torso": (-12, 0, 0),
-                         "leg_l": (0, 0, -4), "leg_r": (0, 0, 4)})
-    tremble = merge(gather, {"torso": (-14, 3, 2), "head": (-30, -4, 0)})
-    dive = merge({"torso": (10, 0, 0), "head": (-30, 0, 0), "arm_l": (-160, 0, -6), "gauntlet_l": (0, 0, 0),
-                  "arm_r": (-160, 0, 6), "leg_l": (10, 0, -4), "leg_r": (20, 0, 4), "cape_tail_l": (50, 0, 0),
-                  "cape_tail_r": (52, 0, 0), "hair_tail": (40, 0, 0)}, fist(85))
-    land = merge({"torso": (42, 0, 0), "head": (-12, 0, 0), "arm_l": (-26, 0, -10), "arm_r": (-26, 0, 10),
-                  "leg_l": (-62, 0, -12), "shin_l": (78, 0, 0), "foot_l": (-14, 0, 0), "leg_r": (24, 0, 12),
-                  "shin_r": (74, 0, 0), "foot_r": (-24, 0, 0), "pos:root": (0, -3.4, 0), "cape_tail_l": (40, 0, -10),
-                  "cape_tail_r": (44, 0, 10), "coat_front_l": (-42, 0, 0), "hair_tail": (30, 0, 0)}, fist(85))
-    keys = [(0, STANCE), (m["rise"], rise), (m["sigil"], vit), (m["barrage"], vit), (2.55, sweep), (3.5, vit), (4.45, sweep),
-            (m["barrage_end"], vit), (m["gather"], gather), (6.2, tremble), (6.6, gather), (6.9, tremble),
-            (m["slam"], dive), (m["land"], land), (8.2, land), (L["ultimate"], STANCE)]
-    bones = timeline(keys)
-    # two full gyroscope spins while the gears spray out, then the dive pitch (linear, pre/post to avoid unwinding)
-    bones["root"] = dict(bones.get("root", {}))
-    bones["root"]["rotation"] = {
-        "0.0": [0, 0, 0], str(m["barrage"]): [0, 0, 0],
-        str(m["barrage_end"]): {"pre": [0, 720, 0], "post": [0, 0, 0]},
-        "6.95": [0, 0, 0], "7.05": [38, 0, 0], str(m["land"]): [0, 0, 0], str(L["ultimate"]): [0, 0, 0]}
-    grow = {"0.0": [0, 0, 0], str(m["rise"]): [0, 0, 0], str(m["sigil"]): [1, 1, 1], str(m["barrage_end"]): [1, 1, 1],
-            str(m["gather"]): [1.15, 1.15, 1.15], "6.9": [1.4, 1.4, 1.4], str(m["land"]): [1.7, 1.7, 1.7], "7.6": [0, 0, 0],
-            str(L["ultimate"]): [0, 0, 0]}
-    bones["halo"] = {"rotation": [0, 0, "q.anim_time * 40"], "scale": grow}
-    bones["halo_inner"] = {"rotation": [0, 0, "q.anim_time * -110"], "scale": {k: v for k, v in grow.items()}}
-    add("ultimate", L["ultimate"], bones,
-        particles=[(m["sigil"], {"effect": "pages", "locator": "loc_chest"}), (m["gather"], {"effect": "spark", "locator": "loc_palm"}),
-                   (6.6, {"effect": "spark", "locator": "loc_compass_tip"}), (m["land"], {"effect": "spark", "locator": "loc_chest"})])
+    draw_a = merge(STANCE, {"arm_r": (-128, 24, 30), "forearm_r": (-30, 0, 0), "compass": (-40, 0, 0), "head": (-22, 10, 0),
+                            "torso": (-4, -12, 0), "arm_l": (-10, 0, -20)})
+    draw_b = merge(draw_a, {"arm_r": (-104, -22, 6), "head": (-16, -8, 0), "torso": (-4, 8, 0)})
+    present = merge({"arm_l": (-64, -24, -46), "arm_r": (-64, 24, 46), "forearm_r": (-10, 0, 0), "gauntlet_l": (-10, 0, 0),
+                     "head": (-12, 0, 0), "torso": (-6, 0, 0)}, spread(1.2))
+    proud = merge(STANCE, {"head": (-6, 0, 0), "torso": (-2, 0, 0), "arm_l": (6, 0, -10), "arm_r": (8, 0, 12)})
+    point = merge(STANCE, {"arm_r": (-96, 6, 0), "forearm_r": (0, 0, 0), "compass": (-80, 0, 0), "head": (0, -6, 0),
+                           "torso": (0, 16, 0), "leg_l": (-12, 0, -4), "leg_r": (10, 0, 4)})
+    sweep = merge(point, {"arm_r": (-86, -48, 0), "torso": (0, -18, 0), "head": (0, -20, 0)})
+    reach = merge(STANCE, {"arm_l": (-78, -16, 0), "gauntlet_l": (-6, 0, 0), "head": (6, -6, 0), "torso": (6, 6, 0),
+                           "leg_l": (-16, 0, -4)}, spread(1.0))
+    slump = merge(STANCE, {"arm_l": (-20, 0, -8), "arm_r": (4, 0, 8), "head": (26, 0, 0), "torso": (12, 0, 0)})
+    keys = [(0, STANCE), (m["sketch"], draw_a), (0.5, draw_b), (0.7, draw_a), (0.9, draw_b), (m["rise"], present), (2.4, present),
+            (2.7, proud)]
+    for c in ("charge1", "charge2", "charge3"):
+        t = m[c]
+        keys += [(t - 0.05, proud), (t + 0.2, point), (t + 0.85, point), (t + 1.3, sweep), (t + 2.2, proud)]
+    keys += [(m["crumble"] - 0.2, proud), (m["crumble"] + 0.3, reach), (12.5, slump), (L["ultimate"], STANCE)]
+    add("ultimate", L["ultimate"], timeline(keys),
+        particles=[(m["sketch"], {"effect": "pages", "locator": "loc_chest"}), (0.7, {"effect": "spark", "locator": "loc_compass_tip"}),
+                   (m["rise"], {"effect": "pages", "locator": "loc_chest"})])
+    # lament: on his knees, hands to his head
+    kneel = {"pos:root": (0, -7.5, 0), "leg_l": (-85, 0, -6), "shin_l": (88, 0, 0), "leg_r": (8, 0, 4), "shin_r": (84, 0, 0),
+             "foot_r": (-40, 0, 0), "torso": (24, 0, 0), "head": (34, 0, 0), "cape_tail_l": (-6, 0, 0), "cape_tail_r": (-6, 0, 0),
+             "coat_front_l": (-70, 0, 0), "arm_l": (-150, 34, -10), "gauntlet_l": (-60, 0, 0), "arm_r": (-150, -34, 10),
+             "forearm_r": (-60, 0, 0)}
+    add("lament", L["lament"], timeline([(0, STANCE), (0.5, kneel), (1.6, merge(kneel, {"head": (40, 0, 8)})), (2.3, kneel),
+                                         (L["lament"], STANCE)]), particles=[(0.5, {"effect": "pages", "locator": "loc_chest"})])
 
 
 # ------------------------------------------------------------------------------ props
@@ -473,7 +467,7 @@ def controllers():
     }}
 
     # wings: hidden in phase 1, unfold on transform, folded / flapping / swept in phase 2
-    in_air = act("dive_rise") + " || " + act("dive_hover") + " || " + act("ultimate")
+    in_air = act("dive_rise") + " || " + act("dive_hover")
     p2 = "q.property('esb:phase') == 2"
     C["controller.animation.esb.da_vinci.wings"] = {"initial_state": "hidden", "states": {
         "hidden": {"animations": ["wings_hidden"],
@@ -498,16 +492,15 @@ def client_entity():
                   "attack_controller": "controller.animation.esb.da_vinci.attack",
                   "wings_controller": "controller.animation.esb.da_vinci.wings"})
     busy = ("q.property('esb:action') == 'death' || q.property('esb:action') == 'transform' || "
-            "q.property('esb:action') == 'intro' || q.property('esb:action') == 'ultimate'")
+            "q.property('esb:action') == 'intro' || q.property('esb:action') == 'lament'")
     ce = {
         "format_version": "1.10.0",
         "minecraft:client_entity": {"description": {
             "identifier": spec.BOSS_ID,
-            "materials": {"default": "entity_emissive", "halo": "entity_beam_additive"},
-            "textures": {"default": "textures/entity/da_vinci", "halo": "textures/entity/vitruvian_sigil"},
-            "geometry": {"default": "geometry.esb.da_vinci", "halo": "geometry.esb.da_vinci_halo"},
-            "render_controllers": ["controller.render.esb.da_vinci",
-                                   {"controller.render.esb.da_vinci_halo": "q.property('esb:action') == 'ultimate'"}],
+            "materials": {"default": "entity_emissive"},
+            "textures": {"default": "textures/entity/da_vinci"},
+            "geometry": {"default": "geometry.esb.da_vinci"},
+            "render_controllers": ["controller.render.esb.da_vinci"],
             "spawn_egg": {"base_color": "#7E1F2A", "overlay_color": "#D6AE5E"},
             "enable_attachables": False,
             "scripts": {
@@ -515,7 +508,8 @@ def client_entity():
                 "animate": [
                     "idle",
                     {"walk": "!(q.property('esb:action') == 'dive_rise' || q.property('esb:action') == 'dive_hover' || "
-                             "q.property('esb:action') == 'dive_strike' || q.property('esb:action') == 'ultimate')"},
+                             "q.property('esb:action') == 'dive_strike' || q.property('esb:action') == 'ultimate' || "
+                             "q.property('esb:action') == 'lament')"},
                     {"look": f"!({busy})"},
                     "wings_controller",
                     "attack_controller",

@@ -38,6 +38,9 @@
       },
       {
        "ultimate": "q.property('esb:action') == 'ultimate'"
+      },
+      {
+       "lament": "q.property('esb:action') == 'lament'"
       }
      ]
     },
@@ -181,6 +184,18 @@
      ],
      "blend_transition": 0.2,
      "blend_via_shortest_path": true
+    },
+    "lament": {
+     "animations": [
+      "lament"
+     ],
+     "transitions": [
+      {
+       "default": "q.property('esb:action') != 'lament'"
+      }
+     ],
+     "blend_transition": 0.2,
+     "blend_via_shortest_path": true
     }
    }
   },
@@ -243,7 +258,7 @@
      "blend_transition": 0.3,
      "transitions": [
       {
-       "flap": "q.property('esb:action') == 'dive_rise' || q.property('esb:action') == 'dive_hover' || q.property('esb:action') == 'ultimate'"
+       "flap": "q.property('esb:action') == 'dive_rise' || q.property('esb:action') == 'dive_hover'"
       },
       {
        "swept": "q.property('esb:action') == 'dive_strike'"
@@ -263,7 +278,7 @@
        "swept": "q.property('esb:action') == 'dive_strike'"
       },
       {
-       "folded": "!(q.property('esb:action') == 'dive_rise' || q.property('esb:action') == 'dive_hover' || q.property('esb:action') == 'ultimate')"
+       "folded": "!(q.property('esb:action') == 'dive_rise' || q.property('esb:action') == 'dive_hover')"
       }
      ]
     },

@@ -2,20 +2,9 @@
   "format_version": "1.21.90",
   "minecraft:entity": {
     "description": {
-      "identifier": "esb:volt_marker",
+      "identifier": "esb:sound_ring",
       "is_spawnable": false,
-      "is_summonable": true,
-      "properties": {
-        "esb:radius": {
-          "type": "int",
-          "range": [
-            1,
-            12
-          ],
-          "default": 3,
-          "client_sync": true
-        }
-      }
+      "is_summonable": true
     },
     "component_groups": {
       "esb:expire": {
@@ -69,7 +58,7 @@
       "minecraft:fire_immune": true,
       "minecraft:timer": {
         "looping": false,
-        "time": 4,
+        "time": 5,
         "time_down_event": {
           "event": "esb:expire"
         }

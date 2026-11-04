@@ -2,26 +2,27 @@
  "format_version": "1.10.0",
  "minecraft:client_entity": {
   "description": {
-   "identifier": "esb:arc_bolt",
+   "identifier": "esb:sound_ring",
    "materials": {
     "default": "entity_beam_additive"
    },
    "textures": {
-    "default": "textures/entity/arc_bolt"
+    "default": "textures/entity/sound_ring"
    },
    "geometry": {
-    "default": "geometry.esb.arc_bolt"
+    "default": "geometry.esb.sound_ring"
    },
    "render_controllers": [
-    "controller.render.esb.arc_bolt"
+    "controller.render.esb.sound_ring"
    ],
    "animations": {
-    "flicker": "animation.esb.arc_bolt.flicker"
+    "grow": "animation.esb.sound_ring.grow"
    },
    "scripts": {
     "animate": [
-     "flicker"
-    ]
+     "grow"
+    ],
+    "should_update_bones_and_effects_offscreen": "1.0"
    }
   }
  }

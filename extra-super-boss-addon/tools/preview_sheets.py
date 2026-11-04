@@ -247,54 +247,50 @@ def props_sheet(name="edison_props.png", size=(420, 460)):
 
 
 # ------------------------------------------------------------------------------ ULTIMATES
-HALO_GEO = R.load_geo("da_vinci_halo")
-SIGIL_GEO = R.load_geo("vitruvian_sigil")
-SIGIL_TEX = R.load_tex("vitruvian_sigil")
-AURA_GEO = R.load_geo("edison_aura")
-AURA_TEX = R.load_tex("edison_aura")
-BULB_GEO = R.load_geo("volt_bulb")
-BULB_TEX = R.load_tex("volt_bulb")
-MARK_GEO = R.load_geo("volt_marker")
-MARK_TEX = R.load_tex("volt_marker")
+HORSE_GEO = R.load_geo("gran_cavallo")
+HORSE_TEX = R.load_tex("gran_cavallo")
+PHONO_GEO = R.load_geo("phonograph")
+PHONO_TEX = R.load_tex("phonograph")
+RING_GEO = R.load_geo("sound_ring")
+RING_TEX = R.load_tex("sound_ring")
 DV_SCALE = 1.6
+HORSE_SCALE = 1.75
+PHONO_SCALE = 2.2
+_PROP_ANIMS = K.load_json(os.path.join(R.RP, "animations", "ultimate_props.animation.json"))["animations"]
 
 
-def _place(offset, scale):
-    sc = np.array(scale if hasattr(scale, "__len__") else (scale, scale, scale), dtype=float)
-    return {"root": {"rotation": np.zeros(3), "position": np.array(offset, dtype=float), "scale": sc}}
+def prop_pose(anim, t, scale, offset=(0, 0, 0), yaw=0.0, life=None):
+    p = K.sample_pose([_PROP_ANIMS[anim]], [1.0], [t], {"q.life_time": life if life is not None else t, "q.anim_time": t})
+    root = p.setdefault("root", {"rotation": np.zeros(3), "position": np.zeros(3), "scale": np.ones(3)})
+    root["position"] = root["position"] * scale + np.array(offset, dtype=float)
+    root["scale"] = root["scale"] * scale
+    root["rotation"] = root["rotation"] + np.array([0, yaw, 0])
+    return p
 
 
 def ultimates_sheet(name="ultimates.png", size=(760, 640)):
-    """Showcase: Opus Magnum over the arena sigil, Let There Be Light among the Sun Bulbs."""
+    """Showcase: Il Gran Cavallo rearing over Leonardo; Edison cranking the tinfoil phonograph inside a sound ring."""
     import json as _j
-    bal = _j.load(open(os.path.join(R.ROOT, "balance.json")))
-    U, UE = bal["ultimate"], bal["edison"]["ultimate"]
-    um = spec.ACTIONS["ultimate"]["moments"]
-    # Da Vinci: in the air during the spin, halo behind him, arena sigil + sanctuaries below
-    t = 2.2
-    pose = scaled(layered_pose("ultimate", t, 2, "wings_flap", life=1.0), DV_SCALE, (0, U["height"] * 16, 0))
-    extra = [(HALO_GEO, SIGIL_TEX, pose, True), (SIGIL_GEO, SIGIL_TEX, _place((0, 0, 0), (U["radius"] * 0.5, 1, U["radius"] * 0.5)), True)]
-    d = U["radius"] * 0.62 * 16
-    for sx, sz in ((d, d), (-d, d), (d, -d), (-d, -d)):
-        extra.append((SIGIL_GEO, SIGIL_TEX, _place((sx, 0.5, sz), (1.5, 1, 1.5)), True))
-    cam = K.Camera((0, 64, 0), 25, 30, scale=size[1] / 430, size=size)
-    a = R.draw(cam, pose, ground=True, extra=extra)
-    ImageDraw.Draw(a).text((14, 10), "ULTIMATE - OPUS MAGNUM", fill=(255, 215, 130), font=R.font(24))
-    ImageDraw.Draw(a).text((14, 40), "stand in a golden sanctuary", fill=(240, 220, 190), font=R.font(16))
-    # Edison: hovering as a sun, six Sun Bulbs, two strike marks
-    em = spec.EDISON_ACTIONS["ultimate"]["moments"]
-    pose = scaled(edison_pose("ultimate", 3.6, 2, life=1.0), E_SCALE, (0, UE["hover"] * 16, 0))
-    extra = [(AURA_GEO, AURA_TEX, pose, True)]
-    R16 = UE["ring_radius"] * 16
-    for i in range(UE["bulbs"]):
-        ang = np.radians(i * 360 / UE["bulbs"])
-        extra.append((BULB_GEO, BULB_TEX, _place((-np.sin(ang) * R16, 1.6 * 16, np.cos(ang) * R16), 4.5), False))
-    for (mx, mz) in ((-60, -70), (90, -30)):
-        extra.append((MARK_GEO, MARK_TEX, _place((mx, 0, mz), 3), True))
-    cam = K.Camera((0, 46, 0), 20, 22, scale=size[1] / 270, size=size)
-    b = R.draw(cam, pose, ground=True, geo=E_GEO, tex=E_TEX2, extra=extra)
-    ImageDraw.Draw(b).text((14, 10), "ULTIMATE - LET THERE BE LIGHT", fill=(170, 225, 255), font=R.font(24))
-    ImageDraw.Draw(b).text((14, 40), "smash the bulbs, hide from the light", fill=(220, 235, 245), font=R.font(16))
+    speed = _j.load(open(os.path.join(R.ROOT, "balance.json")))["edison"]["ultimate"]["ring_speed"]
+    # Leonardo presents the Great Horse as it rears (the horse is 5 blocks in front of him, facing the camera side)
+    lp = scaled(layered_pose("ultimate", 2.0, 2, None, life=1.0), DV_SCALE, (0, 0, 0))
+    hp = prop_pose("animation.esb.gran_cavallo.rise", 2.0, HORSE_SCALE, (0, 0, -80), yaw=0)
+    cam = K.Camera((0, 50, -42), -62, 6, scale=size[1] / 185, size=size)
+    a = R.draw(cam, lp, ground=True, extra=[(HORSE_GEO, HORSE_TEX, hp, False)])
+    ImageDraw.Draw(a).text((14, 10), "ULTIMATE - IL GRAN CAVALLO", fill=(255, 215, 130), font=R.font(24))
+    ImageDraw.Draw(a).text((14, 40), "Leonardo's clay horse of Milan (1482-1499)", fill=(240, 220, 190), font=R.font(16))
+    # Edison at the crank of the phonograph, a sound wave rolling out from the horn
+    ph_yaw = 0.0
+    pp = prop_pose("animation.esb.phonograph.play", 0.3, PHONO_SCALE, (0, 0, -56), yaw=ph_yaw, life=0.3)
+    ep = scaled(edison_pose("ultimate", 5.0, 2, life=1.0), E_SCALE, (46, 0, -56))
+    ep["root"]["rotation"] = ep["root"]["rotation"] + np.array([0, -90, 0])
+    rp = prop_pose("animation.esb.sound_ring.grow", 0.9, 1.0, (0, 0, -122), life=0.9)
+    rp["root"]["scale"] = np.array([0.9 * speed, 1.0, 0.9 * speed])
+    cam = K.Camera((10, 40, -70), 210, 14, scale=size[1] / 200, size=size)
+    b = R.draw(cam, ep, ground=True, geo=E_GEO, tex=E_TEX2,
+               extra=[(PHONO_GEO, PHONO_TEX, pp, False), (RING_GEO, RING_TEX, rp, True)])
+    ImageDraw.Draw(b).text((14, 10), "ULTIMATE - MARY HAD A LITTLE LAMB", fill=(170, 225, 255), font=R.font(24))
+    ImageDraw.Draw(b).text((14, 40), "the first words ever recorded (1877) - jump the sound waves", fill=(220, 235, 245), font=R.font(16))
     out = Image.new("RGB", (size[0] * 2, size[1]))
     out.paste(a, (0, 0))
     out.paste(b, (size[0], 0))
@@ -303,28 +299,40 @@ def ultimates_sheet(name="ultimates.png", size=(760, 640)):
     print("wrote", pth)
 
 
-def ultimate_gifs(fps=12, size=(300, 360)):
+def ultimate_gifs(fps=10, size=(360, 300)):
+    """The showpieces in motion: the horse rising, pawing, galloping and crumbling; the phonograph playing."""
     os.makedirs(ANIM_DIR, exist_ok=True)
-    for name, boss in (("ultimate_opus_magnum", "da_vinci"), ("ultimate_let_there_be_light", "edison")):
-        frames = []
-        dur = spec.ACTIONS["ultimate"]["length"] if boss == "da_vinci" else spec.EDISON_ACTIONS["ultimate"]["length"]
+    H = "animation.esb.gran_cavallo."
+    seq = [("rise", 2.4), ("paw", 1.2), ("gallop", 1.5), ("crumble", 2.4)]
+    frames = []
+    for anim, dur in seq:
         for i in range(int(dur * fps)):
             t = i / fps
-            if boss == "da_vinci":
-                pose = scaled(layered_pose("ultimate", t, 2, "wings_flap", life=t), DV_SCALE)
-                img = R.draw(K.Camera((0, 34, 0), 25, 6, scale=size[1] / 110, size=size), pose, bg=flat_bg(size), ground=False,
-                             extra=[(HALO_GEO, SIGIL_TEX, pose, True)])
-            else:
-                pose = scaled(edison_pose("ultimate", t, 2, life=t), E_SCALE)
-                img = R.draw(K.Camera((0, 30, 0), 25, 6, scale=size[1] / 100, size=size), pose, bg=flat_bg(size), ground=False,
-                             geo=E_GEO, tex=E_TEX2, extra=[(AURA_GEO, AURA_TEX, pose, True)])
-            ImageDraw.Draw(img).text((8, 6), name.replace("_", " "), fill=(245, 225, 190), font=R.font(13))
+            pose = prop_pose(H + anim, t, 1.0, life=t)
+            img = R.draw(K.Camera((0, 26, -6), 62, 8, scale=size[1] / 76, size=size), pose, bg=flat_bg(size), ground=False,
+                         geo=HORSE_GEO, tex=HORSE_TEX)
+            ImageDraw.Draw(img).text((8, 6), f"Il Gran Cavallo - {anim}", fill=(245, 225, 190), font=R.font(13))
             frames.append(img)
-        pal = frames[len(frames) // 3].convert("P", palette=Image.ADAPTIVE, colors=160)
-        frames = [f.quantize(palette=pal, dither=Image.Dither.NONE) for f in frames]
-        pth = os.path.join(ANIM_DIR, f"{name}.gif")
-        frames[0].save(pth, save_all=True, append_images=frames[1:], duration=int(1000 / fps), loop=0, disposal=2)
-        print("wrote", pth)
+    _save_gif(frames, "ultimate_gran_cavallo.gif", fps)
+    frames = []
+    P = "animation.esb.phonograph."
+    for anim, dur in (("assemble", 1.2), ("play", 2.2), ("blast", 1.0), ("fold", 1.0)):
+        for i in range(int(dur * fps)):
+            t = i / fps
+            pose = prop_pose(P + anim, t, 1.0, life=t)
+            img = R.draw(K.Camera((0, 15, -12), 140, 12, scale=size[1] / 50, size=size), pose, bg=flat_bg(size), ground=False,
+                         geo=PHONO_GEO, tex=PHONO_TEX)
+            ImageDraw.Draw(img).text((8, 6), f"tinfoil phonograph - {anim}", fill=(245, 225, 190), font=R.font(13))
+            frames.append(img)
+    _save_gif(frames, "ultimate_phonograph.gif", fps)
+
+
+def _save_gif(frames, name, fps):
+    pal = frames[len(frames) // 2].convert("P", palette=Image.ADAPTIVE, colors=128)
+    frames = [f.quantize(palette=pal, dither=Image.Dither.NONE) for f in frames]
+    pth = os.path.join(ANIM_DIR, name)
+    frames[0].save(pth, save_all=True, append_images=frames[1:], duration=int(1000 / fps), loop=0, disposal=2)
+    print("wrote", pth)
 
 
 def run_all():

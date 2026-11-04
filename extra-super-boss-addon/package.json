@@ -1,7 +1,7 @@
 {
   "name": "extra-super-boss-addon",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Minecraft Bedrock add-on: Extra Super Boss - Boss 1: Leonardo da Vinci, Boss 2: Thomas Edison",
   "scripts": {
     "assets": "python3 tools/gen_model.py && python3 tools/gen_model_edison.py && python3 tools/gen_art.py && python3 tools/gen_ultimate_art.py && python3 tools/gen_entity.py && python3 tools/gen_animations.py && python3 tools/gen_anim_edison.py && python3 tools/gen_fx.py && python3 tools/gen_offsets.py",

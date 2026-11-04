@@ -18,7 +18,7 @@ export function safe(fn) {
     }
 }
 export function newUlt(p) {
-    return { center: { ...p }, peak: { ...p }, extras: [], sanctuaries: [], wave: 0, bulbs: [], strikes: [], bolts: [] };
+    return { center: { ...p }, extras: [], shattered: false, rings: [], note: 0 };
 }
 /** Remove everything an ultimate spawned. */
 export function clearUlt(s) {
@@ -26,7 +26,7 @@ export function clearUlt(s) {
     if (!u)
         return;
     s.ult = undefined;
-    for (const e of [...u.extras, ...u.bulbs, ...u.bolts.map((b) => b.e), ...u.strikes.map((x) => x.marker)]) {
+    for (const e of [...u.extras, u.prop, ...u.rings.map((r) => r.e)]) {
         if (e && e.isValid)
             safe(() => e.remove());
     }

@@ -7,7 +7,7 @@
  * client through the synced properties esb:action and esb:phase, which drive the animation controllers.
  */
 import { Entity, EntityDamageCause, EntityInitializationCause, Player, system, world } from "@minecraft/server";
-import { beginDying, endAction, forceGround, removeSigil, startAction } from "./abilities.js";
+import { beginDying, endAction, forceGround, onCavalloShattered, removeSigil, startAction } from "./abilities.js";
 import { think } from "./brain.js";
 import { BOSS_IDS, BossState, bosses, clearUlt, event, isBoss, newState, safe, setProp } from "./boss.js";
 import { beginDyingE, bulbBurst, endE, isStunned, onDynamoDestroyed, releaseChair, startIntroE } from "./edison.js";
@@ -101,8 +101,11 @@ world.afterEvents.entityDie.subscribe(({ deadEntity }) => {
     bosses.delete(id);
     return;
   }
-  // Edison's Dynamo destroyed: he is unplugged
-  for (const b of bosses.values()) if (b.dynamo && b.dynamo.id === id) onDynamoDestroyed(b);
+  // Edison's Dynamo destroyed: he is unplugged.  Leonardo's clay horse destroyed: the archers of 1499 again.
+  for (const b of bosses.values()) {
+    if (b.dynamo && b.dynamo.id === id) onDynamoDestroyed(b);
+    if (b.ult?.prop && b.ult.prop.id === id && b.kind === "da_vinci") onCavalloShattered(b);
+  }
 });
 
 // Edison's thrown bulbs shatter into a small electric burst

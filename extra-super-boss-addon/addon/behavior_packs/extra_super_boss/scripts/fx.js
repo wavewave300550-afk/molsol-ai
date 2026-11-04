@@ -25,6 +25,9 @@ export const PFX = {
     glass: "esb:glass_shards",
     telegraph: "esb:telegraph",
     smoke: "esb:blink_smoke",
+    note: "esb:music_note",
+    pathDust: "esb:path_dust",
+    clay: "esb:clay_chunks",
 };
 /** radius -> variable.radius (circles); ac -> variable.ac (Edison: 0 = amber DC, 1 = blue AC). */
 export function particle(dim, id, at, radius, ac) {
@@ -74,6 +77,11 @@ export const SND = {
     portal: "mob.endermen.portal",
     fizz: "random.fizz",
     thunder: "ambient.weather.lightning.impact",
+    neigh: "mob.horse.angry",
+    hoof: "mob.irongolem.walk",
+    crumble: "dig.gravel",
+    harp: "note.harp",
+    bass: "note.bass",
 };
 export function sound(dim, id, at, volume = 1, pitch = 1) {
     try {

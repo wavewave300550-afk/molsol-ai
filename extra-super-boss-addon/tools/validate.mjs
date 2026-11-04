@@ -208,8 +208,8 @@ const particles = new Set(files(path.join(RP, "particles"), ".json").map((f) => 
 const ce = ceFiles.get("esb:da_vinci");
 // animation / controller name -> the entity that owns it ("animation.esb.<short>.x")
 const SHORT = { da_vinci: "esb:da_vinci", brass_gear: "esb:brass_gear", vitruvian_sigil: "esb:vitruvian_sigil", edison: "esb:edison",
-  dynamo: "esb:dynamo", electric_chair: "esb:electric_chair", volt_bulb: "esb:volt_bulb", sun_bulb: "esb:sun_bulb",
-  volt_marker: "esb:volt_marker", arc_bolt: "esb:arc_bolt" };
+  dynamo: "esb:dynamo", electric_chair: "esb:electric_chair", volt_bulb: "esb:volt_bulb", gran_cavallo: "esb:gran_cavallo",
+  phonograph: "esb:phonograph", sound_ring: "esb:sound_ring" };
 const ownerOf = (id) => SHORT[id.replace(/^controller\./, "").split(".")[2]];
 for (const id of [...anims.keys(), ...ctrls.keys()]) ok(!!ownerOf(id), `${id}: unknown owner`);
 const geoOf = (ent) => geos.get(ceFiles.get(ent).geometry.default);
@@ -276,16 +276,21 @@ for (const id of ["esb:edison", "esb:dynamo"]) {
     `${id}: phase 2 texture switch reads a synced property`);
   ok(texExists(ceFiles.get(id).textures.charged), `${id}: charged texture exists`);
 }
-// RULE: every boss has an ULTIMATE (action value, animation, controller state, extra render layer, script trigger)
+// RULE (CLAUDE.md): every boss has an ULTIMATE built on his own history, with its own showpiece entity
+const SHOWPIECE = { "esb:da_vinci": "esb:gran_cavallo", "esb:edison": "esb:phonograph" };
 for (const [id, e] of bpEntities) {
   if (!e.components["minecraft:type_family"]?.family.includes("esb_boss")) continue;
   const short = id.split(":")[1];
   ok(e.description.properties["esb:action"].values.includes("ultimate"), `${id}: has an 'ultimate' action`);
   ok(anims.has(`animation.esb.${short}.ultimate`), `${id}: has an ultimate animation`);
   ok(!!ctrls.get(`controller.animation.esb.${short}.action`)?.states.ultimate, `${id}: ultimate controller state`);
-  ok((ceFiles.get(id).render_controllers ?? []).some((r) => typeof r === "object" && JSON.stringify(r).includes("'ultimate'")),
-    `${id}: an extra render layer shown only during the ultimate`);
   ok(/hp_threshold/.test(js) && new RegExp(`["']ultimate["']`).test(js), `${id}: scripts trigger the ultimate`);
+  const piece = SHOWPIECE[id];
+  ok(!!piece, `${id}: no historical showpiece registered for its ultimate (add it to SHOWPIECE)`);
+  if (piece) {
+    ok(bpEntities.has(piece) && ceFiles.has(piece), `${id}: showpiece ${piece} exists in both packs`);
+    ok(js.includes(`"${piece}"`), `${id}: the scripts spawn ${piece}`);
+  }
 }
 // every action value of each boss has a controller state and is set by the scripts
 for (const [short, values, ctrl] of [["da_vinci", actionValues, "controller.animation.esb.da_vinci.action"],

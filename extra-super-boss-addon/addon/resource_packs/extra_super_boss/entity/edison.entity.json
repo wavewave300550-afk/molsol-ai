@@ -4,23 +4,17 @@
   "description": {
    "identifier": "esb:edison",
    "materials": {
-    "default": "entity_emissive",
-    "aura": "entity_beam_additive"
+    "default": "entity_emissive"
    },
    "textures": {
     "default": "textures/entity/edison",
-    "charged": "textures/entity/edison_charged",
-    "aura": "textures/entity/edison_aura"
+    "charged": "textures/entity/edison_charged"
    },
    "geometry": {
-    "default": "geometry.esb.edison",
-    "aura": "geometry.esb.edison_aura"
+    "default": "geometry.esb.edison"
    },
    "render_controllers": [
-    "controller.render.esb.edison",
-    {
-     "controller.render.esb.edison_aura": "q.property('esb:action') == 'ultimate'"
-    }
+    "controller.render.esb.edison"
    ],
    "spawn_egg": {
     "base_color": "#5D6A44",

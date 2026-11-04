@@ -1,10 +1,10 @@
 import { EntityDamageCause } from "@minecraft/server";
 import { BALANCE } from "./balance.js";
-import { actionBar, at, centerOf, clearUlt, event, face, groundBelow, hurt, isLiving, knockFrom, lock, message, newUlt, now, playersNear, rayClear, safe, sec, setAction, setProp, shake, title, turnTo, unlock, victims, } from "./boss.js";
+import { actionBar, at, centerOf, clearUlt, event, face, groundBelow, hurt, isLiving, isProtectedPlayer, knockFrom, lock, message, newUlt, now, playersNear, rayClear, safe, sec, setAction, setProp, shake, title, turnTo, unlock, victims, } from "./boss.js";
 import { PFX, SND, particle, sound } from "./fx.js";
 import { CHEST, CORE, PALM_DIVE, PALM_QUAKE, PALM_SHOT } from "./offsets.js";
-import { ACTIONS, GEAR_ID, SIGIL_ID } from "./spec.js";
-import { DEG, add, clamp, hdist, lerp, mul, norm, sub, v3, yawTo } from "./vec.js";
+import { ACTIONS, CAVALLO_ID, GEAR_ID, SIGIL_ID } from "./spec.js";
+import { DEG, add, clamp, dist, hdist, lerp, mul, norm, sub, v3, yawTo } from "./vec.js";
 const COOLDOWN = {
     gear_volley: BALANCE.gear_volley.cooldown,
     quake: BALANCE.quake.cooldown,
@@ -55,6 +55,8 @@ export function endAction(s, ability) {
         clearUlt(s);
         s.ready.ultimate = now() + sec(BALANCE.ultimate.cooldown);
     }
+    if (kind === "lament")
+        s.gapUntil = now() + sec(0.5);
     if (kind === "flourish")
         s.nextFlourish = now() + sec(lerp(BALANCE.flourish.every_min, BALANCE.flourish.every_max, Math.random()));
     setAction(s, "none");
@@ -105,7 +107,7 @@ export function tickRun(s) {
         case "flourish":
             break;
         case "ultimate":
-            tickOpus(s);
+            tickCavallo(s);
             break;
         default:
             break;
@@ -403,16 +405,40 @@ export function forceGround(s) {
     removeSigil(s);
     s.dive = undefined;
 }
-// ------------------------------------------------------------------------------------------ ULTIMATE: Opus Magnum
-/** Rises in the Vitruvian pose with a giant halo over an arena-sized sigil with four golden sanctuaries, spins
- *  spraying a spiral of gears, gathers, then slams down: everything inside the sigil but outside the sanctuaries is hit. */
-export function startOpus(s) {
+// ------------------------------------------------------------------------------------------ ULTIMATE: Il Gran Cavallo
+/** Leonardo's Great Horse of Milan (1482-1499): a 7-metre clay horse that was never cast and was shot to pieces by
+ *  French archers. He sketches it into being; it charges three times along telegraphed paths; then the unfired clay
+ *  crumbles. If the players destroy it first, he falls to his knees. */
+export function startCavallo(s) {
     startAction(s, "ultimate");
     s.invulnerable = true;
     s.ult = newUlt(s.entity.location);
-    sound(s.entity.dimension, SND.summon, s.entity.location, 1.6, 0.6);
 }
-function tickOpus(s) {
+function horseAlive(s) {
+    const h = s.ult?.prop;
+    return !!h && h.isValid && isLiving(h);
+}
+function setHorse(s, state) {
+    const h = s.ult?.prop;
+    if (h?.isValid)
+        safe(() => h.setProperty("esb:state", state));
+}
+/** The players shot the clay horse apart, like the Gascon archers of 1499. */
+export function onCavalloShattered(s) {
+    const u = s.ult;
+    if (!u || u.shattered || s.run?.kind !== "ultimate")
+        return;
+    u.shattered = true;
+    const dim = s.entity.dimension;
+    const p = u.prop?.location ?? u.center;
+    particle(dim, PFX.clay, add(p, v3(0, 2, 0)));
+    particle(dim, PFX.pathDust, add(p, v3(0, 0.3, 0)));
+    sound(dim, SND.crumble, p, 2, 0.5);
+    message(playersNear(s, 64), "esb.msg.cavallo_shattered");
+    endAction(s);
+    startAction(s, "lament");
+}
+function tickCavallo(s) {
     const u = s.ult;
     const run = s.run;
     if (!u)
@@ -420,98 +446,109 @@ function tickOpus(s) {
     const U = BALANCE.ultimate;
     const dim = s.entity.dimension;
     const t = run.tick;
-    const rise0 = moment("ultimate", "rise");
-    const rise1 = moment("ultimate", "sigil") + 4;
-    if (t === rise0) {
-        const head = add(u.center, v3(0, 3.6, 0));
-        const h = Math.min(U.height, rayClear(s, head, v3(0, 1, 0), U.height + 1) - 1);
-        if (h >= 3) {
-            event(s, "esb:to_air");
-            s.inAir = true;
-            s.locked = true;
-            u.peak = add(u.center, v3(0, h, 0));
-        }
-        message(playersNear(s, 64), "esb.msg.opus");
-    }
-    if (s.inAir && t > rise0 && t <= rise1) {
-        const k = (t - rise0) / (rise1 - rise0);
-        teleport(s, v3(u.center.x, lerp(u.center.y, u.peak.y, 1 - (1 - k) * (1 - k)), u.center.z));
-    }
-    if (fire(s, "sigil")) {
-        const gy = (groundBelow(s, add(u.center, v3(0, 1, 0)), 6) ?? u.center.y) + 0.02;
-        const big = spawnSigil(s, v3(u.center.x, gy, u.center.z), U.radius);
-        if (big)
-            u.extras.push(big);
-        const d = U.radius * 0.62;
-        for (const [sx, sz] of [[d, d], [-d, d], [d, -d], [-d, -d]]) {
-            const p = v3(u.center.x + sx, u.center.y + 3, u.center.z + sz);
-            const y = groundBelow(s, p, 10) ?? u.center.y;
-            const q = v3(p.x, y + 0.03, p.z);
-            u.sanctuaries.push(q);
-            const e = spawnSigil(s, q, 3);
-            if (e)
-                u.extras.push(e);
-            particle(dim, PFX.pillar, q);
-        }
+    if (fire(s, "sketch")) {
         const ps = playersNear(s, 64);
-        title(ps, "esb.title.opus", "esb.subtitle.opus");
-        shake(ps, 0.25, 1.0);
-        sound(dim, SND.bell, u.center, 2, 0.5);
+        title(ps, "esb.title.cavallo", "esb.subtitle.cavallo");
+        message(ps, "esb.msg.cavallo");
+        particle(dim, PFX.pages, at(s, CHEST));
+        sound(dim, SND.page, s.entity.location, 1.6, 0.7);
     }
-    const b0 = moment("ultimate", "barrage");
-    const b1 = moment("ultimate", "barrage_end");
-    if (t >= b0 && t < b1 && (t - b0) % U.wave_every_ticks === 0) {
-        u.wave++;
-        const from = add(s.entity.location, v3(0, 2.4, 0));
-        const base = u.wave * U.spiral_step_deg;
-        for (let k = 0; k < U.gears_per_wave; k++) {
-            const a = (base + (k * 360) / U.gears_per_wave) * DEG;
-            const dir = norm(v3(-Math.sin(a), s.inAir ? -0.33 : 0.02, Math.cos(a)));
-            shootGear(s, from, mul(dir, U.gear_speed));
+    if (fire(s, "rise")) {
+        const fwd = v3(-Math.sin(s.yaw * DEG), 0, Math.cos(s.yaw * DEG));
+        const p = add(u.center, mul(fwd, 5));
+        const y = groundBelow(s, add(p, v3(0, 3, 0)), 8) ?? u.center.y;
+        const h = safe(() => dim.spawnEntity(CAVALLO_ID, v3(p.x, y, p.z)));
+        if (h) {
+            u.prop = h;
+            safe(() => h.setRotation({ x: 0, y: s.yaw }));
+            safe(() => h.setProperty("esb:state", "rise"));
         }
-        if (u.wave % 2 === 0)
-            sound(dim, SND.click, from, 1, 1.4);
-        if (u.wave % 3 === 0)
-            particle(dim, PFX.spark, from);
+        particle(dim, PFX.pathDust, v3(p.x, y + 0.2, p.z));
+        sound(dim, SND.crumble, p, 2, 0.4);
     }
-    if (fire(s, "gather")) {
-        actionBar(playersNear(s, U.radius + 10), "esb.msg.opus_judgement");
-        sound(dim, SND.charge, s.entity.location, 2, 0.6);
+    if (t === moment("ultimate", "rise") + sec(1.8) && horseAlive(s)) {
+        sound(dim, SND.neigh, u.prop.location, 3, 0.45);
+        shake(playersNear(s, 48), 0.35, 0.8);
     }
-    const slam = moment("ultimate", "slam");
-    const land = moment("ultimate", "land");
-    if (t > moment("ultimate", "gather") && t < slam && t % 6 === 0) {
-        particle(dim, PFX.sigilEdge, add(u.center, v3(0, 0.1, 0)), U.radius);
-        for (const q of u.sanctuaries)
-            particle(dim, PFX.sigilEdge, add(q, v3(0, 0.1, 0)), 3);
-    }
-    if (s.inAir && t > slam && t <= land) {
-        const k = (t - slam) / Math.max(1, land - slam);
-        teleport(s, v3(u.center.x, lerp(u.peak.y, u.center.y, k * k), u.center.z));
-    }
-    if (fire(s, "land")) {
-        if (s.inAir) {
-            event(s, "esb:to_ground");
-            s.inAir = false;
+    if (t === moment("ultimate", "rise") + sec(2.4))
+        setHorse(s, "idle");
+    for (const c of ["charge1", "charge2", "charge3"]) {
+        const c0 = moment("ultimate", c);
+        if (t === c0 && horseAlive(s)) {
+            // pick someone, turn toward them and paw the ground while the path is marked with dust
+            const h = u.prop;
+            const pool = playersNear(s, 40).filter((p) => !isProtectedPlayer(p));
+            const tgt = isLiving(s.target) && !isProtectedPlayer(s.target) ? s.target : pool[Math.floor(Math.random() * pool.length)];
+            const goal = tgt ? tgt.location : add(h.location, v3(-Math.sin(s.yaw * DEG) * 10, 0, Math.cos(s.yaw * DEG) * 10));
+            const dir = norm(v3(goal.x - h.location.x, 0, goal.z - h.location.z));
+            const from = { ...h.location };
+            const clear = rayClear(s, add(from, v3(0, 1.5, 0)), dir, U.charge_length);
+            const to = add(from, mul(dir, Math.max(4, clear - 1.5)));
+            u.charge = { from, to, start: 0, end: 0, hit: new Set() };
+            safe(() => h.setRotation({ x: 0, y: yawTo(from, to) }));
+            setHorse(s, "paw");
+            actionBar(playersNear(s, 40), "esb.msg.cavallo_charge");
+            sound(dim, SND.neigh, from, 2.5, 0.5);
         }
-        const c = v3(u.center.x, u.center.y, u.center.z);
-        for (const v of victims(s, c, U.radius, 3, 8)) {
-            const safeSpot = u.sanctuaries.some((q) => hdist(v.location, q) <= U.sanctuary_radius);
-            if (safeSpot)
+        // the dust trail marking the path, drawn over the first ticks of the paw
+        if (u.charge && t > c0 && t <= c0 + 4 && !u.charge.start) {
+            const L = Math.sqrt((u.charge.to.x - u.charge.from.x) ** 2 + (u.charge.to.z - u.charge.from.z) ** 2);
+            for (let d = (t - c0 - 1) * 1.5; d < L; d += 6) {
+                const k = d / L;
+                const p = v3(lerp(u.charge.from.x, u.charge.to.x, k), u.charge.from.y, lerp(u.charge.from.z, u.charge.to.z, k));
+                particle(dim, PFX.pathDust, add(p, v3(0, 0.2, 0)));
+            }
+        }
+        if (t === c0 + sec(U.paw_seconds) && u.charge && horseAlive(s)) {
+            u.charge.start = now();
+            u.charge.end = now() + sec(U.charge_seconds);
+            setHorse(s, "gallop");
+            sound(dim, SND.neigh, u.charge.from, 3, 0.5);
+        }
+    }
+    const ch = u.charge;
+    if (ch && ch.start && horseAlive(s)) {
+        const h = u.prop;
+        const k = clamp((now() - ch.start) / Math.max(1, ch.end - ch.start), 0, 1);
+        const p = v3(lerp(ch.from.x, ch.to.x, k), ch.from.y, lerp(ch.from.z, ch.to.z, k));
+        const y = groundBelow(s, add(p, v3(0, 3, 0)), 7) ?? p.y;
+        const q = v3(p.x, y, p.z);
+        safe(() => h.teleport(q, { rotation: { x: 0, y: yawTo(ch.from, ch.to) }, keepVelocity: false }));
+        for (const v of victims(s, q, U.trample_width, 2, 4)) {
+            if (ch.hit.has(v.id) || v.id === h.id)
                 continue;
-            if (hurt(s, v, U.damage))
-                knockFrom(v, c, 0.8, U.lift);
+            ch.hit.add(v.id);
+            if (hurt(s, v, U.trample_damage)) {
+                const side = v3(-(ch.to.z - ch.from.z), 0, ch.to.x - ch.from.x);
+                const sgn = (v.location.x - q.x) * side.x + (v.location.z - q.z) * side.z >= 0 ? 1 : -1;
+                knockFrom(v, add(v.location, mul(norm(side), -sgn)), U.knockback, U.lift);
+            }
         }
-        particle(dim, PFX.sigilBurst, add(c, v3(0, 0.1, 0)), U.radius);
-        particle(dim, PFX.sigilBurst, add(c, v3(0, 0.1, 0)), U.radius * 0.5);
-        particle(dim, PFX.shockwave, add(c, v3(0, 0.15, 0)), U.radius);
-        particle(dim, PFX.dust, add(c, v3(0, 0.3, 0)));
-        particle(dim, PFX.pages, add(c, v3(0, 1.5, 0)));
-        shake(playersNear(s, 64), 0.8, 1.4);
-        sound(dim, SND.boom, c, 2, 0.6);
-        sound(dim, SND.totem, c, 1.2, 0.8);
-        sound(dim, SND.anvil, c, 1.4, 0.5);
+        if ((now() - ch.start) % 3 === 0)
+            particle(dim, PFX.pathDust, add(q, v3(0, 0.2, 0)));
+        if ((now() - ch.start) % 4 === 0)
+            sound(dim, SND.hoof, q, 2, 0.4);
+        if (now() >= ch.end) {
+            u.charge = undefined;
+            setHorse(s, "idle");
+            shake(playersNear(s, 16).filter((pl) => dist(pl.location, q) < 10), 0.3, 0.4);
+        }
     }
+    const tp = targetPoint(s);
+    if (tp)
+        turnTo(s, tp, 6);
+    if (fire(s, "crumble") && horseAlive(s)) {
+        // the clay was never fired: it cracks and falls apart
+        setHorse(s, "crumble");
+        u.charge = undefined;
+        const p = u.prop.location;
+        particle(dim, PFX.clay, add(p, v3(0, 2.5, 0)));
+        sound(dim, SND.crumble, p, 2, 0.5);
+        sound(dim, SND.anvil, p, 0.8, 0.4);
+        message(playersNear(s, 64), "esb.msg.cavallo_lament");
+    }
+    if (t === moment("ultimate", "crumble") + sec(0.8) && u.prop?.isValid)
+        particle(dim, PFX.clay, add(u.prop.location, v3(0, 1.5, 0)));
 }
 // ------------------------------------------------------------------------------------------ death
 export function beginDying(s) {

@@ -20,7 +20,8 @@
             "dive_strike",
             "flourish",
             "death",
-            "ultimate"
+            "ultimate",
+            "lament"
           ],
           "default": "none",
           "client_sync": true

@@ -124,31 +124,28 @@ export const BALANCE = {
         },
         "ultimate": {
             "hp_threshold": 0.35,
-            "cooldown": 45,
-            "bulbs": 6,
-            "ring_radius": 9,
-            "bulb_health": 16,
-            "hover": 5,
-            "strike_every_ticks": 10,
-            "strike_delay_ticks": 18,
-            "strike_radius": 2.5,
-            "strike_damage": 8,
-            "flash_radius": 40,
-            "flash_damage": 30,
-            "darkness_seconds": 10
+            "cooldown": 50,
+            "ring_speed": 7.0,
+            "ring_band": 0.75,
+            "ring_damage": 6,
+            "ring_max_radius": 24,
+            "blast_range": 20,
+            "blast_half_angle": 35,
+            "blast_damage": 18,
+            "blast_knockback": 2.2
         }
     },
     "ultimate": {
         "hp_threshold": 0.35,
-        "cooldown": 45,
-        "radius": 16,
-        "sanctuary_radius": 2.6,
-        "damage": 26,
-        "lift": 1.2,
-        "height": 7,
-        "wave_every_ticks": 5,
-        "gears_per_wave": 3,
-        "gear_speed": 0.7,
-        "spiral_step_deg": 23
+        "cooldown": 50,
+        "horse_health": 80,
+        "charge_length": 22,
+        "charge_seconds": 1.3,
+        "paw_seconds": 0.9,
+        "trample_width": 2.4,
+        "trample_damage": 14,
+        "knockback": 1.6,
+        "lift": 0.6,
+        "lament_seconds": 3
     }
 };

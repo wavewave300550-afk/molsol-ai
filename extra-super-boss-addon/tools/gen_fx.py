@@ -186,6 +186,42 @@ EFFECTS = {
                                                     "facing_camera_mode": "rotate_xyz", "uv": cell(0, 1)},
         "minecraft:particle_appearance_tinting": {"color": [0.12, 0.11, 0.13, f"0.9 * {FADE}"]},
     }),
+    # ---------------------------------------------------------------- ultimates
+    "music_note": particle("esb:music_note", "particles_alpha", {
+        **once(4),
+        "minecraft:emitter_shape_sphere": {"radius": 0.8, "direction": "outwards"},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "math.random(1.0, 1.6)"},
+        "minecraft:particle_initial_speed": "math.random(1, 2.5)",
+        "minecraft:particle_initial_spin": {"rotation": "math.random(-25, 25)", "rotation_rate": "math.random(-60, 60)"},
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, 1.2, 0], "linear_drag_coefficient": 1.4},
+        "minecraft:particle_appearance_billboard": {"size": [0.32, 0.32], "facing_camera_mode": "rotate_xyz",
+                                                    "uv": {"texture_width": 64, "texture_height": 64,
+                                                           "uv": [0, 32], "uv_size": [16, 16]}},
+        "minecraft:particle_appearance_tinting": {"color": [1.0, 0.86, 0.45, f"math.min(1, 3 * {FADE})"]},
+    }),
+    "path_dust": particle("esb:path_dust", "particles_blend", {
+        **once(5),
+        "minecraft:emitter_shape_disc": {"plane_normal": [0, 1, 0], "radius": 0.8, "direction": [0, 1, 0]},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "math.random(0.8, 1.4)"},
+        "minecraft:particle_initial_speed": "math.random(0.5, 1.6)",
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, 0.6, 0], "linear_drag_coefficient": 1.5},
+        "minecraft:particle_appearance_billboard": {"size": ["0.45 + v.particle_age * 0.7", "0.45 + v.particle_age * 0.7"],
+                                                    "facing_camera_mode": "rotate_xyz", "uv": cell(0, 1)},
+        "minecraft:particle_appearance_tinting": {"color": [0.72, 0.48, 0.34, f"0.8 * {FADE}"]},
+        "minecraft:particle_appearance_lighting": {},
+    }),
+    "clay_chunks": particle("esb:clay_chunks", "particles_alpha", {
+        **once(16),
+        "minecraft:emitter_shape_box": {"half_dimensions": [1.5, 1.2, 2.5], "direction": "outwards"},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "math.random(0.8, 1.5)"},
+        "minecraft:particle_initial_speed": "math.random(1, 4)",
+        "minecraft:particle_initial_spin": {"rotation": "math.random(0, 360)", "rotation_rate": "math.random(-300, 300)"},
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, -16, 0], "linear_drag_coefficient": 0.5},
+        "minecraft:particle_motion_collision": {"coefficient_of_restitution": 0.2, "collision_drag": 4, "collision_radius": 0.1},
+        "minecraft:particle_appearance_billboard": {"size": ["math.random(0.2, 0.45)", "math.random(0.2, 0.45)"],
+                                                    "facing_camera_mode": "rotate_xyz", "uv": cell(2, 2)},
+        "minecraft:particle_appearance_lighting": {},
+    }),
 }
 
 

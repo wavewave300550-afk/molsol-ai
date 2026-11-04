@@ -11,7 +11,7 @@ import { BALANCE } from "./balance.js";
 import { actionBar, at, centerOf, clearUlt, event, groundBelow, health, hpFrac, isLiving, isProtectedPlayer, knockFrom, lock, message, newUlt, now, playersNear, rayClear, safe, sec, setAction, setProp, shake, title, turnTo, unlock, victims, } from "./boss.js";
 import { PFX, SND, particle, sound } from "./fx.js";
 import { CHAIR_SEAT, DYNAMO_TOP, E_BULB_REST, E_BULB_THROW, E_CHEST, E_HEAD } from "./offsets.js";
-import { ARC_BOLT_ID, CHAIR_ID, DYNAMO_ID, EDISON_ACTIONS, MARKER_ID, SUN_BULB_ID, VOLT_BULB_ID } from "./spec.js";
+import { BEAT, CHAIR_ID, DYNAMO_ID, EDISON_ACTIONS, MELODY, NOTE_PITCH, PHONO_ID, RING_ID, VOLT_BULB_ID, } from "./spec.js";
 import { DEG, add, dist, hdist, lerp, mul, norm, sub, v3, yawDir, yawTo } from "./vec.js";
 const E = BALANCE.edison;
 const ticksOf = (k) => sec(EDISON_ACTIONS[k].length);
@@ -469,17 +469,30 @@ function tickTransformE(s) {
         knockFrom(t, pos, 1.3, 0.45);
     s.ready.vanish = now() + sec(2);
 }
-// ------------------------------------------------------------------------------------------ ULTIMATE: Let There Be Light
-/** Snaps the lights out, rises as a sun over a ring of giant Sun Bulbs that call lightning onto marked spots, then
- *  a blinding flash hits everyone who can see him - weaker for every bulb the players smashed. */
-function startLight(s) {
+// ------------------------------------------------------------------------------------------ ULTIMATE: Mary Had a Little Lamb
+/** 1877: Edison recites "Mary had a little lamb" into his tinfoil phonograph - the first recorded words in history.
+ *  A giant phonograph assembles, he cranks it and the tune plays; every bar sends a sound-wave ring along the ground
+ *  (jump over it). When the record ends the horn blasts a cone in front of it. */
+const PHONO_SCALE = 2.2;
+const NOTE_TICKS = (() => {
+    const out = [];
+    let beats = 0;
+    for (const [n, b] of MELODY) {
+        out.push({ tick: Math.round((EDISON_ACTIONS.ultimate.moments.music + beats * BEAT) * 20), note: n, ring: beats % 4 === 0 });
+        beats += b;
+    }
+    return out;
+})();
+function startLamb(s) {
     startE(s, "ultimate");
     s.ult = newUlt(s.entity.location);
 }
-function aliveBulbs(s) {
-    return (s.ult?.bulbs ?? []).filter((b) => b.isValid && isLiving(b));
+function setPhono(s, state) {
+    const p = s.ult?.prop;
+    if (p?.isValid)
+        safe(() => p.setProperty("esb:state", state));
 }
-function tickLight(s) {
+function tickLamb(s) {
     const u = s.ult;
     if (!u)
         return;
@@ -488,142 +501,105 @@ function tickLight(s) {
     const run = s.run;
     const t = run.tick;
     if (fire(s, "snap")) {
-        const ps = playersNear(s, 40).filter((p) => !isProtectedPlayer(p));
-        for (const p of ps)
-            safe(() => p.addEffect("darkness", sec(U.darkness_seconds), { amplifier: 0, showParticles: false }));
-        title(playersNear(s, 64), "esb.title.light", "esb.subtitle.light");
-        message(playersNear(s, 64), "esb.msg.light");
-        sound(dim, SND.click, s.entity.location, 2, 0.6);
-        sound(dim, SND.portal, s.entity.location, 1.4, 0.5);
+        const ps = playersNear(s, 64);
+        title(ps, "esb.title.lamb", "esb.subtitle.lamb");
+        message(ps, "esb.msg.lamb");
+        sound(dim, SND.click, s.entity.location, 2, 0.8);
     }
-    const r0 = moment("ultimate", "rise");
-    const r1 = r0 + 12;
-    if (t === r0) {
-        const head = add(u.center, v3(0, 3.2, 0));
-        const h = Math.min(U.hover, rayClear(s, head, v3(0, 1, 0), U.hover + 1) - 1);
-        if (h >= 2) {
-            event(s, "esb:to_air");
-            s.inAir = true;
-            s.locked = true;
-            u.peak = add(u.center, v3(0, h, 0));
+    if (fire(s, "phono")) {
+        // the phonograph assembles in front of him with its horn turned toward his target
+        const fwd = yawDir(s.yaw);
+        const p = add(s.entity.location, mul(fwd, 3.5));
+        const y = groundBelow(s, add(p, v3(0, 3, 0)), 8) ?? s.entity.location.y;
+        const base = v3(p.x, y, p.z);
+        const tgt = isLiving(s.target) ? s.target.location : add(base, mul(fwd, 8));
+        const yaw = yawTo(base, tgt);
+        const ph = safe(() => dim.spawnEntity(PHONO_ID, base));
+        if (ph) {
+            u.prop = ph;
+            safe(() => ph.setRotation({ x: 0, y: yaw }));
+            safe(() => ph.setProperty("esb:state", "assemble"));
+        }
+        const dir = yawDir(yaw);
+        const horn = add(base, add(mul(dir, (30 * PHONO_SCALE) / 16), v3(0, (23 * PHONO_SCALE) / 16, 0)));
+        u.horn = { pos: horn, dir };
+        u.center = v3(horn.x, (groundBelow(s, horn, 12) ?? y) + 0.05, horn.z);
+        particle(dim, PFX.smoke, add(base, v3(0, 1, 0)));
+        sound(dim, SND.anvil, base, 1.2, 1.4);
+    }
+    if (fire(s, "crank") && u.prop?.isValid) {
+        // he steps to the crank on the phonograph's left side
+        const ph = u.prop;
+        const pyaw = safe(() => ph.getRotation().y) ?? s.yaw;
+        const left = v3(Math.cos(pyaw * DEG), 0, Math.sin(pyaw * DEG));
+        const spot = add(ph.location, mul(left, 2.9));
+        particle(dim, PFX.smoke, add(s.entity.location, v3(0, 1.4, 0)));
+        s.yaw = yawTo(spot, ph.location);
+        safe(() => s.entity.teleport(spot, { rotation: { x: 0, y: s.yaw }, keepVelocity: false }));
+        sound(dim, SND.click, spot, 1.5, 0.6);
+    }
+    if (t === moment("ultimate", "music"))
+        setPhono(s, "play");
+    // the tune: one note at a time, a ring on the first beat of every bar
+    while (u.note < NOTE_TICKS.length && t >= NOTE_TICKS[u.note].tick) {
+        const n = NOTE_TICKS[u.note++];
+        const pos = u.horn?.pos ?? s.entity.location;
+        sound(dim, SND.harp, pos, 3, NOTE_PITCH[n.note]);
+        particle(dim, PFX.note, pos);
+        if (n.ring) {
+            const e = safe(() => dim.spawnEntity(RING_ID, u.center));
+            u.rings.push({ start: now(), center: { ...u.center }, hit: new Set(), e });
+            sound(dim, SND.bass, pos, 2, 0.6);
         }
     }
-    if (s.inAir && t > r0 && t <= r1) {
-        const k = (t - r0) / (r1 - r0);
-        safe(() => s.entity.teleport(v3(u.center.x, lerp(u.center.y, u.peak.y, 1 - (1 - k) * (1 - k)), u.center.z), { rotation: { x: 0, y: s.yaw }, keepVelocity: false }));
-    }
-    if (fire(s, "bulbs")) {
-        for (let i = 0; i < U.bulbs; i++) {
-            const a = (i * 360 / U.bulbs) * DEG;
-            const p = v3(u.center.x - Math.sin(a) * U.ring_radius, u.center.y + 4, u.center.z + Math.cos(a) * U.ring_radius);
-            const y = groundBelow(s, p, 10) ?? u.center.y;
-            const b = safe(() => dim.spawnEntity(SUN_BULB_ID, v3(p.x, y + 1.6, p.z)));
-            if (b) {
-                u.bulbs.push(b);
-                particle(dim, PFX.pillar, v3(p.x, y, p.z));
-            }
-        }
-        sound(dim, SND.charge, u.center, 2, 1.3);
-    }
-    // strikes: a mark under a player, then lightning from the nearest bulb (no bulbs left, no strikes)
-    const st0 = moment("ultimate", "strikes");
-    const st1 = moment("ultimate", "strikes_end");
-    if (t >= st0 && t < st1 && (t - st0) % U.strike_every_ticks === 0) {
-        const bulbs = aliveBulbs(s);
-        const ps = playersNear(s, 40).filter((p) => !isProtectedPlayer(p) && dist(p.location, u.center) <= 32);
-        if (bulbs.length && ps.length) {
-            const p = ps[Math.floor(Math.random() * ps.length)];
-            const y = groundBelow(s, add(p.location, v3(0, 1, 0)), 4) ?? p.location.y;
-            const pos = v3(p.location.x, y, p.location.z);
-            const m = safe(() => dim.spawnEntity(MARKER_ID, v3(pos.x, pos.y + 0.03, pos.z)));
-            if (m)
-                safe(() => m.setProperty("esb:radius", Math.round(U.strike_radius)));
-            const from = bulbs.sort((a, b) => dist(a.location, pos) - dist(b.location, pos))[0];
-            u.strikes.push({ pos, at: now() + U.strike_delay_ticks, marker: m, from: add(from.location, v3(0, 0.8, 0)) });
-            sound(dim, SND.fizz, pos, 1, 1.8);
-        }
-    }
-    for (const st of [...u.strikes]) {
-        if (now() < st.at)
+    for (const r of [...u.rings]) {
+        const radius = (U.ring_speed * (now() - r.start)) / 20;
+        if (radius > U.ring_max_radius) {
+            u.rings.splice(u.rings.indexOf(r), 1);
+            if (r.e?.isValid)
+                safe(() => r.e.remove());
             continue;
-        u.strikes.splice(u.strikes.indexOf(st), 1);
-        if (st.marker?.isValid)
-            safe(() => st.marker.remove());
-        const bolt3 = safe(() => dim.spawnEntity(ARC_BOLT_ID, st.pos));
-        if (bolt3)
-            u.bolts.push({ e: bolt3, until: now() + 7 });
-        if (st.from)
-            bolt(s, st.from, add(st.pos, v3(0, 0.5, 0)));
-        for (const v of victims(s, st.pos, U.strike_radius, 2, 3)) {
-            if (hurtBy(s, v, U.strike_damage))
-                safe(() => v.addEffect("slowness", 30, { amplifier: 1, showParticles: false }));
         }
-        particle(dim, PFX.voltSpark, add(st.pos, v3(0, 0.3, 0)), undefined, 1);
-        particle(dim, PFX.dust, add(st.pos, v3(0, 0.2, 0)));
-        sound(dim, SND.thunder, st.pos, 0.9, 1.1);
-    }
-    for (const b of [...u.bolts]) {
-        if (now() >= b.until) {
-            u.bolts.splice(u.bolts.indexOf(b), 1);
-            if (b.e.isValid)
-                safe(() => b.e.remove());
-        }
-    }
-    if (fire(s, "charge")) {
-        actionBar(playersNear(s, U.flash_radius + 8), "esb.msg.light_charge");
-        sound(dim, SND.charge, s.entity.location, 2, 0.5);
-    }
-    if (t > moment("ultimate", "charge") && t < moment("ultimate", "flash") && t % 5 === 0) {
-        for (const b of aliveBulbs(s))
-            bolt(s, add(b.location, v3(0, 0.8, 0)), add(s.entity.location, v3(0, 2, 0)));
-    }
-    if (fire(s, "flash")) {
-        const alive = aliveBulbs(s);
-        const dmg = (U.flash_damage * alive.length) / U.bulbs;
-        const eye = add(s.entity.location, v3(0, 2.2, 0));
-        if (dmg > 0) {
-            for (const v of victims(s, eye, U.flash_radius, 40, 40)) {
-                const c = centerOf(v);
-                const d = sub(c, eye);
-                const l = Math.sqrt(d.x * d.x + d.y * d.y + d.z * d.z);
-                if (rayClear(s, eye, norm(d), l) < l - 0.8)
-                    continue; // hidden behind cover
-                if (hurtBy(s, v, dmg))
-                    safe(() => v.addEffect("blindness", 40, { amplifier: 0, showParticles: false }));
-            }
-        }
-        else {
-            message(playersNear(s, 64), "esb.msg.light_fizzle");
-        }
-        for (const b of u.bulbs) {
-            if (!b.isValid)
+        for (const v of victims(s, r.center, radius + U.ring_band + 1, 3, 3)) {
+            if (r.hit.has(v.id))
                 continue;
-            particle(dim, PFX.glass, add(b.location, v3(0, 0.8, 0)));
-            safe(() => b.remove());
+            const d = hdist(v.location, r.center);
+            if (Math.abs(d - radius) > U.ring_band)
+                continue;
+            if (safe(() => v.isOnGround) === false)
+                continue; // jumped over it
+            r.hit.add(v.id);
+            if (hurtBy(s, v, U.ring_damage))
+                knockFrom(v, r.center, 0.6, 0.45);
         }
-        u.bulbs = [];
-        for (const st of u.strikes)
-            if (st.marker?.isValid)
-                safe(() => st.marker.remove());
-        u.strikes = [];
-        particle(dim, PFX.voltSpark, eye, undefined, 1);
-        particle(dim, PFX.shockwave, add(u.center, v3(0, 0.2, 0)), U.ring_radius + 3);
-        shake(playersNear(s, 64), 0.9, 1.2);
-        sound(dim, SND.thunder, eye, 2, 0.7);
-        sound(dim, SND.glass, eye, 2, 0.6);
-        sound(dim, SND.totem, eye, 1, 1.4);
     }
-    const fl = moment("ultimate", "flash");
-    const ld = moment("ultimate", "land");
-    if (s.inAir && t > fl && t <= ld) {
-        const k = (t - fl) / Math.max(1, ld - fl);
-        safe(() => s.entity.teleport(v3(u.center.x, lerp(u.peak.y, u.center.y, k * k), u.center.z), { rotation: { x: 0, y: s.yaw }, keepVelocity: false }));
+    if (fire(s, "finale_warn")) {
+        actionBar(playersNear(s, 40), "esb.msg.lamb_finale");
+        if (u.horn)
+            for (let i = 1; i <= 4; i++)
+                particle(dim, PFX.note, add(u.horn.pos, mul(u.horn.dir, i * 3)));
     }
-    if (fire(s, "land") && s.inAir) {
-        event(s, "esb:to_ground");
-        s.inAir = false;
-        particle(dim, PFX.dust, add(s.entity.location, v3(0, 0.2, 0)));
+    if (fire(s, "finale") && u.horn) {
+        setPhono(s, "blast");
+        const h = u.horn;
+        const cosMax = Math.cos(U.blast_half_angle * DEG);
+        for (const v of victims(s, h.pos, U.blast_range, 6, 6)) {
+            const d = sub(v.location, h.pos);
+            const l = Math.sqrt(d.x * d.x + d.z * d.z) || 1;
+            if ((d.x * h.dir.x + d.z * h.dir.z) / l < cosMax)
+                continue; // beside or behind the horn: safe
+            if (hurtBy(s, v, U.blast_damage))
+                safe(() => v.applyKnockback({ x: h.dir.x * U.blast_knockback, z: h.dir.z * U.blast_knockback }, 0.5));
+        }
+        for (let i = 1; i <= 5; i++)
+            particle(dim, PFX.note, add(h.pos, mul(h.dir, i * 3.5)));
+        particle(dim, PFX.shockwave, add(u.center, v3(0, 0.15, 0)), 8);
+        shake(playersNear(s, 48), 0.7, 1.0);
+        sound(dim, SND.boom, h.pos, 2, 0.8);
+        sound(dim, SND.bass, h.pos, 3, 0.5);
     }
+    if (t === moment("ultimate", "finale") + sec(0.6))
+        setPhono(s, "fold");
 }
 // ------------------------------------------------------------------------------------------ death
 export function beginDyingE(s) {
@@ -739,7 +715,7 @@ function tickRunE(s) {
                 zap(s, PFX.voltSpark, at(s, E_BULB_REST));
             break;
         case "ultimate":
-            tickLight(s);
+            tickLamb(s);
             break;
         default:
             break;
@@ -775,11 +751,11 @@ export function thinkEdison(s) {
     if (now() < s.gapUntil || now() < s.nextDecision)
         return;
     s.nextDecision = now() + DECIDE_EVERY;
-    // ULTIMATE: Let There Be Light below 35% health, then on its own long cooldown
+    // ULTIMATE: Mary Had a Little Lamb below 35% health, then on its own long cooldown
     if (hpFrac(s) <= E.ultimate.hp_threshold && now() >= s.ready.ultimate) {
         if (s.hidden)
             reveal(s);
-        startLight(s);
+        startLamb(s);
         return;
     }
     const d = hdist(t.location, s.entity.location);

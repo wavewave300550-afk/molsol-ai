@@ -284,6 +284,20 @@ def particle_atlas():
     # (3,1) streak
     x, y = cell(3, 1)
     d.polygon([(x + 7 * S, y), (x + 9 * S, y), (x + 8.6 * S, y + 16 * S), (x + 7.4 * S, y + 16 * S)], fill=W)
+    # (0,2) eighth note, (1,2) beamed pair of notes (the phonograph), (2,2) clay chunk
+    x, y = cell(0, 2)
+    d.ellipse([x + 3 * S, y + 10 * S, x + 8 * S, y + 14 * S], fill=W)
+    d.rectangle([x + 7 * S, y + 2 * S, x + 8.2 * S, y + 12 * S], fill=W)
+    d.polygon([(x + 8 * S, y + 2 * S), (x + 13 * S, y + 6 * S), (x + 13 * S, y + 8 * S), (x + 8 * S, y + 5 * S)], fill=W)
+    x, y = cell(1, 2)
+    d.ellipse([x + 1 * S, y + 11 * S, x + 6 * S, y + 15 * S], fill=W)
+    d.ellipse([x + 9 * S, y + 9 * S, x + 14 * S, y + 13 * S], fill=W)
+    d.rectangle([x + 5 * S, y + 3 * S, x + 6.2 * S, y + 13 * S], fill=W)
+    d.rectangle([x + 13 * S, y + 1 * S, x + 14.2 * S, y + 11 * S], fill=W)
+    d.polygon([(x + 5 * S, y + 3 * S), (x + 14 * S, y + 1 * S), (x + 14 * S, y + 3.5 * S), (x + 5 * S, y + 5.5 * S)], fill=W)
+    x, y = cell(2, 2)
+    d.polygon([(x + 3 * S, y + 4 * S), (x + 11 * S, y + 2 * S), (x + 14 * S, y + 9 * S), (x + 8 * S, y + 14 * S), (x + 2 * S, y + 10 * S)],
+              fill=(180, 100, 62, 255), outline=(120, 64, 38, 255))
     im = big.resize((64, 64), Image.LANCZOS)
     save_png("textures/particle/esb_fx.png", im)
 

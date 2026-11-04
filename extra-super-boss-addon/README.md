@@ -12,33 +12,35 @@ no vanilla mob is replaced.
 
 | | |
 |---|---|
-| Pack version | **1.2.0**: an **Ultimate** for every boss and redrawn faces. Same pack UUIDs, so it imports over older versions |
+| Pack version | **1.3.0**: new history-based **Ultimates** (Il Gran Cavallo, Mary Had a Little Lamb) and the redrawn faces. Same pack UUIDs, so it imports over older versions |
 | Game version | Bedrock **1.26.60** or newer (iPhone / iPad / Android / Windows / consoles) |
 | Script API | `@minecraft/server` **2.11.0** (stable) |
 | Experimental toggles | **None needed** |
 
 > **Not yet tested in the real game.** The machine that built this has no Minecraft client (starting a Creator Tools test
 > server needs the user to accept the Minecraft EULA themselves). What was checked: Creator Tools validation **0 errors**,
-> **3543/3543** cross-file reference checks, and a smoke test that runs the real boss scripts against a mocked
-> `@minecraft/server`: **207/207** checks. Every image and GIF here is **rendered from the pack's own files**, not captured in-game.
+> **4089/4089** cross-file reference checks, and a smoke test that runs the real boss scripts against a mocked
+> `@minecraft/server`: **205/205** checks. Every image and GIF here is **rendered from the pack's own files**, not captured in-game.
 
-## Ultimates: every boss has one
+## Ultimates: every boss has one, taken from his own history
 
 ![Ultimates](docs/preview/ultimates.png)
 
-Each boss unleashes his **Ultimate** below **35% health**, and again every **45 s** after that. It's titled on
-screen, shakes the camera, and he is **invulnerable** while it plays: survive it.
+Each boss unleashes his **Ultimate** below **35% health**, and again every **50 s** after that. It's titled on
+screen and shakes the camera. Each one is built on something the man really made, and none of them reuses the
+boss's regular skills.
 
-| Boss | Ultimate | What happens | How to survive |
-|---|---|---|---|
-| Da Vinci | **OPUS MAGNUM** (9 s) | Rises 7 blocks in the Vitruvian pose with a **giant spinning Vitruvian halo** behind him. An **arena-sized golden sigil** (radius 16) is drawn below with **4 small golden sanctuaries** at its corners. He spins twice like a gyroscope spraying a **spiral of brass gears** (48 gears), gathers power overhead, then **slams down**: everyone inside the sigil takes 26 damage and is launched | Dodge the gear spiral and **stand in a golden sanctuary** when he slams (or leave the sigil) |
-| Edison | **LET THERE BE LIGHT** (10 s) | Snaps his fingers: **darkness** falls. He rises as a blazing **sun** (additive aura) while **6 giant Sun Bulbs** float around the arena. Every half second a **strike mark** appears under a player, and 0.9 s later **lightning** from the nearest bulb hits it (8 + slowness). Then he charges and releases a **blinding flash**: 30 damage + blindness to everyone who can see him | **Smash the Sun Bulbs** (16 HP each): every broken bulb weakens the flash, and with all six gone it fizzles. **Hide behind a wall**, step out of the marks |
+| Boss | Ultimate | The history | What happens | How to survive |
+|---|---|---|---|---|
+| Da Vinci | **IL GRAN CAVALLO** (13 s) | From 1482 to 1499 Leonardo worked on a 7-metre horse for the Duke of Milan, meant to be the largest bronze horse ever. The bronze went to cannons; the full-size **clay** model was used as target practice by French archers in 1499 and destroyed. It was never finished | He sketches in the air with his compass and the **colossal clay horse** (about 7 blocks) rises from the ground and rears. **Three times** it turns on a player, paws the ground while **a dust trail marks its path**, then gallops 22 blocks down that line: 14 damage and thrown aside. At the end the unfired clay **cracks and crumbles**, and Leonardo reaches for it: *"Tell me if anything was ever finished."* | **Get off the dust trail** before it charges. Or do what the French archers did: **shoot or smash the horse** (80 HP). It shatters early and Leonardo falls to his knees in grief for 3 s, open to attack |
+| Edison | **MARY HAD A LITTLE LAMB** (13 s) | In 1877 Edison recited *"Mary had a little lamb"* into his tinfoil phonograph: the **first recorded words in history** | A **giant tinfoil phonograph** assembles with its horn aimed at a player, and Edison **cranks it**. The tune plays note by note (26 notes, in tune). On the first beat of every bar **a sound wave rolls out along the ground** from the horn (6 damage). When the record ends the **horn blasts a cone** in front of it: 18 damage and a big push | **Jump over each sound wave** in time with the music. Before the finale, **get out from in front of the horn** (beside or behind it is safe) |
 
-GIFs: [`ultimate_opus_magnum`](docs/preview/anim/ultimate_opus_magnum.gif), [`ultimate_let_there_be_light`](docs/preview/anim/ultimate_let_there_be_light.gif)
+GIFs: [`ultimate_gran_cavallo`](docs/preview/anim/ultimate_gran_cavallo.gif) (the horse rising, pawing, galloping,
+crumbling), [`ultimate_phonograph`](docs/preview/anim/ultimate_phonograph.gif)
 
-| Opus Magnum | Let There Be Light |
+| Il Gran Cavallo | The tinfoil phonograph |
 |---|---|
-| ![opus](docs/preview/anim/ultimate_opus_magnum.gif) | ![light](docs/preview/anim/ultimate_let_there_be_light.gif) |
+| ![horse](docs/preview/anim/ultimate_gran_cavallo.gif) | ![phonograph](docs/preview/anim/ultimate_phonograph.gif) |
 
 ---
 
@@ -49,7 +51,7 @@ GIFs: [`ultimate_opus_magnum`](docs/preview/anim/ultimate_opus_magnum.gif), [`ul
 Long wavy brown hair tied half-up, a calm handsome face (anime-style eyes, firm brows), white shirt, brocade vest, crimson mantle with gold
 trim and a compass-rose emblem, tall boots. His **left arm is a brass clockwork gauntlet**; his **right hand holds a
 drafting compass** as a weapon. In phase 2 he unfolds **ornithopter wings** from his notebooks.
-500 HP, boss bar, about 3.7 blocks tall (40 bones, 114 cubes). **Ultimate: Opus Magnum** (above).
+500 HP, boss bar, about 3.7 blocks tall (40 bones, 114 cubes). **Ultimate: Il Gran Cavallo** (above).
 
 | Ability | When | What happens | How to dodge |
 |---|---|---|---|
@@ -79,7 +81,7 @@ Messy black hair with a white streak, sharp amber eyes and a sly smirk, rolled-u
 leather straps and brass buckles, long black gloves, lace-up boots. He fights like an assassin with a **broken
 light bulb** as a shiv, and brings two machines to the fight: **the Dynamo** (his generator cabinet) and
 **the Electric Chair**. Phase 1 electricity is warm amber (DC); in phase 2, **the Current War**, it turns blue-white (AC).
-420 HP, boss bar, about 3.1 blocks tall, fast (movement 0.34, 0.40 in phase 2). **Ultimate: Let There Be Light** (above).
+420 HP, boss bar, about 3.1 blocks tall, fast (movement 0.34, 0.40 in phase 2). **Ultimate: Mary Had a Little Lamb** (above).
 
 | Ability | When | What happens | How to counter |
 |---|---|---|---|
@@ -149,8 +151,8 @@ Bosses ignore Creative and Spectator players: use `/gamemode survival`, and `/ef
 | 7 | Bring him to half health | AC transformation: blue lightning textures, the Dynamo comes back, he blinks twice |
 | 8 | Kill him | Death sequence, the Dynamo powers down, Volt Shiv drops |
 | 9 | Da Vinci: `/summon esb:da_vinci ~ ~ ~8` | Intro, gear volley, quake, Vitruvian circle, wings at half health, dive |
-| 10 | Bring either boss below 35% health | The Ultimate: big title, camera shake, Da Vinci's halo + arena sigil + sanctuaries, or Edison's darkness + sun aura + Sun Bulbs |
-| 11 | Edison's Ultimate: break 3 bulbs, hide one friend behind a wall | The flash hits for half damage, and the hidden player takes none |
+| 10 | Bring Da Vinci below 35% health | The clay horse rises and rears; dust trails mark three charges; at the end it crumbles. Shoot it down instead and he kneels in grief |
+| 11 | Bring Edison below 35% health | The giant phonograph plays "Mary Had a Little Lamb"; jump each sound wave; get away from the horn before the last note |
 
 Useful: `/kill @e[type=esb:edison]`, `/kill @e[type=esb:da_vinci]`, Settings → Creator → **Content Log GUI** for pack errors
 (screenshot any red line if something looks wrong).
@@ -162,8 +164,8 @@ Useful: `/kill @e[type=esb:edison]`, `/kill @e[type=esb:da_vinci]`, Settings →
 * The basic melee attacks are vanilla `minecraft:behavior.delayed_attack` (like the Ravager) with `q.is_delayed_attacking`.
 * Edison's invisibility relies on the vanilla `invisibility` effect hiding mobs; the Blackout uses the vanilla `darkness` effect.
 * Hitting gears back (`reflect_on_hurt`).
-* The Ultimates use the `camerashake` command (run by the script on each player) and extra additive render layers shown
-  through a Molang condition on the client entity (`render_controllers` with `{"controller": "q.property('esb:action') == 'ultimate'"}`).
+* The Ultimates use the `camerashake` command (run by the script on each player), the vanilla `note.harp` sound for the
+  melody, and `isOnGround` to tell whether a player jumped a sound wave.
 * Balance targets 1–2 players in diamond gear; tune everything in `balance.json` and rebuild.
 * In-game text is English: Bedrock has no Thai UI language, so a `th_TH.lang` would never load.
 
@@ -190,7 +192,7 @@ extra-super-boss-addon/
 | `npm run build` | All of the above in order |
 | `npm run preview` | Render the pose sheets, GIFs and icons into `docs/preview/` |
 
-Rules for new bosses (every boss has an Ultimate, faces must look good, docs in English) are in
+Rules for new bosses (every boss has a history-based Ultimate, faces must look good, docs in English) are in
 [`CLAUDE.md`](CLAUDE.md); `npm run validate` fails if a boss has no Ultimate.
 
 Animation lengths and hit frames live in `tools/spec.py`, which generates both the animation files and

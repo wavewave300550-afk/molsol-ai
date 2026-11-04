@@ -12,6 +12,7 @@ Lengths and hit moments come from tools/spec.py (EDISON_ACTIONS).
 from __future__ import annotations
 
 import json
+import math
 import os
 import sys
 
@@ -224,34 +225,31 @@ def actions():
 
 
 def ultimate():
-    """LET THERE BE LIGHT: snaps the lights out, rises as a sun, conducts the strikes, charges and flashes."""
+    """MARY HAD A LITTLE LAMB: snaps, presents the tinfoil phonograph, cranks it in time with the tune while conducting
+    with his bulb, then throws his arms wide for the horn's finale."""
     m = M["ultimate"]
     snap = {"arm_l": (-124, -20, -20), "forearm_l": (-40, 0, 0), "hand_l": (0, 0, -30), "head": (-10, 12, 0)}
-    hover = {"arm_l": (-24, 0, -64), "arm_r": (-24, 0, 64), "forearm_l": (-10, 0, 0), "forearm_r": (-10, 0, 0),
-             "leg_l": (-12, 0, -6), "shin_l": (24, 0, 0), "leg_r": (8, 0, 6), "shin_r": (34, 0, 0), "foot_r": (-10, 0, 0),
-             "head": (-10, 0, 0), "torso": (-6, 0, 0), "apron_l": (-14, 0, 0), "apron_r": (-8, 0, 0)}
-    point_l = merge(hover, {"arm_r": (-92, -34, 0), "torso": (-4, -16, 0), "head": (-6, -20, 0)})
-    point_r = merge(hover, {"arm_r": (-92, 36, 0), "arm_l": (-70, -20, -30), "torso": (-4, 18, 0), "head": (-6, 22, 0)})
-    point_f = merge(hover, {"arm_r": (-100, 0, 0), "arm_l": (-100, 0, 0), "head": (-2, 0, 0)})
-    charge = {"arm_l": (-172, 0, -8), "arm_r": (-172, 0, 8), "forearm_l": (-6, 0, 0), "forearm_r": (-6, 0, 0),
-              "head": (-32, 0, 0), "torso": (-16, 0, 0), "leg_l": (-6, 0, -4), "leg_r": (6, 0, 4), "shin_r": (12, 0, 0)}
-    shake = merge(charge, {"torso": (-18, 3, 2), "head": (-34, -4, 0)})
-    flash = {"arm_l": (-10, 0, -124), "arm_r": (-10, 0, 124), "head": (-36, 0, 0), "torso": (-22, 0, 0),
-             "leg_l": (0, 0, -12), "leg_r": (0, 0, 12)}
-    fall = merge(CROUCH, {"pos:root": (0, 0, 0), "arm_l": (-40, 0, -40), "arm_r": (-40, 0, 40)})
-    keys = [(0, {}), (m["snap"], snap), (m["rise"], CROUCH), (m["bulbs"], hover), (m["strikes"], hover), (2.6, point_l),
-            (3.6, point_r), (4.6, point_f), (5.6, point_l), (6.4, point_r), (m["strikes_end"], hover), (m["charge"], charge),
-            (7.6, shake), (8.0, charge), (8.3, shake), (m["flash"], flash), (8.8, fall), (m["land"], merge(CROUCH, {"pos:root": (0, -3, 0)})),
-            (L["ultimate"], {})]
-    bones = timeline(keys)
-    size = {"0.0": [0, 0, 0], str(m["rise"]): [0, 0, 0], "1.2": [1, 1, 1], str(m["strikes_end"]): [1, 1, 1],
-            str(m["charge"]): [1.15, 1.15, 1.15], "8.4": [2.0, 2.0, 2.0], str(m["flash"]): [3.0, 3.0, 3.0], "8.8": [0, 0, 0],
-            str(L["ultimate"]): [0, 0, 0]}
-    bones["aura"] = {"rotation": [0, "q.anim_time * 30", 0], "scale": size}
-    bones["aura_rays"] = {"rotation": [0, 0, "q.anim_time * 70"]}
-    add("ultimate", L["ultimate"], bones,
-        particles=[(m["snap"], {"effect": "spark", "locator": "loc_bulb"}), (m["flash"], {"effect": "spark", "locator": "loc_chest_e"}),
-                   (m["flash"], {"effect": "glass", "locator": "loc_bulb"})])
+    present = {"arm_l": (-84, -44, -18), "forearm_l": (-6, 0, 0), "torso": (0, -16, 0), "head": (0, -22, 0), "arm_r": (-10, 0, 20)}
+    grip = {"arm_r": (-72, 6, 10), "forearm_r": (-22, 0, 0), "torso": (6, 0, 0), "head": (-4, 0, 0), "leg_l": (-10, 0, -4),
+            "leg_r": (8, 0, 4)}
+    keys = [(0, {}), (m["snap"], snap), (m["phono"], present), (1.15, present), (m["crank"], grip)]
+    # crank: one turn per 1.2 s; the free hand conducts the beat with the bulb
+    t = m["crank"]
+    end = m["finale_warn"]
+    step = spec.BEAT / 2
+    while t + step < end:
+        t += step
+        ph = 2 * math.pi * (t - m["crank"]) / 1.2
+        beat = math.sin(math.pi * (t - m["music"]) / spec.BEAT)
+        keys.append((round(t, 3), {
+            "arm_r": (-72 + 24 * math.sin(ph), 6, 10), "forearm_r": (-22 + 22 * math.cos(ph), 0, 0),
+            "torso": (6, 0, 3 * math.sin(ph)), "head": (-4 + 5 * abs(beat), 0, 0),
+            "arm_l": (-48 + 16 * beat, -10, -24), "forearm_l": (-30, 0, 0), "leg_l": (-10, 0, -4), "leg_r": (8, 0, 4)}))
+    raise_ = {"arm_l": (-124, -30, -40), "arm_r": (-124, 30, 40), "head": (-26, 0, 0), "torso": (-10, 0, 0), "pos:body": (0, 0, 1.2)}
+    wide = {"arm_l": (-14, 0, -112), "arm_r": (-14, 0, 112), "head": (-34, 0, 0), "torso": (-16, 0, 0)}
+    keys += [(end, grip), (11.0, raise_), (m["finale"], wide), (12.5, wide), (L["ultimate"], {})]
+    add("ultimate", L["ultimate"], timeline(keys),
+        particles=[(m["snap"], {"effect": "spark", "locator": "loc_bulb"}), (m["finale"], {"effect": "spark", "locator": "loc_bulb"})])
 
 
 def props():
@@ -274,19 +272,6 @@ def props():
             "helmet": {"position": ["math.sin(q.life_time * 7200) * 0.2", "math.sin(q.life_time * 5400) * 0.3", 0]},
             "frame": {"rotation": [0, "math.sin(q.life_time * 6000) * 1.2", 0]}},
             "particle_effects": {"0.0": {"effect": "zap", "locator": "loc_helmet"}, "0.1": {"effect": "zap", "locator": "loc_seat"}}},
-        "animation.esb.sun_bulb.float": {"loop": True, "animation_length": 1.0, "bones": {
-            "root": {"scale": "math.min(1, 0.1 + q.life_time * 1.6)", "position": [0, "math.sin(q.life_time * 140) * 1.2", 0]},
-            "spin": {"rotation": [0, "q.life_time * 60", "math.sin(q.life_time * 90) * 8"]}},
-            "particle_effects": {"0.0": {"effect": "trail", "locator": "loc_bulb_p"}, "0.5": {"effect": "trail", "locator": "loc_bulb_p"}}},
-        "animation.esb.volt_marker.grow": {"loop": True, "animation_length": 4.0, "bones": {
-            "root": {"scale": ["q.property('esb:radius') * math.min(1, 0.2 + q.life_time * 3)", 1,
-                               "q.property('esb:radius') * math.min(1, 0.2 + q.life_time * 3)"]},
-            "ring": {"rotation": [0, "q.life_time * 90", 0]},
-            "glyph": {"rotation": [0, "q.life_time * -200", 0],
-                      "scale": ["1 + math.sin(q.life_time * 900) * 0.12", 1, "1 + math.sin(q.life_time * 900) * 0.12"]}}},
-        "animation.esb.arc_bolt.flicker": {"loop": True, "animation_length": 0.5, "bones": {
-            "bolt": {"rotation": [0, "q.life_time * 2200", 0],
-                     "scale": ["1 + math.sin(q.life_time * 4000) * 0.35", 1, "1 + math.cos(q.life_time * 3500) * 0.35"]}}},
         "animation.esb.volt_bulb.spin": {"loop": True, "animation_length": 0.25, "bones": {
             "spin": {"rotation": ["q.life_time * 1080", "q.life_time * 400", 0]}},
             "particle_effects": {"0.0": {"effect": "trail", "locator": "loc_bulb_p"}}},
@@ -330,10 +315,10 @@ def client_entities():
     busy = " || ".join(act(a) for a in ("death", "intro", "transform", "stunned", "ultimate"))
     write(os.path.join(RP, "entity", "edison.entity.json"), {"format_version": "1.10.0", "minecraft:client_entity": {"description": {
         "identifier": spec.EDISON_ID,
-        "materials": {"default": "entity_emissive", "aura": "entity_beam_additive"},
-        "textures": {"default": "textures/entity/edison", "charged": "textures/entity/edison_charged", "aura": "textures/entity/edison_aura"},
-        "geometry": {"default": "geometry.esb.edison", "aura": "geometry.esb.edison_aura"},
-        "render_controllers": ["controller.render.esb.edison", {"controller.render.esb.edison_aura": act("ultimate")}],
+        "materials": {"default": "entity_emissive"},
+        "textures": {"default": "textures/entity/edison", "charged": "textures/entity/edison_charged"},
+        "geometry": {"default": "geometry.esb.edison"},
+        "render_controllers": ["controller.render.esb.edison"],
         "spawn_egg": {"base_color": "#5D6A44", "overlay_color": "#FFD27A"},
         "enable_attachables": False,
         "scripts": {"scale": str(RENDER_SCALE), "animate": ["idle", {"walk": "!(" + act("intro") + " || " + act("ultimate") + ")"},
@@ -365,24 +350,6 @@ def client_entities():
         "particle_effects": {"zap": "esb:volt_spark"},
         "scripts": {"animate": ["state_controller"]},
     }}})
-    simple = {
-        spec.SUN_BULB_ID: ("entity_emissive", "volt_bulb", "volt_bulb", "sun_bulb", {"float": "animation.esb.sun_bulb.float"},
-                           {"trail": "esb:volt_spark"}, "4.5"),
-        spec.MARKER_ID: ("entity_beam_additive", "volt_marker", "volt_marker", "volt_marker", {"grow": "animation.esb.volt_marker.grow"},
-                         None, None),
-        spec.ARC_BOLT_ID: ("entity_beam_additive", "arc_bolt", "arc_bolt", "arc_bolt", {"flicker": "animation.esb.arc_bolt.flicker"},
-                           None, None),
-    }
-    for ident, (mat, geo, tex, rc, anims, parts, scale) in simple.items():
-        d = {"identifier": ident, "materials": {"default": mat}, "textures": {"default": f"textures/entity/{tex}"},
-             "geometry": {"default": f"geometry.esb.{geo}"}, "render_controllers": [f"controller.render.esb.{rc}"],
-             "animations": anims, "scripts": {"animate": list(anims)}}
-        if parts:
-            d["particle_effects"] = parts
-        if scale:
-            d["scripts"]["scale"] = scale
-        write(os.path.join(RP, "entity", f"{ident.split(':')[1]}.entity.json"),
-              {"format_version": "1.10.0", "minecraft:client_entity": {"description": d}})
     write(os.path.join(RP, "entity", "volt_bulb.entity.json"), {"format_version": "1.10.0", "minecraft:client_entity": {"description": {
         "identifier": spec.VOLT_BULB_ID,
         "materials": {"default": "entity_emissive"},

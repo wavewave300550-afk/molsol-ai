@@ -21,7 +21,7 @@ SRC = os.path.join(ROOT, "scripts-src")
 BAL = json.load(open(os.path.join(ROOT, "balance.json")))
 B = BAL["boss"]
 
-VERSION = [1, 2, 0]
+VERSION = [1, 3, 0]
 ENGINE = [1, 26, 60]
 SERVER_API = [2, 11, 0]
 UUID = {
@@ -33,7 +33,7 @@ UUID = {
 }
 ENTITY_FMT = "1.21.90"
 PACK_NAME = "Extra Super Boss"
-PACK_DESC = "Boss 1: Leonardo da Vinci - Boss 2: Thomas Edison (v1.2.0, Ultimates)"
+PACK_DESC = "Boss 1: Leonardo da Vinci - Boss 2: Thomas Edison (v1.3.0)"
 
 
 def write(path, data):
@@ -378,15 +378,21 @@ def fx_entity(ident, family="esb_fx", props=None, lifetime=9):
 
 
 def ultimate_entities():
-    U = E["ultimate"]
-    write(os.path.join(BP, "entities", "sun_bulb.json"), construct(
-        spec.SUN_BULB_ID, "esb_sun_bulb", U["bulb_health"], (1.0, 1.5),
+    """The ultimates' historical showpieces: Leonardo's clay Gran Cavallo and Edison's tinfoil phonograph."""
+    U = BAL["ultimate"]
+    horse = construct(
+        spec.CAVALLO_ID, "esb_cavallo", U["horse_health"], (2.2, 3.6),
+        props={"esb:state": {"type": "enum", "values": ["rise", "idle", "paw", "gallop", "crumble"], "default": "rise",
+                             "client_sync": True}},
         extra={"minecraft:physics": {"has_gravity": False, "has_collision": False},
-               "minecraft:timer": {"looping": False, "time": 15, "time_down_event": {"event": "esb:expire"}},
-               "minecraft:custom_hit_test": {"hitboxes": [{"width": 1.3, "height": 1.8, "pivot": [0, 0.9, 0]}]}}))
-    write(os.path.join(BP, "entities", "volt_marker.json"), fx_entity(
-        spec.MARKER_ID, props={"esb:radius": {"type": "int", "range": [1, 12], "default": 3, "client_sync": True}}, lifetime=4))
-    write(os.path.join(BP, "entities", "arc_bolt.json"), fx_entity(spec.ARC_BOLT_ID, lifetime=2))
+               "minecraft:timer": {"looping": False, "time": 20, "time_down_event": {"event": "esb:expire"}},
+               "minecraft:custom_hit_test": {"hitboxes": [{"width": 3.2, "height": 4.5, "pivot": [0, 2.2, 0]}]}})
+    write(os.path.join(BP, "entities", "gran_cavallo.json"), horse)
+    write(os.path.join(BP, "entities", "phonograph.json"), fx_entity(
+        spec.PHONO_ID, family="esb_phonograph",
+        props={"esb:state": {"type": "enum", "values": ["assemble", "play", "blast", "fold"], "default": "assemble",
+                             "client_sync": True}}, lifetime=18))
+    write(os.path.join(BP, "entities", "sound_ring.json"), fx_entity(spec.RING_ID, lifetime=5))
 
 
 def edison_items():
@@ -499,19 +505,13 @@ def client_entities():
                 "textures": ["Array.skin[q.property('esb:phase') == 2 ? 1 : 0]"]},
             "controller.render.esb.electric_chair": {
                 "geometry": "Geometry.default", "materials": [{"*": "Material.default"}], "textures": ["Texture.default"]},
-            # ultimates: Da Vinci's halo and Edison's sun aura are extra additive layers, rendered only during the ultimate
-            "controller.render.esb.da_vinci_halo": {
-                "geometry": "Geometry.halo", "materials": [{"*": "Material.halo"}], "textures": ["Texture.halo"],
-                "is_hurt_color": no_tint, "on_fire_color": no_tint},
-            "controller.render.esb.edison_aura": {
-                "geometry": "Geometry.aura", "materials": [{"*": "Material.aura"}], "textures": ["Texture.aura"],
-                "is_hurt_color": no_tint, "on_fire_color": no_tint},
-            "controller.render.esb.sun_bulb": {
+            # ultimate showpieces
+            "controller.render.esb.gran_cavallo": {
                 "geometry": "Geometry.default", "materials": [{"*": "Material.default"}], "textures": ["Texture.default"]},
-            "controller.render.esb.volt_marker": {
+            "controller.render.esb.phonograph": {
                 "geometry": "Geometry.default", "materials": [{"*": "Material.default"}], "textures": ["Texture.default"],
                 "is_hurt_color": no_tint, "on_fire_color": no_tint},
-            "controller.render.esb.arc_bolt": {
+            "controller.render.esb.sound_ring": {
                 "geometry": "Geometry.default", "materials": [{"*": "Material.default"}], "textures": ["Texture.default"],
                 "is_hurt_color": no_tint, "on_fire_color": no_tint},
             "controller.render.esb.volt_bulb": {
@@ -571,18 +571,19 @@ LANG = {
         "esb.msg.unplugged": "§aThe Dynamo is down! Edison is unplugged!",
         "esb.msg.patent": "§eThe patent is filed... a current hums through the ground.",
         "esb.msg.patent_busy": "§cThomas Edison is already nearby.",
-        "entity.esb:sun_bulb.name": "Sun Bulb",
-        "entity.esb:volt_marker.name": "Strike Mark",
-        "entity.esb:arc_bolt.name": "Arc Bolt",
-        "esb.title.opus": "§6§lOPUS MAGNUM",
-        "esb.subtitle.opus": "§eStand in a golden sanctuary!",
-        "esb.msg.opus": "§6Leonardo da Vinci§r: \"Behold - the measure of all things!\"",
-        "esb.msg.opus_judgement": "§6Judgement is coming - get into a golden sanctuary!",
-        "esb.title.light": "§e§lLET THERE BE LIGHT",
-        "esb.subtitle.light": "§7Smash the bulbs. Hide from the light.",
-        "esb.msg.light": "§eThomas Edison§r: \"We will make electricity so cheap that only the rich will burn candles!\"",
-        "esb.msg.light_charge": "§eThe bulbs are charging - break line of sight!",
-        "esb.msg.light_fizzle": "§aThe broken bulbs fizzle - the light is weakened!",
+        "entity.esb:gran_cavallo.name": "Il Gran Cavallo",
+        "entity.esb:phonograph.name": "Tinfoil Phonograph",
+        "entity.esb:sound_ring.name": "Sound Wave",
+        "esb.title.cavallo": "§6§lIL GRAN CAVALLO",
+        "esb.subtitle.cavallo": "§eThe Great Horse of Milan, 1499",
+        "esb.msg.cavallo": "§6Leonardo da Vinci§r: \"Seventeen years I gave to this horse. Behold it - in clay!\"",
+        "esb.msg.cavallo_charge": "§eThe Great Horse paws the ground - get off its path!",
+        "esb.msg.cavallo_shattered": "§aLike the French archers of 1499, you shot the clay horse to pieces!",
+        "esb.msg.cavallo_lament": "§6Leonardo da Vinci§r: \"Dimmi se mai fu fatta alcuna cosa... Tell me if anything was ever finished.\"",
+        "esb.title.lamb": "§e§lMARY HAD A LITTLE LAMB",
+        "esb.subtitle.lamb": "§7The first words ever recorded - 1877. Jump the sound waves!",
+        "esb.msg.lamb": "§eThomas Edison§r: \"Mary had a little lamb, its fleece was white as snow...\"",
+        "esb.msg.lamb_finale": "§eThe record is ending - get out of the horn's path!",
     },
 }
 
@@ -613,9 +614,12 @@ def ts_constants():
            "/** Action lengths and named moments in seconds (identical to the animation files). */",
            f"export const ACTIONS = {json.dumps(acts, indent=2)} as const;",
            f'export const EDISON_ID = "{spec.EDISON_ID}";',
-           f'export const SUN_BULB_ID = "{spec.SUN_BULB_ID}";',
-           f'export const MARKER_ID = "{spec.MARKER_ID}";',
-           f'export const ARC_BOLT_ID = "{spec.ARC_BOLT_ID}";',
+           f'export const CAVALLO_ID = "{spec.CAVALLO_ID}";',
+           f'export const PHONO_ID = "{spec.PHONO_ID}";',
+           f'export const RING_ID = "{spec.RING_ID}";',
+           f"export const MELODY = {json.dumps(spec.MELODY)} as const;",
+           f"export const NOTE_PITCH = {json.dumps(spec.NOTE_PITCH)} as const;",
+           f"export const BEAT = {spec.BEAT};",
            f'export const DYNAMO_ID = "{spec.DYNAMO_ID}";',
            f'export const CHAIR_ID = "{spec.CHAIR_ID}";',
            f'export const VOLT_BULB_ID = "{spec.VOLT_BULB_ID}";',

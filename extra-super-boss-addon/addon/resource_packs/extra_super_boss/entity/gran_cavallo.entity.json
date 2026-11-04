@@ -1,0 +1,39 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "esb:gran_cavallo",
+   "materials": {
+    "default": "entity_emissive"
+   },
+   "textures": {
+    "default": "textures/entity/gran_cavallo"
+   },
+   "geometry": {
+    "default": "geometry.esb.gran_cavallo"
+   },
+   "render_controllers": [
+    "controller.render.esb.gran_cavallo"
+   ],
+   "animations": {
+    "rise": "animation.esb.gran_cavallo.rise",
+    "idle": "animation.esb.gran_cavallo.idle",
+    "paw": "animation.esb.gran_cavallo.paw",
+    "gallop": "animation.esb.gran_cavallo.gallop",
+    "crumble": "animation.esb.gran_cavallo.crumble",
+    "state": "controller.animation.esb.gran_cavallo.state"
+   },
+   "scripts": {
+    "animate": [
+     "state"
+    ],
+    "scale": "1.75",
+    "should_update_bones_and_effects_offscreen": "1.0"
+   },
+   "particle_effects": {
+    "dust": "esb:path_dust",
+    "clay": "esb:clay_chunks"
+   }
+  }
+ }
+}

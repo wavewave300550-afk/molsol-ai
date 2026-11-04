@@ -23,9 +23,10 @@ ACTIONS = {
     "dive_strike": {"length": 1.4, "moments": {"impact": 0.3}},
     "flourish": {"length": 2.6, "moments": {}},
     "death": {"length": 4.2, "moments": {"kneel": 1.0, "pages": 3.4}},
-    # ULTIMATE - Opus Magnum
-    "ultimate": {"length": 9.0, "moments": {"rise": 0.2, "sigil": 1.0, "barrage": 1.6, "barrage_end": 5.4, "gather": 5.6,
-                                            "slam": 7.0, "land": 7.3}},
+    # ULTIMATE - Il Gran Cavallo: the colossal clay horse of Milan (1482-1499), never cast, shot apart by French archers
+    "ultimate": {"length": 13.0, "moments": {"sketch": 0.3, "rise": 1.0, "charge1": 3.2, "charge2": 6.2, "charge3": 9.2,
+                                             "crumble": 11.8}},
+    "lament": {"length": 3.0, "moments": {}},
 }
 ACTION_VALUES = ["none"] + list(ACTIONS)
 
@@ -33,9 +34,9 @@ ACTION_VALUES = ["none"] + list(ACTIONS)
 SLASH = {"length": 0.9, "hit_pct": 0.5}
 
 # ------------------------------------------------------------------------------ Boss 2: Thomas Edison
-SUN_BULB_ID = "esb:sun_bulb"
-MARKER_ID = "esb:volt_marker"
-ARC_BOLT_ID = "esb:arc_bolt"
+CAVALLO_ID = "esb:gran_cavallo"
+PHONO_ID = "esb:phonograph"
+RING_ID = "esb:sound_ring"
 EDISON_ID = "esb:edison"
 DYNAMO_ID = "esb:dynamo"
 CHAIR_ID = "esb:electric_chair"
@@ -54,9 +55,16 @@ EDISON_ACTIONS = {
     "stunned": {"length": 3.0, "moments": {}},
     "flourish": {"length": 2.4, "moments": {"catch": 1.25}},
     "death": {"length": 4.0, "moments": {"kneel": 1.0, "fade": 3.0}},
-    # ULTIMATE - Let There Be Light
-    "ultimate": {"length": 10.0, "moments": {"snap": 0.3, "rise": 0.6, "bulbs": 1.0, "strikes": 1.8, "strikes_end": 6.8,
-                                             "charge": 7.0, "flash": 8.5, "land": 9.2}},
+    # ULTIMATE - Mary Had a Little Lamb: the first words ever recorded, on Edison's tinfoil phonograph (1877)
+    "ultimate": {"length": 13.0, "moments": {"snap": 0.2, "phono": 0.6, "crank": 1.4, "music": 2.2, "finale_warn": 10.6,
+                                             "finale": 11.8}},
 }
 EDISON_ACTION_VALUES = ["none"] + list(EDISON_ACTIONS)
 SHANK = {"length": 0.6, "hit_pct": 0.5}
+
+# Mary Had a Little Lamb (in C): (note, beats). Rings go out on the first beat of every bar (every 4 beats).
+MELODY = [("E", 1), ("D", 1), ("C", 1), ("D", 1), ("E", 1), ("E", 1), ("E", 2), ("D", 1), ("D", 1), ("D", 2),
+          ("E", 1), ("G", 1), ("G", 2), ("E", 1), ("D", 1), ("C", 1), ("D", 1), ("E", 1), ("E", 1), ("E", 1), ("E", 1),
+          ("D", 1), ("D", 1), ("E", 1), ("D", 1), ("C", 4)]
+NOTE_PITCH = {"C": 0.707, "D": 0.794, "E": 0.891, "G": 1.059}  # note.harp pitches for C4 D4 E4 G4
+BEAT = 0.27

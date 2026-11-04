@@ -107,53 +107,7 @@
         "Texture.default"
       ]
     },
-    "controller.render.esb.da_vinci_halo": {
-      "geometry": "Geometry.halo",
-      "materials": [
-        {
-          "*": "Material.halo"
-        }
-      ],
-      "textures": [
-        "Texture.halo"
-      ],
-      "is_hurt_color": {
-        "r": 0.0,
-        "g": 0.0,
-        "b": 0.0,
-        "a": 0.0
-      },
-      "on_fire_color": {
-        "r": 0.0,
-        "g": 0.0,
-        "b": 0.0,
-        "a": 0.0
-      }
-    },
-    "controller.render.esb.edison_aura": {
-      "geometry": "Geometry.aura",
-      "materials": [
-        {
-          "*": "Material.aura"
-        }
-      ],
-      "textures": [
-        "Texture.aura"
-      ],
-      "is_hurt_color": {
-        "r": 0.0,
-        "g": 0.0,
-        "b": 0.0,
-        "a": 0.0
-      },
-      "on_fire_color": {
-        "r": 0.0,
-        "g": 0.0,
-        "b": 0.0,
-        "a": 0.0
-      }
-    },
-    "controller.render.esb.sun_bulb": {
+    "controller.render.esb.gran_cavallo": {
       "geometry": "Geometry.default",
       "materials": [
         {
@@ -164,7 +118,7 @@
         "Texture.default"
       ]
     },
-    "controller.render.esb.volt_marker": {
+    "controller.render.esb.phonograph": {
       "geometry": "Geometry.default",
       "materials": [
         {
@@ -187,7 +141,7 @@
         "a": 0.0
       }
     },
-    "controller.render.esb.arc_bolt": {
+    "controller.render.esb.sound_ring": {
       "geometry": "Geometry.default",
       "materials": [
         {

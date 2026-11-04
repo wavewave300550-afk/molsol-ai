@@ -4,7 +4,7 @@ export const GEAR_ID = "esb:brass_gear";
 export const SIGIL_ID = "esb:vitruvian_sigil";
 export const BLUEPRINT_ID = "esb:da_vinci_blueprint";
 export const CODEX_ID = "esb:leonardo_codex";
-export const ACTION_VALUES = ["none", "intro", "gear_volley", "quake", "vitruvian", "transform", "dive_rise", "dive_hover", "dive_strike", "flourish", "death", "ultimate"] as const;
+export const ACTION_VALUES = ["none", "intro", "gear_volley", "quake", "vitruvian", "transform", "dive_rise", "dive_hover", "dive_strike", "flourish", "death", "ultimate", "lament"] as const;
 export type Action = (typeof ACTION_VALUES)[number];
 /** Action lengths and named moments in seconds (identical to the animation files). */
 export const ACTIONS = {
@@ -71,22 +71,28 @@ export const ACTIONS = {
     }
   },
   "ultimate": {
-    "length": 9.0,
+    "length": 13.0,
     "moments": {
-      "rise": 0.2,
-      "sigil": 1.0,
-      "barrage": 1.6,
-      "barrage_end": 5.4,
-      "gather": 5.6,
-      "slam": 7.0,
-      "land": 7.3
+      "sketch": 0.3,
+      "rise": 1.0,
+      "charge1": 3.2,
+      "charge2": 6.2,
+      "charge3": 9.2,
+      "crumble": 11.8
     }
+  },
+  "lament": {
+    "length": 3.0,
+    "moments": {}
   }
 } as const;
 export const EDISON_ID = "esb:edison";
-export const SUN_BULB_ID = "esb:sun_bulb";
-export const MARKER_ID = "esb:volt_marker";
-export const ARC_BOLT_ID = "esb:arc_bolt";
+export const CAVALLO_ID = "esb:gran_cavallo";
+export const PHONO_ID = "esb:phonograph";
+export const RING_ID = "esb:sound_ring";
+export const MELODY = [["E", 1], ["D", 1], ["C", 1], ["D", 1], ["E", 1], ["E", 1], ["E", 2], ["D", 1], ["D", 1], ["D", 2], ["E", 1], ["G", 1], ["G", 2], ["E", 1], ["D", 1], ["C", 1], ["D", 1], ["E", 1], ["E", 1], ["E", 1], ["E", 1], ["D", 1], ["D", 1], ["E", 1], ["D", 1], ["C", 4]] as const;
+export const NOTE_PITCH = {"C": 0.707, "D": 0.794, "E": 0.891, "G": 1.059} as const;
+export const BEAT = 0.27;
 export const DYNAMO_ID = "esb:dynamo";
 export const CHAIR_ID = "esb:electric_chair";
 export const VOLT_BULB_ID = "esb:volt_bulb";
@@ -163,16 +169,14 @@ export const EDISON_ACTIONS = {
     }
   },
   "ultimate": {
-    "length": 10.0,
+    "length": 13.0,
     "moments": {
-      "snap": 0.3,
-      "rise": 0.6,
-      "bulbs": 1.0,
-      "strikes": 1.8,
-      "strikes_end": 6.8,
-      "charge": 7.0,
-      "flash": 8.5,
-      "land": 9.2
+      "snap": 0.2,
+      "phono": 0.6,
+      "crank": 1.4,
+      "music": 2.2,
+      "finale_warn": 10.6,
+      "finale": 11.8
     }
   }
 } as const;
