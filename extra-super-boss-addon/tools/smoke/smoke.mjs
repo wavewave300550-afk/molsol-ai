@@ -375,6 +375,303 @@ section("soak: 3 minutes of fighting two players, every action ends cleanly");
   [a, c, e].forEach((x) => x.remove());
 }
 
+// ================================================================================================ Boss 2: Edison
+const EA = SPEC.EDISON_ACTIONS;
+const EB = BAL.edison;
+const spawnE = (loc, yaw = 0, load = false) => M.__spawnBoss(loc, yaw, { load, type: "esb:edison" });
+const dynamos = () => M.__entities("esb:dynamo");
+const chairs = () => M.__entities("esb:electric_chair");
+function onlyE(e, which) {
+  const s = st(e);
+  for (const k of Object.keys(s.ready)) s.ready[k] = k === which ? 0 : FAR;
+  s.gapUntil = 0;
+  s.nextDecision = 0;
+}
+
+section("Edison spawn: sits on his Dynamo, hops down, title");
+{
+  const X = 30000;
+  const p = M.__spawnPlayer("Tesla", { x: X, y: 64, z: 14 });
+  const t0 = now();
+  const e = spawnE({ x: X, y: 64, z: 0 });
+  tick(1);
+  check(actions(e, t0)[0] === "intro", "intro on a fresh spawn");
+  const d = dynamos();
+  check(d.length === 1 && Math.abs(d[0].location.y - 64) < 0.01, "the Dynamo is placed where he spawned");
+  check(Math.abs(e.location.y - (64 + 2.094)) < 0.01, "he sits on top of the Dynamo");
+  check(events(e, t0).includes("esb:to_air"), "no gravity while sitting");
+  check(!e.applyDamage(10, { cause: "entityAttack", damagingEntity: p }), "cannot be hurt during the intro");
+  tick(sec(EA.intro.moments.light));
+  check(L.titles.some((x) => x.target === p), "title shown");
+  tick(sec(EA.intro.length));
+  check(Math.abs(e.location.y - 64) < 0.05 && e.location.z > 2, `hopped down in front of the Dynamo (z ${e.location.z.toFixed(2)})`);
+  check(events(e, t0).includes("esb:to_ground") && !st(e).inAir, "gravity back after landing");
+  check(e.props["esb:action"] === "none" && events(e, t0).at(-1) === "esb:unlock", "free after the intro");
+  check(st(e).dynamo === d[0], "he knows his Dynamo");
+  [p, e].forEach((x) => x.remove());
+  check(dynamos().length === 0, "Dynamo removed with him");
+}
+
+section("Edison bulb toss: three bulbs on the throw frames, shattering bursts");
+{
+  const X = 32000;
+  const e = spawnE({ x: X, y: 64, z: 0 }, 0, true);
+  const p = M.__spawnPlayer("Target", { x: X, y: 64, z: 12 });
+  tick(2);
+  onlyE(e, "bulb_toss");
+  const t0 = now();
+  check(waitFor(() => st(e).run?.kind === "bulb_toss", 40), "bulb toss chosen at 12 blocks");
+  const start = actionTick(e, "bulb_toss", t0);
+  tick(sec(EA.bulb_toss.length) + 2);
+  const shots = L.shots.filter((x) => x.tick >= start && x.gear.typeId === "esb:volt_bulb");
+  check(shots.length === 3, `3 bulbs in phase 1 (got ${shots.length})`);
+  const want = ["throw1", "throw2", "throw3"].map((k) => start + sec(EA.bulb_toss.moments[k]));
+  check(JSON.stringify(shots.map((x) => x.tick)) === JSON.stringify(want), `thrown on ticks ${want}`);
+  check(shots.every((x) => x.owner === e && x.velocity.z > 0.5), "owned by Edison, thrown toward the player");
+  const before = dmgTo(p).length;
+  M.__projectileHitBlock(shots[0].gear, { x: p.location.x + 0.5, y: 64, z: p.location.z });
+  check(dmgTo(p).length === before + 1 && dmgTo(p).at(-1).amount === EB.bulb_toss.burst_damage, "the burst hurts a player next to the impact");
+  check(p.hasEffect("slowness"), "and slows them");
+  check(L.particles.some((x) => x.id === "esb:glass_shards"), "glass shards");
+  [p, e].forEach((x) => x.remove());
+}
+
+section("Edison blackout: darkness, invisible, telegraph, reappears behind and backstabs");
+{
+  const X = 34000;
+  const e = spawnE({ x: X, y: 64, z: 0 }, 0, true);
+  const p = M.__spawnPlayer("Watcher", { x: X, y: 64, z: 10 });
+  p.rotation = { x: 0, y: 180 }; // looking back toward -Z (at Edison)
+  tick(2);
+  onlyE(e, "vanish");
+  st(e).target = p;
+  const t0 = now();
+  check(waitFor(() => st(e).run?.kind === "vanish", 40), "vanish chosen");
+  const start = actionTick(e, "vanish", t0);
+  tick(sec(EA.vanish.moments.crush));
+  check(p.hasEffect("darkness"), "the lights go out (darkness)");
+  tick(sec(EA.vanish.moments.fade - EA.vanish.moments.crush) + 1);
+  check(e.hasEffect("invisibility") && st(e).hidden, "Edison is invisible");
+  tick(sec(EA.vanish.length - EA.vanish.moments.fade));
+  const tel = () => L.particles.filter((x) => x.id === "esb:telegraph" && x.tick > start);
+  tick(sec(EB.vanish.lurk));
+  check(tel().length >= 2, `telegraph sparks mark where he will appear (${tel().length})`);
+  check(tel().every((x) => x.at.z > 10.5), "the telegraph is behind the player");
+  const bs = actionTick(e, "backstab", t0);
+  check(bs !== undefined, "backstab after the lurk");
+  check(!e.hasEffect("invisibility") && !st(e).hidden, "visible again when he strikes");
+  check(e.location.z > 11 && Math.abs(e.location.z - 11.8) < 0.1, `reappeared behind the player (z ${e.location.z.toFixed(2)})`);
+  tick(sec(EA.backstab.length) + 2);
+  const d = dmgTo(p, t0);
+  check(d.length === 1 && d[0].tick === bs + sec(EA.backstab.moments.stab) && d[0].amount === EB.vanish.damage,
+    `backstab lands on the stab frame for ${EB.vanish.damage}`);
+  check(e.props["esb:action"] === "none" && events(e, t0).at(-1) === "esb:unlock", "ends unlocked");
+  [p, e].forEach((x) => x.remove());
+}
+
+section("Edison overload: chain lightning from the Dynamo, cover protects");
+{
+  const X = 36000;
+  const e = spawnE({ x: X, y: 64, z: 0 }, 0, true);
+  const dyn = M.__dims.overworld.spawnEntity("esb:dynamo", { x: X + 6, y: 64, z: 0 });
+  st(e).dynamo = dyn;
+  const a = M.__spawnPlayer("Open", { x: X + 6, y: 64, z: 10 });
+  const b = M.__spawnPlayer("Friend", { x: X + 9, y: 64, z: 13 });
+  const hid = M.__spawnPlayer("Hidden", { x: X + 6, y: 64, z: -10 });
+  M.__solids.push({ min: { x: X + 2, y: 64, z: -7 }, max: { x: X + 11, y: 72, z: -6 } }); // a wall
+  tick(2);
+  onlyE(e, "overload");
+  st(e).target = a;
+  const t0 = now();
+  check(waitFor(() => st(e).run?.kind === "overload", 40), "overload chosen while the Dynamo stands");
+  const start = actionTick(e, "overload", t0);
+  check(Math.hypot(e.location.x - (X + 6), e.location.z - 1.7) < 0.1, "blinked to the Dynamo's levers");
+  tick(sec(EA.overload.moments.grab) + 1);
+  check(dyn.props["esb:mode"] === "charging", "Dynamo charging (bulbs flare)");
+  tick(sec(EA.overload.length));
+  const dis = start + sec(EA.overload.moments.discharge);
+  check(dmgTo(a, t0).some((x) => x.tick === dis && x.amount === EB.overload.damage), "player in the open is struck");
+  check(dmgTo(b, t0).some((x) => x.tick === dis), "the bolt chains to the player next to them");
+  check(dmgTo(hid, t0).length === 0, "the player behind the wall is safe");
+  check(dyn.props["esb:mode"] === "idle", "Dynamo back to idle");
+  check(L.particles.filter((x) => x.id === "esb:zap" && x.tick === dis).length >= 6, "bolt drawn with sparks");
+  [a, b, hid, e].forEach((x) => x.remove());
+}
+
+section("Edison electric chair: strapped in when you stay, free when you step off or break it");
+{
+  const X = 38000;
+  const e = spawnE({ x: X, y: 64, z: 0 }, 0, true);
+  const p = M.__spawnPlayer("Condemned", { x: X, y: 64, z: 9 });
+  const q = M.__spawnPlayer("Helper", { x: X + 2, y: 64, z: 9 });
+  tick(2);
+  onlyE(e, "chair");
+  st(e).target = p;
+  const t0 = now();
+  check(waitFor(() => st(e).run?.kind === "chair", 40), "chair chosen");
+  const start = actionTick(e, "chair", t0);
+  tick(sec(EA.chair.moments.snap) + 1);
+  const c = chairs()[0];
+  check(!!c && Math.hypot(c.location.x - X, c.location.z - 9) < 0.01, "chair appears under the player");
+  check(L.actionbars.some((x) => x.target === p && x.t.rawtext[0].translate === "esb.msg.chair"), "warning to step off");
+  tick(sec(EA.chair.moments.lock - EA.chair.moments.snap));
+  check(st(e).chair?.locked && c.props["esb:state"] === "locked", "player stayed: locked in");
+  check(p.hasEffect("slowness") && Math.abs(p.location.y - (64 + 0.575)) < 0.01, "strapped to the seat");
+  tick(25);
+  const shocks = dmgTo(p, start).length;
+  check(shocks >= 2, `shocked while strapped (${shocks} times)`);
+  p.location = { x: X + 3, y: 64, z: 9 }; // tries to walk away
+  tick(1);
+  check(Math.hypot(p.location.x - X, p.location.z - 9) < 0.01, "pulled back into the chair");
+  c.applyDamage(100, { cause: "entityAttack", damagingEntity: q }); // the helper breaks it
+  tick(2);
+  check(!st(e).chair && !p.hasEffect("slowness"), "breaking the chair frees the player");
+  const after = dmgTo(p).length;
+  tick(30);
+  check(dmgTo(p).length === after, "no more shocks after escaping");
+  // second cast: the player steps off in time
+  tick(sec(EA.chair.length));
+  onlyE(e, "chair");
+  st(e).target = p;
+  const t1 = now();
+  waitFor(() => st(e).run?.kind === "chair", 40);
+  tick(sec(EA.chair.moments.snap) + 1);
+  p.location = { x: p.location.x + 3, y: 64, z: p.location.z };
+  tick(sec(EA.chair.moments.lock - EA.chair.moments.snap) + 1);
+  check(!st(e).chair && chairs().length === 0 && !p.hasEffect("slowness"), "stepping off dodges the chair");
+  check(dmgTo(p, t1).length === 0, "no damage when dodged");
+  [p, q, e].forEach((x) => x.remove());
+}
+
+section("Edison unplugged: breaking the Dynamo stuns him and he takes extra damage");
+{
+  const X = 40000;
+  const e = spawnE({ x: X, y: 64, z: 0 }, 0, true);
+  const dyn = M.__dims.overworld.spawnEntity("esb:dynamo", { x: X + 4, y: 64, z: 0 });
+  st(e).dynamo = dyn;
+  const p = M.__spawnPlayer("Breaker", { x: X + 4, y: 64, z: 3 });
+  tick(2);
+  const t0 = now();
+  dyn.applyDamage(1000, { cause: "entityAttack", damagingEntity: p });
+  tick(1);
+  check(e.props["esb:action"] === "stunned", "stunned when the Dynamo breaks");
+  check(L.messages.some((m) => m.target === p && m.m.rawtext[0].translate === "esb.msg.unplugged"), "players are told");
+  const hp0 = e.health.currentValue;
+  e.applyDamage(10, { cause: "entityAttack", damagingEntity: p });
+  check(Math.abs(hp0 - e.health.currentValue - 10 * EB.dynamo.stun_damage_mult) < 1e-6, "takes 1.5x damage while stunned");
+  tick(sec(EB.dynamo.stun_seconds) + 2);
+  check(e.props["esb:action"] === "none" && events(e, t0).at(-1) === "esb:unlock", "recovers");
+  onlyE(e, "overload");
+  tick(20);
+  check(!actions(e, t0).includes("overload"), "no overload without a Dynamo");
+  [p, e].forEach((x) => x.remove());
+}
+
+section("Edison phase 2 (Current War): AC textures, Dynamo rebuilt, double blackout");
+{
+  const X = 42000;
+  const e = spawnE({ x: X, y: 64, z: 0 }, 0, true);
+  const p = M.__spawnPlayer("Westinghouse", { x: X, y: 64, z: 10 });
+  p.rotation = { x: 0, y: 180 };
+  tick(2);
+  const t0 = now();
+  e.health.currentValue = e.health.effectiveMax * 0.45;
+  tick(2);
+  check(st(e).run?.kind === "transform" && e.props["esb:phase"] === 2, "transforms at half health, phase 2");
+  check(!e.applyDamage(20, { cause: "entityAttack", damagingEntity: p }), "invulnerable while transforming");
+  tick(sec(EA.transform.length));
+  const d = dynamos();
+  check(d.length === 1 && d[0].props["esb:phase"] === 2, "Dynamo rebuilt and supercharged (AC)");
+  check(d[0] && d[0].health.currentValue === EB.dynamo.health_phase2, "Dynamo at phase 2 health");
+  check(events(e, t0).includes("esb:unlock_fast"), "faster in phase 2");
+  onlyE(e, "vanish");
+  st(e).target = p;
+  const t1 = now();
+  waitFor(() => st(e).run?.kind === "vanish", 40);
+  tick(sec(EA.vanish.length + EB.vanish.lurk_phase2 + EA.backstab.length) * 2 + 10);
+  const stabs = actions(e, t1).filter((a) => a === "backstab").length;
+  check(stabs === 2, `blinks and backstabs twice in phase 2 (${stabs})`);
+  check(dmgTo(p, t1).length === 2 && dmgTo(p, t1).every((x) => x.amount === EB.vanish.damage_phase2), "phase 2 backstab damage");
+  check(L.particles.some((x) => x.id === "esb:telegraph" && x.tick > t1 && x.vars?.["variable.ac"] === 1), "AC blue sparks");
+  [p, e].forEach((x) => x.remove());
+}
+
+section("Edison death: sequence, kill credit, the Dynamo powers down");
+{
+  const X = 44000;
+  const e = spawnE({ x: X, y: 64, z: 0 }, 0, true);
+  const dyn = M.__dims.overworld.spawnEntity("esb:dynamo", { x: X + 4, y: 64, z: 0 });
+  st(e).dynamo = dyn;
+  const p = M.__spawnPlayer("Victor", { x: X, y: 64, z: 3 });
+  tick(2);
+  e.health.currentValue = 4;
+  const t0 = now();
+  check(!e.applyDamage(30, { cause: "entityAttack", damagingEntity: p }), "lethal hit cancelled");
+  tick(1);
+  check(e.props["esb:action"] === "death", "death sequence");
+  tick(sec(EA.death.moments.fade) + 1);
+  check(!dyn.isValid, "the Dynamo powers down with him");
+  tick(sec(EA.death.length));
+  const died = L.died.find((x) => x.entity === e);
+  check(died && died.src.damagingEntity === p && died.tick - t0 >= sec(EA.death.length), "dies after the animation, player credited");
+  tick(30);
+  p.remove();
+}
+
+section("Edison's Patent summons him; the Volt Shiv sparks on hits");
+{
+  const X = 46000;
+  const p = M.__spawnPlayer("Inventor2", { x: X, y: 64, z: 0 });
+  p.container.setItem(0, { typeId: "esb:edison_patent", amount: 1 });
+  const t0 = now();
+  M.__useItem(p, "esb:edison_patent");
+  check(!p.container.getItem(0), "patent consumed");
+  tick(55);
+  const list = M.__entities("esb:edison");
+  check(list.length === 1 && actions(list[0], t0)[0] === "intro", "Edison summoned with his intro");
+  check(dynamos().length === 1, "with his Dynamo");
+  list.forEach((x) => x.remove());
+  p.container.setItem(0, { typeId: "esb:volt_shiv", amount: 1 });
+  const mob = M.__spawnPlayer("Dummy", { x: X + 1, y: 64, z: 1 });
+  let procs = 0;
+  for (let i = 0; i < 30; i++) {
+    const n0 = dmgTo(mob).length;
+    M.__meleeHit(p, mob, 1);
+    tick(1);
+    if (dmgTo(mob).length === n0 + 2) procs++;
+    mob.health.currentValue = 20;
+  }
+  check(procs > 3 && procs < 20, `bonus jolt procs sometimes (${procs}/30)`);
+  check(L.particles.some((x) => x.id === "esb:volt_spark" && x.tick >= t0), "sparks on hit");
+  [p, mob].forEach((x) => x.remove());
+}
+
+section("Edison soak: 3 minutes vs two players, Dynamo broken mid-fight");
+{
+  const X = 48000;
+  const t0 = now();
+  const e = spawnE({ x: X, y: 64, z: 0 });
+  const a = M.__spawnPlayer("A2", { x: X + 3, y: 64, z: 4 });
+  const c = M.__spawnPlayer("C2", { x: X - 6, y: 64, z: 14 });
+  tick(2);
+  for (let i = 0; i < sec(180); i++) {
+    const ang = i / 40;
+    if (!chairs().length) a.location = { x: X + Math.cos(ang) * 4, y: 64, z: Math.sin(ang) * 4 + 4 };
+    c.location = { x: X + Math.cos(-ang * 0.7) * 15, y: 64, z: Math.sin(-ang * 0.7) * 15 };
+    a.health.currentValue = 20;
+    c.health.currentValue = 20;
+    if (i % 40 === 0 && !st(e)?.dying && !st(e)?.invulnerable) e.applyDamage(3, { cause: "entityAttack", damagingEntity: i % 80 === 0 ? a : c });
+    if (i === sec(40)) dynamos().forEach((d) => d.applyDamage(1000, { cause: "entityAttack", damagingEntity: c }));
+    tick();
+  }
+  const seen = new Set(actions(e, t0));
+  for (const k of ["intro", "bulb_toss", "vanish", "backstab", "overload", "chair", "stunned", "transform"]) check(seen.has(k), `soak used ${k}`);
+  check(!st(e)?.hidden && !st(e)?.inAir, "not stuck invisible or in the air");
+  check(chairs().length <= 1 && dynamos().length <= 1, "no leftover chairs / dynamos");
+  check(FX.fxStats.maxPerTick <= FX.FX_BUDGET_PER_TICK, `particle budget respected (max ${FX.fxStats.maxPerTick}/tick)`);
+  [a, c, e].forEach((x) => x.remove());
+}
+
 // ------------------------------------------------------------------------------------------ global checks
 section("engine calls");
 const VANILLA_SOUNDS = new Set(Object.values(FX.SND));

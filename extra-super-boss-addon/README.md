@@ -1,150 +1,173 @@
-# Extra Super Boss — บอสที่ 1: Leonardo da Vinci
+# Extra Super Boss
 
-แอดออน Minecraft Bedrock ชื่อ **Extra Super Boss** บอสตัวแรกคือ **เลโอนาร์โด ดา วินชี — จอมปราชญ์แห่งกลไก** (`esb:da_vinci`)
-เป็น custom entity ใหม่ทั้งตัว (โมเดล, เท็กซ์เจอร์, แอนิเมชัน, AI) ออกแบบตามภาพอ้างอิงที่ส่งมา ไม่ได้แทนที่ม็อบวานิลลาตัวไหน
+A Minecraft Bedrock boss add-on. Every boss is a brand-new custom entity (model, textures, animations, AI);
+no vanilla mob is replaced.
 
-**ไฟล์ติดตั้ง:** [`dist/Extra_Super_Boss_Da_Vinci_v1.mcaddon`](dist/Extra_Super_Boss_Da_Vinci_v1.mcaddon) (มีทั้ง Behavior Pack และ Resource Pack)
+| # | Boss | Entity ID | Summon item |
+|---|---|---|---|
+| 1 | **Leonardo da Vinci — the Clockwork Maestro** | `esb:da_vinci` | Da Vinci's Sealed Blueprint |
+| 2 | **Thomas Edison — the Wizard of Menlo Park** | `esb:edison` | Edison's Patent |
+
+**Install file:** [`dist/Extra_Super_Boss_v1.mcaddon`](dist/Extra_Super_Boss_v1.mcaddon) (behavior pack + resource pack)
 
 | | |
 |---|---|
-| เวอร์ชันแพ็ก | **1.0.1** (หน้าตาเป็นผู้ชายชัดเจนขึ้น: คิ้วหนา ตาคม กราม คาง หู ผมปัดขึ้นเห็นหน้าผาก) — UUID เดิม นำเข้าทับ 1.0.0 ได้ |
-| เวอร์ชันเกม | Bedrock **1.26.60** ขึ้นไป (iPhone / iPad / Android / Windows / Console) |
+| Pack version | **1.1.0** (adds Thomas Edison). Same pack UUIDs, so it imports over 1.0.x |
+| Game version | Bedrock **1.26.60** or newer (iPhone / iPad / Android / Windows / consoles) |
 | Script API | `@minecraft/server` **2.11.0** (stable) |
-| Experimental toggles | **ไม่ต้องเปิด** |
-| Entity ID | `esb:da_vinci` |
-| เรียกบอส | Spawn Egg **Spawn Leonardo da Vinci**, คำสั่ง `/summon esb:da_vinci` หรือคราฟต์ **Da Vinci's Sealed Blueprint** |
+| Experimental toggles | **None needed** |
 
-> **ยังไม่ได้ทดสอบในเกมจริง** เครื่องที่ใช้สร้างไม่มีตัวเกม (การเปิดเซิร์ฟเวอร์ทดสอบของ Creator Tools ต้องให้ผู้ใช้ยอมรับ Minecraft EULA เอง)
-> สิ่งที่ตรวจแล้ว: Creator Tools validate **0 error**, ตรวจการอ้างอิงข้ามไฟล์ **1590 รายการผ่านทั้งหมด**, และ smoke test ที่รันสคริปต์จริงกับ
-> `@minecraft/server` จำลอง **92 รายการผ่านทั้งหมด** ภาพและ GIF ทุกชิ้นในหน้านี้ **เรนเดอร์ด้วยโปรแกรมจากไฟล์จริงของแพ็ก** ไม่ใช่ภาพจากตัวเกม
->
-> ข้อความในเกม (ชื่อบอส, ชื่อไอเท็ม, บทพูด) เป็น**ภาษาอังกฤษ** เพราะ Bedrock ไม่มีภาษาไทยในรายการภาษาของเกม ไฟล์ `th_TH.lang` จะไม่ถูกโหลด
-
-![Phase 1 และ Phase 2](docs/preview/hero.png)
+> **Not yet tested in the real game.** The machine that built this has no Minecraft client (starting a Creator Tools test
+> server needs the user to accept the Minecraft EULA themselves). What was checked: Creator Tools validation **0 errors**,
+> **3244/3244** cross-file reference checks, and a smoke test that runs the real boss scripts against a mocked
+> `@minecraft/server`: **172/172** checks. Every image and GIF here is **rendered from the pack's own files**, not captured in-game.
 
 ---
 
-## 1. ตัวบอส
+## Boss 1 — Leonardo da Vinci
 
-* **รูปลักษณ์จากภาพอ้างอิง:** ผมยาวสีน้ำตาลเป็นลอนมัดครึ่งหัว ตาสีอำพัน เสื้อเชิ้ตขาวคอเปิดแขนพอง เสื้อกั๊กลายดามัสก์สีน้ำตาลเข้ม
-  สายหนังไขว้อกพร้อมเหรียญทองเหลือง ผ้าคลุมไหล่สีแดงเลือดหมูขลิบทอง ชายเสื้อคลุมยาวด้านหลังมีลายเข็มทิศและใบลอเรลสีทอง
-  ผ้าคาดเอวแดง เข็มขัดหนัง กระบอกม้วนกระดาษทองเหลืองที่สะโพกซ้าย กางเกงสีเข้ม รองเท้าบูทยาวพับขอบมีลายดอกลิลลี่สีทอง
-* **แขนซ้ายเป็นถุงมือกลไกทองเหลือง** (แหวนเฟืองเหล็กที่ข้อศอก แกนพลังงานสีอำพันเรืองแสง นิ้วกลไกขยับได้ทีละนิ้ว)
-  **มือขวาถือวงเวียนทองเหลือง** (drafting compass) เป็นอาวุธ
-* **Phase 2** กางปีก **ออร์นิธอปเตอร์** (เครื่องบินกระพือปีกตามสมุดบันทึกของดา วินชี): โครงไม้ ผืนผ้ากระดาษมีภาพสเก็ตช์สีซีเปียและลายมือเขียนกลับด้าน
-* โมเดล **40 bones, 115 cubes**, texture 512×512 (4 พิกเซลต่อหน่วย), ขยายตอนเรนเดอร์ 1.6 เท่า → สูงประมาณ **3.7 บล็อก**
-* แถบพลังบอส (boss bar) ขึ้นเมื่ออยู่ในระยะ 48 บล็อก, พลังชีวิต **500**, ไม่ถูกผลักกระเด็น, ไม่ despawn เอง
+![Da Vinci](docs/preview/hero.png)
 
-![ท่าทั้งหมด](docs/preview/poses.png)
+Long wavy brown hair tied half-up, a stern face with heavy brows, white shirt, brocade vest, crimson mantle with gold
+trim and a compass-rose emblem, tall boots. His **left arm is a brass clockwork gauntlet**; his **right hand holds a
+drafting compass** as a weapon. In phase 2 he unfolds **ornithopter wings** from his notebooks.
+500 HP, boss bar, about 3.7 blocks tall (40 bones, 115 cubes).
 
-## 2. สกิลและการต่อสู้
-
-ดาเมจที่เขียนคือค่าใน `balance.json` (ระดับ Normal) บอส**ไม่โจมตีผู้เล่นโหมด Creative / Spectator**
-
-| สกิล | เมื่อไร | ทำอะไร | วิธีหลบ |
+| Ability | When | What happens | How to dodge |
 |---|---|---|---|
-| **Compass Slash** (ตีปกติ) | ตลอด เมื่อเข้าใกล้ | ง้างวงเวียนเหนือหัวแล้วฟันเฉียงลง ดาเมจ 9 (Phase 2 ฟันเร็วขึ้น 25%) | ถอยออกตอนเห็นเขาง้าง |
-| **Gear Volley** | เป้าห่าง 5–26 บล็อก, มองเห็นกัน | **ท่าเดียวกับภาพอ้างอิง** ยื่นถุงมือกลไกไปข้างหน้า ยิงเฟืองทองเหลืองหมุน 3 ชุด ชุดละ 3 ลูกแบบพัด (Phase 2 ชุดละ 5) ลูกละ 6 | วิ่งด้านข้าง หรือ**ตีเฟืองให้สะท้อนกลับ** (ตั้งค่า `reflect_on_hurt` ไว้ ยังไม่ได้ลองในเกม) |
-| **Gauntlet Quake** | เป้าห่างไม่เกิน 5 บล็อก | ชูถุงมือขึ้นสุดแขนแล้วทุบพื้น คลื่นกระแทกรัศมี 6 บล็อก ดาเมจ 12 (ขอบวงเหลือ 50%) + กระเด็น | เห็นชูแขนขึ้นให้ถอยออกเกิน 6 บล็อก |
-| **Vitruvian Judgement** | เป้าอยู่ใกล้วงเวท | ลอยขึ้นในท่า "Vitruvian Man" วงเวทสีทอง (วงกลม + สี่เหลี่ยม + รูปคน) ปรากฏใต้เท้า ชาร์จ 2.4 วินาที แล้วระเบิด ดาเมจ 16 + ดีดลอย รัศมี 7 (Phase 2: 9) | **ออกจากวงทอง** (มีข้อความเตือนบน action bar) |
-| **Codex Unleashed** (เปลี่ยนร่าง) | พลังเหลือ 50% (ครั้งเดียว) | คุกเข่ากุมถุงมือ แล้วลุกกางแขน ปีกออร์นิธอปเตอร์กางออก หน้ากระดาษปลิวรอบตัว ผลักทุกคนรอบตัวออก ไม่ทำดาเมจ อมตะระหว่างท่า 3.6 วินาที | — |
-| **Ornithopter Dive** (Phase 2) | เป้าห่าง 5–26 บล็อก | ย่อตัวกระโดดขึ้นสูง 8 บล็อก กระพือปีกลอยค้าง 1.4 วินาที **วงทองเล็กตามเป้าไปบนพื้น** แล้วล็อกตำแหน่ง 0.6 วินาทีก่อนพุ่ง พุ่งดิ่งชกพื้น รัศมี 5 ดาเมจ 14 | วิ่งออกจากวงหลังวงหยุดตาม |
-| **Flourish** | ไม่มีเป้าหมาย ทุก 12–22 วิ | หมุนวงเวียนในมือ แล้วยกถุงมือขึ้นดูงอนิ้วกลไกทีละนิ้ว | — |
+| **Compass Slash** | close range | Overhead swing with the compass, 9 damage (25% faster in phase 2) | Back off when he winds up |
+| **Gear Volley** | 5–26 blocks, line of sight | The reference-art pose: gauntlet thrust forward, 3 bursts of spinning brass gears (3 per burst, 5 in phase 2), 6 damage each | Strafe sideways, or hit the gears back (`reflect_on_hurt`) |
+| **Gauntlet Quake** | within 5 blocks | Raises the gauntlet and slams the ground: radius 6, 12 damage (50% at the edge) + knockback | Get more than 6 blocks away when he raises his arm |
+| **Vitruvian Judgement** | near the circle | Rises in the Vitruvian-Man pose over a golden sigil, charges 2.4 s, then detonates: 16 damage + launch, radius 7 (9 in phase 2) | **Leave the golden circle** (action-bar warning) |
+| **Codex Unleashed** (phase 2) | at 50% HP, once | Kneels, then rises as ornithopter wings unfold; pushes everyone back, invulnerable for 3.6 s | — |
+| **Ornithopter Dive** (phase 2) | 5–26 blocks | Leaps 8 blocks up, hovers 1.4 s while a small golden circle follows you, locks 0.6 s before the dive, then slams down: radius 5, 14 damage | Run out of the circle once it stops following |
 
-**Phase 2:** ปีกปรากฏ เดินเร็วขึ้น (0.30 → 0.36) ฟันเร็วขึ้น cooldown ทุกสกิลเหลือ 80% ได้สกิล Dive เพิ่ม
+**Death:** a 4.2 s sequence (stagger, kneel, the compass slips, the gauntlet sparks, pages fly), then the last player who
+hit him gets the kill. **Drops:** Leonardo's Codex (always), diamonds, gold, emeralds, XP bottles, netherite scrap (50%),
+Totem of Undying (35%), 500 XP.
 
-**ตอนตาย:** ไม่ล้มทันที แต่เล่นท่าตาย 4.2 วินาที (เซ → คุกเข่า → วงเวียนหลุดมือ → ถุงมือกระตุกมีประกายไฟ → ทรุดตัว หน้ากระดาษปลิว)
-ระหว่างนั้นไม่รับดาเมจ จากนั้นตายโดยนับว่า**ผู้เล่นคนสุดท้ายที่ตีเป็นคนฆ่า** จึงได้ XP 500 และของดรอปครบ
+GIFs: [`intro`](docs/preview/anim/intro.gif), [`gear_volley`](docs/preview/anim/gear_volley.gif),
+[`quake`](docs/preview/anim/quake.gif), [`vitruvian`](docs/preview/anim/vitruvian.gif),
+[`transform`](docs/preview/anim/transform.gif), [`dive_strike`](docs/preview/anim/dive_strike.gif) — all poses:
+[`poses.png`](docs/preview/poses.png)
 
-**ของดรอป:** Leonardo's Codex 1 (แน่นอน), เพชร 4–8, ทอง 8–16, มรกต 6–12, ขวด XP 8–16, เศษเนเธอไรต์ 1–2 (50%), Totem of Undying (35%)
+---
 
-| ท่า | GIF |
+## Boss 2 — Thomas Edison (assassin)
+
+![Edison](docs/preview/edison_hero.png)
+
+Messy black hair with a white streak, amber eyes and a smirk, rolled-up white shirt, olive work apron with black
+leather straps and brass buckles, long black gloves, lace-up boots. He fights like an assassin with a **broken
+light bulb** as a shiv, and brings two machines to the fight: **the Dynamo** (his generator cabinet) and
+**the Electric Chair**. Phase 1 electricity is warm amber (DC); in phase 2, **the Current War**, it turns blue-white (AC).
+420 HP, boss bar, about 3.1 blocks tall, fast (movement 0.34, 0.40 in phase 2).
+
+| Ability | When | What happens | How to counter |
+|---|---|---|---|
+| **Intro** | on spawn | Sits on top of his Dynamo holding a glowing bulb (the reference pose), then hops down | — |
+| **Bulb Shank** | close range | Quick lunge with the broken bulb, 7 damage (faster in phase 2) | Keep moving |
+| **Bulb Toss** | 4–22 blocks, line of sight | Three side-arm throws of glowing bulbs (two per throw in phase 2): 4 on impact + 4 electric burst (radius 2.5) and slowness | Strafe; don't stand still at range |
+| **Blackout** | up to 26 blocks | Crushes the bulb in his fist: **darkness** for players within 20 blocks, he turns **invisible**, then reappears **behind you** and backstabs: 13 (15 in phase 2). **Sparks crackle where he will appear** 0.7 s before (0.45 s in phase 2). In phase 2 he does it twice in a row | Watch for the sparks behind you and turn or step away |
+| **Overload** | his Dynamo is standing | Blinks to the Dynamo's levers and wrenches them; its bulbs flare for 1.4 s, then lightning hits every creature within 18 blocks of the Dynamo that can see it: 8 (10 in phase 2), and each bolt jumps to one more creature nearby at half damage | **Break line of sight** (any wall) or get out of range |
+| **Electric Chair** | a player within 22 blocks | Points his shiv and snaps his fingers: a chair materializes under you. **If you are still on it 0.8 s later you are strapped in** for 3 s, shocked 2 (3) every half second | **Step off** in time, or have a friend **break the chair** (20 HP) |
+| **The Dynamo** | always | Destructible (90 HP, 120 in phase 2). **Destroying it stuns Edison for 3 s and he takes 1.5× damage** while stunned. No Dynamo, no Overload | Smash it |
+| **The Current War** (phase 2) | at 50% HP, once | Hunches over the surge, then stands in a burst of AC light; textures turn blue, **the Dynamo is rebuilt** (or repaired) and supercharged; invulnerable 3.6 s | — |
+
+**Death:** 4 s — he falls to his knees, the bulb in his hand flickers out, the Dynamo powers down with him.
+**Drops:** the **Volt Shiv** (always), copper, gold, diamonds, glowstone, emeralds, netherite scrap (50%), Totem (35%), 500 XP.
+
+GIFs: [`edison_intro`](docs/preview/anim/edison_intro.gif), [`edison_vanish_backstab`](docs/preview/anim/edison_vanish_backstab.gif),
+[`edison_bulb_toss`](docs/preview/anim/edison_bulb_toss.gif), [`edison_overload`](docs/preview/anim/edison_overload.gif),
+[`edison_chair`](docs/preview/anim/edison_chair.gif), [`edison_transform`](docs/preview/anim/edison_transform.gif) —
+all poses: [`edison_poses.png`](docs/preview/edison_poses.png), machines: [`edison_props.png`](docs/preview/edison_props.png)
+
+| Blackout → backstab | Electric Chair |
 |---|---|
-| เปิดตัว (`intro`) | ![intro](docs/preview/anim/intro.gif) |
-| Gear Volley | ![gear](docs/preview/anim/gear_volley.gif) |
-| Gauntlet Quake | ![quake](docs/preview/anim/quake.gif) |
-| Vitruvian Judgement | ![vitruvian](docs/preview/anim/vitruvian.gif) |
-| เปลี่ยนร่าง Phase 2 | ![transform](docs/preview/anim/transform.gif) |
-| Dive (ลอยค้าง / พุ่ง) | ![hover](docs/preview/anim/dive_hover.gif) ![strike](docs/preview/anim/dive_strike.gif) |
+| ![blackout](docs/preview/anim/edison_vanish_backstab.gif) | ![chair](docs/preview/anim/edison_chair.gif) |
 
-GIF ทุกท่าอยู่ที่ [`docs/preview/anim/`](docs/preview/anim/) (idle, walk, slash, flourish, death, phase2_walk ฯลฯ)
+---
 
-## 3. ไอเท็ม
+## Items
 
-| ไอเท็ม | ได้จาก | ใช้ทำอะไร |
+| Item | From | Use |
 |---|---|---|
-| **Da Vinci's Sealed Blueprint** (`esb:da_vinci_blueprint`) | คราฟต์ (ด้านล่าง) | แตะใช้ → วงเวทวาดบนพื้น 6 บล็อกข้างหน้า 2.5 วินาที แล้วดา วินชีปรากฏพร้อมท่าเปิดตัว ใช้ 1 ชิ้นต่อครั้ง (Creative ไม่เสีย) ต้องมีพื้นที่โล่ง 3×3 สูง 4 บล็อก และต้องไม่มีดา วินชีอยู่ในระยะ 96 บล็อก |
-| **Leonardo's Codex** (`esb:leonardo_codex`) | ดรอปจากบอส | แตะใช้ → Haste II + Speed I + Night Vision 90 วินาที, cooldown 120 วินาที |
+| **Da Vinci's Sealed Blueprint** | crafted | Use it: a golden circle is drawn 6 blocks ahead for 2.5 s, then Da Vinci appears |
+| **Edison's Patent** | crafted | Use it: the ground crackles with current for 2.5 s, then Edison appears on his Dynamo |
+| **Leonardo's Codex** | Da Vinci drop | Use it: Haste II + Speed I + Night Vision for 90 s (120 s cooldown) |
+| **Volt Shiv** | Edison drop | Weapon (sword enchantments): 8 attack damage, 900 durability, sparks on every hit and a 30% chance of an extra 3 lightning damage + slowness |
 
-สูตร Blueprint (โต๊ะคราฟต์):
+The summon items need open ground (3×3, 4 blocks high) in front of you, and the same boss must not already be within 96 blocks.
+Creative mode does not use up the item.
 
 ```
-กระดาษ   ทอง     กระดาษ
-ทอง      นาฬิกา   ทอง
-กระดาษ   เพชร     กระดาษ
+Blueprint (crafting table)        Patent (crafting table)
+paper  gold    paper              redstone  gold       redstone
+gold   clock   gold               copper    glowstone  copper
+paper  diamond paper              redstone  paper      redstone
 ```
 
-## 4. ติดตั้งบน iPhone
+## Install on iPhone
 
-1. ดาวน์โหลด `Extra_Super_Boss_Da_Vinci_v1.mcaddon` ลงแอป **Files**
-2. แตะไฟล์ (หรือ Share → Minecraft) เกมจะนำเข้าทั้ง 2 แพ็ก
-3. สร้างโลกใหม่ → **Behavior Packs** → เปิด **Extra Super Boss** (Resource Pack เปิดตามเอง) → เปิด **Activate Cheats** ถ้าจะใช้ `/summon`
-4. เรียกบอส: Spawn Egg ในหมวดไข่ของ Creative Inventory, `/summon esb:da_vinci ~ ~ ~8` หรือใช้ Blueprint
+1. Save `Extra_Super_Boss_v1.mcaddon` to the **Files** app.
+2. Tap it (or Share → Minecraft). The game imports both packs.
+3. Create a world → **Behavior Packs** → enable **Extra Super Boss** (the resource pack follows) → turn on **Activate Cheats** to use `/summon`.
+4. Summon: spawn eggs in the creative inventory, `/summon esb:da_vinci ~ ~ ~8`, `/summon esb:edison ~ ~ ~8`, or the summon items.
 
-## 5. เช็กลิสต์ทดสอบในเกม
+If the game keeps an older version, delete both "Extra Super Boss" packs under Settings → Storage and import again.
 
-ใช้ `/gamemode survival` ตอนทดสอบการต่อสู้ (บอสไม่ตี Creative) และ `/effect @s resistance 9999 4 true` ถ้าอยากยืนดูท่า
+## In-game test checklist
 
-| # | ทำอะไร | สิ่งที่ควรเห็น |
+Bosses ignore Creative and Spectator players: use `/gamemode survival`, and `/effect @s resistance 9999 4 true` to watch the attacks.
+
+| # | Do | Expect |
 |---|---|---|
-| 1 | `/summon esb:da_vinci ~ ~ ~8` | คุกเข่า → หน้ากระดาษระเบิดออก + เสียงระฆัง → ชื่อบอสขึ้นกลางจอ → ลุก สะบัดผม → ยื่นถุงมือท่าเดียวกับภาพ → boss bar ขึ้น |
-| 2 | ยืนดูเฉย ๆ | หายใจ ผ้าคลุมและผมไหว นิ้วกลไกกระตุก หัวหันตามผู้เล่น |
-| 3 | เดินหนีให้เขาตาม | เดินก้าวยาว ชายเสื้อคลุมพลิ้วไปด้านหลัง แขนแกว่ง |
-| 4 | ยืนใกล้ ๆ | ฟันด้วยวงเวียน (ดาเมจลงตอนวงเวียนฟาดลง) |
-| 5 | ถอยไป 10–20 บล็อก | Gear Volley: ยิงเฟืองหมุน 3 ชุด มีไอน้ำพ่นจากถุงมือทุกนัด |
-| 6 | ยืนชิดตัว | Gauntlet Quake: ชูถุงมือ → ทุบพื้น วงคลื่นสีทองกับฝุ่นแผ่ออก |
-| 7 | อยู่ใกล้ราว 5–8 บล็อก | Vitruvian: ลอยกางแขนขา วงเวทสีทองหมุนบนพื้น มีข้อความ "Step out of the golden circle!" → ระเบิดเป็นแสงทอง |
-| 8 | ตีจนเหลือครึ่งหลอด | เปลี่ยนร่าง: ปีกกางออก ข้อความ Phase 2 ตีไม่เข้าระหว่างท่า |
-| 9 | Phase 2 ยืนห่าง 10 บล็อกขึ้นไป | Dive: กระโดดขึ้นสูง ปีกกระพือ วงทองเล็กตามเท้าเรา → หยุด → พุ่งลงมาตรงวง |
-| 10 | Dive ในถ้ำเพดานต่ำ | ยกเลิกการบินเอง ไม่ติดเพดาน |
-| 11 | ตีจนหมดหลอด | ท่าตาย 4.2 วินาที แล้วดรอป Codex + ของ, XP |
-| 12 | คราฟต์ Blueprint แล้วแตะใช้ | วงเวท + เสาประกาย 2.5 วินาที → บอสปรากฏ |
-| 13 | ใช้ Codex สองครั้งติดกัน | ครั้งแรกได้บัฟ 3 อย่าง ครั้งที่สองขึ้นเวลารอ |
+| 1 | `/summon esb:edison ~ ~ ~8` | He appears sitting on the Dynamo holding a glowing bulb, title "Thomas Edison", then hops down |
+| 2 | Stand 10+ blocks away | Bulb toss: glowing bulbs shatter into sparks and glass |
+| 3 | Fight him a while | Blackout: screen goes dark, he vanishes, sparks crackle behind you, he reappears there and stabs |
+| 4 | Stay near the Dynamo in the open | Overload: he blinks to the levers, the Dynamo's bulbs flare, lightning bolts jump between players. Hide behind a wall and it misses |
+| 5 | Wait for the chair | A chair appears under you with a warning; stay on it and you are strapped in and shocked; break it or step off in time |
+| 6 | Break the Dynamo | "Edison is unplugged!", he kneels dazed for 3 s and takes extra damage |
+| 7 | Bring him to half health | AC transformation: blue lightning textures, the Dynamo comes back, he blinks twice |
+| 8 | Kill him | Death sequence, the Dynamo powers down, Volt Shiv drops |
+| 9 | Da Vinci: `/summon esb:da_vinci ~ ~ ~8` | Intro, gear volley, quake, Vitruvian circle, wings at half health, dive |
 
-คำสั่งที่มีประโยชน์: `/kill @e[type=esb:da_vinci]`, Settings → Creator → **Content Log GUI** ดู error ของแพ็ก
+Useful: `/kill @e[type=esb:edison]`, `/kill @e[type=esb:da_vinci]`, Settings → Creator → **Content Log GUI** for pack errors
+(screenshot any red line if something looks wrong).
 
-**ถ้าเจอปัญหา (เช่นโมเดลไม่ขึ้น หรือบอสยืนนิ่ง):** เปิด Content Log GUI แล้วเรียกบอสใหม่ แคปข้อความสีแดงส่งมา
+## Not yet proven in-game
 
-## 6. สิ่งที่ยังไม่ได้พิสูจน์ในเกมจริง
+* Vanilla sound event names called by the scripts (`random.glass`, `ambient.weather.lightning.impact`, `block.bell.hit`, …):
+  a wrong name is just silent.
+* The basic melee attacks are vanilla `minecraft:behavior.delayed_attack` (like the Ravager) with `q.is_delayed_attacking`.
+* Edison's invisibility relies on the vanilla `invisibility` effect hiding mobs; the Blackout uses the vanilla `darkness` effect.
+* Hitting gears back (`reflect_on_hurt`).
+* Balance targets 1–2 players in diamond gear; tune everything in `balance.json` and rebuild.
+* In-game text is English: Bedrock has no Thai UI language, so a `th_TH.lang` would never load.
 
-* ชื่อเสียงของเกมที่สคริปต์เรียก (`mob.blaze.shoot`, `random.anvil_land`, `beacon.activate`, `block.bell.hit`, `random.totem` ฯลฯ) เป็นเสียงวานิลลา
-  ถ้าชื่อไหนไม่มีในเวอร์ชันของคุณ เสียงนั้นจะเงียบเฉย ๆ ไม่ทำให้เกมพัง
-* ท่าฟันวงเวียนผูกกับ AI โจมตีของวานิลลา (`minecraft:behavior.delayed_attack` + `q.is_delayed_attacking` แบบเดียวกับ Ravager)
-* การตีเฟืองสะท้อนกลับ (`reflect_on_hurt`)
-* สมดุลดาเมจ/เลือดตั้งไว้สำหรับผู้เล่น 1–2 คนชุดเพชร ปรับได้ใน `balance.json` แล้ว build ใหม่
-
-## 7. โครงสร้างโปรเจกต์และการ build
+## Project layout and build
 
 ```
 extra-super-boss-addon/
-  addon/behavior_packs/extra_super_boss/   entities (บอส, เฟือง, วงเวท), items, loot, recipe, scripts (คอมไพล์แล้ว)
-  addon/resource_packs/extra_super_boss/   โมเดล, texture, animations, controllers, particles, render controllers, ภาษา
-  balance.json                             ตัวเลขทั้งหมดของบอส (แหล่งเดียว)
-  scripts-src/*.ts                         AI ของบอส (TypeScript)
-  tools/                                   ตัวสร้างไฟล์ทั้งหมด (Python), validate, smoke test, packager, เรนเดอร์ภาพตัวอย่าง
-  dist/Extra_Super_Boss_Da_Vinci_v1.mcaddon
+  addon/behavior_packs/extra_super_boss/   entities, items, loot, recipes, compiled scripts
+  addon/resource_packs/extra_super_boss/   models, textures, animations, controllers, particles, render controllers, text
+  balance.json                             every boss number (single source)
+  scripts-src/*.ts                         boss AI: boss.ts (shared), abilities.ts + brain.ts (Da Vinci), edison.ts, items.ts, main.ts
+  tools/                                   Python generators, validator, smoke test + mock server, packager, preview renderer
+  dist/Extra_Super_Boss_v1.mcaddon
 ```
 
-| คำสั่ง | ทำอะไร |
+| Command | Does |
 |---|---|
-| `npm install` | ติดตั้ง TypeScript + typings `@minecraft/server` 2.11.0 |
-| `npm run assets` | สร้างโมเดล, texture, entity JSON, animations, particles, offsets จาก Python |
-| `npm run compile` | คอมไพล์ `scripts-src` → `addon/behavior_packs/extra_super_boss/scripts` |
-| `npm run validate` | Creator Tools validate (ต้อง 0 error) + ตรวจการอ้างอิงข้ามไฟล์ |
-| `npm run smoke` | รันสคริปต์จริงกับเกมจำลอง: เปิดตัว, ทุกสกิล, เปลี่ยนร่าง, Dive, เพดานต่ำ, ท่าตาย, ไอเท็ม, สู้ยาว 3 นาที |
-| `npm run package` | สร้าง `dist/Extra_Super_Boss_Da_Vinci_v1.mcaddon` |
-| `npm run build` | ทำทั้งหมดตามลำดับ |
-| `npm run preview` | เรนเดอร์ภาพท่าและ GIF ใน `docs/preview/` |
+| `npm install` | TypeScript + `@minecraft/server` 2.11.0 typings |
+| `npm run assets` | Generate models, textures, entity JSON, animations, particles and script offsets |
+| `npm run compile` | Compile `scripts-src` into the behavior pack |
+| `npm run validate` | Creator Tools validation (must be 0 errors) + cross-file checks |
+| `npm run smoke` | Run the real scripts against a mocked game: intros, every ability, phase changes, the chair, the Dynamo stun, deaths, items, 3-minute soaks |
+| `npm run package` | Build `dist/Extra_Super_Boss_v1.mcaddon` |
+| `npm run build` | All of the above in order |
+| `npm run preview` | Render the pose sheets, GIFs and icons into `docs/preview/` |
 
-ไฟล์ที่ AI กับแอนิเมชันต้องตรงกันถูกสร้างจากแหล่งเดียว: ความยาวท่าและจังหวะดาเมจอยู่ใน `tools/spec.py`
-(สร้างทั้งไฟล์แอนิเมชันและ `scripts-src/spec.ts`) และตำแหน่งฝ่ามือ/อกที่สคริปต์ใช้ปล่อยเฟืองหรือคลื่นกระแทกวัดจากโมเดลจริงใน `tools/gen_offsets.py`
+Animation lengths and hit frames live in `tools/spec.py`, which generates both the animation files and
+`scripts-src/spec.ts`, so damage lands on the frame the client shows. Points the scripts use (Da Vinci's palm,
+Edison's bulb hand, the Dynamo's top, the chair seat) are measured from the real models by `tools/gen_offsets.py`.

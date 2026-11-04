@@ -1,0 +1,242 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.esb.edison.action": {
+   "initial_state": "default",
+   "states": {
+    "default": {
+     "transitions": [
+      {
+       "intro": "q.property('esb:action') == 'intro'"
+      },
+      {
+       "bulb_toss": "q.property('esb:action') == 'bulb_toss'"
+      },
+      {
+       "vanish": "q.property('esb:action') == 'vanish'"
+      },
+      {
+       "backstab": "q.property('esb:action') == 'backstab'"
+      },
+      {
+       "overload": "q.property('esb:action') == 'overload'"
+      },
+      {
+       "chair": "q.property('esb:action') == 'chair'"
+      },
+      {
+       "transform": "q.property('esb:action') == 'transform'"
+      },
+      {
+       "stunned": "q.property('esb:action') == 'stunned'"
+      },
+      {
+       "flourish": "q.property('esb:action') == 'flourish'"
+      },
+      {
+       "death": "q.property('esb:action') == 'death'"
+      }
+     ]
+    },
+    "intro": {
+     "animations": [
+      "intro"
+     ],
+     "transitions": [
+      {
+       "default": "q.property('esb:action') != 'intro'"
+      }
+     ],
+     "blend_transition": 0.15,
+     "blend_via_shortest_path": true
+    },
+    "bulb_toss": {
+     "animations": [
+      "bulb_toss"
+     ],
+     "transitions": [
+      {
+       "default": "q.property('esb:action') != 'bulb_toss'"
+      }
+     ],
+     "blend_transition": 0.15,
+     "blend_via_shortest_path": true
+    },
+    "vanish": {
+     "animations": [
+      "vanish"
+     ],
+     "transitions": [
+      {
+       "backstab": "q.property('esb:action') == 'backstab'"
+      },
+      {
+       "default": "!(q.property('esb:action') == 'vanish' || q.property('esb:action') == 'backstab')"
+      }
+     ],
+     "blend_transition": 0.15,
+     "blend_via_shortest_path": true
+    },
+    "backstab": {
+     "animations": [
+      "backstab"
+     ],
+     "transitions": [
+      {
+       "default": "q.property('esb:action') != 'backstab'"
+      }
+     ],
+     "blend_transition": 0.15,
+     "blend_via_shortest_path": true
+    },
+    "overload": {
+     "animations": [
+      "overload"
+     ],
+     "transitions": [
+      {
+       "default": "q.property('esb:action') != 'overload'"
+      }
+     ],
+     "blend_transition": 0.15,
+     "blend_via_shortest_path": true
+    },
+    "chair": {
+     "animations": [
+      "chair"
+     ],
+     "transitions": [
+      {
+       "default": "q.property('esb:action') != 'chair'"
+      }
+     ],
+     "blend_transition": 0.15,
+     "blend_via_shortest_path": true
+    },
+    "transform": {
+     "animations": [
+      "transform"
+     ],
+     "transitions": [
+      {
+       "default": "q.property('esb:action') != 'transform'"
+      }
+     ],
+     "blend_transition": 0.15,
+     "blend_via_shortest_path": true
+    },
+    "stunned": {
+     "animations": [
+      "stunned"
+     ],
+     "transitions": [
+      {
+       "default": "q.property('esb:action') != 'stunned'"
+      }
+     ],
+     "blend_transition": 0.15,
+     "blend_via_shortest_path": true
+    },
+    "flourish": {
+     "animations": [
+      "flourish"
+     ],
+     "transitions": [
+      {
+       "default": "q.property('esb:action') != 'flourish'"
+      }
+     ],
+     "blend_transition": 0.15,
+     "blend_via_shortest_path": true
+    },
+    "death": {
+     "animations": [
+      "death"
+     ],
+     "transitions": [
+      {
+       "default": "q.property('esb:action') != 'death'"
+      }
+     ],
+     "blend_transition": 0.15,
+     "blend_via_shortest_path": true
+    }
+   }
+  },
+  "controller.animation.esb.edison.attack": {
+   "initial_state": "default",
+   "states": {
+    "default": {
+     "transitions": [
+      {
+       "shank": "q.is_delayed_attacking && q.property('esb:action') == 'none'"
+      }
+     ]
+    },
+    "shank": {
+     "animations": [
+      "shank"
+     ],
+     "blend_transition": 0.08,
+     "transitions": [
+      {
+       "default": "q.all_animations_finished || !q.property('esb:action') == 'none'"
+      }
+     ]
+    }
+   }
+  },
+  "controller.animation.esb.dynamo.mode": {
+   "initial_state": "idle",
+   "states": {
+    "idle": {
+     "animations": [
+      "idle"
+     ],
+     "transitions": [
+      {
+       "charge": "q.property('esb:mode') == 'charging'"
+      }
+     ]
+    },
+    "charge": {
+     "animations": [
+      "charge"
+     ],
+     "blend_transition": 0.15,
+     "transitions": [
+      {
+       "idle": "q.property('esb:mode') != 'charging'"
+      }
+     ]
+    }
+   }
+  },
+  "controller.animation.esb.electric_chair.state": {
+   "initial_state": "armed",
+   "states": {
+    "armed": {
+     "animations": [
+      "armed"
+     ],
+     "transitions": [
+      {
+       "locked": "q.property('esb:state') == 'locked'"
+      }
+     ]
+    },
+    "locked": {
+     "animations": [
+      "locked"
+     ],
+     "blend_transition": 0.1,
+     "transitions": [
+      {
+       "armed": "q.property('esb:state') != 'locked'"
+      }
+     ]
+    }
+   }
+  }
+ }
+}

@@ -41,7 +41,7 @@
           },
           "remove_on_hit": {}
         },
-        "power": 1.3,
+        "power": 1.1,
         "gravity": 0.0,
         "inertia": 1.0,
         "liquid_inertia": 0.8,

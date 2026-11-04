@@ -1,9 +1,9 @@
 import { EntityDamageCause, GameMode, system } from "@minecraft/server";
 import { BALANCE } from "./balance.js";
-import { BOSS_ID } from "./spec.js";
+import { BOSS_ID, EDISON_ID } from "./spec.js";
 import { add, angleDiff, clamp, localToWorld, turnToward, v3, yawTo } from "./vec.js";
 export const BOSS_FAMILY = "esb_boss";
-export const EXCLUDE_FAMILIES = ["esb_boss", "esb_fx", "esb_projectile", "inanimate"];
+export const EXCLUDE_FAMILIES = ["esb_boss", "esb_fx", "esb_projectile", "esb_construct", "inanimate"];
 export const EXCLUDE_TYPES = ["minecraft:item", "minecraft:xp_orb", "minecraft:arrow", "minecraft:snowball",
     "minecraft:armor_stand", "minecraft:painting", "minecraft:leash_knot", "minecraft:boat", "minecraft:chest_boat",
     "minecraft:minecart", "minecraft:ender_pearl", "minecraft:fireball", "minecraft:small_fireball"];
@@ -18,13 +18,16 @@ export function safe(fn) {
     }
 }
 export const bosses = new Map();
-export function newState(e) {
+export function newState(e, kind = "da_vinci") {
     const t = now();
     return {
+        kind,
         entity: e,
         id: e.id,
         phase: 1,
-        ready: { gear_volley: t + sec(3), quake: t + sec(2), vitruvian: t + sec(8), dive: t + sec(4) },
+        ready: kind === "edison"
+            ? { bulb_toss: t + sec(2), vanish: t + sec(4), overload: t + sec(8), chair: t + sec(6) }
+            : { gear_volley: t + sec(3), quake: t + sec(2), vitruvian: t + sec(8), dive: t + sec(4) },
         gapUntil: t,
         nextDecision: t,
         locked: false,
@@ -36,6 +39,9 @@ export function newState(e) {
         nextFlourish: t + sec(BALANCE.flourish.every_min),
         yaw: safe(() => e.getRotation().y) ?? 0,
         props: {},
+        hidden: false,
+        blinksLeft: 0,
+        stunUntil: 0,
     };
 }
 // ------------------------------------------------------------------------------------------ properties & events
@@ -99,8 +105,9 @@ export function isProtectedPlayer(t) {
     const gm = safe(() => t.getGameMode());
     return gm === GameMode.Creative || gm === GameMode.Spectator;
 }
+export const BOSS_IDS = [BOSS_ID, EDISON_ID];
 export function isBoss(e) {
-    return !!e && e.typeId === BOSS_ID;
+    return !!e && BOSS_IDS.includes(e.typeId);
 }
 export function centerOf(t) {
     return add(t.location, v3(0, t.typeId === "minecraft:player" ? 0.9 : 0.6, 0));

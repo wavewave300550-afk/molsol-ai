@@ -1,8 +1,8 @@
-import { GameMode, system, world } from "@minecraft/server";
+import { EntityDamageCause, GameMode, system, world, } from "@minecraft/server";
 import { BALANCE } from "./balance.js";
-import { now, safe, sec } from "./boss.js";
+import { isBoss, isLiving, now, safe, sec } from "./boss.js";
 import { PFX, SND, particle, sound } from "./fx.js";
-import { BLUEPRINT_ID, BOSS_ID, CODEX_ID, SIGIL_ID } from "./spec.js";
+import { BLUEPRINT_ID, BOSS_ID, CODEX_ID, EDISON_ID, PATENT_ID, SHIV_ID, SIGIL_ID } from "./spec.js";
 import { v3, yawTo } from "./vec.js";
 const RITUAL_TICKS = 50;
 const pendingRituals = new Set();
@@ -43,11 +43,13 @@ function openGround(p, spot) {
     }
     return true;
 }
-function useBlueprint(p) {
+const BLUEPRINT = { boss: BOSS_ID, busy: "esb.msg.summon_busy", start: "esb.msg.summon", circle: true };
+const PATENT = { boss: EDISON_ID, busy: "esb.msg.patent_busy", start: "esb.msg.patent", circle: false };
+function summon(p, r) {
     const dim = p.dimension;
-    const near = safe(() => dim.getEntities({ type: BOSS_ID, location: p.location, maxDistance: 96 })) ?? [];
+    const near = safe(() => dim.getEntities({ type: r.boss, location: p.location, maxDistance: 96 })) ?? [];
     if (near.length || pendingRituals.size) {
-        say(p, "esb.msg.summon_busy");
+        say(p, r.busy);
         return;
     }
     const view = p.getViewDirection();
@@ -63,23 +65,48 @@ function useBlueprint(p) {
         return;
     }
     consumeOne(p);
-    say(p, "esb.msg.summon");
+    say(p, r.start);
     const key = `${p.id}:${now()}`;
     pendingRituals.add(key);
-    const sigil = safe(() => dim.spawnEntity(SIGIL_ID, v3(spot.x, spot.y + 0.02, spot.z)));
+    const sigil = r.circle ? safe(() => dim.spawnEntity(SIGIL_ID, v3(spot.x, spot.y + 0.02, spot.z))) : undefined;
     if (sigil)
         safe(() => sigil.setProperty("esb:radius", 3));
     particle(dim, PFX.pillar, spot);
-    sound(dim, SND.charge, spot, 1.2, 0.8);
+    sound(dim, r.circle ? SND.charge : SND.fizz, spot, 1.2, 0.8);
     sound(dim, SND.page, spot, 1.0, 0.7);
+    if (!r.circle) {
+        for (let i = 1; i < RITUAL_TICKS; i += 6) {
+            system.runTimeout(() => particle(dim, PFX.telegraph, v3(spot.x, spot.y + 0.1, spot.z), undefined, 0), i);
+        }
+    }
     system.runTimeout(() => {
         pendingRituals.delete(key);
         if (sigil?.isValid)
             safe(() => sigil.remove());
-        const boss = safe(() => dim.spawnEntity(BOSS_ID, spot));
+        const boss = safe(() => dim.spawnEntity(r.boss, spot));
         if (boss && p.isValid)
             safe(() => boss.setRotation({ x: 0, y: yawTo(spot, p.location) }));
     }, RITUAL_TICKS);
+}
+/** Volt Shiv (Edison's drop): sparks on every hit, sometimes an extra jolt that slows. */
+function shivHit(p, target) {
+    const inv = safe(() => p.getComponent("minecraft:inventory"));
+    const it = safe(() => inv?.container?.getItem(p.selectedSlotIndex));
+    if (!it || it.typeId !== SHIV_ID || !isLiving(target) || target.id === p.id)
+        return;
+    const c = v3(target.location.x, target.location.y + 1, target.location.z);
+    particle(p.dimension, PFX.voltSpark, c, undefined, 0);
+    if (Math.random() < BALANCE.edison.shiv.proc_chance) {
+        system.run(() => {
+            if (!target.isValid)
+                return;
+            safe(() => target.applyDamage(BALANCE.edison.shiv.bonus_damage, { cause: EntityDamageCause.lightning, damagingEntity: p }));
+            if (!isBoss(target))
+                safe(() => target.addEffect("slowness", 20, { amplifier: 1, showParticles: false }));
+            particle(p.dimension, PFX.zap, c, undefined, 1);
+            sound(p.dimension, SND.fizz, c, 0.8, 1.6);
+        });
+    }
 }
 function useCodex(p) {
     const t = now();
@@ -102,9 +129,15 @@ export function registerItems() {
         if (!source || source.typeId !== "minecraft:player")
             return;
         if (itemStack.typeId === BLUEPRINT_ID)
-            useBlueprint(source);
+            summon(source, BLUEPRINT);
+        else if (itemStack.typeId === PATENT_ID)
+            summon(source, PATENT);
         else if (itemStack.typeId === CODEX_ID)
             useCodex(source);
+    });
+    world.afterEvents.entityHitEntity.subscribe(({ damagingEntity, hitEntity }) => {
+        if (damagingEntity?.typeId === "minecraft:player")
+            shivHit(damagingEntity, hitEntity);
     });
 }
 export const RITUAL_SECONDS = RITUAL_TICKS / 20;

@@ -57,6 +57,78 @@
         "b": 0.0,
         "a": 0.0
       }
+    },
+    "controller.render.esb.edison": {
+      "arrays": {
+        "textures": {
+          "Array.skin": [
+            "Texture.default",
+            "Texture.charged"
+          ]
+        }
+      },
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Array.skin[q.property('esb:phase') == 2 ? 1 : 0]"
+      ]
+    },
+    "controller.render.esb.dynamo": {
+      "arrays": {
+        "textures": {
+          "Array.skin": [
+            "Texture.default",
+            "Texture.charged"
+          ]
+        }
+      },
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Array.skin[q.property('esb:phase') == 2 ? 1 : 0]"
+      ]
+    },
+    "controller.render.esb.electric_chair": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.esb.volt_bulb": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "is_hurt_color": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+      },
+      "on_fire_color": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+      }
     }
   }
 }

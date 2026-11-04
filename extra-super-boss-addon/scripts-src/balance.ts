@@ -22,7 +22,7 @@ export const BALANCE = {
     "gears_phase1": 3,
     "gears_phase2": 5,
     "spread_deg": 13,
-    "speed": 1.3,
+    "speed": 1.1,
     "damage": 6
   },
   "quake": {
@@ -58,5 +58,69 @@ export const BALANCE = {
   "codex": {
     "duration": 90,
     "cooldown": 120
+  },
+  "edison": {
+    "health": 420,
+    "render_scale": 1.45,
+    "collision_width": 0.9,
+    "collision_height": 3.0,
+    "speed": 0.34,
+    "speed_phase2": 0.4,
+    "melee_damage": 7,
+    "follow_range": 48,
+    "xp": 500,
+    "phase2_at": 0.5,
+    "aggro_range": 40,
+    "leash_range": 64,
+    "global_gap": 1.0,
+    "bulb_toss": {
+      "range_min": 4,
+      "range_max": 22,
+      "cooldown": 7,
+      "speed": 0.95,
+      "impact_damage": 4,
+      "burst_damage": 4,
+      "burst_radius": 2.5,
+      "slow_seconds": 2
+    },
+    "vanish": {
+      "range": 26,
+      "cooldown": 10,
+      "lurk": 0.7,
+      "lurk_phase2": 0.45,
+      "damage": 13,
+      "damage_phase2": 15,
+      "darkness_seconds": 3
+    },
+    "overload": {
+      "cooldown": 14,
+      "radius": 18,
+      "damage": 8,
+      "damage_phase2": 10,
+      "chain_radius": 6
+    },
+    "chair": {
+      "range": 22,
+      "cooldown": 17,
+      "strap_seconds": 3,
+      "tick_damage": 2,
+      "tick_damage_phase2": 3,
+      "health": 20,
+      "catch_radius": 1.4
+    },
+    "dynamo": {
+      "health": 90,
+      "health_phase2": 120,
+      "stun_seconds": 3,
+      "stun_damage_mult": 1.5
+    },
+    "flourish": {
+      "every_min": 10,
+      "every_max": 18
+    },
+    "shiv": {
+      "bonus_damage": 3,
+      "proc_chance": 0.3
+    }
   }
 } as const;

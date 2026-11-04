@@ -2,6 +2,7 @@ import { BALANCE } from "./balance.js";
 import { startAction, startDive, tickDying, tickRun, vitruvianRadius } from "./abilities.js";
 import { centerOf, hpFrac, isLiving, isProtectedPlayer, now, playersNear, rayClear, safe, sec, } from "./boss.js";
 import { add, dist, hdist, norm, sub, v3 } from "./vec.js";
+import { thinkEdison } from "./edison.js";
 /** How often (ticks) the boss reconsiders its special attacks while chasing. */
 const DECIDE_EVERY = 8;
 function validTarget(s, t) {
@@ -48,6 +49,10 @@ function pick(options) {
     return options[options.length - 1][0];
 }
 export function think(s) {
+    if (s.kind === "edison") {
+        thinkEdison(s);
+        return;
+    }
     if (s.dying) {
         tickDying(s);
         return;

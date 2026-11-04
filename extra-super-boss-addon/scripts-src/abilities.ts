@@ -64,7 +64,7 @@ export function endAction(s: BossState, ability?: Ability): void {
 function fire(s: BossState, name: string): boolean {
   const run = s.run;
   if (!run || run.fired.has(name)) return false;
-  if (run.tick < moment(run.kind, name)) return false;
+  if (run.tick < moment(run.kind as Action, name)) return false;
   run.fired.add(name);
   return true;
 }

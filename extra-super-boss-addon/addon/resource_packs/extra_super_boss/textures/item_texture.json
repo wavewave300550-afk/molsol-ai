@@ -7,6 +7,12 @@
     },
     "esb_leonardo_codex": {
       "textures": "textures/items/esb_leonardo_codex"
+    },
+    "esb_volt_shiv": {
+      "textures": "textures/items/esb_volt_shiv"
+    },
+    "esb_edison_patent": {
+      "textures": "textures/items/esb_edison_patent"
     }
   }
 }

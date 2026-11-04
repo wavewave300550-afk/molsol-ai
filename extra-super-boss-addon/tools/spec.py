@@ -28,3 +28,26 @@ ACTION_VALUES = ["none"] + list(ACTIONS)
 
 # vanilla delayed melee (compass slash) - minecraft:behavior.delayed_attack
 SLASH = {"length": 0.9, "hit_pct": 0.5}
+
+# ------------------------------------------------------------------------------ Boss 2: Thomas Edison
+EDISON_ID = "esb:edison"
+DYNAMO_ID = "esb:dynamo"
+CHAIR_ID = "esb:electric_chair"
+VOLT_BULB_ID = "esb:volt_bulb"
+SHIV_ID = "esb:volt_shiv"
+PATENT_ID = "esb:edison_patent"
+
+EDISON_ACTIONS = {
+    "intro": {"length": 4.4, "moments": {"light": 0.5, "hop": 3.0, "land": 3.4}},
+    "bulb_toss": {"length": 1.8, "moments": {"throw1": 0.5, "throw2": 0.8, "throw3": 1.1}},
+    "vanish": {"length": 0.9, "moments": {"crush": 0.35, "fade": 0.5}},
+    "backstab": {"length": 1.0, "moments": {"stab": 0.25}},
+    "overload": {"length": 2.6, "moments": {"grab": 0.4, "pull": 1.0, "discharge": 1.4}},
+    "chair": {"length": 2.2, "moments": {"snap": 0.6, "lock": 1.4}},
+    "transform": {"length": 3.6, "moments": {"burst": 2.0}},
+    "stunned": {"length": 3.0, "moments": {}},
+    "flourish": {"length": 2.4, "moments": {"catch": 1.25}},
+    "death": {"length": 4.0, "moments": {"kneel": 1.0, "fade": 3.0}},
+}
+EDISON_ACTION_VALUES = ["none"] + list(EDISON_ACTIONS)
+SHANK = {"length": 0.6, "hit_pct": 0.5}

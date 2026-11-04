@@ -202,6 +202,37 @@ def icon_codex():
     save_png("textures/items/esb_leonardo_codex.png", im)
 
 
+def icon_shiv():
+    """Volt Shiv: a broken light bulb on a brass base wrapped in black tape, a spark at the tip."""
+    im = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    d.line([(5, 27), (12, 20)], fill=(30, 26, 28, 255), width=5)  # taped grip
+    for k in range(3):
+        d.line([(6 + k * 2, 24 - k * 2 + 2), (9 + k * 2, 27 - k * 2 - 1)], fill=(70, 64, 66, 255), width=1)
+    d.polygon([(11, 18), (15, 14), (17, 16), (13, 20)], fill=(200, 150, 64, 255), outline=(110, 80, 30, 255))  # brass base
+    d.polygon([(15, 13), (21, 5), (27, 3), (25, 9), (18, 16)], fill=(225, 238, 240, 255), outline=(150, 160, 160, 255))  # glass
+    d.line([(17, 13), (23, 7)], fill=(255, 210, 120, 255), width=1)  # filament
+    d.line([(24, 4), (26, 2)], fill=(255, 255, 255, 255), width=1)
+    for p in ((27, 6), (29, 3), (26, 1)):
+        d.point(p, fill=(140, 220, 255, 255))
+    save_png("textures/items/esb_volt_shiv.png", im)
+
+
+def icon_patent():
+    """Edison's Patent: a folded document with a red seal and a light bulb sketch."""
+    im = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    d.polygon([(6, 4), (24, 4), (27, 7), (27, 28), (6, 28)], fill=(236, 226, 200, 255), outline=(140, 120, 90, 255))
+    d.polygon([(24, 4), (24, 7), (27, 7)], fill=(200, 186, 150, 255))
+    d.ellipse([12, 7, 21, 16], outline=(60, 50, 40, 255))
+    d.rectangle([14, 16, 19, 19], outline=(60, 50, 40, 255))
+    d.line([(15, 12), (16, 9), (17, 12), (18, 9)], fill=(230, 160, 40, 255))
+    for y in (22, 25):
+        d.line([(9, y), (19, y)], fill=(110, 95, 75, 255))
+    d.ellipse([19, 20, 26, 27], fill=(160, 30, 36, 255), outline=(100, 15, 20, 255))
+    save_png("textures/items/esb_edison_patent.png", im)
+
+
 # ------------------------------------------------------------------------------ particle atlas (64 x 64)
 
 def particle_atlas():
@@ -262,5 +293,7 @@ if __name__ == "__main__":
     sigil()
     icon_blueprint()
     icon_codex()
+    icon_shiv()
+    icon_patent()
     particle_atlas()
     print("art: gear, sigil, icons, particle atlas")

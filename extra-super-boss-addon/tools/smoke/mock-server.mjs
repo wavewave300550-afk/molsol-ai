@@ -120,11 +120,13 @@ class Entity {
     this.props = {};
     this.groups = new Set();
     this.dead = false;
+    this.effects = {};
     const def = DEFS.get(typeId);
     if (def) {
       this.families = [...(def.components["minecraft:type_family"]?.family ?? [])];
       const hp = def.components["minecraft:health"]?.value;
-      if (hp) this.health = { currentValue: hp, effectiveMax: hp };
+      const mx = def.components["minecraft:health"]?.max ?? hp;
+      if (hp) this.health = { currentValue: hp, effectiveMax: mx };
       for (const [k, p] of Object.entries(def.description.properties ?? {})) this.props[k] = p.default;
       if (def.components["minecraft:projectile"]) this.projectile = { owner: undefined, shot: undefined, owner_set: false };
     }
@@ -135,7 +137,20 @@ class Entity {
   }
   getComponent(id) {
     if (restricted && id !== "minecraft:health") issue(`getComponent(${id}) in restricted mode`);
-    if (id === "minecraft:health" || id === "health") return this.dead ? undefined : this.health;
+    if (id === "minecraft:health" || id === "health") {
+      if (this.dead) return undefined;
+      const h = this.health;
+      if (!h.setCurrentValue) {
+        Object.defineProperty(h, "setCurrentValue", {
+          enumerable: false,
+          value: (v) => {
+            h.currentValue = Math.max(0, Math.min(h.effectiveMax, v));
+            return true;
+          },
+        });
+      }
+      return h;
+    }
     if (id === "minecraft:projectile" && this.projectile) {
       const self = this;
       return {
@@ -225,8 +240,20 @@ class Entity {
     }
   }
   addEffect(type, duration, opts) {
+    if (restricted) issue("addEffect in restricted mode");
+    if (!Number.isInteger(duration) || duration <= 0) issue(`addEffect ${type}: bad duration ${duration}`);
     __log.effects.push({ tick: tickNo, target: this, type, duration, opts });
+    this.effects[type] = { until: tickNo + duration, amplifier: opts?.amplifier ?? 0 };
     return {};
+  }
+  removeEffect(type) {
+    const had = !!this.effects[type];
+    delete this.effects[type];
+    __log.effects.push({ tick: tickNo, target: this, type, removed: true });
+    return had;
+  }
+  hasEffect(type) {
+    return !!this.effects[type] && this.effects[type].until > tickNo;
   }
   sendMessage(m) {
     __log.messages.push({ tick: tickNo, target: this, m });
@@ -310,6 +337,8 @@ class Player extends Entity {
   }
 }
 
+const d2 = (e, p) => (e.location.x - p.x) ** 2 + (e.location.y - p.y) ** 2 + (e.location.z - p.z) ** 2;
+
 // ------------------------------------------------------------------------------------------ dimension
 class Dimension {
   constructor(id) {
@@ -330,7 +359,7 @@ class Dimension {
         if (Math.sqrt(dx * dx + dy * dy + dz * dz) > q.maxDistance) return false;
       }
       return true;
-    });
+    }).sort((a, b) => (q.location ? d2(a, q.location) - d2(b, q.location) : 0)).slice(0, q.closest ?? Infinity);
   }
   getPlayers(q = {}) {
     return this.getEntities({ ...q, type: "minecraft:player" });
@@ -394,14 +423,14 @@ export const world = {
   },
   afterEvents: {
     entitySpawn: signal(), entityLoad: signal(), entityRemove: signal(), entityDie: signal(), entityHurt: signal(),
-    itemUse: signal(),
+    itemUse: signal(), projectileHitBlock: signal(), projectileHitEntity: signal(), entityHitEntity: signal(),
   },
   beforeEvents: { entityHurt: signal() },
 };
 
 // ------------------------------------------------------------------------------------------ test helpers
-export function __spawnBoss(loc, yaw = 0, { load = false } = {}) {
-  const e = new Entity("esb:da_vinci", loc, dims.overworld);
+export function __spawnBoss(loc, yaw = 0, { load = false, type = "esb:da_vinci" } = {}) {
+  const e = new Entity(type, loc, dims.overworld);
   e.rotation = { x: 0, y: yaw };
   if (load) {
     e.groups = new Set(["esb:ground", "esb:free"]);
@@ -417,6 +446,16 @@ export function __spawnPlayer(name, loc, gm = "Survival") {
 }
 export function __useItem(player, typeId) {
   for (const s of world.afterEvents.itemUse.subs) s.fn({ source: player, itemStack: { typeId, amount: 1 } });
+}
+export function __projectileHitBlock(projectile, location) {
+  for (const s of world.afterEvents.projectileHitBlock.subs) {
+    s.fn({ projectile, source: projectile.projectile?.owner, location, dimension: projectile.dimension });
+  }
+  projectile.remove();
+}
+export function __meleeHit(attacker, target, amount) {
+  for (const s of world.afterEvents.entityHitEntity.subs) s.fn({ damagingEntity: attacker, hitEntity: target });
+  return target.applyDamage(amount, { cause: "entityAttack", damagingEntity: attacker });
 }
 export function __entities(typeId) {
   return [...allEntities].filter((e) => e.isValid && e.typeId === typeId);

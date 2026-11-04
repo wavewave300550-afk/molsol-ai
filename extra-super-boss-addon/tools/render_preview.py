@@ -67,13 +67,13 @@ def background(w, h):
     return inner * (1 - t) + outer * t
 
 
-def draw(cam, pose=None, bg=None, ground=True, extra=()):
+def draw(cam, pose=None, bg=None, ground=True, extra=(), geo=None, tex=None):
     """extra: list of (geo, tex, pose, additive) drawn into the same z-buffer."""
     W, H = cam.size
     img = background(W, H) if bg is None else bg
     zbuf = np.full((H, W), np.inf)
-    faces = list(K.world_faces(GEO, pose))
-    img, zbuf, glow, _ = K.render(faces, TEX, cam, image=img, zbuf=zbuf)
+    faces = list(K.world_faces(geo or GEO, pose))
+    img, zbuf, glow, _ = K.render(faces, TEX if tex is None else tex, cam, image=img, zbuf=zbuf)
     for geo, tex, epose, additive in extra:
         ff = list(K.world_faces(geo, epose))
         if additive:

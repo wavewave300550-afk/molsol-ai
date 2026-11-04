@@ -1,0 +1,118 @@
+{
+  "format_version": "1.21.90",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "esb:dynamo",
+      "is_spawnable": false,
+      "is_summonable": true,
+      "properties": {
+        "esb:mode": {
+          "type": "enum",
+          "values": [
+            "idle",
+            "charging"
+          ],
+          "default": "idle",
+          "client_sync": true
+        },
+        "esb:phase": {
+          "type": "int",
+          "range": [
+            1,
+            2
+          ],
+          "default": 1,
+          "client_sync": true
+        }
+      }
+    },
+    "component_groups": {
+      "esb:expire": {
+        "minecraft:instant_despawn": {}
+      }
+    },
+    "events": {
+      "esb:expire": {
+        "add": {
+          "component_groups": [
+            "esb:expire"
+          ]
+        }
+      }
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": [
+          "esb_dynamo",
+          "esb_construct"
+        ]
+      },
+      "minecraft:collision_box": {
+        "width": 1.4,
+        "height": 2.1
+      },
+      "minecraft:health": {
+        "value": 90,
+        "max": 120
+      },
+      "minecraft:physics": {},
+      "minecraft:pushable": {
+        "is_pushable": false,
+        "is_pushable_by_piston": false
+      },
+      "minecraft:knockback_resistance": {
+        "value": 1.0
+      },
+      "minecraft:fire_immune": true,
+      "minecraft:damage_sensor": {
+        "triggers": [
+          {
+            "on_damage": {
+              "filters": {
+                "test": "is_family",
+                "subject": "damager",
+                "value": "esb_boss"
+              }
+            },
+            "deals_damage": "no"
+          },
+          {
+            "cause": "fall",
+            "deals_damage": "no"
+          },
+          {
+            "cause": "suffocation",
+            "deals_damage": "no"
+          },
+          {
+            "cause": "drowning",
+            "deals_damage": "no"
+          },
+          {
+            "cause": "projectile",
+            "deals_damage": "yes"
+          }
+        ]
+      },
+      "minecraft:breathable": {
+        "total_supply": 15,
+        "suffocate_time": 0,
+        "breathes_water": true
+      },
+      "minecraft:persistent": {},
+      "minecraft:custom_hit_test": {
+        "hitboxes": [
+          {
+            "width": 1.6,
+            "height": 2.2,
+            "pivot": [
+              0,
+              1.1,
+              0
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

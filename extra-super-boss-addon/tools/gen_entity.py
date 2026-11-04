@@ -21,7 +21,7 @@ SRC = os.path.join(ROOT, "scripts-src")
 BAL = json.load(open(os.path.join(ROOT, "balance.json")))
 B = BAL["boss"]
 
-VERSION = [1, 0, 1]
+VERSION = [1, 1, 0]
 ENGINE = [1, 26, 60]
 SERVER_API = [2, 11, 0]
 UUID = {
@@ -33,7 +33,7 @@ UUID = {
 }
 ENTITY_FMT = "1.21.90"
 PACK_NAME = "Extra Super Boss"
-PACK_DESC = "Boss 1: Leonardo da Vinci, the Clockwork Maestro / บอสที่ 1: เลโอนาร์โด ดา วินชี (v1.0.1)"
+PACK_DESC = "Boss 1: Leonardo da Vinci - Boss 2: Thomas Edison (v1.1.0)"
 
 
 def write(path, data):
@@ -81,13 +81,14 @@ def damage_sensor():
     ]}
 
 
-def free_group(speed, attack_duration):
+def free_group(speed, attack_duration, hit_pct=None, cooldown=0.5):
     return {
         "minecraft:movement": {"value": speed},
         "minecraft:behavior.delayed_attack": {
             "priority": 3, "attack_once": False, "track_target": True, "require_complete_path": False,
             "random_stop_interval": 0, "reach_multiplier": 1.3, "speed_multiplier": 1.0,
-            "attack_duration": attack_duration, "hit_delay_pct": spec.SLASH["hit_pct"], "cooldown_time": 0.5,
+            "attack_duration": attack_duration, "hit_delay_pct": hit_pct if hit_pct is not None else spec.SLASH["hit_pct"],
+            "cooldown_time": cooldown,
         },
         "minecraft:behavior.random_stroll": {"priority": 8, "speed_multiplier": 0.6, "xz_dist": 10, "y_dist": 3, "interval": 200},
         "minecraft:behavior.look_at_player": {"priority": 9, "look_distance": 24, "probability": 0.05},
@@ -95,17 +96,18 @@ def free_group(speed, attack_duration):
     }
 
 
-def boss_entity():
-    p2_len = round(spec.SLASH["length"] * 0.8, 2)
+def boss_entity(ident=spec.BOSS_ID, family="da_vinci", values=spec.ACTION_VALUES, B=B, attack=spec.SLASH, p2_speed=0.8,
+                cooldown=0.5, hitbox=(1.6, 3.8), loot="loot_tables/entities/da_vinci.json", file="da_vinci.json"):
+    p2_len = round(attack["length"] * p2_speed, 2)
     ent = {
         "format_version": ENTITY_FMT,
         "minecraft:entity": {
             "description": {
-                "identifier": spec.BOSS_ID,
+                "identifier": ident,
                 "is_spawnable": True,
                 "is_summonable": True,
                 "properties": {
-                    "esb:action": {"type": "enum", "values": spec.ACTION_VALUES, "default": "none", "client_sync": True},
+                    "esb:action": {"type": "enum", "values": values, "default": "none", "client_sync": True},
                     "esb:phase": {"type": "int", "range": [1, 2], "default": 1, "client_sync": True},
                 },
             },
@@ -119,8 +121,8 @@ def boss_entity():
                     "minecraft:variable_max_auto_step": {"base_value": 1.0625, "jump_prevented_value": 0.5625},
                 },
                 "esb:air": {"minecraft:physics": {"has_gravity": False, "has_collision": True}},
-                "esb:free": free_group(B["speed"], spec.SLASH["length"]),
-                "esb:free_fast": free_group(B["speed_phase2"], p2_len),
+                "esb:free": free_group(B["speed"], attack["length"], attack["hit_pct"], cooldown),
+                "esb:free_fast": free_group(B["speed_phase2"], p2_len, attack["hit_pct"], cooldown),
                 "esb:locked": {"minecraft:movement": {"value": 0.0}, "minecraft:body_rotation_always_follows_head": {}},
                 "esb:discard": {"minecraft:instant_despawn": {}},
             },
@@ -140,9 +142,9 @@ def boss_entity():
                 "esb:despawn": {"add": {"component_groups": ["esb:discard"]}},
             },
             "components": {
-                "minecraft:type_family": {"family": ["da_vinci", "esb_boss", "monster", "mob"]},
+                "minecraft:type_family": {"family": [family, "esb_boss", "monster", "mob"]},
                 "minecraft:collision_box": {"width": B["collision_width"], "height": B["collision_height"]},
-                "minecraft:custom_hit_test": {"hitboxes": [{"width": 1.6, "height": 3.8, "pivot": [0, 1.9, 0]}]},
+                "minecraft:custom_hit_test": {"hitboxes": [{"width": hitbox[0], "height": hitbox[1], "pivot": [0, hitbox[1] / 2, 0]}]},
                 "minecraft:health": {"value": B["health"], "max": B["health"]},
                 "minecraft:attack": {"damage": B["melee_damage"]},
                 "minecraft:boss": {"should_darken_sky": False, "hud_range": 48},
@@ -153,7 +155,7 @@ def boss_entity():
                 "minecraft:persistent": {},
                 "minecraft:damage_sensor": damage_sensor(),
                 "minecraft:breathable": {"total_supply": 15, "suffocate_time": 0, "breathes_water": True},
-                "minecraft:loot": {"table": "loot_tables/entities/da_vinci.json"},
+                "minecraft:loot": {"table": loot},
                 "minecraft:experience_reward": {"on_death": f"q.last_hit_by_player ? {B['xp']} : 0"},
                 "minecraft:behavior.float": {"priority": 0},
                 "minecraft:behavior.hurt_by_target": {"priority": 1},
@@ -169,7 +171,7 @@ def boss_entity():
             },
         },
     }
-    write(os.path.join(BP, "entities", "da_vinci.json"), ent)
+    write(os.path.join(BP, "entities", file), ent)
 
 
 def gear_entity():
@@ -282,6 +284,137 @@ def items():
     ]})
 
 
+# ------------------------------------------------------------------------------ Boss 2: Edison
+
+E = BAL["edison"]
+
+
+def construct(ident, family, health, box, props=None, extra=None, max_health=None):
+    comps = {
+        "minecraft:type_family": {"family": [family, "esb_construct"]},
+        "minecraft:collision_box": {"width": box[0], "height": box[1]},
+        "minecraft:health": {"value": health, "max": max_health or health},
+        "minecraft:physics": {},
+        "minecraft:pushable": {"is_pushable": False, "is_pushable_by_piston": False},
+        "minecraft:knockback_resistance": {"value": 1.0},
+        "minecraft:fire_immune": True,
+        "minecraft:damage_sensor": {"triggers": [
+            {"on_damage": {"filters": {"test": "is_family", "subject": "damager", "value": "esb_boss"}}, "deals_damage": "no"},
+            {"cause": "fall", "deals_damage": "no"}, {"cause": "suffocation", "deals_damage": "no"},
+            {"cause": "drowning", "deals_damage": "no"}, {"cause": "projectile", "deals_damage": "yes"}]},
+        "minecraft:breathable": {"total_supply": 15, "suffocate_time": 0, "breathes_water": True},
+    }
+    comps.update(extra or {})
+    d = {"identifier": ident, "is_spawnable": False, "is_summonable": True}
+    if props:
+        d["properties"] = props
+    return {"format_version": ENTITY_FMT, "minecraft:entity": {
+        "description": d,
+        "component_groups": {"esb:expire": {"minecraft:instant_despawn": {}}},
+        "events": {"esb:expire": {"add": {"component_groups": ["esb:expire"]}}},
+        "components": comps}}
+
+
+def edison_entities():
+    boss_entity(ident=spec.EDISON_ID, family="edison", values=spec.EDISON_ACTION_VALUES, B=E, attack=spec.SHANK,
+                p2_speed=0.85, cooldown=0.35, hitbox=(1.3, 3.2), loot="loot_tables/entities/edison.json", file="edison.json")
+    D = E["dynamo"]
+    write(os.path.join(BP, "entities", "dynamo.json"), construct(
+        spec.DYNAMO_ID, "esb_dynamo", D["health"], (1.4, 2.1),
+        props={"esb:mode": {"type": "enum", "values": ["idle", "charging"], "default": "idle", "client_sync": True},
+               "esb:phase": {"type": "int", "range": [1, 2], "default": 1, "client_sync": True}},
+        extra={"minecraft:persistent": {}, "minecraft:custom_hit_test": {"hitboxes": [{"width": 1.6, "height": 2.2, "pivot": [0, 1.1, 0]}]}},
+        max_health=D["health_phase2"]))
+    write(os.path.join(BP, "entities", "electric_chair.json"), construct(
+        spec.CHAIR_ID, "esb_chair", E["chair"]["health"], (0.9, 1.4),
+        props={"esb:state": {"type": "enum", "values": ["armed", "locked"], "default": "armed", "client_sync": True}},
+        extra={"minecraft:timer": {"looping": False, "time": 12, "time_down_event": {"event": "esb:expire"}}}))
+    b = E["bulb_toss"]
+    write(os.path.join(BP, "entities", "volt_bulb.json"), {
+        "format_version": ENTITY_FMT,
+        "minecraft:entity": {
+            "description": {"identifier": spec.VOLT_BULB_ID, "is_spawnable": False, "is_summonable": True},
+            "component_groups": {"esb:expire": {"minecraft:instant_despawn": {}}},
+            "events": {"esb:expire": {"add": {"component_groups": ["esb:expire"]}}},
+            "components": {
+                "minecraft:type_family": {"family": ["esb_projectile", "inanimate"]},
+                "minecraft:collision_box": {"width": 0.4, "height": 0.4},
+                "minecraft:projectile": {
+                    "on_hit": {"impact_damage": {"damage": b["impact_damage"], "knockback": False, "semi_random_diff_damage": False,
+                                                 "destroy_on_hit": True},
+                               "remove_on_hit": {}},
+                    "power": b["speed"], "gravity": 0.03, "inertia": 1.0, "liquid_inertia": 0.8, "uncertainty_base": 0,
+                    "uncertainty_multiplier": 0, "anchor": 1, "offset": [0, 0, 0], "hit_sound": "glass",
+                },
+                "minecraft:physics": {},
+                "minecraft:pushable": {"is_pushable": False, "is_pushable_by_piston": True},
+                "minecraft:timer": {"looping": False, "time": 5, "time_down_event": {"event": "esb:expire"}},
+                "minecraft:conditional_bandwidth_optimization": {
+                    "default_values": {"max_optimized_distance": 80.0, "max_dropped_ticks": 5, "use_motion_prediction_hints": True}},
+            },
+        },
+    })
+
+
+def edison_items():
+    write(os.path.join(BP, "items", "volt_shiv.json"), {
+        "format_version": "1.21.70",
+        "minecraft:item": {
+            "description": {"identifier": spec.SHIV_ID, "menu_category": {"category": "equipment"}},
+            "components": {
+                "minecraft:icon": "esb_volt_shiv",
+                "minecraft:display_name": {"value": "item.esb:volt_shiv.name"},
+                "minecraft:max_stack_size": 1,
+                "minecraft:hand_equipped": True,
+                "minecraft:damage": 8,
+                "minecraft:durability": {"max_durability": 900},
+                "minecraft:enchantable": {"value": 14, "slot": "sword"},
+                "minecraft:can_destroy_in_creative": False,
+                "minecraft:glint": True,
+                "minecraft:tags": {"tags": ["minecraft:is_sword", "esb:boss_weapon"]},
+            },
+        },
+    })
+    write(os.path.join(BP, "items", "edison_patent.json"), {
+        "format_version": "1.21.70",
+        "minecraft:item": {
+            "description": {"identifier": spec.PATENT_ID, "menu_category": {"category": "items"}},
+            "components": {
+                "minecraft:icon": "esb_edison_patent",
+                "minecraft:display_name": {"value": "item.esb:edison_patent.name"},
+                "minecraft:max_stack_size": 16,
+                "minecraft:glint": True,
+            },
+        },
+    })
+    write(os.path.join(BP, "recipes", "edison_patent.json"), {
+        "format_version": "1.20.10",
+        "minecraft:recipe_shaped": {
+            "description": {"identifier": spec.PATENT_ID},
+            "tags": ["crafting_table"],
+            "pattern": ["RGR", "CLC", "RPR"],
+            "key": {"R": {"item": "minecraft:redstone"}, "G": {"item": "minecraft:gold_ingot"},
+                    "C": {"item": "minecraft:copper_ingot"}, "L": {"item": "minecraft:glowstone"},
+                    "P": {"item": "minecraft:paper"}},
+            "unlock": [{"item": "minecraft:copper_ingot"}],
+            "result": {"item": spec.PATENT_ID, "count": 1},
+        },
+    })
+    entry = lambda item, lo, hi: {"type": "item", "name": item, "weight": 1,  # noqa: E731
+                                  "functions": [{"function": "set_count", "count": {"min": lo, "max": hi}}]}
+    write(os.path.join(BP, "loot_tables", "entities", "edison.json"), {"pools": [
+        {"rolls": 1, "entries": [{"type": "item", "name": spec.SHIV_ID, "weight": 1}]},
+        {"rolls": 1, "entries": [entry("minecraft:copper_ingot", 10, 20)]},
+        {"rolls": 1, "entries": [entry("minecraft:gold_ingot", 6, 12)]},
+        {"rolls": 1, "entries": [entry("minecraft:diamond", 3, 6)]},
+        {"rolls": 1, "entries": [entry("minecraft:glowstone", 8, 16)]},
+        {"rolls": 1, "entries": [entry("minecraft:emerald", 4, 8)]},
+        {"rolls": 1, "conditions": [{"condition": "random_chance", "chance": 0.5}], "entries": [entry("minecraft:netherite_scrap", 1, 2)]},
+        {"rolls": 1, "conditions": [{"condition": "random_chance", "chance": 0.35}],
+         "entries": [{"type": "item", "name": "minecraft:totem_of_undying", "weight": 1}]},
+    ]})
+
+
 # ------------------------------------------------------------------------------ resource side
 
 def client_entities():
@@ -322,6 +455,20 @@ def client_entities():
             "controller.render.esb.vitruvian_sigil": {
                 "geometry": "Geometry.default", "materials": [{"*": "Material.default"}], "textures": ["Texture.default"],
                 "is_hurt_color": no_tint, "on_fire_color": no_tint},
+            # Edison and his Dynamo switch to the blue AC texture in phase 2
+            "controller.render.esb.edison": {
+                "arrays": {"textures": {"Array.skin": ["Texture.default", "Texture.charged"]}},
+                "geometry": "Geometry.default", "materials": [{"*": "Material.default"}],
+                "textures": ["Array.skin[q.property('esb:phase') == 2 ? 1 : 0]"]},
+            "controller.render.esb.dynamo": {
+                "arrays": {"textures": {"Array.skin": ["Texture.default", "Texture.charged"]}},
+                "geometry": "Geometry.default", "materials": [{"*": "Material.default"}],
+                "textures": ["Array.skin[q.property('esb:phase') == 2 ? 1 : 0]"]},
+            "controller.render.esb.electric_chair": {
+                "geometry": "Geometry.default", "materials": [{"*": "Material.default"}], "textures": ["Texture.default"]},
+            "controller.render.esb.volt_bulb": {
+                "geometry": "Geometry.default", "materials": [{"*": "Material.default"}], "textures": ["Texture.default"],
+                "is_hurt_color": no_tint, "on_fire_color": no_tint},
         },
     })
     write(os.path.join(RP, "textures", "item_texture.json"), {
@@ -329,6 +476,8 @@ def client_entities():
         "texture_data": {
             "esb_da_vinci_blueprint": {"textures": "textures/items/esb_da_vinci_blueprint"},
             "esb_leonardo_codex": {"textures": "textures/items/esb_leonardo_codex"},
+            "esb_volt_shiv": {"textures": "textures/items/esb_volt_shiv"},
+            "esb_edison_patent": {"textures": "textures/items/esb_edison_patent"},
         },
     })
 
@@ -336,7 +485,7 @@ def client_entities():
 LANG = {
     "en_US": {
         "pack.name": PACK_NAME,
-        "pack.description": "Boss 1: Leonardo da Vinci, the Clockwork Maestro",
+        "pack.description": "Boss 1: Leonardo da Vinci, Boss 2: Thomas Edison",
         "entity.esb:da_vinci.name": "Leonardo da Vinci",
         "item.spawn_egg.entity.esb:da_vinci.name": "Spawn Leonardo da Vinci",
         "entity.esb:brass_gear.name": "Brass Gear",
@@ -355,6 +504,25 @@ LANG = {
         "esb.msg.summon_space": "§cThe blueprint needs open ground: clear a 3x3 area 4 blocks high in front of you.",
         "esb.msg.codex": "§6Inventor's Insight§r: Haste, Speed and Night Vision for %s seconds.",
         "esb.msg.codex_cd": "§7The codex needs %s more seconds.",
+        "entity.esb:edison.name": "Thomas Edison",
+        "item.spawn_egg.entity.esb:edison.name": "Spawn Thomas Edison",
+        "entity.esb:dynamo.name": "The Dynamo",
+        "entity.esb:electric_chair.name": "Electric Chair",
+        "entity.esb:volt_bulb.name": "Volt Bulb",
+        "item.esb:volt_shiv.name": "Volt Shiv",
+        "item.esb:edison_patent.name": "Edison's Patent",
+        "esb.title.edison": "§eThomas Edison",
+        "esb.subtitle.edison": "§7The Wizard of Menlo Park",
+        "esb.msg.edison_intro": "§eThomas Edison§r: \"I have not failed. I've just found 10,000 ways that won't work.\"",
+        "esb.msg.edison_phase2": "§eThomas Edison§r: \"Genius is one percent inspiration and ninety-nine percent perspiration!\"",
+        "esb.msg.edison_death": "§eThomas Edison§r: \"It is very beautiful over there...\"",
+        "esb.msg.blackout": "§8The lights go out...",
+        "esb.msg.overload": "§eThe Dynamo is overloading! Get away or break line of sight!",
+        "esb.msg.chair": "§cYou have been sentenced! Step off the chair!",
+        "esb.msg.strapped": "§cStrapped in! Break the chair to escape!",
+        "esb.msg.unplugged": "§aThe Dynamo is down! Edison is unplugged!",
+        "esb.msg.patent": "§eThe patent is filed... a current hums through the ground.",
+        "esb.msg.patent_busy": "§cThomas Edison is already nearby.",
     },
 }
 
@@ -383,7 +551,17 @@ def ts_constants():
            f"export const ACTION_VALUES = {json.dumps(spec.ACTION_VALUES)} as const;",
            "export type Action = (typeof ACTION_VALUES)[number];",
            "/** Action lengths and named moments in seconds (identical to the animation files). */",
-           f"export const ACTIONS = {json.dumps(acts, indent=2)} as const;", ""]
+           f"export const ACTIONS = {json.dumps(acts, indent=2)} as const;",
+           f'export const EDISON_ID = "{spec.EDISON_ID}";',
+           f'export const DYNAMO_ID = "{spec.DYNAMO_ID}";',
+           f'export const CHAIR_ID = "{spec.CHAIR_ID}";',
+           f'export const VOLT_BULB_ID = "{spec.VOLT_BULB_ID}";',
+           f'export const SHIV_ID = "{spec.SHIV_ID}";',
+           f'export const PATENT_ID = "{spec.PATENT_ID}";',
+           f"export const EDISON_ACTION_VALUES = {json.dumps(spec.EDISON_ACTION_VALUES)} as const;",
+           "export type EdisonAction = (typeof EDISON_ACTION_VALUES)[number];",
+           f"export const EDISON_ACTIONS = {json.dumps({k: {'length': v['length'], 'moments': v['moments']} for k, v in spec.EDISON_ACTIONS.items()}, indent=2)} as const;",
+           ""]
     write(os.path.join(SRC, "spec.ts"), "\n".join(out))
 
 
@@ -393,6 +571,8 @@ if __name__ == "__main__":
     gear_entity()
     sigil_entity()
     items()
+    edison_entities()
+    edison_items()
     client_entities()
     texts()
     ts_constants()

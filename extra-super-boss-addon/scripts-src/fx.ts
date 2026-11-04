@@ -23,17 +23,24 @@ export const PFX = {
   sigilEdge: "esb:sigil_edge",
   sigilBurst: "esb:sigil_burst",
   pillar: "esb:summon_pillar",
+  voltSpark: "esb:volt_spark",
+  zap: "esb:zap",
+  glass: "esb:glass_shards",
+  telegraph: "esb:telegraph",
+  smoke: "esb:blink_smoke",
 } as const;
 
-export function particle(dim: Dimension, id: string, at: Vector3, radius?: number): boolean {
+/** radius -> variable.radius (circles); ac -> variable.ac (Edison: 0 = amber DC, 1 = blue AC). */
+export function particle(dim: Dimension, id: string, at: Vector3, radius?: number, ac?: number): boolean {
   if (fxStats.thisTick >= FX_BUDGET_PER_TICK) {
     fxStats.dropped++;
     return false;
   }
   try {
-    if (radius !== undefined) {
+    if (radius !== undefined || ac !== undefined) {
       const m = new MolangVariableMap();
-      m.setFloat("variable.radius", radius);
+      if (radius !== undefined) m.setFloat("variable.radius", radius);
+      if (ac !== undefined) m.setFloat("variable.ac", ac);
       dim.spawnParticle(id, at, m);
     } else {
       dim.spawnParticle(id, at);
@@ -62,6 +69,11 @@ export const SND = {
   levelup: "random.levelup",
   spell: "mob.evocation_illager.cast_spell",
   summon: "mob.evocation_illager.prepare_summon",
+  throw: "random.bow",
+  glass: "random.glass",
+  portal: "mob.endermen.portal",
+  fizz: "random.fizz",
+  thunder: "ambient.weather.lightning.impact",
 } as const;
 
 export function sound(dim: Dimension, id: string, at: Vector3, volume = 1, pitch = 1): void {

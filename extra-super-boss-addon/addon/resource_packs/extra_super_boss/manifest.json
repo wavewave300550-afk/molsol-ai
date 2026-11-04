@@ -2,12 +2,12 @@
   "format_version": 2,
   "header": {
     "name": "Extra Super Boss",
-    "description": "Boss 1: Leonardo da Vinci, the Clockwork Maestro / บอสที่ 1: เลโอนาร์โด ดา วินชี (v1.0.1)",
+    "description": "Boss 1: Leonardo da Vinci - Boss 2: Thomas Edison (v1.1.0)",
     "uuid": "444fca9a-af9f-45d5-bc08-3a573e2784ef",
     "version": [
       1,
-      0,
-      1
+      1,
+      0
     ],
     "min_engine_version": [
       1,
@@ -21,8 +21,8 @@
       "uuid": "20d09311-9d43-4947-bf46-beaded42baf8",
       "version": [
         1,
-        0,
-        1
+        1,
+        0
       ]
     }
   ],

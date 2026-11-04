@@ -1,4 +1,4 @@
-// npm run package  ->  dist/Extra_Super_Boss_Da_Vinci_v1.mcaddon
+// npm run package  ->  dist/Extra_Super_Boss_v1.mcaddon
 // Uses Minecraft Creator Tools `exportaddon`, then checks the archive holds both packs and every asset.
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIST = path.join(ROOT, "dist");
-const NAME = "Extra_Super_Boss_Da_Vinci_v1.mcaddon";
+const NAME = "Extra_Super_Boss_v1.mcaddon";
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "ct-export-"));
 execFileSync("npx", ["-y", "@minecraft/creator-tools@0.20.0", "exportaddon", "-i", path.join(ROOT, "addon"), "-o", tmp],

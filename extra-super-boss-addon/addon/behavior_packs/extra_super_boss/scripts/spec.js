@@ -70,3 +70,79 @@ export const ACTIONS = {
         }
     }
 };
+export const EDISON_ID = "esb:edison";
+export const DYNAMO_ID = "esb:dynamo";
+export const CHAIR_ID = "esb:electric_chair";
+export const VOLT_BULB_ID = "esb:volt_bulb";
+export const SHIV_ID = "esb:volt_shiv";
+export const PATENT_ID = "esb:edison_patent";
+export const EDISON_ACTION_VALUES = ["none", "intro", "bulb_toss", "vanish", "backstab", "overload", "chair", "transform", "stunned", "flourish", "death"];
+export const EDISON_ACTIONS = {
+    "intro": {
+        "length": 4.4,
+        "moments": {
+            "light": 0.5,
+            "hop": 3.0,
+            "land": 3.4
+        }
+    },
+    "bulb_toss": {
+        "length": 1.8,
+        "moments": {
+            "throw1": 0.5,
+            "throw2": 0.8,
+            "throw3": 1.1
+        }
+    },
+    "vanish": {
+        "length": 0.9,
+        "moments": {
+            "crush": 0.35,
+            "fade": 0.5
+        }
+    },
+    "backstab": {
+        "length": 1.0,
+        "moments": {
+            "stab": 0.25
+        }
+    },
+    "overload": {
+        "length": 2.6,
+        "moments": {
+            "grab": 0.4,
+            "pull": 1.0,
+            "discharge": 1.4
+        }
+    },
+    "chair": {
+        "length": 2.2,
+        "moments": {
+            "snap": 0.6,
+            "lock": 1.4
+        }
+    },
+    "transform": {
+        "length": 3.6,
+        "moments": {
+            "burst": 2.0
+        }
+    },
+    "stunned": {
+        "length": 3.0,
+        "moments": {}
+    },
+    "flourish": {
+        "length": 2.4,
+        "moments": {
+            "catch": 1.25
+        }
+    },
+    "death": {
+        "length": 4.0,
+        "moments": {
+            "kneel": 1.0,
+            "fade": 3.0
+        }
+    }
+};

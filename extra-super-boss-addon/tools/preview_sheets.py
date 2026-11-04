@@ -125,11 +125,141 @@ def gifs(only=None, fps=12, size=(256, 320), scale=5.1):
         print("wrote", p)
 
 
+# ------------------------------------------------------------------------------ Boss 2: Edison
+PE = "animation.esb.edison."
+E_GEO = R.load_geo("edison")
+E_TEX = R.load_tex("edison")
+E_TEX2 = R.load_tex("edison_charged")
+D_GEO = R.load_geo("dynamo")
+D_TEX = R.load_tex("dynamo")
+D_TEX2 = R.load_tex("dynamo_charged")
+C_GEO = R.load_geo("electric_chair")
+C_TEX = R.load_tex("electric_chair")
+E_SCALE = 1.45
+
+
+def edison_pose(action=None, t=0.0, phase=1, speed=0.0, dist=0.0, life=None):
+    env = {"q.modified_move_speed": speed, "q.modified_distance_moved": dist, "q.target_x_rotation": 0, "q.target_y_rotation": 0,
+           "q.life_time": life if life is not None else t, "q.property('esb:phase')": phase, "q.delta_time": 0.05}
+    names, times = [PE + "idle", PE + "walk"], [env["q.life_time"], 0.0]
+    if action:
+        names.append(PE + action)
+        times.append(t)
+    return K.sample_pose([R.ANIMS[n] for n in names], [1.0] * len(names), times, env)
+
+
+def scaled(pose, s=E_SCALE, offset=(0, 0, 0)):
+    """Apply the client render scale (and a world offset) to a pose, for drawing next to other models."""
+    p = {k: {kk: np.array(vv, dtype=float).copy() for kk, vv in v.items()} for k, v in (pose or {}).items()}
+    root = p.setdefault("root", {"rotation": np.zeros(3), "position": np.zeros(3), "scale": np.ones(3)})
+    root["position"] = root["position"] * s + np.array(offset, dtype=float)
+    root["scale"] = root["scale"] * s
+    return p
+
+
+E_SHEET = [
+    ("intro: on the Dynamo", "intro", 0.6, 1), ("intro: hop", "intro", 3.0, 1), ("idle", None, 0.0, 1),
+    ("shank: wind", "shank", 0.14, 1), ("shank: thrust", "shank", 0.3, 1), ("bulb toss", "bulb_toss", 0.8, 1),
+    ("vanish: crush", "vanish", 0.35, 1), ("backstab", "backstab", 0.25, 1), ("overload: pull", "overload", 1.0, 1),
+    ("overload: surge", "overload", 1.6, 1), ("chair: snap", "chair", 0.6, 1), ("transform", "transform", 2.2, 2),
+    ("phase 2 idle", None, 0.0, 2), ("stunned", "stunned", 1.5, 1), ("flourish", "flourish", 0.9, 1), ("death", "death", 4.0, 1),
+]
+
+
+def edison_sheet(cols=8, size=(260, 340), name="edison_poses.png"):
+    tiles = []
+    for label, action, t, phase in E_SHEET:
+        pose = edison_pose(action, t, phase)
+        tex = E_TEX2 if phase == 2 else E_TEX
+        if action == "intro" and t < 2.9:
+            cam = K.Camera((0, 30, 0), 28, 8, scale=size[1] / 82, size=size)
+            img = R.draw(cam, scaled(pose, offset=(0, 33.5, 0)), geo=E_GEO, tex=tex, extra=[(D_GEO, D_TEX, None, False)])
+        else:
+            cam = K.Camera((0, 27, 0), 28, 8, scale=size[1] / 78, size=size)
+            img = R.draw(cam, scaled(pose), geo=E_GEO, tex=tex)
+        ImageDraw.Draw(img).text((8, 6), label, fill=(245, 225, 190), font=R.font(14))
+        tiles.append(img)
+    rows = (len(tiles) + cols - 1) // cols
+    out = Image.new("RGB", (cols * size[0], rows * size[1]))
+    for i, tl in enumerate(tiles):
+        out.paste(tl, ((i % cols) * size[0], (i // cols) * size[1]))
+    p = os.path.join(R.OUT, name)
+    out.save(p)
+    print("wrote", p)
+
+
+E_GIFS = [
+    ("edison_intro", "intro", 1), ("edison_shank", "shank", 1), ("edison_bulb_toss", "bulb_toss", 1),
+    ("edison_vanish_backstab", "vanish+backstab", 1), ("edison_overload", "overload", 1), ("edison_chair", "chair", 1),
+    ("edison_transform", "transform", 2), ("edison_stunned", "stunned", 1), ("edison_flourish", "flourish", 1),
+    ("edison_death", "death", 1), ("edison_walk", None, 1), ("edison_phase2_walk", None, 2),
+]
+
+
+def edison_gifs(only=None, fps=12, size=(256, 320)):
+    os.makedirs(ANIM_DIR, exist_ok=True)
+    acts = {k: v["length"] for k, v in spec.EDISON_ACTIONS.items()}
+    acts["shank"] = spec.SHANK["length"]
+    hop, land = spec.EDISON_ACTIONS["intro"]["moments"]["hop"], spec.EDISON_ACTIONS["intro"]["moments"]["land"]
+    for name, action, phase in E_GIFS:
+        if only and name not in only:
+            continue
+        seq = [(a, acts[a]) for a in action.split("+")] if action else [(None, 1.6)]
+        frames = []
+        for act_name, dur in seq:
+            for i in range(max(2, int(round(dur * fps)))):
+                t = i / fps
+                speed = 1.0 if act_name is None else 0.0
+                pose = edison_pose(act_name, t, phase, speed=speed, dist=t * 4.0 * 1.4, life=t + 0.3)
+                tex = E_TEX2 if phase == 2 else E_TEX
+                extra, off, tgt, sc = [], (0, 0, 0), (0, 24, 0), size[1] / 64
+                if act_name == "intro":
+                    k = min(1.0, max(0.0, (t - hop) / (land - hop)))
+                    off = (0, 33.5 * (1 - k) + np.sin(k * np.pi) * 12, -41.6 * k)
+                    extra = [(D_GEO, D_TEX, None, False)]
+                    tgt, sc = (0, 28, -14), size[1] / 92
+                cam = K.Camera(tgt, 30, 10, scale=sc, size=size)
+                img = R.draw(cam, scaled(pose, offset=off), bg=flat_bg(size), ground=False, geo=E_GEO, tex=tex, extra=extra)
+                ImageDraw.Draw(img).text((8, 6), name.replace("edison_", ""), fill=(245, 225, 190), font=R.font(14))
+                frames.append(img)
+        pal = frames[len(frames) // 2].convert("P", palette=Image.ADAPTIVE, colors=128)
+        frames = [f.quantize(palette=pal, dither=Image.Dither.NONE) for f in frames]
+        p = os.path.join(ANIM_DIR, f"{name}.gif")
+        frames[0].save(p, save_all=True, append_images=frames[1:], duration=int(1000 / fps), loop=0, disposal=2)
+        print("wrote", p)
+
+
+def props_sheet(name="edison_props.png", size=(420, 460)):
+    """The Dynamo (DC and AC), the electric chair (armed / locked) and the thrown bulb."""
+    tiles = []
+    for label, geo, tex, sc, tgt in (("The Dynamo", D_GEO, D_TEX, 9, (0, 17, 0)), ("The Dynamo (phase 2, AC)", D_GEO, D_TEX2, 9, (0, 17, 0)),
+                                     ("Electric Chair", C_GEO, C_TEX, 10, (0, 17, 0))):
+        cam = K.Camera(tgt, 28, 12, scale=sc, size=size)
+        img = R.draw(cam, None, geo=geo, tex=tex)
+        ImageDraw.Draw(img).text((10, 8), label, fill=(245, 225, 190), font=R.font(16))
+        tiles.append(img)
+    out = Image.new("RGB", (size[0] * len(tiles), size[1]))
+    for i, tl in enumerate(tiles):
+        out.paste(tl, (i * size[0], 0))
+    p = os.path.join(R.OUT, name)
+    out.save(p)
+    print("wrote", p)
+
+
+def run_all():
+    sheet()
+    gifs()
+    edison_sheet()
+    props_sheet()
+    edison_gifs()
+
+
 if __name__ == "__main__":
     if "--sheet" in sys.argv:
         sheet()
+        edison_sheet()
+        props_sheet()
     elif "--gif" in sys.argv:
         gifs([a for a in sys.argv[2:]] or None)
     else:
-        sheet()
-        gifs()
+        run_all()

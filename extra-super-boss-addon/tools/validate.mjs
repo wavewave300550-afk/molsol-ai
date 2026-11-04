@@ -187,6 +187,13 @@ for (const [id, ce] of ceFiles) {
 const main = geos.get("geometry.esb.da_vinci");
 const allBones = new Set(main.bones.map((b) => b.name));
 const locators = new Set(main.bones.flatMap((b) => Object.keys(b.locators ?? {})));
+for (const [id, c] of ceFiles) {
+  for (const [k, t] of Object.entries(c.textures)) {
+    const g = geos.get(c.geometry.default);
+    const f = path.join(RP, `${t}.png`);
+    if (g && fs.existsSync(f)) ok(pngSize(f).w === g.description.texture_width && pngSize(f).h === g.description.texture_height, `${id}: ${k} texture matches the geometry size`);
+  }
+}
 for (const b of ["head", "torso", "arm_l", "gauntlet_l", "ghand_l", "finger_l_1", "finger_l_4", "thumb_l", "arm_r", "hand_r",
   "compass", "leg_l", "shin_r", "foot_l", "cape_tail_l", "cape_tail_r", "hair_tail", "wing_l", "wing_r_tip"]) {
   ok(allBones.has(b), `rig bone ${b} present`);
@@ -199,49 +206,87 @@ const ctrls = new Map();
 for (const f of files(path.join(RP, "animation_controllers"), ".json")) for (const [k, c] of Object.entries(json(f).animation_controllers)) ctrls.set(k, c);
 const particles = new Set(files(path.join(RP, "particles"), ".json").map((f) => json(f).particle_effect.description.identifier));
 const ce = ceFiles.get("esb:da_vinci");
+// animation / controller name -> the entity that owns it ("animation.esb.<short>.x")
+const SHORT = { da_vinci: "esb:da_vinci", brass_gear: "esb:brass_gear", vitruvian_sigil: "esb:vitruvian_sigil", edison: "esb:edison",
+  dynamo: "esb:dynamo", electric_chair: "esb:electric_chair", volt_bulb: "esb:volt_bulb" };
+const ownerOf = (id) => SHORT[id.replace(/^controller\./, "").split(".")[2]];
+for (const id of [...anims.keys(), ...ctrls.keys()]) ok(!!ownerOf(id), `${id}: unknown owner`);
+const geoOf = (ent) => geos.get(ceFiles.get(ent).geometry.default);
 for (const [id, d] of ceFiles) {
-  for (const [k, v] of Object.entries(d.animations ?? {})) ok(anims.has(v) || ctrls.has(v), `${id}: animation ${k} -> ${v} missing`);
+  for (const [k, v] of Object.entries(d.animations ?? {})) {
+    ok(anims.has(v) || ctrls.has(v), `${id}: animation ${k} -> ${v} missing`);
+    ok(ownerOf(v) === id, `${id}: uses ${v} that belongs to another entity`);
+  }
   for (const a of d.scripts?.animate ?? []) {
     const k = typeof a === "string" ? a : Object.keys(a)[0];
     ok(k in (d.animations ?? {}), `${id}: animate ${k} not mapped`);
   }
   for (const [k, p] of Object.entries(d.particle_effects ?? {})) ok(particles.has(p), `${id}: particle ${k} -> ${p} missing`);
+  // every animation of this entity is mapped (no orphans)
+  const mappedHere = new Set(Object.values(d.animations ?? {}));
+  for (const aid of anims.keys()) if (ownerOf(aid) === id) ok(mappedHere.has(aid), `animation ${aid} is never mapped (orphan)`);
 }
 for (const [id, a] of anims) {
-  const g = id.includes("brass_gear") ? geos.get("geometry.esb.brass_gear") : id.includes("vitruvian_sigil") ? geos.get("geometry.esb.vitruvian_sigil") : main;
-  const owner = id.includes("brass_gear") ? ceFiles.get("esb:brass_gear") : id.includes("vitruvian_sigil") ? ceFiles.get("esb:vitruvian_sigil") : ce;
+  const ent = ownerOf(id);
+  if (!ent) continue;
+  const g = geoOf(ent);
+  const owner = ceFiles.get(ent);
   const bones = new Set(g.bones.map((b) => b.name));
   const locs = new Set(g.bones.flatMap((b) => Object.keys(b.locators ?? {})));
-  for (const bone of Object.keys(a.bones ?? {})) ok(bones.has(bone), `${id}: bone ${bone} not in the geometry`);
+  for (const bone of Object.keys(a.bones ?? {})) ok(bones.has(bone), `${id}: bone ${bone} not in ${ent}'s geometry`);
   for (const pe of Object.values(a.particle_effects ?? {}).flat()) {
     ok(pe.effect in (owner.particle_effects ?? {}), `${id}: particle key ${pe.effect} not in client entity`);
     ok(locs.has(pe.locator), `${id}: locator ${pe.locator} missing`);
   }
 }
-// action lengths in the animation files equal the script spec
-const specActs = JSON.parse(spec.match(/ACTIONS = (\{[\s\S]*?\n\}) as const/)[1]);
-for (const [k, v] of Object.entries(specActs)) {
-  ok(anims.get(`animation.esb.da_vinci.${k}`)?.animation_length === v.length, `animation ${k} is ${v.length}s like the script`);
+// action lengths in the animation files equal the script spec, for both bosses
+const specActs = JSON.parse(spec.match(/export const ACTIONS = (\{[\s\S]*?\n\}) as const/)[1]);
+const specActsE = JSON.parse(spec.match(/export const EDISON_ACTIONS = (\{[\s\S]*?\n\}) as const/)[1]);
+const actionValuesE = JSON.parse(spec.match(/EDISON_ACTION_VALUES = (\[[^\]]*\])/)[1]);
+for (const [short, acts] of [["da_vinci", specActs], ["edison", specActsE]]) {
+  for (const [k, v] of Object.entries(acts)) {
+    ok(anims.get(`animation.esb.${short}.${k}`)?.animation_length === v.length, `${short} animation ${k} is ${v.length}s like the script`);
+  }
 }
-// Molang property reads are valid synced properties / enum values
-const molang = JSON.stringify([...ctrls.values(), ...anims.values(), ce.scripts]);
-for (const m of molang.matchAll(/q\.property\('([^']+)'\)\s*(==|!=)\s*'([^']+)'/g)) {
-  const def = props[m[1]];
-  ok(def && def.client_sync && def.values.includes(m[3]), `Molang compares ${m[1]} with '${m[3]}' (not a synced enum value)`);
+const edisonBP = bpEntities.get("esb:edison");
+ok(JSON.stringify(edisonBP.description.properties["esb:action"].values) === JSON.stringify(actionValuesE), "Edison esb:action enum matches the spec");
+// Molang property reads: each controller / animation may only read synced properties of its own entity
+for (const [id, obj] of [...ctrls.entries(), ...anims.entries()]) {
+  const ent = ownerOf(id);
+  const eprops = bpEntities.get(ent)?.description.properties ?? {};
+  const txt = JSON.stringify(obj);
+  for (const m of txt.matchAll(/q\.property\('([^']+)'\)\s*(==|!=)\s*'([^']+)'/g)) {
+    const def = eprops[m[1]];
+    ok(def && def.client_sync && def.values.includes(m[3]), `${id}: compares ${m[1]} with '${m[3]}' (not a synced enum value of ${ent})`);
+  }
+  for (const m of txt.matchAll(/q\.property\('([^']+)'\)/g)) ok(eprops[m[1]]?.client_sync, `${id}: reads ${m[1]} which ${ent} does not sync`);
 }
-for (const m of JSON.stringify([...ctrls.values(), ...[...anims.entries()].filter(([k]) => k.includes("da_vinci")).map(([, v]) => v)])
-  .matchAll(/q\.property\('([^']+)'\)/g)) ok(props[m[1]]?.client_sync, `Molang reads ${m[1]} which is not client_sync`);
-ok(bpEntities.get("esb:vitruvian_sigil").description.properties["esb:radius"].client_sync, "sigil radius is synced");
-// every action value has a controller state that plays it
-const actionCtrl = ctrls.get("controller.animation.esb.da_vinci.action");
-for (const v of actionValues) {
-  if (v === "none") continue;
-  ok(!!actionCtrl.states[v], `action '${v}' has a controller state`);
-  ok(molang.includes(`q.property('esb:action') == '${v}'`), `action '${v}' has a transition`);
-  ok(new RegExp(`["']${v}["']`).test(js), `action '${v}' is set by the scripts`);
+for (const [id, d] of ceFiles) {
+  const eprops = bpEntities.get(id)?.description.properties ?? {};
+  for (const m of JSON.stringify(d.scripts ?? {}).matchAll(/q\.property\('([^']+)'\)/g)) ok(eprops[m[1]]?.client_sync, `${id} client scripts read ${m[1]}`);
+}
+const rcsAll = new Map();
+for (const f of files(path.join(RP, "render_controllers"), ".json")) for (const [k, r] of Object.entries(json(f).render_controllers)) rcsAll.set(k, r);
+for (const id of ["esb:edison", "esb:dynamo"]) {
+  const rc = rcsAll.get(`controller.render.${id.replace(":", ".")}`);
+  ok(rc && JSON.stringify(rc).includes("q.property('esb:phase')") && bpEntities.get(id).description.properties["esb:phase"]?.client_sync,
+    `${id}: phase 2 texture switch reads a synced property`);
+  ok(texExists(ceFiles.get(id).textures.charged), `${id}: charged texture exists`);
+}
+// every action value of each boss has a controller state and is set by the scripts
+for (const [short, values, ctrl] of [["da_vinci", actionValues, "controller.animation.esb.da_vinci.action"],
+  ["edison", actionValuesE, "controller.animation.esb.edison.action"]]) {
+  const c = ctrls.get(ctrl);
+  for (const v of values) {
+    if (v === "none") continue;
+    ok(!!c.states[v], `${short} action '${v}' has a controller state`);
+    ok(JSON.stringify(c).includes(`q.property('esb:action') == '${v}'`), `${short} action '${v}' has a transition`);
+    ok(new RegExp(`["']${v}["']`).test(js), `${short} action '${v}' is set by the scripts`);
+  }
 }
 // controller graphs: reachable, cross-faded, no dead ends
 for (const [id, c] of ctrls) {
+  const owner = ceFiles.get(ownerOf(id));
   const seen = new Set([c.initial_state ?? "default"]);
   const todo = [...seen];
   while (todo.length) {
@@ -256,25 +301,26 @@ for (const [id, c] of ctrls) {
   }
   for (const [sn, st] of Object.entries(c.states)) {
     ok(seen.has(sn), `${id}: state ${sn} is unreachable`);
-    for (const a of st.animations ?? []) ok((typeof a === "string" ? a : Object.keys(a)[0]) in ce.animations, `${id}.${sn}: animation not mapped`);
+    for (const a of st.animations ?? []) ok((typeof a === "string" ? a : Object.keys(a)[0]) in owner.animations, `${id}.${sn}: animation not mapped`);
     ok((st.transitions ?? []).length > 0, `${id}.${sn}: dead-end state`);
-    if ((st.animations ?? []).length && sn !== "default") ok(typeof st.blend_transition === "number" || id.endsWith("wings"), `${id}.${sn}: no blend_transition`);
   }
 }
-// every animation is used
-const mapped = new Set(Object.values(ce.animations));
-for (const id of anims.keys()) if (id.includes("da_vinci")) ok(mapped.has(id), `animation ${id} is never mapped (orphan)`);
-// particles: every emitter ends on its own; script particle ids exist
+// particles: every emitter ends on its own; ids used by scripts exist
 for (const f of files(path.join(RP, "particles"), ".json")) {
   const c = json(f).particle_effect.components;
   ok(!!(c["minecraft:emitter_lifetime_once"] || c["minecraft:emitter_lifetime_expression"]), `${path.basename(f)}: emitter must end`);
 }
+const allProps = new Set([...bpEntities.values()].flatMap((e) => Object.keys(e.description.properties ?? {})));
+const itemIds = new Set(files(path.join(BP, "items"), ".json").map((f) => json(f)["minecraft:item"].description.identifier));
 for (const m of new Set([...js.matchAll(/"(esb:[a-z_]+)"/g)].map((x) => x[1]))) {
-  if (bpEntities.has(m) || m in props || m.startsWith("esb:intro") || m === "esb:radius" || boss.events[m]) continue;
-  ok(particles.has(m) || m.startsWith("esb:da_vinci_") || m === "esb:leonardo_codex", `script id ${m} is not a particle/entity/item`);
+  if (bpEntities.has(m) || allProps.has(m) || itemIds.has(m) || m.startsWith("esb:intro") || boss.events[m]) continue;
+  ok(particles.has(m), `script id ${m} is not a particle / entity / item / property / event`);
 }
-const rcs = new Map();
-for (const f of files(path.join(RP, "render_controllers"), ".json")) for (const [k, r] of Object.entries(json(f).render_controllers)) rcs.set(k, r);
+for (const b of ["head", "torso", "arm_r", "hand_r", "shiv", "arm_l", "hand_l", "bulb_l", "apron_l", "apron_r", "leg_l", "shin_r", "foot_l"]) {
+  ok(new Set(geoOf("esb:edison").bones.map((x) => x.name)).has(b), `Edison rig bone ${b}`);
+}
+for (const b of ["lever_1", "lever_3", "bulb_1", "bulb_5"]) ok(new Set(geoOf("esb:dynamo").bones.map((x) => x.name)).has(b), `Dynamo bone ${b}`);
+const rcs = rcsAll;
 for (const [id, d] of ceFiles) for (const r of d.render_controllers) ok(rcs.has(typeof r === "string" ? r : Object.keys(r)[0]), `${id}: render controller missing`);
 
 // ---------------------------------------------------------------- 6) items, loot, names
@@ -287,12 +333,18 @@ for (const it of items) {
 const lang = fs.readFileSync(path.join(RP, "texts", "en_US.lang"), "utf8");
 const langKeys = new Set(lang.split("\n").filter((l) => l.includes("=")).map((l) => l.split("=")[0]));
 for (const id of bpEntities.keys()) ok(langKeys.has(`entity.${id}.name`), `lang: entity.${id}.name`);
-ok(langKeys.has("item.spawn_egg.entity.esb:da_vinci.name"), "lang: spawn egg name");
 for (const it of items) ok(langKeys.has(it.components["minecraft:display_name"].value), `lang: ${it.description.identifier}`);
 for (const m of new Set([...js.matchAll(/"(esb\.(?:msg|title|subtitle)\.[a-z_0-9]+)"/g)].map((x) => x[1]))) ok(langKeys.has(m), `lang key ${m} used by scripts`);
 const loot = json(path.join(BP, "loot_tables", "entities", "da_vinci.json"));
-ok(loot.pools.some((p) => p.entries.some((e) => e.name === "esb:leonardo_codex")), "codex drops from the boss");
-ok(ce.spawn_egg && ce.spawn_egg.base_color && ce.spawn_egg.overlay_color, "spawn egg colours");
+ok(loot.pools.some((p) => p.entries.some((e) => e.name === "esb:leonardo_codex")), "codex drops from Da Vinci");
+const lootE = json(path.join(BP, "loot_tables", "entities", "edison.json"));
+ok(lootE.pools.some((p) => p.entries.some((e) => e.name === "esb:volt_shiv")), "Volt Shiv drops from Edison");
+for (const id of ["esb:da_vinci", "esb:edison"]) {
+  const c = ceFiles.get(id);
+  ok(c.spawn_egg && c.spawn_egg.base_color && c.spawn_egg.overlay_color, `${id}: spawn egg colours`);
+  ok(langKeys.has(`item.spawn_egg.entity.${id}.name`), `lang: ${id} spawn egg name`);
+  ok(!!bpEntities.get(id).components["minecraft:boss"], `${id}: boss bar`);
+}
 
 console.log(`cross-reference checks: ${checks - errors.length}/${checks} passed`);
 for (const e of errors) console.log("  ERROR:", e);

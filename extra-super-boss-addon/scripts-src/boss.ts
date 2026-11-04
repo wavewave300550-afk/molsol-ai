@@ -1,16 +1,18 @@
 import { Entity, EntityDamageCause, GameMode, Player, system, Vector3 } from "@minecraft/server";
 import { BALANCE } from "./balance.js";
-import { Action, BOSS_ID } from "./spec.js";
+import { Action, BOSS_ID, EDISON_ID } from "./spec.js";
 import { add, angleDiff, clamp, localToWorld, turnToward, v3, yawTo } from "./vec.js";
 import { LocalOffset } from "./offsets.js";
 
 export const BOSS_FAMILY = "esb_boss";
-export const EXCLUDE_FAMILIES = ["esb_boss", "esb_fx", "esb_projectile", "inanimate"];
+export const EXCLUDE_FAMILIES = ["esb_boss", "esb_fx", "esb_projectile", "esb_construct", "inanimate"];
 export const EXCLUDE_TYPES = ["minecraft:item", "minecraft:xp_orb", "minecraft:arrow", "minecraft:snowball",
   "minecraft:armor_stand", "minecraft:painting", "minecraft:leash_knot", "minecraft:boat", "minecraft:chest_boat",
   "minecraft:minecart", "minecraft:ender_pearl", "minecraft:fireball", "minecraft:small_fireball"];
 
 export type Ability = "gear_volley" | "quake" | "vitruvian" | "dive";
+export type EdisonAbility = "bulb_toss" | "vanish" | "overload" | "chair";
+export type BossKind = "da_vinci" | "edison";
 
 export const sec = (s: number): number => Math.round(s * 20);
 export const now = (): number => system.currentTick;
@@ -25,7 +27,7 @@ export function safe<T>(fn: () => T): T | undefined {
 
 /** A running scripted action. `tick` counts from 0; moments fire once when reached. */
 export interface Run {
-  kind: Action;
+  kind: string;
   tick: number;
   length: number;
   fired: Set<string>;
@@ -42,13 +44,23 @@ export interface Dive {
   marker?: Entity;
 }
 
+/** Edison's electric chair in play: armed under a player, then locked with the player strapped in. */
+export interface Chair {
+  entity: Entity;
+  victim: Entity;
+  locked: boolean;
+  until: number;
+  seat: { x: number; y: number; z: number };
+}
+
 export interface BossState {
+  kind: BossKind;
   entity: Entity;
   id: string;
   phase: 1 | 2;
   run?: Run;
   target?: Entity;
-  ready: Record<Ability, number>;
+  ready: Record<string, number>;
   gapUntil: number;
   nextDecision: number;
   locked: boolean;
@@ -63,17 +75,28 @@ export interface BossState {
   props: Record<string, string | number | boolean>;
   sigil?: Entity;
   dive?: Dive;
+  // Edison
+  dynamo?: Entity;
+  chair?: Chair;
+  hidden: boolean;
+  blinkTo?: Vector3;
+  blinksLeft: number;
+  stunUntil: number;
+  hop?: { from: Vector3; to: Vector3 };
 }
 
 export const bosses = new Map<string, BossState>();
 
-export function newState(e: Entity): BossState {
+export function newState(e: Entity, kind: BossKind = "da_vinci"): BossState {
   const t = now();
   return {
+    kind,
     entity: e,
     id: e.id,
     phase: 1,
-    ready: { gear_volley: t + sec(3), quake: t + sec(2), vitruvian: t + sec(8), dive: t + sec(4) },
+    ready: kind === "edison"
+      ? { bulb_toss: t + sec(2), vanish: t + sec(4), overload: t + sec(8), chair: t + sec(6) }
+      : { gear_volley: t + sec(3), quake: t + sec(2), vitruvian: t + sec(8), dive: t + sec(4) },
     gapUntil: t,
     nextDecision: t,
     locked: false,
@@ -85,6 +108,9 @@ export function newState(e: Entity): BossState {
     nextFlourish: t + sec(BALANCE.flourish.every_min),
     yaw: safe(() => e.getRotation().y) ?? 0,
     props: {},
+    hidden: false,
+    blinksLeft: 0,
+    stunUntil: 0,
   };
 }
 
@@ -100,7 +126,7 @@ export function event(s: BossState, name: string): void {
   safe(() => s.entity.triggerEvent(name));
 }
 
-export function setAction(s: BossState, a: Action): void {
+export function setAction(s: BossState, a: Action | string): void {
   setProp(s, "esb:action", a);
 }
 
@@ -159,8 +185,10 @@ export function isProtectedPlayer(t: Entity): boolean {
   return gm === GameMode.Creative || gm === GameMode.Spectator;
 }
 
+export const BOSS_IDS: string[] = [BOSS_ID, EDISON_ID];
+
 export function isBoss(e: Entity | undefined): boolean {
-  return !!e && e.typeId === BOSS_ID;
+  return !!e && BOSS_IDS.includes(e.typeId);
 }
 
 export function centerOf(t: Entity): Vector3 {

@@ -5,6 +5,7 @@ import {
   Ability, BossState, centerOf, hpFrac, isLiving, isProtectedPlayer, now, playersNear, rayClear, safe, sec,
 } from "./boss.js";
 import { add, dist, hdist, norm, sub, v3 } from "./vec.js";
+import { thinkEdison } from "./edison.js";
 
 /** How often (ticks) the boss reconsiders its special attacks while chasing. */
 const DECIDE_EVERY = 8;
@@ -53,6 +54,10 @@ function pick(options: [Ability, number][]): Ability | undefined {
 }
 
 export function think(s: BossState): void {
+  if (s.kind === "edison") {
+    thinkEdison(s);
+    return;
+  }
   if (s.dying) {
     tickDying(s);
     return;
