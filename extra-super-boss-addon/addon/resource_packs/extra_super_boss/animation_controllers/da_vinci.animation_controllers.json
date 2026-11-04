@@ -1,0 +1,269 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.esb.da_vinci.action": {
+   "initial_state": "default",
+   "states": {
+    "default": {
+     "transitions": [
+      {
+       "intro": "q.property('esb:action') == 'intro'"
+      },
+      {
+       "gear_volley": "q.property('esb:action') == 'gear_volley'"
+      },
+      {
+       "quake": "q.property('esb:action') == 'quake'"
+      },
+      {
+       "vitruvian": "q.property('esb:action') == 'vitruvian'"
+      },
+      {
+       "transform": "q.property('esb:action') == 'transform'"
+      },
+      {
+       "dive_rise": "q.property('esb:action') == 'dive_rise'"
+      },
+      {
+       "dive_hover": "q.property('esb:action') == 'dive_hover'"
+      },
+      {
+       "dive_strike": "q.property('esb:action') == 'dive_strike'"
+      },
+      {
+       "flourish": "q.property('esb:action') == 'flourish'"
+      },
+      {
+       "death": "q.property('esb:action') == 'death'"
+      }
+     ]
+    },
+    "intro": {
+     "animations": [
+      "intro"
+     ],
+     "transitions": [
+      {
+       "default": "q.property('esb:action') != 'intro'"
+      }
+     ],
+     "blend_transition": 0.2,
+     "blend_via_shortest_path": true
+    },
+    "gear_volley": {
+     "animations": [
+      "gear_volley"
+     ],
+     "transitions": [
+      {
+       "default": "q.property('esb:action') != 'gear_volley'"
+      }
+     ],
+     "blend_transition": 0.2,
+     "blend_via_shortest_path": true
+    },
+    "quake": {
+     "animations": [
+      "quake"
+     ],
+     "transitions": [
+      {
+       "default": "q.property('esb:action') != 'quake'"
+      }
+     ],
+     "blend_transition": 0.2,
+     "blend_via_shortest_path": true
+    },
+    "vitruvian": {
+     "animations": [
+      "vitruvian"
+     ],
+     "transitions": [
+      {
+       "default": "q.property('esb:action') != 'vitruvian'"
+      }
+     ],
+     "blend_transition": 0.2,
+     "blend_via_shortest_path": true
+    },
+    "transform": {
+     "animations": [
+      "transform"
+     ],
+     "transitions": [
+      {
+       "default": "q.property('esb:action') != 'transform'"
+      }
+     ],
+     "blend_transition": 0.2,
+     "blend_via_shortest_path": true
+    },
+    "dive_rise": {
+     "animations": [
+      "dive_rise"
+     ],
+     "transitions": [
+      {
+       "dive_hover": "q.property('esb:action') == 'dive_hover'"
+      },
+      {
+       "dive_strike": "q.property('esb:action') == 'dive_strike'"
+      },
+      {
+       "default": "!(q.property('esb:action') == 'dive_rise' || q.property('esb:action') == 'dive_hover' || q.property('esb:action') == 'dive_strike')"
+      }
+     ],
+     "blend_transition": 0.2,
+     "blend_via_shortest_path": true
+    },
+    "dive_hover": {
+     "animations": [
+      "dive_hover"
+     ],
+     "transitions": [
+      {
+       "dive_strike": "q.property('esb:action') == 'dive_strike'"
+      },
+      {
+       "default": "!(q.property('esb:action') == 'dive_hover' || q.property('esb:action') == 'dive_strike')"
+      }
+     ],
+     "blend_transition": 0.2,
+     "blend_via_shortest_path": true
+    },
+    "dive_strike": {
+     "animations": [
+      "dive_strike"
+     ],
+     "transitions": [
+      {
+       "default": "q.property('esb:action') != 'dive_strike'"
+      }
+     ],
+     "blend_transition": 0.2,
+     "blend_via_shortest_path": true
+    },
+    "flourish": {
+     "animations": [
+      "flourish"
+     ],
+     "transitions": [
+      {
+       "default": "q.property('esb:action') != 'flourish'"
+      }
+     ],
+     "blend_transition": 0.2,
+     "blend_via_shortest_path": true
+    },
+    "death": {
+     "animations": [
+      "death"
+     ],
+     "transitions": [
+      {
+       "default": "q.property('esb:action') != 'death'"
+      }
+     ],
+     "blend_transition": 0.15,
+     "blend_via_shortest_path": true
+    }
+   }
+  },
+  "controller.animation.esb.da_vinci.attack": {
+   "initial_state": "default",
+   "states": {
+    "default": {
+     "transitions": [
+      {
+       "slash": "q.is_delayed_attacking && q.property('esb:action') == 'none'"
+      }
+     ]
+    },
+    "slash": {
+     "animations": [
+      "slash"
+     ],
+     "blend_transition": 0.12,
+     "transitions": [
+      {
+       "default": "q.all_animations_finished || !q.property('esb:action') == 'none'"
+      }
+     ]
+    }
+   }
+  },
+  "controller.animation.esb.da_vinci.wings": {
+   "initial_state": "hidden",
+   "states": {
+    "hidden": {
+     "animations": [
+      "wings_hidden"
+     ],
+     "transitions": [
+      {
+       "unfold": "q.property('esb:action') == 'transform'"
+      },
+      {
+       "folded": "q.property('esb:phase') == 2"
+      }
+     ]
+    },
+    "unfold": {
+     "animations": [
+      "wings_unfold"
+     ],
+     "transitions": [
+      {
+       "folded": "!q.property('esb:action') == 'transform' && q.property('esb:phase') == 2"
+      },
+      {
+       "hidden": "!q.property('esb:action') == 'transform' && !q.property('esb:phase') == 2"
+      }
+     ]
+    },
+    "folded": {
+     "animations": [
+      "wings_folded"
+     ],
+     "blend_transition": 0.3,
+     "transitions": [
+      {
+       "flap": "q.property('esb:action') == 'dive_rise' || q.property('esb:action') == 'dive_hover'"
+      },
+      {
+       "swept": "q.property('esb:action') == 'dive_strike'"
+      },
+      {
+       "hidden": "!q.property('esb:phase') == 2"
+      }
+     ]
+    },
+    "flap": {
+     "animations": [
+      "wings_flap"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "swept": "q.property('esb:action') == 'dive_strike'"
+      },
+      {
+       "folded": "!(q.property('esb:action') == 'dive_rise' || q.property('esb:action') == 'dive_hover')"
+      }
+     ]
+    },
+    "swept": {
+     "animations": [
+      "wings_swept"
+     ],
+     "blend_transition": 0.1,
+     "transitions": [
+      {
+       "folded": "!q.property('esb:action') == 'dive_strike'"
+      }
+     ]
+    }
+   }
+  }
+ }
+}

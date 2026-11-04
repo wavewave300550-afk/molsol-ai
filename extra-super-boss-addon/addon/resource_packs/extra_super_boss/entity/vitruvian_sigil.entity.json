@@ -1,0 +1,28 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "esb:vitruvian_sigil",
+      "materials": {
+        "default": "entity_beam_additive"
+      },
+      "textures": {
+        "default": "textures/entity/vitruvian_sigil"
+      },
+      "geometry": {
+        "default": "geometry.esb.vitruvian_sigil"
+      },
+      "animations": {
+        "grow": "animation.esb.vitruvian_sigil.grow"
+      },
+      "scripts": {
+        "animate": [
+          "grow"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.esb.vitruvian_sigil"
+      ]
+    }
+  }
+}

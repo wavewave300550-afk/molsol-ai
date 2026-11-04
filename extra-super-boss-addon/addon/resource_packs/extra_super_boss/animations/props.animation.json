@@ -1,0 +1,56 @@
+{
+ "format_version": "1.8.0",
+ "animations": {
+  "animation.esb.brass_gear.spin": {
+   "loop": true,
+   "animation_length": 0.25,
+   "bones": {
+    "spin": {
+     "rotation": [
+      0,
+      "q.life_time * 1440",
+      0
+     ]
+    }
+   },
+   "particle_effects": {
+    "0.0": {
+     "effect": "trail",
+     "locator": "loc_gear"
+    }
+   }
+  },
+  "animation.esb.vitruvian_sigil.grow": {
+   "loop": true,
+   "animation_length": 10.0,
+   "bones": {
+    "root": {
+     "scale": [
+      "q.property('esb:radius') * 0.5 * math.min(1, 0.25 + q.life_time * 2.5)",
+      1,
+      "q.property('esb:radius') * 0.5 * math.min(1, 0.25 + q.life_time * 2.5)"
+     ]
+    },
+    "outer": {
+     "rotation": [
+      0,
+      "q.life_time * 24",
+      0
+     ]
+    },
+    "inner": {
+     "rotation": [
+      0,
+      "q.life_time * -60",
+      0
+     ],
+     "scale": [
+      "1 + math.sin(q.life_time * 540) * 0.04",
+      1,
+      "1 + math.sin(q.life_time * 540) * 0.04"
+     ]
+    }
+   }
+  }
+ }
+}

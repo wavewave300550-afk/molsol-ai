@@ -1,0 +1,70 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "esb:da_vinci",
+   "materials": {
+    "default": "entity_emissive"
+   },
+   "textures": {
+    "default": "textures/entity/da_vinci"
+   },
+   "geometry": {
+    "default": "geometry.esb.da_vinci"
+   },
+   "render_controllers": [
+    "controller.render.esb.da_vinci"
+   ],
+   "spawn_egg": {
+    "base_color": "#7E1F2A",
+    "overlay_color": "#D6AE5E"
+   },
+   "enable_attachables": false,
+   "scripts": {
+    "scale": "1.6",
+    "animate": [
+     "idle",
+     {
+      "walk": "!(q.property('esb:action') == 'dive_rise' || q.property('esb:action') == 'dive_hover' || q.property('esb:action') == 'dive_strike')"
+     },
+     {
+      "look": "!(q.property('esb:action') == 'death' || q.property('esb:action') == 'transform' || q.property('esb:action') == 'intro')"
+     },
+     "wings_controller",
+     "attack_controller",
+     "action_controller"
+    ],
+    "should_update_bones_and_effects_offscreen": "1.0"
+   },
+   "animations": {
+    "action_controller": "controller.animation.esb.da_vinci.action",
+    "attack_controller": "controller.animation.esb.da_vinci.attack",
+    "death": "animation.esb.da_vinci.death",
+    "dive_hover": "animation.esb.da_vinci.dive_hover",
+    "dive_rise": "animation.esb.da_vinci.dive_rise",
+    "dive_strike": "animation.esb.da_vinci.dive_strike",
+    "flourish": "animation.esb.da_vinci.flourish",
+    "gear_volley": "animation.esb.da_vinci.gear_volley",
+    "idle": "animation.esb.da_vinci.idle",
+    "intro": "animation.esb.da_vinci.intro",
+    "look": "animation.esb.da_vinci.look",
+    "quake": "animation.esb.da_vinci.quake",
+    "slash": "animation.esb.da_vinci.slash",
+    "transform": "animation.esb.da_vinci.transform",
+    "vitruvian": "animation.esb.da_vinci.vitruvian",
+    "walk": "animation.esb.da_vinci.walk",
+    "wings_controller": "controller.animation.esb.da_vinci.wings",
+    "wings_flap": "animation.esb.da_vinci.wings_flap",
+    "wings_folded": "animation.esb.da_vinci.wings_folded",
+    "wings_hidden": "animation.esb.da_vinci.wings_hidden",
+    "wings_swept": "animation.esb.da_vinci.wings_swept",
+    "wings_unfold": "animation.esb.da_vinci.wings_unfold"
+   },
+   "particle_effects": {
+    "spark": "esb:gold_spark",
+    "steam": "esb:steam_puff",
+    "pages": "esb:page_burst"
+   }
+  }
+ }
+}

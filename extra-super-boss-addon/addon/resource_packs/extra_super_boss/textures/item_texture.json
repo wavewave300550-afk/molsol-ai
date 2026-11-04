@@ -1,0 +1,12 @@
+{
+  "resource_pack_name": "extra_super_boss",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "esb_da_vinci_blueprint": {
+      "textures": "textures/items/esb_da_vinci_blueprint"
+    },
+    "esb_leonardo_codex": {
+      "textures": "textures/items/esb_leonardo_codex"
+    }
+  }
+}
