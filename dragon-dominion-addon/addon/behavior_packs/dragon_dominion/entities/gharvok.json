@@ -1,0 +1,350 @@
+{
+ "format_version": "1.21.90",
+ "minecraft:entity": {
+  "description": {
+   "identifier": "dragon_dominion:gharvok",
+   "is_spawnable": false,
+   "is_summonable": true,
+   "properties": {
+    "dragon_dominion:anim": {
+     "type": "int",
+     "range": [
+      0,
+      17
+     ],
+     "default": 0,
+     "client_sync": true
+    },
+    "dragon_dominion:flight": {
+     "type": "int",
+     "range": [
+      0,
+      2
+     ],
+     "default": 0,
+     "client_sync": true
+    },
+    "dragon_dominion:gait": {
+     "type": "int",
+     "range": [
+      0,
+      2
+     ],
+     "default": 0,
+     "client_sync": true
+    },
+    "dragon_dominion:skull": {
+     "type": "int",
+     "range": [
+      0,
+      2
+     ],
+     "default": 0,
+     "client_sync": true
+    },
+    "dragon_dominion:phase": {
+     "type": "int",
+     "range": [
+      1,
+      3
+     ],
+     "default": 1,
+     "client_sync": true
+    }
+   }
+  },
+  "component_groups": {
+   "dragon_dominion:roam": {
+    "minecraft:movement": {
+     "value": 0.17
+    },
+    "minecraft:behavior.random_stroll": {
+     "priority": 6,
+     "speed_multiplier": 0.75,
+     "xz_dist": 10,
+     "y_dist": 3,
+     "interval": 220
+    },
+    "minecraft:behavior.look_at_player": {
+     "priority": 7,
+     "look_distance": 24,
+     "probability": 0.02
+    },
+    "minecraft:behavior.random_look_around": {
+     "priority": 8
+    }
+   },
+   "dragon_dominion:scripted": {
+    "minecraft:movement": {
+     "value": 0.0
+    }
+   },
+   "dragon_dominion:ground": {
+    "minecraft:physics": {
+     "has_gravity": true,
+     "has_collision": true
+    }
+   },
+   "dragon_dominion:air": {
+    "minecraft:physics": {
+     "has_gravity": false,
+     "has_collision": true
+    }
+   },
+   "dragon_dominion:despawn": {
+    "minecraft:instant_despawn": {}
+   },
+   "dragon_dominion:hp_1": {
+    "minecraft:health": {
+     "value": 500,
+     "max": 500
+    }
+   },
+   "dragon_dominion:hp_2": {
+    "minecraft:health": {
+     "value": 620,
+     "max": 620
+    }
+   },
+   "dragon_dominion:hp_3": {
+    "minecraft:health": {
+     "value": 740,
+     "max": 740
+    }
+   },
+   "dragon_dominion:hp_4": {
+    "minecraft:health": {
+     "value": 860,
+     "max": 860
+    }
+   }
+  },
+  "components": {
+   "minecraft:type_family": {
+    "family": [
+     "dragon_dominion_boss",
+     "gharvok",
+     "dragon",
+     "monster",
+     "mob"
+    ]
+   },
+   "minecraft:collision_box": {
+    "width": 3.2,
+    "height": 3.6
+   },
+   "minecraft:custom_hit_test": {
+    "hitboxes": [
+     {
+      "width": 7.0,
+      "height": 4.4,
+      "pivot": [
+       0,
+       2.2,
+       0
+      ]
+     }
+    ]
+   },
+   "minecraft:health": {
+    "value": 500,
+    "max": 500
+   },
+   "minecraft:boss": {
+    "hud_range": 64,
+    "should_darken_sky": false
+   },
+   "minecraft:knockback_resistance": {
+    "value": 1.0
+   },
+   "minecraft:pushable": {
+    "is_pushable": false,
+    "is_pushable_by_piston": false
+   },
+   "minecraft:push_through": {
+    "value": 1
+   },
+   "minecraft:follow_range": {
+    "value": 48,
+    "max": 48
+   },
+   "minecraft:movement.basic": {},
+   "minecraft:navigation.walk": {
+    "avoid_water": true,
+    "can_path_over_water": false,
+    "can_sink": true,
+    "avoid_damage_blocks": true
+   },
+   "minecraft:jump.static": {},
+   "minecraft:variable_max_auto_step": {
+    "base_value": 1.0625,
+    "jump_prevented_value": 0.5625
+   },
+   "minecraft:physics": {
+    "has_gravity": true,
+    "has_collision": true
+   },
+   "minecraft:persistent": {},
+   "minecraft:nameable": {
+    "always_show": false,
+    "allow_name_tag_renaming": false
+   },
+   "minecraft:breathable": {
+    "total_supply": 15,
+    "suffocate_time": 0,
+    "breathes_water": true,
+    "breathes_air": true
+   },
+   "minecraft:damage_sensor": {
+    "triggers": [
+     {
+      "cause": "fall",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "suffocation",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "flyIntoWall",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "fallingBlock",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "drowning",
+      "deals_damage": "no"
+     }
+    ]
+   },
+   "minecraft:behavior.float": {
+    "priority": 0
+   },
+   "minecraft:conditional_bandwidth_optimization": {}
+  },
+  "events": {
+   "minecraft:entity_spawned": {
+    "add": {
+     "component_groups": [
+      "dragon_dominion:roam",
+      "dragon_dominion:ground",
+      "dragon_dominion:hp_1"
+     ]
+    }
+   },
+   "dragon_dominion:to_scripted": {
+    "remove": {
+     "component_groups": [
+      "dragon_dominion:roam"
+     ]
+    },
+    "add": {
+     "component_groups": [
+      "dragon_dominion:scripted"
+     ]
+    }
+   },
+   "dragon_dominion:to_roam": {
+    "remove": {
+     "component_groups": [
+      "dragon_dominion:scripted"
+     ]
+    },
+    "add": {
+     "component_groups": [
+      "dragon_dominion:roam"
+     ]
+    }
+   },
+   "dragon_dominion:to_air": {
+    "remove": {
+     "component_groups": [
+      "dragon_dominion:ground"
+     ]
+    },
+    "add": {
+     "component_groups": [
+      "dragon_dominion:air"
+     ]
+    }
+   },
+   "dragon_dominion:to_ground": {
+    "remove": {
+     "component_groups": [
+      "dragon_dominion:air"
+     ]
+    },
+    "add": {
+     "component_groups": [
+      "dragon_dominion:ground"
+     ]
+    }
+   },
+   "dragon_dominion:despawn": {
+    "add": {
+     "component_groups": [
+      "dragon_dominion:despawn"
+     ]
+    }
+   },
+   "dragon_dominion:hp_tier_1": {
+    "remove": {
+     "component_groups": [
+      "dragon_dominion:hp_2",
+      "dragon_dominion:hp_3",
+      "dragon_dominion:hp_4"
+     ]
+    },
+    "add": {
+     "component_groups": [
+      "dragon_dominion:hp_1"
+     ]
+    }
+   },
+   "dragon_dominion:hp_tier_2": {
+    "remove": {
+     "component_groups": [
+      "dragon_dominion:hp_1",
+      "dragon_dominion:hp_3",
+      "dragon_dominion:hp_4"
+     ]
+    },
+    "add": {
+     "component_groups": [
+      "dragon_dominion:hp_2"
+     ]
+    }
+   },
+   "dragon_dominion:hp_tier_3": {
+    "remove": {
+     "component_groups": [
+      "dragon_dominion:hp_1",
+      "dragon_dominion:hp_2",
+      "dragon_dominion:hp_4"
+     ]
+    },
+    "add": {
+     "component_groups": [
+      "dragon_dominion:hp_3"
+     ]
+    }
+   },
+   "dragon_dominion:hp_tier_4": {
+    "remove": {
+     "component_groups": [
+      "dragon_dominion:hp_1",
+      "dragon_dominion:hp_2",
+      "dragon_dominion:hp_3"
+     ]
+    },
+    "add": {
+     "component_groups": [
+      "dragon_dominion:hp_4"
+     ]
+    }
+   }
+  }
+ }
+}

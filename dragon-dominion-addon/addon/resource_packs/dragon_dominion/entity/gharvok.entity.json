@@ -1,0 +1,101 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "dragon_dominion:gharvok",
+   "materials": {
+    "default": "entity_alphatest"
+   },
+   "textures": {
+    "intact": "textures/entity/gharvok_intact",
+    "cracked": "textures/entity/gharvok_cracked",
+    "broken": "textures/entity/gharvok_broken"
+   },
+   "geometry": {
+    "default": "geometry.dragon_dominion.gharvok"
+   },
+   "scripts": {
+    "scale": "0.8",
+    "pre_animation": [
+     "v.busy = q.property('dragon_dominion:anim') > 0;",
+     "v.fold_t = q.property('dragon_dominion:flight') > 0 ? 0.0 : (q.property('dragon_dominion:anim') == 8 ? 0.0 : (q.property('dragon_dominion:anim') == 9 ? 0.0 : (q.property('dragon_dominion:anim') == 10 ? 0.35 : (q.property('dragon_dominion:anim') == 11 ? 0.0 : (q.property('dragon_dominion:anim') == 15 ? 0.7 : (q.property('dragon_dominion:anim') == 17 ? 0.35 : 1.0))))));",
+     "v.fold = math.lerp(v.fold ?? 1.0, v.fold_t, math.min(1.0, q.delta_time * 6.0));",
+     "v.yaw_d = q.body_y_rotation - (v.last_yaw ?? q.body_y_rotation);",
+     "v.yaw_d = v.yaw_d > 180 ? v.yaw_d - 360 : (v.yaw_d < -180 ? v.yaw_d + 360 : v.yaw_d);",
+     "v.last_yaw = q.body_y_rotation;",
+     "v.turn = math.lerp(v.turn ?? 0.0, v.yaw_d / math.max(q.delta_time, 0.016), math.min(1.0, q.delta_time * 5.0));",
+     "v.turn_dir = math.clamp(v.turn / 60.0, -1.0, 1.0);",
+     "v.walking = q.property('dragon_dominion:gait') == 1 || (q.property('dragon_dominion:gait') == 0 && q.ground_speed > 0.3);",
+     "v.running = q.property('dragon_dominion:gait') == 2 || (q.property('dragon_dominion:gait') == 0 && q.ground_speed > 4.5);",
+     "v.injured = math.lerp(v.injured ?? 0.0, (q.property('dragon_dominion:phase') >= 3 && !v.busy) ? 1.0 : 0.0, math.min(1.0, q.delta_time * 2.0));"
+    ],
+    "animate": [
+     "locomotion",
+     "action",
+     {
+      "wing_fold": "v.fold"
+     },
+     "flinch",
+     {
+      "injured_overlay": "v.injured"
+     }
+    ],
+    "should_update_bones_and_effects_offscreen": "1.0"
+   },
+   "animations": {
+    "wing_fold": "animation.dragon_dominion.gharvok.wing_fold",
+    "idle_breathing": "animation.dragon_dominion.gharvok.idle_breathing",
+    "idle_head_scan": "animation.dragon_dominion.gharvok.idle_head_scan",
+    "walk": "animation.dragon_dominion.gharvok.walk",
+    "run": "animation.dragon_dominion.gharvok.run",
+    "turn": "animation.dragon_dominion.gharvok.turn",
+    "jump": "animation.dragon_dominion.gharvok.jump",
+    "takeoff": "animation.dragon_dominion.gharvok.takeoff",
+    "wing_flap": "animation.dragon_dominion.gharvok.wing_flap",
+    "glide": "animation.dragon_dominion.gharvok.glide",
+    "landing": "animation.dragon_dominion.gharvok.landing",
+    "roar": "animation.dragon_dominion.gharvok.roar",
+    "claw_combo": "animation.dragon_dominion.gharvok.claw_combo",
+    "charge_windup": "animation.dragon_dominion.gharvok.charge_windup",
+    "charge": "animation.dragon_dominion.gharvok.charge",
+    "charge_impact": "animation.dragon_dominion.gharvok.charge_impact",
+    "tail_sweep": "animation.dragon_dominion.gharvok.tail_sweep",
+    "wing_pressure": "animation.dragon_dominion.gharvok.wing_pressure",
+    "cliff_dive": "animation.dragon_dominion.gharvok.cliff_dive",
+    "skullbreaker": "animation.dragon_dominion.gharvok.skullbreaker",
+    "hit_reaction": "animation.dragon_dominion.gharvok.hit_reaction",
+    "stagger": "animation.dragon_dominion.gharvok.stagger",
+    "skull_fracture": "animation.dragon_dominion.gharvok.skull_fracture",
+    "exhausted": "animation.dragon_dominion.gharvok.exhausted",
+    "death": "animation.dragon_dominion.gharvok.death",
+    "wing_display": "animation.dragon_dominion.gharvok.wing_display",
+    "injured_overlay": "animation.dragon_dominion.gharvok.injured_overlay",
+    "locomotion": "controller.animation.dragon_dominion.gharvok.locomotion",
+    "action": "controller.animation.dragon_dominion.gharvok.action",
+    "flinch": "controller.animation.dragon_dominion.gharvok.flinch"
+   },
+   "particle_effects": {
+    "step": "dragon_dominion:step_dust",
+    "dust_ring": "dragon_dominion:dust_ring",
+    "dust_puff": "dragon_dominion:dust_puff",
+    "wing_gust": "dragon_dominion:wing_gust",
+    "roar_breath": "dragon_dominion:roar_breath",
+    "claw_slash": "dragon_dominion:claw_slash",
+    "impact_burst": "dragon_dominion:impact_burst",
+    "daze_stars": "dragon_dominion:daze_stars",
+    "tail_trail": "dragon_dominion:tail_trail",
+    "skull_shards": "dragon_dominion:skull_shards"
+   },
+   "sound_effects": {
+    "step": "mob.ravager.step",
+    "snort": "mob.ravager.ambient",
+    "flap": "mob.enderdragon.flap",
+    "land": "mob.ravager.step"
+   },
+   "render_controllers": [
+    "controller.render.dragon_dominion.gharvok"
+   ],
+   "enable_attachables": false
+  }
+ }
+}

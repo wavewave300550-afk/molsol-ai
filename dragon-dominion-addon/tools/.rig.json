@@ -1,0 +1,128 @@
+{
+ "geometry": "geometry.dragon_dominion.gharvok",
+ "bones": [
+  "root",
+  "body",
+  "chest",
+  "pelvis",
+  "neck_1",
+  "neck_2",
+  "neck_3",
+  "head",
+  "jaw",
+  "crown",
+  "crown_break_a",
+  "crown_break_b",
+  "crown_stubs",
+  "arm_l_upper",
+  "arm_l_lower",
+  "hand_l",
+  "leg_l_thigh",
+  "leg_l_shin",
+  "leg_l_foot",
+  "wing_l_arm",
+  "wing_l_fore",
+  "wing_l_hand",
+  "wing_l_mem_arm",
+  "wing_l_mem_fore",
+  "wing_l_f1",
+  "wing_l_f2",
+  "wing_l_f3",
+  "wing_l_f4",
+  "tail_1",
+  "tail_2",
+  "tail_3",
+  "tail_4",
+  "tail_5",
+  "tail_6",
+  "tail_7",
+  "tail_blade",
+  "arm_r_upper",
+  "arm_r_lower",
+  "hand_r",
+  "leg_r_thigh",
+  "leg_r_shin",
+  "leg_r_foot",
+  "wing_r_arm",
+  "wing_r_fore",
+  "wing_r_hand",
+  "wing_r_mem_arm",
+  "wing_r_mem_fore",
+  "wing_r_f1",
+  "wing_r_f2",
+  "wing_r_f3",
+  "wing_r_f4"
+ ],
+ "cubes": 253,
+ "texture": [
+  1024,
+  256
+ ],
+ "length_blocks": 14.71,
+ "height_blocks": 5.54,
+ "wingspan_blocks": 19.06,
+ "body_width_blocks": 4.74,
+ "crown_plates": [
+  [
+   "crown",
+   -100
+  ],
+  [
+   "crown",
+   -80
+  ],
+  [
+   "crown",
+   -60
+  ],
+  [
+   "crown_break_b",
+   -40
+  ],
+  [
+   "crown_break_b",
+   -20
+  ],
+  [
+   "crown",
+   0
+  ],
+  [
+   "crown",
+   20
+  ],
+  [
+   "crown",
+   40
+  ],
+  [
+   "crown_break_a",
+   60
+  ],
+  [
+   "crown_break_a",
+   80
+  ],
+  [
+   "crown",
+   100
+  ]
+ ],
+ "locators": {
+  "loc_center": "body",
+  "loc_back": "chest",
+  "loc_mouth": "head",
+  "loc_brow": "head",
+  "loc_eyes": "head",
+  "loc_crown": "crown",
+  "loc_claw_l": "hand_l",
+  "loc_foot_l": "leg_l_foot",
+  "loc_wrist_l": "wing_l_hand",
+  "loc_wingtip_l": "wing_l_f2",
+  "loc_tail_tip": "tail_blade",
+  "loc_claw_r": "hand_r",
+  "loc_foot_r": "leg_r_foot",
+  "loc_wrist_r": "wing_r_hand",
+  "loc_wingtip_r": "wing_r_f2"
+ }
+}

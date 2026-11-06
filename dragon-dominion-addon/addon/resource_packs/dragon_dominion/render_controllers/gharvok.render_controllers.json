@@ -1,0 +1,39 @@
+{
+ "format_version": "1.8.0",
+ "render_controllers": {
+  "controller.render.dragon_dominion.gharvok": {
+   "arrays": {
+    "textures": {
+     "Array.skull": [
+      "Texture.intact",
+      "Texture.cracked",
+      "Texture.broken"
+     ]
+    }
+   },
+   "geometry": "Geometry.default",
+   "materials": [
+    {
+     "*": "Material.default"
+    }
+   ],
+   "textures": [
+    "Array.skull[q.property('dragon_dominion:skull')]"
+   ],
+   "part_visibility": [
+    {
+     "*": true
+    },
+    {
+     "crown_break_a": "q.property('dragon_dominion:skull') < 2"
+    },
+    {
+     "crown_break_b": "q.property('dragon_dominion:skull') < 2"
+    },
+    {
+     "crown_stubs": "q.property('dragon_dominion:skull') >= 2"
+    }
+   ]
+  }
+ }
+}

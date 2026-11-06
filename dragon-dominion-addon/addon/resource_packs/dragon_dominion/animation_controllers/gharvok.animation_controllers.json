@@ -1,0 +1,377 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.dragon_dominion.gharvok.locomotion": {
+   "initial_state": "idle",
+   "states": {
+    "idle": {
+     "animations": [
+      "idle_breathing"
+     ],
+     "blend_transition": 0.25,
+     "transitions": [
+      {
+       "flap": "q.property('dragon_dominion:flight') == 1"
+      },
+      {
+       "glide": "q.property('dragon_dominion:flight') == 2"
+      },
+      {
+       "run": "!v.busy && v.running"
+      },
+      {
+       "walk": "!v.busy && v.walking"
+      },
+      {
+       "turn": "!v.busy && math.abs(v.turn) > 30"
+      }
+     ]
+    },
+    "walk": {
+     "animations": [
+      "walk"
+     ],
+     "blend_transition": 0.25,
+     "transitions": [
+      {
+       "idle": "v.busy || !v.walking || q.property('dragon_dominion:flight') > 0"
+      },
+      {
+       "run": "v.running"
+      }
+     ]
+    },
+    "run": {
+     "animations": [
+      "run"
+     ],
+     "blend_transition": 0.25,
+     "transitions": [
+      {
+       "idle": "v.busy || q.property('dragon_dominion:flight') > 0 || (!v.running && !v.walking)"
+      },
+      {
+       "walk": "!v.running"
+      }
+     ]
+    },
+    "turn": {
+     "animations": [
+      "turn"
+     ],
+     "blend_transition": 0.3,
+     "transitions": [
+      {
+       "idle": "v.busy || q.property('dragon_dominion:flight') > 0 || math.abs(v.turn) < 10"
+      },
+      {
+       "walk": "v.walking"
+      }
+     ]
+    },
+    "flap": {
+     "animations": [
+      {
+       "wing_flap": "!v.busy"
+      }
+     ],
+     "blend_transition": 0.35,
+     "transitions": [
+      {
+       "idle": "q.property('dragon_dominion:flight') == 0"
+      },
+      {
+       "glide": "q.property('dragon_dominion:flight') == 2"
+      }
+     ]
+    },
+    "glide": {
+     "animations": [
+      {
+       "glide": "!v.busy"
+      }
+     ],
+     "blend_transition": 0.4,
+     "transitions": [
+      {
+       "idle": "q.property('dragon_dominion:flight') == 0"
+      },
+      {
+       "flap": "q.property('dragon_dominion:flight') == 1"
+      }
+     ]
+    }
+   }
+  },
+  "controller.animation.dragon_dominion.gharvok.action": {
+   "initial_state": "none",
+   "states": {
+    "none": {
+     "transitions": [
+      {
+       "idle_head_scan": "q.property('dragon_dominion:anim') == 1"
+      },
+      {
+       "roar": "q.property('dragon_dominion:anim') == 2"
+      },
+      {
+       "claw_combo": "q.property('dragon_dominion:anim') == 3"
+      },
+      {
+       "charge_windup": "q.property('dragon_dominion:anim') == 4"
+      },
+      {
+       "charge": "q.property('dragon_dominion:anim') == 5"
+      },
+      {
+       "charge_impact": "q.property('dragon_dominion:anim') == 6"
+      },
+      {
+       "tail_sweep": "q.property('dragon_dominion:anim') == 7"
+      },
+      {
+       "wing_pressure": "q.property('dragon_dominion:anim') == 8"
+      },
+      {
+       "takeoff": "q.property('dragon_dominion:anim') == 9"
+      },
+      {
+       "cliff_dive": "q.property('dragon_dominion:anim') == 10"
+      },
+      {
+       "landing": "q.property('dragon_dominion:anim') == 11"
+      },
+      {
+       "jump": "q.property('dragon_dominion:anim') == 12"
+      },
+      {
+       "skullbreaker": "q.property('dragon_dominion:anim') == 13"
+      },
+      {
+       "stagger": "q.property('dragon_dominion:anim') == 14"
+      },
+      {
+       "skull_fracture": "q.property('dragon_dominion:anim') == 15"
+      },
+      {
+       "exhausted": "q.property('dragon_dominion:anim') == 16"
+      },
+      {
+       "death": "q.property('dragon_dominion:anim') == 17"
+      }
+     ]
+    },
+    "idle_head_scan": {
+     "animations": [
+      "idle_head_scan"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "none": "q.property('dragon_dominion:anim') != 1"
+      }
+     ]
+    },
+    "roar": {
+     "animations": [
+      "roar"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "none": "q.property('dragon_dominion:anim') != 2"
+      }
+     ]
+    },
+    "claw_combo": {
+     "animations": [
+      "claw_combo"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "none": "q.property('dragon_dominion:anim') != 3"
+      }
+     ]
+    },
+    "charge_windup": {
+     "animations": [
+      "charge_windup"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "none": "q.property('dragon_dominion:anim') != 4"
+      }
+     ]
+    },
+    "charge": {
+     "animations": [
+      "charge"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "none": "q.property('dragon_dominion:anim') != 5"
+      }
+     ]
+    },
+    "charge_impact": {
+     "animations": [
+      "charge_impact"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "none": "q.property('dragon_dominion:anim') != 6"
+      }
+     ]
+    },
+    "tail_sweep": {
+     "animations": [
+      "tail_sweep"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "none": "q.property('dragon_dominion:anim') != 7"
+      }
+     ]
+    },
+    "wing_pressure": {
+     "animations": [
+      "wing_pressure"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "none": "q.property('dragon_dominion:anim') != 8"
+      }
+     ]
+    },
+    "takeoff": {
+     "animations": [
+      "takeoff"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "none": "q.property('dragon_dominion:anim') != 9"
+      }
+     ]
+    },
+    "cliff_dive": {
+     "animations": [
+      "cliff_dive"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "none": "q.property('dragon_dominion:anim') != 10"
+      }
+     ]
+    },
+    "landing": {
+     "animations": [
+      "landing"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "none": "q.property('dragon_dominion:anim') != 11"
+      }
+     ]
+    },
+    "jump": {
+     "animations": [
+      "jump"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "none": "q.property('dragon_dominion:anim') != 12"
+      }
+     ]
+    },
+    "skullbreaker": {
+     "animations": [
+      "skullbreaker"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "none": "q.property('dragon_dominion:anim') != 13"
+      }
+     ]
+    },
+    "stagger": {
+     "animations": [
+      "stagger"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "none": "q.property('dragon_dominion:anim') != 14"
+      }
+     ]
+    },
+    "skull_fracture": {
+     "animations": [
+      "skull_fracture"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "none": "q.property('dragon_dominion:anim') != 15"
+      }
+     ]
+    },
+    "exhausted": {
+     "animations": [
+      "exhausted"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "none": "q.property('dragon_dominion:anim') != 16"
+      }
+     ]
+    },
+    "death": {
+     "animations": [
+      "death"
+     ],
+     "blend_transition": 0.3,
+     "transitions": [
+      {
+       "none": "q.property('dragon_dominion:anim') != 17"
+      }
+     ]
+    }
+   }
+  },
+  "controller.animation.dragon_dominion.gharvok.flinch": {
+   "initial_state": "calm",
+   "states": {
+    "calm": {
+     "transitions": [
+      {
+       "flinch": "q.hurt_time > 0 && !v.busy && q.is_alive"
+      }
+     ]
+    },
+    "flinch": {
+     "animations": [
+      "hit_reaction"
+     ],
+     "blend_transition": 0.1,
+     "transitions": [
+      {
+       "calm": "q.all_animations_finished || v.busy"
+      }
+     ]
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,6 @@
+entity.dragon_dominion:gharvok.name=Gharvok, the Cliffbreaker
+item.dragon_dominion:cliff_sigil.name=Cliff Sigil
+item.dragon_dominion:fractured_crownplate.name=Fractured Crownplate
+action.hint.exit.dragon_dominion:gharvok=Gharvok
+pack.name=Dragon Dominion
+pack.description=Resource Pack - Boss 1: Gharvok, the Cliffbreaker

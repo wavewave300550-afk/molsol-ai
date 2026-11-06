@@ -1,0 +1,19 @@
+{
+ "format_version": "1.21.90",
+ "minecraft:item": {
+  "description": {
+   "identifier": "dragon_dominion:fractured_crownplate",
+   "menu_category": {
+    "category": "items"
+   }
+  },
+  "components": {
+   "minecraft:icon": "dragon_dominion_fractured_crownplate",
+   "minecraft:display_name": {
+    "value": "item.dragon_dominion:fractured_crownplate.name"
+   },
+   "minecraft:max_stack_size": 64,
+   "minecraft:rarity": "epic"
+  }
+ }
+}

@@ -1,0 +1,6 @@
+node_modules/
+__pycache__/
+*.pyc
+tools/smoke/.run/
+addon/.mct/previews/
+docs/.validate.json
