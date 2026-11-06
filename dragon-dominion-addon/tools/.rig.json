@@ -36,6 +36,7 @@
   "tail_5",
   "tail_6",
   "tail_7",
+  "tail_8",
   "tail_blade",
   "arm_r_upper",
   "arm_r_lower",
@@ -53,35 +54,39 @@
   "wing_r_f3",
   "wing_r_f4"
  ],
- "cubes": 253,
+ "cubes": 536,
  "texture": [
   1024,
-  256
+  512
  ],
- "length_blocks": 14.71,
- "height_blocks": 5.54,
- "wingspan_blocks": 19.06,
- "body_width_blocks": 4.74,
+ "length_blocks": 16.19,
+ "height_blocks": 5.44,
+ "wingspan_blocks": 20.5,
+ "body_width_blocks": 5.38,
  "crown_plates": [
   [
    "crown",
-   -100
+   -108
   ],
   [
    "crown",
-   -80
+   -90
   ],
   [
    "crown",
-   -60
+   -72
   ],
   [
    "crown_break_b",
-   -40
+   -54
   ],
   [
    "crown_break_b",
-   -20
+   -36
+  ],
+  [
+   "crown",
+   -18
   ],
   [
    "crown",
@@ -89,23 +94,27 @@
   ],
   [
    "crown",
-   20
-  ],
-  [
-   "crown",
-   40
+   18
   ],
   [
    "crown_break_a",
-   60
+   36
   ],
   [
    "crown_break_a",
-   80
+   54
   ],
   [
    "crown",
-   100
+   72
+  ],
+  [
+   "crown",
+   90
+  ],
+  [
+   "crown",
+   108
   ]
  ],
  "locators": {
@@ -124,5 +133,22 @@
   "loc_foot_r": "leg_r_foot",
   "loc_wrist_r": "wing_r_hand",
   "loc_wingtip_r": "wing_r_f2"
+ },
+ "points": {
+  "head": [
+   0,
+   50,
+   -72
+  ],
+  "mouth": [
+   0,
+   42,
+   -104
+  ],
+  "tail_tip": [
+   0,
+   47,
+   151
+  ]
  }
 }

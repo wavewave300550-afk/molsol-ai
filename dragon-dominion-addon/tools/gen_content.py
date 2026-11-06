@@ -26,7 +26,7 @@ ID = f"{NS}:gharvok"
 RIG = json.load(open(os.path.join(HERE, ".rig.json")))
 AN = json.load(open(os.path.join(HERE, ".anim.json")))
 
-VERSION = [1, 0, 0]
+VERSION = [1, 1, 0]
 MIN_ENGINE = [1, 26, 60]          # Script API @minecraft/server 2.11.0 (current stable on npm) ships with 1.26.6x
 SCRIPT_API = "2.11.0"
 UUIDS = {  # generated once; never change them (players update packs in place by UUID)
@@ -36,7 +36,7 @@ UUIDS = {  # generated once; never change them (players update packs in place by
     "rp": "bc3eee27-d96d-43a7-98b7-fa1e23547ba0",
     "rp_res": "029bc848-a7be-4172-8dec-d37ff2172e33",
 }
-SCALE = 0.8   # visual scale of the model (client entity)
+SCALE = 0.76  # visual scale of the model (client entity); config.js geometry is measured at this scale
 
 
 def wj(path, data):
@@ -49,7 +49,7 @@ def wj(path, data):
 def manifests():
     wj(os.path.join(BP, "manifest.json"), {
         "format_version": 2,
-        "header": {"name": "Dragon Dominion", "description": "Behavior Pack - Boss 1: Gharvok, the Cliffbreaker (v1.0.0)",
+        "header": {"name": "Dragon Dominion", "description": "Behavior Pack - Boss 1: Gharvok, the Cliffbreaker (v1.1.0)",
                    "uuid": UUIDS["bp"], "version": VERSION, "min_engine_version": MIN_ENGINE},
         "modules": [
             {"type": "data", "uuid": UUIDS["bp_data"], "version": VERSION},
@@ -64,7 +64,7 @@ def manifests():
     })
     wj(os.path.join(RP, "manifest.json"), {
         "format_version": 2,
-        "header": {"name": "Dragon Dominion", "description": "Resource Pack - Boss 1: Gharvok, the Cliffbreaker (v1.0.0)",
+        "header": {"name": "Dragon Dominion", "description": "Resource Pack - Boss 1: Gharvok, the Cliffbreaker (v1.1.0)",
                    "uuid": UUIDS["rp"], "version": VERSION, "min_engine_version": MIN_ENGINE},
         "modules": [{"type": "resources", "uuid": UUIDS["rp_res"], "version": VERSION}],
         "metadata": {"authors": ["Dragon Dominion"]},

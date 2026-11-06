@@ -82,7 +82,7 @@ def four_view(pose=None, name="gharvok_four_view.png", texture="intact", size=(8
 def close_up(pose=None, name="_head.png", texture="intact"):
     tiles = []
     for yaw, pitch in ((0, 8), (40, 10), (90, 2), (150, 25)):
-        cam = K.Camera((0, 54, -72), yaw, pitch, scale=9, size=(520, 420))
+        cam = K.Camera((0, 52, -80), yaw, pitch, scale=6, size=(520, 420))
         tiles.append(render(cam, pose, texture))
     sheet = Image.new("RGB", (1040, 840), (255, 255, 255))
     for i, t in enumerate(tiles):
@@ -112,9 +112,20 @@ def top(pose=None, name="_top.png"):
     print("wrote", os.path.join(OUT, name))
 
 
-# wing fold weight per action (mirrors FOLD_TARGET in gen_anims.py)
-FOLD_T = {"takeoff": 0, "landing": 0, "wing_pressure": 0, "cliff_dive": 0.35, "skull_fracture": 0.7,
-          "death": 0.35, "wing_flap": 0, "glide": 0}
+# wing layer weights per action: same rules as the client entity's pre_animation (tools/gen_anims.py)
+import gen_anims as GA  # noqa: E402
+
+RUNNING = {"run", "charge"}
+
+
+def wing_weights(anim):
+    fold = GA.FOLD_TARGET.get(anim, 1.0)
+    if anim in ("wing_flap", "glide"):
+        fold = 0.0
+    disp = 0.0 if (anim in GA.DISPLAY_OFF or anim in ("wing_flap", "glide")) else (0.2 if anim in RUNNING else
+                                                                                   0.85 if anim == "walk" else 1.0)
+    return fold, disp
+
 
 KEY_POSES = [
     ("idle_breathing", 1.0), ("idle_head_scan", 0.8), ("walk", 0.4), ("run", 0.2), ("turn", 0.25), ("jump", 0.42),
@@ -126,11 +137,15 @@ KEY_POSES = [
 ]
 
 
-def pose_spec(anim, t):
+def pose_spec(anim, t, fold=None, disp=None):
     spec = [(anim, t, 1.0)]
-    f = FOLD_T.get(anim, 1.0)
+    f, d = wing_weights(anim)
+    f = f if fold is None else fold
+    d = d if disp is None else disp
     if f:
         spec.append(("wing_fold", 0.0, f))
+    if d:
+        spec.append(("wing_display", 0.0, d))
     if anim not in ("idle_breathing", "death"):
         spec.append(("idle_breathing", 0.0, 1.0))
     return spec
@@ -155,7 +170,7 @@ if __name__ == "__main__":
     elif "--sheet" in a:
         key_sheet()
     else:
-        display = [("idle_breathing", 0.0, 1.0), ("wing_fold", 0.0, 1.0), ("wing_display", 0.0, 1.0)]
+        display = pose_spec("idle_breathing", 0.0)
         four_view(pose_of(display), "gharvok_four_view.png", texture)
-        four_view(pose_of(pose_spec("idle_breathing", 0.0)), "gharvok_four_view_folded.png", texture)
+        four_view(pose_of(pose_spec("idle_breathing", 0.0, disp=0.0)), "gharvok_four_view_folded.png", texture)
         four_view(pose_of(display), "gharvok_four_view_broken_crown.png", "broken")

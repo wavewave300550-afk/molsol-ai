@@ -20,8 +20,8 @@ export const CONFIG = Object.freeze({
     names: ["Territorial Guardian", "Cliff Hunter", "Desperate Predator"],
     gapAfterMove: [1.4, 0.9, 0.6], // decision delay after an attack's recovery
     cooldownScale: [1.0, 0.85, 0.72],
-    runSpeed: [6.0, 7.0, 7.6], // blocks / second
-    walkSpeed: 2.6,
+    runSpeed: [5.2, 5.8, 6.4], // blocks / second (the run cycle is tuned for 5.8: little foot sliding)
+    walkSpeed: 2.2, // the walk cycle's stride is tuned for this speed
     turnRate: [5, 6, 7], // degrees / tick while pursuing
   },
   detection: {
@@ -76,12 +76,12 @@ export const CONFIG = Object.freeze({
     exhaustSeconds: [2.4, 3.0, 3.6], // by phase
   },
   geometry: {
-    // measured from the model at in-game scale 0.8 (see tools/gen_model.py)
-    headForward: 4.3,
-    headHeight: 3.3,
-    mouthForward: 5.0,
-    clawForward: 3.4,
-    tailBack: 6.5,
+    // measured from the model at in-game scale 0.76 (tools/gen_model.py -> tools/.rig.json; validate.mjs checks)
+    headForward: 3.4,
+    headHeight: 2.4,
+    mouthForward: 4.9,
+    clawForward: 1.8,
+    tailBack: 7.2,
     bodyRadius: 2.2,
   },
   reset: { walkBack: 8, invulnerable: true },

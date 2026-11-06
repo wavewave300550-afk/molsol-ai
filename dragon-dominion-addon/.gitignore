@@ -4,3 +4,4 @@ __pycache__/
 tools/smoke/.run/
 addon/.mct/previews/
 docs/.validate.json
+docs/.motion.json

@@ -28,7 +28,7 @@ BP = os.path.join(ROOT, "addon", "behavior_packs", "dragon_dominion")
 NS = "animation.dragon_dominion.gharvok"
 RIG = json.load(open(os.path.join(HERE, ".rig.json")))
 BONES = set(RIG["bones"])
-TAIL = [f"tail_{i}" for i in range(1, 8)] + ["tail_blade"]
+TAIL = [f"tail_{i}" for i in range(1, 9)] + ["tail_blade"]
 NECK = ["neck_1", "neck_2", "neck_3", "head"]
 FINGERS = ["f1", "f2", "f3", "f4"]
 
@@ -93,14 +93,18 @@ class Anim:
             self.ch.setdefault(rb, {})[chan] = mirror_expr or (
                 [e[0], neg(e[1]), neg(e[2])] if chan == "rotation" else [neg(e[0]), e[1], e[2]])
 
-    def chain(self, bones, keys, falloff=1.0, delay=0.0):
+    def chain(self, bones, keys, falloff=1.0, delay=None):
         """Same motion down a chain (neck/tail), each link delayed and scaled."""
+        if delay is None:  # overlapping action: each link follows the previous one a little later
+            delay = 0.035 if bones[0] in TAIL else 0.025
         for i, b in enumerate(bones):
             s = falloff ** i
             # tail values are authored as the whole tail's bend: spread the pitch over its 8 links
             px = 0.3 if b in TAIL else 1.0
             for t, v in keys.items():
-                tt = min(self.length, t + delay * i) if t > 0 else t
+                tt = t + delay * i if 0 < t < self.length else t
+                if tt >= self.length - 0.02 and t < self.length:
+                    continue  # a delayed key that would fall past the end is dropped, never piled up at the end
                 self.key(b, "rotation", tt, [v[0] * s * px, v[1] * s, v[2] * s])
 
     def sound(self, t, s):
@@ -161,15 +165,16 @@ def sine(amp, period, phase=0.0, base=0.0, t="q.anim_time"):
 
 
 # =========================================================================== static poses
-FOLD = {
-    "wing_l_arm": (0, -72, -32),
-    "wing_l_fore": (0, 142, 4),
-    "wing_l_hand": (-25, -138, 12),
-    "wing_l_f1": (0, -24, 0),
-    "wing_l_f2": (0, -4, 0),
-    "wing_l_f3": (0, 14, 0),
-    "wing_l_f4": (0, 30, 0),
-}
+def _wing_pose(arm, fore, hand, spread):
+    d = {"wing_l_arm": arm, "wing_l_fore": fore, "wing_l_hand": hand}
+    for k, f in enumerate(FINGERS):
+        d[f"wing_l_{f}"] = (0, round(spread * (k - 1.5) / 1.5, 2), 0)
+    return d
+
+
+# both poses were fitted to points read off the reference sheet by tools/fit_wings.py
+FOLD = _wing_pose((-124.4, -65.0, 72.5), (42.7, 148.2, 4.0), (23.5, -124.1, -23.1), 30.9)      # tight, for running
+DISPLAY = _wing_pose((-56.0, -47.7, -56.1), (-14.6, -17.7, 74.4), (23.3, -59.4, 10.8), 6.6)    # reference stance
 FOLD_SCALE = {"wing_l_mem_arm": (1, 1, 0.3), "wing_l_mem_fore": (1, 1, 0.22)}
 a = anim("wing_fold", 1.0, loop=True)
 for b, v in FOLD.items():
@@ -197,12 +202,16 @@ def gait(a, period, phases, swing, lift, t="q.anim_time", base=None):
         ang = f"(({t}) / {period} + {ph}) * 360"
         b0, b1, b2 = base.get(leg, (0, 0, 0))
         a.expr(up, "rotation", [f"{b0} - {swing} * math.sin({ang})", 0, 0], mirror=False)
+        up_ = f"math.pow(math.max(0, math.cos({ang})), 2)"     # lifted (swing) phase, smooth in and out
+        down_ = f"math.pow(math.max(0, -math.cos({ang})), 2)"  # planted (stance) phase
         if front:
-            a.expr(mid, "rotation", [f"{b1} + {lift} * math.max(0, math.cos({ang}))", 0, 0], mirror=False)
-            a.expr(low, "rotation", [f"{b2} + {lift * 0.8} * math.max(0, math.cos({ang})) - {swing * 0.4} * math.max(0, -math.cos({ang}))", 0, 0], mirror=False)
+            a.expr(mid, "rotation", [f"{b1} + {lift} * {up_}", 0, 0], mirror=False)
+            a.expr(low, "rotation", [f"{b2} + {lift * 0.8} * {up_} - {swing * 0.35} * {down_}", 0, 0], mirror=False)
         else:
-            a.expr(mid, "rotation", [f"{b1} - {lift} * math.max(0, math.cos({ang}))", 0, 0], mirror=False)
-            a.expr(low, "rotation", [f"{b2} + {lift * 1.1} * math.max(0, math.cos({ang}))", 0, 0], mirror=False)
+            a.expr(mid, "rotation", [f"{b1} - {lift} * {up_}", 0, 0], mirror=False)
+            a.expr(low, "rotation", [f"{b2} + {lift * 1.1} * {up_}", 0, 0], mirror=False)
+        # the foot rises while it swings forward instead of dragging through the ground
+        a.expr(up, "position", [0, f"{lift * 0.06} * {up_}", 0], mirror=False)
 
 
 def tail_wave(a, amp_y, period, lag=0.07, amp_x=0.0, base_x=0.0, t="q.anim_time", grow=1.12):
@@ -254,11 +263,6 @@ def fold_keys(frac=1.0, extra=None):
     return d
 
 
-# wings raised with the membranes facing forward (the reference sheet's display pose), relative to SPREAD rest
-DISPLAY = {"wing_l_arm": (55, -10, -38), "wing_l_fore": (0, -10, 22), "wing_l_hand": (0, -8, 30),
-           "wing_l_f1": (0, 6, 0), "wing_l_f2": (0, 0, 0), "wing_l_f3": (0, 0, 0), "wing_l_f4": (0, -6, 0)}
-
-
 def display_delta(a, t, frac=1.0):
     """Key the display pose as an exact additive delta on top of the folded pose (Bedrock sums euler angles)."""
     for b in DISPLAY:
@@ -272,7 +276,7 @@ SPREAD_UP = {"arm": (0, 8, -28), "fore": (0, -10, 18), "hand": (0, 8, 6), "finge
 DOWNSTROKE = {"arm": (0, -6, 26), "fore": (0, 6, 14), "hand": (0, -6, 12), "fingers": -6}
 
 # =========================================================================== LOCOMOTION
-a = anim("idle_breathing", 3.2, loop=True)
+a = anim("idle_breathing", 6.4, loop=True)  # two breaths; the slow tail sway loops exactly once
 a.expr("body", "position", [0, sine(0.45, 3.2), 0])
 a.expr("chest", "rotation", [sine(-1.2, 3.2), 0, 0])
 a.expr("neck_1", "rotation", [sine(1.5, 3.2, 0.1), 0, 0])
@@ -292,29 +296,30 @@ a.rot("jaw", {0: (0, 0, 0), 1.0: (0, 0, 0), 1.2: (6, 0, 0), 1.4: (0, 0, 0), 4.0:
 a.rot("crown", {0: (0, 0, 0), 0.6: (-4, 0, 0), 2.1: (-4, 0, 0), 3.5: (0, 0, 0)})
 a.sound(1.15, "snort")
 
-a = anim("walk", 1.6, loop=True, speed_expr="q.anim_time + q.delta_time * math.clamp(q.ground_speed / 2.2, 0.6, 1.8)")
-gait(a, 1.6, {"fl": 0.0, "hr": 0.04, "fr": 0.5, "hl": 0.54}, swing=16, lift=20)
-a.expr("body", "position", [0, "0.5 * math.cos((q.anim_time / 1.6) * 720)", 0])
-a.expr("body", "rotation", [0, "2 * math.sin((q.anim_time / 1.6) * 360)", "1.5 * math.sin((q.anim_time / 1.6) * 360)"])
-a.expr("neck_1", "rotation", ["1.5 * math.cos((q.anim_time / 1.6) * 720 + 60)", "-2 * math.sin((q.anim_time / 1.6) * 360)", 0])
-a.expr("head", "rotation", ["-1.5 * math.cos((q.anim_time / 1.6) * 720 + 80)", 0, 0])
-tail_wave(a, 4.5, 1.6, lag=0.08)
+WALK_SPEED = "math.max(q.ground_speed, q.property('dragon_dominion:gait') == 1 ? 2.2 : (q.property('dragon_dominion:gait') == 2 ? 5.8 : 0.0))"
+a = anim("walk", 1.3, loop=True, speed_expr=f"q.anim_time + q.delta_time * math.clamp({WALK_SPEED} / 2.2, 0.6, 1.8)")
+gait(a, 1.3, {"fl": 0.0, "hr": 0.06, "fr": 0.5, "hl": 0.56}, swing=22, lift=24)
+a.expr("body", "position", [0, "0.6 * math.cos((q.anim_time / 1.3) * 720)", 0])
+a.expr("body", "rotation", [0, "2 * math.sin((q.anim_time / 1.3) * 360)", "1.8 * math.sin((q.anim_time / 1.3) * 360)"])
+a.expr("neck_1", "rotation", ["1.5 * math.cos((q.anim_time / 1.3) * 720 + 60)", "-2 * math.sin((q.anim_time / 1.3) * 360 - 30)", 0])
+a.expr("head", "rotation", ["-1.5 * math.cos((q.anim_time / 1.3) * 720 + 80)", "-1 * math.sin((q.anim_time / 1.3) * 360 - 60)", 0])
+tail_wave(a, 4.0, 1.3, lag=0.07)
 a.fx(0.05, "step", "loc_claw_l")
-a.fx(0.85, "step", "loc_claw_r")
+a.fx(0.7, "step", "loc_claw_r")
 a.sound(0.05, "step")
-a.sound(0.85, "step")
+a.sound(0.7, "step")
 
-a = anim("run", 0.8, loop=True, speed_expr="q.anim_time + q.delta_time * math.clamp(q.ground_speed / 6.0, 0.7, 1.6)")
-gait(a, 0.8, {"fl": 0.0, "fr": 0.1, "hl": 0.5, "hr": 0.6}, swing=30, lift=34)
-a.expr("body", "position", [0, "1.4 * math.cos((q.anim_time / 0.8) * 720)", 0])
-a.expr("body", "rotation", ["4 * math.sin((q.anim_time / 0.8) * 360 + 90)", 0, 0])
-a.expr("neck_1", "rotation", ["6 - 4 * math.sin((q.anim_time / 0.8) * 360 + 90)", 0, 0])
-a.expr("head", "rotation", ["4 + 3 * math.sin((q.anim_time / 0.8) * 360 + 60)", 0, 0])
-tail_wave(a, 3.0, 0.8, lag=0.06, amp_x=3.5, base_x=4)
+a = anim("run", 0.72, loop=True, speed_expr=f"q.anim_time + q.delta_time * math.clamp({WALK_SPEED} / 5.8, 0.7, 1.6)")
+gait(a, 0.72, {"fl": 0.0, "fr": 0.1, "hl": 0.5, "hr": 0.6}, swing=30, lift=34)
+a.expr("body", "position", [0, "1.4 * math.cos((q.anim_time / 0.72) * 720)", 0])
+a.expr("body", "rotation", ["4 * math.sin((q.anim_time / 0.72) * 360 + 90)", 0, 0])
+a.expr("neck_1", "rotation", ["6 - 4 * math.sin((q.anim_time / 0.72) * 360 + 60)", 0, 0])
+a.expr("head", "rotation", ["4 + 3 * math.sin((q.anim_time / 0.72) * 360 + 30)", 0, 0])
+tail_wave(a, 3.0, 0.72, lag=0.06, amp_x=3.5, base_x=4)
 a.fx(0.0, "step", "loc_claw_l")
-a.fx(0.4, "step", "loc_foot_l")
+a.fx(0.36, "step", "loc_foot_l")
 a.sound(0.0, "step")
-a.sound(0.4, "step")
+a.sound(0.36, "step")
 
 a = anim("turn", 1.0, loop=True)
 gait(a, 1.0, {"fl": 0.0, "hr": 0.0, "fr": 0.5, "hl": 0.5}, swing=8, lift=22)
@@ -392,8 +397,8 @@ a.rot("crown", {0: (0, 0, 0), 0.75: (-10, 0, 0), 1.9: (-10, 0, 0), 2.4: (0, 0, 0
 a.rot("body", {0: (0, 0, 0), 0.45: (3, 0, 0), 0.75: (-8, 0, 0), 1.9: (-6, 0, 0), 2.4: (0, 0, 0)})
 a.pos("body", {0: (0, 0, 0), 0.45: (0, -2, 0), 0.75: (0, 1, 0), 2.4: (0, 0, 0)})
 legs_keys(a, {0: dict(fl=(0, 0, 0), hl=(0, 0, 0)), 0.75: dict(fl=(6, -4, 0), hl=(-6, 8, 2)), 1.9: dict(fl=(6, -4, 0), hl=(-6, 8, 2)), 2.4: dict(fl=(0, 0, 0), hl=(0, 0, 0))})
-for t, f in ((0, 0.0), (0.7, 1.0), (1.9, 1.0), (2.4, 0.0)):
-    display_delta(a, t, f)  # territorial display: wings raised like the reference sheet
+wings(a, {0: {"arm": (0, 0, 0), "fore": (0, 0, 0)}, 0.75: {"arm": (-8, 6, -12), "fore": (0, -6, -8)},
+          1.9: {"arm": (-8, 6, -11), "fore": (0, -6, -8)}, 2.4: {"arm": (0, 0, 0), "fore": (0, 0, 0)}})  # flare
 a.chain(TAIL, {0: (0, 0, 0), 0.75: (8, 0, 0), 1.9: (6, 0, 0), 2.4: (0, 0, 0)}, falloff=1.05)
 a.fx(0.8, "roar_breath", "loc_mouth")
 
@@ -414,7 +419,7 @@ a.fx(0.55, "claw_slash", "loc_claw_l")
 a.fx(1.05, "claw_slash", "loc_claw_r")
 
 a = anim("charge_windup", 1.4)
-a.chain(["neck_1", "neck_2", "neck_3"], {0: (0, 0, 0), 0.5: (-10, 0, 0), 0.9: (22, 0, 0), 1.4: (24, 0, 0)}, falloff=0.75)
+a.chain(["neck_1", "neck_2", "neck_3"], {0: (0, 0, 0), 0.5: (-10, 0, 0), 0.9: (15, 0, 0), 1.4: (16, 0, 0)}, falloff=0.75)
 a.rot("head", {0: (0, 0, 0), 0.5: (-10, 0, 0), 0.9: (18, 0, 0), 1.1: (16, 3, 0), 1.25: (18, -3, 0), 1.4: (18, 0, 0)}, mirror=False)
 a.rot("crown", {0: (0, 0, 0), 0.9: (6, 0, 0), 1.4: (6, 0, 0)})
 a.rot("jaw", {0: (0, 0, 0), 0.4: (24, 0, 0), 0.7: (0, 0, 0)})
@@ -628,7 +633,9 @@ def code(n):
 
 # wing fold target per action (1 = folded on the back, 0 = fully spread as authored)
 FOLD_TARGET = {"takeoff": 0.0, "landing": 0.0, "wing_pressure": 0.0, "cliff_dive": 0.35,
-               "skull_fracture": 0.7, "death": 0.35}
+               "skull_fracture": 0.7, "death": 0.85}
+# display stance weight on top of the fold (1 = the reference's raised, draped wings); 0 = tight fold
+DISPLAY_OFF = ["charge_windup", "charge", "charge_impact", "takeoff", "landing", "wing_pressure", "cliff_dive", "death"]
 
 
 def fold_expr():
@@ -638,10 +645,17 @@ def fold_expr():
     return f"v.fold_t = {P_FLIGHT} > 0 ? 0.0 : {e};"
 
 
+def disp_expr():
+    off = " || ".join(f"{P_ANIM} == {code(n)}" for n in DISPLAY_OFF)
+    return f"v.disp_t = ({P_FLIGHT} > 0 || {off}) ? 0.0 : (v.running ? 0.2 : (v.walking ? 0.85 : 1.0));"
+
+
 PRE_ANIMATION = [
     f"v.busy = {P_ANIM} > 0;",
     fold_expr(),
-    "v.fold = math.lerp(v.fold ?? 1.0, v.fold_t, math.min(1.0, q.delta_time * 6.0));",
+    # critically damped ease toward the targets: no snapping when a state changes
+    "v.fold_v = (v.fold_v ?? 0.0) + ((v.fold_t - (v.fold ?? 1.0)) * 36.0 - (v.fold_v ?? 0.0) * 12.0) * math.min(q.delta_time, 0.05);",
+    "v.fold = math.clamp((v.fold ?? 1.0) + v.fold_v * math.min(q.delta_time, 0.05), 0.0, 1.0);",
     "v.yaw_d = q.body_y_rotation - (v.last_yaw ?? q.body_y_rotation);",
     "v.yaw_d = v.yaw_d > 180 ? v.yaw_d - 360 : (v.yaw_d < -180 ? v.yaw_d + 360 : v.yaw_d);",
     "v.last_yaw = q.body_y_rotation;",
@@ -649,14 +663,18 @@ PRE_ANIMATION = [
     "v.turn_dir = math.clamp(v.turn / 60.0, -1.0, 1.0);",
     f"v.walking = {P_GAIT} == 1 || ({P_GAIT} == 0 && q.ground_speed > 0.3);",
     f"v.running = {P_GAIT} == 2 || ({P_GAIT} == 0 && q.ground_speed > 4.5);",
+    disp_expr(),
+    "v.disp_v = (v.disp_v ?? 0.0) + ((v.disp_t - (v.disp ?? 1.0)) * 25.0 - (v.disp_v ?? 0.0) * 10.0) * math.min(q.delta_time, 0.05);",
+    "v.disp = math.clamp((v.disp ?? 1.0) + v.disp_v * math.min(q.delta_time, 0.05), 0.0, 1.0);",
     f"v.injured = math.lerp(v.injured ?? 0.0, ({P_PHASE} >= 3 && !v.busy) ? 1.0 : 0.0, math.min(1.0, q.delta_time * 2.0));",
 ]
-ANIMATE = ["locomotion", "action", {"wing_fold": "v.fold"}, "flinch", {"injured_overlay": "v.injured"}]
+ANIMATE = ["locomotion", "action", {"wing_fold": "v.fold"}, {"wing_display": "v.disp"}, "flinch",
+           {"injured_overlay": "v.injured"}]
 
 
 def controllers():
     C = {}
-    B = 0.25
+    B = 0.4
     C["controller.animation.dragon_dominion.gharvok.locomotion"] = {"initial_state": "idle", "states": {
         "idle": {"animations": ["idle_breathing"], "blend_transition": B, "transitions": [
             {"flap": f"{P_FLIGHT} == 1"}, {"glide": f"{P_FLIGHT} == 2"},
@@ -675,12 +693,12 @@ def controllers():
     }}
     states = {"none": {"transitions": [{n: f"{P_ANIM} == {code(n)}"} for n in ANIM_CODES[1:]]}}
     for n in ANIM_CODES[1:]:
-        states[n] = {"animations": [n], "blend_transition": 0.2 if n not in ("death",) else 0.3,
+        states[n] = {"animations": [n], "blend_transition": 0.3 if n not in ("death",) else 0.4,
                      "transitions": [{"none": f"{P_ANIM} != {code(n)}"}]}
     C["controller.animation.dragon_dominion.gharvok.action"] = {"initial_state": "none", "states": states}
     C["controller.animation.dragon_dominion.gharvok.flinch"] = {"initial_state": "calm", "states": {
         "calm": {"transitions": [{"flinch": "q.hurt_time > 0 && !v.busy && q.is_alive"}]},
-        "flinch": {"animations": ["hit_reaction"], "blend_transition": 0.1,
+        "flinch": {"animations": ["hit_reaction"], "blend_transition": 0.15,
                    "transitions": [{"calm": "q.all_animations_finished || v.busy"}]},
     }}
     return {"format_version": "1.10.0", "animation_controllers": C}

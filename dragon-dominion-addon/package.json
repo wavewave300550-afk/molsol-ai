@@ -1,7 +1,7 @@
 {
   "name": "dragon-dominion-addon",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Minecraft Bedrock add-on: Dragon Dominion - Boss 1: Gharvok, the Cliffbreaker",
   "type": "module",
   "scripts": {
@@ -10,8 +10,9 @@
     "validate": "node tools/validate.mjs",
     "smoke": "node tools/smoke/smoke.mjs",
     "package": "node tools/package.mjs",
-    "preview": "python3 tools/render_preview.py && python3 tools/render_preview.py --sheet",
-    "build": "npm run assets && npm run check && npm run validate && npm run smoke && npm run package"
+    "preview": "python3 tools/render_preview.py && python3 tools/render_preview.py --sheet && python3 tools/motion_preview.py",
+    "build": "npm run assets && npm run check && npm run validate && npm run motion && npm run smoke && npm run package",
+    "motion": "python3 tools/motion_check.py --strict"
   },
   "devDependencies": {
     "@minecraft/server": "2.11.0",

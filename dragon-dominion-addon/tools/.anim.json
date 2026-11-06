@@ -34,6 +34,9 @@
   {
    "wing_fold": "v.fold"
   },
+  {
+   "wing_display": "v.disp"
+  },
   "flinch",
   {
    "injured_overlay": "v.injured"
@@ -41,8 +44,9 @@
  ],
  "pre_animation": [
   "v.busy = q.property('dragon_dominion:anim') > 0;",
-  "v.fold_t = q.property('dragon_dominion:flight') > 0 ? 0.0 : (q.property('dragon_dominion:anim') == 8 ? 0.0 : (q.property('dragon_dominion:anim') == 9 ? 0.0 : (q.property('dragon_dominion:anim') == 10 ? 0.35 : (q.property('dragon_dominion:anim') == 11 ? 0.0 : (q.property('dragon_dominion:anim') == 15 ? 0.7 : (q.property('dragon_dominion:anim') == 17 ? 0.35 : 1.0))))));",
-  "v.fold = math.lerp(v.fold ?? 1.0, v.fold_t, math.min(1.0, q.delta_time * 6.0));",
+  "v.fold_t = q.property('dragon_dominion:flight') > 0 ? 0.0 : (q.property('dragon_dominion:anim') == 8 ? 0.0 : (q.property('dragon_dominion:anim') == 9 ? 0.0 : (q.property('dragon_dominion:anim') == 10 ? 0.35 : (q.property('dragon_dominion:anim') == 11 ? 0.0 : (q.property('dragon_dominion:anim') == 15 ? 0.7 : (q.property('dragon_dominion:anim') == 17 ? 0.85 : 1.0))))));",
+  "v.fold_v = (v.fold_v ?? 0.0) + ((v.fold_t - (v.fold ?? 1.0)) * 36.0 - (v.fold_v ?? 0.0) * 12.0) * math.min(q.delta_time, 0.05);",
+  "v.fold = math.clamp((v.fold ?? 1.0) + v.fold_v * math.min(q.delta_time, 0.05), 0.0, 1.0);",
   "v.yaw_d = q.body_y_rotation - (v.last_yaw ?? q.body_y_rotation);",
   "v.yaw_d = v.yaw_d > 180 ? v.yaw_d - 360 : (v.yaw_d < -180 ? v.yaw_d + 360 : v.yaw_d);",
   "v.last_yaw = q.body_y_rotation;",
@@ -50,6 +54,9 @@
   "v.turn_dir = math.clamp(v.turn / 60.0, -1.0, 1.0);",
   "v.walking = q.property('dragon_dominion:gait') == 1 || (q.property('dragon_dominion:gait') == 0 && q.ground_speed > 0.3);",
   "v.running = q.property('dragon_dominion:gait') == 2 || (q.property('dragon_dominion:gait') == 0 && q.ground_speed > 4.5);",
+  "v.disp_t = (q.property('dragon_dominion:flight') > 0 || q.property('dragon_dominion:anim') == 4 || q.property('dragon_dominion:anim') == 5 || q.property('dragon_dominion:anim') == 6 || q.property('dragon_dominion:anim') == 9 || q.property('dragon_dominion:anim') == 11 || q.property('dragon_dominion:anim') == 8 || q.property('dragon_dominion:anim') == 10 || q.property('dragon_dominion:anim') == 17) ? 0.0 : (v.running ? 0.2 : (v.walking ? 0.85 : 1.0));",
+  "v.disp_v = (v.disp_v ?? 0.0) + ((v.disp_t - (v.disp ?? 1.0)) * 25.0 - (v.disp_v ?? 0.0) * 10.0) * math.min(q.delta_time, 0.05);",
+  "v.disp = math.clamp((v.disp ?? 1.0) + v.disp_v * math.min(q.delta_time, 0.05), 0.0, 1.0);",
   "v.injured = math.lerp(v.injured ?? 0.0, (q.property('dragon_dominion:phase') >= 3 && !v.busy) ? 1.0 : 0.0, math.min(1.0, q.delta_time * 2.0));"
  ],
  "controllers": [

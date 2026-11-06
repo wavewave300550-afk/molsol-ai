@@ -8,7 +8,7 @@
      "animations": [
       "idle_breathing"
      ],
-     "blend_transition": 0.25,
+     "blend_transition": 0.4,
      "transitions": [
       {
        "flap": "q.property('dragon_dominion:flight') == 1"
@@ -31,7 +31,7 @@
      "animations": [
       "walk"
      ],
-     "blend_transition": 0.25,
+     "blend_transition": 0.4,
      "transitions": [
       {
        "idle": "v.busy || !v.walking || q.property('dragon_dominion:flight') > 0"
@@ -45,7 +45,7 @@
      "animations": [
       "run"
      ],
-     "blend_transition": 0.25,
+     "blend_transition": 0.4,
      "transitions": [
       {
        "idle": "v.busy || q.property('dragon_dominion:flight') > 0 || (!v.running && !v.walking)"
@@ -165,7 +165,7 @@
      "animations": [
       "idle_head_scan"
      ],
-     "blend_transition": 0.2,
+     "blend_transition": 0.3,
      "transitions": [
       {
        "none": "q.property('dragon_dominion:anim') != 1"
@@ -176,7 +176,7 @@
      "animations": [
       "roar"
      ],
-     "blend_transition": 0.2,
+     "blend_transition": 0.3,
      "transitions": [
       {
        "none": "q.property('dragon_dominion:anim') != 2"
@@ -187,7 +187,7 @@
      "animations": [
       "claw_combo"
      ],
-     "blend_transition": 0.2,
+     "blend_transition": 0.3,
      "transitions": [
       {
        "none": "q.property('dragon_dominion:anim') != 3"
@@ -198,7 +198,7 @@
      "animations": [
       "charge_windup"
      ],
-     "blend_transition": 0.2,
+     "blend_transition": 0.3,
      "transitions": [
       {
        "none": "q.property('dragon_dominion:anim') != 4"
@@ -209,7 +209,7 @@
      "animations": [
       "charge"
      ],
-     "blend_transition": 0.2,
+     "blend_transition": 0.3,
      "transitions": [
       {
        "none": "q.property('dragon_dominion:anim') != 5"
@@ -220,7 +220,7 @@
      "animations": [
       "charge_impact"
      ],
-     "blend_transition": 0.2,
+     "blend_transition": 0.3,
      "transitions": [
       {
        "none": "q.property('dragon_dominion:anim') != 6"
@@ -231,7 +231,7 @@
      "animations": [
       "tail_sweep"
      ],
-     "blend_transition": 0.2,
+     "blend_transition": 0.3,
      "transitions": [
       {
        "none": "q.property('dragon_dominion:anim') != 7"
@@ -242,7 +242,7 @@
      "animations": [
       "wing_pressure"
      ],
-     "blend_transition": 0.2,
+     "blend_transition": 0.3,
      "transitions": [
       {
        "none": "q.property('dragon_dominion:anim') != 8"
@@ -253,7 +253,7 @@
      "animations": [
       "takeoff"
      ],
-     "blend_transition": 0.2,
+     "blend_transition": 0.3,
      "transitions": [
       {
        "none": "q.property('dragon_dominion:anim') != 9"
@@ -264,7 +264,7 @@
      "animations": [
       "cliff_dive"
      ],
-     "blend_transition": 0.2,
+     "blend_transition": 0.3,
      "transitions": [
       {
        "none": "q.property('dragon_dominion:anim') != 10"
@@ -275,7 +275,7 @@
      "animations": [
       "landing"
      ],
-     "blend_transition": 0.2,
+     "blend_transition": 0.3,
      "transitions": [
       {
        "none": "q.property('dragon_dominion:anim') != 11"
@@ -286,7 +286,7 @@
      "animations": [
       "jump"
      ],
-     "blend_transition": 0.2,
+     "blend_transition": 0.3,
      "transitions": [
       {
        "none": "q.property('dragon_dominion:anim') != 12"
@@ -297,7 +297,7 @@
      "animations": [
       "skullbreaker"
      ],
-     "blend_transition": 0.2,
+     "blend_transition": 0.3,
      "transitions": [
       {
        "none": "q.property('dragon_dominion:anim') != 13"
@@ -308,7 +308,7 @@
      "animations": [
       "stagger"
      ],
-     "blend_transition": 0.2,
+     "blend_transition": 0.3,
      "transitions": [
       {
        "none": "q.property('dragon_dominion:anim') != 14"
@@ -319,7 +319,7 @@
      "animations": [
       "skull_fracture"
      ],
-     "blend_transition": 0.2,
+     "blend_transition": 0.3,
      "transitions": [
       {
        "none": "q.property('dragon_dominion:anim') != 15"
@@ -330,7 +330,7 @@
      "animations": [
       "exhausted"
      ],
-     "blend_transition": 0.2,
+     "blend_transition": 0.3,
      "transitions": [
       {
        "none": "q.property('dragon_dominion:anim') != 16"
@@ -341,7 +341,7 @@
      "animations": [
       "death"
      ],
-     "blend_transition": 0.3,
+     "blend_transition": 0.4,
      "transitions": [
       {
        "none": "q.property('dragon_dominion:anim') != 17"
@@ -364,7 +364,7 @@
      "animations": [
       "hit_reaction"
      ],
-     "blend_transition": 0.1,
+     "blend_transition": 0.15,
      "transitions": [
       {
        "calm": "q.all_animations_finished || v.busy"

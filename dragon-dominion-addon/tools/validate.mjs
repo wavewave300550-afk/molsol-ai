@@ -111,6 +111,16 @@ for (const bad of [/setType\(/, /setPermutation\(/, /fillBlocks\(/, /createExplo
 const CFG = await import(pathToFileURL(path.join(BP, "scripts", "dragons", "gharvok", "config.js")).href);
 const TIM = await import(pathToFileURL(path.join(BP, "scripts", "dragons", "gharvok", "timings.js")).href);
 ok(CFG.GHARVOK_ID === ID, "config entity id");
+{
+  const rig = json(path.join(ROOT, "tools", ".rig.json"));
+  const ceScale = Number(json(path.join(RP, "entity", "gharvok.entity.json"))["minecraft:client_entity"].description.scripts.scale);
+  const blocks = (u) => (u * ceScale) / 16;
+  const g = CFG.CONFIG.geometry;
+  ok(Math.abs(g.headForward - blocks(-rig.points.head[2])) < 0.25, `config headForward matches the model (${blocks(-rig.points.head[2]).toFixed(2)})`);
+  ok(Math.abs(g.headHeight - blocks(rig.points.head[1])) < 0.25, `config headHeight matches the model (${blocks(rig.points.head[1]).toFixed(2)})`);
+  ok(Math.abs(g.mouthForward - blocks(-rig.points.mouth[2])) < 0.25, `config mouthForward matches the model (${blocks(-rig.points.mouth[2]).toFixed(2)})`);
+  ok(Math.abs(g.tailBack - blocks(rig.points.tail_tip[2])) < 0.3, `config tailBack matches the model (${blocks(rig.points.tail_tip[2]).toFixed(2)})`);
+}
 
 // ---------------------------------------------------------------- 4) behavior entity / items
 const bpe = json(path.join(BP, "entities", "gharvok.json"))["minecraft:entity"];

@@ -2,11 +2,11 @@
   "format_version": 2,
   "header": {
     "name": "Dragon Dominion",
-    "description": "Behavior Pack - Boss 1: Gharvok, the Cliffbreaker (v1.0.0)",
+    "description": "Behavior Pack - Boss 1: Gharvok, the Cliffbreaker (v1.1.0)",
     "uuid": "5beff867-825e-487d-880e-a1d336104536",
     "version": [
       1,
-      0,
+      1,
       0
     ],
     "min_engine_version": [
@@ -21,7 +21,7 @@
       "uuid": "1e635a49-4239-4d52-8e04-4d603ee93a26",
       "version": [
         1,
-        0,
+        1,
         0
       ]
     },
@@ -31,7 +31,7 @@
       "uuid": "ff9141cb-2c0d-458e-af2d-3b0071617372",
       "version": [
         1,
-        0,
+        1,
         0
       ],
       "entry": "scripts/main.js"
@@ -42,7 +42,7 @@
       "uuid": "bc3eee27-d96d-43a7-98b7-fa1e23547ba0",
       "version": [
         1,
-        0,
+        1,
         0
       ]
     },

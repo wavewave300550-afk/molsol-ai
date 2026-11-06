@@ -2,11 +2,11 @@
  "format_version": 2,
  "header": {
   "name": "Dragon Dominion",
-  "description": "Resource Pack - Boss 1: Gharvok, the Cliffbreaker (v1.0.0)",
+  "description": "Resource Pack - Boss 1: Gharvok, the Cliffbreaker (v1.1.0)",
   "uuid": "bc3eee27-d96d-43a7-98b7-fa1e23547ba0",
   "version": [
    1,
-   0,
+   1,
    0
   ],
   "min_engine_version": [
@@ -21,7 +21,7 @@
    "uuid": "029bc848-a7be-4172-8dec-d37ff2172e33",
    "version": [
     1,
-    0,
+    1,
     0
    ]
   }
