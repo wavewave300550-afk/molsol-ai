@@ -1,7 +1,7 @@
 {
   "name": "joki-joki-no-mi",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Minecraft Bedrock add-on: Joki Joki no Mi - Steam Pressure (original fan-made Paramecia devil fruit)",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",

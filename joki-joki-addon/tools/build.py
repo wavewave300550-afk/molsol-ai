@@ -30,7 +30,7 @@ DIST = os.path.join(ROOT, "dist")
 
 ADDON_NAME = "Jōki Jōki no Mi - Steam Pressure"
 FILE_BASE = "Joki_Joki_no_Mi_Steam_Pressure"
-VERSION = [1, 0, 0]
+VERSION = [1, 0, 1]
 MIN_ENGINE = [1, 26, 60]
 SERVER_VERSION = "2.11.0"
 SERVER_UI_VERSION = "2.3.0"

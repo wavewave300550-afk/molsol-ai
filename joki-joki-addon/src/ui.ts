@@ -1,9 +1,8 @@
 import { CommandPermissionLevel, Player, system, world } from "@minecraft/server";
 import { ActionFormData, ActionFormResponse, FormCancelationReason } from "@minecraft/server-ui";
-import { ABILITIES, ABILITY_ORDER, DP, HEAT, Mode, MODES, WORLD_PVP } from "./config.js";
+import { ABILITIES, ABILITY_ORDER, CONTROLS, DP, HEAT, Mode, MODES, WORLD_PVP } from "./config.js";
 import { pvpEnabled } from "./core/combat.js";
-import { S } from "./core/fx.js";
-import { cooldownLeft, tryCast } from "./casting.js";
+import { cooldownLeft, selectAbility } from "./casting.js";
 import { heatBar } from "./hud.js";
 import { setMode } from "./modes.js";
 import { giveValve } from "./power.js";
@@ -23,14 +22,6 @@ async function show(p: Player, form: ActionFormData, tries = 20): Promise<Action
     return res;
   }
   return undefined;
-}
-
-function click(p: Player): void {
-  try {
-    p.playSound(S.click, { volume: 0.5, pitch: 1.2 });
-  } catch {
-    // cosmetic
-  }
 }
 
 type Entry = { label: string; icon?: string; run: () => void | Promise<void> };
@@ -66,12 +57,7 @@ export async function openConsole(p: Player): Promise<void> {
     entries.push({
       label: `${i === s.selected ? "§l" : ""}${id === "redline" ? "§4" : "§0"}${a.name}${i === s.selected ? " §r§6<" : ""}\n§r§8+${heat} heat | ${status}`,
       icon: ICON(id),
-      run: () => {
-        s.selected = i;
-        p.setDynamicProperty(DP.selected, i);
-        click(p);
-        tryCast(p, id);
-      },
+      run: () => selectAbility(p, i),
     });
   });
 
@@ -130,13 +116,16 @@ export async function openConsole(p: Player): Promise<void> {
     .title("§l§cJōki Jōki §r§8Steam Console")
     .body(
       `${status}\n${heatBar(s.heat, over, t)} §r§f${Math.floor(s.heat)}% \n\n` +
-        "§7Tap an ability to select it §fand fire it now§7. Afterwards, §fUse§7 the valve to fire it again; §fSneak + Use§7 reopens this console.",
+        "§7Tap an ability to §fselect§7 it (it does not fire). Then §fUse§7 the valve to fire.\n" +
+        "§8Quick switch: §7Sneak + Use §8= next skill, §7looking up §8= previous, §7looking down §8= this console.",
     );
   for (const e of entries) {
     if (e.icon) form.button(e.label, e.icon);
     else form.button(e.label);
   }
   const res = await show(p, form);
+  // the finger that closes the form is often still on the screen: never let it cast
+  if (p.isValid) s.castGuardUntil = now() + CONTROLS.castGuard;
   if (!res || res.canceled || res.selection === undefined) return;
   const chosen = entries[res.selection];
   if (chosen) await chosen.run();
@@ -152,7 +141,9 @@ async function guide(p: Player): Promise<void> {
     "§l§6HEAT§r §8- speed I, strength I (+3 melee), steam vents, slow cooling.\n" +
     "§l§cPRESSURE§r §8- speed II, strength II, abilities x1.4 power, heat x1.35, heat creeps up.\n" +
     "§l§4REDLINE§r §8- 12s: speed III, strength III, x1.75 power, -40% cooldowns, heat x1.9 and +4/s.\n\n" +
-    "§4§lOVERHEAT§r §8at 100 heat: gears drop, every ability locks for 10s, brief slowness. Standing in water cools faster.";
+    "§4§lOVERHEAT§r §8at 100 heat: gears drop, every ability locks for 10s, brief slowness. Standing in water cools faster.\n\n" +
+    "§l§6CONTROLS§r §8(hold the Steam Valve)\n§7Use §8- fire the selected skill\n§7Sneak + Use §8- next skill (does not fire)\n" +
+    "§7Sneak + Use looking up §8- previous skill\n§7Sneak + Use looking down §8- open this console";
   const res = await show(p, new ActionFormData().title("§lSteam Pressure Guide").body(`${gears}\n\n${lines}`).button("§8Back"));
   if (res && !res.canceled) await openConsole(p);
 }

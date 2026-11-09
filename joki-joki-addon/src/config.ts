@@ -200,3 +200,15 @@ export const PROTECTED_TYPES = new Set<string>([
 
 /** HUD refresh period and how long it lingers after the valve is put away. */
 export const HUD = { period: 4, linger: 80 };
+
+/** Steam Valve controls. */
+export const CONTROLS = {
+  /** Ticks after a skill switch / closing the console during which plain Use is ignored (no accidental casts). */
+  castGuard: 10,
+  /** Min ticks between two Sneak+Use skill steps (holding the button scrolls at this pace). */
+  cycleDebounce: 8,
+  /** View-direction Y at or below which Sneak+Use opens the console (looking at the ground). */
+  lookDown: -0.8,
+  /** View-direction Y at or above which Sneak+Use steps to the PREVIOUS skill (looking at the sky). */
+  lookUp: 0.8,
+};

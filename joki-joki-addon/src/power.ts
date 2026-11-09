@@ -82,7 +82,8 @@ export function grantPower(p: Player): boolean {
     "§c§lJōki Jōki no Mi§r §7- Paramecia: Steam Pressure\n" +
       "§7You received a §6Steam Valve§7. Hold it and:\n" +
       "§f - Use§7 (tap & hold / right-click) = fire the selected ability\n" +
-      "§f - Sneak + Use§7 = open the §6Steam Console§7 (abilities, gears, HUD)\n" +
+      "§f - Sneak + Use§7 = next ability §8(never fires)§7, looking up = previous\n" +
+      "§f - Sneak + Use looking down§7 = §6Steam Console§7 (abilities, gears, HUD)\n" +
       "§7Watch the §cheat gauge§7: at 100% you §4OVERHEAT§7 and lose your powers for 10s.\n" +
       "§8Lost the valve? Type /joki:valve",
   );

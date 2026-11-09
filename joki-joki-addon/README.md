@@ -38,11 +38,17 @@ Hold the **Steam Valve** (`joki:steam_valve`):
 | Input | Touch | Keyboard / controller | Action |
 |---|---|---|---|
 | **Use** | press & hold the screen (or the Use button) — tapping a block also works | right-click / LT | fire the **selected** ability |
-| **Sneak + Use** | toggle Sneak, then Use | Shift + right-click | open the **Steam Console** |
+| **Sneak + Use** | toggle Sneak, then Use | Shift + right-click | **next ability** — only switches, never fires |
+| **Sneak + Use, looking up** | same, aim at the sky | same | **previous ability** |
+| **Sneak + Use, looking down** | same, aim at the ground | same | open the **Steam Console** |
 
-The **Steam Console** is a one-tap menu: tap an ability to **select it and fire it at once** (then plain Use repeats it),
-shift gears (HEAT / PRESSURE / vent to NORMAL), toggle the HUD, read the power guide, summon a replacement valve, and
-(operators) toggle PvP damage. Every button shows the heat cost and live cooldown.
+Switching never fires anything: the skill name flashes in the middle of the screen, the HUD shows
+`Selected: … (n/9)` and Use is ignored for 0.5 s afterwards, so the tap that switched (or closed the menu) can't cast by
+accident. Holding Sneak + Use scrolls through the skills one step every 0.4 s.
+
+The **Steam Console** lists every ability with its heat cost and live cooldown: tapping one **only selects it**. It also
+shifts gears (HEAT / PRESSURE / vent to NORMAL), toggles the HUD, shows the power guide, summons a replacement valve, and
+(operators) toggles PvP damage.
 
 Commands: `/joki:valve` (new valve), `/joki:console` (open menu) — anyone. Testing (op + cheats): `/joki:grant`, `/joki:revoke`, `/joki:cool` (reset heat/cooldowns).
 
@@ -144,17 +150,17 @@ npm test          # typecheck → build → validate → smoke test   (needs Pyt
 |---|---|
 | TypeScript `strict` typecheck against the official 2.11.0 / 2.3.0 typings | ✅ no errors |
 | Minecraft **Creator Tools 0.21.0** validator on the built packs | ✅ **0 errors**; warnings are expected (intentional `minecraft:player` override, menu icons referenced only from script, format-version recommendations on the copied vanilla player files) |
-| `tools/validate.py` — 2,912 static checks | ✅ 0 errors: JSON, manifests/UUIDs (unique, v4, no collision with the other add-ons here), BP↔RP dependencies, player overrides identical to vanilla except the additions, render-controller copies identical to vanilla except `overlay_color`, controller states/transitions/effects, all 37 particles (atlas UVs, Molang balance, allowed variables, mobile particle caps), animations, sounds + Ogg headers, items, lang, textures (RGBA, power-of-two, transparent fruit background), and every particle/sound/animation/effect/item/property/icon id used by the compiled scripts |
-| `tools/smoke/smoke.mjs` — **120 assertions** running the compiled scripts on a strict API mock with vanilla physics | ✅ all pass |
+| `tools/validate.py` — 2,911 static checks | ✅ 0 errors: JSON, manifests/UUIDs (unique, v4, no collision with the other add-ons here), BP↔RP dependencies, player overrides identical to vanilla except the additions, render-controller copies identical to vanilla except `overlay_color`, controller states/transitions/effects, all 37 particles (atlas UVs, Molang balance, allowed variables, mobile particle caps), animations, sounds + Ogg headers, items, lang, textures (RGBA, power-of-two, transparent fruit background), and every particle/sound/animation/effect/item/property/icon id used by the compiled scripts |
+| `tools/smoke/smoke.mjs` — **175 assertions** running the compiled scripts on a strict API mock with vanilla physics | ✅ all pass |
 
-The smoke test covers: eating the fruit and ownership; refusing / refunding a second fruit; all **9 abilities**
+The smoke test covers: skill switching (next / previous / console, wrap-around, scroll pace, switching and closing the console never cast, Use works after the 0.5 s guard); eating the fruit and ownership; refusing / refunding a second fruit; all **9 abilities**
 (boost buffs and expiry, dash distance + wall collision + mid-air + fall guard, jump height + mid-air rule + landing,
 cannon hit / range limit / block collision / 2-bolt PRESSURE burst, scald falloff + knockback + protected mobs,
 knuckle direct + cone + primed-by-melee, kick hit + rebound + lunge length, mist slow/blind/invisibility + dissipation,
 redline ignition / buffs / self-heating / no stacking / expiry); heat accounting per gear; independent cooldowns;
 Overheat trigger, lockout of abilities and gears, penalty, HUD warning, automatic recovery; multiplayer separation and
 PvP rule; melee enhancement; touch block-tap casting; death + respawn valve; leave/rejoin persistence; menus, HUD toggle,
-guide, commands, revoke; all tasks finishing; particle budget (≈1 server particle call per tick while running in REDLINE,
+guide, commands, revoke (every ability is cast the way a player does it: select, then Use); all tasks finishing; particle budget (≈1 server particle call per tick while running in REDLINE,
 peak 16 in a single tick).
 
 Measured movement (vanilla physics constants, no player input): dash 6.8 blocks (ground, HEAT) / 8.4 (from 6 blocks up),

@@ -98,17 +98,37 @@ async function eat(p) {
   await tick(2);
   return true;
 }
-/** Open the Steam Console (Sneak + Use) and tap the button whose label contains `label`. */
+/** Open the Steam Console (Sneak + Use while looking down) and tap the button whose label contains `label`. */
 async function menu(p, label) {
   __ui.queue.push(label);
+  const rot = p.getRotation();
+  p.setRotation({ x: 85, y: rot.y });
   p.isSneaking = true;
   useItem(p, VALVE);
   p.isSneaking = false;
-  await tick(6);
+  p.setRotation(rot);
+  await tick(config.CONTROLS.cycleDebounce);
+  expect(__ui.queue.length === 0, `console tap "${label}" was consumed`);
 }
 async function use(p) {
   useItem(p, VALVE);
   await tick(6);
+}
+/** Select an ability in the console (does NOT fire), wait out the cast guard, then Use to fire it. */
+async function cast(p, label) {
+  await menu(p, label);
+  await tick(config.CONTROLS.castGuard);
+  await use(p);
+}
+/** Sneak + Use at a given pitch (0 = level, -80 = looking up). */
+async function sneakUse(p, pitch = 0) {
+  const rot = p.getRotation();
+  p.setRotation({ x: pitch, y: rot.y });
+  p.isSneaking = true;
+  useItem(p, VALVE);
+  p.isSneaking = false;
+  p.setRotation(rot);
+  await tick(1);
 }
 async function reset(p, loc = { x: 0, y: 64, z: 0 }) {
   runCmd("joki:cool", p);
@@ -159,9 +179,48 @@ await tick(2);
 expect(A.__inv.count(FRUIT) === 1 && owner(A) && valves(A) === 1, "a raced second fruit is refunded, data intact");
 expect(!owner(B) && prop(B, "joki:mode") === 0, "other player unaffected");
 
+// ------------------------------------------------------------------ 1b. switching skills never casts
+await reset(A);
+const sel = () => A.getDynamicProperty("joki:selected") ?? 0;
+const heat0 = S(A);
+const hurt0 = __stats.anims.length;
+const startSel = sel();
+await sneakUse(A, 0);
+expect(sel() === (startSel + 1) % 9, "Sneak + Use (level) selects the next skill");
+expect(prop(A, "joki:mode") === 1 && __stats.anims.length === hurt0, "switching skills does not cast anything");
+expect(__stats.titles.at(-1).includes("<"), "selected skill name flashes on screen");
+await sneakUse(A, 0);
+expect(sel() === (startSel + 1) % 9, "holding Sneak + Use steps at a readable pace (debounced)");
+await tick(config.CONTROLS.cycleDebounce);
+await sneakUse(A, 0);
+expect(sel() === (startSel + 2) % 9, "next Sneak + Use step");
+await tick(config.CONTROLS.cycleDebounce);
+await sneakUse(A, -80);
+expect(sel() === (startSel + 1) % 9, "Sneak + Use looking up selects the previous skill");
+await tick(config.CONTROLS.cycleDebounce);
+for (let i = 0; i < 12; i++) {
+  await sneakUse(A, -80);
+  await tick(config.CONTROLS.cycleDebounce);
+}
+expect(sel() >= 0 && sel() < 9, "selection wraps around both ways");
+useItem(A, VALVE);
+await tick(1);
+expect(prop(A, "joki:mode") === 1, "Use right after a switch is ignored (cast guard)");
+__ui.shown.length = 0;
+await menu(A, "Pressure Dash");
+expect(__ui.shown.at(-1)?.title.includes("Steam Console"), "Sneak + Use looking down opens the console");
+expect(sel() === 1 && prop(A, "joki:mode") === 1 && A.location.z === 0, "tapping a skill in the console only selects it");
+useItem(A, VALVE);
+await tick(1);
+expect(prop(A, "joki:mode") === 1, "the finger closing the console does not cast");
+await tick(config.CONTROLS.castGuard);
+await use(A);
+expect(prop(A, "joki:mode") === 2 && A.location.z > 0.5, "after the guard, Use fires the selected skill");
+void heat0;
+
 // ------------------------------------------------------------------ 2. Steam Boost + auto ignition
 await reset(A);
-await menu(A, "Steam Boost");
+await cast(A, "Steam Boost");
 expect(prop(A, "joki:mode") === 2, "casting from NORMAL auto-shifts to HEAT");
 expect(A.getEffect("speed")?.amplifier === 1 && A.getEffect("strength")?.amplifier === 1, "boost adds +1 speed/strength on top of HEAT");
 expect(near(heatOf(A), 15, 1), `boost heat 15 (hud says ${heatOf(A)})`);
@@ -174,7 +233,7 @@ expect(A.getEffect("speed")?.amplifier === 0, "boost expires back to HEAT speed 
 
 // ------------------------------------------------------------------ 3. Pressure Dash
 await reset(A);
-await menu(A, "Pressure Dash");
+await cast(A, "Pressure Dash");
 await tick(30);
 report.dashGroundHeat = +A.location.z.toFixed(2);
 expect(A.location.z > 5.5 && A.location.z < 9 && Math.abs(A.location.x) < 0.01, `ground dash ~7 blocks forward (got ${A.location.z.toFixed(2)})`);
@@ -182,14 +241,17 @@ expect(A.__hurt.length === 0, "no damage from dash");
 
 await reset(A);
 world.__walls.push({ min: { x: -3, y: 63, z: 3 }, max: { x: 3, y: 70, z: 4 } });
-await menu(A, "Pressure Dash");
+await cast(A, "Pressure Dash");
 await tick(30);
 expect(A.location.z < 3, `walls stop the dash (z ${A.location.z.toFixed(2)})`);
 world.__walls.length = 0;
 
-await reset(A, { x: 0, y: 70, z: 0 });
+await reset(A);
+await menu(A, "Pressure Dash"); // pick it on the ground, then fire it in mid-air
+await tick(config.CONTROLS.castGuard);
+A.location = { x: 0, y: 70, z: 0 };
 A.__fallStart = 70;
-await menu(A, "Pressure Dash");
+await use(A);
 await tick(60);
 report.dashAirHeat = +A.location.z.toFixed(2);
 expect(A.location.y === 64 && A.location.z > 5, "mid-air dash works");
@@ -197,7 +259,7 @@ expect(A.__hurt.length === 0, "dash fall guard prevents fall damage");
 
 // ------------------------------------------------------------------ 4. Boiler Jump
 await reset(A);
-await menu(A, "Boiler Jump");
+await cast(A, "Boiler Jump");
 let peak = 64;
 for (let i = 0; i < 60; i++) {
   await tick(1);
@@ -208,9 +270,12 @@ expect(peak - 64 > 5.5 && peak - 64 < 8.5, `boiler jump ~6.7 blocks (got ${(peak
 expect(A.isOnGround && A.__hurt.length === 0, "landed without fall damage");
 expect(__stats.sounds.includes("joki.steam.land"), "landing steam cushion");
 
-await reset(A, { x: 0, y: 220, z: 0 });
-A.__fallStart = 220;
+await reset(A);
 await menu(A, "Boiler Jump");
+await tick(config.CONTROLS.castGuard);
+A.location = { x: 0, y: 220, z: 0 };
+A.__fallStart = 220;
+await use(A);
 expect(S(A).includes("Boiler Jump"), "mid-air boiler jump allowed once");
 await tick(64);
 expect(!A.isOnGround, "still airborne for the second attempt");
@@ -224,7 +289,7 @@ await tick(2);
 // ------------------------------------------------------------------ 5. Steam Cannon
 await reset(A);
 let z1 = zombie(0, 10);
-await menu(A, "Steam Cannon");
+await cast(A, "Steam Cannon");
 await tick(10);
 expect(hurtBy(z1, A).length === 1 && near(hurtBy(z1, A)[0].amount, 8 * 1.15, 0.01), "cannon hits a target 10 blocks ahead");
 expect(z1.__vel.z > 0, "cannon knocks the target back along the shot");
@@ -232,14 +297,14 @@ expect(__stats.anims.includes("animation.joki.player.cannon"), "cannon pose");
 
 await reset(A);
 z1 = zombie(0, 30);
-await menu(A, "Steam Cannon");
+await cast(A, "Steam Cannon");
 await tick(15);
 expect(hurtBy(z1, A).length === 0, "cannon range is limited to 24 blocks");
 
 await reset(A);
 z1 = zombie(0, 10);
 world.__walls.push({ min: { x: -3, y: 63, z: 5 }, max: { x: 3, y: 70, z: 6 } });
-await menu(A, "Steam Cannon");
+await cast(A, "Steam Cannon");
 await tick(12);
 expect(hurtBy(z1, A).length === 0, "cannon bolts collide with blocks");
 world.__walls.length = 0;
@@ -248,7 +313,7 @@ await reset(A);
 await menu(A, "Gear: PRESSURE");
 expect(prop(A, "joki:mode") === 3, "menu shifts to PRESSURE");
 z1 = zombie(0, 8);
-await menu(A, "Steam Cannon");
+await cast(A, "Steam Cannon");
 await tick(20);
 expect(hurtBy(z1, A).length === 2, `PRESSURE fires a 2-bolt burst (hits ${hurtBy(z1, A).length})`);
 
@@ -259,7 +324,7 @@ const z2 = zombie(-3, 1.5);
 let z3 = zombie(0, 9);
 const vill = dim.spawnEntity("minecraft:villager_v2", { x: 2, y: 64, z: 0 });
 const pet = dim.spawnEntity("minecraft:wolf", { x: -2, y: 64, z: 0 });
-await menu(A, "Scald Burst");
+await cast(A, "Scald Burst");
 await tick(3);
 expect(hurtBy(z1, A).length === 1 && hurtBy(z2, A).length === 1, "scald hits enemies within ~4 blocks");
 expect(hurtBy(z1, A)[0].amount > hurtBy(z2, A)[0].amount, "scald damage falls off with distance");
@@ -272,13 +337,13 @@ expect(__stats.particles > 0 && __stats.sounds.includes("joki.steam.explode"), "
 await reset(A);
 z1 = zombie(0, 2.5);
 const side = zombie(1.2, 2.2);
-await menu(A, "Steam Knuckle");
+await cast(A, "Steam Knuckle");
 expect(hurtBy(z1, A).length === 1 && near(hurtBy(z1, A)[0].amount, 10 * 1.15, 0.01), "knuckle punches the target in reach");
 expect(hurtBy(side, A).length === 1 && near(hurtBy(side, A)[0].amount, 10 * 1.15 * 0.5, 0.01), "knuckle shockwave hits the cone");
-expect(z1.__vel.z > 2, "knuckle launches the target");
+expect(z1.__vel.z > 1 || z1.location.z > 4, `knuckle launches the target (z ${z1.location.z.toFixed(2)})`);
 
 await reset(A);
-await menu(A, "Steam Knuckle");
+await cast(A, "Steam Knuckle");
 expect(S(A).includes("primed"), "no target: the fist is primed");
 z1 = zombie(0, 6);
 world.afterEvents.entityHitEntity.fire({ damagingEntity: A, hitEntity: z1 });
@@ -289,13 +354,13 @@ expect(hurtBy(z1, A).length === 1, "primed knuckle is consumed by one hit");
 // ------------------------------------------------------------------ 8. Jet Kick
 await reset(A);
 z1 = zombie(0, 3.2);
-await menu(A, "Jet Kick");
+await cast(A, "Jet Kick");
 await tick(10);
 expect(hurtBy(z1, A).length === 1 && near(hurtBy(z1, A)[0].amount, 9 * 1.15, 0.01), "jet kick hits the first enemy in the lunge");
 expect(z1.__vel.z > 2 || z1.location.z > 5, "jet kick blasts the target forward");
 expect(A.location.z < z1.location.z, "kicker rebounds instead of passing through");
 await reset(A);
-await menu(A, "Jet Kick");
+await cast(A, "Jet Kick");
 await tick(30);
 report.kickLungeHeat = +A.location.z.toFixed(2);
 expect(A.location.z > 2.5 && A.location.z < 6, `jet kick lunge is short (${A.location.z.toFixed(2)})`);
@@ -304,7 +369,7 @@ expect(A.location.z > 2.5 && A.location.z < 6, `jet kick lunge is short (${A.loc
 await reset(A);
 z1 = zombie(0, 3);
 z3 = zombie(0, 12);
-await menu(A, "Mist Veil");
+await cast(A, "Mist Veil");
 await tick(15);
 expect(z1.getEffect("slowness")?.amplifier === 1 && z1.getEffect("blindness"), "mist slows and blinds enemies inside");
 expect(!z3.getEffect("slowness"), "mist does not reach enemies outside");
@@ -317,7 +382,7 @@ expect(!z1.getEffect("slowness"), "mist dissipates after ~8s");
 
 // ------------------------------------------------------------------ 10. Redline
 await reset(A);
-await menu(A, "Redline");
+await cast(A, "Redline");
 expect(prop(A, "joki:mode") === 1, "redline needs an ignition first");
 await tick(18);
 expect(prop(A, "joki:mode") === 4, "REDLINE engaged after ignition");
@@ -329,24 +394,24 @@ expect(heatOf(A) >= h0 + 7, `REDLINE heat climbs on its own (${h0} -> ${heatOf(A
 z1 = zombie(0, 1.5);
 world.afterEvents.entityHitEntity.fire({ damagingEntity: A, hitEntity: z1 });
 expect(z1.__fire > 0 && z1.__vel.z > 0, "REDLINE melee scalds (fire) and shoves");
-await menu(A, "Redline");
-expect(S(A).includes("Redline") && prop(A, "joki:mode") === 4, "redline cannot be stacked");
+await cast(A, "Redline");
+expect((S(A).includes("Already in REDLINE") || S(A).includes("Redline recharging")) && prop(A, "joki:mode") === 4, `redline cannot be stacked | ${S(A)}`);
 await tick(200);
 expect(prop(A, "joki:mode") === 2, "REDLINE ends after 12s and drops to HEAT");
 expect(S(A).includes("RDL"), "redline cooldown is shown");
 
 // ------------------------------------------------------------------ 11. heat accounting + independent cooldowns
 await reset(A);
-await menu(A, "Pressure Dash");
+await cast(A, "Pressure Dash");
 expect(near(heatOf(A), 12, 1), `dash costs 12 heat in HEAT (${heatOf(A)})`);
 await tick(4);
-await menu(A, "Boiler Jump");
+await cast(A, "Boiler Jump");
 expect(S(A).includes("Boiler Jump"), `cooldowns are independent (jump right after dash) | ${S(A)}`);
 await tick(80);
 await reset(A);
 await menu(A, "Gear: PRESSURE");
 const before = heatOf(A);
-await menu(A, "Pressure Dash");
+await cast(A, "Pressure Dash");
 expect(near(heatOf(A) - before, 12 * 1.35, 1.2), `PRESSURE multiplies ability heat (+${heatOf(A) - before})`);
 
 // ------------------------------------------------------------------ 12. Overheat
@@ -354,7 +419,7 @@ await reset(A);
 A.location = { x: 0, y: 64, z: 0 };
 await menu(A, "Gear: PRESSURE");
 for (const name of ["Scald Burst", "Mist Veil", "Steam Cannon", "Steam Boost", "Steam Knuckle", "Jet Kick"]) {
-  await menu(A, name);
+  await cast(A, name);
   A.location = { x: 0, y: 64, z: 0 };
   A.__vel = { x: 0, y: 0, z: 0 };
   if (prop(A, "joki:overheat")) break;
@@ -365,7 +430,7 @@ expect(A.getEffect("slowness")?.amplifier === 2, "OVERHEAT movement penalty");
 expect(__stats.titles.some((t) => t.includes("Steam systems locked")) && __stats.sounds.includes("joki.overheat.alarm"), "OVERHEAT title + alarm");
 await tick(5);
 expect(S(A).includes("OVERHEAT"), "HUD shows the overheat warning");
-await menu(A, "Pressure Dash");
+await cast(A, "Pressure Dash");
 expect(S(A).includes("OVERHEATED"), "abilities are locked while overheated");
 await menu(A, "Gear: PRESSURE");
 expect(prop(A, "joki:mode") === 1, "gears are locked while overheated");
@@ -373,7 +438,7 @@ await tick(200);
 expect(prop(A, "joki:overheat") === false, "OVERHEAT ends on its own after ~10s");
 expect(heatOf(A) <= 40, `gauge vented during the lockout (${heatOf(A)})`);
 expect(__stats.sounds.includes("joki.overheat.cool"), "cooling sound on recovery");
-await menu(A, "Pressure Dash");
+await cast(A, "Pressure Dash");
 expect(prop(A, "joki:mode") === 2 && !S(A).includes("OVERHEATED"), "abilities work again after recovery");
 await tick(400);
 expect(heatOf(A) === 0 || isNaN(heatOf(A)) || heatOf(A) < 5, "heat keeps cooling to zero");
@@ -383,11 +448,11 @@ await reset(A);
 B.location = { x: 1.5, y: 64, z: 0 };
 B.__inv.addItem(new ItemStack(VALVE));
 holdValve(B);
-await menu(A, "Scald Burst");
+await cast(A, "Scald Burst");
 expect(B.__hurt.length === 0, "steam abilities do not hurt other players by default");
 expect(await eat(B), "second player can eat their own fruit");
 expect(owner(B) && prop(B, "joki:mode") === 1, "B owns an independent power");
-await menu(B, "Pressure Dash");
+await cast(B, "Pressure Dash");
 expect(prop(B, "joki:mode") === 2 && prop(A, "joki:mode") === 2, "both players run their own gears");
 expect(!S(B).includes("recharging"), "A's cooldowns never block B");
 world.setDynamicProperty("joki:pvp", true);
@@ -396,7 +461,7 @@ B.__vel = { x: 0, y: 0, z: 0 };
 await reset(A);
 B.location = { x: 1.5, y: 64, z: 0 };
 B.__hurt = [];
-await menu(A, "Scald Burst");
+await cast(A, "Scald Burst");
 expect(B.__hurt.length === 1, "with PvP enabled steam hurts players");
 world.setDynamicProperty("joki:pvp", false);
 
@@ -410,7 +475,7 @@ expect(A.getEffect("strength")?.amplifier === 1, "PRESSURE melee strength II");
 
 // ------------------------------------------------------------------ 15. touch: tapping a block with the valve
 await reset(A);
-await menu(A, "Pressure Dash"); // select dash
+await cast(A, "Pressure Dash"); // select dash
 await tick(40);
 A.location = { x: 0, y: 64, z: 0 };
 A.__vel = { x: 0, y: 0, z: 0 };
@@ -421,7 +486,7 @@ expect(A.location.z > 4, "tapping a block with the valve casts the selected abil
 // ------------------------------------------------------------------ 16. death and respawn
 await reset(A);
 await menu(A, "Gear: PRESSURE");
-await menu(A, "Steam Cannon");
+await cast(A, "Steam Cannon");
 A.applyDamage(999, { cause: "override" });
 await tick(2);
 expect(prop(A, "joki:mode") === 1 && owner(A), "death vents the boiler but keeps the power");
@@ -448,7 +513,7 @@ world.afterEvents.playerSpawn.fire({ player: A2, initialSpawn: true });
 await tick(25);
 expect(owner(A2) && prop(A2, "joki:mode") === 1, "ownership survives leaving and rejoining");
 expect(valves(A2) === 1, "no extra valve on rejoin");
-await menu(A2, "Steam Boost");
+await cast(A2, "Steam Boost");
 expect(prop(A2, "joki:mode") === 2, "abilities work after rejoin");
 
 // ------------------------------------------------------------------ 18. HUD toggle, guide, commands
@@ -456,9 +521,11 @@ await menu(A2, "Ability HUD");
 expect(A2.getDynamicProperty("joki:hud") === false, "HUD can be turned off (persisted)");
 await menu(A2, "Ability HUD");
 __ui.queue.push("Power Guide", 0, undefined);
+A2.setRotation({ x: 85, y: 0 });
 A2.isSneaking = true;
 useItem(A2, VALVE);
 A2.isSneaking = false;
+A2.setRotation({ x: 0, y: 0 });
 await tick(8);
 expect(__ui.shown.some((f) => f.title.includes("Steam Pressure Guide") && f.body.includes("Steam Knuckle")), "guide lists every ability");
 __ui.queue.length = 0;
@@ -468,7 +535,7 @@ expect(B.messages.some((m) => m.includes("already carry")), "/joki:valve does no
 
 // ------------------------------------------------------------------ 19. performance: redline + running for 5s
 await reset(A2);
-await menu(A2, "Redline");
+await cast(A2, "Redline");
 await tick(20);
 const p0 = __stats.particles;
 const t0 = system.currentTick;

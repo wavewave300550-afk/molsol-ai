@@ -33,6 +33,10 @@ export interface SteamState {
   /** Message flash on the HUD (e.g. "Recharging 2.1s"). */
   notice: string;
   noticeUntil: number;
+  /** Plain Use is ignored until this tick (right after switching skills / closing the console). */
+  castGuardUntil: number;
+  /** Last Sneak+Use skill step (separate from casting so you can switch right after attacking). */
+  lastCycle: number;
 }
 
 const states = new Map<string, SteamState>();
@@ -73,6 +77,8 @@ export function state(p: Player): SteamState {
       speed: 0,
       notice: "",
       noticeUntil: 0,
+      castGuardUntil: 0,
+      lastCycle: -100,
     };
     states.set(p.id, s);
   }

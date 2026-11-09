@@ -1,6 +1,6 @@
 import { Player } from "@minecraft/server";
 import { CASTS } from "./abilities/index.js";
-import { ABILITIES, ABILITY_ORDER, AbilityId, HUD, Mode, MODES } from "./config.js";
+import { ABILITIES, ABILITY_ORDER, AbilityId, CONTROLS, DP, HUD, Mode, MODES } from "./config.js";
 import { S } from "./core/fx.js";
 import { addHeat } from "./heat.js";
 import { setMode } from "./modes.js";
@@ -67,15 +67,67 @@ export function tryCast(p: Player, id: AbilityId): boolean {
   return true;
 }
 
-/** Holding the Steam Valve: Use = fire the selected ability, Sneak + Use = open the Steam Console. */
+/**
+ * Make `index` the selected ability WITHOUT casting it. Plain Use is ignored for a short
+ * moment afterwards so the tap that switched skills can never fire one.
+ */
+export function selectAbility(p: Player, index: number): void {
+  const s = state(p);
+  const n = ABILITY_ORDER.length;
+  s.selected = ((Math.round(index) % n) + n) % n;
+  p.setDynamicProperty(DP.selected, s.selected);
+  const t = now();
+  s.castGuardUntil = t + CONTROLS.castGuard;
+  const id = ABILITY_ORDER[s.selected];
+  const a = ABILITIES[id];
+  const left = cooldownLeft(p, id);
+  const status = isOverheated(s) ? "§4locked" : left > 0 ? `§7${(left / 20).toFixed(1)}s` : "§aready";
+  notice(s, `§eSelected: §f${a.name} §8(${s.selected + 1}/${n}) ${status}`, 40);
+  p.onScreenDisplay.setTitle(" ", {
+    subtitle: `${id === "redline" ? "§4" : "§6"}> ${a.name} <`,
+    fadeInDuration: 0,
+    stayDuration: 18,
+    fadeOutDuration: 6,
+  });
+  try {
+    p.playSound(S.click, { volume: 0.5, pitch: 1.0 + s.selected * 0.06 });
+  } catch {
+    // cosmetic
+  }
+  showHud(p);
+}
+
+/**
+ * Holding the Steam Valve:
+ *   Use                              = fire the selected ability
+ *   Sneak + Use                      = next ability (never casts)
+ *   Sneak + Use while looking up     = previous ability
+ *   Sneak + Use while looking down   = open the Steam Console
+ */
 export function useValve(p: Player, openConsole: (p: Player) => void): void {
   const s = state(p);
   const t = now();
-  if (t - s.lastAction < DEBOUNCE_TICKS) return;
-  s.lastAction = t;
-  if (p.isSneaking || !isOwner(p)) {
+  if (!isOwner(p)) {
+    if (t - s.lastAction < DEBOUNCE_TICKS) return;
+    s.lastAction = t;
     openConsole(p);
     return;
   }
+  if (p.isSneaking) {
+    if (t - s.lastCycle < CONTROLS.cycleDebounce) return;
+    s.lastCycle = t;
+    const lookY = p.getViewDirection().y;
+    if (lookY <= CONTROLS.lookDown) {
+      s.castGuardUntil = t + CONTROLS.castGuard;
+      openConsole(p);
+      return;
+    }
+    selectAbility(p, s.selected + (lookY >= CONTROLS.lookUp ? -1 : 1));
+    return;
+  }
+  // the tap that just switched skills (or closed the console) must not fire one
+  if (t < s.castGuardUntil) return;
+  if (t - s.lastAction < DEBOUNCE_TICKS) return;
+  s.lastAction = t;
   tryCast(p, ABILITY_ORDER[s.selected] ?? "boost");
 }
