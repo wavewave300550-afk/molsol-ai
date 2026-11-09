@@ -38,15 +38,15 @@ Hold the **Steam Valve** (`joki:steam_valve`):
 | Input | Touch | Keyboard / controller | Action |
 |---|---|---|---|
 | **Use** | press & hold the screen (or the Use button) — tapping a block also works | right-click / LT | fire the **selected** ability |
-| **Hold Sneak** | hold / toggle the Sneak button | hold Shift / press the stick | skills **scroll by themselves** — stand up when the one you want is shown |
-| **Hold Sneak, looking up** | same, aim at the sky | same | scroll **backwards** |
+| **Press Sneak** | tap the Sneak button once | press Shift / the stick | **next skill**, nothing to hold |
+| **Press Sneak, looking up** | same, aim at the sky | same | **previous skill** |
 | **Sneak + Use** | while sneaking, Use | Shift + right-click | open the **Steam Console** |
 
-Crouching with the valve in hand moves to the next skill straight away, then one more every 0.6 s. The skill's name
-flashes in the middle of the screen and the HUD shows `Scrolling... name (n/9)`. Standing up locks in the skill on
-screen (`Selected: …`). Scrolling never fires anything, and Use is ignored for 0.5 s after you stand up or close the
-menu, so the same tap can't cast by accident. If you crouch only to open the console (Sneak + Use), the step that
-crouch made is undone. Crouching without the valve in hand doesn't scroll.
+Every Sneak press with the valve in hand moves exactly one skill (staying crouched does not keep switching). The skill
+name flashes in the middle of the screen and the HUD shows `Selected: name (n/9)`. Switching never fires anything, and
+Use is ignored for 0.5 s after a switch or after closing the menu, so the same tap can't cast by accident. If you
+crouch only to open the console (Sneak + Use), the step that crouch made is undone. Sneak without the valve in hand
+does nothing special.
 
 The **Steam Console** lists every ability with its heat cost and live cooldown: tapping one **only selects it**. It also
 shifts gears (HEAT / PRESSURE / vent to NORMAL), toggles the HUD, shows the power guide, summons a replacement valve, and
@@ -153,9 +153,9 @@ npm test          # typecheck → build → validate → smoke test   (needs Pyt
 | TypeScript `strict` typecheck against the official 2.11.0 / 2.3.0 typings | ✅ no errors |
 | Minecraft **Creator Tools 0.21.0** validator on the built packs | ✅ **0 errors**; warnings are expected (intentional `minecraft:player` override, menu icons referenced only from script, format-version recommendations on the copied vanilla player files) |
 | `tools/validate.py` — 2,912 static checks | ✅ 0 errors: JSON, manifests/UUIDs (unique, v4, no collision with the other add-ons here), BP↔RP dependencies, player overrides identical to vanilla except the additions, render-controller copies identical to vanilla except `overlay_color`, controller states/transitions/effects, all 37 particles (atlas UVs, Molang balance, allowed variables, mobile particle caps), animations, sounds + Ogg headers, items, lang, textures (RGBA, power-of-two, transparent fruit background), and every particle/sound/animation/effect/item/property/icon id used by the compiled scripts |
-| `tools/smoke/smoke.mjs` — **181 assertions** running the compiled scripts on a strict API mock with vanilla physics | ✅ all pass |
+| `tools/smoke/smoke.mjs` — **180 assertions** running the compiled scripts on a strict API mock with vanilla physics | ✅ all pass |
 
-The smoke test covers: skill switching (sneak auto-scroll pace and direction, wrap-around, no scroll without the valve, standing up locks the skill, Sneak + Use console undoes the crouch step, scrolling / picking / closing the console never cast, Use works after the 0.5 s guard); eating the fruit and ownership; refusing / refunding a second fruit; all **9 abilities**
+The smoke test covers: skill switching (one Sneak press = one skill, quick taps count, staying crouched does not repeat, looking up = previous, wrap-around, nothing without the valve, Sneak + Use console undoes the crouch step, switching / picking / closing the console never cast, Use works after the 0.5 s guard); eating the fruit and ownership; refusing / refunding a second fruit; all **9 abilities**
 (boost buffs and expiry, dash distance + wall collision + mid-air + fall guard, jump height + mid-air rule + landing,
 cannon hit / range limit / block collision / 2-bolt PRESSURE burst, scald falloff + knockback + protected mobs,
 knuckle direct + cone + primed-by-melee, kick hit + rebound + lunge length, mist slow/blind/invisibility + dissipation,

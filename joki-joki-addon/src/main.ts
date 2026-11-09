@@ -13,7 +13,7 @@ import {
   world,
 } from "@minecraft/server";
 import { knucklePunch } from "./abilities/knuckle.js";
-import { tickSkillScroll, useValve } from "./casting.js";
+import { tickSkillSwitch, useValve } from "./casting.js";
 import { HUD, IDS, Mode, MODES, DP } from "./config.js";
 import { isEnemy, knockAlong } from "./core/combat.js";
 import { center, P, particle, S, sound } from "./core/fx.js";
@@ -245,13 +245,15 @@ world.afterEvents.worldLoad.subscribe(() => {
 
   system.runInterval(runTasks, 1);
 
+  // every Sneak press with the valve in hand = next skill (checked each tick so quick taps count)
+  system.runInterval(() => eachOwner(tickSkillSwitch), 1);
+
   system.runInterval(() => {
     const t = now();
     eachOwner((p) => {
       const s = state(p);
       if (p.isOnGround) s.airJumpsUsed = 0;
       movementFx(p, s, t);
-      tickSkillScroll(p);
     });
   }, 2);
 

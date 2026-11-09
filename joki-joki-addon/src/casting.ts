@@ -72,7 +72,7 @@ export function tryCast(p: Player, id: AbilityId): boolean {
  * Make `index` the selected ability WITHOUT casting it. Plain Use is ignored for a short
  * moment afterwards so the tap that switched skills can never fire one.
  */
-export function selectAbility(p: Player, index: number, confirm = true): void {
+export function selectAbility(p: Player, index: number): void {
   const s = state(p);
   const n = ABILITY_ORDER.length;
   s.selected = ((Math.round(index) % n) + n) % n;
@@ -83,7 +83,7 @@ export function selectAbility(p: Player, index: number, confirm = true): void {
   const a = ABILITIES[id];
   const left = cooldownLeft(p, id);
   const status = isOverheated(s) ? "§4locked" : left > 0 ? `§7${(left / 20).toFixed(1)}s` : "§aready";
-  notice(s, confirm ? `§eSelected: §f${a.name} §8(${s.selected + 1}/${n}) ${status}` : `§6Scrolling... §f${a.name} §8(${s.selected + 1}/${n}) ${status} §7- stand up to pick`, confirm ? 40 : 30);
+  notice(s, `§eSelected: §f${a.name} §8(${s.selected + 1}/${n}) ${status}`, 40);
   p.onScreenDisplay.setTitle(" ", {
     subtitle: `${id === "redline" ? "§4" : "§6"}> ${a.name} <`,
     fadeInDuration: 0,
@@ -99,38 +99,25 @@ export function selectAbility(p: Player, index: number, confirm = true): void {
 }
 
 /**
- * Auto-scroll (called every 2 ticks for each steam user). While the player sneaks holding the valve
- * the selection moves one skill immediately and then one every CONTROLS.autoScrollTicks (backwards
- * while looking up). Standing up keeps the skill shown at that moment. Nothing is ever cast here.
+ * Called every tick for each steam user: every new Sneak press while holding the valve switches to
+ * the NEXT skill (the PREVIOUS one while looking up). Nothing has to be held and nothing is cast.
  */
-export function tickSkillScroll(p: Player): void {
+export function tickSkillSwitch(p: Player): void {
   const s = state(p);
-  const t = now();
-  const scrolling = p.isSneaking && holdingValve(p);
-  if (scrolling) {
-    const step = p.getViewDirection().y >= CONTROLS.lookUp ? -1 : 1;
-    if (s.scrollSince < 0) {
-      s.scrollSince = t;
-      s.scrollFrom = s.selected;
-      s.lastCycle = t;
-      selectAbility(p, s.selected + step, false);
-    } else if (t - s.lastCycle >= CONTROLS.autoScrollTicks) {
-      s.lastCycle = t;
-      selectAbility(p, s.selected + step, false);
-    }
-    return;
-  }
-  if (s.scrollSince >= 0) {
-    s.scrollSince = -1;
-    selectAbility(p, s.selected, true); // lock it in: confirmation + cast guard
-  }
+  const sneaking = p.isSneaking;
+  const pressed = sneaking && !s.wasSneaking;
+  s.wasSneaking = sneaking;
+  if (!pressed || !holdingValve(p)) return;
+  s.stepFrom = s.selected;
+  s.lastStep = now();
+  selectAbility(p, s.selected + (p.getViewDirection().y >= CONTROLS.lookUp ? -1 : 1));
 }
 
 /**
  * Holding the Steam Valve:
- *   Use                     = fire the selected ability
- *   Sneak (hold)            = skills scroll by themselves; stand up to pick (see tickSkillScroll)
- *   Sneak + Use             = open the Steam Console
+ *   Use            = fire the selected ability
+ *   Press Sneak    = next skill, looking up = previous (see tickSkillSwitch)
+ *   Sneak + Use    = open the Steam Console
  */
 export function useValve(p: Player, openConsole: (p: Player) => void): void {
   const s = state(p);
@@ -144,13 +131,13 @@ export function useValve(p: Player, openConsole: (p: Player) => void): void {
   if (p.isSneaking) {
     if (t - s.lastAction < DEBOUNCE_TICKS) return;
     s.lastAction = t;
-    // the player wanted the console, not the scroll this crouch started: undo it
-    if (s.scrollSince >= 0) {
-      s.selected = s.scrollFrom;
+    // the player crouched only to open the console: undo the skill step that crouch made
+    if (s.lastStep >= 0 && p.isSneaking && t - s.lastStep < 100) {
+      s.selected = s.stepFrom;
       p.setDynamicProperty(DP.selected, s.selected);
-      s.scrollSince = -1;
       s.noticeUntil = 0;
     }
+    s.lastStep = -1;
     s.castGuardUntil = t + CONTROLS.castGuard;
     openConsole(p);
     return;

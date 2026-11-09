@@ -35,11 +35,11 @@ export interface SteamState {
   noticeUntil: number;
   /** Plain Use is ignored until this tick (right after switching skills / closing the console). */
   castGuardUntil: number;
-  /** Tick of the last auto-scroll step. */
-  lastCycle: number;
-  /** Tick the current sneak-scroll started (-1 = not scrolling) and the selection before it. */
-  scrollSince: number;
-  scrollFrom: number;
+  /** Was the player sneaking on the previous check (to detect a new Sneak press). */
+  wasSneaking: boolean;
+  /** Tick of the last Sneak-press skill step and the selection before it (-1 = none pending). */
+  lastStep: number;
+  stepFrom: number;
 }
 
 const states = new Map<string, SteamState>();
@@ -81,9 +81,9 @@ export function state(p: Player): SteamState {
       notice: "",
       noticeUntil: 0,
       castGuardUntil: 0,
-      lastCycle: -100,
-      scrollSince: -1,
-      scrollFrom: 0,
+      wasSneaking: false,
+      lastStep: -1,
+      stepFrom: 0,
     };
     states.set(p.id, s);
   }
