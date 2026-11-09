@@ -205,10 +205,11 @@ export const HUD = { period: 4, linger: 80 };
 export const CONTROLS = {
   /** Ticks after a skill switch / closing the console during which plain Use is ignored (no accidental casts). */
   castGuard: 10,
-  /** Min ticks between two Sneak+Use skill steps (holding the button scrolls at this pace). */
-  cycleDebounce: 8,
-  /** View-direction Y at or below which Sneak+Use opens the console (looking at the ground). */
-  lookDown: -0.8,
-  /** View-direction Y at or above which Sneak+Use steps to the PREVIOUS skill (looking at the sky). */
+  /**
+   * Auto-scroll: while the player sneaks holding the valve, the selection moves one skill right away
+   * and then one more every `autoScrollTicks`. Releasing Sneak keeps the skill shown at that moment.
+   */
+  autoScrollTicks: 12,
+  /** View-direction Y at or above which the auto-scroll runs BACKWARDS (looking at the sky). */
   lookUp: 0.8,
 };

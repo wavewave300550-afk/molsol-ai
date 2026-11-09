@@ -98,16 +98,13 @@ async function eat(p) {
   await tick(2);
   return true;
 }
-/** Open the Steam Console (Sneak + Use while looking down) and tap the button whose label contains `label`. */
+/** Open the Steam Console (Sneak + Use) and tap the button whose label contains `label`. */
 async function menu(p, label) {
   __ui.queue.push(label);
-  const rot = p.getRotation();
-  p.setRotation({ x: 85, y: rot.y });
   p.isSneaking = true;
   useItem(p, VALVE);
   p.isSneaking = false;
-  p.setRotation(rot);
-  await tick(config.CONTROLS.cycleDebounce);
+  await tick(8);
   expect(__ui.queue.length === 0, `console tap "${label}" was consumed`);
 }
 async function use(p) {
@@ -119,16 +116,6 @@ async function cast(p, label) {
   await menu(p, label);
   await tick(config.CONTROLS.castGuard);
   await use(p);
-}
-/** Sneak + Use at a given pitch (0 = level, -80 = looking up). */
-async function sneakUse(p, pitch = 0) {
-  const rot = p.getRotation();
-  p.setRotation({ x: pitch, y: rot.y });
-  p.isSneaking = true;
-  useItem(p, VALVE);
-  p.isSneaking = false;
-  p.setRotation(rot);
-  await tick(1);
 }
 async function reset(p, loc = { x: 0, y: 64, z: 0 }) {
   runCmd("joki:cool", p);
@@ -181,42 +168,77 @@ expect(!owner(B) && prop(B, "joki:mode") === 0, "other player unaffected");
 
 // ------------------------------------------------------------------ 1b. switching skills never casts
 await reset(A);
+holdValve(A);
 const sel = () => A.getDynamicProperty("joki:selected") ?? 0;
-const heat0 = S(A);
-const hurt0 = __stats.anims.length;
+const anims0 = __stats.anims.length;
+const STEP = config.CONTROLS.autoScrollTicks;
 const startSel = sel();
-await sneakUse(A, 0);
-expect(sel() === (startSel + 1) % 9, "Sneak + Use (level) selects the next skill");
-expect(prop(A, "joki:mode") === 1 && __stats.anims.length === hurt0, "switching skills does not cast anything");
-expect(__stats.titles.at(-1).includes("<"), "selected skill name flashes on screen");
-await sneakUse(A, 0);
-expect(sel() === (startSel + 1) % 9, "holding Sneak + Use steps at a readable pace (debounced)");
-await tick(config.CONTROLS.cycleDebounce);
-await sneakUse(A, 0);
-expect(sel() === (startSel + 2) % 9, "next Sneak + Use step");
-await tick(config.CONTROLS.cycleDebounce);
-await sneakUse(A, -80);
-expect(sel() === (startSel + 1) % 9, "Sneak + Use looking up selects the previous skill");
-await tick(config.CONTROLS.cycleDebounce);
-for (let i = 0; i < 12; i++) {
-  await sneakUse(A, -80);
-  await tick(config.CONTROLS.cycleDebounce);
-}
-expect(sel() >= 0 && sel() < 9, "selection wraps around both ways");
+A.isSneaking = true;
+await tick(2);
+expect(sel() === (startSel + 1) % 9, "crouching with the valve steps to the next skill at once");
+expect(S(A).includes("Scrolling"), "HUD shows the scroll in progress");
+expect(__stats.titles.at(-1).includes("<"), "the skill name flashes on screen");
+await tick(STEP - 3);
+expect(sel() === (startSel + 1) % 9, "the scroll waits between steps (readable pace)");
+await tick(3);
+expect(sel() === (startSel + 2) % 9, "keeps scrolling by itself while crouching");
+await tick(STEP * 3);
+expect(sel() === (startSel + 5) % 9, "one skill per step, nothing skipped");
+expect(prop(A, "joki:mode") === 1 && __stats.anims.length === anims0, "scrolling never casts anything");
+A.isSneaking = false;
+await tick(2);
+const picked = sel();
+expect(S(A).includes("Selected"), "standing up locks the skill in");
 useItem(A, VALVE);
 await tick(1);
-expect(prop(A, "joki:mode") === 1, "Use right after a switch is ignored (cast guard)");
+expect(prop(A, "joki:mode") === 1 && __stats.anims.length === anims0, "Use right after standing up is ignored (cast guard)");
+await tick(STEP * 2);
+expect(sel() === picked, "the selection stays once standing");
+A.setRotation({ x: -80, y: 0 });
+A.isSneaking = true;
+await tick(2 + STEP);
+A.isSneaking = false;
+A.setRotation({ x: 0, y: 0 });
+await tick(2);
+expect(sel() === (picked + 7) % 9, "crouching while looking up scrolls backwards");
+const wrapStart = sel();
+A.isSneaking = true;
+await tick(2 + STEP * 8);
+A.isSneaking = false;
+await tick(2);
+expect(sel() === wrapStart, "the scroll wraps around after the last skill");
+A.selectedSlotIndex = (A.selectedSlotIndex + 1) % 9;
+A.isSneaking = true;
+await tick(STEP * 2);
+A.isSneaking = false;
+await tick(2);
+expect(sel() === wrapStart, "crouching without the valve in hand does not scroll");
+holdValve(A);
+// Sneak + Use opens the console and undoes the step that crouch caused
+const beforeConsole = sel();
+A.isSneaking = true;
+await tick(2);
 __ui.shown.length = 0;
-await menu(A, "Pressure Dash");
-expect(__ui.shown.at(-1)?.title.includes("Steam Console"), "Sneak + Use looking down opens the console");
-expect(sel() === 1 && prop(A, "joki:mode") === 1 && A.location.z === 0, "tapping a skill in the console only selects it");
+__ui.queue.push("Pressure Dash");
+useItem(A, VALVE);
+await tick(1);
+A.isSneaking = false;
+await tick(8);
+expect(__ui.shown.at(-1)?.title.includes("Steam Console"), "Sneak + Use opens the console");
+expect(beforeConsole !== 1 ? sel() === 1 : true, "tapping a skill in the console selects it");
+expect(prop(A, "joki:mode") === 1 && A.location.z === 0, "tapping a skill in the console does not fire it");
 useItem(A, VALVE);
 await tick(1);
 expect(prop(A, "joki:mode") === 1, "the finger closing the console does not cast");
 await tick(config.CONTROLS.castGuard);
 await use(A);
 expect(prop(A, "joki:mode") === 2 && A.location.z > 0.5, "after the guard, Use fires the selected skill");
-void heat0;
+A.isSneaking = true;
+await tick(2);
+useItem(A, VALVE); // console opened, closed without choosing
+A.isSneaking = false;
+await tick(8);
+expect(sel() === 1, "opening the console undoes the scroll step the crouch made");
 
 // ------------------------------------------------------------------ 2. Steam Boost + auto ignition
 await reset(A);
@@ -521,11 +543,9 @@ await menu(A2, "Ability HUD");
 expect(A2.getDynamicProperty("joki:hud") === false, "HUD can be turned off (persisted)");
 await menu(A2, "Ability HUD");
 __ui.queue.push("Power Guide", 0, undefined);
-A2.setRotation({ x: 85, y: 0 });
 A2.isSneaking = true;
 useItem(A2, VALVE);
 A2.isSneaking = false;
-A2.setRotation({ x: 0, y: 0 });
 await tick(8);
 expect(__ui.shown.some((f) => f.title.includes("Steam Pressure Guide") && f.body.includes("Steam Knuckle")), "guide lists every ability");
 __ui.queue.length = 0;

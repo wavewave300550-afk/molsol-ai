@@ -13,7 +13,7 @@ import {
   world,
 } from "@minecraft/server";
 import { knucklePunch } from "./abilities/knuckle.js";
-import { useValve } from "./casting.js";
+import { tickSkillScroll, useValve } from "./casting.js";
 import { HUD, IDS, Mode, MODES, DP } from "./config.js";
 import { isEnemy, knockAlong } from "./core/combat.js";
 import { center, P, particle, S, sound } from "./core/fx.js";
@@ -22,7 +22,7 @@ import { flatDir } from "./core/vec.js";
 import { tickHeat } from "./heat.js";
 import { showHud } from "./hud.js";
 import { movementFx, refreshEffects } from "./modes.js";
-import { giveValve, grantPower, hasValve, resetRuntime, revokePower, syncProperties } from "./power.js";
+import { giveValve, grantPower, hasValve, holdingValve, resetRuntime, revokePower, syncProperties } from "./power.js";
 import { dropState, isOverheated, isOwner, now, state } from "./state.js";
 import { openConsole } from "./ui.js";
 
@@ -240,14 +240,6 @@ function eachOwner(fn: (p: Player) => void): void {
   }
 }
 
-function holdingValve(p: Player): boolean {
-  try {
-    return p.getComponent("minecraft:inventory")?.container?.getItem(p.selectedSlotIndex)?.typeId === IDS.valve;
-  } catch {
-    return false;
-  }
-}
-
 world.afterEvents.worldLoad.subscribe(() => {
   for (const p of world.getAllPlayers()) syncProperties(p);
 
@@ -259,6 +251,7 @@ world.afterEvents.worldLoad.subscribe(() => {
       const s = state(p);
       if (p.isOnGround) s.airJumpsUsed = 0;
       movementFx(p, s, t);
+      tickSkillScroll(p);
     });
   }, 2);
 

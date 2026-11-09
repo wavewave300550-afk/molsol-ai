@@ -117,7 +117,7 @@ export async function openConsole(p: Player): Promise<void> {
     .body(
       `${status}\n${heatBar(s.heat, over, t)} §r§f${Math.floor(s.heat)}% \n\n` +
         "§7Tap an ability to §fselect§7 it (it does not fire). Then §fUse§7 the valve to fire.\n" +
-        "§8Quick switch: §7Sneak + Use §8= next skill, §7looking up §8= previous, §7looking down §8= this console.",
+        "§8Quick switch: §7hold Sneak§8 with the valve - skills scroll by themselves, stand up to pick (look up = backwards).",
     );
   for (const e of entries) {
     if (e.icon) form.button(e.label, e.icon);
@@ -142,8 +142,8 @@ async function guide(p: Player): Promise<void> {
     "§l§cPRESSURE§r §8- speed II, strength II, abilities x1.4 power, heat x1.35, heat creeps up.\n" +
     "§l§4REDLINE§r §8- 12s: speed III, strength III, x1.75 power, -40% cooldowns, heat x1.9 and +4/s.\n\n" +
     "§4§lOVERHEAT§r §8at 100 heat: gears drop, every ability locks for 10s, brief slowness. Standing in water cools faster.\n\n" +
-    "§l§6CONTROLS§r §8(hold the Steam Valve)\n§7Use §8- fire the selected skill\n§7Sneak + Use §8- next skill (does not fire)\n" +
-    "§7Sneak + Use looking up §8- previous skill\n§7Sneak + Use looking down §8- open this console";
+    "§l§6CONTROLS§r §8(hold the Steam Valve)\n§7Use §8- fire the selected skill\n§7Hold Sneak §8- skills scroll by themselves, stand up to pick (never fires)\n" +
+    "§7Hold Sneak looking up §8- scroll backwards\n§7Sneak + Use §8- open this console";
   const res = await show(p, new ActionFormData().title("§lSteam Pressure Guide").body(`${gears}\n\n${lines}`).button("§8Back"));
   if (res && !res.canceled) await openConsole(p);
 }

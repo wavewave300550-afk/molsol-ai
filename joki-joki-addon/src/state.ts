@@ -35,8 +35,11 @@ export interface SteamState {
   noticeUntil: number;
   /** Plain Use is ignored until this tick (right after switching skills / closing the console). */
   castGuardUntil: number;
-  /** Last Sneak+Use skill step (separate from casting so you can switch right after attacking). */
+  /** Tick of the last auto-scroll step. */
   lastCycle: number;
+  /** Tick the current sneak-scroll started (-1 = not scrolling) and the selection before it. */
+  scrollSince: number;
+  scrollFrom: number;
 }
 
 const states = new Map<string, SteamState>();
@@ -79,6 +82,8 @@ export function state(p: Player): SteamState {
       noticeUntil: 0,
       castGuardUntil: 0,
       lastCycle: -100,
+      scrollSince: -1,
+      scrollFrom: 0,
     };
     states.set(p.id, s);
   }

@@ -6,6 +6,7 @@ import { addHeat } from "./heat.js";
 import { setMode } from "./modes.js";
 import { isOverheated, isOwner, notice, now, setActive, state } from "./state.js";
 import { showHud } from "./hud.js";
+import { holdingValve } from "./power.js";
 
 const DEBOUNCE_TICKS = 4;
 
@@ -71,7 +72,7 @@ export function tryCast(p: Player, id: AbilityId): boolean {
  * Make `index` the selected ability WITHOUT casting it. Plain Use is ignored for a short
  * moment afterwards so the tap that switched skills can never fire one.
  */
-export function selectAbility(p: Player, index: number): void {
+export function selectAbility(p: Player, index: number, confirm = true): void {
   const s = state(p);
   const n = ABILITY_ORDER.length;
   s.selected = ((Math.round(index) % n) + n) % n;
@@ -82,7 +83,7 @@ export function selectAbility(p: Player, index: number): void {
   const a = ABILITIES[id];
   const left = cooldownLeft(p, id);
   const status = isOverheated(s) ? "§4locked" : left > 0 ? `§7${(left / 20).toFixed(1)}s` : "§aready";
-  notice(s, `§eSelected: §f${a.name} §8(${s.selected + 1}/${n}) ${status}`, 40);
+  notice(s, confirm ? `§eSelected: §f${a.name} §8(${s.selected + 1}/${n}) ${status}` : `§6Scrolling... §f${a.name} §8(${s.selected + 1}/${n}) ${status} §7- stand up to pick`, confirm ? 40 : 30);
   p.onScreenDisplay.setTitle(" ", {
     subtitle: `${id === "redline" ? "§4" : "§6"}> ${a.name} <`,
     fadeInDuration: 0,
@@ -98,11 +99,38 @@ export function selectAbility(p: Player, index: number): void {
 }
 
 /**
+ * Auto-scroll (called every 2 ticks for each steam user). While the player sneaks holding the valve
+ * the selection moves one skill immediately and then one every CONTROLS.autoScrollTicks (backwards
+ * while looking up). Standing up keeps the skill shown at that moment. Nothing is ever cast here.
+ */
+export function tickSkillScroll(p: Player): void {
+  const s = state(p);
+  const t = now();
+  const scrolling = p.isSneaking && holdingValve(p);
+  if (scrolling) {
+    const step = p.getViewDirection().y >= CONTROLS.lookUp ? -1 : 1;
+    if (s.scrollSince < 0) {
+      s.scrollSince = t;
+      s.scrollFrom = s.selected;
+      s.lastCycle = t;
+      selectAbility(p, s.selected + step, false);
+    } else if (t - s.lastCycle >= CONTROLS.autoScrollTicks) {
+      s.lastCycle = t;
+      selectAbility(p, s.selected + step, false);
+    }
+    return;
+  }
+  if (s.scrollSince >= 0) {
+    s.scrollSince = -1;
+    selectAbility(p, s.selected, true); // lock it in: confirmation + cast guard
+  }
+}
+
+/**
  * Holding the Steam Valve:
- *   Use                              = fire the selected ability
- *   Sneak + Use                      = next ability (never casts)
- *   Sneak + Use while looking up     = previous ability
- *   Sneak + Use while looking down   = open the Steam Console
+ *   Use                     = fire the selected ability
+ *   Sneak (hold)            = skills scroll by themselves; stand up to pick (see tickSkillScroll)
+ *   Sneak + Use             = open the Steam Console
  */
 export function useValve(p: Player, openConsole: (p: Player) => void): void {
   const s = state(p);
@@ -114,15 +142,17 @@ export function useValve(p: Player, openConsole: (p: Player) => void): void {
     return;
   }
   if (p.isSneaking) {
-    if (t - s.lastCycle < CONTROLS.cycleDebounce) return;
-    s.lastCycle = t;
-    const lookY = p.getViewDirection().y;
-    if (lookY <= CONTROLS.lookDown) {
-      s.castGuardUntil = t + CONTROLS.castGuard;
-      openConsole(p);
-      return;
+    if (t - s.lastAction < DEBOUNCE_TICKS) return;
+    s.lastAction = t;
+    // the player wanted the console, not the scroll this crouch started: undo it
+    if (s.scrollSince >= 0) {
+      s.selected = s.scrollFrom;
+      p.setDynamicProperty(DP.selected, s.selected);
+      s.scrollSince = -1;
+      s.noticeUntil = 0;
     }
-    selectAbility(p, s.selected + (lookY >= CONTROLS.lookUp ? -1 : 1));
+    s.castGuardUntil = t + CONTROLS.castGuard;
+    openConsole(p);
     return;
   }
   // the tap that just switched skills (or closed the console) must not fire one

@@ -35,6 +35,15 @@ export function hasValve(p: Player): boolean {
   return false;
 }
 
+/** Is the Steam Valve in the selected hotbar slot? */
+export function holdingValve(p: Player): boolean {
+  try {
+    return p.getComponent("minecraft:inventory")?.container?.getItem(p.selectedSlotIndex)?.typeId === IDS.valve;
+  } catch {
+    return false;
+  }
+}
+
 export function giveValve(p: Player): boolean {
   if (hasValve(p)) return false;
   const inv = p.getComponent("minecraft:inventory")?.container;
@@ -82,8 +91,8 @@ export function grantPower(p: Player): boolean {
     "§c§lJōki Jōki no Mi§r §7- Paramecia: Steam Pressure\n" +
       "§7You received a §6Steam Valve§7. Hold it and:\n" +
       "§f - Use§7 (tap & hold / right-click) = fire the selected ability\n" +
-      "§f - Sneak + Use§7 = next ability §8(never fires)§7, looking up = previous\n" +
-      "§f - Sneak + Use looking down§7 = §6Steam Console§7 (abilities, gears, HUD)\n" +
+      "§f - Hold Sneak§7 = skills scroll by themselves, stand up to pick §8(never fires)\n" +
+      "§f - Sneak + Use§7 = §6Steam Console§7 (abilities, gears, HUD)\n" +
       "§7Watch the §cheat gauge§7: at 100% you §4OVERHEAT§7 and lose your powers for 10s.\n" +
       "§8Lost the valve? Type /joki:valve",
   );
