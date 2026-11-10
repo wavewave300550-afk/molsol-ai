@@ -11,8 +11,8 @@ import path from "node:path";
 
 const BUILD = process.env.SEKIYU_BUILD;
 const ROOT = process.env.SEKIYU_ROOT;
-const BP = path.join(BUILD, "Sekiyu_BP");
-const RP = path.join(BUILD, "Sekiyu_RP");
+const BP = path.join(BUILD, process.env.SMOKE_BP || "Sekiyu_BP");
+const RP = path.join(BUILD, process.env.SMOKE_RP || "Sekiyu_RP");
 const readJson = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
 const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)]));
 

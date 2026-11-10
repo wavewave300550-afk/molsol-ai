@@ -25,14 +25,17 @@ import fruit_model  # noqa: E402
 import models  # noqa: E402
 import sounds  # noqa: E402
 
-BUILD = os.path.join(ROOT, "build")
+# The combined "Forbidden Fruits" add-on reuses this script to generate the assets into its own
+# build folder (ADDON_BUILD_DIR) and compiles the scripts itself (ADDON_ASSETS_ONLY=1).
+BUILD = os.environ.get("ADDON_BUILD_DIR") or os.path.join(ROOT, "build")
+ASSETS_ONLY = os.environ.get("ADDON_ASSETS_ONLY") == "1"
 BP = os.path.join(BUILD, "Sekiyu_BP")
 RP = os.path.join(BUILD, "Sekiyu_RP")
 DIST = os.path.join(ROOT, "dist")
 
 ADDON_NAME = "Sekiyu Sekiyu no Mi - Petroleum"
 FILE_BASE = "Sekiyu_Sekiyu_no_Mi_Petroleum"
-VERSION = [1, 0, 0]
+VERSION = [1, 0, 1]
 MIN_ENGINE = [1, 26, 60]
 SERVER_VERSION = "2.11.0"
 SERVER_UI_VERSION = "2.3.0"
@@ -799,6 +802,9 @@ def main():
     build_sounds()
     build_fog()
     build_lang()
+    if ASSETS_ONLY:
+        print("assets built in", BUILD)
+        return
     build_scripts()
     print("built", os.path.relpath(package(), ROOT))
 

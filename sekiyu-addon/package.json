@@ -1,7 +1,7 @@
 {
   "name": "sekiyu-sekiyu-no-mi",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Minecraft Bedrock add-on: Sekiyu Sekiyu no Mi - Petroleum (original fan-made Logia devil fruit)",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",

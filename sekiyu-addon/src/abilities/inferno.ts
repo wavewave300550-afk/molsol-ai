@@ -13,9 +13,13 @@ import { CastResult, Ctx } from "./types.js";
 const FOG_ID = "sekiyu:inferno_fog";
 const FOG_TAG = "sekiyu_inferno";
 
+/** Players currently under the inferno fog are flagged so a reload / respawn can lift it (and nobody else is touched). */
+const FOG_FLAG = "sekiyu:fogged";
+
 function fog(p: Player, on: boolean): void {
   try {
     p.runCommand(on ? `fog @s push ${FOG_ID} ${FOG_TAG}` : `fog @s remove ${FOG_TAG}`);
+    p.setDynamicProperty(FOG_FLAG, on ? true : undefined);
   } catch {
     // fog unavailable: cosmetic only
   }
@@ -100,6 +104,6 @@ export function castInferno(c: Ctx): CastResult {
 }
 
 export function clearInfernoFog(p: Player): void {
-  fog(p, false);
+  if (p.getDynamicProperty(FOG_FLAG) === true) fog(p, false);
 }
 

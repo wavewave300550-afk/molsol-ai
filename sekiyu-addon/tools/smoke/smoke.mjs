@@ -8,12 +8,16 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "../..");
-const BUILD = path.join(ROOT, "build");
+// SMOKE_BUILD / SMOKE_BP / SMOKE_RP / SMOKE_PREFIX let the combined "Forbidden Fruits" pack run this
+// same test against its merged build (scripts of this fruit live under scripts/<prefix>).
+const BUILD = process.env.SMOKE_BUILD || path.join(ROOT, "build");
+const BP_NAME = process.env.SMOKE_BP || "Sekiyu_BP";
+const MOD = (...p) => pathToFileURL(path.join(tmp, "scripts", process.env.SMOKE_PREFIX || "", ...p)).href;
 process.env.SEKIYU_BUILD = BUILD;
 process.env.SEKIYU_ROOT = ROOT;
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "sekiyu-smoke-"));
-fs.cpSync(path.join(BUILD, "Sekiyu_BP", "scripts"), path.join(tmp, "scripts"), { recursive: true });
+fs.cpSync(path.join(BUILD, BP_NAME, "scripts"), path.join(tmp, "scripts"), { recursive: true });
 fs.writeFileSync(path.join(tmp, "package.json"), JSON.stringify({ type: "module" }));
 for (const [pkg, file] of [["server", "mock-server.mjs"], ["server-ui", "mock-server-ui.mjs"]]) {
   const dir = path.join(tmp, "node_modules", "@minecraft", pkg);
@@ -32,10 +36,10 @@ const realLog = console.log;
 console.log = (...a) => logs.push(a.join(" "));
 
 await import(pathToFileURL(path.join(tmp, "scripts", "main.js")).href);
-const { taskCount } = await import(pathToFileURL(path.join(tmp, "scripts", "core", "tasks.js")).href);
-const { poolCount, poolsSnapshot } = await import(pathToFileURL(path.join(tmp, "scripts", "pools.js")).href);
-const { constructCount } = await import(pathToFileURL(path.join(tmp, "scripts", "constructs.js")).href);
-const config = await import(pathToFileURL(path.join(tmp, "scripts", "config.js")).href);
+const { taskCount } = await import(MOD("core", "tasks.js"));
+const { poolCount, poolsSnapshot } = await import(MOD("pools.js"));
+const { constructCount } = await import(MOD("constructs.js"));
+const config = await import(MOD("config.js"));
 
 const failures = [];
 let passed = 0;
@@ -391,7 +395,7 @@ B.location = { x: 40, y: 64, z: 40 };
 
 // ------------------------------------------------------------------ 13. oil pools: fire rules and budget
 await reset(A);
-const { spawnPool, ignitePoolsNear } = await import(pathToFileURL(path.join(tmp, "scripts", "pools.js")).href);
+const { spawnPool, ignitePoolsNear } = await import(MOD("pools.js"));
 spawnPool(dim, { x: 0, y: 64, z: 6 }, 2, A.id);
 spawnPool(dim, { x: 0, y: 64, z: 9.5 }, 2, A.id);
 z1 = zombie(0, 6);

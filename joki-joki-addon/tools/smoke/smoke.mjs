@@ -9,13 +9,17 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "../..");
-const BUILD = path.join(ROOT, "build");
+// SMOKE_BUILD / SMOKE_BP / SMOKE_RP / SMOKE_PREFIX let the combined "Forbidden Fruits" pack run this
+// same test against its merged build (scripts of this fruit live under scripts/<prefix>).
+const BUILD = process.env.SMOKE_BUILD || path.join(ROOT, "build");
+const BP_NAME = process.env.SMOKE_BP || "Joki_BP";
+const MOD = (...p) => pathToFileURL(path.join(tmp, "scripts", process.env.SMOKE_PREFIX || "", ...p)).href;
 process.env.JOKI_BUILD = BUILD;
 process.env.JOKI_ROOT = ROOT;
 
 // ------------------------------------------------------------------ stage scripts + mocks
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "joki-smoke-"));
-fs.cpSync(path.join(BUILD, "Joki_BP", "scripts"), path.join(tmp, "scripts"), { recursive: true });
+fs.cpSync(path.join(BUILD, BP_NAME, "scripts"), path.join(tmp, "scripts"), { recursive: true });
 fs.writeFileSync(path.join(tmp, "package.json"), JSON.stringify({ type: "module" }));
 for (const [pkg, file] of [["server", "mock-server.mjs"], ["server-ui", "mock-server-ui.mjs"]]) {
   const dir = path.join(tmp, "node_modules", "@minecraft", pkg);
@@ -34,8 +38,8 @@ const realLog = console.log;
 console.log = (...a) => logs.push(a.join(" "));
 
 await import(pathToFileURL(path.join(tmp, "scripts", "main.js")).href);
-const { taskCount } = await import(pathToFileURL(path.join(tmp, "scripts", "core", "tasks.js")).href);
-const config = await import(pathToFileURL(path.join(tmp, "scripts", "config.js")).href);
+const { taskCount } = await import(MOD("core", "tasks.js"));
+const config = await import(MOD("config.js"));
 
 // ------------------------------------------------------------------ harness
 const failures = [];

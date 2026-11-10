@@ -23,7 +23,10 @@ import art  # noqa: E402
 import fruit_icon  # noqa: E402
 import sounds  # noqa: E402
 
-BUILD = os.path.join(ROOT, "build")
+# The combined "Forbidden Fruits" add-on reuses this script to generate the assets into its own
+# build folder (ADDON_BUILD_DIR) and compiles the scripts itself (ADDON_ASSETS_ONLY=1).
+BUILD = os.environ.get("ADDON_BUILD_DIR") or os.path.join(ROOT, "build")
+ASSETS_ONLY = os.environ.get("ADDON_ASSETS_ONLY") == "1"
 BP = os.path.join(BUILD, "Joki_BP")
 RP = os.path.join(BUILD, "Joki_RP")
 DIST = os.path.join(ROOT, "dist")
@@ -888,6 +891,9 @@ def main():
     build_bp()
     build_sounds()
     build_lang()
+    if ASSETS_ONLY:
+        print("assets built in", BUILD)
+        return
     build_scripts()
     addon = package()
     print("built", os.path.relpath(addon, ROOT))

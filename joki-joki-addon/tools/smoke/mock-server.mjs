@@ -10,8 +10,8 @@ import path from "node:path";
 
 const BUILD = process.env.JOKI_BUILD;
 const ROOT = process.env.JOKI_ROOT;
-const BP = path.join(BUILD, "Joki_BP");
-const RP = path.join(BUILD, "Joki_RP");
+const BP = path.join(BUILD, process.env.SMOKE_BP || "Joki_BP");
+const RP = path.join(BUILD, process.env.SMOKE_RP || "Joki_RP");
 const readJson = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
 const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)]));
 
