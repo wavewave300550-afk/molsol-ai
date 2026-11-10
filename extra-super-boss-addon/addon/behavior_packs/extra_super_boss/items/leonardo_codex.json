@@ -1,0 +1,19 @@
+{
+  "format_version": "1.21.70",
+  "minecraft:item": {
+    "description": {
+      "identifier": "esb:leonardo_codex",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "esb_leonardo_codex",
+      "minecraft:display_name": {
+        "value": "item.esb:leonardo_codex.name"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:glint": true
+    }
+  }
+}

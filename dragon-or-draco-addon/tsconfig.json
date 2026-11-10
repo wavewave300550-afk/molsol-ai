@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",
+    "module": "ES2020",
+    "moduleResolution": "node",
+    "lib": ["ES2021"],
+    "strict": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "removeComments": false,
+    "outDir": "addon/behavior_packs/dragon_or_draco/scripts",
+    "rootDir": "scripts-src",
+    "skipLibCheck": false
+  },
+  "include": ["scripts-src/**/*.ts"]
+}

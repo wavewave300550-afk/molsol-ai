@@ -1,0 +1,19 @@
+{
+  "name": "grizzly-oath-addon",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Minecraft Bedrock add-on: Historical Artifacts 001 - Grizzly's Oath (Hugh Glass)",
+  "scripts": {
+    "assets": "python3 tools/postprocess.py && python3 tools/gen_animations.py && python3 tools/gen_sounds.py",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "compile": "tsc -p tsconfig.json",
+    "smoke": "node tools/smoke/smoke.mjs",
+    "validate": "node tools/validate.mjs",
+    "package": "node tools/package.mjs",
+    "build": "npm run assets && npm run compile && npm run validate && npm run smoke && npm run package"
+  },
+  "devDependencies": {
+    "@minecraft/server": "2.11.0",
+    "typescript": "5.6.3"
+  }
+}

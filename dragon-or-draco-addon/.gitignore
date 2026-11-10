@@ -1,0 +1,6 @@
+node_modules/
+addon/.mct/previews/
+__pycache__/
+*.pyc
+tools/smoke/.run/
+docs/preview/.reel/

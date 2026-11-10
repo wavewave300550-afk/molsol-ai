@@ -1,0 +1,357 @@
+{
+ "foot_slip_units": {
+  "walk_loop": {
+   "fl": 0.802,
+   "fr": 0.849,
+   "hl": 0.678,
+   "hr": 0.929
+  },
+  "run_loop": {
+   "fl": 1.107,
+   "fr": 1.11,
+   "hl": 0.65,
+   "hr": 0.848
+  }
+ },
+ "lowest_point": {
+  "walk_loop": -0.39,
+  "run_loop": -0.53,
+  "walk_start": -0.31,
+  "walk_stop": -0.55,
+  "run_start": -0.61,
+  "run_stop": -0.43,
+  "turn_left": -0.46,
+  "turn_right": -0.49,
+  "step_backward": -0.39,
+  "landing_impact": -0.46,
+  "pre_takeoff": -0.4,
+  "idle_breathe": -0.35,
+  "idle_look_left": -0.56,
+  "idle_look_right": -0.45,
+  "idle_sniff": -0.45,
+  "idle_blink": -0.23,
+  "idle_ground_scratch": -0.55,
+  "idle_tail_sway": -0.52,
+  "idle_wing_adjust": -0.35,
+  "idle_stretch": -0.66,
+  "idle_yawn": -0.73,
+  "rest_lower": -0.47,
+  "rest_breathe": -0.89,
+  "rest_rise": -0.37,
+  "alert": -0.65,
+  "roar": -0.86,
+  "bite": -0.4,
+  "claw_swipe": -0.47,
+  "tail_smash": -0.48,
+  "wing_buffet": -0.48,
+  "fire_breath_charge": -0.73,
+  "fire_breath_release": -0.41,
+  "hurt": -0.61,
+  "death": -0.55
+ },
+ "loop_seams": {
+  "walk_loop": "closed",
+  "run_loop": "closed",
+  "turn_left": "closed",
+  "turn_right": "closed",
+  "flight_flap": "closed",
+  "flight_ascend": "closed",
+  "flight_glide": "closed",
+  "flight_descend": "closed",
+  "flight_bank_left": "closed",
+  "flight_bank_right": "closed",
+  "landing_approach": "closed",
+  "idle_breathe": "closed",
+  "rest_breathe": "closed",
+  "look_at_target": "closed"
+ },
+ "keys": {
+  "walk_loop": {
+   "channels": 60,
+   "keyed": 37,
+   "max_keys": 33
+  },
+  "run_loop": {
+   "channels": 60,
+   "keyed": 37,
+   "max_keys": 22
+  },
+  "walk_start": {
+   "channels": 58,
+   "keyed": 35,
+   "max_keys": 13
+  },
+  "walk_stop": {
+   "channels": 58,
+   "keyed": 36,
+   "max_keys": 19
+  },
+  "run_start": {
+   "channels": 60,
+   "keyed": 38,
+   "max_keys": 13
+  },
+  "run_stop": {
+   "channels": 58,
+   "keyed": 36,
+   "max_keys": 22
+  },
+  "turn_left": {
+   "channels": 58,
+   "keyed": 34,
+   "max_keys": 28
+  },
+  "turn_right": {
+   "channels": 58,
+   "keyed": 34,
+   "max_keys": 24
+  },
+  "step_backward": {
+   "channels": 58,
+   "keyed": 58,
+   "max_keys": 26
+  },
+  "flight_flap": {
+   "channels": 56,
+   "keyed": 55,
+   "max_keys": 27
+  },
+  "flight_ascend": {
+   "channels": 56,
+   "keyed": 55,
+   "max_keys": 25
+  },
+  "flight_glide": {
+   "channels": 56,
+   "keyed": 54,
+   "max_keys": 21
+  },
+  "flight_descend": {
+   "channels": 56,
+   "keyed": 54,
+   "max_keys": 30
+  },
+  "flight_bank_left": {
+   "channels": 17,
+   "keyed": 2,
+   "max_keys": 6
+  },
+  "flight_bank_right": {
+   "channels": 17,
+   "keyed": 2,
+   "max_keys": 6
+  },
+  "landing_approach": {
+   "channels": 48,
+   "keyed": 46,
+   "max_keys": 16
+  },
+  "landing_impact": {
+   "channels": 56,
+   "keyed": 56,
+   "max_keys": 30
+  },
+  "pre_takeoff": {
+   "channels": 56,
+   "keyed": 56,
+   "max_keys": 16
+  },
+  "launch": {
+   "channels": 48,
+   "keyed": 48,
+   "max_keys": 31
+  },
+  "idle_breathe": {
+   "channels": 59,
+   "keyed": 35,
+   "max_keys": 9
+  },
+  "idle_look_left": {
+   "channels": 25,
+   "keyed": 25,
+   "max_keys": 23
+  },
+  "idle_look_right": {
+   "channels": 26,
+   "keyed": 26,
+   "max_keys": 23
+  },
+  "idle_sniff": {
+   "channels": 27,
+   "keyed": 27,
+   "max_keys": 30
+  },
+  "idle_blink": {
+   "channels": 2,
+   "keyed": 2,
+   "max_keys": 10
+  },
+  "idle_ground_scratch": {
+   "channels": 31,
+   "keyed": 31,
+   "max_keys": 66
+  },
+  "idle_tail_sway": {
+   "channels": 31,
+   "keyed": 31,
+   "max_keys": 22
+  },
+  "idle_wing_adjust": {
+   "channels": 44,
+   "keyed": 44,
+   "max_keys": 37
+  },
+  "idle_stretch": {
+   "channels": 54,
+   "keyed": 54,
+   "max_keys": 35
+  },
+  "idle_yawn": {
+   "channels": 32,
+   "keyed": 32,
+   "max_keys": 35
+  },
+  "rest_lower": {
+   "channels": 58,
+   "keyed": 36,
+   "max_keys": 18
+  },
+  "rest_breathe": {
+   "channels": 5,
+   "keyed": 5,
+   "max_keys": 9
+  },
+  "rest_rise": {
+   "channels": 58,
+   "keyed": 58,
+   "max_keys": 30
+  },
+  "alert": {
+   "channels": 30,
+   "keyed": 30,
+   "max_keys": 16
+  },
+  "roar": {
+   "channels": 57,
+   "keyed": 57,
+   "max_keys": 47
+  },
+  "bite": {
+   "channels": 30,
+   "keyed": 30,
+   "max_keys": 18
+  },
+  "claw_swipe": {
+   "channels": 30,
+   "keyed": 30,
+   "max_keys": 22
+  },
+  "tail_smash": {
+   "channels": 31,
+   "keyed": 31,
+   "max_keys": 27
+  },
+  "wing_buffet": {
+   "channels": 54,
+   "keyed": 54,
+   "max_keys": 41
+  },
+  "fire_breath_charge": {
+   "channels": 35,
+   "keyed": 35,
+   "max_keys": 18
+  },
+  "fire_breath_release": {
+   "channels": 53,
+   "keyed": 31,
+   "max_keys": 88
+  },
+  "hurt": {
+   "channels": 28,
+   "keyed": 28,
+   "max_keys": 9
+  },
+  "death": {
+   "channels": 57,
+   "keyed": 57,
+   "max_keys": 29
+  },
+  "look_at_target": {
+   "channels": 4,
+   "keyed": 0,
+   "max_keys": 0
+  }
+ },
+ "additive_boundaries": {
+  "idle_look_left": [
+   0.0,
+   0.0
+  ],
+  "idle_look_right": [
+   0.0,
+   0.0
+  ],
+  "idle_sniff": [
+   0.0,
+   0.0
+  ],
+  "idle_blink": [
+   0.0,
+   0.0
+  ],
+  "idle_ground_scratch": [
+   0.01,
+   0.0
+  ],
+  "idle_tail_sway": [
+   0.01,
+   0.0
+  ],
+  "idle_wing_adjust": [
+   0.0,
+   0.0
+  ],
+  "idle_stretch": [
+   0.0,
+   0.0
+  ],
+  "idle_yawn": [
+   0.0,
+   0.0
+  ],
+  "alert": [
+   0.05,
+   0.66
+  ],
+  "roar": [
+   0.03,
+   0.12
+  ],
+  "bite": [
+   0.06,
+   0.02
+  ],
+  "claw_swipe": [
+   0.08,
+   0.0
+  ],
+  "tail_smash": [
+   0.0,
+   0.0
+  ],
+  "wing_buffet": [
+   0.14,
+   0.0
+  ],
+  "hurt": [
+   0.0,
+   0.0
+  ]
+ },
+ "v1_walk_foot_slip_units": {
+  "fl": 29.07,
+  "fr": 29.07,
+  "hl": 21.49,
+  "hr": 21.49
+ }
+}

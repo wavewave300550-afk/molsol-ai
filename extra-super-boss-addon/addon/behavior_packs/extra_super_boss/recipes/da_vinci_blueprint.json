@@ -1,0 +1,39 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "esb:da_vinci_blueprint"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "PGP",
+      "GCG",
+      "PDP"
+    ],
+    "key": {
+      "P": {
+        "item": "minecraft:paper"
+      },
+      "G": {
+        "item": "minecraft:gold_ingot"
+      },
+      "C": {
+        "item": "minecraft:clock"
+      },
+      "D": {
+        "item": "minecraft:diamond"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:clock"
+      }
+    ],
+    "result": {
+      "item": "esb:da_vinci_blueprint",
+      "count": 1
+    }
+  }
+}

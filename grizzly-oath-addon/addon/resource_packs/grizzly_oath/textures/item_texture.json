@@ -1,0 +1,12 @@
+{
+  "resource_pack_name": "grizzly_oath",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "grizzly_oath:grizzlys_oath": {
+      "textures": "textures/items/grizzlys_oath_icon"
+    },
+    "grizzly_oath:grizzlys_oath_awakened": {
+      "textures": "textures/items/grizzlys_oath_awakened_icon"
+    }
+  }
+}

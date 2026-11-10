@@ -1,0 +1,183 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.esb.gran_cavallo.state": {
+   "initial_state": "rise",
+   "states": {
+    "rise": {
+     "animations": [
+      "rise"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "idle": "q.property('esb:state') == 'idle'"
+      },
+      {
+       "paw": "q.property('esb:state') == 'paw'"
+      },
+      {
+       "gallop": "q.property('esb:state') == 'gallop'"
+      },
+      {
+       "crumble": "q.property('esb:state') == 'crumble'"
+      }
+     ]
+    },
+    "idle": {
+     "animations": [
+      "idle"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "rise": "q.property('esb:state') == 'rise'"
+      },
+      {
+       "paw": "q.property('esb:state') == 'paw'"
+      },
+      {
+       "gallop": "q.property('esb:state') == 'gallop'"
+      },
+      {
+       "crumble": "q.property('esb:state') == 'crumble'"
+      }
+     ]
+    },
+    "paw": {
+     "animations": [
+      "paw"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "rise": "q.property('esb:state') == 'rise'"
+      },
+      {
+       "idle": "q.property('esb:state') == 'idle'"
+      },
+      {
+       "gallop": "q.property('esb:state') == 'gallop'"
+      },
+      {
+       "crumble": "q.property('esb:state') == 'crumble'"
+      }
+     ]
+    },
+    "gallop": {
+     "animations": [
+      "gallop"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "rise": "q.property('esb:state') == 'rise'"
+      },
+      {
+       "idle": "q.property('esb:state') == 'idle'"
+      },
+      {
+       "paw": "q.property('esb:state') == 'paw'"
+      },
+      {
+       "crumble": "q.property('esb:state') == 'crumble'"
+      }
+     ]
+    },
+    "crumble": {
+     "animations": [
+      "crumble"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "rise": "q.property('esb:state') == 'rise'"
+      },
+      {
+       "idle": "q.property('esb:state') == 'idle'"
+      },
+      {
+       "paw": "q.property('esb:state') == 'paw'"
+      },
+      {
+       "gallop": "q.property('esb:state') == 'gallop'"
+      }
+     ]
+    }
+   }
+  },
+  "controller.animation.esb.phonograph.state": {
+   "initial_state": "assemble",
+   "states": {
+    "assemble": {
+     "animations": [
+      "assemble"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "play": "q.property('esb:state') == 'play'"
+      },
+      {
+       "blast": "q.property('esb:state') == 'blast'"
+      },
+      {
+       "fold": "q.property('esb:state') == 'fold'"
+      }
+     ]
+    },
+    "play": {
+     "animations": [
+      "play"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "assemble": "q.property('esb:state') == 'assemble'"
+      },
+      {
+       "blast": "q.property('esb:state') == 'blast'"
+      },
+      {
+       "fold": "q.property('esb:state') == 'fold'"
+      }
+     ]
+    },
+    "blast": {
+     "animations": [
+      "blast"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "assemble": "q.property('esb:state') == 'assemble'"
+      },
+      {
+       "play": "q.property('esb:state') == 'play'"
+      },
+      {
+       "fold": "q.property('esb:state') == 'fold'"
+      }
+     ]
+    },
+    "fold": {
+     "animations": [
+      "fold"
+     ],
+     "blend_transition": 0.2,
+     "transitions": [
+      {
+       "assemble": "q.property('esb:state') == 'assemble'"
+      },
+      {
+       "play": "q.property('esb:state') == 'play'"
+      },
+      {
+       "blast": "q.property('esb:state') == 'blast'"
+      }
+     ]
+    }
+   }
+  }
+ }
+}

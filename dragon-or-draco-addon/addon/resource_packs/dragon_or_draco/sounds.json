@@ -1,0 +1,18 @@
+{
+  "entity_sounds": {
+    "entities": {
+      "dod:red_dragon": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.05
+        ],
+        "events": {
+          "ambient": "mob.dod.red_dragon.ambient",
+          "hurt": "mob.dod.red_dragon.hurt",
+          "death": "mob.dod.red_dragon.death_thud"
+        }
+      }
+    }
+  }
+}

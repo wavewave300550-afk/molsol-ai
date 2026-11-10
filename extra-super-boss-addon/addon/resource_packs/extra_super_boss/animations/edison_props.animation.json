@@ -1,0 +1,173 @@
+{
+ "format_version": "1.8.0",
+ "animations": {
+  "animation.esb.dynamo.idle": {
+   "loop": true,
+   "animation_length": 1.0,
+   "bones": {
+    "bulb_1": {
+     "scale": "1 + math.sin(q.life_time * 840 + 0) * 0.04"
+    },
+    "bulb_2": {
+     "scale": "1 + math.sin(q.life_time * 840 + 70) * 0.04"
+    },
+    "bulb_3": {
+     "scale": "1 + math.sin(q.life_time * 840 + 140) * 0.04"
+    },
+    "bulb_4": {
+     "scale": "1 + math.sin(q.life_time * 840 + 210) * 0.04"
+    },
+    "bulb_5": {
+     "scale": "1 + math.sin(q.life_time * 840 + 280) * 0.04"
+    },
+    "lever_1": {
+     "rotation": [
+      0,
+      0,
+      0
+     ]
+    },
+    "lever_2": {
+     "rotation": [
+      0,
+      0,
+      0
+     ]
+    },
+    "lever_3": {
+     "rotation": [
+      0,
+      0,
+      0
+     ]
+    }
+   }
+  },
+  "animation.esb.dynamo.charge": {
+   "loop": true,
+   "animation_length": 0.5,
+   "bones": {
+    "bulb_1": {
+     "scale": "1.18 + math.sin(q.life_time * 2400 + 0) * 0.12"
+    },
+    "bulb_2": {
+     "scale": "1.18 + math.sin(q.life_time * 2400 + 50) * 0.12"
+    },
+    "bulb_3": {
+     "scale": "1.18 + math.sin(q.life_time * 2400 + 100) * 0.12"
+    },
+    "bulb_4": {
+     "scale": "1.18 + math.sin(q.life_time * 2400 + 150) * 0.12"
+    },
+    "bulb_5": {
+     "scale": "1.18 + math.sin(q.life_time * 2400 + 200) * 0.12"
+    },
+    "lever_1": {
+     "rotation": [
+      "-60 + math.sin(q.life_time * 3000 + 90) * 4",
+      0,
+      0
+     ]
+    },
+    "lever_2": {
+     "rotation": [
+      "-60 + math.sin(q.life_time * 3000 + 180) * 4",
+      0,
+      0
+     ]
+    },
+    "lever_3": {
+     "rotation": [
+      "-60 + math.sin(q.life_time * 3000 + 270) * 4",
+      0,
+      0
+     ]
+    }
+   },
+   "particle_effects": {
+    "0.0": {
+     "effect": "zap",
+     "locator": "loc_coil"
+    },
+    "0.25": {
+     "effect": "zap",
+     "locator": "loc_top"
+    }
+   }
+  },
+  "animation.esb.electric_chair.armed": {
+   "loop": true,
+   "animation_length": 0.5,
+   "bones": {
+    "root": {
+     "scale": "math.min(1, 0.2 + q.life_time * 3.2)"
+    },
+    "helmet": {
+     "position": [
+      0,
+      3,
+      0
+     ]
+    },
+    "straps": {
+     "scale": 0.0001
+    }
+   },
+   "particle_effects": {
+    "0.0": {
+     "effect": "zap",
+     "locator": "loc_helmet"
+    }
+   }
+  },
+  "animation.esb.electric_chair.locked": {
+   "loop": true,
+   "animation_length": 0.2,
+   "bones": {
+    "helmet": {
+     "position": [
+      "math.sin(q.life_time * 7200) * 0.2",
+      "math.sin(q.life_time * 5400) * 0.3",
+      0
+     ]
+    },
+    "frame": {
+     "rotation": [
+      0,
+      "math.sin(q.life_time * 6000) * 1.2",
+      0
+     ]
+    }
+   },
+   "particle_effects": {
+    "0.0": {
+     "effect": "zap",
+     "locator": "loc_helmet"
+    },
+    "0.1": {
+     "effect": "zap",
+     "locator": "loc_seat"
+    }
+   }
+  },
+  "animation.esb.volt_bulb.spin": {
+   "loop": true,
+   "animation_length": 0.25,
+   "bones": {
+    "spin": {
+     "rotation": [
+      "q.life_time * 1080",
+      "q.life_time * 400",
+      0
+     ]
+    }
+   },
+   "particle_effects": {
+    "0.0": {
+     "effect": "trail",
+     "locator": "loc_bulb_p"
+    }
+   }
+  }
+ }
+}
