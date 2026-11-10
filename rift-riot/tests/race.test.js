@@ -422,3 +422,50 @@ test('full AI race: everyone finishes, places are unique and locked in finish or
   // but across races every racer's AI must use its skill
   assert.ok(Object.values(uses).every((n) => n > 0), JSON.stringify(uses));
 });
+
+function crossGapAttempt(id, useSkill) {
+  const race = newRace(id);
+  toGo(race);
+  const p = race.player;
+  isolate(race, [p]);
+  const br = track.branch;
+  // start on the shortcut, aimed down it, at speed, with the span closed for the whole attempt
+  track.bridgeState = ((orig) => {
+    const f = (t, o = {}) => Object.assign(o, { solid: false, warn: false, phase: 10, timeToChange: 9 });
+    f.orig = orig;
+    return f;
+  })(track.bridgeState);
+  const start = useSkill === 'rail' ? br.gap0 - 30 : br.gap0 - 30;
+  Object.assign(p, { x: br.ax + br.tx * start, z: br.az + br.tz * start, y: br.ay, gy: br.ay, refY: br.ay, heading: br.heading, lap: 1, nextGate: 6 });
+  p.px = p.x;
+  p.pz = p.z;
+  p.vx = br.tx * 30;
+  p.vz = br.tz * 30;
+  let fell = false;
+  let fired = false;
+  for (let i = 0; i < 60 * 4; i++) {
+    p.input.throttle = 1;
+    p.input.steer = 0;
+    const sb = (p.x - br.ax) * br.tx + (p.z - br.az) * br.tz;
+    const trigger = useSkill === 'rail' ? br.gap0 - 6 : br.gap0 - 13;
+    if (useSkill && !fired && sb > trigger) {
+      fired = tryUseSkill(race, p) === null;
+    }
+    race.step(DT);
+    if (race.events.some((e) => e.type === 'fall')) fell = true;
+    race.events.length = 0;
+    if (sb > br.gap1 + 6 && p.grounded) break;
+  }
+  track.bridgeState = track.bridgeState.orig;
+  const sb = (p.x - br.ax) * br.tx + (p.z - br.az) * br.tz;
+  return { fell, past: sb > br.gap1, fired };
+}
+
+test('closed shortcut span: rail and slingshot cross the gap, a plain racer falls', () => {
+  const rail = crossGapAttempt('boonsong', 'rail');
+  assert.ok(rail.fired && !rail.fell && rail.past, 'rail ' + JSON.stringify(rail));
+  const jump = crossGapAttempt('granny', 'jump');
+  assert.ok(jump.fired && !jump.fell && jump.past, 'jump ' + JSON.stringify(jump));
+  const plain = crossGapAttempt('celestine', null);
+  assert.ok(plain.fell, 'plain ' + JSON.stringify(plain));
+});
