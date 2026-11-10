@@ -16,7 +16,7 @@ export const RACERS = [
     role: 'อ่านสนาม • ทางลัด',
     color: '#c8793a',
     accent: '#3f6fb5',
-    stats: { speed: 0.985, accel: 0.94, turn: 0.96, stability: 1.12, grip: 1.05 },
+    stats: { speed: 0.992, accel: 0.96, turn: 0.97, stability: 1.12, grip: 1.05 },
   },
   {
     id: 'baby',
@@ -48,7 +48,7 @@ export const RACERS = [
     role: 'รักษาความเร็ว • เลือกไลน์',
     color: '#f7a8c8',
     accent: '#8fe3ff',
-    stats: { speed: 1.0, accel: 1.0, turn: 1.08, stability: 0.95, grip: 1.08 },
+    stats: { speed: 0.988, accel: 0.97, turn: 1.06, stability: 0.95, grip: 1.05 },
   },
   {
     id: 'granny',
@@ -96,7 +96,7 @@ export const RACERS = [
     role: 'คุมพื้นที่ • กันข้างตัว',
     color: '#2f8fd8',
     accent: '#ff8a2a',
-    stats: { speed: 1.008, accel: 0.98, turn: 0.98, stability: 1.05, grip: 0.86 },
+    stats: { speed: 1.014, accel: 1.0, turn: 1.0, stability: 1.05, grip: 0.92 },
     hover: 0.55, // visual hover height; gameplay still treats it as on the ground
   },
 ];

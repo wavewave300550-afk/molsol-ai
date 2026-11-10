@@ -41,6 +41,7 @@ export const BALANCE = {
     grip: 2.6, // lowered grip → visible slide
     innerSteer: 1.0, // steering into the drift
     outerSteer: 0.28, // counter-steering still keeps some rotation
+    carry: 0.8, // share of scrubbed sideways speed kept as forward speed while drifting
     chargeTime: 0.9, // continuous drift needed before a boost is earned
     minSlip: 0.12, // rad — must actually be sliding for charge to count
     boostTime: 0.5,

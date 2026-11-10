@@ -169,7 +169,10 @@ export function stepVehicle(r, dt, applyMods) {
   if (r.drift !== 0) grip = D.grip;
   grip = lerp(grip, Math.min(grip, SL.grip), r.slickAmount);
   if (!supported) grip = 0.6;
+  const vlBefore = Math.abs(vl);
   vl *= Math.exp(-grip * dt);
+  // arcade drift: most of the scrubbed sideways speed carries on as forward speed
+  if (r.drift !== 0 && vf > 0) vf += (vlBefore - Math.abs(vl)) * D.carry;
 
   // ── throttle / brake ──
   let maxS = V.maxSpeed * st.speed * m.speedMul;

@@ -14,7 +14,7 @@ uniform float scale;
 void main(){
   vAlpha = alpha; vShape = shape; vColor = pcolor;
   vec4 mv = modelViewMatrix * vec4(position, 1.0);
-  gl_PointSize = min(220.0, size * 0.062 * scale / max(0.1, -mv.z));
+  gl_PointSize = min(150.0, size * 0.05 * scale / max(0.1, -mv.z));
   gl_Position = projectionMatrix * mv;
 }`;
 const PFS = `
@@ -366,7 +366,7 @@ export class Effects {
         break;
       case 'pushed':
         this.burst(r.x, r.y + 1.6, r.z, 8, 10, 0.4, 9, '#ffffff', 2, 0, 0.5);
-        if (r.isPlayer) this.pop('ปึ้ก!', '#ffe14f', r.x, r.y + 4.2, r.z, 4);
+        if (r.isPlayer) this.pop('ปึ้ก!', '#ffe14f', r.x, r.y + 4.2, r.z, 2.6);
         break;
       case 'respawn':
         this.ring(r.x, r.gy, r.z, 4, 0.6, 0.5, '#7ef9ff');
@@ -522,9 +522,9 @@ export class Effects {
       // stroller turbo smoke + hovering potty wash (cheap ambience, near camera only)
       if (speedN > 0.3 && camera && (r.x - camera.position.x) ** 2 + (r.z - camera.position.z) ** 2 < 3600) {
         if (r.def.id === 'baby')
-          this._emit(r, 'e', 14, dt, () => P.spawn(r.x - fx * 3 + rx * (Math.random() - 0.5) * 2, r.y + 1.3, r.z - fz * 3 + rz * (Math.random() - 0.5) * 2, -fx * 3, 1.5, -fz * 3, 0.5, 12, 0.5, 0.5, 0.55, 0, -1, 1, 1.5));
+          this._emit(r, 'e', 14, dt, () => P.spawn(r.x - fx * 3 + rx * (Math.random() - 0.5) * 2, r.y + 1.3, r.z - fz * 3 + rz * (Math.random() - 0.5) * 2, -fx * 3, 1.5, -fz * 3, 0.5, 9, 0.5, 0.5, 0.55, 0, -1, 1, 1.3));
         if (r.def.id === 'gator')
-          this._emit(r, 'e', 12, dt, () => P.spawn(r.x + (Math.random() - 0.5) * 1.6, r.y + 0.4, r.z + (Math.random() - 0.5) * 1.6, (Math.random() - 0.5) * 3, -1, (Math.random() - 0.5) * 3, 0.4, 10, 0.6, 0.95, 1, 0, 0, 1, 1));
+          this._emit(r, 'e', 12, dt, () => P.spawn(r.x + (Math.random() - 0.5) * 1.6, r.y + 0.4, r.z + (Math.random() - 0.5) * 1.6, (Math.random() - 0.5) * 3, -1, (Math.random() - 0.5) * 3, 0.35, 5, 0.6, 0.95, 1, 0, 0, 1, 0.8));
       }
     }
     this.sleepers.count = pieces;
