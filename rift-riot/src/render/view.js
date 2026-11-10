@@ -363,11 +363,24 @@ export class GameView {
     a.pushed = 0;
     model.update(a);
     const portrait = this.aspect < 1;
-    const d = (portrait ? 17 : 12.5) + (model.height - 3) * 1.2;
     const cam = this.camera;
+    if (portrait) {
+      // phone held upright: model fills the upper part of the screen, info card below
+      const vfov = 46;
+      cam.fov = vfov;
+      cam.updateProjectionMatrix();
+      const width = Math.max(model.height * 1.7, 6.8);
+      const d = width / (2 * Math.tan(THREE.MathUtils.degToRad(vfov / 2)) * this.aspect) + 1.5;
+      const viewH = 2 * d * Math.tan(THREE.MathUtils.degToRad(vfov / 2));
+      const lookY = model.height * 0.5 - viewH * 0.17;
+      cam.position.set(this.stage.x, this.stage.y + lookY + 1.6, this.stage.z + d);
+      cam.lookAt(this.stage.x, this.stage.y + lookY, this.stage.z);
+      return;
+    }
+    const d = 12.5 + (model.height - 3) * 1.2;
     // in landscape the model sits left of centre so the info panel has room
-    const side = portrait ? 0 : 3.4;
-    const lookY = model.height * 0.45 + (portrait ? -1.6 : 0);
+    const side = 3.4;
+    const lookY = model.height * 0.45;
     cam.position.set(this.stage.x + side, this.stage.y + 3.6, this.stage.z + d);
     cam.lookAt(this.stage.x + side, this.stage.y + lookY, this.stage.z);
     this._applyFov(40);

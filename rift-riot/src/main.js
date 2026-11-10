@@ -91,7 +91,15 @@ function resize() {
   renderer.setSize(w, h, false);
   view.resize();
   const portrait = h > w * 1.1;
-  $('rotate').classList.toggle('hidden', !(portrait && touch && !app.rotateDismissed && app.state === 'race'));
+  const showRotate = portrait && touch && !app.rotateDismissed && app.state === 'race';
+  $('rotate').classList.toggle('hidden', !showRotate);
+  if (showRotate && !app.rotateTimer) {
+    // a gentle hint, not a blocker: it goes away by itself
+    app.rotateTimer = setTimeout(() => {
+      app.rotateDismissed = true;
+      $('rotate').classList.add('hidden');
+    }, 5000);
+  }
 }
 window.addEventListener('resize', resize);
 window.addEventListener('orientationchange', () => setTimeout(resize, 250));

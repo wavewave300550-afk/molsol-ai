@@ -258,7 +258,9 @@ export function updateAI(race, r, dt) {
       for (const o of race.racers) {
         if (o === r || o.respawning || o.finished) continue;
         const behind = r.progress - o.progress;
-        if (behind > 5 && behind < (bend ? 34 : 16) && Math.abs(o.pm.d - myLat) < 6.5) want = true;
+        // a chaser right on my line, or anyone following into a bend where slipping costs most
+        if (behind > 4 && behind < 18 && Math.abs(o.pm.d - myLat) < 6.5) want = true;
+        if (bend && behind > 4 && behind < 55) want = true;
       }
       break;
     }

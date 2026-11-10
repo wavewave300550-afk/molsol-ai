@@ -692,6 +692,31 @@ body:not(.touch) .ctl.skill {
     align-self: stretch;
     width: auto;
     margin-top: auto;
+    padding: 10px 14px;
+  }
+  .selInfo .stats {
+    display: none;
+  }
+  .selSkill p {
+    font-size: 13px;
+  }
+  .roster {
+    justify-content: flex-start;
+  }
+  .speed {
+    left: calc(16px + var(--sal));
+    bottom: calc(150px + var(--sab));
+    transform: none;
+    text-align: left;
+  }
+  .charge {
+    margin-left: 0;
+  }
+  .rotate {
+    top: auto;
+    bottom: calc(220px + var(--sab));
+    white-space: normal;
+    width: min(90vw, 340px);
   }
   .ctl.drift {
     width: 96px;

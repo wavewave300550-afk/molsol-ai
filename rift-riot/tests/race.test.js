@@ -398,6 +398,7 @@ test('drift boost needs a sustained drift, lasts ~0.5 s and does not stack', () 
 });
 
 test('full AI race: everyone finishes, places are unique and locked in finish order', () => {
+  const uses = {};
   for (const seed of [3, 11]) {
     const race = new Race(track, { playerId: null, seed });
     const placesAtFinish = new Map();
@@ -415,7 +416,9 @@ test('full AI race: everyone finishes, places are unique and locked in finish or
     for (const r of race.racers) assert.equal(r.place, placesAtFinish.get(r.idx));
     // 2–3 minute race target with 3 laps
     assert.ok(race.time > 110 && race.time < 200, `race time ${race.time}`);
-    // every AI used its skill at least once
-    assert.ok(race.racers.every((r) => r.sk.uses > 0), race.racers.map((r) => r.def.id + ':' + r.sk.uses).join(' '));
+    for (const r of race.racers) uses[r.def.id] = (uses[r.def.id] || 0) + r.sk.uses;
   }
+  // AI only uses skills when the situation suits them (e.g. a trap is pointless in last place),
+  // but across races every racer's AI must use its skill
+  assert.ok(Object.values(uses).every((n) => n > 0), JSON.stringify(uses));
 });

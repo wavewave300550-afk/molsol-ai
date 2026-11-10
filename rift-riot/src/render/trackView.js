@@ -79,7 +79,8 @@ function signTexture(lines, bg, fg) {
   return canvasTex(256, 256, (g, w, h) => {
     g.fillStyle = bg;
     g.beginPath();
-    g.roundRect(6, 6, w - 12, h - 12, 26);
+    if (g.roundRect) g.roundRect(6, 6, w - 12, h - 12, 26);
+    else g.rect(6, 6, w - 12, h - 12); // older iOS Safari
     g.fill();
     g.lineWidth = 10;
     g.strokeStyle = fg;
