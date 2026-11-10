@@ -1,0 +1,22 @@
+{
+  "name": "rift-riot",
+  "private": true,
+  "version": "1.0.0",
+  "description": "RIFT RIOT — ศึกซิ่งป่วนจักรวาล: 3D arcade racer for mobile browsers (three.js)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "test": "node --test tests/",
+    "balance": "node tools/balance-report.mjs",
+    "smoke": "node tools/browser-smoke.mjs"
+  },
+  "dependencies": {
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "vite": "^8.3.7",
+    "vite-plugin-singlefile": "^2.3.4"
+  }
+}

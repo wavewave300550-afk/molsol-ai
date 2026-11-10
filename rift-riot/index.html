@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <title>RIFT RIOT — ศึกซิ่งป่วนจักรวาล</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="RIFT RIOT" />
+    <meta name="theme-color" content="#2a1a63" />
+    <link rel="stylesheet" href="/src/ui/styles.css" />
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+
+    <div id="ui">
+      <div id="loading" class="screen">
+        <div class="logo small"><span>RIFT</span><span>RIOT</span></div>
+        <p id="loadingText">กำลังเปิดประตูมิติ…</p>
+      </div>
+
+      <section id="title" class="screen hidden">
+        <div class="logo"><span>RIFT</span><span>RIOT</span></div>
+        <p class="tagline">ศึกซิ่งป่วนจักรวาล</p>
+        <button id="btnStart" class="big primary">เริ่มเกม</button>
+        <p class="hint" id="titleHint"></p>
+        <button id="btnMuteTitle" class="chip">🔊 เสียง: เปิด</button>
+      </section>
+
+      <section id="select" class="screen hidden">
+        <header class="selHead">
+          <button id="btnBack" class="chip">‹ กลับ</button>
+          <h2>เลือกผู้เข้าแข่งขัน</h2>
+          <span class="free">ครบ 6 ตัว • ฟรี • เลือกได้ทันที</span>
+        </header>
+        <div class="selInfo">
+          <div class="selNo" id="selNo">001</div>
+          <h3 id="selName">UNCLE BOONSONG</h3>
+          <div class="selTh" id="selTh"></div>
+          <div class="selRide" id="selRide"></div>
+          <div class="selSkill">
+            <span class="skIcon" id="selIcon"></span>
+            <div>
+              <b id="selSkillName"></b>
+              <p id="selSkillDesc"></p>
+            </div>
+          </div>
+          <div class="stats" id="selStats"></div>
+        </div>
+        <div class="roster" id="roster"></div>
+        <button id="btnRace" class="big primary">เริ่มแข่ง!</button>
+      </section>
+
+      <section id="hud" class="hidden">
+        <div class="hudTop">
+          <div class="pos"><b id="hudPos">1</b><span>/6</span></div>
+          <div class="lap">รอบ <b id="hudLap">1</b>/<span id="hudLaps">3</span></div>
+          <div class="time" id="hudTime">0:00.0</div>
+          <button id="btnPause" class="round" aria-label="พักเกม">II</button>
+        </div>
+        <canvas id="minimap" width="168" height="168"></canvas>
+        <div id="banner" class="banner hidden"></div>
+        <div id="warn" class="warn hidden"></div>
+        <div id="toast" class="toast hidden"></div>
+        <div id="speed" class="speed"><b id="hudSpeed">0</b> km/h<div class="charge"><i id="hudCharge"></i></div></div>
+
+        <div id="steerPad" class="steerPad touchOnly">
+          <span class="arrow l">◀</span>
+          <div id="steerKnob" class="knob"></div>
+          <span class="arrow r">▶</span>
+        </div>
+        <button id="btnBrake" class="ctl brake touchOnly">เบรก</button>
+        <button id="btnDrift" class="ctl drift touchOnly">ดริฟต์</button>
+        <button id="btnSkill" class="ctl skill">
+          <svg viewBox="0 0 100 100" class="ring"><circle cx="50" cy="50" r="46" class="ringBg" /><circle cx="50" cy="50" r="46" class="ringFg" id="skillRing" /></svg>
+          <span class="skIcon" id="skillIcon">★</span>
+          <span class="skNum" id="skillNum"></span>
+          <span class="skKey keyOnly">E</span>
+        </button>
+        <div class="keys keyOnly">W/↑ เร่ง • S/↓ เบรก • A D/← → เลี้ยว • Space ดริฟต์ • E สกิล • Esc พัก</div>
+      </section>
+
+      <section id="pause" class="overlay hidden">
+        <div class="panel">
+          <h2>พักเกม</h2>
+          <button id="btnResume" class="big primary">เล่นต่อ</button>
+          <button id="btnRestart" class="big">เริ่มแข่งใหม่</button>
+          <button id="btnQuit" class="big">กลับไปเลือกตัวละคร</button>
+          <label class="row">เสียง <input id="volume" type="range" min="0" max="100" value="80" /></label>
+          <div class="row">
+            <button id="btnMute" class="chip">🔊 เสียง: เปิด</button>
+            <button id="btnQuality" class="chip">ภาพ: อัตโนมัติ</button>
+            <button id="btnAuto" class="chip">เร่งอัตโนมัติ: เปิด</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="results" class="overlay hidden">
+        <div class="panel wide">
+          <h2 id="resTitle">ผลการแข่งขัน</h2>
+          <ol id="resList" class="scrollable"></ol>
+          <div class="row">
+            <button id="btnAgain" class="big primary">แข่งอีกครั้ง</button>
+            <button id="btnPick" class="big">เลือกตัวละคร</button>
+          </div>
+        </div>
+      </section>
+
+      <div id="rotate" class="rotate hidden">หมุนจอเป็นแนวนอนจะเห็นสนามกว้างขึ้น <button id="btnRotateOk" class="chip">ตกลง</button></div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
