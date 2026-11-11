@@ -22,8 +22,40 @@ export const SPELLS = {
     { code: "P14", id: "pressure.isobaric_citadel", kind: "struct", targets: 2, dist: 14, wait: 200, after: 480, block: "grimoire:pressure_barrier", damage: true },
     { code: "P15", id: "pressure.thousand_atmospheres", kind: "damage", targets: 4, dist: 12, wait: 300 },
   ],
-  ice: [],
-  blood: [],
+  ice: [
+    { code: "I01", id: "ice.sovereign_lance", kind: "damage", targets: 3, dist: 9, line: true, wait: 70, after: 90 },
+    { code: "I02", id: "ice.boreal_dragon", kind: "damage", targets: 3, dist: 7, wait: 120 },
+    { code: "I03", id: "ice.winters_guillotine", kind: "damage", targets: 3, dist: 11, line: true, wait: 70, after: 120 },
+    { code: "I04", id: "ice.crystal_rain", kind: "damage", targets: 4, dist: 10, wait: 110 },
+    { code: "I05", id: "ice.eternal_lotus", kind: "ward", targets: 1, dist: 3, wait: 40, after: 260 },
+    { code: "I06", id: "ice.frozen_throne_mirror", kind: "ward", targets: 1, dist: 3, wait: 30, after: 320 },
+    { code: "I07", id: "ice.chains_of_niflheim", kind: "damage", targets: 3, dist: 8, wait: 160, bind: true },
+    { code: "I08", id: "ice.pale_moon_labyrinth", kind: "struct", targets: 2, dist: 12, wait: 120, after: 320, block: "grimoire:frost_wall" },
+    { code: "I09", id: "ice.whiteout_dominion", kind: "damage", targets: 3, dist: 6, wait: 120, after: 160 },
+    { code: "I10", id: "ice.frost_mirror_traverse", kind: "teleport", targets: 0, dist: 10, wait: 40 },
+    { code: "I11", id: "ice.winter_seraph", kind: "flight", targets: 0, wait: 60, after: 360 },
+    { code: "I12", id: "ice.frost_legion", kind: "summon", targets: 2, dist: 6, wait: 160, after: 520, mobs: ["grimoire:frost_knight_sword", "grimoire:frost_knight_spear", "grimoire:frost_knight_shield"] },
+    { code: "I13", id: "ice.still_winter_hourglass", kind: "damage", targets: 3, dist: 9, wait: 130, bind: true },
+    { code: "I14", id: "ice.everlasting_citadel", kind: "struct", targets: 2, dist: 16, wait: 220, after: 520, block: "grimoire:frost_wall", damage: true },
+    { code: "I15", id: "ice.the_last_winter", kind: "damage", targets: 4, dist: 12, wait: 330 },
+  ],
+  blood: [
+    { code: "B01", id: "blood.stiletto_rain", kind: "damage", targets: 3, dist: 8, wait: 70 },
+    { code: "B02", id: "blood.red_court_guillotine", kind: "damage", targets: 3, dist: 8, wait: 110 },
+    { code: "B03", id: "blood.sanguine_leviathan", kind: "damage", targets: 3, dist: 10, line: true, wait: 110 },
+    { code: "B04", id: "blood.thousand_blade_crowns", kind: "damage", targets: 3, dist: 8, wait: 150 },
+    { code: "B05", id: "blood.scarlet_rose_aegis", kind: "ward", targets: 1, dist: 2.5, wait: 30, after: 180 },
+    { code: "B06", id: "blood.royal_reprisal", kind: "ward", targets: 1, dist: 2.5, wait: 30, after: 280 },
+    { code: "B07", id: "blood.veinbound_marionette", kind: "damage", targets: 3, dist: 8, wait: 150, bind: true },
+    { code: "B08", id: "blood.crimson_thorn_garden", kind: "damage", targets: 3, dist: 9, wait: 260 },
+    { code: "B09", id: "blood.hematic_maelstrom", kind: "damage", targets: 3, dist: 9, wait: 150 },
+    { code: "B10", id: "blood.bloodstep", kind: "teleport", targets: 0, dist: 8, wait: 40 },
+    { code: "B11", id: "blood.arterial_current", kind: "move", targets: 0, wait: 220, lookUp: true },
+    { code: "B12", id: "blood.royal_stag", kind: "summon", targets: 2, dist: 7, wait: 200, after: 420, mobs: ["grimoire:royal_stag"] },
+    { code: "B13", id: "blood.sovereigns_pulse", kind: "mark", targets: 3, dist: 6, wait: 60, after: 200 },
+    { code: "B14", id: "blood.scarlet_sea", kind: "damage", targets: 4, dist: 10, wait: 420 },
+    { code: "B15", id: "blood.crimson_moon_heart", kind: "damage", targets: 4, dist: 10, wait: 420 },
+  ],
 };
 
 const ITEMS = { pressure: "grimoire:pressure", ice: "grimoire:ice", blood: "grimoire:blood" };
@@ -91,6 +123,18 @@ async function runSpell(h, school, i, spec, arenaX, arenaZ) {
   const st = await h.state(name);
   const cd = st?.cooldowns?.[spec.id];
   h.check(S, `${spec.code} activates via crouch-select + hold/release (cooldown started)`, cd !== undefined && cd !== 0, { cd, preparing: st?.preparing, selected: st?.selected });
+  if (spec.kind === "flight") {
+    h.check(S, `${spec.code} cooldown waits until the flight ends`, cd === -1, { cd });
+    await h.wait(30);
+    const wf = await h.worldInfo();
+    h.check(S, `${spec.code} spawns its constructs`, wf && wf.fx > 0, wf);
+    // the flight ends when the Ice Grimoire is put away; the cooldown must start then
+    caster.selectedSlotIndex = 4;
+    await h.wait(40);
+    const st3 = await h.state(name);
+    h.check(S, `${spec.code} cooldown starts after the flight ends`, (st3?.cooldowns?.[spec.id] ?? 0) > 300, st3?.cooldowns);
+    caster.selectedSlotIndex = 0;
+  }
   // during the spell: poll the construct count
   const midWait = Math.min(spec.wait ?? 40, 30);
   let maxFx = 0;
@@ -100,7 +144,7 @@ async function runSpell(h, school, i, spec, arenaX, arenaZ) {
     if (w && w.fx >= maxFx) { maxFx = w.fx; w1 = w; }
     await h.wait(3);
   }
-  h.check(S, `${spec.code} spawns its constructs`, maxFx > 0, { maxFx, w1 });
+  if (spec.kind !== "flight") h.check(S, `${spec.code} spawns its constructs`, maxFx > 0, { maxFx, w1 });
   if (spec.kind === "ward") {
     const attacker = targets[0] ?? h.dim().spawnEntity("minecraft:husk", { x: arenaX + 2.5, y: -60, z: arenaZ + 0.5 });
     const before = hp(caster);
@@ -132,6 +176,30 @@ async function runSpell(h, school, i, spec, arenaX, arenaZ) {
     await h.wait(5);
     const s3 = await h.state(name);
     h.check(S, `${spec.code} empowerment is consumed by the next eligible spell (no stacking)`, s3?.empowered === false, s3);
+  }
+  if (spec.kind === "summon") {
+    const counts = spec.mobs.map((m) => countType(h, m));
+    h.check(S, `${spec.code} summons exactly the expected autonomous entities`, counts.every((n) => n === 1), { counts });
+  }
+  if (spec.kind === "mark") {
+    // hitting one marked enemy must also hurt the others (damage sharing)
+    await h.wait(20);
+    const before = targets.map(hp);
+    targets[0].applyDamage(8, { cause: EntityDamageCause.entityAttack, damagingEntity: caster });
+    await h.wait(6);
+    const after = targets.map(hp);
+    const shared = after.slice(1).some((v, k) => v < before[k + 1]);
+    h.check(S, `${spec.code} transfers part of the damage to the other marked enemies`, shared, { before, after });
+    await h.wait(12);
+    const again = targets.map(hp);
+    h.check(S, `${spec.code} transfer does not recurse (values stable after the pulse)`, again.every((v, k) => Math.abs(v - after[k]) < 4.1), { after, again });
+  }
+  if (spec.kind === "teleport") {
+    await h.wait(20);
+    const moved = Math.hypot(caster.location.x - pos0.x, caster.location.z - pos0.z);
+    const feet = h.dim().getBlock({ x: Math.floor(caster.location.x), y: Math.floor(caster.location.y), z: Math.floor(caster.location.z) });
+    const head = h.dim().getBlock({ x: Math.floor(caster.location.x), y: Math.floor(caster.location.y) + 1, z: Math.floor(caster.location.z) });
+    h.check(S, `${spec.code} teleports the caster to a safe spot`, moved > 3 && feet?.isAir !== false && head?.isAir !== false, { moved, feet: feet?.typeId, head: head?.typeId });
   }
   if (spec.kind === "move") {
     const moved = Math.hypot(caster.location.x - pos0.x, caster.location.z - pos0.z);

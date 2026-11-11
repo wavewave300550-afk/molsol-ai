@@ -318,7 +318,7 @@ export function titansVise(c: Cast): Routine {
     const items = targets.map((t) => ({
       t,
       fx: c.fx("grimoire:fx_p_vise", t.location, { phase: 1, size: Math.max(1, Math.min(2.2, (t.getHeadLocation().y - t.location.y) / 1.6)) }),
-      b: bind(c.ownerId, c.dim, t, c.p("duration") * 20 + 10),
+      b: c.bind(t, c.p("duration") * 20 + 10),
     }));
     let last = { ...items[0].t.location };
     c.sound("grimoire.pressure.grind", last, 1, 0.9);

@@ -10,6 +10,7 @@ Rings and discs are therefore always built in the horizontal XZ plane and re-ori
 X rotation on a parent bone, which keeps tangent alignment independent of the Z sign.
 """
 import math
+import re
 from .texkit import Atlas
 
 PX = 16.0
@@ -203,6 +204,8 @@ class Model:
     def bone(self, name, parent=None, pivot=(0, 0, 0), rotation=None, binding=None):
         if name in self.by_name:
             raise ValueError(f"duplicate bone {name} in {self.ident}")
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
+            raise ValueError(f"unsafe bone name {name!r} in {self.ident}")
         b = Bone(self, name, parent, pivot, rotation, binding)
         self.bones.append(b)
         self.by_name[name] = b

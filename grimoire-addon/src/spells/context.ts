@@ -3,6 +3,7 @@ import { Fx, FxInit, ParticleVars, Rgb, flash, particle, shake, sound, spawnFx }
 import { HitOptions, bodyCenter, enemiesAlong, enemiesNear, hit as busHit, isEnemy } from "../core/combat";
 import { Ward, addWard, removeWard } from "../core/defense";
 import { TempBlockSet } from "../core/blocks";
+import { Bind, BindOptions, bind as bindTarget, endBind } from "../core/status";
 import { Routine, RoutineHandle, start } from "../core/tasks";
 import { V3, add, dist, dot, mul, norm, sub, v3 } from "../core/vec";
 import type { SpellDef } from "./types";
@@ -259,6 +260,15 @@ export class Cast extends SpellScope {
     return { point: this.ground(base, 30), target: a.entity };
   }
 
+  private binds: Bind[] = [];
+
+  /** Bind/freeze a target; the bind is released when this spell ends (whatever the reason). */
+  bind(target: Entity, ticks: number, o: BindOptions = {}): Bind | undefined {
+    const b = bindTarget(this.player.id, this.dim, target, ticks, o);
+    if (b) this.binds.push(b);
+    return b;
+  }
+
   ward(def: Omit<Ward, "id" | "alive" | "ownerId">): Ward {
     const w = addWard({ ...def, ownerId: this.player.id });
     this.wards.push(w);
@@ -273,6 +283,8 @@ export class Cast extends SpellScope {
   override cleanup(dissolveTicks = 12): void {
     for (const h of this.subs) if (h.alive) h.cancel("spell ended");
     this.subs.length = 0;
+    for (const b of this.binds) endBind(b, true);
+    this.binds.length = 0;
     for (const w of this.wards) removeWard(w);
     this.wards.length = 0;
     this.tempBlocks?.clear();

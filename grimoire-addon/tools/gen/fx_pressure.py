@@ -135,7 +135,7 @@ def salvo():
     ring(f, "hubring", "hub", (0, 18, 8), 6, 1.5, 2, 12, "p_copper", rx=90)
     ring(f, "g_hubcore", "hub", (0, 18, 8), 3, 1.2, 2.2, 8, "p_glow_band", rx=90)
     for s in (-1, 1):
-        f.bone(f"strut{s}", "wings").cbox((s * 22, 22, 10), (34, 1.4, 1.4), "p_copper_dark", rotation=(0, 0, 0))
+        f.bone(f"strut{'l' if s > 0 else 'r'}", "wings").cbox((s * 22, 22, 10), (34, 1.4, 1.4), "p_copper_dark", rotation=(0, 0, 0))
     form = f.anim("form", length=0.9)
     for i in range(idx):
         t0 = 0.05 + (i % 12) * 0.05

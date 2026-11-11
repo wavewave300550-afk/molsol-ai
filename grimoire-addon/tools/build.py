@@ -110,12 +110,14 @@ def main():
         rc = fx.render_controller()
         if rc:
             extra_rc[f"controller.render.grimoire.{fx.name}"] = rc
+    for mob in mobs.MOBS:
+        mob.write(RP, BP)
     if extra_rc:
         fxdefs.dump(os.path.join(RP, "render_controllers", "grimoire_fx_variants.render_controllers.json"),
                     {"format_version": "1.10.0", "render_controllers": extra_rc})
     bundle()
     meta = {"spells": spells, "particles": particle_ids, "sounds": sound_ids,
-            "constructs": [f.ident for f in fxdefs.REGISTRY]}
+            "constructs": [f.ident for f in fxdefs.REGISTRY], "mobs": [m.ident for m in mobs.MOBS]}
     with open(os.path.join(ROOT, ".build_meta.json"), "w") as f:
         json.dump(meta, f, indent=1)
     addon = package()
