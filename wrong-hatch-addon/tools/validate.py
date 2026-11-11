@@ -150,7 +150,7 @@ for p, d in rp.items():
     if "minecraft:client_entity" in d:
         desc = d["minecraft:client_entity"]["description"]
         clients[desc["identifier"]] = desc
-check(len(clients) == 6, f"expected 6 client entities, found {len(clients)}")
+check(len(clients) == 7, f"expected 7 client entities, found {len(clients)}")
 for eid, desc in clients.items():
     for k, t in desc["textures"].items():
         check(tex_exists(t), f"{eid}: texture {t} missing")

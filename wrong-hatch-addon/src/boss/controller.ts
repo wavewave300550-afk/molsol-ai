@@ -7,8 +7,8 @@
  * (shell fortress, stuns, invulnerable windows, phase gates, the scripted
  * death) and keeps the boss bar, leash and despawn logic up to date.
  */
-import { Dimension, Entity, EntityHealthComponent, EntityHurtBeforeEvent, Player, Vector3 } from "@minecraft/server";
-import { BASE_HP, DESPAWN_AFTER_TICKS, FORTRESS, HUD_RANGE, LAST_HATCH_AT, LEASH_RANGE, PHASE2_AT, PHASE3_AT, RECOVER, RESET_AFTER_TICKS } from "../config.js";
+import { Dimension, Entity, EntityHealthComponent, EntityHurtAfterEvent, Player, Vector3 } from "@minecraft/server";
+import { BASE_HP, BOSS_ID, DESPAWN_AFTER_TICKS, FORTRESS, HUD_RANGE, LAST_HATCH_AT, LEASH_RANGE, PHASE2_AT, PHASE3_AT, RECOVER, RESET_AFTER_TICKS } from "../config.js";
 import { ACT, ActName } from "../generated/spec.js";
 import { targetsNear, viewersNear } from "../util/combat.js";
 import { particle, sound } from "../util/fx.js";
@@ -62,7 +62,7 @@ export class BossController implements BossLink {
   hatchCountdown = -1;
   readonly participants = new Set<string>();
 
-  constructor(readonly entity: Entity) {
+  constructor(public entity: Entity) {
     this.id = entity.id;
     const home = entity.getDynamicProperty("wh:home");
     this.home = typeof home === "object" ? (home as Vector3) : entity.location;
@@ -155,6 +155,7 @@ export class BossController implements BossLink {
     }
   }
   setMove(mode: "chase" | "busy"): void {
+    if (!this.isBoss()) return;
     const want = mode === "busy" ? "busy" : this.phase >= 3 ? "chase_fast" : "chase";
     if (want === this.moveMode) return;
     this.moveMode = want;
@@ -317,47 +318,80 @@ export class BossController implements BossLink {
     }
   }
 
-  // ------------------------------------------------------------------ damage filter (before event, read-only context)
-  filterDamage(ev: EntityHurtBeforeEvent): void {
-    const src = ev.damageSource.damagingEntity;
-    if (this.invulnerable || this.dying) {
-      ev.cancel = true;
-      this.deferred.push(() => {
-        particle(this.dim(), "wh:gold_ring", this.pos(), 2.2);
-        sound(this.dim(), "wrong_hatch.shell_close", this.center(), 0.6, 1.6);
-      });
-      return;
-    }
-    let dmg = ev.damage;
-    if (this.fortress) {
-      this.fortress.absorbed += dmg;
-      dmg *= FORTRESS.reduction;
-    }
-    if (this.now < this.exposedUntil) dmg *= this.exposedMul;
-    const h = this.health();
-    if (h) {
-      const max = h.effectiveMax;
-      const after = h.currentValue - dmg;
-      // phase gates: damage never skips a phase transition
-      let floor = 0;
-      if (this.phase === 1) floor = max * PHASE2_AT;
-      else if (!this.fh1) floor = max * PHASE3_AT;
-      else if (!this.fh2) floor = max * LAST_HATCH_AT;
-      if (floor > 0 && after < floor) dmg = Math.max(0, h.currentValue - floor + 0.01);
-      if (h.currentValue - dmg <= 1) {
-        dmg = Math.max(0, h.currentValue - 1);
-        this.dying = true;
-        this.invulnerable = true;
+  // ------------------------------------------------------------------ damage handling
+  // Damage *scaling* (invulnerable windows, Shell Fortress, exposed stuns) is done by the entity's
+  // damage_sensor, driven by the int property wh:dmode. This keeps the add-on on the widely available
+  // Script API 2.1.0 (no before-event needed). The after-event below enforces phase gates and starts
+  // the scripted death before the last hit points are gone.
+  private lastMode = -1;
+  /** True while the controller drives the real boss (false on the death stand-in body). */
+  isBoss(): boolean {
+    return this.entity.typeId === BOSS_ID;
+  }
+  syncDamageMode(): void {
+    if (!this.isBoss()) return;
+    let mode = 0;
+    if (this.invulnerable || this.dying) mode = 1;
+    else if (this.fortress) mode = 2;
+    else if (this.now < this.exposedUntil) mode = this.exposedMul >= 1.45 ? 3 : 4;
+    if (mode !== this.lastMode) {
+      this.lastMode = mode;
+      try {
+        this.entity.setProperty("wh:dmode", mode);
+      } catch {
+        // ignore
       }
     }
-    ev.damage = Math.max(0, dmg);
+  }
+
+  onHurt(ev: EntityHurtAfterEvent): void {
+    const src = ev.damageSource.damagingEntity;
+    const dmg = ev.damage;
+    const h = this.health();
+    if (!h) return;
+    if (this.invulnerable || this.dying) {
+      // the sensor normally blocks this; covers the one tick before the property applies
+      try {
+        h.setCurrentValue(Math.min(h.effectiveMax, h.currentValue + dmg));
+      } catch {
+        // ignore
+      }
+      particle(this.dim(), "wh:gold_ring", this.pos(), 2.2);
+      sound(this.dim(), "wrong_hatch.shell_close", this.center(), 0.6, 1.6);
+      return;
+    }
+    if (this.fortress) this.fortress.absorbed += dmg / FORTRESS.reduction;
+    const max = h.effectiveMax;
+    // phase gates: damage never skips a phase transition
+    let floor = 0;
+    if (this.phase === 1) floor = max * PHASE2_AT;
+    else if (!this.fh1) floor = max * PHASE3_AT;
+    else if (!this.fh2) floor = max * LAST_HATCH_AT;
+    try {
+      if (floor > 0 && h.currentValue < floor) h.setCurrentValue(floor);
+      // the scripted death starts while a few hit points remain
+      const deathAt = Math.max(30, max * 0.035);
+      if (floor === 0 && h.currentValue <= deathAt) {
+        h.setCurrentValue(Math.max(1, Math.min(h.currentValue, deathAt)));
+        this.dying = true;
+        this.invulnerable = true;
+        this.syncDamageMode();
+      }
+    } catch {
+      // ignore
+    }
     if (src instanceof Player) {
-      this.threat.set(src.id, (this.threat.get(src.id) ?? 0) + ev.damage);
+      this.threat.set(src.id, (this.threat.get(src.id) ?? 0) + dmg);
       this.participants.add(src.id);
     } else if (src && src.typeId === "minecraft:player") {
       this.participants.add(src.id);
     }
-    this.recent.push({ t: this.now, amount: ev.damage });
+    this.recent.push({ t: this.now, amount: dmg });
+  }
+
+  /** Lethal overkill (a single hit bigger than the remaining health): continue the death on a stand-in body. */
+  rebind(body: Entity): void {
+    this.entity = body;
   }
   damageInLast(ticks: number): number {
     let s = 0;
@@ -377,6 +411,7 @@ export class BossController implements BossLink {
       }
     }
     if (this.recent.length > 64) this.recent = this.recent.filter((r) => now - r.t < 200);
+    this.syncDamageMode();
 
     if (this.dying && this.jobName !== "death") {
       this.start("death", deathSequence(this));
@@ -395,6 +430,7 @@ export class BossController implements BossLink {
     }
 
     this.step();
+    this.syncDamageMode();
 
     if (!this.job && !this.dying) {
       const t = this.target();

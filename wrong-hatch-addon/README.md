@@ -9,8 +9,8 @@ files are in the same folder).
 
 | | |
 |---|---|
-| Game version | Bedrock **1.26.60+** (`min_engine_version` 1.26.60) |
-| Script API | `@minecraft/server` **2.11.0** (latest stable). **No experimental toggles needed.** |
+| Game version | Bedrock **1.21.100 or newer** (`min_engine_version` 1.21.100), so every current phone, console and PC client works |
+| Script API | `@minecraft/server` **2.1.0** (stable). **No experimental toggles needed.** |
 | Boss stats | 600 HP solo, scaled to 900 / 1200 / 1500 HP for 2 / 3 / 4+ players at spawn |
 | Size | 5.20 blocks tall, 5.68 blocks long (6.0 including the tail curl), **9.66-block wingspan** when spread |
 
@@ -18,11 +18,23 @@ files are in the same folder).
 
 ---
 
+## วิธีติดตั้ง (ภาษาไทย)
+
+1. เปิดไฟล์ `The_Wrong_Hatch.mcaddon` เกมจะนำเข้าแพ็ก 2 อัน (Behavior + Resource)
+2. ตั้งค่าโลก → **Behavior Packs** → เปิด **BOSS 001: The Wrong Hatch** (ต้องเปิดอันนี้ ไม่ใช่แค่ Resource Pack)
+3. เข้าโลกแล้วจะมีข้อความสีเหลืองในแชทว่า **"BOSS 001: The Wrong Hatch loaded."** ถ้าไม่มีข้อความนี้ แปลว่าแพ็กยังไม่ถูกเปิดในโลกนั้น
+4. เรียกบอส (ต้องอยู่โหมด **Survival** หรือ **Adventure** บอสไม่โจมตีคนโหมดสร้างสรรค์):
+   * ไข่ **Spawn The Wrong Hatch** ในเมนูโหมดสร้างสรรค์ หรือ
+   * พิมพ์ `/wh:summon` (ต้องเปิดโกง) หรือ
+   * คราฟต์ **Suspicious Egg** (ไข่ + บล็อกทอง + ตาแมงมุมหมัก) แล้วใช้บนพื้น
+5. ต้องใช้เกม Bedrock **1.21.100 ขึ้นไป**
+
 ## Quick start
 
 1. Open `The_Wrong_Hatch.mcaddon`. Both packs are imported.
 2. Turn on the behaviour pack **BOSS 001: The Wrong Hatch** in a world. The resource pack follows automatically.
-3. Spawn the boss **in Survival or Adventure mode**. Like vanilla mobs, it ignores Creative players.
+3. On joining, chat shows **"BOSS 001: The Wrong Hatch loaded."** If it doesn't, the behaviour pack isn't active in that world.
+4. Spawn the boss **in Survival or Adventure mode**. Like vanilla mobs, it ignores Creative players.
    * **Spawn egg:** *Spawn The Wrong Hatch* (creative inventory) for testing.
    * **Survival:** craft a **Suspicious Egg** (egg + gold block + fermented spider eye, shapeless) and use it on the
      ground. A 5-second hatching ritual follows, then the boss bursts out.
@@ -48,7 +60,7 @@ The fight has three phases. Each has its own texture set, and the glowing cracks
 | **Final Hatch II** | at 10 % | The mechanic again, with a shorter (10 s) countdown. |
 | **Death sequence** | 5 s | Staggers, drops to its knees, cracks spread and the core flares, then the shell bursts in a golden nova. Then loot and experience. |
 
-Damage can never skip a phase. Transitions are gated, so a single huge hit stops at the threshold.
+Damage can't skip a phase: transitions are gated, and the boss's health is held at the threshold. The only exception is a single hit bigger than its entire remaining health (e.g. `/kill`). In that case the death sequence still plays, on a stand-in body, and the loot still drops once.
 
 ### Abilities
 
@@ -151,7 +163,7 @@ The boss drops from the loot table `loot_tables/entities/wrong_hatch.json`, and 
 ```
 wrong-hatch-addon/
 ├─ dist/                    ← The_Wrong_Hatch.mcaddon (+ BP/RP .mcpack)
-├─ src/                     ← TypeScript gameplay (Script API 2.11.0)
+├─ src/                     ← TypeScript gameplay (Script API 2.1.0)
 │  ├─ main.ts               ← events, commands, main loop
 │  ├─ config.ts             ← every balancing number
 │  ├─ boss/controller.ts    ← state machine, damage filter, targeting, leash/despawn, boss bar
@@ -176,6 +188,10 @@ wrong-hatch-addon/
 └─ docs/images/
 ```
 
+* **Damage scaling without new APIs:** invulnerable windows, Shell Fortress (×0.15) and the exposed stuns
+  (×1.5 / ×1.35) are handled by the entity's `damage_sensor`, switched by the server-side int property
+  `wh:dmode`. Phase gates and the scripted death run from the regular `entityHurt` after-event. This keeps the
+  add-on on Script API 2.1.0.
 * **Model:** built in code at half scale and exported ×2. The textures use 1 texel per 1/16 block (vanilla
   density). The material is `entity_emissive_alpha`: alpha-0 texels glow, which is how the cracks and core
   light up. A second render pass, the vanilla Warden's glow-layer technique, pulses the glow during the
@@ -190,7 +206,7 @@ wrong-hatch-addon/
 ### Build it yourself
 ```bash
 cd wrong-hatch-addon
-npm install       # @minecraft/server 2.11.0 typings + TypeScript
+npm install       # @minecraft/server 2.1.0 typings + TypeScript
 npm test          # typecheck → build → static validation → full-fight smoke test
 ```
 You also need Python 3 with Pillow and numpy, and `ffmpeg` with libvorbis for the sounds.
@@ -200,8 +216,8 @@ You also need Python 3 with Pillow and numpy, and `ffmpeg` with libvorbis for th
 ## Verification
 
 ### Verified automatically
-1. **TypeScript `strict` typecheck** against the official `@minecraft/server` 2.11.0 typings: 0 errors.
-2. **Static validation, 6,416 checks, 0 errors.** It covers:
+1. **TypeScript `strict` typecheck** against the official `@minecraft/server` 2.1.0 typings: 0 errors.
+2. **Static validation, 6,880 checks, 0 errors.** It covers:
    * JSON syntax, manifests and UUIDs, and the script-module version matching the typings.
    * Geometry: hierarchy, cycles, UV bounds.
    * Cross references: client entity ↔ geometry ↔ textures ↔ render controllers ↔ materials ↔ animations ↔ controllers.

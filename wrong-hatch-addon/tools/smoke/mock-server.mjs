@@ -172,6 +172,7 @@ export class EntityHealthComponent {
     return this.entity.__maxHp;
   }
   setCurrentValue(v) {
+    if (!this.entity.isValid) throw new Error("setCurrentValue on a dead/removed entity");
     if (!Number.isFinite(v)) issue(`setCurrentValue(${v})`);
     this.entity.__hp = Math.max(0, Math.min(this.entity.__maxHp, v));
     return true;
@@ -227,6 +228,22 @@ export class Entity {
       if (v.duration-- <= 0) this.__effects.delete(k);
     }
   }
+  __filter(f, other) {
+    if (f.all_of) return f.all_of.every((x) => this.__filter(x, other));
+    if (f.any_of) return f.any_of.some((x) => this.__filter(x, other));
+    const subj = f.subject === "other" ? other : this;
+    if (!subj) return false;
+    const op = f.operator ?? "==";
+    const cmp = (a, b) => (op === "==" || op === "equals" ? a === b : op === "!=" ? a !== b : op === "<" ? a < b : op === "<=" ? a <= b : op === ">" ? a > b : a >= b);
+    if (f.test === "is_family") return cmp(subj.families.includes(f.value), true);
+    if (f.test === "int_property") {
+      const def = subj.__def?.description?.properties?.[f.domain];
+      if (!def) issue(`filter int_property on undefined ${f.domain}`);
+      return cmp(subj.__props[f.domain], f.value);
+    }
+    issue(`mock does not know filter ${f.test}`);
+    return false;
+  }
   getComponent(id) {
     const comps = this.__comps();
     if (id === "minecraft:health" || id === "health") return comps["minecraft:health"] || this.typeId === "minecraft:player" ? new EntityHealthComponent(this) : undefined;
@@ -256,15 +273,21 @@ export class Entity {
     if (!Number.isFinite(amount) || amount < 0) issue(`bad damage amount ${amount}`);
     if (opts.cause && !EntityDamageCause[opts.cause]) issue(`bad damage cause ${opts.cause}`);
     if (opts.damagingEntity && !opts.damagingEntity.isValid) issue("damagingEntity is invalid");
-    const ev = { cancel: false, damage: amount, damageSource: { cause: opts.cause ?? "none", damagingEntity: opts.damagingEntity }, hurtEntity: this };
+    const source = { cause: opts.cause ?? "none", damagingEntity: opts.damagingEntity };
+    const ev = { cancel: false, damage: amount, damageSource: source, hurtEntity: this };
     world.beforeEvents.entityHurt.fire(ev);
-    if (!Number.isFinite(ev.damage)) issue(`before-event left non-finite damage ${ev.damage}`);
     if (ev.cancel || ev.damage <= 0) return false;
-    // damage_sensor: very small subset (cause all / fall)
+    // damage_sensor: first matching trigger wins (cause + on_damage filters)
     const sensor = this.__comps()["minecraft:damage_sensor"];
     if (sensor) {
       const trig = Array.isArray(sensor.triggers) ? sensor.triggers : [sensor.triggers];
-      if (trig.some((t) => t.cause === "all" && t.deals_damage === "no")) return false;
+      for (const t of trig) {
+        if (t.cause && t.cause !== "all" && t.cause !== (opts.cause === "entityAttack" ? "entity_attack" : opts.cause)) continue;
+        if (t.on_damage?.filters && !this.__filter(t.on_damage.filters, opts.damagingEntity)) continue;
+        if (t.deals_damage === "no") return false;
+        if (t.damage_multiplier !== undefined) ev.damage *= t.damage_multiplier;
+        break;
+      }
     }
     this.__hp -= ev.damage;
     __log.damage.push({ to: this.typeId, amount: ev.damage, from: opts.damagingEntity?.typeId });
@@ -279,6 +302,8 @@ export class Entity {
         world.afterEvents.entityDie.fire({ deadEntity: this, damageSource: ev.damageSource });
       }
     }
+    // like the engine: the hurt after-event arrives after death has been processed
+    world.afterEvents.entityHurt.fire({ damage: ev.damage, damageSource: source, hurtEntity: this });
     return true;
   }
   applyKnockback(h, vert) {
@@ -514,7 +539,7 @@ export const world = {
   beforeEvents: { entityHurt: new Signal() },
   afterEvents: {
     entitySpawn: new Signal(), entityLoad: new Signal(), entityDie: new Signal(), entityHurt: new Signal(),
-    itemUse: new Signal(), itemCompleteUse: new Signal(), entityHitEntity: new Signal(), playerInteractWithBlock: new Signal(),
+    itemUse: new Signal(), itemCompleteUse: new Signal(), entityHitEntity: new Signal(), playerInteractWithBlock: new Signal(), playerSpawn: new Signal(),
   },
   getDimension(id) {
     const d = dims[id.replace("minecraft:", "")];

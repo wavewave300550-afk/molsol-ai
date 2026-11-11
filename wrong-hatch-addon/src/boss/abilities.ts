@@ -91,6 +91,7 @@ function slide(c: BossController, dir: Vector3, step: number): boolean {
 }
 
 function airborne(c: BossController, on: boolean): void {
+  if (!c.isBoss()) return;
   try {
     c.entity.triggerEvent(on ? "wh:airborne_on" : "wh:airborne_off");
   } catch {

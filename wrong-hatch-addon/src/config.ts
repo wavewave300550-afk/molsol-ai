@@ -3,6 +3,7 @@
  * values; Easy x0.7, Hard x1.3. Ticks are 1/20 s.
  */
 export const BOSS_ID = "wh:wrong_hatch";
+export const REMAINS_ID = "wh:wrong_hatch_remains";
 export const CHICK_ID = "wh:wrong_chick";
 export const EGG_ID = "wh:hatch_egg";
 export const LOBBED_EGG_ID = "wh:lobbed_egg";

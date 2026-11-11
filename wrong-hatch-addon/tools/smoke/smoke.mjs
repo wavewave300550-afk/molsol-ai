@@ -104,6 +104,15 @@ await __tick(70);
 check(__log.anims.includes(ACT.intro), "intro animation played");
 check(String(boss.nameTag).includes("Phase I"), `boss bar name shows phase (got ${boss.nameTag})`);
 
+// realistic heavy hits (a netherite axe crit is ~20-30) until the next phase gate engages
+async function pushTo(frac) {
+  for (let i = 0; i < 400 && boss.isValid; i++) {
+    if (hp().currentValue <= hp().effectiveMax * frac + 0.5) break;
+    boss.applyDamage(45, { cause: "entityAttack", damagingEntity: p1 });
+    if (i % 3 === 0) await __tick(1);
+  }
+}
+
 // ------------------------------------------------------------------ fight driver
 const seen = { 1: new Set(), 2: new Set(), 3: new Set() };
 let phaseNow = () => boss.getProperty("wh:phase");
@@ -173,7 +182,8 @@ async function fight(ticks, { keepAbove, burstEvery = 600, smashEggs = true, bre
 await fight(3600, { keepAbove: 0.65 });
 check(phaseNow() === 1, "still phase I during coverage");
 // cross into phase II with one huge hit: must stop at the 65 % gate
-boss.applyDamage(5000, { cause: "entityAttack", damagingEntity: p1 });
+await pushTo(0.65);
+for (let i = 0; i < 5; i++) boss.applyDamage(45, { cause: "entityAttack", damagingEntity: p1 });
 check(Math.abs(hp().currentValue / hp().effectiveMax - 0.65) < 0.01, `phase gate holds at 65 % (got ${(hp().currentValue / hp().effectiveMax).toFixed(3)})`);
 await __tick(80);
 collect();
@@ -183,7 +193,7 @@ check(seen[2].has("crow") || seen[1].has("crow"), "crow transition played");
 // ------------------------------------------------------------------ phase II
 await fight(7000, { keepAbove: 0.3, breakFortress: false });
 // Final Hatch I: break every shell -> botched hatch
-boss.applyDamage(5000, { cause: "entityAttack", damagingEntity: p1 });
+await pushTo(0.3);
 await __tick(12);
 collect();
 const shells = ow.getEntities({ type: "wh:brood_shell" });
@@ -206,7 +216,7 @@ check(phaseNow() === 3, "phase III after the first Final Hatch");
 await fight(7000, { keepAbove: 0.1 });
 // Final Hatch II: leave the shells alone -> Hatch Nova
 const p1HpBefore = p1.__deaths ?? 0;
-boss.applyDamage(5000, { cause: "entityAttack", damagingEntity: p1 });
+await pushTo(0.1);
 await __tick(240);
 collect();
 check(seen[3].has("hatch_nova"), "Hatch Nova fired when shells survive");
@@ -216,20 +226,38 @@ await __tick(40);
 collect();
 
 // ------------------------------------------------------------------ death
-for (let i = 0; i < 40 && boss.isValid; i++) {
-  boss.applyDamage(200, { cause: "entityAttack", damagingEntity: p1 });
+for (let i = 0; i < 80 && boss.isValid && !String(__log.anims.slice(-3)).includes(String(ACT.death)); i++) {
+  boss.applyDamage(18, { cause: "entityAttack", damagingEntity: p1 });
   await __tick(1);
 }
 check(boss.isValid, "boss is kept alive for its death sequence");
-check(hp().currentValue >= 1, "lethal damage leaves 1 HP for the death sequence");
+check(hp().currentValue >= 1, "the scripted death starts before the last hit points are gone");
 await __tick(120);
 collect();
 check(!boss.isValid, "boss removed after the death sequence");
 check(seen[3].has("death"), "death animation played");
 check(__log.spawned.get("loot:entities/wrong_hatch") === 1, "loot table spawned once");
+world.afterEvents.playerSpawn.fire({ player: p1, initialSpawn: true });
 check(p1.__xp > 0 && p2.__xp > 0, "participants received experience");
 check(ow.getEntities({ type: "wh:wrong_chick" }).length === 0, "brood despawned with the boss");
 check(ow.getEntities({ type: "wh:hatch_egg" }).length === 0, "eggs cleared with the boss");
+
+// ------------------------------------------------------------------ overkill: one hit bigger than the remaining health
+{
+  const b2 = ow.spawnEntity("wh:wrong_hatch", { x: 2, y: 0, z: 2 });
+  for (const [k, v] of [["wh:init", true], ["wh:phase", 3], ["wh:hpScale", 1], ["wh:fh1", true], ["wh:fh2", true]]) b2.setDynamicProperty(k, v);
+  world.afterEvents.entityLoad.fire({ entity: b2 });
+  await __tick(3);
+  b2.getComponent("minecraft:health").setCurrentValue(45);
+  const lootBefore = __log.spawned.get("loot:entities/wrong_hatch") ?? 0;
+  b2.applyDamage(400, { cause: "entityAttack", damagingEntity: p2 });
+  await __tick(2);
+  check(!b2.isValid, "overkill kills the real boss entity");
+  check(ow.getEntities({ type: "wh:wrong_hatch_remains" }).length === 1, "overkill continues the death on the remains body");
+  await __tick(115);
+  check(ow.getEntities({ type: "wh:wrong_hatch_remains" }).length === 0, "remains removed after the death sequence");
+  check((__log.spawned.get("loot:entities/wrong_hatch") ?? 0) === lootBefore + 1, "overkill still drops the loot exactly once");
+}
 
 // ------------------------------------------------------------------ coverage report
 const ABILITY_ANIMS = {

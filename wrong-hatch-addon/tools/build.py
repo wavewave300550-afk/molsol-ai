@@ -40,8 +40,8 @@ NS = "wh"
 
 ADDON_NAME = "BOSS 001: The Wrong Hatch"
 VERSION = [1, 0, 0]
-MIN_ENGINE = [1, 26, 60]
-SERVER_VERSION = "2.11.0"
+MIN_ENGINE = [1, 21, 100]
+SERVER_VERSION = "2.1.0"   # stable since Bedrock 1.21.100 (Sept 2025): runs on every current client
 UUID = {
     "bp_header": "3b9f0c1e-7d24-4a51-9e6b-2f8a1c0d5e11",
     "bp_data": "3b9f0c1e-7d24-4a51-9e6b-2f8a1c0d5e12",
@@ -66,6 +66,7 @@ ENTITY_NAMES = {
     "lobbed_egg": "Lobbed Egg",
     "brood_shell": "Brood Shell",
     "feather_dart": "Feather Dart",
+    "wrong_hatch_remains": "The Wrong Hatch",
 }
 
 # particle definitions: id -> parameters
@@ -401,6 +402,11 @@ def simple_client(identifier, geometry, textures, materials, rcs, animations=Non
 def build_client_entities(boss_anims):
     ed = os.path.join(RP, "entity", "wrong_hatch")
     write_json(os.path.join(ed, "wrong_hatch.entity.json"), boss_client(boss_anims))
+    remains = boss_client(boss_anims)
+    rd = remains["minecraft:client_entity"]["description"]
+    rd["identifier"] = f"{NS}:wrong_hatch_remains"
+    del rd["spawn_egg"]
+    write_json(os.path.join(ed, "wrong_hatch_remains.entity.json"), remains)
     T = "textures/entity/wrong_hatch/"
     write_json(os.path.join(ed, "wrong_chick.entity.json"), simple_client(
         f"{NS}:wrong_chick", "geometry.wrong_hatch.chick",
@@ -469,6 +475,16 @@ def event_add(*groups, remove=()):
 PLAYER_FILTER = {"test": "is_family", "subject": "other", "value": "player"}
 
 
+def dmode_trigger(mode, deals=None, mul=None):
+    t = {"on_damage": {"filters": {"test": "int_property", "subject": "self", "domain": f"{NS}:dmode", "operator": "==",
+                                   "value": mode}}}
+    if deals:
+        t["deals_damage"] = deals
+    if mul:
+        t["damage_multiplier"] = mul
+    return t
+
+
 def boss_entity():
     hp_groups = {}
     hp_events = {}
@@ -491,6 +507,8 @@ def boss_entity():
                 "properties": {
                     f"{NS}:anim": {"type": "int", "range": [0, 63], "default": 0, "client_sync": True},
                     f"{NS}:phase": {"type": "int", "range": [0, 3], "default": 1, "client_sync": True},
+                    # 0 normal, 1 invulnerable, 2 Shell Fortress (x0.15), 3 exposed (x1.5), 4 dazed (x1.35)
+                    f"{NS}:dmode": {"type": "int", "range": [0, 4], "default": 0, "client_sync": False},
                 },
             },
             "component_groups": {
@@ -522,13 +540,16 @@ def boss_entity():
                 "minecraft:persistent": {},
                 "minecraft:follow_range": {"value": 64, "max": 64},
                 "minecraft:breathable": {"total_supply": 15, "suffocate_time": 0, "breathes_water": True},
-                "minecraft:loot": {"table": "loot_tables/entities/wrong_hatch.json"},
                 "minecraft:damage_sensor": {"triggers": [
                     {"cause": "fall", "deals_damage": "no"},
                     {"cause": "suffocation", "deals_damage": "no"},
                     {"cause": "drowning", "deals_damage": "no"},
                     {"on_damage": {"filters": {"test": "is_family", "subject": "other", "value": "wrong_hatch_minion"}},
                      "deals_damage": "no"},
+                    dmode_trigger(1, deals="no"),
+                    dmode_trigger(2, mul=0.15),
+                    dmode_trigger(3, mul=1.5),
+                    dmode_trigger(4, mul=1.35),
                 ]},
                 "minecraft:behavior.hurt_by_target": {"priority": 1},
                 "minecraft:behavior.nearest_attackable_target": {
@@ -670,6 +691,11 @@ def build_bp_entities():
     write_json(os.path.join(ed, "brood_shell.json"), prop_entity(
         f"{NS}:brood_shell", ["wrong_hatch_egg", "brood_shell", "inanimate"], 1.1, 1.7, health=40,
         groups=shell_groups, events={k: event_add(k) for k in shell_groups}, lifetime=60))
+    write_json(os.path.join(ed, "wrong_hatch_remains.json"), prop_entity(
+        f"{NS}:wrong_hatch_remains", ["wrong_hatch_remains", "inanimate"], 2.8, 4.8,
+        properties={f"{NS}:anim": {"type": "int", "range": [0, 63], "default": 0, "client_sync": True},
+                    f"{NS}:phase": {"type": "int", "range": [0, 3], "default": 1, "client_sync": True}},
+        lifetime=30, vulnerable=False))
     write_json(os.path.join(ed, "lobbed_egg.json"), prop_entity(
         f"{NS}:lobbed_egg", ["wrong_hatch_projectile", "inanimate"], 0.3, 0.3, lifetime=8, vulnerable=False))
     write_json(os.path.join(ed, "feather_dart.json"), prop_entity(

@@ -2,7 +2,7 @@
  * Keeps one BossController per Wrong Hatch entity, re-attaches controllers
  * after chunk / world reloads, and routes engine events to them.
  */
-import { Entity, EntityHurtBeforeEvent, world } from "@minecraft/server";
+import { Entity, EntityHurtAfterEvent, world } from "@minecraft/server";
 import { BOSS_ID } from "../config.js";
 import { BossController } from "./controller.js";
 
@@ -41,16 +41,12 @@ export function detach(id: string, cleanup = true): void {
   missingSince.delete(id);
 }
 
-/** Damage filter for bosses + neutralises the zero-damage vanilla melee used only for chasing. */
-export function onBeforeHurt(ev: EntityHurtBeforeEvent): void {
+/** Boss damage bookkeeping (phase gates, threat, scripted death). */
+export function onAfterHurt(ev: EntityHurtAfterEvent): void {
   const victim = ev.hurtEntity;
-  if (victim.typeId === BOSS_ID) {
-    const c = controllers.get(victim.id);
-    if (c) c.filterDamage(ev);
-    return;
-  }
-  const src = ev.damageSource.damagingEntity;
-  if (src && src.typeId === BOSS_ID && ev.damage < 1) ev.cancel = true;
+  if (victim.typeId !== BOSS_ID) return;
+  const c = controllers.get(victim.id);
+  if (c && c.entity.id === victim.id) c.onHurt(ev);
 }
 
 export function tickControllers(now: number): void {

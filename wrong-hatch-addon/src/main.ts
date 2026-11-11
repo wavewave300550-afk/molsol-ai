@@ -14,11 +14,11 @@ import {
   system,
   world,
 } from "@minecraft/server";
-import { BOSS_ID, EGG_ID, LAST_HATCH_AT, PHASE2_AT, PHASE3_AT, SHELL_ID } from "./config.js";
+import { BOSS_ID, EGG_ID, LAST_HATCH_AT, PHASE2_AT, PHASE3_AT, REMAINS_ID, SHELL_ID } from "./config.js";
 import { isTrackedEgg, smashEgg, tickBrood } from "./boss/brood.js";
 import { tickHazards } from "./boss/hazards.js";
 import { onShellBroken } from "./boss/phases.js";
-import { allControllers, attach, controllerFor, detach, discover, onBeforeHurt, tickControllers } from "./boss/registry.js";
+import { allControllers, attach, controllerFor, detach, discover, onAfterHurt, tickControllers } from "./boss/registry.js";
 import { onItemCompleteUse, onItemUse, onPlayerHit, startRitual, tickRituals } from "./rewards.js";
 
 // --------------------------------------------------------------------------- commands (testing helpers)
@@ -78,7 +78,7 @@ system.beforeEvents.startup.subscribe((ev) => {
 
 // --------------------------------------------------------------------------- events
 
-world.beforeEvents.entityHurt.subscribe((ev) => onBeforeHurt(ev));
+world.afterEvents.entityHurt.subscribe((ev) => onAfterHurt(ev));
 
 world.afterEvents.entitySpawn.subscribe((ev) => {
   const e = ev.entity;
@@ -100,8 +100,24 @@ world.afterEvents.entityDie.subscribe((ev) => {
       if (c.shells.some((s) => s.id === dead.id)) onShellBroken(c, dead);
     }
   } else if (dead.typeId === BOSS_ID) {
-    // only reachable through /kill or similar: the scripted death never lets health hit 0
-    detach(dead.id, true);
+    // a single hit bigger than the remaining health (or /kill): finish the death on a stand-in body
+    const c = controllerFor(dead);
+    if (!c) return;
+    try {
+      const body = dead.dimension.spawnEntity(REMAINS_ID, dead.location);
+      body.teleport(dead.location, { rotation: { x: 0, y: dead.getRotation().y } });
+      body.setProperty("wh:phase", c.phase);
+      try {
+        dead.remove();
+      } catch {
+        // corpse already gone
+      }
+      c.rebind(body);
+      c.dying = true;
+      c.invulnerable = true;
+    } catch {
+      detach(dead.id, true);
+    }
   }
 });
 
@@ -114,6 +130,15 @@ world.afterEvents.playerInteractWithBlock.subscribe((ev) => {
   if (!ev.isFirstEvent || ev.itemStack?.typeId !== "wh:suspicious_egg") return;
   const b = ev.block;
   startRitual(ev.player, { x: b.location.x + 0.5, y: b.location.y + 1, z: b.location.z + 0.5 });
+});
+
+world.afterEvents.playerSpawn.subscribe((ev) => {
+  if (!ev.initialSpawn) return;
+  const p = ev.player;
+  system.runTimeout(() => {
+    if (!p.isValid) return;
+    p.sendMessage("§6[BOSS 001: The Wrong Hatch] §aloaded.§r §7Survival/Adventure: use a §fSuspicious Egg§7 on the ground (egg + gold block + fermented spider eye). Testing: §fSpawn The Wrong Hatch§7 egg or §f/wh:summon§7.");
+  }, 60);
 });
 
 // --------------------------------------------------------------------------- main loop

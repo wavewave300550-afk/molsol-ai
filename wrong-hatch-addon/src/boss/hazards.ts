@@ -156,7 +156,7 @@ export class Dart implements Hazard {
     this.pos = from;
     this.dir = norm(dir);
     try {
-      this.ent = dim.spawnEntity(DART_ID, from, { initialRotation: dirYaw(this.dir) });
+      this.ent = dim.spawnEntity(DART_ID, from);
     } catch {
       this.ent = undefined;
     }
