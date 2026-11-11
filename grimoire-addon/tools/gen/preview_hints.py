@@ -1,0 +1,22 @@
+"""Camera/frame hints for offline construct previews (tools/preview.py fx)."""
+PREVIEW_HINTS = {
+    "fx_p_lance": {"camera": {"yaw": 70, "pitch": 15, "target": [0, 0, -24]}, "frames": [("formation", 0.2, "p1"), ("flight", 0.9, "p2")]},
+    "fx_p_piston": {"camera": {"dist": 520, "target": [0, 40, 0]}, "frames": [("materialized", 1.0, "p2"), ("impact", 0.5, "p4")], "v": {"len": 6}},
+    "fx_p_dome": {"camera": {"dist": 260, "target": [0, 30, 0]}, "frames": [("3 layers", 1.2, "p2"), ("outer broken", 0.4, "p3")]},
+    "fx_p_layers": {"camera": {"dist": 820, "pitch": 40}, "frames": [("dominion", 2.6, "p2"), ("compression", 2.0, "p3")]},
+    "fx_p_front": {"camera": {"dist": 260, "pitch": 20, "target": [0, 30, 0]}, "frames": [("release front", 0.6, "p2")]},
+    "fx_p_citadel_ring": {"camera": {"dist": 480, "pitch": 30}},
+    "fx_p_field": {"camera": {"dist": 380, "pitch": 30}, "frames": [("field", 0.2, "p2"), ("converging", 1.4, "p2")]},
+    "fx_p_vise": {"camera": {"dist": 140, "target": [0, 16, 0]}, "frames": [("closing", 2.5, "p2")]},
+    "fx_p_cage": {"camera": {"dist": 230}},
+    "fx_p_salvo": {"camera": {"yaw": 160, "dist": 130, "target": [0, 20, 10]}, "frames": [("ring wings", 1.2, "p2"), ("firing", 0.2, "p3")]},
+    "fx_p_column": {"camera": {"dist": 120, "target": [0, 32, 0]}},
+    "fx_p_mantle": {"camera": {"dist": 70, "target": [0, 14, 0]}},
+    "fx_p_marker": {"camera": {"dist": 30, "target": [0, 6, 0]}},
+    "fx_p_crystal": {"camera": {"dist": 34}},
+    "fx_p_disc": {"camera": {"dist": 34, "yaw": 20}},
+    "fx_p_sonar": {"camera": {"dist": 70}},
+    "fx_p_rail_ring": {"camera": {"dist": 90, "yaw": 25}},
+    "fx_p_step_ring": {"camera": {"dist": 60, "pitch": 45}},
+    "fx_p_blade": {"camera": {"dist": 220, "pitch": 35}},
+}

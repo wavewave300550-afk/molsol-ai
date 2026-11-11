@@ -287,32 +287,34 @@ def paint_sigil(school, size=64):
 
 
 def paint_flow(school, w=128, h=128):
-    """Seamlessly tiling (vertical) flow texture for the uv_anim overlay (additive)."""
+    """Seamlessly tiling (vertical) flow texture for the uv_anim overlay (additive, sparse & subtle)."""
     rs = np.random.RandomState({"pressure": 41, "ice": 42, "blood": 43}[school])
     img = np.zeros((h, w, 3), np.float32)
     y, x = np.mgrid[0:h, 0:w].astype(np.float32)
     if school == "pressure":
-        for k in range(5):
-            ph = rs.rand() * 6.28
-            band = np.exp(-((np.sin((y / h * 2 + x / w * 0.4) * math.pi * 2 + ph + k)) ** 2) * 18)
-            img += band[..., None] * np.array([255, 140, 30], np.float32) * 0.35
+        # a few thin isobar pulses travelling along the spine/cover
+        for k in range(3):
+            yy = (rs.rand() * h + x * 0.15) % h
+            d = np.minimum(np.abs(y - yy), h - np.abs(y - yy))
+            img += np.exp(-d * d / 1.2)[..., None] * np.array([255, 150, 40], np.float32) * 0.55
     elif school == "ice":
-        for _ in range(60):
+        for _ in range(26):
             px, py = rs.rand() * w, rs.rand() * h
-            d = np.sqrt((x - px) ** 2 + ((y - py + h / 2) % h - h / 2) ** 2)
-            img += np.exp(-d * d / 2.0)[..., None] * np.array([180, 240, 255], np.float32)
+            d2 = (x - px) ** 2 + ((y - py + h / 2) % h - h / 2) ** 2
+            img += np.exp(-d2 / 1.5)[..., None] * np.array([170, 235, 255], np.float32) * 0.8
     else:
-        for _ in range(7):
+        # blood flowing down a few branching vessels, brighter in pulses
+        for _ in range(5):
             px = rs.rand() * w
-            amp = rs.rand() * 6 + 2
+            amp = rs.rand() * 5 + 2
             xx = px + np.sin(y / h * math.tau * 2 + rs.rand() * 6) * amp
             d = np.abs(x - xx)
-            pulse = 0.5 + 0.5 * np.sin(y / h * math.tau * 3)
-            img += np.exp(-d * d / 1.6)[..., None] * np.array([255, 30, 45], np.float32) * (0.4 + 0.6 * pulse[..., None])
+            pulse = np.clip(np.sin(y / h * math.tau * 3) * 2 - 1, 0, 1)
+            img += np.exp(-d * d / 0.6)[..., None] * np.array([255, 40, 50], np.float32) * (0.15 + 0.6 * pulse[..., None])
     img = np.clip(img, 0, 255)
     out = np.zeros((h, w, 4), np.float32)
     out[..., :3] = img
-    out[..., 3] = np.clip(img.max(-1) * 1.5, 0, 255)
+    out[..., 3] = np.clip(img.max(-1) * 1.2, 0, 255)
     return out
 
 

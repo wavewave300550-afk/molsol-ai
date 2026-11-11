@@ -91,6 +91,9 @@ def install(bds):
     os.makedirs(rp_dir)
     shutil.copytree(os.path.join(ROOT, "packs", "Grimoire_BP"), os.path.join(bp_dir, "Grimoire_BP"))
     shutil.copytree(os.path.join(ROOT, "tests", "harness_bp"), os.path.join(bp_dir, "Grimoire_Harness"))
+    meta = json.load(open(os.path.join(ROOT, ".build_meta.json")))
+    with open(os.path.join(bp_dir, "Grimoire_Harness", "scripts", "charges.js"), "w") as f:
+        f.write("export const CHARGES = " + json.dumps({s["id"]: s["charge"] for s in meta["spells"]}) + ";\n")
     shutil.copytree(os.path.join(ROOT, "packs", "Grimoire_RP"), os.path.join(rp_dir, "Grimoire_RP"))
     bpu, bpv = read_manifest(os.path.join(bp_dir, "Grimoire_BP"))
     rpu, rpv = read_manifest(os.path.join(rp_dir, "Grimoire_RP"))

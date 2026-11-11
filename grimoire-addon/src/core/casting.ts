@@ -5,7 +5,7 @@ import { Fizzle, GRIMOIRE_ITEMS, School, SpellDef, schoolOfItem } from "../spell
 import { log } from "./log";
 import { PlayerState, flash, remainingTicks, save, startCooldown, stateOf } from "./state";
 import { start } from "./tasks";
-import { particle, sound, COLORS } from "./fx";
+import { Fx, particle, sound, spawnFx, COLORS } from "./fx";
 import { schoolColor } from "./hud";
 
 /**
@@ -33,10 +33,24 @@ export function heldSchool(p: Player): { school: School; item: ItemStack; slot: 
 }
 
 const prepScopes = new Map<string, Prep>();
+const sigils = new Map<string, Fx>();
+const SIGIL: Record<School, string> = { pressure: "grimoire:fx_sigil_p", ice: "grimoire:fx_sigil_i", blood: "grimoire:fx_sigil_b" };
+
+function endSigil(playerId: string, flare: boolean): void {
+  const s = sigils.get(playerId);
+  sigils.delete(playerId);
+  if (!s) return;
+  if (flare) {
+    s.phase(3);
+    s.size(2.2);
+    system.runTimeout(() => s.dissolve(8), 5);
+  } else s.dissolve(6);
+}
 
 function cancelPrep(p: Player, st: PlayerState, reason: string | undefined): void {
   if (!st.prep) return;
   st.prep = undefined;
+  endSigil(p.id, false);
   const scope = prepScopes.get(p.id);
   prepScopes.delete(p.id);
   scope?.cleanup(6);
@@ -116,6 +130,9 @@ export function onStartUse(p: Player, item: ItemStack): void {
     /* ignore */
   }
   p.dimension.playSound(`grimoire.${school}.charge`, p.location, { volume: 0.7 });
+  endSigil(p.id, false);
+  const sig = spawnFx(p, p.dimension, SIGIL[school], { x: p.location.x, y: p.location.y + 0.06, z: p.location.z }, { size: 1.2, variant: 0, phase: 1 });
+  if (sig) sigils.set(p.id, sig);
   if (spell.prepare) {
     const scope = new Prep(p, spell);
     prepScopes.set(p.id, scope);
@@ -157,6 +174,12 @@ export function tickPreparation(p: Player, st: PlayerState): void {
   }
   const t = system.currentTick - prep.startTick;
   const k = Math.min(1, t / Math.max(1, spell.charge));
+  const sig = sigils.get(p.id);
+  if (sig) {
+    sig.move({ x: p.location.x, y: p.location.y + 0.06, z: p.location.z });
+    sig.size(1.2 + k * 0.8);
+    if (k >= 1 && sig.getPhase() < 2) sig.phase(2);
+  }
   if (t % 3 === 0) {
     const head = p.getHeadLocation();
     const dir = p.getViewDirection();
@@ -195,6 +218,7 @@ export function onReleaseUse(p: Player): void {
   }
   const spell = spellById(prep.spellId);
   st.prep = undefined;
+  endSigil(p.id, true);
   const scope = prepScopes.get(p.id);
   prepScopes.delete(p.id);
   if (!spell) {
@@ -262,8 +286,7 @@ export function activate(p: Player, st: PlayerState, spell: SpellDef, scope?: Pr
     /* ignore */
   }
   sound(p.dimension, `grimoire.${spell.school}.release`, p.location, 1, 1);
-  world.getDimension(p.dimension.id); // keep dimension handle warm
-  const playerId = p.id;
+    const playerId = p.id;
   const handle = start(routine ?? emptyRoutine(), `${spell.code}:${p.name}`, playerId, 20 * 200);
   ctx.handle = handle;
   handle.onEnd(() => {

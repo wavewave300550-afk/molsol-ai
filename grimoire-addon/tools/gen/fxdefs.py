@@ -33,7 +33,7 @@ MATERIALS = {"default": "entity_emissive_alpha", "trans": "entity_alphablend", "
 
 class Fx:
     def __init__(self, name, school, tex=(128, 128), bounds=(8, 8, (0, 1, 0)), family=("grimoire_fx", "inanimate"),
-                 lifetime=120, variants=None, center=(0, 0, 0)):
+                 lifetime=120, variants=None, center=(0, 0, 0), components=None):
         self.name = name
         self.school = school
         self.ident = f"grimoire:{name}"
@@ -54,6 +54,7 @@ class Fx:
         self.extra_textures = {}
         self.images = {}  # rp-relative path (no extension) -> RGBA array, saved at write time
         self.center = center
+        self.components = components or {}
         REGISTRY.append(self)
 
     # ---------------------------------------------------------------- model helpers
@@ -181,6 +182,7 @@ class Fx:
                     "minecraft:breathable": {"breathes_air": True, "breathes_water": True, "breathes_lava": True, "breathes_solids": True},
                     "minecraft:timer": {"time": self.lifetime, "looping": False,
                                         "time_down_event": {"event": "grimoire:expire", "target": "self"}},
+                    **self.components,
                 },
                 "events": {"grimoire:expire": {"add": {"component_groups": ["grimoire:despawn"]}}},
             },

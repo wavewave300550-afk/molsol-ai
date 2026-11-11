@@ -3,7 +3,7 @@ import { Fx, FxInit, ParticleVars, Rgb, flash, particle, shake, sound, spawnFx }
 import { HitOptions, bodyCenter, enemiesAlong, enemiesNear, hit as busHit, isEnemy } from "../core/combat";
 import { Ward, addWard, removeWard } from "../core/defense";
 import { TempBlockSet } from "../core/blocks";
-import type { RoutineHandle } from "../core/tasks";
+import { Routine, RoutineHandle, start } from "../core/tasks";
 import { V3, add, dist, dot, mul, norm, sub, v3 } from "../core/vec";
 import type { SpellDef } from "./types";
 
@@ -102,6 +102,19 @@ export class Cast extends SpellScope {
   private tempBlocks?: TempBlockSet;
   /** Constructs handed over from the preparation phase (formation already visible). */
   adopted: Fx[] = [];
+  private subs: RoutineHandle[] = [];
+
+  /** Run a parallel routine owned by this cast (cancelled with the spell). */
+  run(gen: Routine, label = "sub"): RoutineHandle {
+    const h = start(gen, `${this.spell.code}:${label}`, this.player.id, 20 * 120);
+    this.subs.push(h);
+    return h;
+  }
+
+  /** Wait until all parallel routines finished (use inside the main routine). */
+  *join(maxTicks = 20 * 30): Routine {
+    for (let i = 0; i < maxTicks && this.subs.some((h) => h.alive); i++) yield 1;
+  }
 
   constructor(
     player: Player,
@@ -258,6 +271,8 @@ export class Cast extends SpellScope {
   }
 
   override cleanup(dissolveTicks = 12): void {
+    for (const h of this.subs) if (h.alive) h.cancel("spell ended");
+    this.subs.length = 0;
     for (const w of this.wards) removeWard(w);
     this.wards.length = 0;
     this.tempBlocks?.clear();

@@ -90,3 +90,10 @@ style('pg_blood_script', 'script', c1='#f0d6cc', c2='#ff2030')
 # ------------------------------------------------------------------ neutral
 style('n_black', 'solid', c='#0c0a0a', noise=0.2)
 style('n_white_glow', 'glow', c1='#ffffff', c2='#cfcfcf', mode='radial', floor=0.5)
+
+# ------------------------------------------------------------------ construct extras
+style('p_copper_glass', 'grad', c1='#ffb070', c2='#8a4318', a=165, a2=120)
+style('p_amber', 'crystal', c1='#ffe0a0', c2='#d87a10', emissive=True)
+style('p_gold_glow', 'glow', c1='#fff4cc', c2='#ffb030', mode='edge', rim=2.0, floor=0.3)
+style('i_glass', 'grad', c1='#e8f8ff', c2='#7fb8f0', a=120, a2=70)
+style('b_glass', 'grad', c1='#ff8a8a', c2='#8a0614', a=170, a2=120)

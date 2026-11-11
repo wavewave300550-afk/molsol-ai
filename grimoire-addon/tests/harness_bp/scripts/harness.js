@@ -108,12 +108,18 @@ async function runSuites(names) {
   results = [];
   world.gameRules.doMobSpawning = false;
   try { dim().runCommand("time set noon"); } catch {}
-  for (const n of names.length ? names : Object.keys(SUITES)) {
+  // simulated players do not keep chunks ticking: register ticking areas over the test arenas
+  for (const [n, x] of [["gr_a", 16], ["gr_b", 112], ["gr_c", 208]]) {
+    try { dim().runCommand(`tickingarea add circle ${x} -60 0 4 ${n} true`); } catch {}
+  }
+  await wait(40);
+  for (const full of names.length ? names : Object.keys(SUITES)) {
+    const [n, filt] = full.split(":");
     const suite = SUITES[n];
     if (!suite) { out({ error: `unknown suite ${n}` }); continue; }
     out({ suiteStart: n });
     try {
-      await suite({ out, wait, debug, state, worldInfo, resetCd, dim, spawnPlayer, give, crouch, cast, selectSpell, spawnTargets, hp, cleanupTargets, countFamily, check, GameMode, EntityDamageCause, world, system });
+      await suite({ only: filt ? filt.split(",") : null, out, wait, debug, state, worldInfo, resetCd, dim, spawnPlayer, give, crouch, cast, selectSpell, spawnTargets, hp, cleanupTargets, countFamily, check, GameMode, EntityDamageCause, world, system });
     } catch (err) {
       check(n, "suite crashed", false, `${err} ${err?.stack ?? ""}`);
     }

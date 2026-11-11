@@ -34,6 +34,7 @@ import { allSpells, spellsOf } from "./spells/registry";
 import { GRIMOIRE_ITEMS, SCHOOLS, School, schoolOfItem } from "./spells/types";
 import { initHooks } from "./spells/hooks";
 import { initDiagnostics } from "./core/diagnostics";
+import { endBindsOf, tickBinds } from "./core/status";
 
 // ------------------------------------------------------------------------------- startup
 
@@ -167,6 +168,7 @@ world.afterEvents.playerSpawn.subscribe((e) => {
 
 function endPlayer(id: string, reason: string): void {
   cancelOwned(id, reason);
+  endBindsOf(id);
   removeWardsOf(id);
   removeAllFxOf(id);
 }
@@ -241,6 +243,7 @@ initDiagnostics();
 system.runInterval(() => {
   const now = system.currentTick;
   tickRoutines(now);
+  tickBinds(now);
   flushDamage(now);
   for (const p of world.getAllPlayers()) {
     if (!p.isValid) continue;

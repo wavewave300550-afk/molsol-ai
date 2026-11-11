@@ -212,3 +212,42 @@ async function reuse_gap(h) {
   C.disconnect();
 }
 SUITES.reuse_gap = reuse_gap;
+
+// Calibration (informational): how applyKnockback maps to player motion in this engine build.
+async function calibrate(h) {
+  const S = "calibrate";
+  const D = h.spawnPlayer("Dave", 40, 0, h.GameMode.Survival);
+  await h.wait(30);
+  for (const [hz, vy, repeat] of [[1, 0, 1], [2, 0, 1], [1, 0.4, 1], [0.6, 0.05, 10], [1.2, 0.0, 10], [0, 0.6, 1]]) {
+    D.teleport({ x: 40.5, y: -60, z: 0.5 });
+    await h.wait(10);
+    const p0 = D.location;
+    const track = [];
+    for (let i = 0; i < 24; i++) {
+      if (i < repeat) D.applyKnockback({ x: hz, z: 0 }, vy);
+      await h.wait(1);
+      const l = D.location, v = D.getVelocity();
+      track.push([+(l.x - p0.x).toFixed(2), +(l.y - p0.y).toFixed(2), +v.x.toFixed(3), +v.y.toFixed(3)]);
+    }
+    h.out({ calib: { hz, vy, repeat }, after1: track[0], after2: track[1], after5: track[4], after10: track[9], end: track[23] });
+    h.check(S, `knockback h=${hz} v=${vy} x${repeat} moves the player`, Math.abs(track[23][0]) > 0.1 || Math.abs(track[3][1]) > 0.1, track[23]);
+  }
+  // mobs are simulated server-side: measure the knockback -> velocity mapping on a husk
+  for (const [hz, vy] of [[1, 0], [2, 0], [1, 0.5], [0, 0.8]]) {
+    const m = h.dim().spawnEntity("minecraft:husk", { x: 44.5, y: -60, z: 4.5 });
+    await h.wait(10);
+    const p0 = m.location;
+    m.applyKnockback({ x: hz, z: 0 }, vy);
+    const tr = [];
+    for (let i = 0; i < 12; i++) {
+      await h.wait(1);
+      const l = m.location, v = m.getVelocity();
+      tr.push([+(l.x - p0.x).toFixed(2), +(l.y - p0.y).toFixed(2), +v.x.toFixed(3), +v.y.toFixed(3)]);
+    }
+    h.out({ mobcalib: { hz, vy }, t1: tr[0], t2: tr[1], t5: tr[4], t12: tr[11] });
+    h.check(S, `mob knockback h=${hz} v=${vy} moves the mob`, Math.abs(tr[11][0]) > 0.05 || Math.abs(tr[2][1]) > 0.05, tr);
+    m.remove();
+  }
+  D.disconnect();
+}
+SUITES.calibrate = calibrate;
