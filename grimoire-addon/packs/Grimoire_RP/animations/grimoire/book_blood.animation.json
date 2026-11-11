@@ -1,0 +1,463 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.book_blood.pose": {
+   "loop": true,
+   "bones": {
+    "anchor": {
+     "position": [
+      "c.is_first_person ? 3.5 : 2.0",
+      "c.is_first_person ? 21.5 : 21.0",
+      "c.is_first_person ? -5.0 : -1.5"
+     ],
+     "rotation": [
+      "c.is_first_person ? 18.0 : 5.0",
+      "c.is_first_person ? -40.0 : 70.0",
+      "c.is_first_person ? -6.0 : 8.0"
+     ]
+    }
+   }
+  },
+  "animation.grimoire.book_blood.closed": {
+   "loop": true,
+   "bones": {
+    "half_r": {
+     "rotation": [
+      0.0,
+      -90.0,
+      0.0
+     ]
+    },
+    "half_l": {
+     "rotation": [
+      0.0,
+      90.0,
+      0.0
+     ]
+    },
+    "flip0": {
+     "rotation": [
+      0.0,
+      -90.0,
+      0.0
+     ]
+    },
+    "flip1": {
+     "rotation": [
+      0.0,
+      -90.0,
+      0.0
+     ]
+    },
+    "flip2": {
+     "rotation": [
+      0.0,
+      -90.0,
+      0.0
+     ]
+    },
+    "lift": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 120) * 0.35 + 1.2",
+      0.0
+     ],
+     "rotation": [
+      "math.sin(q.life_time * 70) * 3",
+      "math.sin(q.life_time * 45) * 6",
+      "math.cos(q.life_time * 60) * 3"
+     ]
+    },
+    "g_sigil": {
+     "scale": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.book_blood.open": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.35,
+   "bones": {
+    "half_r": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       -90.0,
+       0.0
+      ],
+      "0.35": [
+       0.0,
+       -14.0,
+       0.0
+      ]
+     }
+    },
+    "half_l": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       90.0,
+       0.0
+      ],
+      "0.35": [
+       0.0,
+       14.0,
+       0.0
+      ]
+     }
+    },
+    "lift": {
+     "position": {
+      "0.0": [
+       0.0,
+       1.2,
+       0.0
+      ],
+      "0.35": [
+       0.0,
+       3.4,
+       -1.5
+      ]
+     }
+    },
+    "g_sigil": {
+     "scale": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.35": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.book_blood.charge": {
+   "loop": true,
+   "bones": {
+    "lift": {
+     "rotation": [
+      "math.sin(q.life_time * 200) * 1.2",
+      0.0,
+      "math.sin(q.life_time * 160) * 1.2"
+     ]
+    },
+    "g_sigil_spin": {
+     "rotation": [
+      0.0,
+      "q.life_time * 120",
+      0.0
+     ]
+    },
+    "g_sigil": {
+     "scale": [
+      "1 + math.sin(q.life_time * 300) * 0.05",
+      "1 + math.sin(q.life_time * 300) * 0.05",
+      "1 + math.sin(q.life_time * 300) * 0.05"
+     ]
+    },
+    "flip0": {
+     "rotation": [
+      0.0,
+      "-14 - math.mod(q.life_time * 220 + 0, 152)",
+      0.0
+     ]
+    },
+    "flip1": {
+     "rotation": [
+      0.0,
+      "-14 - math.mod(q.life_time * 220 + 60, 152)",
+      0.0
+     ]
+    },
+    "flip2": {
+     "rotation": [
+      0.0,
+      "-14 - math.mod(q.life_time * 220 + 120, 152)",
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.book_blood.release": {
+   "animation_length": 0.5,
+   "bones": {
+    "lift": {
+     "position": {
+      "0.0": [
+       0.0,
+       3.4,
+       -1.5
+      ],
+      "0.1": [
+       0.0,
+       3.8,
+       -4.0
+      ],
+      "0.5": [
+       0.0,
+       1.2,
+       0.0
+      ]
+     }
+    },
+    "g_sigil": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.12": [
+       1.8,
+       1.8,
+       1.8
+      ],
+      "0.3": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "half_r": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       -14.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       -90.0,
+       0.0
+      ]
+     }
+    },
+    "half_l": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       14.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       90.0,
+       0.0
+      ]
+     }
+    },
+    "flip0": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       -60.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       -90.0,
+       0.0
+      ]
+     }
+    },
+    "flip1": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       -60.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       -90.0,
+       0.0
+      ]
+     }
+    },
+    "flip2": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       -60.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       -90.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.book_blood.flip": {
+   "animation_length": 0.55,
+   "bones": {
+    "half_r": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       -90.0,
+       0.0
+      ],
+      "0.12": [
+       0.0,
+       -20.0,
+       0.0
+      ],
+      "0.42": [
+       0.0,
+       -20.0,
+       0.0
+      ],
+      "0.55": [
+       0.0,
+       -90.0,
+       0.0
+      ]
+     }
+    },
+    "half_l": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       90.0,
+       0.0
+      ],
+      "0.12": [
+       0.0,
+       20.0,
+       0.0
+      ],
+      "0.42": [
+       0.0,
+       20.0,
+       0.0
+      ],
+      "0.55": [
+       0.0,
+       90.0,
+       0.0
+      ]
+     }
+    },
+    "flip0": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       -90.0,
+       0.0
+      ],
+      "0.12": [
+       0.0,
+       -22.0,
+       0.0
+      ],
+      "0.4": [
+       0.0,
+       -158.0,
+       0.0
+      ],
+      "0.55": [
+       0.0,
+       -90.0,
+       0.0
+      ]
+     }
+    },
+    "flip1": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       -90.0,
+       0.0
+      ],
+      "0.12": [
+       0.0,
+       -22.0,
+       0.0
+      ],
+      "0.55": [
+       0.0,
+       -90.0,
+       0.0
+      ]
+     }
+    },
+    "flip2": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       -90.0,
+       0.0
+      ],
+      "0.12": [
+       0.0,
+       -22.0,
+       0.0
+      ],
+      "0.55": [
+       0.0,
+       -90.0,
+       0.0
+      ]
+     }
+    },
+    "lift": {
+     "position": {
+      "0.0": [
+       0.0,
+       1.2,
+       0.0
+      ],
+      "0.15": [
+       0.0,
+       2.0,
+       -0.5
+      ],
+      "0.55": [
+       0.0,
+       1.2,
+       0.0
+      ]
+     }
+    },
+    "g_sigil": {
+     "scale": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.book_blood.emblem": {
+   "loop": true,
+   "bones": {
+    "heart": {
+     "scale": [
+      "1 + math.pow(math.max(0, math.sin(q.life_time * 216)), 12) * 0.22",
+      "1 + math.pow(math.max(0, math.sin(q.life_time * 216)), 12) * 0.22",
+      "1 + math.pow(math.max(0, math.sin(q.life_time * 216)), 12) * 0.22"
+     ]
+    },
+    "g_heartglow": {
+     "scale": [
+      "(1 + math.pow(math.max(0, math.sin(q.life_time * 216)), 12) * 0.22) * 1.15",
+      "(1 + math.pow(math.max(0, math.sin(q.life_time * 216)), 12) * 0.22) * 1.15",
+      "(1 + math.pow(math.max(0, math.sin(q.life_time * 216)), 12) * 0.22) * 1.15"
+     ]
+    }
+   }
+  }
+ }
+}

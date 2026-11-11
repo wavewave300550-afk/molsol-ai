@@ -1,0 +1,22 @@
+{
+ "format_version": "1.16.100",
+ "minecraft:fog_settings": {
+  "description": {
+   "identifier": "grimoire:crimson_moon"
+  },
+  "distance": {
+   "air": {
+    "fog_start": 0.12,
+    "fog_end": 0.75,
+    "fog_color": "#5A0610",
+    "render_distance_type": "render"
+   },
+   "weather": {
+    "fog_start": 0.096,
+    "fog_end": 0.75,
+    "fog_color": "#5A0610",
+    "render_distance_type": "render"
+   }
+  }
+ }
+}

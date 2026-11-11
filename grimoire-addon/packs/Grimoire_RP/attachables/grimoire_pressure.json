@@ -1,0 +1,44 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "grimoire:pressure",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "trans": "entity_alphablend",
+    "glow": "entity_beam_additive"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/book_pressure",
+    "flow": "textures/entity/grimoire/book_pressure_flow"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.book_pressure"
+   },
+   "animations": {
+    "pose": "animation.grimoire.book_pressure.pose",
+    "closed": "animation.grimoire.book_pressure.closed",
+    "open": "animation.grimoire.book_pressure.open",
+    "charge": "animation.grimoire.book_pressure.charge",
+    "release": "animation.grimoire.book_pressure.release",
+    "flip": "animation.grimoire.book_pressure.flip",
+    "emblem": "animation.grimoire.book_pressure.emblem",
+    "ctrl": "controller.animation.grimoire.book_pressure"
+   },
+   "scripts": {
+    "initialize": [
+     "v.flip_t = 0; v.rel_t = 0;"
+    ],
+    "animate": [
+     "pose",
+     "emblem",
+     "ctrl"
+    ]
+   },
+   "render_controllers": [
+    "controller.render.grimoire.book",
+    "controller.render.grimoire.book_flow"
+   ]
+  }
+ }
+}

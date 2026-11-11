@@ -1,0 +1,20 @@
+[
+ {
+  "flipbook_texture": "textures/blocks/grimoire/pressure_barrier",
+  "atlas_tile": "grimoire_pressure_barrier",
+  "ticks_per_frame": 3,
+  "blend_frames": true
+ },
+ {
+  "flipbook_texture": "textures/blocks/grimoire/frost_wall",
+  "atlas_tile": "grimoire_frost_wall",
+  "ticks_per_frame": 3,
+  "blend_frames": true
+ },
+ {
+  "flipbook_texture": "textures/blocks/grimoire/blood_thornwall",
+  "atlas_tile": "grimoire_blood_thornwall",
+  "ticks_per_frame": 3,
+  "blend_frames": true
+ }
+]

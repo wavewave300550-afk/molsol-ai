@@ -1,0 +1,39 @@
+{
+ "format_version": "1.26.60",
+ "minecraft:recipe_shaped": {
+  "description": {
+   "identifier": "grimoire:craft_pressure"
+  },
+  "tags": [
+   "crafting_table"
+  ],
+  "pattern": [
+   "CBC",
+   "RXR",
+   "CBC"
+  ],
+  "key": {
+   "C": {
+    "item": "minecraft:copper_ingot"
+   },
+   "B": {
+    "item": "minecraft:breeze_rod"
+   },
+   "R": {
+    "item": "minecraft:blaze_powder"
+   },
+   "X": {
+    "item": "minecraft:book"
+   }
+  },
+  "result": {
+   "item": "grimoire:pressure",
+   "count": 1
+  },
+  "unlock": [
+   {
+    "item": "minecraft:book"
+   }
+  ]
+ }
+}

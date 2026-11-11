@@ -1,0 +1,87 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.grimoire.book_ice": {
+   "initial_state": "closed",
+   "states": {
+    "closed": {
+     "animations": [
+      "closed"
+     ],
+     "transitions": [
+      {
+       "opening": "q.is_using_item"
+      },
+      {
+       "flip": "q.is_sneaking"
+      }
+     ],
+     "blend_transition": 0.15
+    },
+    "flip": {
+     "animations": [
+      "flip"
+     ],
+     "on_entry": [
+      "v.flip_t = q.life_time;"
+     ],
+     "transitions": [
+      {
+       "opening": "q.is_using_item && !q.is_sneaking"
+      },
+      {
+       "flip_hold": "q.life_time - v.flip_t > 0.55"
+      }
+     ],
+     "blend_transition": 0.08
+    },
+    "flip_hold": {
+     "animations": [
+      "closed"
+     ],
+     "transitions": [
+      {
+       "closed": "!q.is_sneaking"
+      },
+      {
+       "opening": "q.is_using_item && !q.is_sneaking"
+      }
+     ],
+     "blend_transition": 0.1
+    },
+    "opening": {
+     "animations": [
+      "open",
+      "charge"
+     ],
+     "transitions": [
+      {
+       "release": "!q.is_using_item"
+      },
+      {
+       "flip": "q.is_sneaking"
+      }
+     ],
+     "blend_transition": 0.1
+    },
+    "release": {
+     "animations": [
+      "release"
+     ],
+     "on_entry": [
+      "v.rel_t = q.life_time;"
+     ],
+     "transitions": [
+      {
+       "closed": "q.life_time - v.rel_t > 0.5"
+      },
+      {
+       "opening": "q.is_using_item && q.life_time - v.rel_t > 0.2"
+      }
+     ],
+     "blend_transition": 0.05
+    }
+   }
+  }
+ }
+}

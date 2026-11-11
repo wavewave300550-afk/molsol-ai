@@ -1,0 +1,93 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.player.channel": {
+   "loop": true,
+   "bones": {
+    "rightarm": {
+     "rotation": [
+      "(variable.is_first_person ? 0 : 1) * (-62 + math.sin(q.life_time * 260) * 2.5)",
+      "(variable.is_first_person ? 0 : 1) * -12",
+      "(variable.is_first_person ? 0 : 1) * 8"
+     ]
+    },
+    "leftarm": {
+     "rotation": [
+      "(variable.is_first_person ? 0 : 1) * (-28 + math.cos(q.life_time * 200) * 2)",
+      "(variable.is_first_person ? 0 : 1) * 14",
+      "(variable.is_first_person ? 0 : 1) * -18"
+     ]
+    },
+    "body": {
+     "rotation": [
+      0.0,
+      "(variable.is_first_person ? 0 : 1) * -6",
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.player.release": {
+   "animation_length": 0.4,
+   "bones": {
+    "rightarm": {
+     "rotation": {
+      "0.0": [
+       "(variable.is_first_person ? 0 : 1) * -62",
+       0.0,
+       0.0
+      ],
+      "0.08": [
+       "(variable.is_first_person ? 0 : 1) * -96",
+       "(variable.is_first_person ? 0 : 1) * -10",
+       0.0
+      ],
+      "0.4": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "leftarm": {
+     "rotation": {
+      "0.0": [
+       "(variable.is_first_person ? 0 : 1) * -28",
+       0.0,
+       0.0
+      ],
+      "0.1": [
+       "(variable.is_first_person ? 0 : 1) * -12",
+       "(variable.is_first_person ? 0 : 1) * 20",
+       "(variable.is_first_person ? 0 : 1) * -30"
+      ],
+      "0.4": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "body": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.08": [
+       "(variable.is_first_person ? 0 : 1) * 6",
+       "(variable.is_first_person ? 0 : 1) * -8",
+       0.0
+      ],
+      "0.4": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   }
+  }
+ }
+}

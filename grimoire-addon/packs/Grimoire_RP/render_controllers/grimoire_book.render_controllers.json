@@ -1,0 +1,59 @@
+{
+ "format_version": "1.10.0",
+ "render_controllers": {
+  "controller.render.grimoire.book": {
+   "geometry": "Geometry.default",
+   "textures": [
+    "Texture.default"
+   ],
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "t_*": "Material.trans"
+    },
+    {
+     "g_*": "Material.glow"
+    }
+   ],
+   "part_visibility": [
+    {
+     "*": true
+    },
+    {
+     "flow_*": false
+    }
+   ]
+  },
+  "controller.render.grimoire.book_flow": {
+   "geometry": "Geometry.default",
+   "textures": [
+    "Texture.flow"
+   ],
+   "materials": [
+    {
+     "*": "Material.glow"
+    }
+   ],
+   "part_visibility": [
+    {
+     "*": false
+    },
+    {
+     "flow_*": true
+    }
+   ],
+   "uv_anim": {
+    "offset": [
+     0.0,
+     "math.mod(q.life_time * 0.35, 1.0)"
+    ],
+    "scale": [
+     1.0,
+     1.0
+    ]
+   }
+  }
+ }
+}

@@ -1,0 +1,8 @@
+node_modules/
+tools/__pycache__/
+tools/gen/__pycache__/
+tests/__pycache__/
+*.pyc
+.build/
+.build_meta.json
+tests/results/

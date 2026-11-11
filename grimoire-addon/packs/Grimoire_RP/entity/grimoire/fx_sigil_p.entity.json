@@ -1,0 +1,54 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:fx_sigil_p",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "trans": "entity_alphablend",
+    "glow": "entity_beam_additive"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/fx_sigil_p",
+    "v0": "textures/entity/grimoire/fx_sigil_p_v1"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.fx_sigil_p"
+   },
+   "animations": {
+    "form": "animation.grimoire.fx_sigil_p.form",
+    "spin": "animation.grimoire.fx_sigil_p.spin",
+    "fast": "animation.grimoire.fx_sigil_p.fast",
+    "pulse": "animation.grimoire.fx_sigil_p.pulse",
+    "dissolve": "animation.grimoire.fx_sigil_p.dissolve",
+    "orient": "animation.grimoire.fx_sigil_p.orient",
+    "ctrl": "controller.animation.grimoire.fx_sigil_p",
+    "pulse_ctrl": "controller.animation.grimoire.fx_sigil_p.pulse"
+   },
+   "scripts": {
+    "initialize": [
+     "v.yaw = 0; v.pitch = 0; v.size = 1; v.len = 1; v.last_aux = 0;"
+    ],
+    "pre_animation": [
+     "v.ty = q.property('grimoire:yaw') - q.body_y_rotation;",
+     "v.dy = math.mod(math.mod(v.ty - v.yaw, 360) + 540, 360) - 180;",
+     "v.first = q.life_time < 0.1;",
+     "v.yaw = v.first ? v.ty : v.yaw + v.dy * 0.4;",
+     "v.pitch = v.first ? q.property('grimoire:pitch') : math.lerp(v.pitch, q.property('grimoire:pitch'), 0.4);",
+     "v.size = v.first ? q.property('grimoire:size') : math.lerp(v.size, q.property('grimoire:size'), 0.25);",
+     "v.len = v.first ? q.property('grimoire:len') : math.lerp(v.len, q.property('grimoire:len'), 0.35);",
+     "v.ph = q.property('grimoire:phase');",
+     "v.var = q.property('grimoire:variant');"
+    ],
+    "animate": [
+     "orient",
+     "ctrl",
+     "pulse_ctrl"
+    ]
+   },
+   "render_controllers": [
+    "controller.render.grimoire.fx_sigil_p"
+   ]
+  }
+ }
+}

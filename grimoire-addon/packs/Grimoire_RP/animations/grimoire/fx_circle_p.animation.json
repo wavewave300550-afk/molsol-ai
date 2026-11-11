@@ -1,0 +1,175 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_circle_p.form": {
+   "animation_length": 0.6,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       0.01,
+       0.01,
+       0.01
+      ],
+      "0.35": [
+       1.06,
+       1.06,
+       1.06
+      ],
+      "0.6": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "g_spin": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       -120.0,
+       0.0
+      ],
+      "0.6": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_circle_p.spin": {
+   "loop": true,
+   "bones": {
+    "g_spin": {
+     "rotation": [
+      0.0,
+      "q.life_time * 18",
+      0.0
+     ]
+    },
+    "g_inner": {
+     "rotation": [
+      0.0,
+      "-q.life_time * 32",
+      0.0
+     ],
+     "scale": [
+      "1 + math.sin(q.life_time * 180) * 0.03",
+      "1 + math.sin(q.life_time * 180) * 0.03",
+      "1 + math.sin(q.life_time * 180) * 0.03"
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_circle_p.fast": {
+   "loop": true,
+   "bones": {
+    "g_spin": {
+     "rotation": [
+      0.0,
+      "q.life_time * 90",
+      0.0
+     ]
+    },
+    "g_inner": {
+     "rotation": [
+      0.0,
+      "-q.life_time * 140",
+      0.0
+     ],
+     "scale": [
+      "1 + math.sin(q.life_time * 600) * 0.06",
+      "1 + math.sin(q.life_time * 600) * 0.06",
+      "1 + math.sin(q.life_time * 600) * 0.06"
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_circle_p.pulse": {
+   "animation_length": 0.35,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.08": [
+       1.12,
+       1.12,
+       1.12
+      ],
+      "0.35": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_circle_p.dissolve": {
+   "animation_length": 0.7,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       1.1,
+       1.1,
+       1.1
+      ],
+      "0.6": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "g_spin": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.6": [
+       0.0,
+       160.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_circle_p.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

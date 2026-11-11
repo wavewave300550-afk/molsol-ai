@@ -1,0 +1,15 @@
+{
+ "resource_pack_name": "grimoire",
+ "texture_name": "atlas.items",
+ "texture_data": {
+  "grimoire_pressure": {
+   "textures": "textures/items/grimoire_pressure"
+  },
+  "grimoire_ice": {
+   "textures": "textures/items/grimoire_ice"
+  },
+  "grimoire_blood": {
+   "textures": "textures/items/grimoire_blood"
+  }
+ }
+}

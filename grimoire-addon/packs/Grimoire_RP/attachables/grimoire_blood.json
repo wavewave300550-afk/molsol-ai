@@ -1,0 +1,44 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "grimoire:blood",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "trans": "entity_alphablend",
+    "glow": "entity_beam_additive"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/book_blood",
+    "flow": "textures/entity/grimoire/book_blood_flow"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.book_blood"
+   },
+   "animations": {
+    "pose": "animation.grimoire.book_blood.pose",
+    "closed": "animation.grimoire.book_blood.closed",
+    "open": "animation.grimoire.book_blood.open",
+    "charge": "animation.grimoire.book_blood.charge",
+    "release": "animation.grimoire.book_blood.release",
+    "flip": "animation.grimoire.book_blood.flip",
+    "emblem": "animation.grimoire.book_blood.emblem",
+    "ctrl": "controller.animation.grimoire.book_blood"
+   },
+   "scripts": {
+    "initialize": [
+     "v.flip_t = 0; v.rel_t = 0;"
+    ],
+    "animate": [
+     "pose",
+     "emblem",
+     "ctrl"
+    ]
+   },
+   "render_controllers": [
+    "controller.render.grimoire.book",
+    "controller.render.grimoire.book_flow"
+   ]
+  }
+ }
+}

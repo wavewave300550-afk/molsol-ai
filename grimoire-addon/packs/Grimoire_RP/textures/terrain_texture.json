@@ -1,0 +1,17 @@
+{
+ "resource_pack_name": "grimoire",
+ "texture_name": "atlas.terrain",
+ "padding": 8,
+ "num_mip_levels": 4,
+ "texture_data": {
+  "grimoire_pressure_barrier": {
+   "textures": "textures/blocks/grimoire/pressure_barrier"
+  },
+  "grimoire_frost_wall": {
+   "textures": "textures/blocks/grimoire/frost_wall"
+  },
+  "grimoire_blood_thornwall": {
+   "textures": "textures/blocks/grimoire/blood_thornwall"
+  }
+ }
+}

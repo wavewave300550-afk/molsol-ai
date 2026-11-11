@@ -1,0 +1,12 @@
+{
+ "format_version": "1.21.40",
+ "grimoire:pressure_barrier": {
+  "sound": "glass"
+ },
+ "grimoire:frost_wall": {
+  "sound": "glass"
+ },
+ "grimoire:blood_thornwall": {
+  "sound": "glass"
+ }
+}

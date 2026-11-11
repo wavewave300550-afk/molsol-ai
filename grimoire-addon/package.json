@@ -1,0 +1,20 @@
+{
+  "name": "grimoire-imperial-magic",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Minecraft Bedrock add-on: three Grimoires (Pressure, Ice, Blood) with 45 spells. No mana, cooldown-only casting.",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "bundle": "esbuild src/main.ts --bundle --format=esm --platform=neutral --target=es2022 --external:@minecraft/server --external:@minecraft/server-ui --outfile=packs/Grimoire_BP/scripts/main.js",
+    "build": "python3 tools/build.py",
+    "validate": "python3 tools/validate.py",
+    "test:bds": "python3 tests/run_bds.py",
+    "test": "npm run typecheck && npm run build && npm run validate"
+  },
+  "devDependencies": {
+    "@minecraft/server": "2.11.0",
+    "@minecraft/server-ui": "2.3.0",
+    "esbuild": "0.28.2",
+    "typescript": "5.9.3"
+  }
+}

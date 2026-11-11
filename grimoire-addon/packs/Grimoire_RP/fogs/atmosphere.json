@@ -1,0 +1,22 @@
+{
+ "format_version": "1.16.100",
+ "minecraft:fog_settings": {
+  "description": {
+   "identifier": "grimoire:atmosphere"
+  },
+  "distance": {
+   "air": {
+    "fog_start": 0.4,
+    "fog_end": 1.0,
+    "fog_color": "#FFB060",
+    "render_distance_type": "render"
+   },
+   "weather": {
+    "fog_start": 0.32000000000000006,
+    "fog_end": 1.0,
+    "fog_color": "#FFB060",
+    "render_distance_type": "render"
+   }
+  }
+ }
+}

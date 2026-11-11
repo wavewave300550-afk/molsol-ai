@@ -1,0 +1,17 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Grimoire Test Harness (dev only)",
+    "description": "Drives simulated players against Grimoire: Imperial Magic inside Bedrock Dedicated Server. Not part of the add-on.",
+    "uuid": "5c0b7a4e-2b0e-4a3e-9d55-7f1d3c0a9e11",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 26, 60]
+  },
+  "modules": [
+    { "type": "script", "language": "javascript", "uuid": "5c0b7a4e-2b0e-4a3e-9d55-7f1d3c0a9e12", "version": [1, 0, 0], "entry": "scripts/harness.js" }
+  ],
+  "dependencies": [
+    { "module_name": "@minecraft/server", "version": "2.11.0" },
+    { "module_name": "@minecraft/server-gametest", "version": "1.0.0-beta" }
+  ]
+}

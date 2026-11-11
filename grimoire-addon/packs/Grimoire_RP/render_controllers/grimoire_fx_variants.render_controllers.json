@@ -1,0 +1,155 @@
+{
+ "format_version": "1.10.0",
+ "render_controllers": {
+  "controller.render.grimoire.fx_sigil_p": {
+   "geometry": "Geometry.default",
+   "arrays": {
+    "textures": {
+     "Array.tex": [
+      "Texture.v0"
+     ]
+    }
+   },
+   "textures": [
+    "Array.tex[math.clamp(q.property('grimoire:variant'), 0, 0)]"
+   ],
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "t_*": "Material.trans"
+    },
+    {
+     "g_*": "Material.glow"
+    }
+   ]
+  },
+  "controller.render.grimoire.fx_circle_p": {
+   "geometry": "Geometry.default",
+   "arrays": {
+    "textures": {
+     "Array.tex": [
+      "Texture.v0",
+      "Texture.v1",
+      "Texture.v2"
+     ]
+    }
+   },
+   "textures": [
+    "Array.tex[math.clamp(q.property('grimoire:variant'), 0, 2)]"
+   ],
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "t_*": "Material.trans"
+    },
+    {
+     "g_*": "Material.glow"
+    }
+   ]
+  },
+  "controller.render.grimoire.fx_sigil_i": {
+   "geometry": "Geometry.default",
+   "arrays": {
+    "textures": {
+     "Array.tex": [
+      "Texture.v0"
+     ]
+    }
+   },
+   "textures": [
+    "Array.tex[math.clamp(q.property('grimoire:variant'), 0, 0)]"
+   ],
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "t_*": "Material.trans"
+    },
+    {
+     "g_*": "Material.glow"
+    }
+   ]
+  },
+  "controller.render.grimoire.fx_circle_i": {
+   "geometry": "Geometry.default",
+   "arrays": {
+    "textures": {
+     "Array.tex": [
+      "Texture.v0",
+      "Texture.v1",
+      "Texture.v2"
+     ]
+    }
+   },
+   "textures": [
+    "Array.tex[math.clamp(q.property('grimoire:variant'), 0, 2)]"
+   ],
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "t_*": "Material.trans"
+    },
+    {
+     "g_*": "Material.glow"
+    }
+   ]
+  },
+  "controller.render.grimoire.fx_sigil_b": {
+   "geometry": "Geometry.default",
+   "arrays": {
+    "textures": {
+     "Array.tex": [
+      "Texture.v0"
+     ]
+    }
+   },
+   "textures": [
+    "Array.tex[math.clamp(q.property('grimoire:variant'), 0, 0)]"
+   ],
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "t_*": "Material.trans"
+    },
+    {
+     "g_*": "Material.glow"
+    }
+   ]
+  },
+  "controller.render.grimoire.fx_circle_b": {
+   "geometry": "Geometry.default",
+   "arrays": {
+    "textures": {
+     "Array.tex": [
+      "Texture.v0",
+      "Texture.v1",
+      "Texture.v2"
+     ]
+    }
+   },
+   "textures": [
+    "Array.tex[math.clamp(q.property('grimoire:variant'), 0, 2)]"
+   ],
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "t_*": "Material.trans"
+    },
+    {
+     "g_*": "Material.glow"
+    }
+   ]
+  }
+ }
+}
