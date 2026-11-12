@@ -1,0 +1,5 @@
+## Dragon Dominion - English (United States)
+## One section per creature, in this order. Key formats:
+##   entity.dragon_dominion:<name>.name=<Display Name>
+##   item.spawn_egg.entity.dragon_dominion:<name>.name=Spawn <Display Name>
+##   tier.dragon_dominion.<tier_id>.name=<Tier Name>

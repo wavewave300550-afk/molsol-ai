@@ -1,0 +1,39 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Dragon Dominion [BP]",
+    "description": "Dragon Dominion behavior pack",
+    "uuid": "207ddd61-776d-4c01-89be-5babddf6d88b",
+    "version": [0, 1, 0],
+    "min_engine_version": [1, 26, 60]
+  },
+  "modules": [
+    {
+      "description": "Dragon Dominion behavior data",
+      "type": "data",
+      "uuid": "a6d0d735-46ec-429b-9156-36babf467988",
+      "version": [0, 1, 0]
+    },
+    {
+      "description": "Dragon Dominion gameplay scripts",
+      "type": "script",
+      "language": "javascript",
+      "uuid": "5bfabe09-af07-4e8a-86a2-f2813a47d0d3",
+      "version": [0, 1, 0],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "87494967-a706-43dc-91fc-2704ce550f10",
+      "version": [0, 1, 0]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.11.0"
+    }
+  ],
+  "metadata": {
+    "product_type": "addon"
+  }
+}

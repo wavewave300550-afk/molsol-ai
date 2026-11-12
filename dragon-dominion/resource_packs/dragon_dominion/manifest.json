@@ -1,0 +1,27 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Dragon Dominion [RP]",
+    "description": "Dragon Dominion resource pack",
+    "uuid": "87494967-a706-43dc-91fc-2704ce550f10",
+    "version": [0, 1, 0],
+    "min_engine_version": [1, 26, 60]
+  },
+  "modules": [
+    {
+      "description": "Dragon Dominion resources",
+      "type": "resources",
+      "uuid": "50560be4-b4ca-4c74-a63e-a23b63e9e5c8",
+      "version": [0, 1, 0]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "207ddd61-776d-4c01-89be-5babddf6d88b",
+      "version": [0, 1, 0]
+    }
+  ],
+  "metadata": {
+    "product_type": "addon"
+  }
+}

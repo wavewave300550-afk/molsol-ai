@@ -1,0 +1,25 @@
+{
+  "name": "dragon-dominion",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Minecraft Bedrock add-on: Dragon Dominion (Phase 0 foundation)",
+  "type": "module",
+  "engines": {
+    "node": ">=20.6"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "python3 tools/build.py",
+    "validate": "python3 tools/validate.py",
+    "validate:mct": "python3 tools/mct_validate.py",
+    "test:tools": "python3 -m unittest discover -s tools/tests -p \"test_*.py\"",
+    "test:runtime": "node --import ./tools/tests/mock/register.mjs --test tools/tests/runtime.test.mjs",
+    "test": "npm run typecheck && npm run build && npm run validate && npm run test:tools && npm run test:runtime",
+    "package": "python3 tools/build.py --package",
+    "set-version": "python3 tools/version.py"
+  },
+  "devDependencies": {
+    "@minecraft/server": "2.11.0",
+    "typescript": "5.9.3"
+  }
+}
