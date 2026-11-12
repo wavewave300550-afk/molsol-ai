@@ -1,0 +1,3624 @@
+{
+ "server_version": "1.26.63.1",
+ "completed": true,
+ "summary": {
+  "DONE": true,
+  "total": 294,
+  "failed": 0
+ },
+ "results": [
+  {
+   "suite": "controls",
+   "name": "diagnostics reachable",
+   "ok": true,
+   "detail": {
+    "kind": "state",
+    "name": "Alice",
+    "tick": 571,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0
+    },
+    "cooldowns": {},
+    "preparing": null,
+    "empowered": false
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "three grimoires start at spell 01",
+   "ok": true,
+   "detail": {
+    "pressure": 0,
+    "ice": 0,
+    "blood": 0
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "one crouch press advances exactly one spell",
+   "ok": true,
+   "detail": {
+    "pressure": 1,
+    "ice": 0,
+    "blood": 0
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "holding crouch 3s advances only once",
+   "ok": true,
+   "detail": {
+    "pressure": 2,
+    "ice": 0,
+    "blood": 0
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "selection wraps 15 -> 01",
+   "ok": true,
+   "detail": {
+    "pressure": 0,
+    "ice": 0,
+    "blood": 0
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "holding Use starts preparation (no instant cast)",
+   "ok": true,
+   "detail": {
+    "kind": "state",
+    "name": "Alice",
+    "tick": 709,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0
+    },
+    "cooldowns": {},
+    "preparing": {
+     "spell": "pressure.lance",
+     "ticks": 4
+    },
+    "empowered": false
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "release casts the selected spell (cooldown 6s started)",
+   "ok": true,
+   "detail": {
+    "pressure.lance": 118
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "single release activates only one spell",
+   "ok": true,
+   "detail": {
+    "pressure.lance": 118
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "casting costs no health",
+   "ok": true,
+   "detail": {
+    "hp0": 20,
+    "hp1": 20
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "full hunger does not block casting (no food component used)",
+   "ok": true,
+   "detail": {
+    "food0": 20
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "spell on cooldown cannot be recast",
+   "ok": true,
+   "detail": {
+    "pressure.lance": 91
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "selected P02 Atlas Piston",
+   "ok": true,
+   "detail": {
+    "pressure": 1,
+    "ice": 0,
+    "blood": 0
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "releasing before minimum preparation does not cast",
+   "ok": true,
+   "detail": {
+    "pressure.lance": 72
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "P02 castable while P01 is cooling (independent cooldowns)",
+   "ok": true,
+   "detail": {
+    "pressure.lance": 52,
+    "pressure.atlas_piston": 358
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "crouching during preparation cancels it",
+   "ok": true,
+   "detail": {
+    "kind": "state",
+    "name": "Alice",
+    "tick": 816,
+    "selected": {
+     "pressure": 3,
+     "ice": 0,
+     "blood": 0
+    },
+    "cooldowns": {
+     "pressure.lance": 23,
+     "pressure.atlas_piston": 329
+    },
+    "preparing": null,
+    "empowered": false
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "release after crouch-cancel casts nothing",
+   "ok": true,
+   "detail": {
+    "pressure.lance": 19,
+    "pressure.atlas_piston": 325
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "the crouch also advanced the selection (P03 -> P04)",
+   "ok": true,
+   "detail": {
+    "pressure": 3,
+    "ice": 0,
+    "blood": 0
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "switching items cancels preparation",
+   "ok": true,
+   "detail": {
+    "kind": "state",
+    "name": "Alice",
+    "tick": 851,
+    "selected": {
+     "pressure": 3,
+     "ice": 0,
+     "blood": 0
+    },
+    "cooldowns": {
+     "pressure.atlas_piston": 294
+    },
+    "preparing": null,
+    "empowered": false
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "no cast after item switch",
+   "ok": true,
+   "detail": {
+    "pressure.atlas_piston": 290
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "Use while crouching does not prepare",
+   "ok": true,
+   "detail": {
+    "kind": "state",
+    "name": "Alice",
+    "tick": 882,
+    "selected": {
+     "pressure": 4,
+     "ice": 0,
+     "blood": 0
+    },
+    "cooldowns": {
+     "pressure.atlas_piston": 263
+    },
+    "preparing": null,
+    "empowered": false
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "no cast when the preparation started crouched",
+   "ok": true,
+   "detail": {
+    "pressure.atlas_piston": 260
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "selection is stored per grimoire",
+   "ok": true,
+   "detail": {
+    "pressure": 4,
+    "ice": 1,
+    "blood": 0
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "another copy of the book shares the player's cooldowns",
+   "ok": true,
+   "detail": {
+    "kind": "state",
+    "name": "Alice",
+    "tick": 897,
+    "selected": {
+     "pressure": 4,
+     "ice": 1,
+     "blood": 0
+    },
+    "cooldowns": {
+     "pressure.atlas_piston": 248
+    },
+    "preparing": null,
+    "empowered": false
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "second player has independent selection",
+   "ok": true,
+   "detail": {
+    "kind": "state",
+    "name": "Bob",
+    "tick": 897,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0
+    },
+    "cooldowns": {},
+    "preparing": null,
+    "empowered": false
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "creative player can cast (P01)",
+   "ok": true,
+   "detail": {
+    "pressure.lance": 118
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "death cancels preparation",
+   "ok": true,
+   "detail": {
+    "kind": "state",
+    "name": "Alice",
+    "tick": 931,
+    "selected": {
+     "pressure": 4,
+     "ice": 1,
+     "blood": 0
+    },
+    "cooldowns": {
+     "pressure.atlas_piston": 214
+    },
+    "preparing": null,
+    "empowered": false
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "no cast happened through death",
+   "ok": true,
+   "detail": {
+    "pressure.atlas_piston": 194
+   }
+  },
+  {
+   "suite": "controls",
+   "name": "cooldowns survive death",
+   "ok": true,
+   "detail": {
+    "pressure.atlas_piston": 194
+   }
+  },
+  {
+   "suite": "reuse_gap",
+   "name": "engine re-use window measured: presses >= 7 ticks after a release are accepted",
+   "ok": true,
+   "detail": {
+    "2": false,
+    "3": false,
+    "4": false,
+    "5": false,
+    "6": false,
+    "7": true,
+    "8": true,
+    "10": true,
+    "12": true
+   }
+  },
+  {
+   "suite": "reuse_gap",
+   "name": "every press 10+ ticks after a release starts a new use",
+   "ok": true,
+   "detail": {
+    "2": false,
+    "3": false,
+    "4": false,
+    "5": false,
+    "6": false,
+    "7": true,
+    "8": true,
+    "10": true,
+    "12": true
+   }
+  },
+  {
+   "suite": "reuse_gap",
+   "name": "dropped and early-released presses never cast anything",
+   "ok": true,
+   "detail": {}
+  },
+  {
+   "suite": "pressure:P01",
+   "name": "P01 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 118,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "pressure:P01",
+   "name": "P01 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 1266,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "P01:TP01"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "pressure:P01",
+   "name": "P01 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     14,
+     14,
+     14
+    ]
+   }
+  },
+  {
+   "suite": "pressure:P01",
+   "name": "P01 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "pressure:P01",
+   "name": "P01 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 1347,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "pressure:P02",
+   "name": "P02 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 358,
+    "preparing": null,
+    "selected": {
+     "pressure": 1,
+     "ice": 0,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "pressure:P02",
+   "name": "P02 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 3,
+    "w1": {
+     "kind": "world",
+     "tick": 1429,
+     "fx": 3,
+     "tempBlocks": 0,
+     "routines": [
+      "P02:TP02"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "pressure:P02",
+   "name": "P02 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "pressure:P02",
+   "name": "P02 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "pressure:P02",
+   "name": "P02 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 1570,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "pressure:P03",
+   "name": "P03 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 198,
+    "preparing": null,
+    "selected": {
+     "pressure": 2,
+     "ice": 0,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "pressure:P03",
+   "name": "P03 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 1653,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "P03:TP03"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "pressure:P03",
+   "name": "P03 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "pressure:P03",
+   "name": "P03 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "pressure:P03",
+   "name": "P03 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 1774,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "pressure:P04",
+   "name": "P04 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 438,
+    "preparing": null,
+    "selected": {
+     "pressure": 3,
+     "ice": 0,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "pressure:P04",
+   "name": "P04 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 9,
+    "w1": {
+     "kind": "world",
+     "tick": 1880,
+     "fx": 9,
+     "tempBlocks": 0,
+     "routines": [
+      "P04:TP04",
+      "P04:disc",
+      "P04:disc",
+      "P04:disc",
+      "P04:disc",
+      "P04:disc",
+      "P04:disc"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "pressure:P04",
+   "name": "P04 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "pressure:P04",
+   "name": "P04 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "pressure:P04",
+   "name": "P04 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 2049,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "pressure:P05",
+   "name": "P05 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 498,
+    "preparing": null,
+    "selected": {
+     "pressure": 4,
+     "ice": 0,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "pressure:P05",
+   "name": "P05 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 2144,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "P05:TP05"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "pressure:P05",
+   "name": "P05 absorbs/reduces a real attack on the caster",
+   "ok": true,
+   "detail": {
+    "before": 20,
+    "after": 20
+   }
+  },
+  {
+   "suite": "pressure:P05",
+   "name": "P05 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "pressure:P05",
+   "name": "P05 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 2441,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "pressure:P06",
+   "name": "P06 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 438,
+    "preparing": null,
+    "selected": {
+     "pressure": 5,
+     "ice": 0,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "pressure:P06",
+   "name": "P06 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 2539,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "P06:TP06"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "pressure:P06",
+   "name": "P06 absorbs/reduces a real attack on the caster",
+   "ok": true,
+   "detail": {
+    "before": 20,
+    "after": 17.600000381469727
+   }
+  },
+  {
+   "suite": "pressure:P06",
+   "name": "P06 counterattack hits the attacker",
+   "ok": true,
+   "detail": {
+    "attackerHp": 14.095999717712402
+   }
+  },
+  {
+   "suite": "pressure:P06",
+   "name": "P06 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": [
+     {
+      "cause": "entityAttack",
+      "src": "minecraft:husk",
+      "dmg": 2.4000000953674316
+     }
+    ]
+   }
+  },
+  {
+   "suite": "pressure:P06",
+   "name": "P06 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 2867,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "pressure:P07",
+   "name": "P07 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 598,
+    "preparing": null,
+    "selected": {
+     "pressure": 6,
+     "ice": 0,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "pressure:P07",
+   "name": "P07 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 4,
+    "w1": {
+     "kind": "world",
+     "tick": 2976,
+     "fx": 4,
+     "tempBlocks": 0,
+     "routines": [
+      "P07:TP07"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "pressure:P07",
+   "name": "P07 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "pressure:P07",
+   "name": "P07 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "pressure:P07",
+   "name": "P07 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 3157,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "pressure:P08",
+   "name": "P08 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 698,
+    "preparing": null,
+    "selected": {
+     "pressure": 7,
+     "ice": 0,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "pressure:P08",
+   "name": "P08 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 11,
+    "w1": {
+     "kind": "world",
+     "tick": 3275,
+     "fx": 11,
+     "tempBlocks": 88,
+     "routines": [
+      "P08:TP08"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "pressure:P08",
+   "name": "P08 raises temporary barrier blocks",
+   "ok": true,
+   "detail": {
+    "blocks": 465
+   }
+  },
+  {
+   "suite": "pressure:P08",
+   "name": "P08 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "pressure:P08",
+   "name": "P08 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 3686,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "pressure:P09",
+   "name": "P09 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 558,
+    "preparing": null,
+    "selected": {
+     "pressure": 8,
+     "ice": 0,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "pressure:P09",
+   "name": "P09 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 3803,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "P09:TP09"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "pressure:P09",
+   "name": "P09 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "pressure:P09",
+   "name": "P09 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "pressure:P09",
+   "name": "P09 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 3984,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "pressure:P10",
+   "name": "P10 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 98,
+    "preparing": null,
+    "selected": {
+     "pressure": 9,
+     "ice": 0,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "pressure:P10",
+   "name": "P10 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 4096,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": []
+    }
+   }
+  },
+  {
+   "suite": "pressure:P10",
+   "name": "P10 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "pressure:P10",
+   "name": "P10 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 4149,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "pressure:P11",
+   "name": "P11 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 278,
+    "preparing": null,
+    "selected": {
+     "pressure": 10,
+     "ice": 0,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "pressure:P11",
+   "name": "P11 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 11,
+    "w1": {
+     "kind": "world",
+     "tick": 4274,
+     "fx": 11,
+     "tempBlocks": 0,
+     "routines": [
+      "P11:TP11"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "pressure:P11",
+   "name": "P11 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "pressure:P11",
+   "name": "P11 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 4365,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "pressure:P12",
+   "name": "P12 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 498,
+    "preparing": null,
+    "selected": {
+     "pressure": 11,
+     "ice": 0,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "pressure:P12",
+   "name": "P12 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 5,
+    "w1": {
+     "kind": "world",
+     "tick": 4513,
+     "fx": 5,
+     "tempBlocks": 0,
+     "routines": [
+      "P12:TP12"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "pressure:P12",
+   "name": "P12 marks detected living entities",
+   "ok": true,
+   "detail": {
+    "markers": 3
+   }
+  },
+  {
+   "suite": "pressure:P12",
+   "name": "P12 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "pressure:P12",
+   "name": "P12 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 4836,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "pressure:P13",
+   "name": "P13 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 698,
+    "preparing": null,
+    "selected": {
+     "pressure": 12,
+     "ice": 0,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "pressure:P13",
+   "name": "P13 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 4975,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "P13:TP13"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "pressure:P13",
+   "name": "P13 grants a single-use empowerment",
+   "ok": true,
+   "detail": {
+    "kind": "state",
+    "name": "TP13",
+    "tick": 5056,
+    "selected": {
+     "pressure": 12,
+     "ice": 0,
+     "blood": 0
+    },
+    "cooldowns": {
+     "pressure.equilibrium_theft": 608
+    },
+    "preparing": null,
+    "empowered": true
+   }
+  },
+  {
+   "suite": "pressure:P13",
+   "name": "P13 empowerment is consumed by the next eligible spell (no stacking)",
+   "ok": true,
+   "detail": {
+    "kind": "state",
+    "name": "TP13",
+    "tick": 5104,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0
+    },
+    "cooldowns": {
+     "pressure.lance": 113
+    },
+    "preparing": null,
+    "empowered": false
+   }
+  },
+  {
+   "suite": "pressure:P13",
+   "name": "P13 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": [
+     {
+      "cause": "entityAttack",
+      "src": "minecraft:husk",
+      "dmg": 3
+     },
+     {
+      "cause": "entityAttack",
+      "src": "minecraft:husk",
+      "dmg": 3
+     },
+     {
+      "cause": "entityAttack",
+      "src": "minecraft:husk",
+      "dmg": 3
+     }
+    ]
+   }
+  },
+  {
+   "suite": "pressure:P13",
+   "name": "P13 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 5174,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "pressure:P14",
+   "name": "P14 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 1498,
+    "preparing": null,
+    "selected": {
+     "pressure": 13,
+     "ice": 0,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "pressure:P14",
+   "name": "P14 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 10,
+    "w1": {
+     "kind": "world",
+     "tick": 5350,
+     "fx": 10,
+     "tempBlocks": 0,
+     "routines": [
+      "P14:TP14"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "pressure:P14",
+   "name": "P14 raises temporary barrier blocks",
+   "ok": true,
+   "detail": {
+    "blocks": 316
+   }
+  },
+  {
+   "suite": "pressure:P14",
+   "name": "P14 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "pressure:P14",
+   "name": "P14 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "pressure:P14",
+   "name": "P14 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 6043,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "pressure:P15",
+   "name": "P15 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 3598,
+    "preparing": null,
+    "selected": {
+     "pressure": 14,
+     "ice": 0,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "pressure:P15",
+   "name": "P15 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 4,
+    "w1": {
+     "kind": "world",
+     "tick": 6216,
+     "fx": 4,
+     "tempBlocks": 0,
+     "routines": [
+      "P15:TP15"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "pressure:P15",
+   "name": "P15 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "pressure:P15",
+   "name": "P15 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "pressure:P15",
+   "name": "P15 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 6547,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "ice:I01",
+   "name": "I01 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 158,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "ice:I01",
+   "name": "I01 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 10,
+    "w1": {
+     "kind": "world",
+     "tick": 6622,
+     "fx": 10,
+     "tempBlocks": 0,
+     "routines": [
+      "I01:TI01"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "ice:I01",
+   "name": "I01 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     17,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "ice:I01",
+   "name": "I01 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "ice:I01",
+   "name": "I01 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 6773,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "ice:I02",
+   "name": "I02 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 398,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 1,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "ice:I02",
+   "name": "I02 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 6875,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "I02:TI02"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "ice:I02",
+   "name": "I02 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "suite": "ice:I02",
+   "name": "I02 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "ice:I02",
+   "name": "I02 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 7008,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "ice:I03",
+   "name": "I03 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 278,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 2,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "ice:I03",
+   "name": "I03 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 8,
+    "w1": {
+     "kind": "world",
+     "tick": 7113,
+     "fx": 8,
+     "tempBlocks": 0,
+     "routines": [
+      "I03:TI03"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "ice:I03",
+   "name": "I03 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "ice:I03",
+   "name": "I03 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "ice:I03",
+   "name": "I03 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 7276,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "ice:I04",
+   "name": "I04 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 498,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 3,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "ice:I04",
+   "name": "I04 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 6,
+    "w1": {
+     "kind": "world",
+     "tick": 7392,
+     "fx": 6,
+     "tempBlocks": 0,
+     "routines": [
+      "I04:TI04",
+      "I04:volley",
+      "I04:volley",
+      "I04:volley"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "ice:I04",
+   "name": "I04 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "ice:I04",
+   "name": "I04 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "ice:I04",
+   "name": "I04 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 7515,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "ice:I05",
+   "name": "I05 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 558,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 4,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "ice:I05",
+   "name": "I05 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 7612,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "I05:TI05"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "ice:I05",
+   "name": "I05 absorbs/reduces a real attack on the caster",
+   "ok": true,
+   "detail": {
+    "before": 20,
+    "after": 20
+   }
+  },
+  {
+   "suite": "ice:I05",
+   "name": "I05 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "ice:I05",
+   "name": "I05 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 7909,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "ice:I06",
+   "name": "I06 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 638,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 5,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "ice:I06",
+   "name": "I06 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 5,
+    "w1": {
+     "kind": "world",
+     "tick": 8011,
+     "fx": 5,
+     "tempBlocks": 0,
+     "routines": [
+      "I06:TI06"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "ice:I06",
+   "name": "I06 absorbs/reduces a real attack on the caster",
+   "ok": true,
+   "detail": {
+    "before": 20,
+    "after": 20
+   }
+  },
+  {
+   "suite": "ice:I06",
+   "name": "I06 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "ice:I06",
+   "name": "I06 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 8359,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "ice:I07",
+   "name": "I07 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 598,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 6,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "ice:I07",
+   "name": "I07 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 7,
+    "w1": {
+     "kind": "world",
+     "tick": 8468,
+     "fx": 7,
+     "tempBlocks": 0,
+     "routines": [
+      "I07:TI07"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "ice:I07",
+   "name": "I07 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     14,
+     14,
+     14
+    ]
+   }
+  },
+  {
+   "suite": "ice:I07",
+   "name": "I07 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "ice:I07",
+   "name": "I07 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 8659,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "ice:I08",
+   "name": "I08 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 798,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 7,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "ice:I08",
+   "name": "I08 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 10,
+    "w1": {
+     "kind": "world",
+     "tick": 8795,
+     "fx": 10,
+     "tempBlocks": 414,
+     "routines": [
+      "I08:TI08"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "ice:I08",
+   "name": "I08 raises temporary barrier blocks",
+   "ok": true,
+   "detail": {
+    "blocks": 711
+   }
+  },
+  {
+   "suite": "ice:I08",
+   "name": "I08 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "ice:I08",
+   "name": "I08 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 9248,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "ice:I09",
+   "name": "I09 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 898,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 8,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "ice:I09",
+   "name": "I09 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 8,
+    "w1": {
+     "kind": "world",
+     "tick": 9371,
+     "fx": 8,
+     "tempBlocks": 0,
+     "routines": [
+      "I09:TI09"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "ice:I09",
+   "name": "I09 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     15,
+     18,
+     18
+    ]
+   }
+  },
+  {
+   "suite": "ice:I09",
+   "name": "I09 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "ice:I09",
+   "name": "I09 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 9642,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "ice:I10",
+   "name": "I10 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 158,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 9,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "ice:I10",
+   "name": "I10 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 3,
+    "w1": {
+     "kind": "world",
+     "tick": 9758,
+     "fx": 3,
+     "tempBlocks": 0,
+     "routines": [
+      "I10:TI10"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "ice:I10",
+   "name": "I10 teleports the caster to a safe spot",
+   "ok": true,
+   "detail": {
+    "moved": 19.50640920313116,
+    "feet": "minecraft:air",
+    "head": "minecraft:air"
+   }
+  },
+  {
+   "suite": "ice:I10",
+   "name": "I10 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "ice:I10",
+   "name": "I10 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 9849,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "ice:I11",
+   "name": "I11 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": -1,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 10,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "ice:I11",
+   "name": "I11 cooldown waits until the flight ends",
+   "ok": true,
+   "detail": {
+    "cd": -1
+   }
+  },
+  {
+   "suite": "ice:I11",
+   "name": "I11 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 9997,
+    "fx": 1,
+    "tempBlocks": 0,
+    "routines": [
+     "I11:TI11"
+    ]
+   }
+  },
+  {
+   "suite": "ice:I11",
+   "name": "I11 cooldown starts after the flight ends",
+   "ok": true,
+   "detail": {
+    "ice.winter_seraph": 373
+   }
+  },
+  {
+   "suite": "ice:I11",
+   "name": "I11 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "ice:I11",
+   "name": "I11 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 10457,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "ice:I12",
+   "name": "I12 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 1198,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 11,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "ice:I12",
+   "name": "I12 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 4,
+    "w1": {
+     "kind": "world",
+     "tick": 10599,
+     "fx": 4,
+     "tempBlocks": 0,
+     "routines": [
+      "I12:TI12"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "ice:I12",
+   "name": "I12 summons exactly the expected autonomous entities",
+   "ok": true,
+   "detail": {
+    "counts": [
+     1,
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "suite": "ice:I12",
+   "name": "I12 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "ice:I12",
+   "name": "I12 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 11270,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "ice:I13",
+   "name": "I13 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 998,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 12,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "ice:I13",
+   "name": "I13 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 3,
+    "w1": {
+     "kind": "world",
+     "tick": 11411,
+     "fx": 3,
+     "tempBlocks": 0,
+     "routines": [
+      "I13:TI13"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "ice:I13",
+   "name": "I13 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     10,
+     10,
+     10
+    ]
+   }
+  },
+  {
+   "suite": "ice:I13",
+   "name": "I13 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "ice:I13",
+   "name": "I13 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 11692,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "ice:I14",
+   "name": "I14 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 1798,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 13,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "ice:I14",
+   "name": "I14 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 10,
+    "w1": {
+     "kind": "world",
+     "tick": 11868,
+     "fx": 10,
+     "tempBlocks": 216,
+     "routines": [
+      "I14:TI14"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "ice:I14",
+   "name": "I14 raises temporary barrier blocks",
+   "ok": true,
+   "detail": {
+    "blocks": 486
+   }
+  },
+  {
+   "suite": "ice:I14",
+   "name": "I14 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "ice:I14",
+   "name": "I14 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "ice:I14",
+   "name": "I14 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 12621,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "ice:I15",
+   "name": "I15 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 3598,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 14,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "ice:I15",
+   "name": "I15 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 12794,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "I15:TI15"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "ice:I15",
+   "name": "I15 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "ice:I15",
+   "name": "I15 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "ice:I15",
+   "name": "I15 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 13155,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "blood:B01",
+   "name": "B01 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 138,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0
+    }
+   }
+  },
+  {
+   "suite": "blood:B01",
+   "name": "B01 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 4,
+    "w1": {
+     "kind": "world",
+     "tick": 13246,
+     "fx": 4,
+     "tempBlocks": 0,
+     "routines": [
+      "B01:TB01"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "blood:B01",
+   "name": "B01 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     12,
+     12,
+     12
+    ]
+   }
+  },
+  {
+   "suite": "blood:B01",
+   "name": "B01 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "blood:B01",
+   "name": "B01 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 13329,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "blood:B02",
+   "name": "B02 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 318,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 1
+    }
+   }
+  },
+  {
+   "suite": "blood:B02",
+   "name": "B02 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 13411,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "B02:TB02"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "blood:B02",
+   "name": "B02 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     8,
+     8
+    ]
+   }
+  },
+  {
+   "suite": "blood:B02",
+   "name": "B02 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "blood:B02",
+   "name": "B02 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 13552,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "blood:B03",
+   "name": "B03 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 478,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 2
+    }
+   }
+  },
+  {
+   "suite": "blood:B03",
+   "name": "B03 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 13,
+    "w1": {
+     "kind": "world",
+     "tick": 13643,
+     "fx": 13,
+     "tempBlocks": 0,
+     "routines": [
+      "B03:TB03"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "blood:B03",
+   "name": "B03 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     15,
+     9.200000762939453,
+     15
+    ]
+   }
+  },
+  {
+   "suite": "blood:B03",
+   "name": "B03 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "blood:B03",
+   "name": "B03 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 13784,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "blood:B04",
+   "name": "B04 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 518,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 3
+    }
+   }
+  },
+  {
+   "suite": "blood:B04",
+   "name": "B04 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 13,
+    "w1": {
+     "kind": "world",
+     "tick": 13880,
+     "fx": 13,
+     "tempBlocks": 0,
+     "routines": [
+      "B04:TB04"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "blood:B04",
+   "name": "B04 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "blood:B04",
+   "name": "B04 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "blood:B04",
+   "name": "B04 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 14061,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "blood:B05",
+   "name": "B05 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 498,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 4
+    }
+   }
+  },
+  {
+   "suite": "blood:B05",
+   "name": "B05 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 14156,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "B05:TB05"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "blood:B05",
+   "name": "B05 absorbs/reduces a real attack on the caster",
+   "ok": true,
+   "detail": {
+    "before": 20,
+    "after": 20
+   }
+  },
+  {
+   "suite": "blood:B05",
+   "name": "B05 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "blood:B05",
+   "name": "B05 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 14364,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "blood:B06",
+   "name": "B06 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 558,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 5
+    }
+   }
+  },
+  {
+   "suite": "blood:B06",
+   "name": "B06 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 14464,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "B06:TB06"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "blood:B06",
+   "name": "B06 absorbs/reduces a real attack on the caster",
+   "ok": true,
+   "detail": {
+    "before": 20,
+    "after": 20
+   }
+  },
+  {
+   "suite": "blood:B06",
+   "name": "B06 counterattack hits the attacker",
+   "ok": true,
+   "detail": {
+    "attackerHp": 17.059999465942383
+   }
+  },
+  {
+   "suite": "blood:B06",
+   "name": "B06 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "blood:B06",
+   "name": "B06 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 14772,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "blood:B07",
+   "name": "B07 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 598,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 6
+    }
+   }
+  },
+  {
+   "suite": "blood:B07",
+   "name": "B07 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 5,
+    "w1": {
+     "kind": "world",
+     "tick": 14881,
+     "fx": 5,
+     "tempBlocks": 0,
+     "routines": [
+      "B07:TB07"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "blood:B07",
+   "name": "B07 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     12,
+     12,
+     12
+    ]
+   }
+  },
+  {
+   "suite": "blood:B07",
+   "name": "B07 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "blood:B07",
+   "name": "B07 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 15062,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "blood:B08",
+   "name": "B08 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 698,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 7
+    }
+   }
+  },
+  {
+   "suite": "blood:B08",
+   "name": "B08 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 8,
+    "w1": {
+     "kind": "world",
+     "tick": 15198,
+     "fx": 8,
+     "tempBlocks": 0,
+     "routines": [
+      "B08:TB08"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "blood:B08",
+   "name": "B08 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     18,
+     17,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "blood:B08",
+   "name": "B08 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "blood:B08",
+   "name": "B08 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 15471,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "blood:B09",
+   "name": "B09 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 798,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 8
+    }
+   }
+  },
+  {
+   "suite": "blood:B09",
+   "name": "B09 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 15612,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "B09:TB09"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "blood:B09",
+   "name": "B09 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "blood:B09",
+   "name": "B09 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "blood:B09",
+   "name": "B09 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 15775,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "blood:B10",
+   "name": "B10 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 138,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 9
+    }
+   }
+  },
+  {
+   "suite": "blood:B10",
+   "name": "B10 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 4,
+    "w1": {
+     "kind": "world",
+     "tick": 15889,
+     "fx": 4,
+     "tempBlocks": 0,
+     "routines": [
+      "B10:TB10"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "blood:B10",
+   "name": "B10 teleports the caster to a safe spot",
+   "ok": true,
+   "detail": {
+    "moved": 11.510864433221338,
+    "feet": "minecraft:air",
+    "head": "minecraft:air"
+   }
+  },
+  {
+   "suite": "blood:B10",
+   "name": "B10 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "blood:B10",
+   "name": "B10 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 15980,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "blood:B11",
+   "name": "B11 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 358,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 10
+    }
+   }
+  },
+  {
+   "suite": "blood:B11",
+   "name": "B11 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 15,
+    "w1": {
+     "kind": "world",
+     "tick": 16123,
+     "fx": 15,
+     "tempBlocks": 0,
+     "routines": [
+      "B11:TB11"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "blood:B11",
+   "name": "B11 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "blood:B11",
+   "name": "B11 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 16356,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "blood:B12",
+   "name": "B12 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 1098,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 11
+    }
+   }
+  },
+  {
+   "suite": "blood:B12",
+   "name": "B12 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 16498,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "B12:TB12"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "blood:B12",
+   "name": "B12 summons exactly the expected autonomous entities",
+   "ok": true,
+   "detail": {
+    "counts": [
+     1
+    ]
+   }
+  },
+  {
+   "suite": "blood:B12",
+   "name": "B12 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "blood:B12",
+   "name": "B12 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 17109,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "blood:B13",
+   "name": "B13 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 898,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 12
+    }
+   }
+  },
+  {
+   "suite": "blood:B13",
+   "name": "B13 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 7,
+    "w1": {
+     "kind": "world",
+     "tick": 17248,
+     "fx": 7,
+     "tempBlocks": 0,
+     "routines": [
+      "B13:TB13"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "blood:B13",
+   "name": "B13 transfers part of the damage to the other marked enemies",
+   "ok": true,
+   "detail": {
+    "before": [
+     16,
+     16,
+     16
+    ],
+    "after": [
+     8.128000259399414,
+     12.064000129699707,
+     12.064000129699707
+    ]
+   }
+  },
+  {
+   "suite": "blood:B13",
+   "name": "B13 transfer does not recurse (values stable after the pulse)",
+   "ok": true,
+   "detail": {
+    "after": [
+     8.128000259399414,
+     12.064000129699707,
+     12.064000129699707
+    ],
+    "again": [
+     8.128000259399414,
+     12.064000129699707,
+     12.064000129699707
+    ]
+   }
+  },
+  {
+   "suite": "blood:B13",
+   "name": "B13 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "blood:B13",
+   "name": "B13 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 17537,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "blood:B14",
+   "name": "B14 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 1798,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 13
+    }
+   }
+  },
+  {
+   "suite": "blood:B14",
+   "name": "B14 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 10,
+    "w1": {
+     "kind": "world",
+     "tick": 17695,
+     "fx": 10,
+     "tempBlocks": 0,
+     "routines": [
+      "B14:TB14"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "blood:B14",
+   "name": "B14 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     7,
+     20,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "blood:B14",
+   "name": "B14 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "blood:B14",
+   "name": "B14 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 18146,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "blood:B15",
+   "name": "B15 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 3598,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 14
+    }
+   }
+  },
+  {
+   "suite": "blood:B15",
+   "name": "B15 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 5,
+    "w1": {
+     "kind": "world",
+     "tick": 18337,
+     "fx": 5,
+     "tempBlocks": 0,
+     "routines": [
+      "B15:TB15"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "blood:B15",
+   "name": "B15 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "blood:B15",
+   "name": "B15 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "blood:B15",
+   "name": "B15 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 18770,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "robust:dimension",
+   "name": "an active cast is running before the dimension change",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 18858,
+    "fx": 2,
+    "tempBlocks": 0,
+    "routines": [
+     "P05:Dana"
+    ]
+   }
+  },
+  {
+   "suite": "robust:dimension",
+   "name": "preparation running before the dimension change",
+   "ok": true,
+   "detail": {
+    "kind": "state",
+    "name": "Dana",
+    "tick": 18870,
+    "selected": {
+     "pressure": 5,
+     "ice": 0,
+     "blood": 0
+    },
+    "cooldowns": {
+     "pressure.aegis_of_isobars": 476
+    },
+    "preparing": {
+     "spell": "pressure.counterpressure_mantle",
+     "ticks": 6
+    },
+    "empowered": false
+   }
+  },
+  {
+   "suite": "robust:dimension",
+   "name": "simulated player is now in the Nether",
+   "ok": true,
+   "detail": "minecraft:nether"
+  },
+  {
+   "suite": "robust:dimension",
+   "name": "dimension change cancels the preparation",
+   "ok": true,
+   "detail": {
+    "kind": "state",
+    "name": "Dana",
+    "tick": 18882,
+    "selected": {
+     "pressure": 5,
+     "ice": 0,
+     "blood": 0
+    },
+    "cooldowns": {
+     "pressure.aegis_of_isobars": 464
+    },
+    "preparing": null,
+    "empowered": false
+   }
+  },
+  {
+   "suite": "robust:dimension",
+   "name": "dimension change ends the caster's active spells",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 18882,
+    "fx": 1,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "robust:dimension",
+   "name": "their constructs dissolve within 2 seconds",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 18887,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "robust:dimension",
+   "name": "releasing Use after the dimension change casts nothing",
+   "ok": true,
+   "detail": {
+    "pressure.aegis_of_isobars": 455
+   }
+  },
+  {
+   "suite": "robust:dimension",
+   "name": "the cooldown of the spell that was already cast is kept",
+   "ok": true,
+   "detail": {
+    "pressure.aegis_of_isobars": 455
+   }
+  },
+  {
+   "suite": "robust:pvp",
+   "name": "PvP off: the lance was cast",
+   "ok": true,
+   "detail": {
+    "pressure.lance": 98
+   }
+  },
+  {
+   "suite": "robust:pvp",
+   "name": "PvP off (default): spells never damage other players",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "suite": "robust:pvp",
+   "name": "PvP on: the same spell damages the other player",
+   "ok": true,
+   "detail": [
+    {
+     "cause": "magic",
+     "by": "Pvpa",
+     "dmg": 7
+    }
+   ]
+  },
+  {
+   "suite": "robust:pvp",
+   "name": "PvP on, same grimoire_team tag, friendlyFire off: teammates are not damaged",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "suite": "robust:pvp",
+   "name": "casting consumed no food (Survival, full hunger bar)",
+   "ok": true,
+   "detail": {
+    "before": 20,
+    "after": 20
+   }
+  },
+  {
+   "suite": "robust:pvp",
+   "name": "the grimoire is not consumed by casting",
+   "ok": true,
+   "detail": {
+    "id": "grimoire:pressure",
+    "amount": 1
+   }
+  },
+  {
+   "suite": "robust:multiplayer",
+   "name": "two players cast the same spell in the same tick; both activate",
+   "ok": true,
+   "detail": {
+    "finn": {
+     "ice.frost_legion": 1160
+    },
+    "gwen": {
+     "ice.frost_legion": 1160
+    }
+   }
+  },
+  {
+   "suite": "robust:multiplayer",
+   "name": "each caster summons their own three knights",
+   "ok": true,
+   "detail": {
+    "finn": 3,
+    "gwen": 3,
+    "total": 6
+   }
+  },
+  {
+   "suite": "robust:multiplayer",
+   "name": "summoned knights are tamed to their own caster",
+   "ok": true,
+   "detail": {
+    "ownF": 3,
+    "ownG": 3
+   }
+  },
+  {
+   "suite": "robust:multiplayer",
+   "name": "when one caster disconnects only their summons are removed",
+   "ok": true,
+   "detail": {
+    "remaining": 3
+   }
+  },
+  {
+   "suite": "robust:multiplayer",
+   "name": "the disconnected caster's spell routine ended",
+   "ok": true,
+   "detail": [
+    "I12:Gwen"
+   ]
+  },
+  {
+   "suite": "robust:multiplayer",
+   "name": "the other caster's spell keeps running",
+   "ok": true,
+   "detail": [
+    "I12:Gwen"
+   ]
+  },
+  {
+   "suite": "robust:multiplayer",
+   "name": "no summons remain after both casters left",
+   "ok": true,
+   "detail": 0
+  },
+  {
+   "suite": "robust:blocks",
+   "name": "placed pre-existing blocks inside the labyrinth footprint",
+   "ok": true,
+   "detail": {
+    "gold": 70
+   }
+  },
+  {
+   "suite": "robust:blocks",
+   "name": "labyrinth raised temporary walls",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 19467,
+    "fx": 10,
+    "tempBlocks": 273,
+    "routines": [
+     "P08:Hank"
+    ]
+   }
+  },
+  {
+   "suite": "robust:blocks",
+   "name": "temporary walls never replace existing blocks (during the spell)",
+   "ok": true,
+   "detail": {
+    "intact": 70,
+    "of": 70
+   }
+  },
+  {
+   "suite": "robust:blocks",
+   "name": "all temporary walls removed when the spell ends",
+   "ok": true,
+   "detail": {
+    "w": {
+     "kind": "world",
+     "tick": 19807,
+     "fx": 0,
+     "tempBlocks": 0,
+     "routines": []
+    },
+    "barriers": 0
+   }
+  },
+  {
+   "suite": "robust:blocks",
+   "name": "existing blocks are intact after the spell",
+   "ok": true,
+   "detail": {
+    "intact": 70,
+    "of": 70
+   }
+  },
+  {
+   "suite": "robust:blocks",
+   "name": "second labyrinth is up before the owner disconnects",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 19896,
+    "fx": 10,
+    "tempBlocks": 255,
+    "routines": [
+     "P08:Hank"
+    ]
+   }
+  },
+  {
+   "suite": "robust:blocks",
+   "name": "owner disconnect mid-spell removes every temporary wall",
+   "ok": true,
+   "detail": {
+    "w": {
+     "kind": "world",
+     "tick": 19926,
+     "fx": 0,
+     "tempBlocks": 0,
+     "routines": []
+    },
+    "barriers": 0
+   }
+  },
+  {
+   "suite": "robust:blocks",
+   "name": "owner disconnect mid-spell ends the routine and its constructs",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 19926,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "robust:blocks",
+   "name": "existing blocks are intact after the disconnect cleanup",
+   "ok": true,
+   "detail": {
+    "intact": 70,
+    "of": 70
+   }
+  },
+  {
+   "suite": "cleanup",
+   "name": "constructs dissolved after spells ended",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 19966,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "cleanup",
+   "name": "temporary blocks removed",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 19966,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "cleanup",
+   "name": "no routines left running",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 19966,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "cleanup",
+   "name": "no construct entities remain in the world",
+   "ok": true,
+   "detail": 0
+  }
+ ],
+ "log_problems": []
+}

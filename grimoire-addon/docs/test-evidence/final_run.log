@@ -1,0 +1,722 @@
+NO LOG FILE! - Failed to up file descriptor limit Operation not permitted
+NO LOG FILE! - setting up server logging...
+[2026-11-12 03:47:13:750 INFO] Starting Server
+[2026-11-12 03:47:13:750 INFO] Version: 1.26.63.1
+[2026-11-12 03:47:13:750 INFO] Session ID: 25088f4d-2c35-4185-9f82-4e382ce30b4a
+[2026-11-12 03:47:13:750 INFO] Build ID: 53340802
+[2026-11-12 03:47:13:750 INFO] Branch: r/26_u6
+[2026-11-12 03:47:13:750 INFO] Commit ID: 2fcf3da2f65401b298466e1f5953182d548b2de7
+[2026-11-12 03:47:13:750 INFO] Configuration: Publish
+[2026-11-12 03:47:13:750 INFO] Contents of server.properties: {"allow-cheats":"true","allow-inbound-script-debugging":"false","allow-list":"false","allow-outbound-script-debugging":"false","block-network-ids-are-hashes":"true","chat-restriction":"None","client-side-chunk-generation-enabled":"true","compression-algorithm":"zlib","compression-threshold":"1","content-log-console-output-enabled":"true","content-log-file-enabled":"true","content-log-level":"info","default-player-permission-level":"member","difficulty":"normal","disable-custom-skins":"false","disable-persona":"false","disable-player-interaction":"false","enable-lan-visibility":"true","force-gamemode":"false","gamemode":"survival","level-name":"grimoire_test","max-players":"10","max-threads":"8","online-mode":"false","persistent-ticking-area-max-chunks":"100","persistent-ticking-area-max-count":"10","player-idle-timeout":"30","player-movement-action-direction-threshold":"0.85","player-position-acceptance-threshold":"0.5","script-debugger-auto-attach":"disabled","server-authoritative-block-breaking-pick-range-scalar":"1.5","server-authoritative-dismount-strict":"false","server-authoritative-entity-attack-range-tolerance":"0.5","server-authoritative-entity-attack-range-validation":"disabled","server-authoritative-entity-attack-request-validation":"disabled","server-authoritative-entity-interactions-strict":"false","server-authoritative-movement-strict":"false","server-build-radius-ratio":"Disabled","server-name":"Dedicated Server","server-port":"19132","server-portv6":"19133","server-udp-ports":"19132","texturepack-required":"false","tick-distance":"6","transient-ticking-area-max-chunks":"300","transport":"nethernet","view-distance":"10"}
+[2026-11-12 03:47:13:750 INFO] Level Name: grimoire_test
+[2026-11-12 03:47:13:750 INFO] Profiler config ('bootstrap.json') load result: success=1, errorMessage=(null)
+[2026-11-12 03:47:13:752 INFO] No CDN config file found at: cdn_config.json for dedicated server
+[2026-11-12 03:47:13:752 INFO] Game mode: 0 Survival
+[2026-11-12 03:47:13:752 INFO] Difficulty: 2 NORMAL
+[2026-11-12 03:47:13:755 INFO] Content logging to console is enabled.
+[2026-11-12 03:47:13:758 INFO] 
+
+#####################################################
+#                                                   #
+#               LOADING VANILLA WORLD               #
+#                                                   #
+#####################################################
+[2026-11-12 03:47:14:118 INFO] Content logging to disk is enabled. Writing log to: ./ContentLog2026-11-12_03-47-14.txt
+[2026-11-12 03:47:14:119 INFO] Experiment(s) active: gtst
+[2026-11-12 03:47:14:119 INFO] Opening level 'worlds/grimoire_test/db'
+[2026-11-12 03:47:14:122 INFO] Accepting clients on 0.0.0.0:19132
+[2026-11-12 03:47:14:171 INFO] Pack Stack - [00] Grimoire: Imperial Magic BP (id: 1dcdd281-148f-43d0-86bd-a29bfeda5bb1, version: 1.0.0) @ worlds/grimoire_test/behavior_packs/Grimoire_BP
+[2026-11-12 03:47:14:171 INFO] Pack Stack - [01] Grimoire Test Harness (dev only) (id: 5c0b7a4e-2b0e-4a3e-9d55-7f1d3c0a9e11, version: 1.0.0) @ worlds/grimoire_test/behavior_packs/Grimoire_Harness
+[2026-11-12 03:47:14:471 INFO] Signed in to signaling service successfully
+[2026-11-12 03:47:15:125 INFO] Server started.
+[2026-11-12 03:47:15:126 INFO] ================ TELEMETRY MESSAGE ===================
+[2026-11-12 03:47:15:126 INFO] Server Telemetry is currently not enabled. 
+[2026-11-12 03:47:15:126 INFO] Enabling this telemetry helps us improve the game.
+[2026-11-12 03:47:15:126 INFO] 
+[2026-11-12 03:47:15:126 INFO] To enable this feature, add the line 'emit-server-telemetry=true'
+[2026-11-12 03:47:15:126 INFO] to the server.properties file in the handheld/src-server directory
+[2026-11-12 03:47:15:126 INFO] ======================================================
+[2026-11-12 03:47:15:138 WARN] [Scripting] [Grimoire] loaded: 45 spells, PvP off
+
+[2026-11-12 03:47:16:085 WARN] [Scripting] [HARNESS] {"ready":true}
+
+[2026-11-12 03:47:16:314 INFO] Script event harness:run has been sent
+[2026-11-12 03:47:18:223 WARN] [Scripting] [HARNESS] {"suiteStart":"controls"}
+
+[2026-11-12 03:47:18:230 INFO] Player Spawned: Alice xuid: , pfid: 
+[2026-11-12 03:47:18:233 INFO] Player Spawned: Bob xuid: , pfid: 
+[2026-11-12 03:47:19:725 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"diagnostics reachable","ok":true,"detail":{"kind":"state","name":"Alice","tick":571,"selected":{"pressure":0,"ice":0,"blood":0},"cooldowns":{},"preparing":null,"empowered":false}}
+
+[2026-11-12 03:47:19:725 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"three grimoires start at spell 01","ok":true,"detail":{"pressure":0,"ice":0,"blood":0}}
+
+[2026-11-12 03:47:20:025 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"one crouch press advances exactly one spell","ok":true,"detail":{"pressure":1,"ice":0,"blood":0}}
+
+[2026-11-12 03:47:23:176 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"holding crouch 3s advances only once","ok":true,"detail":{"pressure":2,"ice":0,"blood":0}}
+
+[2026-11-12 03:47:26:425 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"selection wraps 15 -> 01","ok":true,"detail":{"pressure":0,"ice":0,"blood":0}}
+
+[2026-11-12 03:47:26:625 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"holding Use starts preparation (no instant cast)","ok":true,"detail":{"kind":"state","name":"Alice","tick":709,"selected":{"pressure":0,"ice":0,"blood":0},"cooldowns":{},"preparing":{"spell":"pressure.lance","ticks":4},"empowered":false}}
+
+[2026-11-12 03:47:27:225 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"release casts the selected spell (cooldown 6s started)","ok":true,"detail":{"pressure.lance":118}}
+
+[2026-11-12 03:47:27:225 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"single release activates only one spell","ok":true,"detail":{"pressure.lance":118}}
+
+[2026-11-12 03:47:27:476 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"casting costs no health","ok":true,"detail":{"hp0":20,"hp1":20}}
+
+[2026-11-12 03:47:27:476 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"full hunger does not block casting (no food component used)","ok":true,"detail":{"food0":20}}
+
+[2026-11-12 03:47:28:575 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"spell on cooldown cannot be recast","ok":true,"detail":{"pressure.lance":91}}
+
+[2026-11-12 03:47:28:875 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"selected P02 Atlas Piston","ok":true,"detail":{"pressure":1,"ice":0,"blood":0}}
+
+[2026-11-12 03:47:29:525 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"releasing before minimum preparation does not cast","ok":true,"detail":{"pressure.lance":72}}
+
+[2026-11-12 03:47:30:525 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"P02 castable while P01 is cooling (independent cooldowns)","ok":true,"detail":{"pressure.lance":52,"pressure.atlas_piston":358}}
+
+[2026-11-12 03:47:31:975 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"crouching during preparation cancels it","ok":true,"detail":{"kind":"state","name":"Alice","tick":816,"selected":{"pressure":3,"ice":0,"blood":0},"cooldowns":{"pressure.lance":23,"pressure.atlas_piston":329},"preparing":null,"empowered":false}}
+
+[2026-11-12 03:47:32:175 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"release after crouch-cancel casts nothing","ok":true,"detail":{"pressure.lance":19,"pressure.atlas_piston":325}}
+
+[2026-11-12 03:47:32:175 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"the crouch also advanced the selection (P03 -> P04)","ok":true,"detail":{"pressure":3,"ice":0,"blood":0}}
+
+[2026-11-12 03:47:33:725 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"switching items cancels preparation","ok":true,"detail":{"kind":"state","name":"Alice","tick":851,"selected":{"pressure":3,"ice":0,"blood":0},"cooldowns":{"pressure.atlas_piston":294},"preparing":null,"empowered":false}}
+
+[2026-11-12 03:47:33:925 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"no cast after item switch","ok":true,"detail":{"pressure.atlas_piston":290}}
+
+[2026-11-12 03:47:35:276 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"Use while crouching does not prepare","ok":true,"detail":{"kind":"state","name":"Alice","tick":882,"selected":{"pressure":4,"ice":0,"blood":0},"cooldowns":{"pressure.atlas_piston":263},"preparing":null,"empowered":false}}
+
+[2026-11-12 03:47:35:425 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"no cast when the preparation started crouched","ok":true,"detail":{"pressure.atlas_piston":260}}
+
+[2026-11-12 03:47:35:875 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"selection is stored per grimoire","ok":true,"detail":{"pressure":4,"ice":1,"blood":0}}
+
+[2026-11-12 03:47:36:024 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"another copy of the book shares the player's cooldowns","ok":true,"detail":{"kind":"state","name":"Alice","tick":897,"selected":{"pressure":4,"ice":1,"blood":0},"cooldowns":{"pressure.atlas_piston":248},"preparing":null,"empowered":false}}
+
+[2026-11-12 03:47:36:025 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"second player has independent selection","ok":true,"detail":{"kind":"state","name":"Bob","tick":897,"selected":{"pressure":0,"ice":0,"blood":0},"cooldowns":{},"preparing":null,"empowered":false}}
+
+[2026-11-12 03:47:36:725 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"creative player can cast (P01)","ok":true,"detail":{"pressure.lance":118}}
+
+[2026-11-12 03:47:37:725 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"death cancels preparation","ok":true,"detail":{"kind":"state","name":"Alice","tick":931,"selected":{"pressure":4,"ice":1,"blood":0},"cooldowns":{"pressure.atlas_piston":214},"preparing":null,"empowered":false}}
+
+[2026-11-12 03:47:38:725 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"no cast happened through death","ok":true,"detail":{"pressure.atlas_piston":194}}
+
+[2026-11-12 03:47:38:725 WARN] [Scripting] [HARNESS] {"suite":"controls","name":"cooldowns survive death","ok":true,"detail":{"pressure.atlas_piston":194}}
+
+[2026-11-12 03:47:39:223 WARN] [Scripting] [HARNESS] {"suiteEnd":"controls"}
+
+[2026-11-12 03:47:39:223 WARN] [Scripting] [HARNESS] {"suiteStart":"reuse_gap"}
+
+[2026-11-12 03:47:39:227 INFO] Player Spawned: Carol xuid: , pfid: 
+[2026-11-12 03:47:51:424 WARN] [Scripting] [HARNESS] {"measurement":"engine re-use window","acceptedByGap":{"2":false,"3":false,"4":false,"5":false,"6":false,"7":true,"8":true,"10":true,"12":true},"firstAcceptedGapTicks":7}
+
+[2026-11-12 03:47:51:424 WARN] [Scripting] [HARNESS] {"suite":"reuse_gap","name":"engine re-use window measured: presses >= 7 ticks after a release are accepted","ok":true,"detail":{"2":false,"3":false,"4":false,"5":false,"6":false,"7":true,"8":true,"10":true,"12":true}}
+
+[2026-11-12 03:47:51:424 WARN] [Scripting] [HARNESS] {"suite":"reuse_gap","name":"every press 10+ ticks after a release starts a new use","ok":true,"detail":{"2":false,"3":false,"4":false,"5":false,"6":false,"7":true,"8":true,"10":true,"12":true}}
+
+[2026-11-12 03:47:51:426 WARN] [Scripting] [HARNESS] {"suite":"reuse_gap","name":"dropped and early-released presses never cast anything","ok":true,"detail":{}}
+
+[2026-11-12 03:47:51:426 WARN] [Scripting] [HARNESS] {"suiteEnd":"reuse_gap"}
+
+[2026-11-12 03:47:51:426 WARN] [Scripting] [HARNESS] {"suiteStart":"pressure"}
+
+[2026-11-12 03:47:51:432 INFO] Player Spawned: TP01 xuid: , pfid: 
+[2026-11-12 03:47:54:026 WARN] [Scripting] [HARNESS] {"suite":"pressure:P01","name":"P01 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":118,"preparing":null,"selected":{"pressure":0,"ice":0,"blood":0}}}
+
+[2026-11-12 03:47:55:525 WARN] [Scripting] [HARNESS] {"suite":"pressure:P01","name":"P01 spawns its constructs","ok":true,"detail":{"maxFx":2,"w1":{"kind":"world","tick":1266,"fx":2,"tempBlocks":0,"routines":["P01:TP01"]}}}
+
+[2026-11-12 03:47:56:524 WARN] [Scripting] [HARNESS] {"suite":"pressure:P01","name":"P01 damages enemies","ok":true,"detail":{"dealt":[14,14,14]}}
+
+[2026-11-12 03:47:56:524 WARN] [Scripting] [HARNESS] {"suite":"pressure:P01","name":"P01 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:47:58:527 WARN] [Scripting] [HARNESS] {"suite":"pressure:P01","name":"P01 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":1347,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:47:59:028 INFO] Player Spawned: TP02 xuid: , pfid: 
+[2026-11-12 03:48:02:176 WARN] [Scripting] [HARNESS] {"suite":"pressure:P02","name":"P02 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":358,"preparing":null,"selected":{"pressure":1,"ice":0,"blood":0}}}
+
+[2026-11-12 03:48:03:676 WARN] [Scripting] [HARNESS] {"suite":"pressure:P02","name":"P02 spawns its constructs","ok":true,"detail":{"maxFx":3,"w1":{"kind":"world","tick":1429,"fx":3,"tempBlocks":0,"routines":["P02:TP02"]}}}
+
+[2026-11-12 03:48:07:674 WARN] [Scripting] [HARNESS] {"suite":"pressure:P02","name":"P02 damages enemies","ok":true,"detail":{"dealt":[20,20,20]}}
+
+[2026-11-12 03:48:07:675 WARN] [Scripting] [HARNESS] {"suite":"pressure:P02","name":"P02 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:48:09:675 WARN] [Scripting] [HARNESS] {"suite":"pressure:P02","name":"P02 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":1570,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:48:10:178 INFO] Player Spawned: TP03 xuid: , pfid: 
+[2026-11-12 03:48:13:375 WARN] [Scripting] [HARNESS] {"suite":"pressure:P03","name":"P03 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":198,"preparing":null,"selected":{"pressure":2,"ice":0,"blood":0}}}
+
+[2026-11-12 03:48:14:876 WARN] [Scripting] [HARNESS] {"suite":"pressure:P03","name":"P03 spawns its constructs","ok":true,"detail":{"maxFx":2,"w1":{"kind":"world","tick":1653,"fx":2,"tempBlocks":0,"routines":["P03:TP03"]}}}
+
+[2026-11-12 03:48:17:876 WARN] [Scripting] [HARNESS] {"suite":"pressure:P03","name":"P03 damages enemies","ok":true,"detail":{"dealt":[20,20,20]}}
+
+[2026-11-12 03:48:17:876 WARN] [Scripting] [HARNESS] {"suite":"pressure:P03","name":"P03 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:48:19:875 WARN] [Scripting] [HARNESS] {"suite":"pressure:P03","name":"P03 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":1774,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:48:20:379 INFO] Player Spawned: TP04 xuid: , pfid: 
+[2026-11-12 03:48:24:125 WARN] [Scripting] [HARNESS] {"suite":"pressure:P04","name":"P04 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":438,"preparing":null,"selected":{"pressure":3,"ice":0,"blood":0}}}
+
+[2026-11-12 03:48:25:626 WARN] [Scripting] [HARNESS] {"suite":"pressure:P04","name":"P04 spawns its constructs","ok":true,"detail":{"maxFx":9,"w1":{"kind":"world","tick":1880,"fx":9,"tempBlocks":0,"routines":["P04:TP04","P04:disc","P04:disc","P04:disc","P04:disc","P04:disc","P04:disc"]}}}
+
+[2026-11-12 03:48:31:624 WARN] [Scripting] [HARNESS] {"suite":"pressure:P04","name":"P04 damages enemies","ok":true,"detail":{"dealt":[20,20,20]}}
+
+[2026-11-12 03:48:31:625 WARN] [Scripting] [HARNESS] {"suite":"pressure:P04","name":"P04 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:48:33:626 WARN] [Scripting] [HARNESS] {"suite":"pressure:P04","name":"P04 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":2049,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:48:34:129 INFO] Player Spawned: TP05 xuid: , pfid: 
+[2026-11-12 03:48:37:927 WARN] [Scripting] [HARNESS] {"suite":"pressure:P05","name":"P05 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":498,"preparing":null,"selected":{"pressure":4,"ice":0,"blood":0}}}
+
+[2026-11-12 03:48:39:425 WARN] [Scripting] [HARNESS] {"suite":"pressure:P05","name":"P05 spawns its constructs","ok":true,"detail":{"maxFx":2,"w1":{"kind":"world","tick":2144,"fx":2,"tempBlocks":0,"routines":["P05:TP05"]}}}
+
+[2026-11-12 03:48:39:725 WARN] [Scripting] [HARNESS] {"suite":"pressure:P05","name":"P05 absorbs/reduces a real attack on the caster","ok":true,"detail":{"before":20,"after":20}}
+
+[2026-11-12 03:48:40:225 WARN] [Scripting] [HARNESS] {"suite":"pressure:P05","name":"P05 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:48:53:226 WARN] [Scripting] [HARNESS] {"suite":"pressure:P05","name":"P05 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":2441,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:48:53:728 INFO] Player Spawned: TP06 xuid: , pfid: 
+[2026-11-12 03:48:57:675 WARN] [Scripting] [HARNESS] {"suite":"pressure:P06","name":"P06 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":438,"preparing":null,"selected":{"pressure":5,"ice":0,"blood":0}}}
+
+[2026-11-12 03:48:59:175 WARN] [Scripting] [HARNESS] {"suite":"pressure:P06","name":"P06 spawns its constructs","ok":true,"detail":{"maxFx":2,"w1":{"kind":"world","tick":2539,"fx":2,"tempBlocks":0,"routines":["P06:TP06"]}}}
+
+[2026-11-12 03:48:59:475 WARN] [Scripting] [HARNESS] {"suite":"pressure:P06","name":"P06 absorbs/reduces a real attack on the caster","ok":true,"detail":{"before":20,"after":17.600000381469727}}
+
+[2026-11-12 03:48:59:475 WARN] [Scripting] [HARNESS] {"suite":"pressure:P06","name":"P06 counterattack hits the attacker","ok":true,"detail":{"attackerHp":14.095999717712402}}
+
+[2026-11-12 03:48:59:525 WARN] [Scripting] [HARNESS] {"suite":"pressure:P06","name":"P06 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[{"cause":"entityAttack","src":"minecraft:husk","dmg":2.4000000953674316}]}}
+
+[2026-11-12 03:49:14:526 WARN] [Scripting] [HARNESS] {"suite":"pressure:P06","name":"P06 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":2867,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:49:15:028 INFO] Player Spawned: TP07 xuid: , pfid: 
+[2026-11-12 03:49:19:525 WARN] [Scripting] [HARNESS] {"suite":"pressure:P07","name":"P07 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":598,"preparing":null,"selected":{"pressure":6,"ice":0,"blood":0}}}
+
+[2026-11-12 03:49:21:024 WARN] [Scripting] [HARNESS] {"suite":"pressure:P07","name":"P07 spawns its constructs","ok":true,"detail":{"maxFx":4,"w1":{"kind":"world","tick":2976,"fx":4,"tempBlocks":0,"routines":["P07:TP07"]}}}
+
+[2026-11-12 03:49:27:025 WARN] [Scripting] [HARNESS] {"suite":"pressure:P07","name":"P07 damages enemies","ok":true,"detail":{"dealt":[20,20,20]}}
+
+[2026-11-12 03:49:27:025 WARN] [Scripting] [HARNESS] {"suite":"pressure:P07","name":"P07 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:49:29:025 WARN] [Scripting] [HARNESS] {"suite":"pressure:P07","name":"P07 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":3157,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:49:29:528 INFO] Player Spawned: TP08 xuid: , pfid: 
+[2026-11-12 03:49:34:477 WARN] [Scripting] [HARNESS] {"suite":"pressure:P08","name":"P08 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":698,"preparing":null,"selected":{"pressure":7,"ice":0,"blood":0}}}
+
+[2026-11-12 03:49:35:977 WARN] [Scripting] [HARNESS] {"suite":"pressure:P08","name":"P08 spawns its constructs","ok":true,"detail":{"maxFx":11,"w1":{"kind":"world","tick":3275,"fx":11,"tempBlocks":88,"routines":["P08:TP08"]}}}
+
+[2026-11-12 03:49:38:074 WARN] [Scripting] [HARNESS] {"suite":"pressure:P08","name":"P08 raises temporary barrier blocks","ok":true,"detail":{"blocks":465}}
+
+[2026-11-12 03:49:42:475 WARN] [Scripting] [HARNESS] {"suite":"pressure:P08","name":"P08 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:49:55:476 WARN] [Scripting] [HARNESS] {"suite":"pressure:P08","name":"P08 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":3686,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:49:55:978 INFO] Player Spawned: TP09 xuid: , pfid: 
+[2026-11-12 03:50:00:875 WARN] [Scripting] [HARNESS] {"suite":"pressure:P09","name":"P09 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":558,"preparing":null,"selected":{"pressure":8,"ice":0,"blood":0}}}
+
+[2026-11-12 03:50:02:376 WARN] [Scripting] [HARNESS] {"suite":"pressure:P09","name":"P09 spawns its constructs","ok":true,"detail":{"maxFx":2,"w1":{"kind":"world","tick":3803,"fx":2,"tempBlocks":0,"routines":["P09:TP09"]}}}
+
+[2026-11-12 03:50:08:375 WARN] [Scripting] [HARNESS] {"suite":"pressure:P09","name":"P09 damages enemies","ok":true,"detail":{"dealt":[20,20]}}
+
+[2026-11-12 03:50:08:375 WARN] [Scripting] [HARNESS] {"suite":"pressure:P09","name":"P09 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:50:10:375 WARN] [Scripting] [HARNESS] {"suite":"pressure:P09","name":"P09 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":3984,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:50:10:878 INFO] Player Spawned: TP10 xuid: , pfid: 
+[2026-11-12 03:50:15:527 WARN] [Scripting] [HARNESS] {"suite":"pressure:P10","name":"P10 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":98,"preparing":null,"selected":{"pressure":9,"ice":0,"blood":0}}}
+
+[2026-11-12 03:50:16:575 WARN] [Scripting] [HARNESS] {"suite":"pressure:P10","name":"P10 spawns its constructs","ok":true,"detail":{"maxFx":2,"w1":{"kind":"world","tick":4096,"fx":2,"tempBlocks":0,"routines":[]}}}
+
+[2026-11-12 03:50:16:575 WARN] [Scripting] [HARNESS] {"note":"P10 simulated players have no client physics; knockback-driven motion is not observable in BDS","moved":21.29230989913048}
+
+[2026-11-12 03:50:16:625 WARN] [Scripting] [HARNESS] {"suite":"pressure:P10","name":"P10 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:50:18:625 WARN] [Scripting] [HARNESS] {"suite":"pressure:P10","name":"P10 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":4149,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:50:19:128 INFO] Player Spawned: TP11 xuid: , pfid: 
+[2026-11-12 03:50:24:426 WARN] [Scripting] [HARNESS] {"suite":"pressure:P11","name":"P11 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":278,"preparing":null,"selected":{"pressure":10,"ice":0,"blood":0}}}
+
+[2026-11-12 03:50:25:925 WARN] [Scripting] [HARNESS] {"suite":"pressure:P11","name":"P11 spawns its constructs","ok":true,"detail":{"maxFx":11,"w1":{"kind":"world","tick":4274,"fx":11,"tempBlocks":0,"routines":["P11:TP11"]}}}
+
+[2026-11-12 03:50:25:926 WARN] [Scripting] [HARNESS] {"note":"P11 simulated players have no client physics; knockback-driven motion is not observable in BDS","moved":31.028554634063113}
+
+[2026-11-12 03:50:27:424 WARN] [Scripting] [HARNESS] {"suite":"pressure:P11","name":"P11 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:50:29:425 WARN] [Scripting] [HARNESS] {"suite":"pressure:P11","name":"P11 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":4365,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:50:29:928 INFO] Player Spawned: TP12 xuid: , pfid: 
+[2026-11-12 03:50:35:477 WARN] [Scripting] [HARNESS] {"suite":"pressure:P12","name":"P12 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":498,"preparing":null,"selected":{"pressure":11,"ice":0,"blood":0}}}
+
+[2026-11-12 03:50:36:975 WARN] [Scripting] [HARNESS] {"suite":"pressure:P12","name":"P12 spawns its constructs","ok":true,"detail":{"maxFx":5,"w1":{"kind":"world","tick":4513,"fx":5,"tempBlocks":0,"routines":["P12:TP12"]}}}
+
+[2026-11-12 03:50:38:475 WARN] [Scripting] [HARNESS] {"suite":"pressure:P12","name":"P12 marks detected living entities","ok":true,"detail":{"markers":3}}
+
+[2026-11-12 03:50:40:975 WARN] [Scripting] [HARNESS] {"suite":"pressure:P12","name":"P12 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:50:52:977 WARN] [Scripting] [HARNESS] {"suite":"pressure:P12","name":"P12 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":4836,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:50:53:480 INFO] Player Spawned: TP13 xuid: , pfid: 
+[2026-11-12 03:50:59:476 WARN] [Scripting] [HARNESS] {"suite":"pressure:P13","name":"P13 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":698,"preparing":null,"selected":{"pressure":12,"ice":0,"blood":0}}}
+
+[2026-11-12 03:51:00:976 WARN] [Scripting] [HARNESS] {"suite":"pressure:P13","name":"P13 spawns its constructs","ok":true,"detail":{"maxFx":2,"w1":{"kind":"world","tick":4975,"fx":2,"tempBlocks":0,"routines":["P13:TP13"]}}}
+
+[2026-11-12 03:51:03:977 WARN] [Scripting] [HARNESS] {"suite":"pressure:P13","name":"P13 grants a single-use empowerment","ok":true,"detail":{"kind":"state","name":"TP13","tick":5056,"selected":{"pressure":12,"ice":0,"blood":0},"cooldowns":{"pressure.equilibrium_theft":608},"preparing":null,"empowered":true}}
+
+[2026-11-12 03:51:06:380 WARN] [Scripting] [HARNESS] {"suite":"pressure:P13","name":"P13 empowerment is consumed by the next eligible spell (no stacking)","ok":true,"detail":{"kind":"state","name":"TP13","tick":5104,"selected":{"pressure":0,"ice":0,"blood":0},"cooldowns":{"pressure.lance":113},"preparing":null,"empowered":false}}
+
+[2026-11-12 03:51:07:875 WARN] [Scripting] [HARNESS] {"suite":"pressure:P13","name":"P13 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[{"cause":"entityAttack","src":"minecraft:husk","dmg":3},{"cause":"entityAttack","src":"minecraft:husk","dmg":3},{"cause":"entityAttack","src":"minecraft:husk","dmg":3}]}}
+
+[2026-11-12 03:51:09:875 WARN] [Scripting] [HARNESS] {"suite":"pressure:P13","name":"P13 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":5174,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:51:10:378 INFO] Player Spawned: TP14 xuid: , pfid: 
+[2026-11-12 03:51:17:326 WARN] [Scripting] [HARNESS] {"suite":"pressure:P14","name":"P14 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":1498,"preparing":null,"selected":{"pressure":13,"ice":0,"blood":0}}}
+
+[2026-11-12 03:51:18:828 WARN] [Scripting] [HARNESS] {"suite":"pressure:P14","name":"P14 spawns its constructs","ok":true,"detail":{"maxFx":10,"w1":{"kind":"world","tick":5350,"fx":10,"tempBlocks":0,"routines":["P14:TP14"]}}}
+
+[2026-11-12 03:51:20:963 WARN] [Scripting] [HARNESS] {"suite":"pressure:P14","name":"P14 raises temporary barrier blocks","ok":true,"detail":{"blocks":316}}
+
+[2026-11-12 03:51:29:369 WARN] [Scripting] [HARNESS] {"suite":"pressure:P14","name":"P14 damages enemies","ok":true,"detail":{"dealt":[20,20]}}
+
+[2026-11-12 03:51:29:369 WARN] [Scripting] [HARNESS] {"suite":"pressure:P14","name":"P14 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:51:53:370 WARN] [Scripting] [HARNESS] {"suite":"pressure:P14","name":"P14 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":6043,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:51:53:873 INFO] Player Spawned: TP15 xuid: , pfid: 
+[2026-11-12 03:52:01:570 WARN] [Scripting] [HARNESS] {"suite":"pressure:P15","name":"P15 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":3598,"preparing":null,"selected":{"pressure":14,"ice":0,"blood":0}}}
+
+[2026-11-12 03:52:03:069 WARN] [Scripting] [HARNESS] {"suite":"pressure:P15","name":"P15 spawns its constructs","ok":true,"detail":{"maxFx":4,"w1":{"kind":"world","tick":6216,"fx":4,"tempBlocks":0,"routines":["P15:TP15"]}}}
+
+[2026-11-12 03:52:16:569 WARN] [Scripting] [HARNESS] {"suite":"pressure:P15","name":"P15 damages enemies","ok":true,"detail":{"dealt":[20,20,20,20]}}
+
+[2026-11-12 03:52:16:569 WARN] [Scripting] [HARNESS] {"suite":"pressure:P15","name":"P15 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:52:18:570 WARN] [Scripting] [HARNESS] {"suite":"pressure:P15","name":"P15 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":6547,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:52:19:069 WARN] [Scripting] [HARNESS] {"suiteEnd":"pressure"}
+
+[2026-11-12 03:52:19:069 WARN] [Scripting] [HARNESS] {"suiteStart":"ice"}
+
+[2026-11-12 03:52:19:073 INFO] Player Spawned: TI01 xuid: , pfid: 
+[2026-11-12 03:52:21:872 WARN] [Scripting] [HARNESS] {"suite":"ice:I01","name":"I01 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":158,"preparing":null,"selected":{"pressure":0,"ice":0,"blood":0}}}
+
+[2026-11-12 03:52:23:369 WARN] [Scripting] [HARNESS] {"suite":"ice:I01","name":"I01 spawns its constructs","ok":true,"detail":{"maxFx":10,"w1":{"kind":"world","tick":6622,"fx":10,"tempBlocks":0,"routines":["I01:TI01"]}}}
+
+[2026-11-12 03:52:25:369 WARN] [Scripting] [HARNESS] {"suite":"ice:I01","name":"I01 damages enemies","ok":true,"detail":{"dealt":[17,20,20]}}
+
+[2026-11-12 03:52:25:370 WARN] [Scripting] [HARNESS] {"suite":"ice:I01","name":"I01 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:52:29:871 WARN] [Scripting] [HARNESS] {"suite":"ice:I01","name":"I01 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":6773,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:52:30:372 INFO] Player Spawned: TI02 xuid: , pfid: 
+[2026-11-12 03:52:33:621 WARN] [Scripting] [HARNESS] {"suite":"ice:I02","name":"I02 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":398,"preparing":null,"selected":{"pressure":0,"ice":1,"blood":0}}}
+
+[2026-11-12 03:52:35:121 WARN] [Scripting] [HARNESS] {"suite":"ice:I02","name":"I02 spawns its constructs","ok":true,"detail":{"maxFx":2,"w1":{"kind":"world","tick":6875,"fx":2,"tempBlocks":0,"routines":["I02:TI02"]}}}
+
+[2026-11-12 03:52:39:621 WARN] [Scripting] [HARNESS] {"suite":"ice:I02","name":"I02 damages enemies","ok":true,"detail":{"dealt":[20,0,0]}}
+
+[2026-11-12 03:52:39:621 WARN] [Scripting] [HARNESS] {"suite":"ice:I02","name":"I02 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:52:41:621 WARN] [Scripting] [HARNESS] {"suite":"ice:I02","name":"I02 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":7008,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:52:42:125 INFO] Player Spawned: TI03 xuid: , pfid: 
+[2026-11-12 03:52:45:520 WARN] [Scripting] [HARNESS] {"suite":"ice:I03","name":"I03 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":278,"preparing":null,"selected":{"pressure":0,"ice":2,"blood":0}}}
+
+[2026-11-12 03:52:47:020 WARN] [Scripting] [HARNESS] {"suite":"ice:I03","name":"I03 spawns its constructs","ok":true,"detail":{"maxFx":8,"w1":{"kind":"world","tick":7113,"fx":8,"tempBlocks":0,"routines":["I03:TI03"]}}}
+
+[2026-11-12 03:52:49:020 WARN] [Scripting] [HARNESS] {"suite":"ice:I03","name":"I03 damages enemies","ok":true,"detail":{"dealt":[20,20,20]}}
+
+[2026-11-12 03:52:49:020 WARN] [Scripting] [HARNESS] {"suite":"ice:I03","name":"I03 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:52:55:022 WARN] [Scripting] [HARNESS] {"suite":"ice:I03","name":"I03 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":7276,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:52:55:522 INFO] Player Spawned: TI04 xuid: , pfid: 
+[2026-11-12 03:52:59:471 WARN] [Scripting] [HARNESS] {"suite":"ice:I04","name":"I04 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":498,"preparing":null,"selected":{"pressure":0,"ice":3,"blood":0}}}
+
+[2026-11-12 03:53:00:971 WARN] [Scripting] [HARNESS] {"suite":"ice:I04","name":"I04 spawns its constructs","ok":true,"detail":{"maxFx":6,"w1":{"kind":"world","tick":7392,"fx":6,"tempBlocks":0,"routines":["I04:TI04","I04:volley","I04:volley","I04:volley"]}}}
+
+[2026-11-12 03:53:04:970 WARN] [Scripting] [HARNESS] {"suite":"ice:I04","name":"I04 damages enemies","ok":true,"detail":{"dealt":[20,20,20,20]}}
+
+[2026-11-12 03:53:04:970 WARN] [Scripting] [HARNESS] {"suite":"ice:I04","name":"I04 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:53:06:970 WARN] [Scripting] [HARNESS] {"suite":"ice:I04","name":"I04 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":7515,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:53:07:474 INFO] Player Spawned: TI05 xuid: , pfid: 
+[2026-11-12 03:53:11:371 WARN] [Scripting] [HARNESS] {"suite":"ice:I05","name":"I05 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":558,"preparing":null,"selected":{"pressure":0,"ice":4,"blood":0}}}
+
+[2026-11-12 03:53:12:870 WARN] [Scripting] [HARNESS] {"suite":"ice:I05","name":"I05 spawns its constructs","ok":true,"detail":{"maxFx":2,"w1":{"kind":"world","tick":7612,"fx":2,"tempBlocks":0,"routines":["I05:TI05"]}}}
+
+[2026-11-12 03:53:13:169 WARN] [Scripting] [HARNESS] {"suite":"ice:I05","name":"I05 absorbs/reduces a real attack on the caster","ok":true,"detail":{"before":20,"after":20}}
+
+[2026-11-12 03:53:13:669 WARN] [Scripting] [HARNESS] {"suite":"ice:I05","name":"I05 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:53:26:670 WARN] [Scripting] [HARNESS] {"suite":"ice:I05","name":"I05 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":7909,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:53:27:176 INFO] Player Spawned: TI06 xuid: , pfid: 
+[2026-11-12 03:53:31:321 WARN] [Scripting] [HARNESS] {"suite":"ice:I06","name":"I06 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":638,"preparing":null,"selected":{"pressure":0,"ice":5,"blood":0}}}
+
+[2026-11-12 03:53:32:820 WARN] [Scripting] [HARNESS] {"suite":"ice:I06","name":"I06 spawns its constructs","ok":true,"detail":{"maxFx":5,"w1":{"kind":"world","tick":8011,"fx":5,"tempBlocks":0,"routines":["I06:TI06"]}}}
+
+[2026-11-12 03:53:33:120 WARN] [Scripting] [HARNESS] {"suite":"ice:I06","name":"I06 absorbs/reduces a real attack on the caster","ok":true,"detail":{"before":20,"after":20}}
+
+[2026-11-12 03:53:33:170 WARN] [Scripting] [HARNESS] {"suite":"ice:I06","name":"I06 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:53:49:171 WARN] [Scripting] [HARNESS] {"suite":"ice:I06","name":"I06 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":8359,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:53:49:675 INFO] Player Spawned: TI07 xuid: , pfid: 
+[2026-11-12 03:53:54:171 WARN] [Scripting] [HARNESS] {"suite":"ice:I07","name":"I07 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":598,"preparing":null,"selected":{"pressure":0,"ice":6,"blood":0}}}
+
+[2026-11-12 03:53:55:670 WARN] [Scripting] [HARNESS] {"suite":"ice:I07","name":"I07 spawns its constructs","ok":true,"detail":{"maxFx":7,"w1":{"kind":"world","tick":8468,"fx":7,"tempBlocks":0,"routines":["I07:TI07"]}}}
+
+[2026-11-12 03:54:02:170 WARN] [Scripting] [HARNESS] {"suite":"ice:I07","name":"I07 damages enemies","ok":true,"detail":{"dealt":[14,14,14]}}
+
+[2026-11-12 03:54:02:171 WARN] [Scripting] [HARNESS] {"suite":"ice:I07","name":"I07 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:54:04:170 WARN] [Scripting] [HARNESS] {"suite":"ice:I07","name":"I07 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":8659,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:54:04:673 INFO] Player Spawned: TI08 xuid: , pfid: 
+[2026-11-12 03:54:09:621 WARN] [Scripting] [HARNESS] {"suite":"ice:I08","name":"I08 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":798,"preparing":null,"selected":{"pressure":0,"ice":7,"blood":0}}}
+
+[2026-11-12 03:54:11:120 WARN] [Scripting] [HARNESS] {"suite":"ice:I08","name":"I08 spawns its constructs","ok":true,"detail":{"maxFx":10,"w1":{"kind":"world","tick":8795,"fx":10,"tempBlocks":414,"routines":["I08:TI08"]}}}
+
+[2026-11-12 03:54:13:255 WARN] [Scripting] [HARNESS] {"suite":"ice:I08","name":"I08 raises temporary barrier blocks","ok":true,"detail":{"blocks":711}}
+
+[2026-11-12 03:54:17:658 WARN] [Scripting] [HARNESS] {"suite":"ice:I08","name":"I08 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:54:33:657 WARN] [Scripting] [HARNESS] {"suite":"ice:I08","name":"I08 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":9248,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:54:34:160 INFO] Player Spawned: TI09 xuid: , pfid: 
+[2026-11-12 03:54:39:358 WARN] [Scripting] [HARNESS] {"suite":"ice:I09","name":"I09 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":898,"preparing":null,"selected":{"pressure":0,"ice":8,"blood":0}}}
+
+[2026-11-12 03:54:40:857 WARN] [Scripting] [HARNESS] {"suite":"ice:I09","name":"I09 spawns its constructs","ok":true,"detail":{"maxFx":8,"w1":{"kind":"world","tick":9371,"fx":8,"tempBlocks":0,"routines":["I09:TI09"]}}}
+
+[2026-11-12 03:54:45:357 WARN] [Scripting] [HARNESS] {"suite":"ice:I09","name":"I09 damages enemies","ok":true,"detail":{"dealt":[15,18,18]}}
+
+[2026-11-12 03:54:45:358 WARN] [Scripting] [HARNESS] {"suite":"ice:I09","name":"I09 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:54:53:358 WARN] [Scripting] [HARNESS] {"suite":"ice:I09","name":"I09 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":9642,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:54:53:865 INFO] Player Spawned: TI10 xuid: , pfid: 
+[2026-11-12 03:54:58:707 WARN] [Scripting] [HARNESS] {"suite":"ice:I10","name":"I10 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":158,"preparing":null,"selected":{"pressure":0,"ice":9,"blood":0}}}
+
+[2026-11-12 03:55:00:206 WARN] [Scripting] [HARNESS] {"suite":"ice:I10","name":"I10 spawns its constructs","ok":true,"detail":{"maxFx":3,"w1":{"kind":"world","tick":9758,"fx":3,"tempBlocks":0,"routines":["I10:TI10"]}}}
+
+[2026-11-12 03:55:01:207 WARN] [Scripting] [HARNESS] {"suite":"ice:I10","name":"I10 teleports the caster to a safe spot","ok":true,"detail":{"moved":19.50640920313116,"feet":"minecraft:air","head":"minecraft:air"}}
+
+[2026-11-12 03:55:01:708 WARN] [Scripting] [HARNESS] {"suite":"ice:I10","name":"I10 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:55:03:707 WARN] [Scripting] [HARNESS] {"suite":"ice:I10","name":"I10 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":9849,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:55:04:212 INFO] Player Spawned: TI11 xuid: , pfid: 
+[2026-11-12 03:55:09:608 WARN] [Scripting] [HARNESS] {"suite":"ice:I11","name":"I11 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":-1,"preparing":null,"selected":{"pressure":0,"ice":10,"blood":0}}}
+
+[2026-11-12 03:55:09:608 WARN] [Scripting] [HARNESS] {"suite":"ice:I11","name":"I11 cooldown waits until the flight ends","ok":true,"detail":{"cd":-1}}
+
+[2026-11-12 03:55:11:107 WARN] [Scripting] [HARNESS] {"suite":"ice:I11","name":"I11 spawns its constructs","ok":true,"detail":{"kind":"world","tick":9997,"fx":1,"tempBlocks":0,"routines":["I11:TI11"]}}
+
+[2026-11-12 03:55:13:108 WARN] [Scripting] [HARNESS] {"suite":"ice:I11","name":"I11 cooldown starts after the flight ends","ok":true,"detail":{"ice.winter_seraph":373}}
+
+[2026-11-12 03:55:16:107 WARN] [Scripting] [HARNESS] {"suite":"ice:I11","name":"I11 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:55:34:107 WARN] [Scripting] [HARNESS] {"suite":"ice:I11","name":"I11 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":10457,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:55:34:611 INFO] Player Spawned: TI12 xuid: , pfid: 
+[2026-11-12 03:55:40:758 WARN] [Scripting] [HARNESS] {"suite":"ice:I12","name":"I12 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":1198,"preparing":null,"selected":{"pressure":0,"ice":11,"blood":0}}}
+
+[2026-11-12 03:55:42:257 WARN] [Scripting] [HARNESS] {"suite":"ice:I12","name":"I12 spawns its constructs","ok":true,"detail":{"maxFx":4,"w1":{"kind":"world","tick":10599,"fx":4,"tempBlocks":0,"routines":["I12:TI12"]}}}
+
+[2026-11-12 03:55:42:257 WARN] [Scripting] [HARNESS] {"suite":"ice:I12","name":"I12 summons exactly the expected autonomous entities","ok":true,"detail":{"counts":[1,1,1]}}
+
+[2026-11-12 03:55:48:758 WARN] [Scripting] [HARNESS] {"suite":"ice:I12","name":"I12 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:56:14:757 WARN] [Scripting] [HARNESS] {"suite":"ice:I12","name":"I12 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":11270,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:56:15:262 INFO] Player Spawned: TI13 xuid: , pfid: 
+[2026-11-12 03:56:21:358 WARN] [Scripting] [HARNESS] {"suite":"ice:I13","name":"I13 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":998,"preparing":null,"selected":{"pressure":0,"ice":12,"blood":0}}}
+
+[2026-11-12 03:56:22:857 WARN] [Scripting] [HARNESS] {"suite":"ice:I13","name":"I13 spawns its constructs","ok":true,"detail":{"maxFx":3,"w1":{"kind":"world","tick":11411,"fx":3,"tempBlocks":0,"routines":["I13:TI13"]}}}
+
+[2026-11-12 03:56:27:857 WARN] [Scripting] [HARNESS] {"suite":"ice:I13","name":"I13 damages enemies","ok":true,"detail":{"dealt":[10,10,10]}}
+
+[2026-11-12 03:56:27:857 WARN] [Scripting] [HARNESS] {"suite":"ice:I13","name":"I13 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:56:35:857 WARN] [Scripting] [HARNESS] {"suite":"ice:I13","name":"I13 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":11692,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:56:36:360 INFO] Player Spawned: TI14 xuid: , pfid: 
+[2026-11-12 03:56:43:309 WARN] [Scripting] [HARNESS] {"suite":"ice:I14","name":"I14 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":1798,"preparing":null,"selected":{"pressure":0,"ice":13,"blood":0}}}
+
+[2026-11-12 03:56:44:808 WARN] [Scripting] [HARNESS] {"suite":"ice:I14","name":"I14 spawns its constructs","ok":true,"detail":{"maxFx":10,"w1":{"kind":"world","tick":11868,"fx":10,"tempBlocks":216,"routines":["I14:TI14"]}}}
+
+[2026-11-12 03:56:46:926 WARN] [Scripting] [HARNESS] {"suite":"ice:I14","name":"I14 raises temporary barrier blocks","ok":true,"detail":{"blocks":486}}
+
+[2026-11-12 03:56:56:330 WARN] [Scripting] [HARNESS] {"suite":"ice:I14","name":"I14 damages enemies","ok":true,"detail":{"dealt":[20,20]}}
+
+[2026-11-12 03:56:56:330 WARN] [Scripting] [HARNESS] {"suite":"ice:I14","name":"I14 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:57:22:332 WARN] [Scripting] [HARNESS] {"suite":"ice:I14","name":"I14 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":12621,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:57:22:833 INFO] Player Spawned: TI15 xuid: , pfid: 
+[2026-11-12 03:57:30:532 WARN] [Scripting] [HARNESS] {"suite":"ice:I15","name":"I15 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":3598,"preparing":null,"selected":{"pressure":0,"ice":14,"blood":0}}}
+
+[2026-11-12 03:57:32:030 WARN] [Scripting] [HARNESS] {"suite":"ice:I15","name":"I15 spawns its constructs","ok":true,"detail":{"maxFx":2,"w1":{"kind":"world","tick":12794,"fx":2,"tempBlocks":0,"routines":["I15:TI15"]}}}
+
+[2026-11-12 03:57:47:030 WARN] [Scripting] [HARNESS] {"suite":"ice:I15","name":"I15 damages enemies","ok":true,"detail":{"dealt":[20,20,20,20]}}
+
+[2026-11-12 03:57:47:030 WARN] [Scripting] [HARNESS] {"suite":"ice:I15","name":"I15 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:57:49:032 WARN] [Scripting] [HARNESS] {"suite":"ice:I15","name":"I15 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":13155,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:57:49:529 WARN] [Scripting] [HARNESS] {"suiteEnd":"ice"}
+
+[2026-11-12 03:57:49:529 WARN] [Scripting] [HARNESS] {"suiteStart":"blood"}
+
+[2026-11-12 03:57:49:533 INFO] Player Spawned: TB01 xuid: , pfid: 
+[2026-11-12 03:57:52:231 WARN] [Scripting] [HARNESS] {"suite":"blood:B01","name":"B01 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":138,"preparing":null,"selected":{"pressure":0,"ice":0,"blood":0}}}
+
+[2026-11-12 03:57:53:731 WARN] [Scripting] [HARNESS] {"suite":"blood:B01","name":"B01 spawns its constructs","ok":true,"detail":{"maxFx":4,"w1":{"kind":"world","tick":13246,"fx":4,"tempBlocks":0,"routines":["B01:TB01"]}}}
+
+[2026-11-12 03:57:55:730 WARN] [Scripting] [HARNESS] {"suite":"blood:B01","name":"B01 damages enemies","ok":true,"detail":{"dealt":[12,12,12]}}
+
+[2026-11-12 03:57:55:730 WARN] [Scripting] [HARNESS] {"suite":"blood:B01","name":"B01 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:57:57:731 WARN] [Scripting] [HARNESS] {"suite":"blood:B01","name":"B01 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":13329,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:57:58:236 INFO] Player Spawned: TB02 xuid: , pfid: 
+[2026-11-12 03:58:01:381 WARN] [Scripting] [HARNESS] {"suite":"blood:B02","name":"B02 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":318,"preparing":null,"selected":{"pressure":0,"ice":0,"blood":1}}}
+
+[2026-11-12 03:58:02:881 WARN] [Scripting] [HARNESS] {"suite":"blood:B02","name":"B02 spawns its constructs","ok":true,"detail":{"maxFx":2,"w1":{"kind":"world","tick":13411,"fx":2,"tempBlocks":0,"routines":["B02:TB02"]}}}
+
+[2026-11-12 03:58:06:880 WARN] [Scripting] [HARNESS] {"suite":"blood:B02","name":"B02 damages enemies","ok":true,"detail":{"dealt":[20,8,8]}}
+
+[2026-11-12 03:58:06:880 WARN] [Scripting] [HARNESS] {"suite":"blood:B02","name":"B02 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:58:08:880 WARN] [Scripting] [HARNESS] {"suite":"blood:B02","name":"B02 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":13552,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:58:09:386 INFO] Player Spawned: TB03 xuid: , pfid: 
+[2026-11-12 03:58:12:982 WARN] [Scripting] [HARNESS] {"suite":"blood:B03","name":"B03 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":478,"preparing":null,"selected":{"pressure":0,"ice":0,"blood":2}}}
+
+[2026-11-12 03:58:14:482 WARN] [Scripting] [HARNESS] {"suite":"blood:B03","name":"B03 spawns its constructs","ok":true,"detail":{"maxFx":13,"w1":{"kind":"world","tick":13643,"fx":13,"tempBlocks":0,"routines":["B03:TB03"]}}}
+
+[2026-11-12 03:58:18:480 WARN] [Scripting] [HARNESS] {"suite":"blood:B03","name":"B03 damages enemies","ok":true,"detail":{"dealt":[15,9.200000762939453,15]}}
+
+[2026-11-12 03:58:18:480 WARN] [Scripting] [HARNESS] {"suite":"blood:B03","name":"B03 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:58:20:482 WARN] [Scripting] [HARNESS] {"suite":"blood:B03","name":"B03 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":13784,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:58:20:984 INFO] Player Spawned: TB04 xuid: , pfid: 
+[2026-11-12 03:58:24:831 WARN] [Scripting] [HARNESS] {"suite":"blood:B04","name":"B04 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":518,"preparing":null,"selected":{"pressure":0,"ice":0,"blood":3}}}
+
+[2026-11-12 03:58:26:330 WARN] [Scripting] [HARNESS] {"suite":"blood:B04","name":"B04 spawns its constructs","ok":true,"detail":{"maxFx":13,"w1":{"kind":"world","tick":13880,"fx":13,"tempBlocks":0,"routines":["B04:TB04"]}}}
+
+[2026-11-12 03:58:32:330 WARN] [Scripting] [HARNESS] {"suite":"blood:B04","name":"B04 damages enemies","ok":true,"detail":{"dealt":[20,20,20]}}
+
+[2026-11-12 03:58:32:330 WARN] [Scripting] [HARNESS] {"suite":"blood:B04","name":"B04 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:58:34:330 WARN] [Scripting] [HARNESS] {"suite":"blood:B04","name":"B04 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":14061,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:58:34:833 INFO] Player Spawned: TB05 xuid: , pfid: 
+[2026-11-12 03:58:38:631 WARN] [Scripting] [HARNESS] {"suite":"blood:B05","name":"B05 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":498,"preparing":null,"selected":{"pressure":0,"ice":0,"blood":4}}}
+
+[2026-11-12 03:58:40:131 WARN] [Scripting] [HARNESS] {"suite":"blood:B05","name":"B05 spawns its constructs","ok":true,"detail":{"maxFx":2,"w1":{"kind":"world","tick":14156,"fx":2,"tempBlocks":0,"routines":["B05:TB05"]}}}
+
+[2026-11-12 03:58:40:431 WARN] [Scripting] [HARNESS] {"suite":"blood:B05","name":"B05 absorbs/reduces a real attack on the caster","ok":true,"detail":{"before":20,"after":20}}
+
+[2026-11-12 03:58:40:481 WARN] [Scripting] [HARNESS] {"suite":"blood:B05","name":"B05 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:58:49:481 WARN] [Scripting] [HARNESS] {"suite":"blood:B05","name":"B05 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":14364,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:58:49:985 INFO] Player Spawned: TB06 xuid: , pfid: 
+[2026-11-12 03:58:54:032 WARN] [Scripting] [HARNESS] {"suite":"blood:B06","name":"B06 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":558,"preparing":null,"selected":{"pressure":0,"ice":0,"blood":5}}}
+
+[2026-11-12 03:58:55:531 WARN] [Scripting] [HARNESS] {"suite":"blood:B06","name":"B06 spawns its constructs","ok":true,"detail":{"maxFx":2,"w1":{"kind":"world","tick":14464,"fx":2,"tempBlocks":0,"routines":["B06:TB06"]}}}
+
+[2026-11-12 03:58:55:831 WARN] [Scripting] [HARNESS] {"suite":"blood:B06","name":"B06 absorbs/reduces a real attack on the caster","ok":true,"detail":{"before":20,"after":20}}
+
+[2026-11-12 03:58:55:831 WARN] [Scripting] [HARNESS] {"suite":"blood:B06","name":"B06 counterattack hits the attacker","ok":true,"detail":{"attackerHp":17.059999465942383}}
+
+[2026-11-12 03:58:55:881 WARN] [Scripting] [HARNESS] {"suite":"blood:B06","name":"B06 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:59:09:882 WARN] [Scripting] [HARNESS] {"suite":"blood:B06","name":"B06 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":14772,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:59:10:383 INFO] Player Spawned: TB07 xuid: , pfid: 
+[2026-11-12 03:59:14:883 WARN] [Scripting] [HARNESS] {"suite":"blood:B07","name":"B07 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":598,"preparing":null,"selected":{"pressure":0,"ice":0,"blood":6}}}
+
+[2026-11-12 03:59:16:380 WARN] [Scripting] [HARNESS] {"suite":"blood:B07","name":"B07 spawns its constructs","ok":true,"detail":{"maxFx":5,"w1":{"kind":"world","tick":14881,"fx":5,"tempBlocks":0,"routines":["B07:TB07"]}}}
+
+[2026-11-12 03:59:22:381 WARN] [Scripting] [HARNESS] {"suite":"blood:B07","name":"B07 damages enemies","ok":true,"detail":{"dealt":[12,12,12]}}
+
+[2026-11-12 03:59:22:381 WARN] [Scripting] [HARNESS] {"suite":"blood:B07","name":"B07 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:59:24:383 WARN] [Scripting] [HARNESS] {"suite":"blood:B07","name":"B07 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":15062,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:59:24:884 INFO] Player Spawned: TB08 xuid: , pfid: 
+[2026-11-12 03:59:29:831 WARN] [Scripting] [HARNESS] {"suite":"blood:B08","name":"B08 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":698,"preparing":null,"selected":{"pressure":0,"ice":0,"blood":7}}}
+
+[2026-11-12 03:59:31:330 WARN] [Scripting] [HARNESS] {"suite":"blood:B08","name":"B08 spawns its constructs","ok":true,"detail":{"maxFx":8,"w1":{"kind":"world","tick":15198,"fx":8,"tempBlocks":0,"routines":["B08:TB08"]}}}
+
+[2026-11-12 03:59:42:832 WARN] [Scripting] [HARNESS] {"suite":"blood:B08","name":"B08 damages enemies","ok":true,"detail":{"dealt":[18,17,20]}}
+
+[2026-11-12 03:59:42:832 WARN] [Scripting] [HARNESS] {"suite":"blood:B08","name":"B08 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 03:59:44:830 WARN] [Scripting] [HARNESS] {"suite":"blood:B08","name":"B08 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":15471,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 03:59:45:335 INFO] Player Spawned: TB09 xuid: , pfid: 
+[2026-11-12 03:59:50:531 WARN] [Scripting] [HARNESS] {"suite":"blood:B09","name":"B09 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":798,"preparing":null,"selected":{"pressure":0,"ice":0,"blood":8}}}
+
+[2026-11-12 03:59:52:031 WARN] [Scripting] [HARNESS] {"suite":"blood:B09","name":"B09 spawns its constructs","ok":true,"detail":{"maxFx":2,"w1":{"kind":"world","tick":15612,"fx":2,"tempBlocks":0,"routines":["B09:TB09"]}}}
+
+[2026-11-12 03:59:58:030 WARN] [Scripting] [HARNESS] {"suite":"blood:B09","name":"B09 damages enemies","ok":true,"detail":{"dealt":[20,20,20]}}
+
+[2026-11-12 03:59:58:030 WARN] [Scripting] [HARNESS] {"suite":"blood:B09","name":"B09 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 04:00:00:031 WARN] [Scripting] [HARNESS] {"suite":"blood:B09","name":"B09 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":15775,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 04:00:00:535 INFO] Player Spawned: TB10 xuid: , pfid: 
+[2026-11-12 04:00:05:280 WARN] [Scripting] [HARNESS] {"suite":"blood:B10","name":"B10 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":138,"preparing":null,"selected":{"pressure":0,"ice":0,"blood":9}}}
+
+[2026-11-12 04:00:06:780 WARN] [Scripting] [HARNESS] {"suite":"blood:B10","name":"B10 spawns its constructs","ok":true,"detail":{"maxFx":4,"w1":{"kind":"world","tick":15889,"fx":4,"tempBlocks":0,"routines":["B10:TB10"]}}}
+
+[2026-11-12 04:00:07:781 WARN] [Scripting] [HARNESS] {"suite":"blood:B10","name":"B10 teleports the caster to a safe spot","ok":true,"detail":{"moved":11.510864433221338,"feet":"minecraft:air","head":"minecraft:air"}}
+
+[2026-11-12 04:00:08:280 WARN] [Scripting] [HARNESS] {"suite":"blood:B10","name":"B10 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 04:00:10:281 WARN] [Scripting] [HARNESS] {"suite":"blood:B10","name":"B10 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":15980,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 04:00:10:784 INFO] Player Spawned: TB11 xuid: , pfid: 
+[2026-11-12 04:00:16:082 WARN] [Scripting] [HARNESS] {"suite":"blood:B11","name":"B11 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":358,"preparing":null,"selected":{"pressure":0,"ice":0,"blood":10}}}
+
+[2026-11-12 04:00:17:581 WARN] [Scripting] [HARNESS] {"suite":"blood:B11","name":"B11 spawns its constructs","ok":true,"detail":{"maxFx":15,"w1":{"kind":"world","tick":16123,"fx":15,"tempBlocks":0,"routines":["B11:TB11"]}}}
+
+[2026-11-12 04:00:17:581 WARN] [Scripting] [HARNESS] {"note":"B11 simulated players have no client physics; knockback-driven motion is not observable in BDS","moved":42.69636891953186}
+
+[2026-11-12 04:00:27:080 WARN] [Scripting] [HARNESS] {"suite":"blood:B11","name":"B11 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 04:00:29:082 WARN] [Scripting] [HARNESS] {"suite":"blood:B11","name":"B11 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":16356,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 04:00:29:583 INFO] Player Spawned: TB12 xuid: , pfid: 
+[2026-11-12 04:00:35:732 WARN] [Scripting] [HARNESS] {"suite":"blood:B12","name":"B12 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":1098,"preparing":null,"selected":{"pressure":0,"ice":0,"blood":11}}}
+
+[2026-11-12 04:00:37:230 WARN] [Scripting] [HARNESS] {"suite":"blood:B12","name":"B12 spawns its constructs","ok":true,"detail":{"maxFx":2,"w1":{"kind":"world","tick":16498,"fx":2,"tempBlocks":0,"routines":["B12:TB12"]}}}
+
+[2026-11-12 04:00:37:230 WARN] [Scripting] [HARNESS] {"suite":"blood:B12","name":"B12 summons exactly the expected autonomous entities","ok":true,"detail":{"counts":[1]}}
+
+[2026-11-12 04:00:45:730 WARN] [Scripting] [HARNESS] {"suite":"blood:B12","name":"B12 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 04:01:06:730 WARN] [Scripting] [HARNESS] {"suite":"blood:B12","name":"B12 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":17109,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 04:01:07:236 INFO] Player Spawned: TB13 xuid: , pfid: 
+[2026-11-12 04:01:13:232 WARN] [Scripting] [HARNESS] {"suite":"blood:B13","name":"B13 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":898,"preparing":null,"selected":{"pressure":0,"ice":0,"blood":12}}}
+
+[2026-11-12 04:01:14:730 WARN] [Scripting] [HARNESS] {"suite":"blood:B13","name":"B13 spawns its constructs","ok":true,"detail":{"maxFx":7,"w1":{"kind":"world","tick":17248,"fx":7,"tempBlocks":0,"routines":["B13:TB13"]}}}
+
+[2026-11-12 04:01:16:031 WARN] [Scripting] [HARNESS] {"suite":"blood:B13","name":"B13 transfers part of the damage to the other marked enemies","ok":true,"detail":{"before":[16,16,16],"after":[8.128000259399414,12.064000129699707,12.064000129699707]}}
+
+[2026-11-12 04:01:16:630 WARN] [Scripting] [HARNESS] {"suite":"blood:B13","name":"B13 transfer does not recurse (values stable after the pulse)","ok":true,"detail":{"after":[8.128000259399414,12.064000129699707,12.064000129699707],"again":[8.128000259399414,12.064000129699707,12.064000129699707]}}
+
+[2026-11-12 04:01:18:130 WARN] [Scripting] [HARNESS] {"suite":"blood:B13","name":"B13 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 04:01:28:132 WARN] [Scripting] [HARNESS] {"suite":"blood:B13","name":"B13 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":17537,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 04:01:28:633 INFO] Player Spawned: TB14 xuid: , pfid: 
+[2026-11-12 04:01:35:581 WARN] [Scripting] [HARNESS] {"suite":"blood:B14","name":"B14 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":1798,"preparing":null,"selected":{"pressure":0,"ice":0,"blood":13}}}
+
+[2026-11-12 04:01:37:080 WARN] [Scripting] [HARNESS] {"suite":"blood:B14","name":"B14 spawns its constructs","ok":true,"detail":{"maxFx":10,"w1":{"kind":"world","tick":17695,"fx":10,"tempBlocks":0,"routines":["B14:TB14"]}}}
+
+[2026-11-12 04:01:56:581 WARN] [Scripting] [HARNESS] {"suite":"blood:B14","name":"B14 damages enemies","ok":true,"detail":{"dealt":[7,20,20,20]}}
+
+[2026-11-12 04:01:56:581 WARN] [Scripting] [HARNESS] {"suite":"blood:B14","name":"B14 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 04:01:58:582 WARN] [Scripting] [HARNESS] {"suite":"blood:B14","name":"B14 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":18146,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 04:01:59:085 INFO] Player Spawned: TB15 xuid: , pfid: 
+[2026-11-12 04:02:06:782 WARN] [Scripting] [HARNESS] {"suite":"blood:B15","name":"B15 activates via crouch-select + hold/release (cooldown started)","ok":true,"detail":{"cd":3598,"preparing":null,"selected":{"pressure":0,"ice":0,"blood":14}}}
+
+[2026-11-12 04:02:08:285 WARN] [Scripting] [HARNESS] {"suite":"blood:B15","name":"B15 spawns its constructs","ok":true,"detail":{"maxFx":5,"w1":{"kind":"world","tick":18337,"fx":5,"tempBlocks":0,"routines":["B15:TB15"]}}}
+
+[2026-11-12 04:02:27:780 WARN] [Scripting] [HARNESS] {"suite":"blood:B15","name":"B15 damages enemies","ok":true,"detail":{"dealt":[20,20,20,20]}}
+
+[2026-11-12 04:02:27:780 WARN] [Scripting] [HARNESS] {"suite":"blood:B15","name":"B15 costs the caster no health (no self-inflicted damage)","ok":true,"detail":{"hurts":[]}}
+
+[2026-11-12 04:02:29:782 WARN] [Scripting] [HARNESS] {"suite":"blood:B15","name":"B15 cleans up constructs/blocks after it ends","ok":true,"detail":{"kind":"world","tick":18770,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 04:02:30:280 WARN] [Scripting] [HARNESS] {"suiteEnd":"blood"}
+
+[2026-11-12 04:02:30:280 WARN] [Scripting] [HARNESS] {"suiteStart":"robustness"}
+
+[2026-11-12 04:02:30:287 INFO] Player Spawned: Dana xuid: , pfid: 
+[2026-11-12 04:02:34:181 WARN] [Scripting] [HARNESS] {"suite":"robust:dimension","name":"an active cast is running before the dimension change","ok":true,"detail":{"kind":"world","tick":18858,"fx":2,"tempBlocks":0,"routines":["P05:Dana"]}}
+
+[2026-11-12 04:02:34:781 WARN] [Scripting] [HARNESS] {"suite":"robust:dimension","name":"preparation running before the dimension change","ok":true,"detail":{"kind":"state","name":"Dana","tick":18870,"selected":{"pressure":5,"ice":0,"blood":0},"cooldowns":{"pressure.aegis_of_isobars":476},"preparing":{"spell":"pressure.counterpressure_mantle","ticks":6},"empowered":false}}
+
+[2026-11-12 04:02:35:380 WARN] [Scripting] [HARNESS] {"suite":"robust:dimension","name":"simulated player is now in the Nether","ok":true,"detail":"minecraft:nether"}
+
+[2026-11-12 04:02:35:381 WARN] [Scripting] [HARNESS] {"suite":"robust:dimension","name":"dimension change cancels the preparation","ok":true,"detail":{"kind":"state","name":"Dana","tick":18882,"selected":{"pressure":5,"ice":0,"blood":0},"cooldowns":{"pressure.aegis_of_isobars":464},"preparing":null,"empowered":false}}
+
+[2026-11-12 04:02:35:381 WARN] [Scripting] [HARNESS] {"suite":"robust:dimension","name":"dimension change ends the caster's active spells","ok":true,"detail":{"kind":"world","tick":18882,"fx":1,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 04:02:35:631 WARN] [Scripting] [HARNESS] {"suite":"robust:dimension","name":"their constructs dissolve within 2 seconds","ok":true,"detail":{"kind":"world","tick":18887,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 04:02:35:831 WARN] [Scripting] [HARNESS] {"suite":"robust:dimension","name":"releasing Use after the dimension change casts nothing","ok":true,"detail":{"pressure.aegis_of_isobars":455}}
+
+[2026-11-12 04:02:35:831 WARN] [Scripting] [HARNESS] {"suite":"robust:dimension","name":"the cooldown of the spell that was already cast is kept","ok":true,"detail":{"pressure.aegis_of_isobars":455}}
+
+[2026-11-12 04:02:36:833 INFO] Player Spawned: Pvpa xuid: , pfid: 
+[2026-11-12 04:02:36:836 INFO] Player Spawned: Pvpt xuid: , pfid: 
+[2026-11-12 04:02:40:031 WARN] [Scripting] [HARNESS] {"suite":"robust:pvp","name":"PvP off: the lance was cast","ok":true,"detail":{"pressure.lance":98}}
+
+[2026-11-12 04:02:40:031 WARN] [Scripting] [HARNESS] {"suite":"robust:pvp","name":"PvP off (default): spells never damage other players","ok":true,"detail":[]}
+
+[2026-11-12 04:02:42:232 WARN] [Scripting] [HARNESS] {"suite":"robust:pvp","name":"PvP on: the same spell damages the other player","ok":true,"detail":[{"cause":"magic","by":"Pvpa","dmg":7}]}
+
+[2026-11-12 04:02:44:281 WARN] [Scripting] [HARNESS] {"suite":"robust:pvp","name":"PvP on, same grimoire_team tag, friendlyFire off: teammates are not damaged","ok":true,"detail":[]}
+
+[2026-11-12 04:02:44:281 WARN] [Scripting] [HARNESS] {"suite":"robust:pvp","name":"casting consumed no food (Survival, full hunger bar)","ok":true,"detail":{"before":20,"after":20}}
+
+[2026-11-12 04:02:44:281 WARN] [Scripting] [HARNESS] {"suite":"robust:pvp","name":"the grimoire is not consumed by casting","ok":true,"detail":{"id":"grimoire:pressure","amount":1}}
+
+[2026-11-12 04:02:44:933 INFO] Player Spawned: Finn xuid: , pfid: 
+[2026-11-12 04:02:44:937 INFO] Player Spawned: Gwen xuid: , pfid: 
+[2026-11-12 04:02:52:688 WARN] [Scripting] [HARNESS] {"suite":"robust:multiplayer","name":"two players cast the same spell in the same tick; both activate","ok":true,"detail":{"finn":{"ice.frost_legion":1160},"gwen":{"ice.frost_legion":1160}}}
+
+[2026-11-12 04:02:52:689 WARN] [Scripting] [HARNESS] {"suite":"robust:multiplayer","name":"each caster summons their own three knights","ok":true,"detail":{"finn":3,"gwen":3,"total":6}}
+
+[2026-11-12 04:02:52:689 WARN] [Scripting] [HARNESS] {"suite":"robust:multiplayer","name":"summoned knights are tamed to their own caster","ok":true,"detail":{"ownF":3,"ownG":3}}
+
+[2026-11-12 04:02:54:680 WARN] [Scripting] [HARNESS] {"suite":"robust:multiplayer","name":"when one caster disconnects only their summons are removed","ok":true,"detail":{"remaining":3}}
+
+[2026-11-12 04:02:54:681 WARN] [Scripting] [HARNESS] {"suite":"robust:multiplayer","name":"the disconnected caster's spell routine ended","ok":true,"detail":["I12:Gwen"]}
+
+[2026-11-12 04:02:54:681 WARN] [Scripting] [HARNESS] {"suite":"robust:multiplayer","name":"the other caster's spell keeps running","ok":true,"detail":["I12:Gwen"]}
+
+[2026-11-12 04:02:56:679 WARN] [Scripting] [HARNESS] {"suite":"robust:multiplayer","name":"no summons remain after both casters left","ok":true,"detail":0}
+
+[2026-11-12 04:02:56:684 INFO] Player Spawned: Hank xuid: , pfid: 
+[2026-11-12 04:02:57:930 WARN] [Scripting] [HARNESS] {"suite":"robust:blocks","name":"placed pre-existing blocks inside the labyrinth footprint","ok":true,"detail":{"gold":70}}
+
+[2026-11-12 04:03:04:630 WARN] [Scripting] [HARNESS] {"suite":"robust:blocks","name":"labyrinth raised temporary walls","ok":true,"detail":{"kind":"world","tick":19467,"fx":10,"tempBlocks":273,"routines":["P08:Hank"]}}
+
+[2026-11-12 04:03:04:632 WARN] [Scripting] [HARNESS] {"suite":"robust:blocks","name":"temporary walls never replace existing blocks (during the spell)","ok":true,"detail":{"intact":70,"of":70}}
+
+[2026-11-12 04:03:21:805 WARN] [Scripting] [HARNESS] {"suite":"robust:blocks","name":"all temporary walls removed when the spell ends","ok":true,"detail":{"w":{"kind":"world","tick":19807,"fx":0,"tempBlocks":0,"routines":[]},"barriers":0}}
+
+[2026-11-12 04:03:21:807 WARN] [Scripting] [HARNESS] {"suite":"robust:blocks","name":"existing blocks are intact after the spell","ok":true,"detail":{"intact":70,"of":70}}
+
+[2026-11-12 04:03:26:162 WARN] [Scripting] [HARNESS] {"suite":"robust:blocks","name":"second labyrinth is up before the owner disconnects","ok":true,"detail":{"kind":"world","tick":19896,"fx":10,"tempBlocks":255,"routines":["P08:Hank"]}}
+
+[2026-11-12 04:03:27:826 WARN] [Scripting] [HARNESS] {"suite":"robust:blocks","name":"owner disconnect mid-spell removes every temporary wall","ok":true,"detail":{"w":{"kind":"world","tick":19926,"fx":0,"tempBlocks":0,"routines":[]},"barriers":0}}
+
+[2026-11-12 04:03:27:826 WARN] [Scripting] [HARNESS] {"suite":"robust:blocks","name":"owner disconnect mid-spell ends the routine and its constructs","ok":true,"detail":{"kind":"world","tick":19926,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 04:03:27:828 WARN] [Scripting] [HARNESS] {"suite":"robust:blocks","name":"existing blocks are intact after the disconnect cleanup","ok":true,"detail":{"intact":70,"of":70}}
+
+[2026-11-12 04:03:27:830 WARN] [Scripting] [HARNESS] {"suiteEnd":"robustness"}
+
+[2026-11-12 04:03:27:830 WARN] [Scripting] [HARNESS] {"suiteStart":"cleanup"}
+
+[2026-11-12 04:03:29:734 WARN] [Scripting] [HARNESS] {"suite":"cleanup","name":"constructs dissolved after spells ended","ok":true,"detail":{"kind":"world","tick":19966,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 04:03:29:734 WARN] [Scripting] [HARNESS] {"suite":"cleanup","name":"temporary blocks removed","ok":true,"detail":{"kind":"world","tick":19966,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 04:03:29:734 WARN] [Scripting] [HARNESS] {"suite":"cleanup","name":"no routines left running","ok":true,"detail":{"kind":"world","tick":19966,"fx":0,"tempBlocks":0,"routines":[]}}
+
+[2026-11-12 04:03:29:734 WARN] [Scripting] [HARNESS] {"suite":"cleanup","name":"no construct entities remain in the world","ok":true,"detail":0}
+
+[2026-11-12 04:03:29:734 WARN] [Scripting] [HARNESS] {"suiteEnd":"cleanup"}
+
+[2026-11-12 04:03:29:735 WARN] [Scripting] [HARNESS] {"DONE":true,"total":294,"failed":0}
