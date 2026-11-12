@@ -1,0 +1,40 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:frost_knight_sword",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "trans": "entity_alphablend",
+    "glow": "entity_beam_additive"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/frost_knight_sword"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.frost_knight_sword"
+   },
+   "animations": {
+    "slash": "animation.grimoire.frost_knight_sword.slash",
+    "crescent": "animation.grimoire.frost_knight_sword.crescent",
+    "guard": "animation.grimoire.frost_knight_sword.guard",
+    "idle": "animation.grimoire.frost_knight_sword.idle",
+    "walk": "animation.grimoire.frost_knight_sword.walk",
+    "summon": "animation.grimoire.frost_knight_sword.summon",
+    "dissolve": "animation.grimoire.frost_knight_sword.dissolve",
+    "move": "controller.animation.grimoire.frost_knight_sword.move",
+    "act": "controller.animation.grimoire.frost_knight_sword.act"
+   },
+   "scripts": {
+    "scale": "1.0",
+    "animate": [
+     "move",
+     "act"
+    ]
+   },
+   "render_controllers": [
+    "controller.render.grimoire.fx"
+   ]
+  }
+ }
+}

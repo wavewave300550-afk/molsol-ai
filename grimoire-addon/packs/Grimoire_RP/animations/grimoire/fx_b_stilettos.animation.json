@@ -1,0 +1,242 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_b_stilettos.form": {
+   "animation_length": 0.8,
+   "bones": {
+    "sr0": {
+     "scale": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.35": [
+       1.1,
+       1.1,
+       1.1
+      ],
+      "0.45": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "sr1": {
+     "scale": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.15": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       1.1,
+       1.1,
+       1.1
+      ],
+      "0.6": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "sr2": {
+     "scale": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.3": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.65": [
+       1.1,
+       1.1,
+       1.1
+      ],
+      "0.75": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_b_stilettos.hold": {
+   "loop": true,
+   "bones": {
+    "sr0": {
+     "rotation": [
+      0.0,
+      "q.life_time * -50",
+      0.0
+     ]
+    },
+    "sr1": {
+     "rotation": [
+      0.0,
+      "q.life_time * 50",
+      0.0
+     ]
+    },
+    "sr2": {
+     "rotation": [
+      0.0,
+      "q.life_time * -50",
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_b_stilettos.volley0": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.3,
+   "bones": {
+    "sr0": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_b_stilettos.volley1": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.3,
+   "bones": {
+    "sr0": {
+     "scale": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "sr1": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_b_stilettos.volley2": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.3,
+   "bones": {
+    "sr0": {
+     "scale": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "sr1": {
+     "scale": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "sr2": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_b_stilettos.dissolve": {
+   "animation_length": 0.7,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       1.06,
+       1.06,
+       1.06
+      ],
+      "0.5": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       40.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_b_stilettos.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

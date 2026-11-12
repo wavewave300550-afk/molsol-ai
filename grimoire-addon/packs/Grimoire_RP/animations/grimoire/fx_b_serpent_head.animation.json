@@ -1,0 +1,186 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_b_serpent_head.swim": {
+   "loop": true,
+   "bones": {
+    "head": {
+     "rotation": [
+      "math.sin(q.life_time * 220) * 6",
+      "math.sin(q.life_time * 160) * 10",
+      0.0
+     ]
+    },
+    "lower_jaw": {
+     "rotation": [
+      "10 + math.sin(q.life_time * 300) * 6",
+      0.0,
+      0.0
+     ]
+    },
+    "crest": {
+     "scale": [
+      "1 + math.sin(q.life_time * 1800 + 0.0) * 0.04",
+      "1 + math.sin(q.life_time * 1800 + 0.0) * 0.04",
+      "1 + math.sin(q.life_time * 1800 + 0.0) * 0.04"
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_b_serpent_head.form": {
+   "animation_length": 0.3,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       0.01,
+       0.01,
+       0.01
+      ],
+      "0.21": [
+       1.08,
+       1.08,
+       1.08
+      ],
+      "0.3": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_b_serpent_head.bite": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.6,
+   "bones": {
+    "lower_jaw": {
+     "rotation": {
+      "0.0": [
+       10.0,
+       0.0,
+       0.0
+      ],
+      "0.2": [
+       55.0,
+       0.0,
+       0.0
+      ],
+      "0.35": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.6": [
+       8.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "upper_jaw": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.2": [
+       -20.0,
+       0.0,
+       0.0
+      ],
+      "0.35": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "head": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.2": [
+       -25.0,
+       0.0,
+       0.0
+      ],
+      "0.35": [
+       15.0,
+       0.0,
+       0.0
+      ],
+      "0.6": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_b_serpent_head.dissolve": {
+   "animation_length": 0.7,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       1.06,
+       1.06,
+       1.06
+      ],
+      "0.5": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       40.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_b_serpent_head.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

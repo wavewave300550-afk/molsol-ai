@@ -1,0 +1,162 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_b_grand_crown.form": {
+   "animation_length": 1.0,
+   "bones": {
+    "crown": {
+     "scale": {
+      "0.0": [
+       0.05,
+       0.05,
+       0.05
+      ],
+      "0.7": [
+       1.08,
+       1.08,
+       1.08
+      ],
+      "1.0": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       -180.0,
+       0.0
+      ],
+      "1.0": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_b_grand_crown.idle": {
+   "loop": true,
+   "bones": {
+    "blades": {
+     "rotation": [
+      0.0,
+      "q.life_time * 180",
+      0.0
+     ]
+    },
+    "crown": {
+     "rotation": [
+      0.0,
+      "q.life_time * 20",
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_b_grand_crown.strike": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.6,
+   "bones": {
+    "crown": {
+     "position": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.1": [
+       0.0,
+       10.0,
+       0.0
+      ],
+      "0.3": [
+       0.0,
+       "-v.len * 16",
+       0.0
+      ]
+     }
+    },
+    "blades": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.3": [
+       1.5,
+       1.0,
+       1.5
+      ],
+      "0.6": [
+       1.5,
+       1.0,
+       1.5
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_b_grand_crown.dissolve": {
+   "animation_length": 0.7,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       1.06,
+       1.06,
+       1.06
+      ],
+      "0.5": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       40.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_b_grand_crown.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

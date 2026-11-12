@@ -1,0 +1,75 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_i_spike.rise": {
+   "animation_length": 0.25,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       0.6,
+       0.01,
+       0.6
+      ],
+      "0.15": [
+       1.1,
+       1.15,
+       1.1
+      ],
+      "0.25": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_i_spike.dissolve": {
+   "animation_length": 0.6,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.1": [
+       1.08,
+       0.9,
+       1.08
+      ],
+      "0.5": [
+       0.2,
+       0.0,
+       0.2
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_i_spike.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

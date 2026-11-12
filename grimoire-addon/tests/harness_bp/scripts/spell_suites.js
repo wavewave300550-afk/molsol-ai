@@ -35,7 +35,7 @@ export const SPELLS = {
     { code: "I10", id: "ice.frost_mirror_traverse", kind: "teleport", targets: 0, dist: 10, wait: 40 },
     { code: "I11", id: "ice.winter_seraph", kind: "flight", targets: 0, wait: 60, after: 360 },
     { code: "I12", id: "ice.frost_legion", kind: "summon", targets: 2, dist: 6, wait: 160, after: 520, mobs: ["grimoire:frost_knight_sword", "grimoire:frost_knight_spear", "grimoire:frost_knight_shield"] },
-    { code: "I13", id: "ice.still_winter_hourglass", kind: "damage", targets: 3, dist: 9, wait: 130, bind: true },
+    { code: "I13", id: "ice.still_winter_hourglass", kind: "damage", targets: 3, dist: 9, wait: 130, after: 160, bind: true },
     { code: "I14", id: "ice.everlasting_citadel", kind: "struct", targets: 2, dist: 16, wait: 220, after: 520, block: "grimoire:frost_wall", damage: true },
     { code: "I15", id: "ice.the_last_winter", kind: "damage", targets: 4, dist: 12, wait: 330 },
   ],

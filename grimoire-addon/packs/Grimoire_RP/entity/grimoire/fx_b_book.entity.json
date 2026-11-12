@@ -1,0 +1,49 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:fx_b_book",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "trans": "entity_alphablend",
+    "glow": "entity_beam_additive"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/fx_b_book"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.fx_b_book"
+   },
+   "animations": {
+    "open": "animation.grimoire.fx_b_book.open",
+    "form": "animation.grimoire.fx_b_book.form",
+    "dissolve": "animation.grimoire.fx_b_book.dissolve",
+    "orient": "animation.grimoire.fx_b_book.orient",
+    "ctrl": "controller.animation.grimoire.fx_b_book"
+   },
+   "scripts": {
+    "initialize": [
+     "v.yaw = 0; v.pitch = 0; v.size = 1; v.len = 1; v.last_aux = 0;"
+    ],
+    "pre_animation": [
+     "v.ty = q.property('grimoire:yaw') - q.body_y_rotation;",
+     "v.dy = math.mod(math.mod(v.ty - v.yaw, 360) + 540, 360) - 180;",
+     "v.first = q.life_time < 0.1;",
+     "v.yaw = v.first ? v.ty : v.yaw + v.dy * 0.4;",
+     "v.pitch = v.first ? q.property('grimoire:pitch') : math.lerp(v.pitch, q.property('grimoire:pitch'), 0.4);",
+     "v.size = v.first ? q.property('grimoire:size') : math.lerp(v.size, q.property('grimoire:size'), 0.25);",
+     "v.len = v.first ? q.property('grimoire:len') : math.lerp(v.len, q.property('grimoire:len'), 0.35);",
+     "v.ph = q.property('grimoire:phase');",
+     "v.var = q.property('grimoire:variant');"
+    ],
+    "animate": [
+     "orient",
+     "ctrl"
+    ]
+   },
+   "render_controllers": [
+    "controller.render.grimoire.fx"
+   ]
+  }
+ }
+}

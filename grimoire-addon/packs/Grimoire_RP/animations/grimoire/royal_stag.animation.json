@@ -1,0 +1,566 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.royal_stag.idle": {
+   "loop": true,
+   "bones": {
+    "body": {
+     "scale": [
+      1.0,
+      "1 + math.sin(q.life_time * 100) * 0.015",
+      "1 + math.sin(q.life_time * 100) * 0.01"
+     ]
+    },
+    "head": {
+     "rotation": [
+      "math.sin(q.life_time * 40) * 4",
+      "math.sin(q.life_time * 25) * 12",
+      0.0
+     ]
+    },
+    "ear_l": {
+     "rotation": [
+      0.0,
+      0.0,
+      "math.max(0, math.sin(q.life_time * 300)) * math.pow(math.sin(q.life_time * 30), 8) * 30"
+     ]
+    },
+    "tail": {
+     "rotation": [
+      "math.sin(q.life_time * 150) * 8",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.royal_stag.walk": {
+   "loop": true,
+   "bones": {
+    "leg_fl": {
+     "rotation": [
+      "math.cos(q.modified_distance_moved * 38.17) * 26 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_br": {
+     "rotation": [
+      "math.cos(q.modified_distance_moved * 38.17) * 26 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_fr": {
+     "rotation": [
+      "-math.cos(q.modified_distance_moved * 38.17) * 26 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_bl": {
+     "rotation": [
+      "-math.cos(q.modified_distance_moved * 38.17) * 26 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_fl_low": {
+     "rotation": [
+      "math.max(0, math.sin(q.modified_distance_moved * 38.17)) * 20.8 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_fr_low": {
+     "rotation": [
+      "math.max(0, math.sin(q.modified_distance_moved * 38.17)) * 20.8 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_bl_low": {
+     "rotation": [
+      "math.max(0, math.sin(q.modified_distance_moved * 38.17)) * 20.8 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_br_low": {
+     "rotation": [
+      "math.max(0, math.sin(q.modified_distance_moved * 38.17)) * 20.8 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "body": {
+     "position": [
+      0.0,
+      "math.abs(math.sin(q.modified_distance_moved * 38.17)) * 0.8666666666666667 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0
+     ]
+    },
+    "neck": {
+     "rotation": [
+      "math.sin(q.modified_distance_moved * 38.17 * 2) * 3.25",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.royal_stag.run": {
+   "loop": true,
+   "bones": {
+    "leg_fl": {
+     "rotation": [
+      "math.cos(q.modified_distance_moved * 30.536) * 48 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_br": {
+     "rotation": [
+      "math.cos(q.modified_distance_moved * 30.536) * 48 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_fr": {
+     "rotation": [
+      "-math.cos(q.modified_distance_moved * 30.536) * 48 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_bl": {
+     "rotation": [
+      "-math.cos(q.modified_distance_moved * 30.536) * 48 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_fl_low": {
+     "rotation": [
+      "math.max(0, math.sin(q.modified_distance_moved * 30.536)) * 38.400000000000006 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_fr_low": {
+     "rotation": [
+      "math.max(0, math.sin(q.modified_distance_moved * 30.536)) * 38.400000000000006 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_bl_low": {
+     "rotation": [
+      "math.max(0, math.sin(q.modified_distance_moved * 30.536)) * 38.400000000000006 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_br_low": {
+     "rotation": [
+      "math.max(0, math.sin(q.modified_distance_moved * 30.536)) * 38.400000000000006 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "body": {
+     "position": [
+      0.0,
+      "math.abs(math.sin(q.modified_distance_moved * 30.536)) * 1.6 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0
+     ]
+    },
+    "neck": {
+     "rotation": [
+      -6.0,
+      0.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.royal_stag.summon": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 1.4,
+   "bones": {
+    "root": {
+     "scale": {
+      "0.0": [
+       0.05,
+       0.05,
+       0.05
+      ],
+      "0.8": [
+       0.6,
+       1.1,
+       0.6
+      ],
+      "1.2": [
+       1.04,
+       0.98,
+       1.04
+      ],
+      "1.4": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       -180.0,
+       0.0
+      ],
+      "1.2": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "neck": {
+     "rotation": {
+      "0.0": [
+       40.0,
+       0.0,
+       0.0
+      ],
+      "1.0": [
+       -20.0,
+       0.0,
+       0.0
+      ],
+      "1.4": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.royal_stag.prepare": {
+   "loop": true,
+   "bones": {
+    "neck": {
+     "rotation": [
+      38.0,
+      0.0,
+      0.0
+     ]
+    },
+    "head": {
+     "rotation": [
+      20.0,
+      0.0,
+      0.0
+     ]
+    },
+    "leg_fl": {
+     "rotation": [
+      "-20 + math.sin(q.life_time * 500) * 25",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_fl_low": {
+     "rotation": [
+      "30 + math.sin(q.life_time * 500) * 20",
+      0.0,
+      0.0
+     ]
+    },
+    "body": {
+     "rotation": [
+      6.0,
+      0.0,
+      0.0
+     ]
+    },
+    "g_veins": {
+     "scale": [
+      "1 + math.sin(q.life_time * 900) * 0.04",
+      "1 + math.sin(q.life_time * 900) * 0.04",
+      "1 + math.sin(q.life_time * 900) * 0.04"
+     ]
+    }
+   }
+  },
+  "animation.grimoire.royal_stag.charge": {
+   "loop": true,
+   "bones": {
+    "leg_fl": {
+     "rotation": [
+      "math.cos(q.modified_distance_moved * 26.719) * 55 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_br": {
+     "rotation": [
+      "math.cos(q.modified_distance_moved * 26.719) * 55 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_fr": {
+     "rotation": [
+      "-math.cos(q.modified_distance_moved * 26.719) * 55 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_bl": {
+     "rotation": [
+      "-math.cos(q.modified_distance_moved * 26.719) * 55 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_fl_low": {
+     "rotation": [
+      "math.max(0, math.sin(q.modified_distance_moved * 26.719)) * 44.0 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_fr_low": {
+     "rotation": [
+      "math.max(0, math.sin(q.modified_distance_moved * 26.719)) * 44.0 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_bl_low": {
+     "rotation": [
+      "math.max(0, math.sin(q.modified_distance_moved * 26.719)) * 44.0 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "leg_br_low": {
+     "rotation": [
+      "math.max(0, math.sin(q.modified_distance_moved * 26.719)) * 44.0 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0,
+      0.0
+     ]
+    },
+    "body": {
+     "position": [
+      0.0,
+      "math.abs(math.sin(q.modified_distance_moved * 26.719)) * 1.8333333333333333 * math.min(1, q.modified_move_speed * 2.5)",
+      0.0
+     ]
+    },
+    "neck": {
+     "rotation": [
+      42.0,
+      0.0,
+      0.0
+     ]
+    },
+    "head": {
+     "rotation": [
+      22.0,
+      0.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.royal_stag.defend": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 1.0,
+   "bones": {
+    "body": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.3": [
+       -38.0,
+       0.0,
+       0.0
+      ],
+      "0.7": [
+       -38.0,
+       0.0,
+       0.0
+      ],
+      "1.0": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "leg_fl": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.3": [
+       -70.0,
+       0.0,
+       0.0
+      ],
+      "0.7": [
+       -60.0,
+       0.0,
+       0.0
+      ],
+      "1.0": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "leg_fr": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.3": [
+       -50.0,
+       0.0,
+       0.0
+      ],
+      "0.7": [
+       -70.0,
+       0.0,
+       0.0
+      ],
+      "1.0": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "g_veins": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.4": [
+       1.15,
+       1.15,
+       1.15
+      ],
+      "1.0": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "ant_l": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.4": [
+       1.2,
+       1.2,
+       1.2
+      ],
+      "1.0": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "ant_r": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.4": [
+       1.2,
+       1.2,
+       1.2
+      ],
+      "1.0": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.royal_stag.dissolve": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 1.2,
+   "bones": {
+    "root": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       1.05,
+       1.05,
+       1.05
+      ],
+      "1.1": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "ant_l": {
+     "position": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "1.0": [
+       8.0,
+       10.0,
+       0.0
+      ]
+     }
+    },
+    "ant_r": {
+     "position": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "1.0": [
+       -8.0,
+       10.0,
+       0.0
+      ]
+     }
+    }
+   }
+  }
+ }
+}

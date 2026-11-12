@@ -1,0 +1,295 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_i_dragon.form": {
+   "animation_length": 0.7,
+   "bones": {
+    "fade": {
+     "position": {
+      "0.0": [
+       0.0,
+       -30.0,
+       18.0
+      ],
+      "0.5": [
+       0.0,
+       3.0,
+       0.0
+      ],
+      "0.7": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "scale": {
+      "0.0": [
+       0.2,
+       0.2,
+       0.2
+      ],
+      "0.5": [
+       1.05,
+       1.05,
+       1.05
+      ],
+      "0.7": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_i_dragon.idle": {
+   "loop": true,
+   "bones": {
+    "head": {
+     "rotation": [
+      "math.sin(q.life_time * 100) * 3",
+      "math.sin(q.life_time * 70) * 4",
+      0.0
+     ]
+    },
+    "lower_jaw": {
+     "rotation": [
+      "4 + math.sin(q.life_time * 140) * 2",
+      0.0,
+      0.0
+     ]
+    },
+    "g_breath": {
+     "scale": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_i_dragon.roar": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.8,
+   "bones": {
+    "lower_jaw": {
+     "rotation": {
+      "0.0": [
+       4.0,
+       0.0,
+       0.0
+      ],
+      "0.25": [
+       42.0,
+       0.0,
+       0.0
+      ],
+      "0.8": [
+       36.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "upper_jaw": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.25": [
+       -10.0,
+       0.0,
+       0.0
+      ],
+      "0.8": [
+       -8.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "head": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.15": [
+       -14.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       6.0,
+       0.0,
+       0.0
+      ],
+      "0.8": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "g_breath": {
+     "scale": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.3": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_i_dragon.breath": {
+   "loop": true,
+   "bones": {
+    "lower_jaw": {
+     "rotation": [
+      "38 + math.sin(q.life_time * 900) * 2",
+      0.0,
+      0.0
+     ]
+    },
+    "upper_jaw": {
+     "rotation": [
+      "-8 + math.sin(q.life_time * 900) * 1",
+      0.0,
+      0.0
+     ]
+    },
+    "head": {
+     "rotation": [
+      "math.sin(q.life_time * 600) * 1.5",
+      "math.sin(q.life_time * 400) * 1.5",
+      0.0
+     ]
+    },
+    "g_breath": {
+     "scale": [
+      "1.2 + math.sin(q.life_time * 1200) * 0.3",
+      "1.2 + math.sin(q.life_time * 1200) * 0.3",
+      "1.2 + math.sin(q.life_time * 1200) * 0.3"
+     ]
+    },
+    "mane": {
+     "scale": [
+      "1 + math.sin(q.life_time * 3600 + 0.0) * 0.03",
+      "1 + math.sin(q.life_time * 3600 + 0.0) * 0.03",
+      "1 + math.sin(q.life_time * 3600 + 0.0) * 0.03"
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_i_dragon.close": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.4,
+   "bones": {
+    "lower_jaw": {
+     "rotation": {
+      "0.0": [
+       38.0,
+       0.0,
+       0.0
+      ],
+      "0.3": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "g_breath": {
+     "scale": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_i_dragon.dissolve": {
+   "animation_length": 0.8,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.15": [
+       1.08,
+       1.08,
+       1.08
+      ],
+      "0.7": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "horns": {
+     "position": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.6": [
+       0.0,
+       10.0,
+       6.0
+      ]
+     }
+    },
+    "lower_jaw": {
+     "position": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.6": [
+       0.0,
+       -8.0,
+       -4.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_i_dragon.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

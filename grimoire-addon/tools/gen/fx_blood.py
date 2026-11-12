@@ -64,8 +64,8 @@ def guillotine():
         fr.crystal((sgn * 44, 120, 0), 26, 7, "b_silver", "b_ruby")
         for y in (20, 50, 80, 110):
             fr.cbox((sgn * 44, y, 0), (7.6, 2, 7.6), "b_silver_light")
-    ring(f, "arch", "frame", (0, 116, 0), 44, 4, 5, 14, "b_silver", rx=90, start=180, arc=180)
-    ring(f, "g_arch", "frame", (0, 116, 0), 40, 1.0, 5.5, 14, "b_glow_band", rx=90, start=180, arc=180)
+    ring(f, "arch", "frame", (0, 116, 0), 44, 4, 5, 14, "b_silver", rx=90, start=0, arc=180)
+    ring(f, "g_arch", "frame", (0, 116, 0), 40, 1.0, 5.5, 14, "b_glow_band", rx=90, start=0, arc=180)
     fr.cbox((0, 118, 0), (94, 6, 6), "b_silver")
     for sgn in (-1, 1):
         ring(f, f"wheel{'l' if sgn > 0 else 'r'}", "frame", (sgn * 18, 118, -4), 6, 1.2, 1.6, 10, "b_silver_light", rx=90)
@@ -212,7 +212,7 @@ def crowns():
         a = math.tau * k / 16
         gp.crystal((math.cos(a) * 44, 6, math.sin(a) * 44), 30 if k % 2 == 0 else 18, 7, "b_crystal", "b_ruby")
     for i, ry in enumerate((0, 90)):
-        ring(g, f"arch{i}", "crown", (0, 6, 0), 44, 3, 4, 14, "b_silver", rx=90, ry=ry, start=180, arc=180)
+        ring(g, f"arch{i}", "crown", (0, 6, 0), 44, 3, 4, 14, "b_silver", rx=90, ry=ry, start=0, arc=180)
     g.bone("orb", "crown").solid_cylinder((0, 50, 0), 6, 10, "b_ruby", layers=3)
     g.bone("cross", "crown").cbox((0, 64, 0), (2.5, 14, 2.5), "b_silver_light")
     g.model.by_name["cross"].cbox((0, 66, 0), (9, 2.5, 2.5), "b_silver_light")
@@ -285,9 +285,9 @@ def fan():
     for k in range(12):
         a = -80 + k * (160 / 11)
         hb = oriented(f, f"fp{k}", "panels", (0, 6, -10), ry=a)
-        hb.cbox((0, 6, -10 - 18), (7, 1.2, 34), "b_crystal")
-        hb.cbox((0, 6.8, -10 - 18), (0.8, 0.6, 34), "b_silver")
-        f.model.bone(f"g_fv{k}", f"fp{k}", pivot=(0, 6, -10)).cbox((1.6, 6.9, -10 - 14), (0.5, 0.4, 22), "b_glow_band")
+        hb.cbox((0, 6, -10 + 18), (7, 1.2, 34), "b_crystal")
+        hb.cbox((0, 6.8, -10 + 18), (0.8, 0.6, 34), "b_silver")
+        f.model.bone(f"g_fv{k}", f"fp{k}", pivot=(0, 6, -10)).cbox((1.6, 6.9, -10 + 14), (0.5, 0.4, 22), "b_glow_band")
     ring(f, "rim", "fan", (0, 6, -10), 36, 2, 2.4, 14, "b_silver", rx=90, start=10, arc=160)
     f.bone("hub", "fan", pivot=(0, 6, -10)).solid_cylinder((0, 4, -10), 4, 4, "b_ruby", layers=3)
     open_ = f.anim("form", length=0.6)
@@ -329,14 +329,26 @@ def threads():
     tp.scale("t_sheath", {0: [1, 1, 1], 0.1: [3, 3, 1], 0.4: [1, 1, 1]})
     t.pulse("pulse")
 
-    h = Fx("fx_b_heart_sigil", B, bounds=(2, 2, (0, 0.5, 0)))
-    hb = oriented(h, "g_heart", "fade", (0, 6, 0), rx=90)
-    for (dx, dz, w, d) in ((-1.6, -1.4, 3.2, 3.2), (1.6, -1.4, 3.2, 3.2), (0, 0.4, 5.2, 3.2), (0, 2.2, 3, 2.2), (0, 3.4, 1.2, 1.2)):
-        hb.cbox((dx, 6, dz), (w, 0.8, d), "b_core")
-    ring(h, "g_halo", "fade", (0, 6, 0), 5.5, 0.4, 0.4, 14, "b_glow_band", rx=90)
+    h = Fx("fx_b_heart_sigil", B, bounds=(2, 2, (0, 0.5, 0)), tex=(64, 64))
+    a = Art(64, 64, ss=4)
+    a.circle(32, 32, 29, outline=(255, 60, 70), width=1.6)
+    a.ring_ticks(32, 32, 25, 28, 24, (255, 120, 120), 0.6)
+    for k in range(4):
+        ang = math.radians(45 + 90 * k)
+        a.circle(32 + math.cos(ang) * 22, 32 + math.sin(ang) * 22, 3, outline=(255, 90, 90), width=0.8)
+    a.radial_glow(32, 34, 18, (255, 30, 50), 0.8)
+    a.poly(BOOK.heart_pts(32, 34, 0.95), fill=(255, 40, 60), outline=(255, 200, 200), width=1.2)
+    a.poly(BOOK.heart_pts(28, 30, 0.25), fill=(255, 220, 220))
+    img = a.finish(emissive=False, alpha_from_glow=False)
+    img[..., 3] = np.clip(img[..., :3].max(-1) * 1.5, 0, 255)
+    rect = ('rect',) + h.model.atlas.put_image('sigil', img)
+    for i, ry in enumerate((0, 90)):
+        pl = oriented(h, f"g_heart{i}", "fade", (0, 6, 0), rx=90, ry=ry)
+        pl.box((-6, 6, -6), (12, 0, 12), None, faces={"up": rect, "down": rect})
     ha = h.anim("beat", loop=True)
     beat = "1 + math.pow(math.max(0, math.sin(q.life_time * 300)), 10) * 0.35"
-    ha.scale("g_heart", [beat] * 3)
+    ha.scale("g_heart0", [beat] * 3)
+    ha.scale("g_heart1", [beat] * 3)
     ha.rot("fade", [0, "q.life_time * 60", 0])
     h.phase(1, h.default_form(0.2), "beat").phase(2, "beat")
 
@@ -415,8 +427,21 @@ def roses():
 
 # ---------------------------------------------------------------------------- B09/B14 sea, whirlpool, pillar, beasts, tidal wave
 def liquids():
-    s = Fx("fx_b_sea", B, bounds=(36, 3, (0, 0, 0)), tex=(128, 256))
-    s.bone("t_surface").solid_cylinder((0, 0, 0), 128, 1.2, "b_liquid", layers=4)
+    s = Fx("fx_b_sea", B, bounds=(36, 3, (0, 0, 0)), tex=(256, 256))
+    a = Art(256, 256, ss=2)
+    rsea = np.random.RandomState(9)
+    a.radial_glow(128, 128, 126, (150, 8, 22), 1.0)
+    for k in range(9):
+        rr = 20 + k * 12 + rsea.rand() * 4
+        a.circle(128, 128, rr, outline=(255, 70, 80) if k % 2 else (190, 20, 34), width=1.4 if k % 2 else 0.8)
+    for pts, depth in vein_paths(rsea, 256, 256, [(128, 128, rsea.rand() * 6.28) for _ in range(8)], life=60, branch=0.04, wobble=0.5):
+        a.line(pts, (255, 60, 70), 0.6)
+    img = a.finish(emissive=False, alpha_from_glow=False)
+    yy, xx = np.mgrid[0:256, 0:256]
+    rad = np.sqrt((xx - 127.5) ** 2 + (yy - 127.5) ** 2) / 128.0
+    img[..., 3] = np.clip((1.0 - rad) * 6, 0, 1) * 215
+    rect = ('rect',) + s.model.atlas.put_image('sea', img)
+    s.bone("t_surface").box((-128, 0.4, -128), (256, 0, 256), None, faces={"up": rect, "down": rect})
     for i in range(5):
         ring(s, f"t_rip{i}", "fade", (0, 1.3, 0), 24 + i * 22, 3, 0.6, 18 + i * 4, "b_liquid_thin")
         ring(s, f"g_rip{i}", "fade", (0, 1.5, 0), 26 + i * 22, 0.6, 0.4, 18 + i * 4, "b_glow_band", gap=4)
@@ -544,23 +569,27 @@ def heart_parts():
     h = Fx("fx_b_heart", B, bounds=(12, 14, (0, 4, 0)), tex=(128, 256))
     h.bone("heart", pivot=(0, 40, 0))
     v = h.model.bone("ventricles", "heart", pivot=(0, 40, 0))
-    v.cbox((0, 34, 0), (44, 40, 34), "b_crystal")
-    v.cbox((-6, 18, 0), (30, 22, 26), "b_crystal")
-    v.cbox((-10, 6, 2), (16, 14, 16), "b_crystal_glow")
+    for a in (0, 30, 60):
+        v.cbox((0, 36, 0), (40, 34, 26), "b_crystal", rotation=(0, a, 0))
+    for k, (w, y, dx) in enumerate(((32, 16, -3), (22, 7, -6), (12, 0, -8))):
+        for a in (0, 45):
+            v.cbox((dx, y, 1), (w, 10, w * 0.75), "b_crystal" if k < 2 else "b_crystal_glow", rotation=(0, a, 0))
     for k in range(6):
-        v.cbox((-18 + k * 7, 36 + (k % 2) * 6, -17.4), (4, 24, 1), "b_ruby")
+        v.cbox((-16 + k * 6.5, 37 + (k % 2) * 5, -16.6), (3.4, 22, 1), "b_ruby")
     atr = h.model.bone("atria", "heart", pivot=(0, 56, 0))
-    atr.cbox((-14, 60, 2), (22, 18, 24), "b_scales")
-    atr.cbox((14, 60, 2), (20, 16, 22), "b_scales")
-    aorta = h.model.bone("aorta", "heart", pivot=(4, 66, 0))
-    ring(h, "arch_v", "aorta", (4, 72, 4), 14, 7, 7, 10, "b_burgundy", rx=90, start=180, arc=200)
-    aorta.solid_cylinder((-8, 64, 4), 5, 22, "b_burgundy", layers=2)
-    aorta.solid_cylinder((16, 64, -2), 4, 18, "b_burgundy", layers=2)
-    h.model.bone("g_veins", "heart", pivot=(0, 40, 0)).cbox((0, 38, -17.6), (36, 44, 0.3), "b_veins")
-    h.model.bone("g_core", "heart", pivot=(0, 40, 0)).solid_cylinder((0, 26, 0), 10, 28, "b_core", layers=3)
+    for (x, w) in ((-12, 20), (13, 17)):
+        for a in (0, 45):
+            atr.cbox((x, 57, 3), (w, 15, w * 0.9), "b_crystal_glow", rotation=(0, a, 0))
+    aorta = h.model.bone("aorta", "heart", pivot=(4, 64, 0))
+    ring(h, "arch_v", "aorta", (5, 67, 5), 7, 4.5, 4.5, 10, "b_liquid_solid", rx=90, start=-10, arc=200)
+    aorta.solid_cylinder((-2, 62, 6), 3.2, 14, "b_liquid_solid", layers=2)
+    aorta.solid_cylinder((12, 62, 4), 2.6, 12, "b_liquid_solid", layers=2)
+    aorta.solid_cylinder((-10, 60, -2), 2.4, 12, "b_liquid_solid", layers=2)
+    h.model.bone("g_veins", "heart", pivot=(0, 40, 0)).cbox((0, 36, -16.9), (34, 40, 0.3), "b_veins")
+    h.model.bone("g_core", "heart", pivot=(0, 40, 0)).solid_cylinder((0, 24, 0), 9, 26, "b_core", layers=3)
     for k in range(8):
-        hb = oriented(h, f"sh{k}", "heart", (0, 40, 0), rx=90 - 20 * (k % 2), ry=k * 45)
-        hb.crystal((0, 40, 0), 34 + (k % 3) * 6, 5, "b_crystal_glow", "b_ruby")
+        hb = oriented(h, f"sh{k}", "heart", (0, 40, 0), rx=-50 + 15 * (k % 3), ry=k * 45)
+        hb.crystal((0, 40, 0), 36 + (k % 3) * 6, 4.5, "b_crystal_glow", "b_ruby")
     form = h.anim("form", length=1.6)
     form.scale("heart", {0: [0.05, 0.05, 0.05], 1.2: [1.05, 1.05, 1.05], 1.6: [1, 1, 1]})
     beat = h.anim("beat", loop=True, length=1.0)

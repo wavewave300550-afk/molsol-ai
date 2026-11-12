@@ -1,0 +1,236 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_b_heart.form": {
+   "animation_length": 1.6,
+   "bones": {
+    "heart": {
+     "scale": {
+      "0.0": [
+       0.05,
+       0.05,
+       0.05
+      ],
+      "1.2": [
+       1.05,
+       1.05,
+       1.05
+      ],
+      "1.6": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_b_heart.beat": {
+   "loop": true,
+   "animation_length": 1.0,
+   "bones": {
+    "ventricles": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.08": [
+       0.86,
+       0.9,
+       0.86
+      ],
+      "0.22": [
+       1.08,
+       1.06,
+       1.08
+      ],
+      "0.4": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "1.0": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "atria": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.3": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.36": [
+       0.9,
+       0.92,
+       0.9
+      ],
+      "0.5": [
+       1.05,
+       1.04,
+       1.05
+      ],
+      "0.7": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "1.0": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "g_core": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.1": [
+       1.5,
+       1.4,
+       1.5
+      ],
+      "0.4": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "1.0": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "heart": {
+     "rotation": [
+      0.0,
+      "q.life_time * 8",
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_b_heart.stopped": {
+   "loop": true,
+   "bones": {
+    "g_core": {
+     "scale": [
+      0.6,
+      0.6,
+      0.6
+     ]
+    },
+    "heart": {
+     "scale": [
+      "1 + math.sin(q.life_time * 3240 + 0.0) * 0.008",
+      "1 + math.sin(q.life_time * 3240 + 0.0) * 0.008",
+      "1 + math.sin(q.life_time * 3240 + 0.0) * 0.008"
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_b_heart.final": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.8,
+   "bones": {
+    "heart": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.1": [
+       0.8,
+       0.8,
+       0.8
+      ],
+      "0.25": [
+       1.6,
+       1.6,
+       1.6
+      ],
+      "0.6": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_b_heart.dissolve": {
+   "animation_length": 0.7,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       1.06,
+       1.06,
+       1.06
+      ],
+      "0.5": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       40.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_b_heart.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

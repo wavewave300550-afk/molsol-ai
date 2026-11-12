@@ -1,0 +1,125 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.grimoire.fx_i_tower": {
+   "initial_state": "p0",
+   "states": {
+    "p0": {
+     "transitions": [
+      {
+       "p1": "q.property('grimoire:phase') == 1"
+      },
+      {
+       "p2": "q.property('grimoire:phase') == 2"
+      },
+      {
+       "p15": "q.property('grimoire:phase') == 15"
+      }
+     ],
+     "blend_transition": 0.12
+    },
+    "p1": {
+     "transitions": [
+      {
+       "p0": "q.property('grimoire:phase') == 0"
+      },
+      {
+       "p2": "q.property('grimoire:phase') == 2"
+      },
+      {
+       "p15": "q.property('grimoire:phase') == 15"
+      }
+     ],
+     "blend_transition": 0.12,
+     "animations": [
+      "form",
+      "idle"
+     ]
+    },
+    "p2": {
+     "transitions": [
+      {
+       "p0": "q.property('grimoire:phase') == 0"
+      },
+      {
+       "p1": "q.property('grimoire:phase') == 1"
+      },
+      {
+       "p15": "q.property('grimoire:phase') == 15"
+      }
+     ],
+     "blend_transition": 0.12,
+     "animations": [
+      "idle"
+     ]
+    },
+    "p15": {
+     "transitions": [
+      {
+       "p0": "q.property('grimoire:phase') == 0"
+      },
+      {
+       "p1": "q.property('grimoire:phase') == 1"
+      },
+      {
+       "p2": "q.property('grimoire:phase') == 2"
+      }
+     ],
+     "blend_transition": 0.12,
+     "animations": [
+      "dissolve"
+     ]
+    }
+   }
+  },
+  "controller.animation.grimoire.fx_i_tower.pulse": {
+   "initial_state": "idle",
+   "states": {
+    "idle": {
+     "on_entry": [
+      "v.last_aux = q.property('grimoire:aux');"
+     ],
+     "transitions": [
+      {
+       "pulse": "q.property('grimoire:aux') != v.last_aux"
+      }
+     ]
+    },
+    "pulse": {
+     "animations": [
+      "fire"
+     ],
+     "on_entry": [
+      "v.last_aux = q.property('grimoire:aux');"
+     ],
+     "transitions": [
+      {
+       "idle": "q.all_animations_finished"
+      },
+      {
+       "pulse_again": "q.property('grimoire:aux') != v.last_aux"
+      }
+     ],
+     "blend_transition": 0.05
+    },
+    "pulse_again": {
+     "animations": [
+      "fire"
+     ],
+     "on_entry": [
+      "v.last_aux = q.property('grimoire:aux');"
+     ],
+     "transitions": [
+      {
+       "idle": "q.all_animations_finished"
+      },
+      {
+       "pulse": "q.property('grimoire:aux') != v.last_aux"
+      }
+     ],
+     "blend_transition": 0.05
+    }
+   }
+  }
+ }
+}

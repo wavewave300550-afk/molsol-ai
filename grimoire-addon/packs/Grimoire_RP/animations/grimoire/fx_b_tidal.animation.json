@@ -1,0 +1,260 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_b_tidal.surge": {
+   "loop": true,
+   "bones": {
+    "tw0": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 0) * 4",
+      0.0
+     ]
+    },
+    "tw1": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 30) * 4",
+      0.0
+     ]
+    },
+    "tw2": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 60) * 4",
+      0.0
+     ]
+    },
+    "tw3": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 90) * 4",
+      0.0
+     ]
+    },
+    "tw4": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 120) * 4",
+      0.0
+     ]
+    },
+    "tw5": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 150) * 4",
+      0.0
+     ]
+    },
+    "tw6": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 180) * 4",
+      0.0
+     ]
+    },
+    "tw7": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 210) * 4",
+      0.0
+     ]
+    },
+    "tw8": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 240) * 4",
+      0.0
+     ]
+    },
+    "tw9": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 270) * 4",
+      0.0
+     ]
+    },
+    "tw10": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 300) * 4",
+      0.0
+     ]
+    },
+    "tw11": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 330) * 4",
+      0.0
+     ]
+    },
+    "tw12": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 360) * 4",
+      0.0
+     ]
+    },
+    "tw13": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 390) * 4",
+      0.0
+     ]
+    },
+    "tw14": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 420) * 4",
+      0.0
+     ]
+    },
+    "tw15": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 450) * 4",
+      0.0
+     ]
+    },
+    "tw16": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 480) * 4",
+      0.0
+     ]
+    },
+    "tw17": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 510) * 4",
+      0.0
+     ]
+    },
+    "tw18": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 540) * 4",
+      0.0
+     ]
+    },
+    "tw19": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 570) * 4",
+      0.0
+     ]
+    },
+    "tw20": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 600) * 4",
+      0.0
+     ]
+    },
+    "tw21": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 630) * 4",
+      0.0
+     ]
+    },
+    "tw22": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 660) * 4",
+      0.0
+     ]
+    },
+    "tw23": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 200 + 690) * 4",
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_b_tidal.form": {
+   "animation_length": 0.6,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       0.01,
+       0.01,
+       0.01
+      ],
+      "0.42": [
+       1.08,
+       1.08,
+       1.08
+      ],
+      "0.6": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_b_tidal.dissolve": {
+   "animation_length": 0.7,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       1.06,
+       1.06,
+       1.06
+      ],
+      "0.5": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       40.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_b_tidal.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

@@ -221,7 +221,9 @@ def swords():
     b = v.bone("blades")
     for k, (x, z, y) in enumerate(((0, 0, 0), (6, 3, 8), (-6, 2, 5), (3, -6, 12), (-4, -5, 15), (1, 6, 18))):
         sword(b, x, y + 14, z, 1.15)
-    v.bone("t_trail").cbox((0, 46, 0), (14, 40, 14), "i_ice_pale")
+    tr = v.bone("t_trail")
+    for (x, z) in ((0, 0), (6, 3), (-6, 2), (3, -6)):
+        tr.cbox((x, 44, z), (0.8, 30, 0.8), "i_ice_pale")
     fall = v.anim("fall", loop=True)
     fall.scale("t_trail", [1, "1.2 + math.sin(q.life_time * 2000) * 0.2", 1])
     v.phase(1, v.default_form(0.12), "fall").phase(2, "fall")
@@ -297,7 +299,7 @@ def mirror():
         a = 360 * k / 6 + 30
         hb = oriented(f, f"msp{k}", "spikes", (0, 0, 0), ry=-a + 90)
         hb.cbox((0, 0, -27), (2.4, 2.4, 9), "i_crystal_glow", rotation=(0, 45, 0))
-    f.bone("g_runes", "frame").cbox((0, 0, -0.6), (30, 30, 0.1), "i_runes_ice", rotation=(0, 0, 0))
+    hexring(f, "g_inner", "frame", (0, 0, -0.4), 12, 0.6, 0.8, "i_glow_band", rx=90)
     form = f.anim("form", length=0.5)
     form.scale("frame", {0: [0.05, 0.05, 1], 0.35: [1.08, 1.08, 1], 0.5: [1, 1, 1]})
     form.rot("frame", {0: [0, 0, 0], 0.5: [0, 0, 0]})
@@ -403,8 +405,8 @@ def tower():
     ar = Fx("fx_i_arch", I, bounds=(8, 8, (0, 3, 0)))
     for sgn in (-1, 1):
         ar.bone(f"pillar{'l' if sgn > 0 else 'r'}").crystal((sgn * 40, 0, 0), 64, 9, "i_crystal_deep", "i_crystal")
-    ring(ar, "arc", "fade", (0, 64, 0), 40, 6, 6, 12, "i_crystal", rx=90, start=180, arc=180)
-    ring(ar, "g_arc", "fade", (0, 64, 0), 34, 1.2, 6.5, 12, "i_glow_band", rx=90, start=180, arc=180)
+    ring(ar, "arc", "fade", (0, 64, 0), 40, 6, 6, 12, "i_crystal", rx=90, start=0, arc=180)
+    ring(ar, "g_arc", "fade", (0, 64, 0), 34, 1.2, 6.5, 12, "i_glow_band", rx=90, start=0, arc=180)
     ar.bone("key").crystal((0, 100, 0), 16, 7, "i_crystal_glow")
     ar.phase(1, ar.default_form(0.8))
 

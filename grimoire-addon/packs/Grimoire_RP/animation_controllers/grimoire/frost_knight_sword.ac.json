@@ -1,0 +1,172 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.grimoire.frost_knight_sword.move": {
+   "initial_state": "idle",
+   "states": {
+    "idle": {
+     "animations": [
+      "idle"
+     ],
+     "transitions": [
+      {
+       "walk": "q.modified_move_speed > 0.08"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "walk": {
+     "animations": [
+      "walk"
+     ],
+     "transitions": [
+      {
+       "idle": "q.modified_move_speed <= 0.08"
+      }
+     ],
+     "blend_transition": 0.2
+    }
+   }
+  },
+  "controller.animation.grimoire.frost_knight_sword.act": {
+   "initial_state": "none",
+   "states": {
+    "none": {
+     "transitions": [
+      {
+       "a1": "q.property('grimoire:act') == 1"
+      },
+      {
+       "a2": "q.property('grimoire:act') == 2"
+      },
+      {
+       "a4": "q.property('grimoire:act') == 4"
+      },
+      {
+       "a7": "q.property('grimoire:act') == 7"
+      },
+      {
+       "a3": "q.property('grimoire:act') == 3"
+      }
+     ],
+     "blend_transition": 0.1
+    },
+    "a1": {
+     "animations": [
+      "slash"
+     ],
+     "transitions": [
+      {
+       "none": "q.property('grimoire:act') != 1"
+      },
+      {
+       "a2": "q.property('grimoire:act') == 2"
+      },
+      {
+       "a4": "q.property('grimoire:act') == 4"
+      },
+      {
+       "a7": "q.property('grimoire:act') == 7"
+      },
+      {
+       "a3": "q.property('grimoire:act') == 3"
+      }
+     ],
+     "blend_transition": 0.08
+    },
+    "a2": {
+     "animations": [
+      "crescent"
+     ],
+     "transitions": [
+      {
+       "none": "q.property('grimoire:act') != 2"
+      },
+      {
+       "a1": "q.property('grimoire:act') == 1"
+      },
+      {
+       "a4": "q.property('grimoire:act') == 4"
+      },
+      {
+       "a7": "q.property('grimoire:act') == 7"
+      },
+      {
+       "a3": "q.property('grimoire:act') == 3"
+      }
+     ],
+     "blend_transition": 0.08
+    },
+    "a4": {
+     "animations": [
+      "summon"
+     ],
+     "transitions": [
+      {
+       "none": "q.property('grimoire:act') != 4"
+      },
+      {
+       "a1": "q.property('grimoire:act') == 1"
+      },
+      {
+       "a2": "q.property('grimoire:act') == 2"
+      },
+      {
+       "a7": "q.property('grimoire:act') == 7"
+      },
+      {
+       "a3": "q.property('grimoire:act') == 3"
+      }
+     ],
+     "blend_transition": 0.08
+    },
+    "a7": {
+     "animations": [
+      "dissolve"
+     ],
+     "transitions": [
+      {
+       "none": "q.property('grimoire:act') != 7"
+      },
+      {
+       "a1": "q.property('grimoire:act') == 1"
+      },
+      {
+       "a2": "q.property('grimoire:act') == 2"
+      },
+      {
+       "a4": "q.property('grimoire:act') == 4"
+      },
+      {
+       "a3": "q.property('grimoire:act') == 3"
+      }
+     ],
+     "blend_transition": 0.08
+    },
+    "a3": {
+     "animations": [
+      "guard"
+     ],
+     "transitions": [
+      {
+       "none": "q.property('grimoire:act') != 3"
+      },
+      {
+       "a1": "q.property('grimoire:act') == 1"
+      },
+      {
+       "a2": "q.property('grimoire:act') == 2"
+      },
+      {
+       "a4": "q.property('grimoire:act') == 4"
+      },
+      {
+       "a7": "q.property('grimoire:act') == 7"
+      }
+     ],
+     "blend_transition": 0.08
+    }
+   }
+  }
+ }
+}

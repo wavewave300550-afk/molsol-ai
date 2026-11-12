@@ -1,0 +1,41 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:royal_stag",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "trans": "entity_alphablend",
+    "glow": "entity_beam_additive"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/royal_stag"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.royal_stag"
+   },
+   "animations": {
+    "idle": "animation.grimoire.royal_stag.idle",
+    "walk": "animation.grimoire.royal_stag.walk",
+    "run": "animation.grimoire.royal_stag.run",
+    "summon": "animation.grimoire.royal_stag.summon",
+    "prepare": "animation.grimoire.royal_stag.prepare",
+    "charge": "animation.grimoire.royal_stag.charge",
+    "defend": "animation.grimoire.royal_stag.defend",
+    "dissolve": "animation.grimoire.royal_stag.dissolve",
+    "move": "controller.animation.grimoire.royal_stag.move",
+    "act": "controller.animation.grimoire.royal_stag.act"
+   },
+   "scripts": {
+    "scale": "1.0",
+    "animate": [
+     "move",
+     "act"
+    ]
+   },
+   "render_controllers": [
+    "controller.render.grimoire.fx"
+   ]
+  }
+ }
+}

@@ -1,0 +1,188 @@
+{
+ "format_version": "1.16.0",
+ "minecraft:geometry": [
+  {
+   "description": {
+    "identifier": "geometry.grimoire.fx_b_heart_sigil",
+    "texture_width": 64,
+    "texture_height": 64,
+    "visible_bounds_width": 2,
+    "visible_bounds_height": 2,
+    "visible_bounds_offset": [
+     0,
+     0.5,
+     0
+    ]
+   },
+   "bones": [
+    {
+     "name": "root",
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    {
+     "name": "yaw",
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "parent": "root"
+    },
+    {
+     "name": "pitch",
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "parent": "yaw"
+    },
+    {
+     "name": "fade",
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "parent": "pitch"
+    },
+    {
+     "name": "g_heart0_t",
+     "pivot": [
+      0.0,
+      6.0,
+      0.0
+     ],
+     "parent": "fade",
+     "rotation": [
+      90.0,
+      0.0,
+      0.0
+     ]
+    },
+    {
+     "name": "g_heart0",
+     "pivot": [
+      0.0,
+      6.0,
+      0.0
+     ],
+     "parent": "g_heart0_t",
+     "cubes": [
+      {
+       "origin": [
+        -6.0,
+        6.0,
+        -6.0
+       ],
+       "size": [
+        12.0,
+        0.0,
+        12.0
+       ],
+       "uv": {
+        "up": {
+         "uv": [
+          0,
+          0
+         ],
+         "uv_size": [
+          64,
+          64
+         ]
+        },
+        "down": {
+         "uv": [
+          0,
+          0
+         ],
+         "uv_size": [
+          64,
+          64
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "name": "g_heart1_o",
+     "pivot": [
+      0.0,
+      6.0,
+      0.0
+     ],
+     "parent": "fade",
+     "rotation": [
+      0.0,
+      90.0,
+      0.0
+     ]
+    },
+    {
+     "name": "g_heart1_t",
+     "pivot": [
+      0.0,
+      6.0,
+      0.0
+     ],
+     "parent": "g_heart1_o",
+     "rotation": [
+      90.0,
+      0.0,
+      0.0
+     ]
+    },
+    {
+     "name": "g_heart1",
+     "pivot": [
+      0.0,
+      6.0,
+      0.0
+     ],
+     "parent": "g_heart1_t",
+     "cubes": [
+      {
+       "origin": [
+        -6.0,
+        6.0,
+        -6.0
+       ],
+       "size": [
+        12.0,
+        0.0,
+        12.0
+       ],
+       "uv": {
+        "up": {
+         "uv": [
+          0,
+          0
+         ],
+         "uv_size": [
+          64,
+          64
+         ]
+        },
+        "down": {
+         "uv": [
+          0,
+          0
+         ],
+         "uv_size": [
+          64,
+          64
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

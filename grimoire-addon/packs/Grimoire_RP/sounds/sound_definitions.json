@@ -1,0 +1,809 @@
+{
+ "format_version": "1.20.20",
+ "sound_definitions": {
+  "grimoire.ui.page": {
+   "category": "ui",
+   "min_distance": 1.0,
+   "max_distance": 16.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ui_page",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ui.ready": {
+   "category": "ui",
+   "min_distance": 1.0,
+   "max_distance": 16.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ui_ready",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ui.fizzle": {
+   "category": "ui",
+   "min_distance": 1.0,
+   "max_distance": 16.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ui_fizzle",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.pressure.charge": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/pressure_charge",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.pressure.release": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/pressure_release",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.pressure.lance": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/pressure_lance",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.pressure.boom": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/pressure_boom",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.pressure.thud": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/pressure_thud",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.pressure.whoosh": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/pressure_whoosh",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.pressure.slam": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/pressure_slam",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.pressure.hum": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/pressure_hum",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.pressure.pulse": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/pressure_pulse",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.pressure.disc": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/pressure_disc",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.pressure.dash": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/pressure_dash",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.pressure.ring": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/pressure_ring",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.pressure.sonar": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/pressure_sonar",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.pressure.crystal": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/pressure_crystal",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.pressure.rise": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/pressure_rise",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.pressure.grind": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/pressure_grind",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.pressure.edict": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/pressure_edict",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.charge": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_charge",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.release": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_release",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.form": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_form",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.shatter": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_shatter",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.crack": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_crack",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.freeze": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_freeze",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.roar": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_roar",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.breath": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_breath",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.fall": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_fall",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.impact": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_impact",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.chime": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_chime",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.reflect": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_reflect",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.chain": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_chain",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.wall": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_wall",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.blizzard": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_blizzard",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.mirror": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_mirror",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.wing": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_wing",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.summon": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_summon",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.slash": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_slash",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.tick": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_tick",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.pulse": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_pulse",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.beam": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_beam",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.ice.descent": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ice_descent",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.charge": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_charge",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.release": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_release",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.splash": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_splash",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.form": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_form",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.slice": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_slice",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.drop": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_drop",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.hiss": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_hiss",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.bite": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_bite",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.crown": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_crown",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.bloom": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_bloom",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.absorb": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_absorb",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.lance": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_lance",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.snap": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_snap",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.thorn": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_thorn",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.whirl": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_whirl",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.burst": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_burst",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.step": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_step",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.flow": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_flow",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.stag": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_stag",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.hoof": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_hoof",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.heart": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_heart",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.heart_big": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_heart_big",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.storm": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_storm",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "grimoire.blood.shatter": {
+   "category": "player",
+   "min_distance": 6.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/blood_shatter",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  }
+ }
+}

@@ -119,6 +119,35 @@ def fx_jobs(names=None):
     return jobs, groups
 
 
+def mob_jobs(names):
+    jobs, cells = [], []
+    for name in names:
+        geo = f"{RP}/models/entity/grimoire/{name}.geo.json"
+        anim = f"{RP}/animations/grimoire/{name}.animation.json"
+        all_anims = json.load(open(anim))["animations"]
+        keys = list(all_anims.keys())
+        tex = {"default": f"{RP}/textures/entity/grimoire/{name}.png"}
+        views = MOB_VIEWS.get(name, [("idle", 0.5, ["idle"])])
+        for i, (label, t, use) in enumerate(views):
+            idx = [keys.index(f"animation.grimoire.{name}.{u}") for u in use]
+            out = f"{TMP}/{name}_{i}.png"
+            jobs.append({"out": out, "geo": geo, "textures": tex, "anims": [{"file": anim, "name": k} for k in keys], "size": 400,
+                         "camera": MOB_CAMERA.get(name, {"yaw": -32, "pitch": 12, "dist": 95, "target": [0, 22, 0], "fov": 38}),
+                         "frames": [{"t": t, "anims": idx, "q": {"modified_move_speed": 0.4 if "walk" in use or "run" in use or "charge" in use else 0,
+                                                              "modified_distance_moved": t * 4}}]})
+            cells.append((out, f"{name} - {label}"))
+    return jobs, cells
+
+
+MOB_VIEWS = {
+    "frost_knight_sword": [("idle", 0.5, ["idle"]), ("slash", 0.13, ["slash"]), ("crescent spin", 0.35, ["crescent"])],
+    "frost_knight_spear": [("idle", 0.5, ["idle"]), ("lunge", 0.35, ["lunge"]), ("walk", 0.4, ["walk"])],
+    "frost_knight_shield": [("idle", 0.5, ["idle"]), ("bulwark", 0.5, ["bulwark"]), ("shield slam", 0.3, ["slam"])],
+    "royal_stag": [("idle", 0.5, ["idle"]), ("run", 0.25, ["run"]), ("prepare charge", 0.5, ["prepare"]), ("defensive magic", 0.4, ["defend"])],
+}
+
+MOB_CAMERA = {"royal_stag": {"yaw": -38, "pitch": 14, "dist": 132, "target": [0, 32, -4], "fov": 38}}
+
 PREVIEW_HINTS = {}
 try:
     sys.path.insert(0, os.path.join(ROOT, "tools"))
@@ -134,6 +163,10 @@ def main():
         jobs, cells = book_jobs()
         render(jobs)
         print(sheet(cells, 4, os.path.join(OUT, "grimoires.png"), "The three Grimoires (offline render of the shipped geometry, textures and animations)"))
+    elif what == "mobs":
+        jobs, cells = mob_jobs(sys.argv[2:] or list(MOB_VIEWS))
+        render(jobs)
+        print(sheet(cells, 4, os.path.join(OUT, "summons.png"), "Summoned allies: Imperial Frost Legion and the Royal Stag (offline render)"))
     elif what == "fx":
         names = sys.argv[2:] or None
         jobs, groups = fx_jobs(names)

@@ -1,0 +1,239 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_i_spear.form": {
+   "animation_length": 0.8,
+   "bones": {
+    "shards": {
+     "scale": {
+      "0.0": [
+       0.05,
+       0.05,
+       0.05
+      ],
+      "0.5": [
+       0.6,
+       0.6,
+       1.0
+      ],
+      "0.8": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "hx0": {
+     "scale": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.2": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.45": [
+       1.2,
+       1.2,
+       1.2
+      ],
+      "0.8": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "hx1": {
+     "scale": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.35": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.6": [
+       1.2,
+       1.2,
+       1.2
+      ],
+      "0.8": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "hx2": {
+     "scale": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.75": [
+       1.2,
+       1.2,
+       1.2
+      ],
+      "0.8": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_i_spear.hold": {
+   "loop": true,
+   "bones": {
+    "g_hex0": {
+     "rotation": [
+      0.0,
+      "q.life_time * -120",
+      0.0
+     ]
+    },
+    "hs0": {
+     "rotation": [
+      0.0,
+      "q.life_time * 60",
+      0.0
+     ]
+    },
+    "g_hex1": {
+     "rotation": [
+      0.0,
+      "q.life_time * 120",
+      0.0
+     ]
+    },
+    "hs1": {
+     "rotation": [
+      0.0,
+      "q.life_time * -60",
+      0.0
+     ]
+    },
+    "g_hex2": {
+     "rotation": [
+      0.0,
+      "q.life_time * -120",
+      0.0
+     ]
+    },
+    "hs2": {
+     "rotation": [
+      0.0,
+      "q.life_time * 60",
+      0.0
+     ]
+    },
+    "g_core": {
+     "scale": [
+      "1 + math.sin(q.life_time * 2160 + 0.0) * 0.08",
+      "1 + math.sin(q.life_time * 2160 + 0.0) * 0.08",
+      "1 + math.sin(q.life_time * 2160 + 0.0) * 0.08"
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_i_spear.fly": {
+   "loop": true,
+   "bones": {
+    "g_hex0": {
+     "rotation": [
+      0.0,
+      "q.life_time * -600",
+      0.0
+     ]
+    },
+    "g_hex1": {
+     "rotation": [
+      0.0,
+      "q.life_time * 600",
+      0.0
+     ]
+    },
+    "g_hex2": {
+     "rotation": [
+      0.0,
+      "q.life_time * -600",
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_i_spear.dissolve": {
+   "animation_length": 0.7,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       1.06,
+       1.06,
+       1.06
+      ],
+      "0.5": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       40.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_i_spear.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

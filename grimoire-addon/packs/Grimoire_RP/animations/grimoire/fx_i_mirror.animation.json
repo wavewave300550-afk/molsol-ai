@@ -1,0 +1,289 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_i_mirror.form": {
+   "animation_length": 0.5,
+   "bones": {
+    "frame": {
+     "scale": {
+      "0.0": [
+       0.05,
+       0.05,
+       1.0
+      ],
+      "0.35": [
+       1.08,
+       1.08,
+       1.0
+      ],
+      "0.5": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_i_mirror.idle": {
+   "loop": true,
+   "bones": {
+    "g_rim": {
+     "rotation": [
+      0.0,
+      "q.life_time * 60",
+      0.0
+     ]
+    },
+    "frame": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 110) * 1.2",
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_i_mirror.reflect": {
+   "animation_length": 0.3,
+   "bones": {
+    "t_pane": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.05": [
+       1.1,
+       1.1,
+       1.1
+      ],
+      "0.3": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "g_rim": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.05": [
+       1.35,
+       1.35,
+       1.35
+      ],
+      "0.3": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_i_mirror.shatter": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.5,
+   "bones": {
+    "frame": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.08": [
+       1.25,
+       1.25,
+       1.25
+      ],
+      "0.4": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "msp0": {
+     "position": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.4": [
+       0.0,
+       0.0,
+       -16.0
+      ]
+     }
+    },
+    "msp1": {
+     "position": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.4": [
+       0.0,
+       0.0,
+       -16.0
+      ]
+     }
+    },
+    "msp2": {
+     "position": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.4": [
+       0.0,
+       0.0,
+       -16.0
+      ]
+     }
+    },
+    "msp3": {
+     "position": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.4": [
+       0.0,
+       0.0,
+       -16.0
+      ]
+     }
+    },
+    "msp4": {
+     "position": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.4": [
+       0.0,
+       0.0,
+       -16.0
+      ]
+     }
+    },
+    "msp5": {
+     "position": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.4": [
+       0.0,
+       0.0,
+       -16.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_i_mirror.portal": {
+   "loop": true,
+   "bones": {
+    "t_pane": {
+     "scale": [
+      "1 + math.sin(q.life_time * 900) * 0.06",
+      "1 + math.cos(q.life_time * 900) * 0.06",
+      1.0
+     ]
+    },
+    "g_rim": {
+     "rotation": [
+      0.0,
+      "q.life_time * 360",
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_i_mirror.dissolve": {
+   "animation_length": 0.7,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       1.06,
+       1.06,
+       1.06
+      ],
+      "0.5": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       40.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_i_mirror.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

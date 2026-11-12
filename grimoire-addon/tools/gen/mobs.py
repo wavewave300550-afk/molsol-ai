@@ -4,6 +4,7 @@ from .modelkit import Model, geometry_file
 from .anim import Anim, anim_file, controller_file
 from .fxdefs import dump
 from .fxparts import oriented
+from .texkit import Atlas
 
 MOBS = []
 
@@ -15,7 +16,7 @@ class Mob:
     def __init__(self, name, tex=(128, 256), bounds=(3, 3.5, (0, 1.5, 0))):
         self.name = name
         self.ident = f"grimoire:{name}"
-        self.model = Model(f"geometry.grimoire.{name}", tex[0], tex[1], bounds)
+        self.model = Model(f"geometry.grimoire.{name}", tex[0], tex[1], bounds, atlas=Atlas(tex[0], tex[1], density=1.0))
         self.anims = {}
         self.controllers = {}
         self.animate = []
@@ -303,50 +304,82 @@ shield_knight()
 def royal_stag():
     m = Mob("royal_stag", tex=(128, 256), bounds=(4, 5, (0, 2, 0)))
     b = m.model
+    side_faces = {"east": "b_stag_hide", "west": "b_stag_hide"}
+
+    def shard(bone, base, h, w, rx, rz=0.0, style="b_crystal_glow", tip="b_ruby"):
+        """Tilted crystal spike whose base stays planted at `base`."""
+        x, y, z = base
+        bone.box((x - w / 2, y - 0.6, z - w / 2), (w, h * 0.72 + 0.6, w), style, rotation=(rx, 0, rz), pivot=base)
+        bone.box((x - w * 0.3, y + h * 0.72, z - w * 0.3), (w * 0.6, h * 0.28, w * 0.6), tip, rotation=(rx, 0, rz), pivot=base)
+
     b.bone("root", pivot=(0, 0, 0))
     body = b.bone("body", "root", pivot=(0, 24, 0))
-    body.cbox((0, 26, 0), (15, 14, 30), "b_crystal")                 # torso
-    body.cbox((0, 28, -12), (16, 16, 10), "b_crystal")               # chest
-    body.cbox((0, 33.5, 0), (10, 2, 26), "b_scales")                 # spine plates
-    body.cbox((0, 19.5, 2), (11, 2, 22), "b_burgundy")               # belly
-    b.bone("g_veins", "body", pivot=(0, 24, 0)).cbox((0, 27, 0), (15.4, 10, 26), "b_veins")
-    neck = b.bone("neck", "body", pivot=(0, 31, -14))
-    neck.cbox((0, 37, -18), (8, 14, 9), "b_crystal", rotation=(-30, 0, 0))
-    neck.cbox((0, 33, -16), (9, 6, 6), "b_scales", rotation=(-30, 0, 0))
-    head = b.bone("head", "neck", pivot=(0, 43, -21))
-    head.cbox((0, 45, -24), (8, 8, 10), "b_crystal")
-    head.cbox((0, 43, -31), (6, 5.5, 8), "b_crystal")                # muzzle
-    head.cbox((0, 41, -35), (4, 3.4, 2), "b_burgundy")               # nose
-    b.bone("g_eyes", "head", pivot=(0, 46, -26)).cbox((0, 46.5, -26.5), (8.4, 1.4, 2), "b_core")
+    # tapered torso: deep chest, ribcage, narrow waist, rounded haunch (sides carry the glowing vessel hide)
+    body.cbox((0, 28, -11), (15, 16, 11), "b_crystal", faces=side_faces)        # chest (withers 36)
+    body.cbox((0, 27, -2), (14, 14, 10), "b_crystal", faces=side_faces)         # ribcage
+    body.cbox((0, 27.5, 6), (12.5, 12, 8), "b_crystal", faces=side_faces)       # waist
+    body.cbox((0, 28, 13), (14, 14, 9), "b_crystal", faces=side_faces)          # haunch
+    body.cbox((0, 20.6, 0), (9.5, 1.6, 22), "b_burgundy")                        # belly
+    body.cbox((0, 23, -16.9), (11, 9, 1.2), "b_crystal_glow")                    # breast plate
+    for i, (z, top, h) in enumerate(((-14.5, 36, 3.2), (-11, 36, 4.6), (-7.5, 36, 5.2), (-3.5, 34, 4.4),
+                                     (0.5, 34, 3.8), (4.5, 33.5, 3.2), (9, 35, 2.8), (13, 35, 2.2))):
+        shard(body, (0, top, z), h, 1.7 - i * 0.06, -38)                           # spine ridge
+    veins = b.bone("g_veins", "body", pivot=(0, 24, 0))
+    veins.cbox((0, 28.5, -17.6), (3.2, 3.2, 0.6), "b_core", rotation=(0, 0, 45))   # crystallised heart
+    for side in (1, -1):                                                           # main arteries along the flanks
+        for (x, z0, z1, y) in ((7.56, -16, -5.6, 29.5), (7.06, -7, 3, 29), (6.31, 2, 10, 28.6), (7.06, 8.6, 17, 29.2)):
+            veins.cbox((side * x, y, (z0 + z1) / 2), (0.2, 0.7, z1 - z0), "b_glow_band")
+    neck = b.bone("neck", "body", pivot=(0, 33, -13))
+    neck.cbox((0, 39.5, -16), (7.5, 15, 8), "b_crystal", rotation=(25, 0, 0), faces=side_faces)
+    neck.cbox((0, 35.2, -18.6), (8.4, 6, 3), "b_burgundy", rotation=(25, 0, 0))   # throat ruff
+    for i, (y, z) in enumerate(((36.7, -10.3), (39.0, -11.4), (41.2, -12.4), (43.6, -13.6), (46.0, -14.6))):
+        shard(neck, (0, y, z), 3.4 - abs(i - 2) * 0.4, 1.3, -62)                  # crystal mane
+    head = b.bone("head", "neck", pivot=(0, 45, -19))
+    head.cbox((0, 47.5, -22.5), (8, 7.5, 9), "b_crystal")
+    head.cbox((0, 45.5, -29.5), (5.6, 5, 7), "b_crystal")                         # muzzle
+    head.cbox((0, 47.6, -29), (4.4, 1.2, 5.4), "b_crystal_glow")                   # blaze
+    head.cbox((0, 45.4, -33.2), (3.8, 3.2, 1), "b_burgundy")                      # nose
+    head.cbox((0, 43.2, -28.5), (4.6, 1.2, 5.6), "b_burgundy")                    # jaw
+    eyes = b.bone("g_eyes", "head", pivot=(0, 48, -24))
+    for side in (1, -1):
+        eyes.cbox((side * 4.06, 48.3, -24.6), (0.24, 1.3, 2.2), "b_core")
     for side, nm in ((1, "ear_l"), (-1, "ear_r")):
-        ear = b.bone(nm, "head", pivot=(side * 4, 48, -22))
-        ear.cbox((side * 6, 49, -22), (5, 2, 2.6), "b_crystal", rotation=(0, side * 20, 0))
+        ear = b.bone(nm, "head", pivot=(side * 4, 50, -20.5))
+        ear.cbox((side * 6.2, 50.5, -20.5), (5, 2, 2.6), "b_crystal", rotation=(0, side * 20, side * -15))
+        ear.cbox((side * 6.4, 50.5, -21.85), (3.4, 1.2, 0.2), "b_glow_band", rotation=(0, side * 20, side * -15))
     # branching vascular antlers (bind-pose chains; rest rotations bend them)
     for side, nm in ((1, "ant_l"), (-1, "ant_r")):
-        base = b.bone(nm, "head", pivot=(side * 3, 49, -22), rotation=(-20, side * 25, 0))
+        b.bone(nm, "head", pivot=(side * 2.6, 51, -21), rotation=(-20, side * 25, 0))
+        b.bone(nm + "_burr", nm, pivot=(side * 2.6, 51, -21)).cbox((side * 2.6, 51.4, -21), (3.2, 1.6, 3.2), "b_silver")
         prev = nm
-        y = 49
-        for s in range(4):
-            seg = b.bone(f"{nm}_{s}", prev, pivot=(side * 3, y, -22), rotation=(10 if s else 0, 0, 0))
-            seg.cbox((side * 3, y + 4.5, -22), (2.2 - s * 0.3, 9.4, 2.2 - s * 0.3), "b_crystal_glow")
-            seg.cbox((side * 3 - 0.0, y + 4.5, -23.2), (0.5, 9, 0.5), "b_glow_band")
+        y = 51
+        for s_ in range(4):
+            seg = b.bone(f"{nm}_{s_}", prev, pivot=(side * 2.6, y, -21), rotation=(10 if s_ else 0, 0, 0))
+            seg.cbox((side * 2.6, y + 4.5, -21), (2.2 - s_ * 0.3, 9.4, 2.2 - s_ * 0.3), "b_crystal_glow")
+            seg.cbox((side * 2.6, y + 4.5, -22.2), (0.5, 9, 0.5), "b_glow_band")
             # tines branch forward / outward from each segment
-            for t, (rx, ry, ln) in enumerate(((-55, side * 30, 7 - s), (-30, -side * 40, 6 - s * 0.8))):
-                tb = b.bone(f"{nm}_{s}t{t}", f"{nm}_{s}", pivot=(side * 3, y + 7, -22), rotation=(rx, ry, 0))
-                tb.cbox((side * 3, y + 7 + ln / 2, -22), (1.2, ln, 1.2), "b_crystal_glow")
-                tb.cbox((side * 3, y + 7 + ln + 0.6, -22), (0.8, 1.2, 0.8), "b_ruby")
-            prev = f"{nm}_{s}"
+            for t, (rx, ry, ln) in enumerate(((-55, side * 30, 7 - s_), (-30, -side * 40, 6 - s_ * 0.8))):
+                tb = b.bone(f"{nm}_{s_}t{t}", f"{nm}_{s_}", pivot=(side * 2.6, y + 7, -21), rotation=(rx, ry, 0))
+                tb.cbox((side * 2.6, y + 7 + ln / 2, -21), (1.2, ln, 1.2), "b_crystal_glow")
+                tb.cbox((side * 2.6, y + 7 + ln + 0.6, -21), (0.8, 1.2, 0.8), "b_ruby")
+            prev = f"{nm}_{s_}"
             y += 9
-    legs = (("leg_fl", 5, -10), ("leg_fr", -5, -10), ("leg_bl", 5, 11), ("leg_br", -5, 11))
+    legs = (("leg_fl", 5, -10), ("leg_fr", -5, -10), ("leg_bl", 5, 12), ("leg_br", -5, 12))
     for nm, x, z in legs:
+        back = z > 0
         up = b.bone(nm, "root", pivot=(x, 22, z))
-        up.cbox((x, 17, z), (4.4, 11, 5), "b_crystal")
-        low = b.bone(f"{nm}_low", nm, pivot=(x, 12, z))
-        low.cbox((x, 7, z + 0.4), (2.8, 10, 3), "b_crystal")
-        low.cbox((x, 1.2, z - 0.4), (3.6, 2.4, 4.2), "b_silver")   # blackened-silver hoof
-        b.bone(f"g_{nm}_hoof", f"{nm}_low", pivot=(x, 1, z)).cbox((x, 0.3, z - 0.4), (3, 0.4, 3.6), "b_core")
-    tail = b.bone("tail", "body", pivot=(0, 30, 15))
-    tail.cbox((0, 28, 17), (3, 5, 3), "b_crystal_glow", rotation=(25, 0, 0))
+        if back:
+            up.cbox((x, 20, z + 0.5), (5, 10, 7.5), "b_crystal", faces=side_faces)   # thigh
+            up.cbox((x, 14, z + 1.2), (3.6, 6, 4), "b_crystal")
+        else:
+            up.cbox((x, 17.5, z), (4.2, 11, 5), "b_crystal", faces=side_faces)
+        low = b.bone(f"{nm}_low", nm, pivot=(x, 12, z + (1.2 if back else 0)))
+        low.cbox((x, 7, z + (1.6 if back else 0.4)), (2.6, 10, 2.8), "b_crystal")
+        low.cbox((x, 9.5, z + (0.15 if back else -1.05)), (1.4, 4, 0.2), "b_glow_band")   # shin vessel
+        low.cbox((x, 1.2, z - 0.4 + (1.2 if back else 0)), (3.6, 2.4, 4.2), "b_silver")   # blackened-silver hoof
+        b.bone(f"g_{nm}_hoof", f"{nm}_low", pivot=(x, 1, z)).cbox((x, 0.3, z - 0.4 + (1.2 if back else 0)), (3, 0.4, 3.6), "b_core")
+    tail = b.bone("tail", "body", pivot=(0, 33, 17.5))
+    tail.cbox((0, 32, 19), (3.4, 5, 2.6), "b_crystal_glow", rotation=(30, 0, 0))
 
     def gait(a, speed_mult, amp):
         ph = f"q.modified_distance_moved * {38.17 * speed_mult}"

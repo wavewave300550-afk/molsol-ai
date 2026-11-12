@@ -1,0 +1,40 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:frost_knight_spear",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "trans": "entity_alphablend",
+    "glow": "entity_beam_additive"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/frost_knight_spear"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.frost_knight_spear"
+   },
+   "animations": {
+    "thrust": "animation.grimoire.frost_knight_spear.thrust",
+    "lunge": "animation.grimoire.frost_knight_spear.lunge",
+    "brace": "animation.grimoire.frost_knight_spear.brace",
+    "idle": "animation.grimoire.frost_knight_spear.idle",
+    "walk": "animation.grimoire.frost_knight_spear.walk",
+    "summon": "animation.grimoire.frost_knight_spear.summon",
+    "dissolve": "animation.grimoire.frost_knight_spear.dissolve",
+    "move": "controller.animation.grimoire.frost_knight_spear.move",
+    "act": "controller.animation.grimoire.frost_knight_spear.act"
+   },
+   "scripts": {
+    "scale": "1.0",
+    "animate": [
+     "move",
+     "act"
+    ]
+   },
+   "render_controllers": [
+    "controller.render.grimoire.fx"
+   ]
+  }
+ }
+}

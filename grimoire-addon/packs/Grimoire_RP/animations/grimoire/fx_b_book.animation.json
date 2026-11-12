@@ -1,0 +1,153 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_b_book.open": {
+   "loop": true,
+   "bones": {
+    "book": {
+     "scale": [
+      3.0,
+      3.0,
+      3.0
+     ],
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 90) * 2",
+      0.0
+     ]
+    },
+    "half_r": {
+     "rotation": [
+      0.0,
+      -14.0,
+      0.0
+     ]
+    },
+    "half_l": {
+     "rotation": [
+      0.0,
+      14.0,
+      0.0
+     ]
+    },
+    "flip0": {
+     "rotation": [
+      0.0,
+      "-14 - math.mod(q.life_time * 160 + 0, 152)",
+      0.0
+     ]
+    },
+    "flip1": {
+     "rotation": [
+      0.0,
+      "-14 - math.mod(q.life_time * 160 + 60, 152)",
+      0.0
+     ]
+    },
+    "flip2": {
+     "rotation": [
+      0.0,
+      "-14 - math.mod(q.life_time * 160 + 120, 152)",
+      0.0
+     ]
+    },
+    "g_sigil_spin": {
+     "rotation": [
+      0.0,
+      "q.life_time * 90",
+      0.0
+     ]
+    },
+    "heart": {
+     "scale": [
+      "1 + math.pow(math.max(0, math.sin(q.life_time * 216)), 12) * 0.22",
+      "1 + math.pow(math.max(0, math.sin(q.life_time * 216)), 12) * 0.22",
+      "1 + math.pow(math.max(0, math.sin(q.life_time * 216)), 12) * 0.22"
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_b_book.form": {
+   "animation_length": 0.6,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       0.01,
+       0.01,
+       0.01
+      ],
+      "0.42": [
+       1.08,
+       1.08,
+       1.08
+      ],
+      "0.6": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_b_book.dissolve": {
+   "animation_length": 0.7,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       1.06,
+       1.06,
+       1.06
+      ],
+      "0.5": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       40.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_b_book.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

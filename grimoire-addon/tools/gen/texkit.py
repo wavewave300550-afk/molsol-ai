@@ -377,8 +377,9 @@ def quant(n, lo=4, hi=32):
 
 
 class Atlas:
-    def __init__(self, w=128, h=128, max_h=1024):
+    def __init__(self, w=128, h=128, max_h=1024, density=0.5):
         self.w, self.h, self.max_h = w, h, max_h
+        self.density = density          # texels per model pixel (0.5 = half vanilla; mobs use 1.0)
         self.img = np.zeros((h, w, 4), np.float32)
         self.cache = {}
         self.cx, self.cy, self.row_h = 0, 0, 0
@@ -401,7 +402,7 @@ class Atlas:
         if force:
             tw, th = force
         else:
-            tw, th = quant(int(round(fw / 2)) or 1), quant(int(round(fh / 2)) or 1)
+            tw, th = quant(int(round(fw * self.density)) or 1), quant(int(round(fh * self.density)) or 1)
         key = (style_name, tw, th)
         if key in self.cache:
             return self.cache[key]

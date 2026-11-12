@@ -1,0 +1,40 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:frost_knight_shield",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "trans": "entity_alphablend",
+    "glow": "entity_beam_additive"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/frost_knight_shield"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.frost_knight_shield"
+   },
+   "animations": {
+    "bash": "animation.grimoire.frost_knight_shield.bash",
+    "slam": "animation.grimoire.frost_knight_shield.slam",
+    "bulwark": "animation.grimoire.frost_knight_shield.bulwark",
+    "idle": "animation.grimoire.frost_knight_shield.idle",
+    "walk": "animation.grimoire.frost_knight_shield.walk",
+    "summon": "animation.grimoire.frost_knight_shield.summon",
+    "dissolve": "animation.grimoire.frost_knight_shield.dissolve",
+    "move": "controller.animation.grimoire.frost_knight_shield.move",
+    "act": "controller.animation.grimoire.frost_knight_shield.act"
+   },
+   "scripts": {
+    "scale": "1.0",
+    "animate": [
+     "move",
+     "act"
+    ]
+   },
+   "render_controllers": [
+    "controller.render.grimoire.fx"
+   ]
+  }
+ }
+}
