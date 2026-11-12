@@ -155,22 +155,29 @@ def leviathan():
     h.phase(3, "bite")
 
     s = Fx("fx_b_serpent_seg", B, bounds=(4, 4, (0, 0.4, 0)))
-    s.bone("t_body").solid_cylinder((0, 0, 0), 9, 14, "b_liquid", layers=3)
+    # horizontal tube along the direction of travel (model forward is -Z)
+    oriented(s, "t_body", s.top, (0, 8, 0), rx=90).solid_cylinder((0, 0.5, 0), 8.5, 15, "b_liquid", layers=3)
+    oriented(s, "core", s.top, (0, 8, 0), rx=90).solid_cylinder((0, 2.5, 0), 5, 11, "b_crystal", layers=2)
     sc = s.bone("scales")
-    for k in range(3):
-        sc.cbox((0, 13 + k * 0.6, -4 + k * 4), (12 - k, 1.6, 5), "b_scales", rotation=(0, 0, 0))
-    sc.crystal((0, 14, 0), 10, 3, "b_thorn", "b_ruby")
-    s.bone("g_vein").cbox((0, 7, 0), (1, 1, 14), "b_glow_band")
+    for k in range(3):                                               # dorsal scale plates
+        sc.cbox((0, 15.4 - abs(k - 1) * 0.5, -5 + k * 5), (9 - abs(k - 1) * 2, 1.4, 5.4), "b_scales", rotation=(-10, 0, 0))
+    oriented(s, "dorsal", s.top, (0, 15.5, 1), rx=-38).crystal((0, 15.5, 1), 9, 2.6, "b_thorn", "b_ruby")
+    for sgn in (-1, 1):                                              # lateral arteries
+        s.bone(f"g_vein_{'l' if sgn > 0 else 'r'}").cbox((sgn * 8.2, 8, 0), (0.4, 1.2, 15), "b_glow_band")
+    s.bone("t_belly").cbox((0, 1.4, 0), (8, 1.2, 14), "b_liquid_thin")
     sa = s.anim("pulse_loop", loop=True)
     vibrate(sa, "t_body", 0.05, 2.5)
+    sa.scale("core", ["1 + math.sin(q.life_time * 400) * 0.06"] * 3)
     s.phase(1, s.default_form(0.2), "pulse_loop").phase(2, "pulse_loop")
 
     t = Fx("fx_b_serpent_tail", B, bounds=(4, 3, (0, 0.3, 0)))
-    tb = t.bone("tail", pivot=(0, 6, -6))
-    for k in range(4):
-        tb.cbox((0, 6 - k * 0.5, k * 5), (12 - k * 2.6, 10 - k * 2.2, 6), "b_liquid_solid")
-    fin = oriented(t, "tfin", "tail", (0, 6, 20), rx=60)
-    fin.cbox((0, 14, 20), (1, 18, 10), "b_crystal_glow")
+    t.bone("tail", pivot=(0, 8, -6))
+    for k in range(4):                                               # tapering tube toward +Z (behind)
+        r, z = 8 - k * 1.7, k * 5
+        oriented(t, f"t_tail{k}", "tail", (0, 8, z), rx=90).solid_cylinder((0, 5, z), r, 6, "b_liquid", layers=2)
+        t.bone(f"g_tv{k}", "tail").cbox((0, 8 + r * 0.72, z), (0.5, 0.5, 5.2), "b_glow_band")
+    for j, ry in enumerate((-28, 0, 28)):                            # crystal fin fan trailing behind
+        oriented(t, f"tfin{j}", "tail", (0, 8, 18), rx=-72, ry=ry).cbox((0, 8 + 8, 18), (0.8, 16 - abs(j - 1) * 3, 4.5 - abs(j - 1)), "b_crystal_glow")
     ta = t.anim("whip", loop=True)
     ta.rot("tail", [0, "math.sin(q.life_time * 300) * 25", 0])
     t.phase(1, t.default_form(0.2), "whip").phase(2, "whip")
@@ -495,17 +502,32 @@ def liquids():
 
     bst = Fx("fx_b_beast", B, bounds=(7, 9, (0, 3, -1)), tex=(128, 256))
     bst.bone("neck", pivot=(0, 0, 0))
+    curve = (-10, -8, 6, 12, 15, 14)          # S-curve: rises, then leans over its prey (forward is -Z)
     for k in range(6):
-        hb = bst.model.bone(f"nk{k}", "neck" if k == 0 else f"nk{k - 1}", pivot=(0, k * 14, 0))
-        hb.solid_cylinder((0, k * 14, 0), 16 - k * 1.2, 15, "b_liquid", layers=2)
+        y, r = k * 14, 16 - k * 1.6
+        hb = bst.model.bone(f"nk{k}", "neck" if k == 0 else f"nk{k - 1}", pivot=(0, y, 0), rotation=(curve[k], 0, 0))
+        hb.solid_cylinder((0, y, 0), r, 15, "b_liquid", layers=2)
+        sp = bst.model.bone(f"nk{k}_sp", f"nk{k}", pivot=(0, y + 8, r * 0.7), rotation=(-40, 0, 0))
+        sp.crystal((0, y + 8, r * 0.7), 9 - k * 0.6, 3, "b_thorn", "b_ruby")          # dorsal spikes, raked back
+        bst.model.bone(f"g_nv{k}", f"nk{k}", pivot=(0, y, 0)).cbox((0, y + 7.5, -r * 0.71), (1.2, 14, 0.4), "b_glow_band")  # throat vein
     hd = bst.model.bone("maw", "nk5", pivot=(0, 84, 0))
-    hd.cbox((0, 92, -8), (18, 14, 26), "b_liquid_solid")
-    hd.crystal((0, 98, 4), 16, 5, "b_thorn", "b_ruby")
+    hd.cbox((0, 92, -3), (17, 13, 18), "b_scales")                                   # skull
+    hd.cbox((0, 90, -17), (12, 8, 14), "b_liquid_solid")                             # snout
+    hd.cbox((0, 94.6, -16), (8, 1.4, 12), "b_crystal_glow")                          # snout ridge
+    for j, (rx, ry, ln) in enumerate(((-60, 0, 16), (-70, 26, 12), (-70, -26, 12))):  # horn crest
+        hb = bst.model.bone(f"horn{j}", "maw", pivot=(0, 98, 2), rotation=(rx, ry, 0))
+        hb.crystal((0, 98, 2), ln, 4, "b_thorn", "b_ruby")
+    for k in range(5):
+        for sgn in (-1, 1):
+            hd.cbox((sgn * 5.2, 84.6, -23 + k * 3.4), (1.4, 4, 1.4), "b_bone", rotation=(0, 45, 0))   # upper fangs
+    eyes = bst.model.bone("g_eyes", "maw", pivot=(0, 95, -8))
     for sgn in (-1, 1):
-        hd.cbox((sgn * 7, 86, -18), (2, 6, 2), "b_bone")
+        eyes.cbox((sgn * 8.6, 95, -8), (0.4, 2.2, 4), "b_core")
     jaw = bst.model.bone("jaw", "maw", pivot=(0, 86, 2))
-    jaw.cbox((0, 83, -10), (14, 5, 24), "b_liquid_solid")
-    bst.model.bone("g_eyes", "maw", pivot=(0, 96, -14)).cbox((0, 96, -14), (14, 2, 2), "b_core")
+    jaw.cbox((0, 83.5, -10), (13, 4.5, 24), "b_liquid_solid")
+    for k in range(4):
+        for sgn in (-1, 1):
+            jaw.cbox((sgn * 4.4, 87, -19 + k * 3.6), (1.2, 3, 1.2), "b_bone", rotation=(0, 45, 0))     # lower fangs
     rise = bst.anim("form", length=0.8)
     rise.scale("fade", {0: [1, 0.01, 1], 0.6: [1, 1.05, 1], 0.8: [1, 1, 1]})
     sway = bst.anim("sway", loop=True)
@@ -539,7 +561,8 @@ def flow_parts():
     for k in range(14):
         ang = math.tau * k / 14
         y = 4 + (k % 5) * 6
-        fr.bone(f"fg{k}").cbox((math.cos(ang) * 8, y, math.sin(ang) * 8), (2.2, 2.2, 2.2), "b_ruby", rotation=(0, 45, 0))
+        fr.bone(f"fg{k}").cbox((math.cos(ang) * 8, y, math.sin(ang) * 8), (1.5, 3.8 - (k % 3) * 0.6, 1.5), "b_ruby",
+                               rotation=(30 + (k % 4) * 12, 45 + k * 23, (k % 3 - 1) * 20))   # tilted ruby shards
     swirl = fr.anim("swirl", loop=True)
     for k in range(14):
         swirl.rot(f"fg{k}", [0, f"q.life_time * {200 + k * 15}", 0])
@@ -552,7 +575,10 @@ def flow_parts():
     rb = Fx("fx_b_ribbon", B, bounds=(5, 3, (0, 0, -1)))
     for k, (dz, dy) in enumerate(((0, 0), (-8, 0.8), (-16, 1.4), (-24, 1.0))):
         seg = rb.bone(f"t_rs{k}")
-        seg.cbox((0, dy, dz - 4), (14 - k, 1.4, 9), "b_liquid")
+        w = 14 - k
+        seg.cbox((0, dy, dz - 4), (w, 1.4, 9), "b_liquid")
+        for sgn in (-1, 1):                                          # raised liquid lips: a flowing channel
+            seg.cbox((sgn * (w / 2 + 0.3), dy + 1.0, dz - 4), (1.2, 2.6, 9), "b_liquid", rotation=(0, 0, sgn * -22))
         rb.model.bone(f"g_rv{k}", "fade", pivot=(0, dy, dz)).cbox((0, dy + 0.8, dz - 4), (1.0, 0.4, 9), "b_glow_band")
     br = oriented(rb, "branch", "fade", (0, 1, -12), ry=40)
     br.cbox((0, 1, -18), (5, 0.8, 12), "b_liquid_solid")

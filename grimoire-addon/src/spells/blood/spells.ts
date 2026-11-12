@@ -407,6 +407,7 @@ export function* crimsonThornGarden(c: Cast): Routine {
     if (t % 40 === 20) {
       for (const e of nearestEnemies(c, point, R, 6)) {
         c.fx("grimoire:fx_b_thorns", e.location, { phase: 1, yaw: t * 37 % 360, size: 0.9 });
+        c.particle("grimoire:thorn_burst", e.location, { color: CR, color2: BG, size: 1.2, radius: 1.4, count: 2 });
         c.hit(e, c.p("thornDamage"));
         push(e, v3(0, 0, 0), 0, 0.4);
         effect(e, "slowness", 40, 2);
@@ -601,6 +602,7 @@ export function* royalStag(c: Cast): Routine {
       const side = rotY(flatNorm(v), 90);
       const foot = add(stag.location, add(mul(side, step % 2 ? 0.35 : -0.35), v3(0, 0.05, 0)));
       c.particle("grimoire:hoofprint", foot, { color: BG, size: 1, dir: flatNorm(v) });
+      if (step % 2 === 0) c.sound("grimoire.blood.hoof", foot, 0.5, 0.9 + (step % 4) * 0.05);
     }
     // charge attack every 5 seconds
     if (t % 100 === 40) {

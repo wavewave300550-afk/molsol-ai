@@ -68,10 +68,10 @@ def book_jobs():
         tex = {"default": f"{RP}/textures/entity/grimoire/book_{s}.png", "flow": f"{RP}/textures/entity/grimoire/book_{s}_flow.png"}
         anims = [{"file": anim, "name": f"{n}.{k}"} for k in ("closed", "open", "charge", "flip", "emblem", "release")]
         views = [
-            ("closed (front cover)", 0.5, [0, 4], {"yaw": 90, "pitch": 12, "dist": 34}),
+            ("front cover", 0.5, [0, 4], {"yaw": 90, "pitch": 12, "dist": 34}),
             ("closed 3/4", 1.0, [0, 4], {"yaw": 130, "pitch": 18, "dist": 34}),
-            ("open + charging", 0.6, [1, 2, 4], {"yaw": 0, "pitch": 22, "dist": 38}),
-            ("page flip (crouch)", 0.26, [3, 4], {"yaw": 20, "pitch": 30, "dist": 36}),
+            ("open, charging", 0.6, [1, 2, 4], {"yaw": 180, "pitch": 30, "dist": 38}),
+            ("page flip (select)", 0.26, [3, 4], {"yaw": 200, "pitch": 34, "dist": 36}),
         ]
         for i, (label, t, use, cam) in enumerate(views):
             out = f"{TMP}/book_{s}_{i}.png"

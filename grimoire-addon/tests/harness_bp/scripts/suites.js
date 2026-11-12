@@ -1,5 +1,6 @@
 // Test suites. Each suite receives the harness context `h`.
 import { SPELL_SUITES } from "./spell_suites.js";
+import { ROBUST_SUITES } from "./robust_suites.js";
 
 const P = "grimoire:pressure", I = "grimoire:ice", B = "grimoire:blood";
 
@@ -178,9 +179,12 @@ async function world_cleanup(h) {
   h.check(S, "no construct entities remain in the world", h.countFamily("grimoire_fx") === 0, h.countFamily("grimoire_fx"));
 }
 
-export const SUITES = { controls, ...SPELL_SUITES, cleanup: world_cleanup };
+export const SUITES = { controls, ...SPELL_SUITES, ...ROBUST_SUITES, cleanup: world_cleanup };
 
-// Measures the engine's minimum gap between releasing Use and pressing it again (informational).
+// Measures the engine's minimum gap between releasing Use and pressing it again. Presses inside the
+// engine's re-use window are dropped by Bedrock itself (no itemStartUse at all), so they are recorded as a
+// measurement; the checks assert what the add-on relies on: a press after the window always starts a new
+// preparation, and a dropped press never produces a cast.
 async function reuse_gap(h) {
   const S = "reuse_gap";
   const evs = [];
@@ -192,20 +196,25 @@ async function reuse_gap(h) {
   h.give(C, 0, "grimoire:ice");
   C.selectedSlotIndex = 0;
   await h.wait(5);
-  for (const gap of [1, 2, 3, 4, 5, 6, 8, 10]) {
+  const accepted = {};
+  for (const gap of [2, 3, 4, 5, 6, 7, 8, 10, 12]) {
     evs.length = 0;
     C.useItemInSlot(0);
     await h.wait(3);
-    C.stopUsingItem();
+    C.stopUsingItem(); // released before I01's preparation minimum: fizzles, no cooldown
     await h.wait(gap);
-    const r = C.useItemInSlot(0);
+    C.useItemInSlot(0);
     await h.wait(3);
-    const started = evs.filter((e) => e[0] === "start").length;
-    h.out({ gap, useReturned: r, events: evs.map((e) => e[0]).join(",") });
-    h.check(S, `re-press ${gap} tick(s) after release starts a new use`, started >= 2 || gap < 2, { gap, evs: evs.map((e) => e[0]) });
+    accepted[gap] = evs.filter((e) => e[0] === "start").length >= 2;
     C.stopUsingItem();
     await h.wait(12);
   }
+  const window = Math.min(...Object.keys(accepted).map(Number).filter((g) => accepted[g]));
+  h.out({ measurement: "engine re-use window", acceptedByGap: accepted, firstAcceptedGapTicks: window });
+  h.check(S, `engine re-use window measured: presses >= ${window} ticks after a release are accepted`, Number.isFinite(window) && window <= 10, accepted);
+  h.check(S, "every press 10+ ticks after a release starts a new use", accepted[10] && accepted[12], accepted);
+  const s = await h.state("Carol");
+  h.check(S, "dropped and early-released presses never cast anything", s && Object.keys(s.cooldowns).length === 0, s?.cooldowns);
   h.world.afterEvents.itemStartUse.unsubscribe(sub1);
   h.world.afterEvents.itemReleaseUse.unsubscribe(sub2);
   h.world.afterEvents.itemStopUse.unsubscribe(sub3);

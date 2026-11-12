@@ -186,11 +186,23 @@ world.beforeEvents.playerLeave.subscribe((e) => {
   system.run(() => {
     endPlayer(id, "owner left");
     forget(id);
+    lastDimension.delete(id);
   });
 });
 
+/** Last known dimension per player: the main loop detects changes the event may miss (e.g. scripted teleports). */
+const lastDimension = new Map<string, string>();
+
+function onDimensionChanged(p: Player): void {
+  lastDimension.set(p.id, p.dimension.id);
+  cancelPreparation(p, "Preparation cancelled (dimension changed)");
+  // constructs, wards, binds and summons stay behind in the old dimension, whose chunks may unload:
+  // end every active cast of this player now, exactly like a disconnect (I11 starts its cooldown).
+  endPlayer(p.id, "dimension changed");
+}
+
 world.afterEvents.playerDimensionChange.subscribe((e) => {
-  cancelPreparation(e.player, "Preparation cancelled (dimension changed)");
+  if (lastDimension.get(e.player.id) !== e.player.dimension.id) onDimensionChanged(e.player);
 });
 
 world.afterEvents.entityDie.subscribe((e) => {
@@ -247,6 +259,10 @@ system.runInterval(() => {
   flushDamage(now);
   for (const p of world.getAllPlayers()) {
     if (!p.isValid) continue;
+    const dimId = p.dimension.id;
+    const known = lastDimension.get(p.id);
+    if (known === undefined) lastDimension.set(p.id, dimId);
+    else if (known !== dimId) onDimensionChanged(p); // backup if the event was missed
     const st = stateOf(p);
     const sneaking = p.isSneaking;
     if (sneaking !== st.sneaking) onSneakEdge(p, sneaking); // backup if an event was missed

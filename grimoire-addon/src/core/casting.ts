@@ -34,6 +34,11 @@ export function heldSchool(p: Player): { school: School; item: ItemStack; slot: 
 
 const prepScopes = new Map<string, Prep>();
 const sigils = new Map<string, Fx>();
+const RELEASE_COLORS: Record<School, [typeof COLORS.white, typeof COLORS.white]> = {
+  pressure: [COLORS.orange, COLORS.gold],
+  ice: [COLORS.ice, COLORS.white],
+  blood: [COLORS.crimson, COLORS.redgold],
+};
 const SIGIL: Record<School, string> = { pressure: "grimoire:fx_sigil_p", ice: "grimoire:fx_sigil_i", blood: "grimoire:fx_sigil_b" };
 
 function endSigil(playerId: string, flare: boolean): void {
@@ -286,6 +291,10 @@ export function activate(p: Player, st: PlayerState, spell: SpellDef, scope?: Pr
     /* ignore */
   }
   sound(p.dimension, `grimoire.${spell.school}.release`, p.location, 1, 1);
+  const runeAt = { x: p.location.x, y: p.location.y + 1.1, z: p.location.z };
+  const [rc1, rc2] = RELEASE_COLORS[spell.school];
+  particle(p.dimension, "grimoire:rune_flash", runeAt, { color: rc1, color2: rc2, radius: 1.3, count: 4, size: 1.4 });
+  if (empowered) particle(p.dimension, "grimoire:star_burst", runeAt, { color: COLORS.gold, color2: COLORS.white, radius: 1.4, count: 3, size: 1.6 });
     const playerId = p.id;
   const handle = start(routine ?? emptyRoutine(), `${spell.code}:${p.name}`, playerId, 20 * 200);
   ctx.handle = handle;

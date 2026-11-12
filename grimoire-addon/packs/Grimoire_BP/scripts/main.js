@@ -1742,6 +1742,7 @@ function* crimsonThornGarden(c) {
     if (t % 40 === 20) {
       for (const e of nearestEnemies(c, point, R, 6)) {
         c.fx("grimoire:fx_b_thorns", e.location, { phase: 1, yaw: t * 37 % 360, size: 0.9 });
+        c.particle("grimoire:thorn_burst", e.location, { color: CR, color2: BG, size: 1.2, radius: 1.4, count: 2 });
         c.hit(e, c.p("thornDamage"));
         push(e, v3(0, 0, 0), 0, 0.4);
         effect(e, "slowness", 40, 2);
@@ -1918,6 +1919,7 @@ function* royalStag(c) {
       const side = rotY(flatNorm(v), 90);
       const foot = add(stag.location, add(mul(side, step2 % 2 ? 0.35 : -0.35), v3(0, 0.05, 0)));
       c.particle("grimoire:hoofprint", foot, { color: BG, size: 1, dir: flatNorm(v) });
+      if (step2 % 2 === 0) c.sound("grimoire.blood.hoof", foot, 0.5, 0.9 + step2 % 4 * 0.05);
     }
     if (t % 100 === 40) {
       const foe = nearestEnemies(c, stag.location, 16, 1)[0];
@@ -4686,6 +4688,11 @@ function heldSchool(p) {
 }
 var prepScopes = /* @__PURE__ */ new Map();
 var sigils = /* @__PURE__ */ new Map();
+var RELEASE_COLORS = {
+  pressure: [COLORS.orange, COLORS.gold],
+  ice: [COLORS.ice, COLORS.white],
+  blood: [COLORS.crimson, COLORS.redgold]
+};
 var SIGIL = { pressure: "grimoire:fx_sigil_p", ice: "grimoire:fx_sigil_i", blood: "grimoire:fx_sigil_b" };
 function endSigil(playerId, flare) {
   const s = sigils.get(playerId);
@@ -4909,6 +4916,10 @@ function activate(p, st, spell, scope) {
   } catch {
   }
   sound(p.dimension, `grimoire.${spell.school}.release`, p.location, 1, 1);
+  const runeAt = { x: p.location.x, y: p.location.y + 1.1, z: p.location.z };
+  const [rc1, rc2] = RELEASE_COLORS[spell.school];
+  particle(p.dimension, "grimoire:rune_flash", runeAt, { color: rc1, color2: rc2, radius: 1.3, count: 4, size: 1.4 });
+  if (empowered) particle(p.dimension, "grimoire:star_burst", runeAt, { color: COLORS.gold, color2: COLORS.white, radius: 1.4, count: 3, size: 1.6 });
   const playerId = p.id;
   const handle = start(routine ?? emptyRoutine(), `${spell.code}:${p.name}`, playerId, 20 * 200);
   ctx.handle = handle;
@@ -5115,10 +5126,17 @@ world10.beforeEvents.playerLeave.subscribe((e) => {
   system14.run(() => {
     endPlayer(id, "owner left");
     forget(id);
+    lastDimension.delete(id);
   });
 });
+var lastDimension = /* @__PURE__ */ new Map();
+function onDimensionChanged(p) {
+  lastDimension.set(p.id, p.dimension.id);
+  cancelPreparation(p, "Preparation cancelled (dimension changed)");
+  endPlayer(p.id, "dimension changed");
+}
 world10.afterEvents.playerDimensionChange.subscribe((e) => {
-  cancelPreparation(e.player, "Preparation cancelled (dimension changed)");
+  if (lastDimension.get(e.player.id) !== e.player.dimension.id) onDimensionChanged(e.player);
 });
 world10.afterEvents.entityDie.subscribe((e) => {
   const d = e.deadEntity;
@@ -5163,6 +5181,10 @@ system14.runInterval(() => {
   flushDamage(now);
   for (const p of world10.getAllPlayers()) {
     if (!p.isValid) continue;
+    const dimId = p.dimension.id;
+    const known = lastDimension.get(p.id);
+    if (known === void 0) lastDimension.set(p.id, dimId);
+    else if (known !== dimId) onDimensionChanged(p);
     const st = stateOf(p);
     const sneaking = p.isSneaking;
     if (sneaking !== st.sneaking) onSneakEdge(p, sneaking);
