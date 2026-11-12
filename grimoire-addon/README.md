@@ -294,13 +294,16 @@ or the spell scripts, then rebuilt and re-tested on the server (see [Testing](#t
 [docs/TESTING.md](docs/TESTING.md) has the full per-spell matrix and every check. The raw harness output is in
 `docs/test-evidence/`.
 
-**Final run:** **524 of 524** automated checks passed on Bedrock Dedicated Server 1.26.63.1, with 0 Content Log
-errors or warnings.
+**Final run (after the polish pass):** **524 of 524** automated checks passed on Bedrock Dedicated Server 1.26.63.1,
+with 0 Content Log errors or warnings.
 
 * All 90 spells passed: the original 45 (regression) and the 45 of Expansion 02.
-* The behavior pack under test is byte-identical to the one in `dist/`.
-* One robustness check failed in the first pass because the new test expected the wrong spell number. The test was
-  corrected and the suite re-run; [docs/TESTING.md](docs/TESTING.md) records this.
+* The behavior pack under test is byte-identical to the one in `dist/`. The polish pass changed the resource pack
+  (models, textures) and the spell scripts; both were rebuilt before the run.
+* In the first pass, B13 Sovereign's Pulse failed 2 checks: its cast did not start once, so the follow-up check failed
+  too. It passed every check when the Blood suite was re-run on the same pack; the cause of the one-off miss was not
+  found. The robustness suite was also re-run separately, because the first pass misspelled its name and the harness
+  ran nothing for it. [docs/TESTING.md](docs/TESTING.md) records both.
 
 * **Verified in-engine (automated):** all of the following were run on Bedrock Dedicated Server 1.26.63.1 by
   simulated players using the real inputs (crouch, hold Use, release, switch slots):
