@@ -280,6 +280,8 @@ or the spell scripts, then rebuilt and re-tested on the server (see [Testing](#t
 * Glowing details on solid parts are now self-lit. Before, they were shaded like a surface and went dark at night.
 * **Darkness** constructs were nearly black. Their plates, shadow sheets and voids are lighter and carry thin
   self-lit jade seams, so they read as dark obsidian panels instead of black boxes.
+* **Blood** liquid surfaces use broad, glossy ripples. Bodies built from many small cubes (the beast, pillar, hand and
+  ribbon) used to read as noisy red pixels.
 * **Plasma** containment metal gets violet seams. Membranes are smooth glowing sheets instead of speckled noise.
 * **Prism Light** spectral colours are softened to luminous pastels and also colour the glow's falloff (it used to stay
   grey). Specific constructs:

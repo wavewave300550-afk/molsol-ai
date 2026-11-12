@@ -187,10 +187,12 @@ def p_liquid(w, h, s, seed):
     """Glossy magical blood: dark core, bright ripples, specular streaks."""
     u, v = grid(w, h)
     c1, c2 = hexrgb(s.get('c1', '#ff2a33')), hexrgb(s.get('c2', '#4a020c'))
-    n = noise2(w, h, seed, 4)
-    rip = 0.5 + 0.5 * np.sin((v * 6 + n * 3 + u * 2) * math.pi)
-    rgb = mix(c2[None, None, :], c1[None, None, :], (rip * 0.55 + n * 0.25)[..., None])
-    spec = np.clip((rip - 0.86) * 7, 0, 1) * s.get('spec', 0.7)
+    # broad, smooth ripples (the old 3 ripples + strong noise per tile read as red pixel mush on bodies built
+    # from many small cubes); brighter overall so the liquid looks glossy, not dark
+    n = noise2(w, h, seed, 3)
+    rip = 0.5 + 0.5 * np.sin((v * 2.6 + n * 1.2 + u * 0.8) * math.pi)
+    rgb = mix(c2[None, None, :], c1[None, None, :], np.clip(0.28 + rip * 0.5 + n * 0.12, 0, 1)[..., None])
+    spec = np.clip((rip - 0.9) * 9, 0, 1) * s.get('spec', 0.7)
     rgb = mix(rgb, np.array([255, 190, 190], np.float32), spec[..., None])
     a = s.get('a', 230)
     if s.get('emissive'):
