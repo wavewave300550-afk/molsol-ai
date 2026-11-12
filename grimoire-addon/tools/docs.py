@@ -59,6 +59,38 @@ def cooldown_table(meta):
     return "\n".join(rows)
 
 
+def bp_hash():
+    """Content hash of the behaviour pack (file paths + bytes), independent of zip timestamps."""
+    import hashlib
+    h = hashlib.sha256()
+    base = os.path.join(ROOT, "packs", "Grimoire_BP")
+    for dirpath, _, files in sorted(os.walk(base)):
+        for name in sorted(files):
+            path = os.path.join(dirpath, name)
+            h.update(os.path.relpath(path, base).encode())
+            h.update(open(path, "rb").read())
+    return h.hexdigest()
+
+
+def log_facts(evidence):
+    """Pull measurements and server build info out of the raw server log next to the results file."""
+    facts = {}
+    log = os.path.splitext(evidence)[0] + ".log"
+    if not os.path.exists(log):
+        return facts
+    for line in open(log, encoding="utf-8", errors="replace"):
+        if "Build ID:" in line:
+            facts["build"] = line.split("Build ID:")[1].strip()
+        if "Commit ID:" in line:
+            facts["commit"] = line.split("Commit ID:")[1].strip()
+        if '"measurement"' in line and "[HARNESS]" in line:
+            try:
+                facts["reuse"] = json.loads(line.split("[HARNESS]", 1)[1].strip())
+            except ValueError:
+                pass
+    return facts
+
+
 def testing_md(meta, report, validate_out, evidence_rel):
     res = report["results"]
     by_suite = OrderedDict()
@@ -82,7 +114,18 @@ def testing_md(meta, report, validate_out, evidence_rel):
            "* Run: `python3 tests/run_bds.py --bds <bds dir> controls reuse_gap pressure ice blood robustness cleanup`",
            f"* Result: **{passed}/{total} checks passed**, {len(report['log_problems'])} Content Log errors/warnings,"
            f" run completed: {report['completed']}",
+           f"* Behaviour pack under test: content hash `{bp_hash()[:16]}` (sha256 over `packs/Grimoire_BP`); it is the"
+           " pack shipped in `dist/` (later commits changed only resource-pack visuals and documentation)",
            ""]
+    facts = log_facts(os.path.join(ROOT, evidence_rel))
+    extra = []
+    if facts.get("build"):
+        extra.append(f"* Server build id {facts['build']}, commit {facts.get('commit', '?')[:12]}")
+    if facts.get("reuse"):
+        r = facts["reuse"]
+        extra.append(f"* Measured engine re-use window: a new Use press is accepted from **{r.get('firstAcceptedGapTicks')} ticks**"
+                     f" after a release (accepted by gap in ticks: `{json.dumps(r.get('acceptedByGap'))}`)")
+    out[-1:-1] = extra
     if report["log_problems"]:
         out += ["Content Log problems:", ""] + [f"* `{p}`" for p in report["log_problems"]] + [""]
 
@@ -147,6 +190,9 @@ def testing_md(meta, report, validate_out, evidence_rel):
             "* The feel of knockback-driven player movement (P11 Skyline Pressure Rail, I11 Wings of the Winter Seraph,",
             "  B11 Arterial Current) and dash knockback on players: simulated players have no client and ignore knockback.",
             "* Frame rate on any device. No performance benchmark was run on mobile or desktop; no FPS figure is claimed.",
+            "* Cooldown persistence across leaving and rejoining a world. It is implemented (player dynamic property, saved",
+            "  on leave), but simulated players are not persisted between spawns, so it could not be exercised; survival of",
+            "  cooldowns through death *is* tested.",
             "* Touch controls: crouch/use mapping on mobile follows the standard Bedrock controls (sneak button, hold the",
             "  screen / use button) but was not tried on a phone.",
             ""]

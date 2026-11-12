@@ -9,7 +9,9 @@
     "build": "python3 tools/build.py",
     "validate": "python3 tools/validate.py",
     "test:bds": "python3 tests/run_bds.py",
-    "test": "npm run typecheck && npm run build && npm run validate"
+    "test": "npm run typecheck && npm run build && npm run validate",
+    "docs": "python3 tools/docs.py docs/test-evidence/final_run.json",
+    "preview": "python3 tools/preview.py"
   },
   "devDependencies": {
     "@minecraft/server": "2.11.0",

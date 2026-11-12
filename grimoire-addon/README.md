@@ -122,13 +122,16 @@ Constructs and summons are offline renders of the shipped models. They are **not
 
 ## Who gets hit
 
-* Spells damage **hostile mobs** and **anyone who attacked you or your summons**.
-* They never damage:
+* Spells damage **hostile mobs**.
+* They also damage **any creature that attacked you or your summons in the last 20 seconds**, even one that would
+  normally be protected (an angry iron golem, for example).
+* Otherwise they never damage:
   * you,
-  * your summons or your allies' summons,
+  * your own summons, or other players' summons while `pvp` is off,
   * villagers, wandering traders, iron and snow golems, allays,
   * tamed or named mobs.
-* Other players can be hit only when `pvp` is on. Passive animals can be hit only when `harmPassiveMobs` is on.
+* Other players can be hit only when `pvp` is on, and teammates (a shared `grimoire_team:<name>` tag) only when
+  `friendlyFire` is also on. Passive animals can be hit only when `harmPassiveMobs` is on.
 
 Each construct, ward, bind, temporary block and summon belongs to the cast that created it. It is removed when:
 
