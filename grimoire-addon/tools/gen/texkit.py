@@ -69,7 +69,17 @@ def p_grad(w, h, s, seed):
     alpha = s.get('a', 255)
     if 'a2' in s:
         alpha = mix(np.float32(s['a']), np.float32(s['a2']), t)
+    if s.get('rim') and w >= 4 and h >= 4:
+        seam = _seam(w, h)
+        rgb = np.where(seam[..., None], hexrgb(s['rim'])[None, None, :], rgb)
+        alpha = np.where(seam, 0 if s.get('rim_mode') == 'E' else 255, np.broadcast_to(np.asarray(alpha, np.float32), (h, w)))
     return rgba(rgb, alpha)
+
+
+def _seam(w, h):
+    px_edge = np.minimum(np.minimum(np.arange(w)[None, :], w - 1 - np.arange(w)[None, :]),
+                         np.minimum(np.arange(h)[:, None], h - 1 - np.arange(h)[:, None]))
+    return px_edge < 1
 
 
 def p_metal(w, h, s, seed):
@@ -85,6 +95,11 @@ def p_metal(w, h, s, seed):
     rgb = c[None, None, :] * (0.82 + streak[..., None] * 0.3)
     rgb = mix(rgb, hi[None, None, :], (np.clip(0.35 - v, 0, 0.35) * 1.2)[..., None])
     rgb = mix(rgb, lo[None, None, :], (bevel * 0.55)[..., None])
+    if s.get('rim') and w >= 4 and h >= 4:
+        # seam along the tile border: self-lit on default-material bones, opaque on t_ bones (see Atlas.tile)
+        seam = _seam(w, h)
+        rgb = np.where(seam[..., None], hexrgb(s['rim'])[None, None, :], rgb)
+        return rgba(rgb, np.where(seam, 0 if s.get('rim_mode') == 'E' else 255, s.get('a', 255)))
     return rgba(rgb, s.get('a', 255))
 
 
@@ -383,6 +398,7 @@ class Atlas:
         self.img = np.zeros((h, w, 4), np.float32)
         self.cache = {}
         self.cx, self.cy, self.row_h = 0, 0, 0
+        self.lit_glow = False           # see tile(): enabled for spell constructs
 
     def _alloc(self, tw, th):
         if self.cx + tw > self.w:
@@ -397,18 +413,31 @@ class Atlas:
         self.row_h = max(self.row_h, th)
         return u, v
 
-    def tile(self, style_name, fw, fh, force=None):
-        """Return (u, v, w, h) of a tile for a face of size fw x fh model pixels."""
+    def tile(self, style_name, fw, fh, force=None, lit=False, mat="default"):
+        """Return (u, v, w, h) of a tile for a face of size fw x fh model pixels.
+        `lit`: the face is on a default-material bone (entity_emissive_alpha). A glow style there gets an emissive
+        mask (alpha 0 where it is bright) so it really glows at night instead of being shaded like a surface;
+        on g_/t_ bones alpha keeps its additive/transparency meaning, so those tiles stay as they were."""
         if force:
             tw, th = force
         else:
             tw, th = quant(int(round(fw * self.density)) or 1), quant(int(round(fh * self.density)) or 1)
-        key = (style_name, tw, th)
-        if key in self.cache:
-            return self.cache[key]
         if style_name not in STYLES:
             raise KeyError(f'unknown style {style_name}')
         spec = STYLES[style_name]
+        emissive = lit and spec['kind'] == 'glow' and 'emissive' not in spec and 'a' not in spec and self.lit_glow
+        rim = ''
+        if spec.get('rim'):
+            if self.lit_glow and spec['kind'] in ('metal', 'grad') and mat in ('default', 't'):
+                rim = 'E' if mat == 'default' else 'O'
+                spec = dict(spec, rim_mode=rim)
+            else:
+                spec = {k: v for k, v in spec.items() if k != 'rim'}
+        key = (style_name, tw, th, 'E' if emissive else '', rim)
+        if key in self.cache:
+            return self.cache[key]
+        if emissive:
+            spec = dict(spec, emissive=True)
         px = STYLE_KINDS[spec['kind']](tw, th, spec, seed_of(style_name, tw, th))
         u, v = self._alloc(tw, th)
         self.img[v:v + th, u:u + tw] = px

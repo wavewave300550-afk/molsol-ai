@@ -510,8 +510,7 @@ export function frostMirrorTraverse(c: Cast): Routine {
     mA?.phase(4);
     mB?.phase(4);
     yield 4;
-    const rot = p.getRotation();
-    const ok = p.tryTeleport(dest, { checkForBlocks: true, rotation: rot, keepVelocity: false });
+    const ok = p.tryTeleport(dest, { checkForBlocks: true, keepVelocity: false });
     if (!ok) {
       hudFlash(stateOf(p), "§7The mirror path was blocked", 30);
     }

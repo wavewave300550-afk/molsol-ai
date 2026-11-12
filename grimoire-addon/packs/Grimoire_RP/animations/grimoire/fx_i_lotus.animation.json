@@ -656,6 +656,200 @@
     }
    }
   },
+  "animation.grimoire.fx_i_lotus.eyeguard": {
+   "loop": true,
+   "bones": {
+    "t_p0_0_s0": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "t_p0_0_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "t_p0_4_s0": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "t_p0_4_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "t_p1_0_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "t_p1_0_s2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "t_p1_2_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "t_p1_3_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "t_p1_3_s2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "t_p1_5_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "t_p2_0_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "t_p2_0_s2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "t_p2_1_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "t_p2_1_s2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "t_p2_2_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "t_p2_2_s2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "t_p2_3_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "t_p2_3_s2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "t_p2_4_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "t_p2_4_s2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "core": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pist0": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pist1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pist2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pist3": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pist4": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pist5": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    }
+   }
+  },
   "animation.grimoire.fx_i_lotus.dissolve": {
    "animation_length": 0.7,
    "bones": {

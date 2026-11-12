@@ -551,6 +551,102 @@
     }
    }
   },
+  "animation.grimoire.fx_d_velvet.eyeguard": {
+   "loop": true,
+   "bones": {
+    "panel0": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "panel1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "panel2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "panel3": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "panel4": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "panel5": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "panel6": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "panel7": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "panel8": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "panel9": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "panel10": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "panel11": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "collar": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    }
+   }
+  },
   "animation.grimoire.fx_d_velvet.dissolve": {
    "animation_length": 0.7,
    "bones": {

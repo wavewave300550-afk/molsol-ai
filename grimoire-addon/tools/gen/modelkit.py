@@ -58,7 +58,9 @@ class Bone:
             if isinstance(st, tuple) and st[0] == 'rect':
                 _, u, v, tw, th = st
             else:
-                u, v, tw, th = self.model.atlas.tile(st, fw, fh, tile)
+                n = self.name.lower()
+                mat = "g" if n.startswith("g_") or n.startswith("flow_") else "t" if n.startswith("t_") else "default"
+                u, v, tw, th = self.model.atlas.tile(st, fw, fh, tile, lit=mat == "default", mat=mat)
             if mirror_uv:
                 uv[face] = {"uv": [u + tw, v], "uv_size": [-tw, th]}
             else:

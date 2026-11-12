@@ -143,6 +143,18 @@
     }
    }
   },
+  "animation.grimoire.fx_p_mantle.eyeguard": {
+   "loop": true,
+   "bones": {
+    "t_collar": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    }
+   }
+  },
   "animation.grimoire.fx_p_mantle.dissolve": {
    "animation_length": 0.7,
    "bones": {

@@ -18,6 +18,7 @@
     "form": "animation.grimoire.fx_pl_molt.form",
     "idle": "animation.grimoire.fx_pl_molt.idle",
     "molt": "animation.grimoire.fx_pl_molt.molt",
+    "eyeguard": "animation.grimoire.fx_pl_molt.eyeguard",
     "dissolve": "animation.grimoire.fx_pl_molt.dissolve",
     "orient": "animation.grimoire.fx_pl_molt.orient",
     "ctrl": "controller.animation.grimoire.fx_pl_molt"
@@ -39,7 +40,8 @@
     ],
     "animate": [
      "orient",
-     "ctrl"
+     "ctrl",
+     "eyeguard"
     ]
    },
    "render_controllers": [

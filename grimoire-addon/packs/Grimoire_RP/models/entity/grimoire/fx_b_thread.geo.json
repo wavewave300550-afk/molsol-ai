@@ -6,11 +6,11 @@
     "identifier": "geometry.grimoire.fx_b_thread",
     "texture_width": 128,
     "texture_height": 128,
-    "visible_bounds_width": 2,
-    "visible_bounds_height": 2,
+    "visible_bounds_width": 52.0,
+    "visible_bounds_height": 52.0,
     "visible_bounds_offset": [
      0,
-     0,
+     0.0,
      -1
     ]
    },
@@ -106,7 +106,7 @@
           0
          ],
          "uv_size": [
-          8,
+          16,
           4
          ]
         },
@@ -116,28 +116,28 @@
           0
          ],
          "uv_size": [
-          8,
+          16,
           4
          ]
         },
         "up": {
          "uv": [
-          12,
+          20,
           0
          ],
          "uv_size": [
           4,
-          8
+          16
          ]
         },
         "down": {
          "uv": [
-          12,
+          20,
           0
          ],
          "uv_size": [
           4,
-          8
+          16
          ]
         }
        }
@@ -167,7 +167,7 @@
        "uv": {
         "north": {
          "uv": [
-          16,
+          24,
           0
          ],
          "uv_size": [
@@ -177,7 +177,7 @@
         },
         "south": {
          "uv": [
-          16,
+          24,
           0
          ],
          "uv_size": [
@@ -187,42 +187,42 @@
         },
         "east": {
          "uv": [
-          20,
+          28,
           0
          ],
          "uv_size": [
-          8,
+          16,
           4
          ]
         },
         "west": {
          "uv": [
-          20,
+          28,
           0
          ],
          "uv_size": [
-          8,
+          16,
           4
          ]
         },
         "up": {
          "uv": [
-          28,
+          44,
           0
          ],
          "uv_size": [
           4,
-          8
+          16
          ]
         },
         "down": {
          "uv": [
-          28,
+          44,
           0
          ],
          "uv_size": [
           4,
-          8
+          16
          ]
         }
        }
@@ -262,7 +262,7 @@
        "uv": {
         "north": {
          "uv": [
-          32,
+          48,
           0
          ],
          "uv_size": [
@@ -272,7 +272,7 @@
         },
         "south": {
          "uv": [
-          32,
+          48,
           0
          ],
          "uv_size": [
@@ -282,7 +282,7 @@
         },
         "east": {
          "uv": [
-          32,
+          48,
           0
          ],
          "uv_size": [
@@ -292,7 +292,7 @@
         },
         "west": {
          "uv": [
-          32,
+          48,
           0
          ],
          "uv_size": [
@@ -302,7 +302,7 @@
         },
         "up": {
          "uv": [
-          32,
+          48,
           0
          ],
          "uv_size": [
@@ -312,7 +312,7 @@
         },
         "down": {
          "uv": [
-          32,
+          48,
           0
          ],
          "uv_size": [

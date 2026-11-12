@@ -18,6 +18,7 @@
     "flatten": "animation.grimoire.fx_d_silhouette.flatten",
     "travel": "animation.grimoire.fx_d_silhouette.travel",
     "rise": "animation.grimoire.fx_d_silhouette.rise",
+    "eyeguard": "animation.grimoire.fx_d_silhouette.eyeguard",
     "dissolve": "animation.grimoire.fx_d_silhouette.dissolve",
     "orient": "animation.grimoire.fx_d_silhouette.orient",
     "ctrl": "controller.animation.grimoire.fx_d_silhouette"
@@ -39,7 +40,8 @@
     ],
     "animate": [
      "orient",
-     "ctrl"
+     "ctrl",
+     "eyeguard"
     ]
    },
    "render_controllers": [

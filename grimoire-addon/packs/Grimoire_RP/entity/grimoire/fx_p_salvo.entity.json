@@ -18,6 +18,7 @@
     "form": "animation.grimoire.fx_p_salvo.form",
     "idle": "animation.grimoire.fx_p_salvo.idle",
     "fire": "animation.grimoire.fx_p_salvo.fire",
+    "eyeguard": "animation.grimoire.fx_p_salvo.eyeguard",
     "dissolve": "animation.grimoire.fx_p_salvo.dissolve",
     "orient": "animation.grimoire.fx_p_salvo.orient",
     "ctrl": "controller.animation.grimoire.fx_p_salvo"
@@ -39,7 +40,8 @@
     ],
     "animate": [
      "orient",
-     "ctrl"
+     "ctrl",
+     "eyeguard"
     ]
    },
    "render_controllers": [

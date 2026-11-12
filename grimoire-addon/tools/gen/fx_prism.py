@@ -8,12 +8,20 @@ from .fxlib import aim_box, polyline, silhouette
 from .texkit import style
 
 R_ = "prism_light"
-TINTS = [(1.0, 0.24, 0.24), (1.0, 0.58, 0.18), (1.0, 0.94, 0.3), (0.32, 1.0, 0.45), (0.3, 0.56, 1.0), (0.45, 0.36, 1.0), (0.78, 0.36, 1.0), (1, 1, 1)]
+_PURE = [(1.0, 0.24, 0.24), (1.0, 0.58, 0.18), (1.0, 0.94, 0.3), (0.32, 1.0, 0.45), (0.3, 0.56, 1.0), (0.45, 0.36, 1.0), (0.78, 0.36, 1.0), (1, 1, 1)]
+# spectral light, not paint: a quarter of the white is kept so tinted glass and light read as luminous pastels
+TINTS = [tuple(round(0.25 + 0.75 * c, 3) for c in t) for t in _PURE]
 SPEC = [f"pr_s{i}" for i in range(7)]
 style('pr_glass_r', 'grad', c1='#ff9a9a', c2='#ff3c3c', a=118, a2=78)
 style('pr_glass_g', 'grad', c1='#9affa8', c2='#38ff58', a=118, a2=78)
 style('pr_glass_b', 'grad', c1='#9ab8ff', c2='#3c6cff', a=118, a2=78)
-style('pr_dim', 'grad', c1='#2a2c3a', c2='#10121a', a=150, a2=110)
+style('pr_dim', 'grad', c1='#4a4e66', c2='#262a3a', a=96, a2=64)
+style('pr_band_soft', 'glow', c1='#ffffff', c2='#fff4e0', mode='vband', pow=1.8, floor=0.0)
+# a hanging curtain of light: dense at the hem, fading to nothing at the top (translucent, never a wall)
+style('pr_curtain_light', 'grad', c1='#fff8ee', c2='#ffffff', a=12, a2=150, noise=0.04)
+# afterimage: an even soft glow (additive), no stripes
+style('pr_ghost', 'glow', c1='#ffffff', c2='#f4f0ea', mode='radial', pow=0.25, floor=0.62)
+style('pr_band_core', 'glow', c1='#ffffff', c2='#fffaf0', mode='vband', pow=0.8, floor=0.3)
 
 
 def tri_pts(r, rot=90):
@@ -189,12 +197,18 @@ def fraunhofer():
 
     b = Fx("fx_pr_band", R_, bounds=(3, 1, (0, 0, 0)), lifetime=500)
     b.bone("stretch", pivot=(0, 0, 0))
-    b.bone("g_band", "stretch").cbox((0, 0.3, -8), (36, 0.3, 16), "pr_beam")
-    b.bone("g_edge", "stretch").cbox((0, 0.5, -8), (1, 0.2, 16), "pr_edge")
+    # a ribbon of light on the ground: bright along its middle, fading to nothing at the sides (additive, so it
+    # reads as light falling on the floor, not as a painted strip), with two thin brighter filaments
+    b.bone("g_band", "stretch").cbox((0, 0.3, -8), (30, 0.2, 16), "pr_band_soft")
+    b.bone("g_edge", "stretch").cbox((0, 0.5, -8), (1.2, 0.2, 16), "pr_band_core")
+    fil = b.bone("g_fil", "stretch", pivot=(0, 0.6, 0))
+    for x in (-6, 6):
+        fil.cbox((x, 0.6, -8), (0.6, 0.15, 16), "pr_band_core")
     b.tints = TINTS
     b.phase(1, b.default_form(0.3), "shimmer")
     sh = b.anim("shimmer", loop=True)
     sh.scale("g_band", ["1 + math.sin(q.life_time * 400) * 0.06", 1, 1])
+    sh.scale("g_fil", ["1 + math.sin(q.life_time * 260) * 0.35", 1, 1])
     b.phase(2, "shimmer")
 
 
@@ -360,7 +374,7 @@ def rayline():
 
     a = Fx("fx_pr_afterimage", R_, bounds=(2, 3, (0, 1, 0)), lifetime=60)
     a.bone("cut", pivot=(0, 0, 0))
-    silhouette(a, "g_", "cut", "pr_beam", 1.0)
+    silhouette(a, "g_", "cut", "pr_ghost", 1.0)
     a.tints = TINTS
     pop = a.anim("form", length=0.2)
     pop.scale("cut", {0: [1.2, 1.2, 0.05], 0.2: [1, 1, 0.08]})
@@ -461,11 +475,12 @@ def benediction():
         for t in range(6):
             rr = 30 * (1 - t / 6)
             aa = a + t * 0.5
-            pts.append((math.cos(aa) * rr, 40 - t * 2.6, math.sin(aa) * rr))
+            pts.append((math.cos(aa) * rr, 40 - t * 1.4, math.sin(aa) * rr))
         polyline(rb, pts, 0.7, SPEC[i])
-    core = b.bone("g_white", pivot=(0, 24, 0))
-    for i, s in enumerate((10, 7, 4)):
-        core.cbox((0, 24, 0), (s, s, s), "pr_core", rotation=(i * 30, i * 45, 0))
+    # the white point burns in the middle of the halo, above the head (not in the caster's face)
+    core = b.bone("g_white", pivot=(0, 40, 0))
+    for i, s in enumerate((8, 6, 3.5)):
+        core.cbox((0, 40, 0), (s, s, s), "pr_core", rotation=(i * 30, i * 45, 0))
     ap = b.anim("form", length=0.5)
     ap.scale("halo", {0: [0.2, 0.2, 0.2], 0.5: [1, 1, 1]}).scale("g_white", [0, 0, 0])
     for i in range(7):
@@ -583,7 +598,7 @@ def coronation():
     cu = Fx("fx_pr_curtain", R_, bounds=(11, 13, (0, 6, 0)), tex=(128, 256), lifetime=500)
     for k in range(6):
         s = cu.bone(f"t_strip{k}", pivot=((k - 2.5) * 27, 192, 0))
-        s.cbox(((k - 2.5) * 27, 96, 0), (27.4, 192, 0.6), "pr_beam")
+        s.cbox(((k - 2.5) * 27, 96, 0), (27.4, 192, 0.6), "pr_curtain_light")
     cu.tints = TINTS
     ds = cu.anim("form", length=0.8)
     for k in range(6):

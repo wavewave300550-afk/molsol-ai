@@ -74,3 +74,18 @@ PREVIEW_HINTS.update({
     "fx_b_cage": {"camera": {"dist": 140, "target": [0, 20, 0]}, "frames": [("thorn cage", 0.4, "p1")]},
     "fx_b_book": {"camera": {"yaw": 180, "pitch": 15, "dist": 90, "target": [0, 0, 0]}},
 })
+# stretched (script-lengthened) constructs at an in-game length, so the sheet shows what players see
+PREVIEW_HINTS.update({
+    "fx_pl_beam": {"camera": {"yaw": 80, "pitch": 12, "dist": 260, "target": [0, 0, -60]}, "v": {"len": 8}},
+    "fx_pl_jet": {"camera": {"yaw": 80, "pitch": 12, "dist": 260, "target": [0, 0, -60]}, "v": {"len": 8}},
+    "fx_pl_sweepjet": {"camera": {"yaw": 80, "pitch": 12, "dist": 260, "target": [0, 0, -60]}, "v": {"len": 8}},
+    "fx_pl_string": {"camera": {"yaw": 80, "pitch": 12, "dist": 200, "target": [0, 0, -40]}, "v": {"len": 6}},
+    "fx_pl_branch": {"camera": {"yaw": 80, "pitch": 12, "dist": 200, "target": [0, 0, -40]}, "v": {"len": 6}},
+    "fx_pl_whip": {"camera": {"yaw": 80, "pitch": 12, "dist": 200, "target": [0, 0, -40]}, "v": {"len": 6}},
+    "fx_pr_ray": {"camera": {"yaw": 80, "pitch": 12, "dist": 260, "target": [0, 0, -60]}, "v": {"len": 8}},
+    "fx_pr_band": {"camera": {"yaw": 80, "pitch": 12, "dist": 200, "target": [0, 0, -40]}, "v": {"len": 6}},
+    "fx_pl_skates": {"camera": {"dist": 60, "target": [0, 4, 0]}},
+    "fx_pl_tail": {"camera": {"dist": 90, "yaw": 80}, "v": {"len": 4}},
+    "fx_pr_tapestry": {"camera": {"dist": 160, "target": [0, 20, 0]}},
+    "fx_pr_spectroscope": {"camera": {"dist": 60, "yaw": 70}, "v": {"len": 4}},
+})

@@ -246,6 +246,47 @@ No third-party art or audio is included. three.js and Playwright are used only b
   * Each one has a self-despawn timer.
   * Each one carries a session id so that leftovers are removable.
 
+## Polish pass (visual and bug fixes)
+
+This pass followed a report that the spells looked bad and were buggy. Everything below was changed in the generator
+or the spell scripts, then rebuilt and re-tested on the server (see [Testing](#testing)).
+
+**Bugs fixed**
+
+* **The book floated above the hand.** In third person it sat about 21 model pixels (1.3 blocks) above the right hand.
+  It is now held in front of the hand at chest height. This was checked by rendering the vanilla player model with the
+  attachable bound to its hand bone ([docs/images/hand_books.png](docs/images/hand_books.png)).
+* **Constructs vanished at the edge of the screen.** 15 constructs were larger than their culling bounds, and stretched
+  ones (beams, jets, strings, bands) disappeared once their origin left the view. Bounds are now computed from the
+  real geometry, doubled for the size property, and stretched constructs get 52 blocks.
+* **Constructs worn by the caster blocked the first-person view.** Cloaks, wings, halos, the doppelganger and the
+  afterimages now hide the parts that pass through the caster's eyes, only while the camera is within 2.3 blocks.
+  Other players, and the caster in third person, still see them whole.
+* **D10 Silhouette Traverse and PR10 Rayline Stride locked the camera.** The dash re-applied the starting rotation on
+  every step. You can now look around while dashing (the PR06, B10 and I10 teleports no longer force a rotation either).
+* **PR11 Iridescent Sail hovered.** Its push set the vertical speed to 0 every 3 ticks, so the caster stayed at one
+  height for the whole spell. It now glides down at a steady rate.
+* **D11 Stairway of the Unlit Sky dropped the caster.** All steps vanished at once when the spell ended. The stair now
+  folds back one step at a time, the step underfoot last, with slow falling and fall immunity. The same protection
+  applies if the spell is cancelled.
+* **Area spells aimed at the sky landed in mid-air.** Aiming above the horizon, or past the range over a drop, now
+  lands the spell on the ground ahead of the caster.
+* **PR13 Whitepoint Benediction put its white core inside the caster's chest.** It now burns in the middle of the halo,
+  above the head.
+
+**Visual changes**
+
+* Construct textures are twice as sharp (one texel per model pixel instead of one per two).
+* Glowing details on solid parts are now self-lit. Before, they were shaded like a surface and went dark at night.
+* **Darkness** constructs were nearly black. Their plates, shadow sheets and voids are lighter and carry thin
+  self-lit jade seams, so they read as dark obsidian panels instead of black boxes.
+* **Plasma** containment metal gets violet seams. Membranes are smooth glowing sheets instead of speckled noise.
+* **Prism Light** spectral colours are softened to luminous pastels and also colour the glow's falloff (it used to stay
+  grey). Specific constructs:
+  * The ground band is a soft ribbon of light instead of a flat painted strip.
+  * Afterimages glow evenly instead of showing stripes.
+  * The light curtain is translucent and fades upward, instead of being an opaque wall.
+
 ## Testing
 
 [docs/TESTING.md](docs/TESTING.md) has the full per-spell matrix and every check. The raw harness output is in
@@ -292,7 +333,8 @@ The target versions were checked when the add-on was built:
 ## Known issues and limitations
 
 * **Client presentation is unverified.** This covers:
-  * the book's first-person and third-person placement (tuned from vanilla attachables and offline renders),
+  * the book's first-person placement (third person was checked on the vanilla player model offline; first person follows
+    vanilla attachable conventions),
   * every animation, particle, sound and fog,
   * how the HUD fits on small screens.
 

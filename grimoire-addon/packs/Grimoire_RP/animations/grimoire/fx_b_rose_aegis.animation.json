@@ -776,6 +776,319 @@
     }
    }
   },
+  "animation.grimoire.fx_b_rose_aegis.eyeguard": {
+   "loop": true,
+   "bones": {
+    "pt0_0_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt0_0_s2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt0_1_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt0_4_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt0_5_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt0_5_s2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt0_6_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt0_9_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt1_0_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt1_0_s2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt1_1_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt1_2_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt1_3_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt1_3_s2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt1_4_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt1_4_s2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt1_5_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt1_6_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt1_7_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt1_7_s2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt2_0_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt2_0_s2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt2_1_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt2_1_s2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt2_2_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt2_2_s2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt2_3_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt2_3_s2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt2_4_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt2_4_s2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt2_5_s1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "pt2_5_s2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "th0": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "th1": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "th2": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "th3": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "th4": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "th5": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "th6": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "th7": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "th8": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "th9": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "th10": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "th11": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    }
+   }
+  },
   "animation.grimoire.fx_b_rose_aegis.dissolve": {
    "animation_length": 0.7,
    "bones": {

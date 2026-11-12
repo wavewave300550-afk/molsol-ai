@@ -460,7 +460,10 @@ def book_animations(school, dims):
     A = []
     # pose by view (spyglass-style offsets; geometry authored at origin)
     pose = Anim(f"{n}.pose", loop=True)
-    pose.pos("anchor", ["c.is_first_person ? 3.5 : 2.0", "c.is_first_person ? 21.5 : 21.0", "c.is_first_person ? -5.0 : -1.5"])
+    # The bound bone's pivot sits on the hand bone's pivot (documented binding rule; vanilla trident/shield/wrench
+    # all hold their grip at the pivot). Offsets are a few pixels, like vanilla bow/trident wield animations:
+    # the book floats just above and in front of the hand instead of 1.3 blocks above it.
+    pose.pos("anchor", ["c.is_first_person ? -1.5 : 0.5", "c.is_first_person ? 2.5 : 3.0", "c.is_first_person ? -2.0 : -4.5"])
     pose.rot("anchor", ["c.is_first_person ? 18.0 : 5.0", "c.is_first_person ? -40.0 : 70.0", "c.is_first_person ? -6.0 : 8.0"])
     A.append(pose)
     # closed + floating idle (gentle bob and sway)

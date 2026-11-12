@@ -44,6 +44,39 @@
     }
    }
   },
+  "animation.grimoire.fx_pr_afterimage.eyeguard": {
+   "loop": true,
+   "bones": {
+    "g_body": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "g_head": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "g_arm_l": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    },
+    "g_arm_r": {
+     "scale": [
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0",
+      "q.distance_from_camera > 2.3 ? 1 : 0"
+     ]
+    }
+   }
+  },
   "animation.grimoire.fx_pr_afterimage.orient": {
    "loop": true,
    "bones": {

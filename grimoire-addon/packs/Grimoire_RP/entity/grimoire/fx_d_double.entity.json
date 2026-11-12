@@ -20,6 +20,7 @@
     "walk": "animation.grimoire.fx_d_double.walk",
     "attack": "animation.grimoire.fx_d_double.attack",
     "dissolve": "animation.grimoire.fx_d_double.dissolve",
+    "eyeguard": "animation.grimoire.fx_d_double.eyeguard",
     "orient": "animation.grimoire.fx_d_double.orient",
     "ctrl": "controller.animation.grimoire.fx_d_double",
     "pulse_ctrl": "controller.animation.grimoire.fx_d_double.pulse"
@@ -42,6 +43,7 @@
     "animate": [
      "orient",
      "ctrl",
+     "eyeguard",
      "pulse_ctrl"
     ]
    },

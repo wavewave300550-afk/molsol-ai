@@ -297,7 +297,7 @@ export function* parallaxDisplacement(c: Cast): Routine {
     const dest = safeSpot(c.dim, add(p.location, mul(rotY(away, turn), c.p("hop"))));
     if (dest && segmentClear(c, add(p.location, v3(0, 0.2, 0)), add(dest, v3(0, 0.2, 0)))) {
       try {
-        p.teleport(dest, { rotation: p.getRotation(), keepVelocity: false });
+        p.teleport(dest, { keepVelocity: false });
       } catch {
         /* blocked */
       }
@@ -446,7 +446,6 @@ export function* raylineStride(c: Cast): Routine {
   c.sound("grimoire.prism_light.beam", feet, 1, 1.3);
   yield 4;
   grantFallImmunity(p.id, 40);
-  const rot = p.getRotation();
   let i = 0;
   for (let k = 0; k < route.length - 1; k++) {
     const A = route[k], B = route[k + 1];
@@ -454,12 +453,12 @@ export function* raylineStride(c: Cast): Routine {
     for (let s = 1; s <= steps && c.ok; s++) {
       const at = lerp(A, B, s / steps);
       try {
-        p.teleport(at, { rotation: rot, keepVelocity: false });
+        p.teleport(at, { keepVelocity: false });
       } catch {
         break;
       }
       if (i++ % 2 === 0) {
-        const after = c.fx("grimoire:fx_pr_afterimage", at, { yaw: rot.y, variant: i % 7, phase: 1 });
+        const after = c.fx("grimoire:fx_pr_afterimage", at, { yaw: p.getRotation().y, variant: i % 7, phase: 1 });
         c.run(dissolveLater(after, 8, 6), "after");
       }
       yield 1;
@@ -481,8 +480,16 @@ export function* iridescentSail(c: Cast): Routine {
     if (!p.isOnGround) {
       effect(p, "slow_falling", 12, 0);
       if (t % 3 === 0) {
+        // a glide, never a hover: the sail keeps a steady sink (knockback sets vertical speed outright, so
+        // driving with 0 would hold the caster at one height for the whole duration)
         const look = flatNorm(p.getViewDirection());
-        drive(p, mul(look, c.p("glide") * 0.6));
+        let vy = -0.08;
+        try {
+          vy = Math.min(-0.06, Math.max(-0.22, p.getVelocity().y));
+        } catch {
+          /* keep default */
+        }
+        drive(p, { ...mul(look, c.p("glide") * 0.6), y: vy });
       }
       if (t % 4 === 0) glints(c, add(p.location, v3(0, 2.4, 0)), 1.2, 0.4);
     }

@@ -5,7 +5,7 @@ import { Ward, addWard, removeWard } from "../core/defense";
 import { TempBlockSet } from "../core/blocks";
 import { Bind, BindOptions, bind as bindTarget, endBind } from "../core/status";
 import { Routine, RoutineHandle, start } from "../core/tasks";
-import { V3, add, dist, dot, mul, norm, sub, v3 } from "../core/vec";
+import { V3, add, dist, dot, flatNorm, mul, norm, sub, v3 } from "../core/vec";
 import type { SpellDef } from "./types";
 
 export interface Aim {
@@ -240,6 +240,11 @@ export class Cast extends SpellScope {
 
   /** Top surface below a point (searches down `maxDown` blocks, falls back to the point). */
   ground(p: V3, maxDown = 24): V3 {
+    return this.groundHit(p, maxDown) ?? { x: p.x, y: Math.floor(p.y), z: p.z };
+  }
+
+  /** Top surface below a point, or undefined when there is none within `maxDown` blocks. */
+  groundHit(p: V3, maxDown = 24): V3 | undefined {
     try {
       const hit = this.dim.getBlockFromRay(add(p, v3(0, 0.5, 0)), v3(0, -1, 0), {
         maxDistance: maxDown + 0.5,
@@ -250,14 +255,28 @@ export class Cast extends SpellScope {
     } catch {
       /* unloaded */
     }
-    return { x: p.x, y: Math.floor(p.y), z: p.z };
+    return undefined;
   }
 
-  /** Aimed ground point (where area spells land). */
+  /** Aimed ground point (where area spells land). Aiming at the sky (or past the range over a drop) lands the
+   *  spell on the ground ahead of the caster instead of hanging it in the air. */
   aimGround(maxDistance: number): { point: V3; target?: Entity } {
     const a = this.aim(maxDistance);
-    const base = a.entity ? a.entity.location : a.point;
-    return { point: this.ground(base, 30), target: a.entity };
+    if (a.entity) return { point: this.ground(a.entity.location, 30), target: a.entity };
+    if (a.block) {
+      const g = this.groundHit(add(a.point, v3(0, 0.3, 0)), 30);
+      if (g) return { point: g };
+    }
+    const d = this.player.getViewDirection();
+    const f = flatNorm(d);
+    const horiz = Math.hypot(d.x, d.z) * maxDistance;
+    const reach = d.y > 0 ? Math.max(3, maxDistance * 0.6) : Math.max(3, Math.min(maxDistance, horiz));
+    const feet = this.player.location;
+    for (let r = reach; r >= 2; r -= 2) {
+      const g = this.groundHit(add(feet, add(mul(f, r), v3(0, 3, 0))), 30);
+      if (g) return { point: g };
+    }
+    return { point: { x: feet.x + f.x * 3, y: Math.floor(feet.y), z: feet.z + f.z * 3 } };
   }
 
   private binds: Bind[] = [];

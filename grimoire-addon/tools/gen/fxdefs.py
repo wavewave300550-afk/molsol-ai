@@ -5,6 +5,10 @@ from .modelkit import Model, geometry_file
 from .anim import Anim, anim_file, controller_file, phase_controller, pulse_controller
 
 REGISTRY = []
+# constructs that sit on (follow) the caster: see Fx.eye_guard
+WORN = {"fx_pl_molt", "fx_d_velvet", "fx_p_mantle", "fx_b_rose_aegis", "fx_pr_benediction", "fx_i_wings", "fx_p_salvo",
+        "fx_pl_stellarator", "fx_pr_sail", "fx_d_double", "fx_d_silhouette", "fx_pr_afterimage", "fx_pl_tail",
+        "fx_pl_skates", "fx_d_lock", "fx_p_sonar", "fx_i_lotus"}
 
 FX_PROPERTIES = {
     "grimoire:phase": {"type": "int", "range": [0, 15], "default": 0, "client_sync": True},
@@ -38,7 +42,11 @@ class Fx:
         self.school = school
         self.ident = f"grimoire:{name}"
         self.geo_id = f"geometry.grimoire.{name}"
-        self.model = Model(self.geo_id, tex[0], tex[1], bounds)
+        from .texkit import Atlas
+        # constructs are seen up close: one texel per model pixel (was half), like the summoned mobs
+        atlas = Atlas(tex[0], tex[1], max_h=2048, density=1.0)
+        atlas.lit_glow = True
+        self.model = Model(self.geo_id, tex[0], tex[1], bounds, atlas=atlas)
         self.model.standard_root(center)
         self.model.bone("fade", "pitch", pivot=center)
         self.top = "fade"
@@ -97,7 +105,86 @@ class Fx:
         return "dissolve"
 
     # ---------------------------------------------------------------- emit
+    def _extents(self):
+        xs, ys = [], []
+        for b in self.model.bones:
+            for c in b.cubes:
+                o, sz = c["origin"], c["size"]
+                pad = max(sz) * 0.5 if c.get("rotation") else 0.0
+                xs += [abs(o[0]) + pad, abs(o[0] + sz[0]) + pad, abs(o[2]) + pad, abs(o[2] + sz[2]) + pad]
+                ys += [o[1] - pad, o[1] + sz[1] + pad]
+        return xs, ys
+
+    def auto_bounds(self):
+        """Culling bounds from the real geometry, doubled for the size property; stretched constructs (beams,
+        jets, strings, bands) are lengthened by script, so they get room for 24+ blocks."""
+        xs, ys = self._extents()
+        if not xs:
+            return
+        w = max(xs) * 2 / 16 * 2.0 + 1.0
+        h = (max(ys) - min(ys)) / 16 * 2.0 + 1.0
+        if "stretch" in self.model.by_name:
+            w = max(w, 52.0)
+            h = max(h, 52.0)
+        bw, bh, off = self.model.bounds
+        cy = (max(ys) + min(ys)) / 2 / 16
+        self.model.bounds = (round(max(bw, w), 2), round(max(bh, h), 2), (off[0], round(cy, 2), off[2]))
+
+    def eye_guard(self):
+        """Worn constructs only (they sit on the caster): bones that pass within ~half a block of eye height are
+        hidden when the camera is that close - the caster's own first-person view. Everyone else, and the
+        caster in third person, still see them."""
+        if self.name not in WORN:
+            return
+        import math
+        eye = (0.0, 25.9, 0.0)
+
+        def rot_pt(p, c):
+            r = c.get("rotation")
+            if not r:
+                return p
+            pv = c.get("pivot", [c["origin"][i] + c["size"][i] / 2 for i in range(3)])
+            x, y, z = p[0] - pv[0], p[1] - pv[1], p[2] - pv[2]
+            ax, ay, az = (math.radians(-r[0]), math.radians(r[1]), math.radians(-r[2]))
+            y, z = y * math.cos(ax) - z * math.sin(ax), y * math.sin(ax) + z * math.cos(ax)
+            x, z = x * math.cos(ay) + z * math.sin(ay), -x * math.sin(ay) + z * math.cos(ay)
+            x, y = x * math.cos(az) - y * math.sin(az), x * math.sin(az) + y * math.cos(az)
+            return (x + pv[0], y + pv[1], z + pv[2])
+
+        near = []
+        for b in self.model.bones:
+            hit = False
+            for c in b.cubes:
+                o, sz = c["origin"], c["size"]
+                for fx_ in (0, 0.25, 0.5, 0.75, 1):
+                    for fy in (0, 0.25, 0.5, 0.75, 1):
+                        for fz in (0, 0.5, 1):
+                            q = rot_pt((o[0] + sz[0] * fx_, o[1] + sz[1] * fy, o[2] + sz[2] * fz), c)
+                            if sum((q[k] - eye[k]) ** 2 for k in range(3)) < 7.5 ** 2:
+                                hit = True
+                                break
+                        if hit:
+                            break
+                    if hit:
+                        break
+                if hit:
+                    break
+            if hit:
+                near.append(b.name)
+        if not near:
+            return
+        a = Anim(f"animation.grimoire.{self.name}.eyeguard", loop=True)
+        for n in near:
+            a.scale(n, ["q.distance_from_camera > 2.3 ? 1 : 0"] * 3)
+        self.anims["eyeguard"] = a
+        self.keep("eyeguard")
+
     def finalize(self):
+        if getattr(self, "_finalized", False):
+            return
+        self._finalized = True
+        self.auto_bounds()
+        self.eye_guard()
         if 1 not in self.phases:
             self.phase(1, self.default_form())
         if 15 not in self.phases:
@@ -195,7 +282,9 @@ class Fx:
         import numpy as np
         base = self.model.atlas.img
         rgb = base[..., :3]
-        mask = ((rgb.min(-1) > 165) & (rgb.max(-1) - rgb.min(-1) < 70))[..., None]
+        # every unsaturated (white / grey / glass) texel, dim ones too, so a glow's falloff takes the colour
+        # instead of staying grey; saturated metal (gold frames) keeps its colour
+        mask = ((rgb.max(-1) > 24) & (rgb.max(-1) - rgb.min(-1) < 70))[..., None]
         self.variants = []
         for i, t in enumerate(self.tints):
             arr = base.copy()

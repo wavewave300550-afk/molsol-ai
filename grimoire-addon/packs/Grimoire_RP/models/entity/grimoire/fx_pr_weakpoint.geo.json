@@ -6,11 +6,11 @@
     "identifier": "geometry.grimoire.fx_pr_weakpoint",
     "texture_width": 128,
     "texture_height": 128,
-    "visible_bounds_width": 2,
-    "visible_bounds_height": 2,
+    "visible_bounds_width": 3.31,
+    "visible_bounds_height": 5.5,
     "visible_bounds_offset": [
      0,
-     0,
+     0.0,
      0
     ]
    },
@@ -717,7 +717,7 @@
          ],
          "uv_size": [
           4,
-          12
+          24
          ]
         },
         "south": {
@@ -727,7 +727,7 @@
          ],
          "uv_size": [
           4,
-          12
+          24
          ]
         },
         "east": {
@@ -737,7 +737,7 @@
          ],
          "uv_size": [
           4,
-          12
+          24
          ]
         },
         "west": {
@@ -747,7 +747,7 @@
          ],
          "uv_size": [
           4,
-          12
+          24
          ]
         },
         "up": {
@@ -801,7 +801,7 @@
          ],
          "uv_size": [
           4,
-          12
+          24
          ]
         },
         "south": {
@@ -811,7 +811,7 @@
          ],
          "uv_size": [
           4,
-          12
+          24
          ]
         },
         "east": {
@@ -821,7 +821,7 @@
          ],
          "uv_size": [
           4,
-          12
+          24
          ]
         },
         "west": {
@@ -831,7 +831,7 @@
          ],
          "uv_size": [
           4,
-          12
+          24
          ]
         },
         "up": {
@@ -885,7 +885,7 @@
          ],
          "uv_size": [
           4,
-          12
+          24
          ]
         },
         "south": {
@@ -895,7 +895,7 @@
          ],
          "uv_size": [
           4,
-          12
+          24
          ]
         },
         "east": {
@@ -905,7 +905,7 @@
          ],
          "uv_size": [
           4,
-          12
+          24
          ]
         },
         "west": {
@@ -915,7 +915,7 @@
          ],
          "uv_size": [
           4,
-          12
+          24
          ]
         },
         "up": {
@@ -969,7 +969,7 @@
          ],
          "uv_size": [
           4,
-          12
+          24
          ]
         },
         "south": {
@@ -979,7 +979,7 @@
          ],
          "uv_size": [
           4,
-          12
+          24
          ]
         },
         "east": {
@@ -989,7 +989,7 @@
          ],
          "uv_size": [
           4,
-          12
+          24
          ]
         },
         "west": {
@@ -999,7 +999,7 @@
          ],
          "uv_size": [
           4,
-          12
+          24
          ]
         },
         "up": {

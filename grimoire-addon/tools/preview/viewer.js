@@ -88,10 +88,11 @@ export function buildModel(geoJson, textures, materialsFor) {
       const g = new THREE.BoxGeometry(s[0] + inf * 2, s[1] + inf * 2, s[2] + inf * 2);
       const faces = c.uv || {};
       const groups = [];
+      const boxUV = Array.isArray(faces);
       for (const [face, idx] of Object.entries(FACE_INDEX)) {
-        const f = faces[face];
+        const f = boxUV ? null : faces[face];
         if (f) faceUV(g, idx, [f.uv[0], f.uv[1], f.uv_size[0], f.uv_size[1]], tw, th);
-        groups.push(!!f);
+        groups.push(boxUV || !!f);
       }
       // hide faces without uv
       g.clearGroups();

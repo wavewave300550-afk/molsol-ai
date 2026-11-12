@@ -18,6 +18,7 @@
     "form": "animation.grimoire.fx_i_wings.form",
     "fly": "animation.grimoire.fx_i_wings.fly",
     "close": "animation.grimoire.fx_i_wings.close",
+    "eyeguard": "animation.grimoire.fx_i_wings.eyeguard",
     "dissolve": "animation.grimoire.fx_i_wings.dissolve",
     "orient": "animation.grimoire.fx_i_wings.orient",
     "ctrl": "controller.animation.grimoire.fx_i_wings"
@@ -39,7 +40,8 @@
     ],
     "animate": [
      "orient",
-     "ctrl"
+     "ctrl",
+     "eyeguard"
     ]
    },
    "render_controllers": [

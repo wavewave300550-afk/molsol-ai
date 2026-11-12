@@ -410,7 +410,6 @@ export function* silhouetteTraverse(c: Cast): Routine {
   effect(p, "invisibility", 40, 0);
   yield 5;
   fx?.phase(2);
-  const rot = p.getRotation();
   let idx = 0;
   const step = c.p("speed") / 0.5;
   while (idx < route.length - 1 && c.ok) {
@@ -418,11 +417,11 @@ export function* silhouetteTraverse(c: Cast): Routine {
     const at = route[Math.floor(idx)];
     fx?.move(at);
     try {
-      p.teleport(at, { rotation: rot, keepVelocity: false });
+      p.teleport(at, { keepVelocity: false });
     } catch {
       break;
     }
-    c.particle("grimoire:shadow_print", add(at, v3(0, 0.05, 0)), { color: SHADE, color2: DG, size: 1.4, radius: (rot.y * Math.PI) / 180 });
+    c.particle("grimoire:shadow_print", add(at, v3(0, 0.05, 0)), { color: SHADE, color2: DG, size: 1.4, radius: (p.getRotation().y * Math.PI) / 180 });
     yield 1;
   }
   fx?.phase(3);
@@ -476,6 +475,22 @@ export function* stairwayOfTheUnlitSky(c: Cast): Routine {
       }
     }
     yield 1;
+  }
+  // the stair folds back from its far end, the step underfoot last, while the caster drifts down
+  const land = () => {
+    if (!p.isValid) return;
+    effect(p, "slow_falling", 100, 0);
+    grantFallImmunity(p.id, 240);
+  };
+  c.onCleanup(land);
+  land();
+  while (steps.length) {
+    const old = steps.shift()!;
+    set.remove(old.loc);
+    const ffx = c.fx("grimoire:fx_d_step", v3(old.loc.x + 0.5, old.top, old.loc.z + 0.5), { phase: 3 });
+    c.run(dissolveLater(ffx, 8, 2), "fold");
+    if (steps.length % 2 === 0) c.sound("grimoire.darkness.fold", old.loc, 0.4, 1.3);
+    yield 2;
   }
 }
 

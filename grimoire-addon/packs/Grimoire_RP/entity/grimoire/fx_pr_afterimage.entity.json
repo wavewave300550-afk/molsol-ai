@@ -25,6 +25,7 @@
    "animations": {
     "form": "animation.grimoire.fx_pr_afterimage.form",
     "dissolve": "animation.grimoire.fx_pr_afterimage.dissolve",
+    "eyeguard": "animation.grimoire.fx_pr_afterimage.eyeguard",
     "orient": "animation.grimoire.fx_pr_afterimage.orient",
     "ctrl": "controller.animation.grimoire.fx_pr_afterimage"
    },
@@ -45,7 +46,8 @@
     ],
     "animate": [
      "orient",
-     "ctrl"
+     "ctrl",
+     "eyeguard"
     ]
    },
    "render_controllers": [

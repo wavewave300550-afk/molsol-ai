@@ -6,11 +6,11 @@
     "identifier": "geometry.grimoire.fx_p_marker",
     "texture_width": 128,
     "texture_height": 128,
-    "visible_bounds_width": 2,
+    "visible_bounds_width": 2.88,
     "visible_bounds_height": 3,
     "visible_bounds_offset": [
      0,
-     1,
+     0.38,
      0
     ]
    },

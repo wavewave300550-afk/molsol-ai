@@ -6,11 +6,11 @@
     "identifier": "geometry.grimoire.fx_pr_ray",
     "texture_width": 128,
     "texture_height": 128,
-    "visible_bounds_width": 3,
-    "visible_bounds_height": 3,
+    "visible_bounds_width": 52.0,
+    "visible_bounds_height": 52.0,
     "visible_bounds_offset": [
      0,
-     0,
+     0.0,
      0
     ]
    },
@@ -106,7 +106,7 @@
           0
          ],
          "uv_size": [
-          8,
+          16,
           4
          ]
         },
@@ -116,28 +116,28 @@
           0
          ],
          "uv_size": [
-          8,
+          16,
           4
          ]
         },
         "up": {
          "uv": [
-          12,
+          20,
           0
          ],
          "uv_size": [
           4,
-          8
+          16
          ]
         },
         "down": {
          "uv": [
-          12,
+          20,
           0
          ],
          "uv_size": [
           4,
-          8
+          16
          ]
         }
        }
@@ -167,7 +167,7 @@
        "uv": {
         "north": {
          "uv": [
-          16,
+          24,
           0
          ],
          "uv_size": [
@@ -177,7 +177,7 @@
         },
         "south": {
          "uv": [
-          16,
+          24,
           0
          ],
          "uv_size": [
@@ -187,42 +187,42 @@
         },
         "east": {
          "uv": [
-          20,
+          28,
           0
          ],
          "uv_size": [
-          8,
+          16,
           4
          ]
         },
         "west": {
          "uv": [
-          20,
+          28,
           0
          ],
          "uv_size": [
-          8,
+          16,
           4
          ]
         },
         "up": {
          "uv": [
-          28,
+          44,
           0
          ],
          "uv_size": [
           4,
-          8
+          16
          ]
         },
         "down": {
          "uv": [
-          28,
+          44,
           0
          ],
          "uv_size": [
           4,
-          8
+          16
          ]
         }
        }

@@ -6,11 +6,11 @@
     "identifier": "geometry.grimoire.fx_pl_network",
     "texture_width": 256,
     "texture_height": 256,
-    "visible_bounds_width": 28,
-    "visible_bounds_height": 10,
+    "visible_bounds_width": 53.48,
+    "visible_bounds_height": 43.12,
     "visible_bounds_offset": [
      0,
-     3,
+     2.71,
      0
     ]
    },

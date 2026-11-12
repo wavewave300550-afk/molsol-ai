@@ -18,6 +18,7 @@
     "form": "animation.grimoire.fx_p_mantle.form",
     "idle": "animation.grimoire.fx_p_mantle.idle",
     "contract": "animation.grimoire.fx_p_mantle.contract",
+    "eyeguard": "animation.grimoire.fx_p_mantle.eyeguard",
     "dissolve": "animation.grimoire.fx_p_mantle.dissolve",
     "orient": "animation.grimoire.fx_p_mantle.orient",
     "ctrl": "controller.animation.grimoire.fx_p_mantle",
@@ -41,6 +42,7 @@
     "animate": [
      "orient",
      "ctrl",
+     "eyeguard",
      "pulse_ctrl"
     ]
    },

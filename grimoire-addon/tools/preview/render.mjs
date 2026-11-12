@@ -26,14 +26,25 @@ for (const job of jobs) {
   }
   const textures = {};
   for (const [k, v] of Object.entries(job.textures)) textures[k] = dataUrl(v);
+  if (job.rig) {
+    const strip = (t) => JSON.parse(t.replace(/^\s*\/\/.*$/gm, ""));
+    const pg = strip(fs.readFileSync(job.rig.geo, "utf8"));
+    job.rig.geoJson = (pg["minecraft:geometry"] || []).find((g) => g.description.identifier === job.rig.geoId);
+    job.rig.animList = [];
+    for (const a of job.rig.anims || []) {
+      const all = strip(fs.readFileSync(a.file, "utf8")).animations;
+      if (all[a.name]) job.rig.animList.push(all[a.name]);
+    }
+  }
   const outFrames = await page.evaluate(async ({ geo, textures, anims, job }) => {
     const { THREE, buildModel, pose, M } = window.GRIMOIRE_PREVIEW;
     const size = job.size || 512;
     const canvas = document.getElementById("c");
-    canvas.width = size; canvas.height = size;
+    const W = Math.round(size * (job.aspect || 1));
+    canvas.width = W; canvas.height = size;
     if (!window.__R) window.__R = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true, alpha: false });
     const renderer = window.__R;
-    renderer.setSize(size, size, false);
+    renderer.setSize(W, size, false);
     renderer.autoClear = true;
     renderer.setClearColor(new THREE.Color(job.bg || "#14121a"));
     const loader = new THREE.TextureLoader();
@@ -70,14 +81,43 @@ for (const job of jobs) {
         return mk("default", tex[fr.texKey || "default"]);
       };
       const model = buildModel(geo, tex, matFor);
-      pose(model, (fr.anims || anims.map((_, i) => i)).map((i) => anims[i]), fr.t, ctx);
-      scene.add(model.object);
+      if (job.rig) {
+        // vanilla player + the item's bound bone re-parented to the hand bone (bound pivot == hand pivot)
+        const skin = new THREE.MeshLambertMaterial({ color: 0x8a7a6a });
+        const flat = (name) => {
+          const m = new THREE.ShaderMaterial({ vertexShader: "varying vec3 vN; void main(){ vN=normalize(normalMatrix*normal); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+            fragmentShader: "varying vec3 vN; void main(){ float l=0.45+0.55*abs(dot(normalize(vN),normalize(vec3(0.4,0.8,0.5)))); gl_FragColor=vec4(vec3(0.62,0.52,0.42)*l,1.0);}" });
+          return m;
+        };
+        void skin;
+        const player = buildModel(job.rig.geoJson, {}, flat);
+        const rctx = { ...ctx, v: { ...ctx.v, is_holding_right: 1, ...(job.rig.v || {}) }, c: { ...ctx.c, is_first_person: job.rig.firstPerson ? 1 : 0 } };
+        pose(player, job.rig.animList, fr.t, rctx);
+        if (job.rig.firstPerson) {
+          for (const [n, b] of Object.entries(player.bones)) b.node.userData.content.visible = ["rightarm", "rightsleeve"].includes(n);
+        }
+        const hand = player.bones[job.rig.bindTo.toLowerCase()];
+        const bound = model.bones[job.rig.itemBone.toLowerCase()];
+        hand.node.add(bound.node);
+        bound.node.userData.base = new THREE.Vector3(0, 0, 0);
+        bound.node.position.set(0, 0, 0);
+        const ictx = { ...ctx, c: { ...ctx.c, is_first_person: job.rig.firstPerson ? 1 : 0 } };
+        pose(model, (fr.anims || anims.map((_, i) => i)).map((i) => anims[i]), fr.t, ictx);
+        scene.add(player.object);
+      } else {
+        pose(model, (fr.anims || anims.map((_, i) => i)).map((i) => anims[i]), fr.t, ctx);
+        scene.add(model.object);
+      }
       const cam = { yaw: 30, pitch: 18, dist: 40, target: [0, 0, 0], fov: 35, ...(job.camera || {}), ...(fr.camera || {}) };
-      const camera = new THREE.PerspectiveCamera(cam.fov, 1, 0.1, 5000);
+      const camera = new THREE.PerspectiveCamera(cam.fov, job.aspect || 1, 0.1, 5000);
       const y = cam.yaw * Math.PI / 180, p = cam.pitch * Math.PI / 180;
       // camera on the model's front (-Z raw == +Z after mirror? front faces -Z raw; mirrored model keeps Z)
       camera.position.set(cam.target[0] + Math.sin(y) * Math.cos(p) * cam.dist, cam.target[1] + Math.sin(p) * cam.dist, cam.target[2] - Math.cos(y) * Math.cos(p) * cam.dist);
       camera.lookAt(cam.target[0], cam.target[1], cam.target[2]);
+      if (cam.eye) {
+        camera.position.set(cam.eye[0], cam.eye[1], cam.eye[2]);
+        camera.lookAt(cam.eye[0], cam.eye[1], cam.eye[2] - 10);
+      }
       renderer.render(scene, camera);
       frames.push(canvas.toDataURL("image/png"));
       renderer.renderLists.dispose();

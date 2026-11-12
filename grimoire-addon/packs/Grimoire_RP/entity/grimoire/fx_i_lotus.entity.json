@@ -24,6 +24,7 @@
     "shatter2": "animation.grimoire.fx_i_lotus.shatter2",
     "gone2": "animation.grimoire.fx_i_lotus.gone2",
     "shimmer": "animation.grimoire.fx_i_lotus.shimmer",
+    "eyeguard": "animation.grimoire.fx_i_lotus.eyeguard",
     "dissolve": "animation.grimoire.fx_i_lotus.dissolve",
     "orient": "animation.grimoire.fx_i_lotus.orient",
     "ctrl": "controller.animation.grimoire.fx_i_lotus",
@@ -47,6 +48,7 @@
     "animate": [
      "orient",
      "ctrl",
+     "eyeguard",
      "pulse_ctrl"
     ]
    },

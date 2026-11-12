@@ -467,7 +467,7 @@ export function bloodstep(c: Cast): Routine {
     c.fx("grimoire:fx_b_fragments", from, { phase: 1 });
     c.sound("grimoire.blood.step", from, 1, 1);
     yield 3;
-    p.tryTeleport(dest, { checkForBlocks: true, rotation: p.getRotation(), keepVelocity: false });
+    p.tryTeleport(dest, { checkForBlocks: true, keepVelocity: false });
     grantFallImmunity(p.id, 30);
     const reform = c.fx("grimoire:fx_b_fragments", dest, { phase: 1 });
     reform?.phase(3);

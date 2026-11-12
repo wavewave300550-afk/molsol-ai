@@ -6,11 +6,11 @@
     "identifier": "geometry.grimoire.fx_pr_focal",
     "texture_width": 128,
     "texture_height": 128,
-    "visible_bounds_width": 3,
-    "visible_bounds_height": 5,
+    "visible_bounds_width": 13.0,
+    "visible_bounds_height": 19.34,
     "visible_bounds_offset": [
      0,
-     2,
+     2.19,
      0
     ]
    },

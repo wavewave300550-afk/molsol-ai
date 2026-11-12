@@ -6,11 +6,11 @@
     "identifier": "geometry.grimoire.fx_pr_bloom",
     "texture_width": 256,
     "texture_height": 256,
-    "visible_bounds_width": 12,
-    "visible_bounds_height": 12,
+    "visible_bounds_width": 18.71,
+    "visible_bounds_height": 23.97,
     "visible_bounds_offset": [
      0,
-     4,
+     3.0,
      0
     ]
    },

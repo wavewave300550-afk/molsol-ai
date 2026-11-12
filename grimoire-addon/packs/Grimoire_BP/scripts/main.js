@@ -1169,6 +1169,10 @@ var Cast = class extends SpellScope {
   }
   /** Top surface below a point (searches down `maxDown` blocks, falls back to the point). */
   ground(p, maxDown = 24) {
+    return this.groundHit(p, maxDown) ?? { x: p.x, y: Math.floor(p.y), z: p.z };
+  }
+  /** Top surface below a point, or undefined when there is none within `maxDown` blocks. */
+  groundHit(p, maxDown = 24) {
     try {
       const hit2 = this.dim.getBlockFromRay(add(p, v3(0, 0.5, 0)), v3(0, -1, 0), {
         maxDistance: maxDown + 0.5,
@@ -1178,13 +1182,27 @@ var Cast = class extends SpellScope {
       if (hit2) return { x: p.x, y: hit2.block.location.y + 1, z: p.z };
     } catch {
     }
-    return { x: p.x, y: Math.floor(p.y), z: p.z };
+    return void 0;
   }
-  /** Aimed ground point (where area spells land). */
+  /** Aimed ground point (where area spells land). Aiming at the sky (or past the range over a drop) lands the
+   *  spell on the ground ahead of the caster instead of hanging it in the air. */
   aimGround(maxDistance) {
     const a = this.aim(maxDistance);
-    const base = a.entity ? a.entity.location : a.point;
-    return { point: this.ground(base, 30), target: a.entity };
+    if (a.entity) return { point: this.ground(a.entity.location, 30), target: a.entity };
+    if (a.block) {
+      const g = this.groundHit(add(a.point, v3(0, 0.3, 0)), 30);
+      if (g) return { point: g };
+    }
+    const d = this.player.getViewDirection();
+    const f = flatNorm(d);
+    const horiz = Math.hypot(d.x, d.z) * maxDistance;
+    const reach = d.y > 0 ? Math.max(3, maxDistance * 0.6) : Math.max(3, Math.min(maxDistance, horiz));
+    const feet = this.player.location;
+    for (let r = reach; r >= 2; r -= 2) {
+      const g = this.groundHit(add(feet, add(mul(f, r), v3(0, 3, 0))), 30);
+      if (g) return { point: g };
+    }
+    return { point: { x: feet.x + f.x * 3, y: Math.floor(feet.y), z: feet.z + f.z * 3 } };
   }
   binds = [];
   /** Bind/freeze a target; the bind is released when this spell ends (whatever the reason). */
@@ -1879,7 +1897,7 @@ function bloodstep(c) {
     c.fx("grimoire:fx_b_fragments", from, { phase: 1 });
     c.sound("grimoire.blood.step", from, 1, 1);
     yield 3;
-    p.tryTeleport(dest, { checkForBlocks: true, rotation: p.getRotation(), keepVelocity: false });
+    p.tryTeleport(dest, { checkForBlocks: true, keepVelocity: false });
     grantFallImmunity(p.id, 30);
     const reform = c.fx("grimoire:fx_b_fragments", dest, { phase: 1 });
     reform?.phase(3);
@@ -3032,7 +3050,6 @@ function* silhouetteTraverse(c) {
   effect(p, "invisibility", 40, 0);
   yield 5;
   fx?.phase(2);
-  const rot = p.getRotation();
   let idx = 0;
   const step2 = c.p("speed") / 0.5;
   while (idx < route.length - 1 && c.ok) {
@@ -3040,11 +3057,11 @@ function* silhouetteTraverse(c) {
     const at = route[Math.floor(idx)];
     fx?.move(at);
     try {
-      p.teleport(at, { rotation: rot, keepVelocity: false });
+      p.teleport(at, { keepVelocity: false });
     } catch {
       break;
     }
-    c.particle("grimoire:shadow_print", add(at, v3(0, 0.05, 0)), { color: SHADE, color2: DG, size: 1.4, radius: rot.y * Math.PI / 180 });
+    c.particle("grimoire:shadow_print", add(at, v3(0, 0.05, 0)), { color: SHADE, color2: DG, size: 1.4, radius: p.getRotation().y * Math.PI / 180 });
     yield 1;
   }
   fx?.phase(3);
@@ -3095,6 +3112,21 @@ function* stairwayOfTheUnlitSky(c) {
       }
     }
     yield 1;
+  }
+  const land = () => {
+    if (!p.isValid) return;
+    effect(p, "slow_falling", 100, 0);
+    grantFallImmunity(p.id, 240);
+  };
+  c.onCleanup(land);
+  land();
+  while (steps.length) {
+    const old = steps.shift();
+    set.remove(old.loc);
+    const ffx = c.fx("grimoire:fx_d_step", v3(old.loc.x + 0.5, old.top, old.loc.z + 0.5), { phase: 3 });
+    c.run(dissolveLater(ffx, 8, 2), "fold");
+    if (steps.length % 2 === 0) c.sound("grimoire.darkness.fold", old.loc, 0.4, 1.3);
+    yield 2;
   }
 }
 function* inklessDoppelganger(c) {
@@ -4185,8 +4217,7 @@ function frostMirrorTraverse(c) {
     mA?.phase(4);
     mB?.phase(4);
     yield 4;
-    const rot = p.getRotation();
-    const ok = p.tryTeleport(dest, { checkForBlocks: true, rotation: rot, keepVelocity: false });
+    const ok = p.tryTeleport(dest, { checkForBlocks: true, keepVelocity: false });
     if (!ok) {
       flash2(stateOf(p), "\xA77The mirror path was blocked", 30);
     }
@@ -6857,7 +6888,7 @@ function* parallaxDisplacement(c) {
     const dest = safeSpot(c.dim, add(p.location, mul(rotY(away, turn), c.p("hop"))));
     if (dest && segmentClear(c, add(p.location, v3(0, 0.2, 0)), add(dest, v3(0, 0.2, 0)))) {
       try {
-        p.teleport(dest, { rotation: p.getRotation(), keepVelocity: false });
+        p.teleport(dest, { keepVelocity: false });
       } catch {
       }
       break;
@@ -6997,7 +7028,6 @@ function* raylineStride(c) {
   c.sound("grimoire.prism_light.beam", feet, 1, 1.3);
   yield 4;
   grantFallImmunity(p.id, 40);
-  const rot = p.getRotation();
   let i = 0;
   for (let k = 0; k < route.length - 1; k++) {
     const A = route[k], B = route[k + 1];
@@ -7005,12 +7035,12 @@ function* raylineStride(c) {
     for (let s = 1; s <= steps && c.ok; s++) {
       const at = lerp(A, B, s / steps);
       try {
-        p.teleport(at, { rotation: rot, keepVelocity: false });
+        p.teleport(at, { keepVelocity: false });
       } catch {
         break;
       }
       if (i++ % 2 === 0) {
-        const after = c.fx("grimoire:fx_pr_afterimage", at, { yaw: rot.y, variant: i % 7, phase: 1 });
+        const after = c.fx("grimoire:fx_pr_afterimage", at, { yaw: p.getRotation().y, variant: i % 7, phase: 1 });
         c.run(dissolveLater3(after, 8, 6), "after");
       }
       yield 1;
@@ -7031,7 +7061,12 @@ function* iridescentSail(c) {
       effect(p, "slow_falling", 12, 0);
       if (t % 3 === 0) {
         const look = flatNorm(p.getViewDirection());
-        drive(p, mul(look, c.p("glide") * 0.6));
+        let vy = -0.08;
+        try {
+          vy = Math.min(-0.06, Math.max(-0.22, p.getVelocity().y));
+        } catch {
+        }
+        drive(p, { ...mul(look, c.p("glide") * 0.6), y: vy });
       }
       if (t % 4 === 0) glints(c, add(p.location, v3(0, 2.4, 0)), 1.2, 0.4);
     }
