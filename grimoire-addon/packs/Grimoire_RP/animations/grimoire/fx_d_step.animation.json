@@ -1,0 +1,145 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_d_step.unfold": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.3,
+   "bones": {
+    "half_l": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       -88.0
+      ],
+      "0.3": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "half_r": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       88.0
+      ],
+      "0.3": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_d_step.fold": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.35,
+   "bones": {
+    "half_l": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.3": [
+       0.0,
+       0.0,
+       -88.0
+      ]
+     }
+    },
+    "half_r": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.3": [
+       0.0,
+       0.0,
+       88.0
+      ]
+     }
+    },
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.35": [
+       0.2,
+       0.2,
+       0.2
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_d_step.dissolve": {
+   "animation_length": 0.7,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       1.06,
+       1.06,
+       1.06
+      ],
+      "0.5": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       40.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_d_step.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

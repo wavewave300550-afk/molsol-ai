@@ -1,0 +1,165 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_pl_horizon.form": {
+   "animation_length": 0.8,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       0.01,
+       1.0,
+       0.01
+      ],
+      "0.8": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_horizon.flow": {
+   "loop": true,
+   "bones": {
+    "g_flow_a": {
+     "position": [
+      0.0,
+      0.0,
+      "math.mod(q.life_time * 14, 18)"
+     ]
+    },
+    "g_flow_b": {
+     "position": [
+      "-math.mod(q.life_time * 14, 18)",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_horizon.ripple": {
+   "animation_length": 0.4,
+   "bones": {
+    "t_mem": {
+     "position": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.1": [
+       0.0,
+       2.5,
+       0.0
+      ],
+      "0.4": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "g_flow_a": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.1": [
+       1.0,
+       4.0,
+       1.0
+      ],
+      "0.4": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "g_flow_b": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.15": [
+       1.0,
+       4.0,
+       1.0
+      ],
+      "0.4": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_horizon.dissolve": {
+   "animation_length": 0.8,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.7": [
+       0.01,
+       1.0,
+       0.01
+      ]
+     }
+    },
+    "g_edges": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.3": [
+       1.0,
+       3.0,
+       1.0
+      ],
+      "0.7": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_horizon.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

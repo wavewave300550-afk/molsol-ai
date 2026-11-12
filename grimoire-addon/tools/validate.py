@@ -29,7 +29,8 @@ RP = os.path.join(ROOT, "packs", "Grimoire_RP")
 SRC = os.path.join(ROOT, "src")
 ERRORS, WARNINGS, INFO = [], [], []
 
-# Specification table: code -> (name, cooldown seconds). I11's cooldown starts after the flight ends.
+# Specification table (both design documents): code -> (name, cooldown seconds).
+# I11's cooldown starts after the flight ends; every other spell starts its cooldown on activation.
 SPEC = {
     "P01": ("Pressure Lance", 6), "P02": ("Atlas Piston", 18), "P03": ("Isobaric Severance", 10),
     "P04": ("Cataclysm Salvo", 22), "P05": ("Aegis of Isobars", 25), "P06": ("Counterpressure Mantle", 22),
@@ -48,7 +49,27 @@ SPEC = {
     "B10": ("Bloodstep: Shattered Ruby", 7), "B11": ("Arterial Current", 18), "B12": ("Crimson Familiar: The Royal Stag", 55),
     "B13": ("Sovereign's Pulse", 45), "B14": ("Grand Magic: Scarlet Sea of Lament", 90),
     "B15": ("Imperial Edict: Heart of the Crimson Moon", 180),
+    # Expansion 02
+    "PL01": ("Coronal Lash", 7), "PL02": ("Helix Borer", 12), "PL03": ("Prominence Uprising", 19),
+    "PL04": ("Arc-Shear Cascade", 24), "PL05": ("Stellarator Ward", 25), "PL06": ("Corona Molt", 30),
+    "PL07": ("Fieldline Harp", 29), "PL08": ("Polarity Orchestra", 38), "PL09": ("Static Horizon", 42),
+    "PL10": ("Ion Skates", 10), "PL11": ("Prominence Sling", 18), "PL12": ("Living Circuit: The Auroral Manta", 55),
+    "PL13": ("Magnetic Reconnection", 45), "PL14": ("Grand Magic: Stellarator Cathedral", 90),
+    "PL15": ("Imperial Edict: Heavenwide Reconnection", 180),
+    "D01": ("Umbral Origami", 7), "D02": ("Maw of the Unseen", 17), "D03": ("The Unwritten Sentence", 13),
+    "D04": ("Sevenfold Eclipse", 26), "D05": ("Velvet of the Hollow King", 27), "D06": ("Shadow Latch", 32),
+    "D07": ("Curtainfall Divide", 35), "D08": ("Dusk Mosaic", 38), "D09": ("Censor's Seal", 42),
+    "D10": ("Silhouette Traverse", 9), "D11": ("Stairway of the Unlit Sky", 22), "D12": ("The Inkless Doppelgänger", 55),
+    "D13": ("Footfall Reversal", 45), "D14": ("Grand Magic: Court of the Unseen", 90),
+    "D15": ("Imperial Edict: The World Without an Outline", 180),
+    "PR01": ("Sevenfold Verdict", 7), "PR02": ("Total Internal Reflection", 13), "PR03": ("Caustic Bloom", 19),
+    "PR04": ("Fraunhofer Lattice", 26), "PR05": ("Brewster's Veil", 27), "PR06": ("Parallax Displacement", 32),
+    "PR07": ("Chromatic Turnstile", 35), "PR08": ("Kaleidoscope Theater", 40), "PR09": ("Interference Tapestry", 43),
+    "PR10": ("Rayline Stride", 9), "PR11": ("Iridescent Sail", 20), "PR12": ("Spectral Diagnosis", 48),
+    "PR13": ("Whitepoint Benediction", 55), "PR14": ("Grand Magic: The Chromatic Observatory", 90),
+    "PR15": ("Imperial Edict: The Colorless Coronation", 180),
 }
+SCHOOLS = ("pressure", "ice", "blood", "plasma", "darkness", "prism_light")
 STABLE_MODULES = {"@minecraft/server": "2.11.0", "@minecraft/server-ui": "2.3.0"}
 VANILLA_MATERIALS = {"entity_emissive_alpha", "entity_alphablend", "entity_beam_additive", "entity_alphatest",
                      "entity", "entity_emissive", "entity_custom", "entity_alphatest_one_sided"}
@@ -137,7 +158,7 @@ def check_items(lang_rp, item_textures):
     for path in glob.glob(f"{BP}/items/*.json"):
         d = load(path)["minecraft:item"]
         items[d["description"]["identifier"]] = d
-    want = {"grimoire:pressure", "grimoire:ice", "grimoire:blood"}
+    want = {f"grimoire:{s}" for s in SCHOOLS}
     if set(items) != want:
         err(f"items {sorted(items)} != {sorted(want)}")
     for ident, d in items.items():
@@ -316,11 +337,11 @@ def script_ids():
     ids = set(re.findall(r'["\'`](grimoire:[a-z0-9_]+)["\'`]', text))
     sounds = set(re.findall(r'["\'`](grimoire\.[a-z0-9_]+\.[a-z0-9_]+)["\'`]', text))
     for tmpl in re.findall(r"`grimoire\.\$\{[^}]+\}\.([a-z0-9_]+)`", text):
-        for school in ("pressure", "ice", "blood"):
+        for school in SCHOOLS:
             sounds.add(f"grimoire.{school}.{tmpl}")
     particles_tmpl = re.findall(r"`grimoire:\$\{[^}]+\}_([a-z0-9_]+)`", text)
     for tmpl in particles_tmpl:
-        for school in ("pressure", "ice", "blood"):
+        for school in SCHOOLS:
             ids.add(f"grimoire:{school}_{tmpl}")
     fogs = set(re.findall(r"fog @s push (grimoire:[a-z0-9_]+)", text))
     fogs |= {i for i in re.findall(r'["\'](grimoire:(?:whiteout|whiteout_caster))["\']', text)}
@@ -357,7 +378,7 @@ def main():
             err(f"{code} cooldown {s['cooldown']} != spec {cd}")
         if s["cooldownAfterEnd"] != (code == "I11"):
             err(f"{code} cooldownAfterEnd={s['cooldownAfterEnd']} (only I11 may start its cooldown after the effect)")
-    for school in ("pressure", "ice", "blood"):
+    for school in SCHOOLS:
         n = sum(1 for s in spells.values() if s["school"] == school)
         if n != 15:
             err(f"{school} has {n} spells, expected 15")
@@ -432,7 +453,7 @@ def main():
     for d in list(server.values()):
         known_props |= set(d["description"].get("properties", {}))
     resolved = {"constructs": 0, "particles": 0, "sounds": 0, "fogs": 0}
-    non_asset = {"grimoire:pressure", "grimoire:ice", "grimoire:blood", "grimoire:temporary", "grimoire:rules",
+    non_asset = {*(f"grimoire:{s}" for s in SCHOOLS), "grimoire:temporary", "grimoire:rules",
                  "grimoire:state", "grimoire:session", "grimoire:owner", "grimoire:phase", "grimoire:act", "grimoire:book",
                  "grimoire:debug_reply", "grimoire:debug", "grimoire:config", "grimoire:getbook", "grimoire:guide",
                  "grimoire:resetcooldowns", "grimoire:charge", "grimoire:release", "grimoire:aux"}

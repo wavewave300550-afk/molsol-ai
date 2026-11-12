@@ -9,6 +9,10 @@ FOGS = {
     "grimoire:crimson_moon": (0.12, 0.75, "#5A0610", "render"),
     "grimoire:scarlet_sea": (0.3, 0.95, "#3A0610", "render"),
     "grimoire:atmosphere": (0.4, 1.0, "#FFB060", "render"),
+    # expansion 02: D15 The World Without an Outline (outlines dissolve into deep green)
+    "grimoire:outline_void": (0.08, 0.55, "#0C2A1A", "render"),
+    # PR15 The Colorless Coronation (a bright pearl haze while the spectrum is unwoven)
+    "grimoire:coronation": (0.45, 1.0, "#F4F0FF", "render"),
 }
 
 

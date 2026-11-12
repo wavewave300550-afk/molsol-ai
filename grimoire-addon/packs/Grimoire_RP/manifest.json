@@ -2,7 +2,7 @@
  "format_version": 2,
  "header": {
   "name": "Grimoire: Imperial Magic RP",
-  "description": "Three Grimoires (Pressure, Ice, Blood) with 15 spells each. No mana - only cooldowns. Crouch to select, hold Use to prepare, release to cast.",
+  "description": "Six Grimoires (Pressure, Ice, Blood, Plasma, Darkness, Prism Light) with 15 spells each. No mana - only cooldowns. Crouch to select, hold Use to prepare, release to cast.",
   "uuid": "bfec4fe7-3e6a-47d3-b8c3-f667105b9234",
   "version": [
    1,

@@ -150,6 +150,342 @@
      "g_*": "Material.glow"
     }
    ]
+  },
+  "controller.render.grimoire.fx_sigil_pl": {
+   "geometry": "Geometry.default",
+   "arrays": {
+    "textures": {
+     "Array.tex": [
+      "Texture.v0"
+     ]
+    }
+   },
+   "textures": [
+    "Array.tex[math.clamp(q.property('grimoire:variant'), 0, 0)]"
+   ],
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "t_*": "Material.trans"
+    },
+    {
+     "g_*": "Material.glow"
+    }
+   ]
+  },
+  "controller.render.grimoire.fx_circle_pl": {
+   "geometry": "Geometry.default",
+   "arrays": {
+    "textures": {
+     "Array.tex": [
+      "Texture.v0",
+      "Texture.v1",
+      "Texture.v2"
+     ]
+    }
+   },
+   "textures": [
+    "Array.tex[math.clamp(q.property('grimoire:variant'), 0, 2)]"
+   ],
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "t_*": "Material.trans"
+    },
+    {
+     "g_*": "Material.glow"
+    }
+   ]
+  },
+  "controller.render.grimoire.fx_sigil_d": {
+   "geometry": "Geometry.default",
+   "arrays": {
+    "textures": {
+     "Array.tex": [
+      "Texture.v0"
+     ]
+    }
+   },
+   "textures": [
+    "Array.tex[math.clamp(q.property('grimoire:variant'), 0, 0)]"
+   ],
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "t_*": "Material.trans"
+    },
+    {
+     "g_*": "Material.glow"
+    }
+   ]
+  },
+  "controller.render.grimoire.fx_circle_d": {
+   "geometry": "Geometry.default",
+   "arrays": {
+    "textures": {
+     "Array.tex": [
+      "Texture.v0",
+      "Texture.v1",
+      "Texture.v2"
+     ]
+    }
+   },
+   "textures": [
+    "Array.tex[math.clamp(q.property('grimoire:variant'), 0, 2)]"
+   ],
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "t_*": "Material.trans"
+    },
+    {
+     "g_*": "Material.glow"
+    }
+   ]
+  },
+  "controller.render.grimoire.fx_sigil_pr": {
+   "geometry": "Geometry.default",
+   "arrays": {
+    "textures": {
+     "Array.tex": [
+      "Texture.v0"
+     ]
+    }
+   },
+   "textures": [
+    "Array.tex[math.clamp(q.property('grimoire:variant'), 0, 0)]"
+   ],
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "t_*": "Material.trans"
+    },
+    {
+     "g_*": "Material.glow"
+    }
+   ]
+  },
+  "controller.render.grimoire.fx_circle_pr": {
+   "geometry": "Geometry.default",
+   "arrays": {
+    "textures": {
+     "Array.tex": [
+      "Texture.v0",
+      "Texture.v1",
+      "Texture.v2"
+     ]
+    }
+   },
+   "textures": [
+    "Array.tex[math.clamp(q.property('grimoire:variant'), 0, 2)]"
+   ],
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "t_*": "Material.trans"
+    },
+    {
+     "g_*": "Material.glow"
+    }
+   ]
+  },
+  "controller.render.grimoire.fx_pr_ribbon": {
+   "geometry": "Geometry.default",
+   "arrays": {
+    "textures": {
+     "Array.tex": [
+      "Texture.v0",
+      "Texture.v1",
+      "Texture.v2",
+      "Texture.v3",
+      "Texture.v4",
+      "Texture.v5",
+      "Texture.v6",
+      "Texture.v7"
+     ]
+    }
+   },
+   "textures": [
+    "Array.tex[math.clamp(q.property('grimoire:variant'), 0, 7)]"
+   ],
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "t_*": "Material.trans"
+    },
+    {
+     "g_*": "Material.glow"
+    }
+   ]
+  },
+  "controller.render.grimoire.fx_pr_ray": {
+   "geometry": "Geometry.default",
+   "arrays": {
+    "textures": {
+     "Array.tex": [
+      "Texture.v0",
+      "Texture.v1",
+      "Texture.v2",
+      "Texture.v3",
+      "Texture.v4",
+      "Texture.v5",
+      "Texture.v6",
+      "Texture.v7"
+     ]
+    }
+   },
+   "textures": [
+    "Array.tex[math.clamp(q.property('grimoire:variant'), 0, 7)]"
+   ],
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "t_*": "Material.trans"
+    },
+    {
+     "g_*": "Material.glow"
+    }
+   ]
+  },
+  "controller.render.grimoire.fx_pr_band": {
+   "geometry": "Geometry.default",
+   "arrays": {
+    "textures": {
+     "Array.tex": [
+      "Texture.v0",
+      "Texture.v1",
+      "Texture.v2",
+      "Texture.v3",
+      "Texture.v4",
+      "Texture.v5",
+      "Texture.v6",
+      "Texture.v7"
+     ]
+    }
+   },
+   "textures": [
+    "Array.tex[math.clamp(q.property('grimoire:variant'), 0, 7)]"
+   ],
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "t_*": "Material.trans"
+    },
+    {
+     "g_*": "Material.glow"
+    }
+   ]
+  },
+  "controller.render.grimoire.fx_pr_gate": {
+   "geometry": "Geometry.default",
+   "arrays": {
+    "textures": {
+     "Array.tex": [
+      "Texture.v0",
+      "Texture.v1",
+      "Texture.v2",
+      "Texture.v3",
+      "Texture.v4",
+      "Texture.v5",
+      "Texture.v6",
+      "Texture.v7"
+     ]
+    }
+   },
+   "textures": [
+    "Array.tex[math.clamp(q.property('grimoire:variant'), 0, 7)]"
+   ],
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "t_*": "Material.trans"
+    },
+    {
+     "g_*": "Material.glow"
+    }
+   ]
+  },
+  "controller.render.grimoire.fx_pr_afterimage": {
+   "geometry": "Geometry.default",
+   "arrays": {
+    "textures": {
+     "Array.tex": [
+      "Texture.v0",
+      "Texture.v1",
+      "Texture.v2",
+      "Texture.v3",
+      "Texture.v4",
+      "Texture.v5",
+      "Texture.v6",
+      "Texture.v7"
+     ]
+    }
+   },
+   "textures": [
+    "Array.tex[math.clamp(q.property('grimoire:variant'), 0, 7)]"
+   ],
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "t_*": "Material.trans"
+    },
+    {
+     "g_*": "Material.glow"
+    }
+   ]
+  },
+  "controller.render.grimoire.fx_pr_curtain": {
+   "geometry": "Geometry.default",
+   "arrays": {
+    "textures": {
+     "Array.tex": [
+      "Texture.v0",
+      "Texture.v1",
+      "Texture.v2",
+      "Texture.v3",
+      "Texture.v4",
+      "Texture.v5",
+      "Texture.v6",
+      "Texture.v7"
+     ]
+    }
+   },
+   "textures": [
+    "Array.tex[math.clamp(q.property('grimoire:variant'), 0, 7)]"
+   ],
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "t_*": "Material.trans"
+    },
+    {
+     "g_*": "Material.glow"
+    }
+   ]
   }
  }
 }

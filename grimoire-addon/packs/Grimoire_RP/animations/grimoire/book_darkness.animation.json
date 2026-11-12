@@ -1,0 +1,573 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.book_darkness.pose": {
+   "loop": true,
+   "bones": {
+    "anchor": {
+     "position": [
+      "c.is_first_person ? 3.5 : 2.0",
+      "c.is_first_person ? 21.5 : 21.0",
+      "c.is_first_person ? -5.0 : -1.5"
+     ],
+     "rotation": [
+      "c.is_first_person ? 18.0 : 5.0",
+      "c.is_first_person ? -40.0 : 70.0",
+      "c.is_first_person ? -6.0 : 8.0"
+     ]
+    }
+   }
+  },
+  "animation.grimoire.book_darkness.closed": {
+   "loop": true,
+   "bones": {
+    "half_r": {
+     "rotation": [
+      0.0,
+      -90.0,
+      0.0
+     ]
+    },
+    "half_l": {
+     "rotation": [
+      0.0,
+      90.0,
+      0.0
+     ]
+    },
+    "flip0": {
+     "rotation": [
+      0.0,
+      -90.0,
+      0.0
+     ]
+    },
+    "flip1": {
+     "rotation": [
+      0.0,
+      -90.0,
+      0.0
+     ]
+    },
+    "flip2": {
+     "rotation": [
+      0.0,
+      -90.0,
+      0.0
+     ]
+    },
+    "lift": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 120) * 0.35 + 1.2",
+      0.0
+     ],
+     "rotation": [
+      "math.sin(q.life_time * 70) * 3",
+      "math.sin(q.life_time * 45) * 6",
+      "math.cos(q.life_time * 60) * 3"
+     ]
+    },
+    "g_sigil": {
+     "scale": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.book_darkness.open": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.35,
+   "bones": {
+    "half_r": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       -90.0,
+       0.0
+      ],
+      "0.35": [
+       0.0,
+       -14.0,
+       0.0
+      ]
+     }
+    },
+    "half_l": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       90.0,
+       0.0
+      ],
+      "0.35": [
+       0.0,
+       14.0,
+       0.0
+      ]
+     }
+    },
+    "lift": {
+     "position": {
+      "0.0": [
+       0.0,
+       1.2,
+       0.0
+      ],
+      "0.35": [
+       0.0,
+       3.4,
+       -1.5
+      ]
+     }
+    },
+    "g_sigil": {
+     "scale": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.35": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.book_darkness.charge": {
+   "loop": true,
+   "bones": {
+    "lift": {
+     "rotation": [
+      "math.sin(q.life_time * 200) * 1.2",
+      0.0,
+      "math.sin(q.life_time * 160) * 1.2"
+     ]
+    },
+    "g_sigil_spin": {
+     "rotation": [
+      0.0,
+      "q.life_time * 120",
+      0.0
+     ]
+    },
+    "g_sigil": {
+     "scale": [
+      "1 + math.sin(q.life_time * 300) * 0.05",
+      "1 + math.sin(q.life_time * 300) * 0.05",
+      "1 + math.sin(q.life_time * 300) * 0.05"
+     ]
+    },
+    "flip0": {
+     "rotation": [
+      0.0,
+      "-14 - math.mod(q.life_time * 220 + 0, 152)",
+      0.0
+     ]
+    },
+    "flip1": {
+     "rotation": [
+      0.0,
+      "-14 - math.mod(q.life_time * 220 + 60, 152)",
+      0.0
+     ]
+    },
+    "flip2": {
+     "rotation": [
+      0.0,
+      "-14 - math.mod(q.life_time * 220 + 120, 152)",
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.book_darkness.release": {
+   "animation_length": 0.5,
+   "bones": {
+    "lift": {
+     "position": {
+      "0.0": [
+       0.0,
+       3.4,
+       -1.5
+      ],
+      "0.1": [
+       0.0,
+       3.8,
+       -4.0
+      ],
+      "0.5": [
+       0.0,
+       1.2,
+       0.0
+      ]
+     }
+    },
+    "g_sigil": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.12": [
+       1.8,
+       1.8,
+       1.8
+      ],
+      "0.3": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "half_r": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       -14.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       -90.0,
+       0.0
+      ]
+     }
+    },
+    "half_l": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       14.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       90.0,
+       0.0
+      ]
+     }
+    },
+    "flip0": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       -60.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       -90.0,
+       0.0
+      ]
+     }
+    },
+    "flip1": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       -60.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       -90.0,
+       0.0
+      ]
+     }
+    },
+    "flip2": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       -60.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       -90.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.book_darkness.flip": {
+   "animation_length": 0.55,
+   "bones": {
+    "half_r": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       -90.0,
+       0.0
+      ],
+      "0.12": [
+       0.0,
+       -20.0,
+       0.0
+      ],
+      "0.42": [
+       0.0,
+       -20.0,
+       0.0
+      ],
+      "0.55": [
+       0.0,
+       -90.0,
+       0.0
+      ]
+     }
+    },
+    "half_l": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       90.0,
+       0.0
+      ],
+      "0.12": [
+       0.0,
+       20.0,
+       0.0
+      ],
+      "0.42": [
+       0.0,
+       20.0,
+       0.0
+      ],
+      "0.55": [
+       0.0,
+       90.0,
+       0.0
+      ]
+     }
+    },
+    "flip0": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       -90.0,
+       0.0
+      ],
+      "0.12": [
+       0.0,
+       -22.0,
+       0.0
+      ],
+      "0.4": [
+       0.0,
+       -158.0,
+       0.0
+      ],
+      "0.55": [
+       0.0,
+       -90.0,
+       0.0
+      ]
+     }
+    },
+    "flip1": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       -90.0,
+       0.0
+      ],
+      "0.12": [
+       0.0,
+       -22.0,
+       0.0
+      ],
+      "0.55": [
+       0.0,
+       -90.0,
+       0.0
+      ]
+     }
+    },
+    "flip2": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       -90.0,
+       0.0
+      ],
+      "0.12": [
+       0.0,
+       -22.0,
+       0.0
+      ],
+      "0.55": [
+       0.0,
+       -90.0,
+       0.0
+      ]
+     }
+    },
+    "lift": {
+     "position": {
+      "0.0": [
+       0.0,
+       1.2,
+       0.0
+      ],
+      "0.15": [
+       0.0,
+       2.0,
+       -0.5
+      ],
+      "0.55": [
+       0.0,
+       1.2,
+       0.0
+      ]
+     }
+    },
+    "g_sigil": {
+     "scale": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.book_darkness.emblem": {
+   "loop": true,
+   "bones": {
+    "shutter0": {
+     "rotation": [
+      0.0,
+      "math.sin(q.life_time * 30) * 4",
+      0.0
+     ]
+    },
+    "shutter1": {
+     "rotation": [
+      0.0,
+      "-math.sin(q.life_time * 30) * 6",
+      0.0
+     ]
+    },
+    "hollow": {
+     "scale": [
+      "1 + math.sin(q.life_time * 60) * 0.06",
+      "1 + math.sin(q.life_time * 60) * 0.06",
+      "1 + math.sin(q.life_time * 60) * 0.06"
+     ]
+    }
+   }
+  },
+  "animation.grimoire.book_darkness.extras": {
+   "loop": true,
+   "bones": {
+    "plate0": {
+     "position": [
+      "math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * -0.45",
+      "math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * 0.45",
+      "-math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * 0.05"
+     ]
+    },
+    "plate1": {
+     "position": [
+      "math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * 0.45",
+      "math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * 0.45",
+      "-math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * 0.08"
+     ]
+    },
+    "plate2": {
+     "position": [
+      "math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * -0.45",
+      "math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * 0.0",
+      "-math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * 0.11"
+     ]
+    },
+    "plate3": {
+     "position": [
+      "math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * 0.45",
+      "math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * 0.0",
+      "-math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * 0.14"
+     ]
+    },
+    "plate4": {
+     "position": [
+      "math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * -0.45",
+      "math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * -0.45",
+      "-math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * 0.16999999999999998"
+     ]
+    },
+    "plate5": {
+     "position": [
+      "math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * 0.45",
+      "math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * -0.45",
+      "-math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * 0.2"
+     ]
+    },
+    "plate6": {
+     "position": [
+      "math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * 0.0",
+      "math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * 0.135",
+      "-math.max(v.ck, ((q.life_time - v.flip_t) < 0.55 && v.flip_t > 0 ? math.sin((q.life_time - v.flip_t) / 0.55 * 180) : 0)) * 0.22999999999999998"
+     ]
+    },
+    "slit": {
+     "scale": [
+      "1 + v.ck * 2.4 + math.sin(q.life_time * 80) * 0.2",
+      1.0,
+      1.0
+     ]
+    },
+    "emblem": {
+     "scale": [
+      "1 - ((q.life_time - v.rel_t) < 0.35 && v.rel_t > 0 ? 1 - (q.life_time - v.rel_t) / 0.35 : 0) * 0.45",
+      1.0,
+      "1 - ((q.life_time - v.rel_t) < 0.35 && v.rel_t > 0 ? 1 - (q.life_time - v.rel_t) / 0.35 : 0) * 0.45"
+     ]
+    },
+    "fold0": {
+     "rotation": [
+      "(1 - v.ck) * 80 + math.sin(q.life_time * 90 + 0) * 12 * v.ck",
+      0.0,
+      0.0
+     ]
+    },
+    "fold1": {
+     "rotation": [
+      "(1 - v.ck) * 80 + math.sin(q.life_time * 90 + 90) * 12 * v.ck",
+      0.0,
+      0.0
+     ]
+    },
+    "fold2": {
+     "rotation": [
+      "(1 - v.ck) * 80 + math.sin(q.life_time * 90 + 180) * 12 * v.ck",
+      0.0,
+      0.0
+     ]
+    },
+    "fold3": {
+     "rotation": [
+      "(1 - v.ck) * 80 + math.sin(q.life_time * 90 + 270) * 12 * v.ck",
+      0.0,
+      0.0
+     ]
+    },
+    "folds": {
+     "scale": [
+      "v.ck",
+      "v.ck",
+      "v.ck"
+     ]
+    }
+   }
+  }
+ }
+}

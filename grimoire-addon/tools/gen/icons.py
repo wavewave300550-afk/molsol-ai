@@ -13,10 +13,14 @@ def _save(arr, path):
 def item_icon(school, size=32):
     """A 3/4 view of the closed grimoire with its emblem, drawn as crisp pixel-ish art."""
     a = Art(size, size, ss=6)
-    cover = {"pressure": (38, 33, 30), "ice": (22, 52, 150), "blood": (86, 12, 26)}[school]
-    trim = {"pressure": (190, 106, 48), "ice": (205, 215, 235), "blood": (70, 70, 82)}[school]
-    glowc = {"pressure": (255, 150, 40), "ice": (110, 230, 255), "blood": (255, 40, 55)}[school]
-    pages = {"pressure": (240, 226, 190), "ice": (220, 242, 255), "blood": (240, 214, 206)}[school]
+    cover = {"pressure": (38, 33, 30), "ice": (22, 52, 150), "blood": (86, 12, 26),
+             "plasma": (40, 20, 84), "darkness": (14, 42, 27), "prism_light": (246, 242, 236)}[school]
+    trim = {"pressure": (190, 106, 48), "ice": (205, 215, 235), "blood": (70, 70, 82),
+            "plasma": (170, 176, 196), "darkness": (46, 96, 70), "prism_light": (214, 182, 118)}[school]
+    glowc = {"pressure": (255, 150, 40), "ice": (110, 230, 255), "blood": (255, 40, 55),
+             "plasma": (220, 80, 255), "darkness": (120, 190, 150), "prism_light": (255, 255, 255)}[school]
+    pages = {"pressure": (240, 226, 190), "ice": (220, 242, 255), "blood": (240, 214, 206),
+             "plasma": (236, 230, 255), "darkness": (80, 104, 90), "prism_light": (252, 250, 244)}[school]
     # page block (right side) and cover (front)
     a.poly([(9, 4), (27, 3), (27, 27), (9, 29)], fill=pages)
     for y in range(6, 28, 2):
@@ -34,9 +38,28 @@ def item_icon(school, size=32):
         a.hexagon(cx, cy, 7.4, trim, 0.9)
         a.hexagon(cx, cy, 5.6, glowc, 0.7)
         a.star6(cx, cy, 4.6, (245, 252, 255), 0.9)
-    else:
+    elif school == "blood":
         a.poly(B.heart_pts(cx, cy, 0.32), fill=(225, 25, 40), outline=(160, 160, 176), width=0.6)
         a.poly(B.heart_pts(cx - 1, cy - 1.2, 0.1), fill=(255, 200, 210))
+    elif school == "plasma":
+        # Triune Plasma Core: rhombus containment frame, three filaments, white-hot centre
+        a.poly([(cx, cy - 7.5), (cx + 6, cy), (cx, cy + 7.5), (cx - 6, cy)], outline=trim, width=0.9)
+        for k in range(3):
+            ang = k * 2.094
+            pts = [(cx + math.cos(ang + t * 0.5) * (1 + t * 0.9), cy + math.sin(ang + t * 0.5) * (1 + t * 0.9)) for t in range(6)]
+            a.line(pts, glowc, 0.6)
+        a.circle(cx, cy, 1.5, fill=(255, 240, 255))
+    elif school == "darkness":
+        # The Hollow Eye: layered jade shutters around a darker vertical diamond absence
+        for i, (w, h) in enumerate(((5.6, 8.4), (4.2, 6.6), (2.8, 4.8))):
+            a.poly([(cx, cy - h), (cx + w, cy), (cx, cy + h), (cx - w, cy)], outline=glowc if i == 0 else trim, width=0.6)
+        a.poly([(cx, cy - 3.6), (cx + 1.1, cy), (cx, cy + 3.6), (cx - 1.1, cy)], fill=(2, 8, 4))
+    else:
+        # The Sevenfold Aperture: prism, one white beam in, seven colours out
+        a.poly([(cx, cy - 5), (cx + 4.5, cy + 3.5), (cx - 4.5, cy + 3.5)], fill=(236, 244, 255), outline=trim, width=0.6)
+        a.line([(cx - 9, cy - 1), (cx - 2.2, cy)], (255, 255, 255), 0.6)
+        for k, col in enumerate(((255, 52, 52), (255, 140, 34), (255, 232, 52), (64, 255, 100), (52, 132, 255), (92, 68, 255), (180, 68, 255))):
+            a.line([(cx + 2.2, cy), (cx + 9, cy - 3.5 + k * 1.2)], col, 0.45)
     a.radial_glow(cx, cy, 6, glowc, 0.35)
     out = a.finish(emissive=False, alpha_from_glow=False)
     # transparent background outside the drawn book
@@ -80,6 +103,8 @@ def glyph_page():
         page[y:y + 16, x:x + 16] = arr
 
     for i, school in enumerate(("pressure", "ice", "blood")):
+        put(i, item_icon(school, 16))
+    for i, school in zip((9, 10, 11), ("plasma", "darkness", "prism_light")):
         put(i, item_icon(school, 16))
     # bar full / empty
     a = Art(16, 16, ss=6)
@@ -137,6 +162,12 @@ def barrier_texture(kind, frames=8):
             edge = (np.minimum(np.minimum(x, 15 - x), np.minimum(y, 15 - y)) < 1).astype(np.float32)
             rgb = np.stack([140 + 100 * k, 200 + 50 * k, 255 * np.ones_like(k)], -1)
             alpha = 120 + 60 * k + edge * 70
+        elif kind == "shadow_step":
+            # solidified shadow: dark green glass panel, jade edge seam that slowly travels
+            edge = (np.minimum(np.minimum(x, 15 - x), np.minimum(y, 15 - y)) < 1.2).astype(np.float32)
+            seam = np.clip(1 - np.abs(((x + y + f * 2) % 16) - 8) / 1.5, 0, 1) * edge
+            rgb = np.stack([18 + 80 * seam + 20 * edge, 54 + 130 * seam + 40 * edge, 34 + 90 * seam + 26 * edge], -1)
+            alpha = 215 + 40 * edge
         else:
             vein = np.abs(np.sin(x / 16 * math.pi * 3 + np.sin(y / 16 * math.pi * 2 + ph) * 1.3))
             k = np.clip((0.2 - vein) * 5, 0, 1)
@@ -152,11 +183,11 @@ def write_icons(rp, bp):
     os.makedirs(f"{rp}/textures/items", exist_ok=True)
     os.makedirs(f"{rp}/textures/font", exist_ok=True)
     os.makedirs(f"{rp}/textures/blocks/grimoire", exist_ok=True)
-    for s in ("pressure", "ice", "blood"):
+    for s in ("pressure", "ice", "blood", "plasma", "darkness", "prism_light"):
         _save(item_icon(s, 32), f"{rp}/textures/items/grimoire_{s}.png")
     icon = pack_icon(256)
     _save(icon, f"{rp}/pack_icon.png")
     _save(icon, f"{bp}/pack_icon.png")
     _save(glyph_page(), f"{rp}/textures/font/glyph_E5.png")
-    for k in ("pressure_barrier", "frost_wall", "blood_thornwall"):
+    for k in ("pressure_barrier", "frost_wall", "blood_thornwall", "shadow_step"):
         _save(barrier_texture(k), f"{rp}/textures/blocks/grimoire/{k}.png")

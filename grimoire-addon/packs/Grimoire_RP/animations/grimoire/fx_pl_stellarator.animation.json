@@ -1,0 +1,165 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_pl_stellarator.form": {
+   "animation_length": 0.6,
+   "bones": {
+    "t_tube": {
+     "scale": {
+      "0.0": [
+       0.2,
+       3.0,
+       0.2
+      ],
+      "0.6": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       -180.0,
+       0.0
+      ],
+      "0.6": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "ribs": {
+     "scale": {
+      "0.0": [
+       1.6,
+       0.01,
+       1.6
+      ],
+      "0.6": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_stellarator.run": {
+   "loop": true,
+   "bones": {
+    "g_stream0": {
+     "rotation": [
+      "math.sin(q.life_time * 200) * 6",
+      "q.life_time * 220",
+      0.0
+     ]
+    },
+    "g_stream1": {
+     "rotation": [
+      "math.sin(q.life_time * 240) * 6",
+      "q.life_time * 265",
+      0.0
+     ]
+    },
+    "g_stream2": {
+     "rotation": [
+      "math.sin(q.life_time * 280) * 6",
+      "q.life_time * 310",
+      0.0
+     ]
+    },
+    "ribs": {
+     "rotation": [
+      0.0,
+      "q.life_time * 10",
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_stellarator.pulse": {
+   "animation_length": 0.3,
+   "bones": {
+    "t_tube": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.08": [
+       1.08,
+       1.5,
+       1.08
+      ],
+      "0.3": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_stellarator.dissolve": {
+   "animation_length": 0.7,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       1.06,
+       1.06,
+       1.06
+      ],
+      "0.5": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       40.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_stellarator.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

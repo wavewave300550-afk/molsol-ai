@@ -1,0 +1,200 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_d_maw.rise": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.6,
+   "bones": {
+    "jaw_f": {
+     "rotation": {
+      "0.0": [
+       90.0,
+       0.0,
+       0.0
+      ],
+      "0.6": [
+       42.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "jaw_b": {
+     "rotation": {
+      "0.0": [
+       -90.0,
+       0.0,
+       0.0
+      ],
+      "0.6": [
+       -42.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_d_maw.open": {
+   "loop": true,
+   "bones": {
+    "jaw_f": {
+     "rotation": [
+      "42 + math.sin(q.life_time * 200) * 4",
+      0.0,
+      0.0
+     ]
+    },
+    "jaw_b": {
+     "rotation": [
+      "-42 - math.sin(q.life_time * 200) * 4",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_d_maw.snap": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.3,
+   "bones": {
+    "jaw_f": {
+     "rotation": {
+      "0.0": [
+       42.0,
+       0.0,
+       0.0
+      ],
+      "0.1": [
+       -20.0,
+       0.0,
+       0.0
+      ],
+      "0.18": [
+       -15.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "jaw_b": {
+     "rotation": {
+      "0.0": [
+       -42.0,
+       0.0,
+       0.0
+      ],
+      "0.1": [
+       20.0,
+       0.0,
+       0.0
+      ],
+      "0.18": [
+       15.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.1": [
+       1.08,
+       0.92,
+       1.08
+      ],
+      "0.3": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_d_maw.dissolve": {
+   "animation_length": 0.6,
+   "bones": {
+    "jaw_f": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.5": [
+       1.6,
+       0.02,
+       1.6
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       -15.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       80.0,
+       30.0,
+       0.0
+      ]
+     }
+    },
+    "jaw_b": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.5": [
+       1.6,
+       0.02,
+       1.6
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       15.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       -80.0,
+       -30.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_d_maw.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

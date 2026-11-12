@@ -1,0 +1,107 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.grimoire.fx_d_maw": {
+   "initial_state": "p0",
+   "states": {
+    "p0": {
+     "transitions": [
+      {
+       "p1": "q.property('grimoire:phase') == 1"
+      },
+      {
+       "p2": "q.property('grimoire:phase') == 2"
+      },
+      {
+       "p3": "q.property('grimoire:phase') == 3"
+      },
+      {
+       "p15": "q.property('grimoire:phase') == 15"
+      }
+     ],
+     "blend_transition": 0.12
+    },
+    "p1": {
+     "transitions": [
+      {
+       "p0": "q.property('grimoire:phase') == 0"
+      },
+      {
+       "p2": "q.property('grimoire:phase') == 2"
+      },
+      {
+       "p3": "q.property('grimoire:phase') == 3"
+      },
+      {
+       "p15": "q.property('grimoire:phase') == 15"
+      }
+     ],
+     "blend_transition": 0.12,
+     "animations": [
+      "rise"
+     ]
+    },
+    "p2": {
+     "transitions": [
+      {
+       "p0": "q.property('grimoire:phase') == 0"
+      },
+      {
+       "p1": "q.property('grimoire:phase') == 1"
+      },
+      {
+       "p3": "q.property('grimoire:phase') == 3"
+      },
+      {
+       "p15": "q.property('grimoire:phase') == 15"
+      }
+     ],
+     "blend_transition": 0.12,
+     "animations": [
+      "open"
+     ]
+    },
+    "p3": {
+     "transitions": [
+      {
+       "p0": "q.property('grimoire:phase') == 0"
+      },
+      {
+       "p1": "q.property('grimoire:phase') == 1"
+      },
+      {
+       "p2": "q.property('grimoire:phase') == 2"
+      },
+      {
+       "p15": "q.property('grimoire:phase') == 15"
+      }
+     ],
+     "blend_transition": 0.12,
+     "animations": [
+      "snap"
+     ]
+    },
+    "p15": {
+     "transitions": [
+      {
+       "p0": "q.property('grimoire:phase') == 0"
+      },
+      {
+       "p1": "q.property('grimoire:phase') == 1"
+      },
+      {
+       "p2": "q.property('grimoire:phase') == 2"
+      },
+      {
+       "p3": "q.property('grimoire:phase') == 3"
+      }
+     ],
+     "blend_transition": 0.12,
+     "animations": [
+      "dissolve"
+     ]
+    }
+   }
+  }
+ }
+}

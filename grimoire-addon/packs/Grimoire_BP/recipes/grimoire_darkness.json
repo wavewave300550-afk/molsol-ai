@@ -1,0 +1,39 @@
+{
+ "format_version": "1.26.60",
+ "minecraft:recipe_shaped": {
+  "description": {
+   "identifier": "grimoire:craft_darkness"
+  },
+  "tags": [
+   "crafting_table"
+  ],
+  "pattern": [
+   "SOS",
+   "IXI",
+   "SOS"
+  ],
+  "key": {
+   "S": {
+    "item": "minecraft:sculk"
+   },
+   "O": {
+    "item": "minecraft:obsidian"
+   },
+   "I": {
+    "item": "minecraft:ink_sac"
+   },
+   "X": {
+    "item": "minecraft:book"
+   }
+  },
+  "result": {
+   "item": "grimoire:darkness",
+   "count": 1
+  },
+  "unlock": [
+   {
+    "item": "minecraft:book"
+   }
+  ]
+ }
+}

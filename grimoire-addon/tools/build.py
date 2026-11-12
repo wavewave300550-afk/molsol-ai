@@ -19,18 +19,20 @@ sys.path.insert(0, os.path.join(ROOT, "tools"))
 from gen import styles  # noqa: E401,F401  (registers texture styles)
 from gen import book, packs, particles, sounds, icons, fxdefs, fogs, playeranim  # noqa: E402
 from gen import fx_common, fx_pressure, fx_ice, fx_blood, mobs  # noqa: E402,F401  (register constructs)
+from gen import fx_plasma, fx_darkness, fx_prism  # noqa: E402,F401  (expansion 02 constructs)
 
 BP = os.path.join(ROOT, "packs", "Grimoire_BP")
 RP = os.path.join(ROOT, "packs", "Grimoire_RP")
 DIST = os.path.join(ROOT, "dist")
+SCHOOLS = ("pressure", "ice", "blood", "plasma", "darkness", "prism_light")
 
 
 def spells_from_ts():
     """Single source of truth for spell metadata is the TypeScript registry."""
     out = []
-    for school in ("pressure", "ice", "blood"):
+    for school in SCHOOLS:
         src = open(os.path.join(ROOT, "src", "spells", school, "index.ts"), encoding="utf-8").read()
-        for m in re.finditer(r'code: "([PIB]\d\d)", id: "([a-z_.]+)", school: S, name: "([^"]+)", cooldown: (\d+), charge: (\d+), enhanceable: (true|false)(, cooldownAfterEnd: true)?', src):
+        for m in re.finditer(r'code: "([A-Z]{1,2}\d\d)", id: "([a-z_.]+)", school: S, name: "([^"]+)", cooldown: (\d+), charge: (\d+), enhanceable: (true|false)(, cooldownAfterEnd: true)?', src):
             out.append({"code": m.group(1), "id": m.group(2), "school": school, "name": m.group(3),
                         "cooldown": int(m.group(4)), "charge": int(m.group(5)), "enhanceable": m.group(6) == "true",
                         "cooldownAfterEnd": bool(m.group(7))})
@@ -90,7 +92,7 @@ def main():
     skip_sounds = "--no-sounds" in sys.argv
     clean()
     spells = spells_from_ts()
-    assert len(spells) == 45, f"expected 45 spells, parsed {len(spells)}"
+    assert len(spells) == 90, f"expected 90 spells, parsed {len(spells)}"
     packs.manifests(BP, RP)
     packs.items(BP)
     packs.recipes(BP)

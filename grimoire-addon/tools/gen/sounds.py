@@ -271,10 +271,72 @@ def library():
     S["blood.heart_big"] = reverb(heartbeat(1.2, 34, 115, 1.4), 1.0, 0.45)
     S["blood.storm"] = reverb(mix(boom(2.5, 60, 25, 116, 1.0) * 0.8, band(noise(2.5, 117), 800, 6000) * 0.25, crackle(2.5, 30, 118, 3000) * 0.5), 0.8, 0.3)
     S["blood.shatter"] = reverb(mix(shatter(1.6, 119, 1400), boom(1.6, 70, 30, 120, 0.6) * 0.8), 0.9, 0.35)
+    expansion_library(S)
     return S
 
 
 VOLUMES = {"pressure.edict": 1.0, "ice.descent": 1.0, "blood.storm": 1.0}
+
+
+def expansion_library(S):
+    """Expansion 02 sounds: Plasma (electric hum, snaps, surges), Darkness (folding paper, deep thuds,
+    mechanical latches - no hiss), Prism Light (glass harmonics, chimes, shimmering sine sweeps)."""
+    def buzz(dur, f, seed, depth=0.5):
+        t = t_(dur)
+        saw = 2 * ((t * f) % 1) - 1
+        return (saw * 0.4 + band(noise(dur, seed), 2000, 7000) * 0.3) * (1 - depth + depth * np.abs(np.sin(2 * np.pi * 50 * t)))
+    # ---------------------------------------------------------------- plasma
+    S["plasma.charge"] = mix(buzz(1.0, 110, 301) * swell(SR, 0.85, 1.3) * 0.6, sweep_band(noise(1.0, 302), 400, 4000, 0.5) * swell(SR, 0.9) * 0.4)
+    S["plasma.release"] = mix(crackle(0.5, 160, 303, 9000) * 0.7, boom(0.5, 180, 70, 304, 0.4) * 0.6, whoosh(0.5, 600, 4200, 305, 0.2) * 0.5)
+    S["plasma.hum"] = buzz(1.2, 82, 306, 0.3) * (0.7 + 0.3 * np.sin(2 * np.pi * 3 * t_(1.2)))
+    S["plasma.crack"] = mix(crackle(0.35, 260, 307, 11000), boom(0.35, 260, 120, 308, 0.2) * 0.4)
+    S["plasma.surge"] = reverb(mix(sweep_band(noise(1.2, 309), 300, 6000, 0.4) * swell(int(SR * 1.2), 0.7, 1.6), buzz(1.2, 140, 310) * swell(int(SR * 1.2), 0.8) * 0.5), 0.6, 0.3)
+    S["plasma.zap"] = mix(tone(lambda t: 1800 - 1500 * t / 0.3, 0.3) * env(int(SR * 0.3), 0.005, 0.2) * 0.5, crackle(0.3, 200, 311, 10000) * 0.6)
+    S["plasma.whip"] = mix(whoosh(0.4, 1500, 6000, 312, 0.5), crackle(0.4, 120, 313, 9000) * env(int(SR * 0.4), 0.3, 0.1) * 0.7)
+    S["plasma.drill"] = mix(buzz(1.0, 220, 314, 0.8) * (0.6 + 0.4 * np.sin(2 * np.pi * 26 * t_(1.0))), band(noise(1.0, 315), 800, 3000) * 0.4)
+    S["plasma.reconnect"] = reverb(mix(boom(2.2, 70, 25, 316, 1.3), crackle(2.2, 220, 317, 10000) * swell(int(SR * 2.2), 0.2, 2.0) * 0.6,
+                                        sweep_band(noise(2.2, 318), 6000, 300, 0.6) * 0.5), 1.0, 0.35)
+    S["plasma.membrane"] = mix(sweep_band(noise(0.7, 319), 900, 2600, 0.8) * swell(int(SR * 0.7), 0.5) * 0.7, buzz(0.7, 96, 320) * 0.25)
+    S["plasma.skate"] = mix(band(noise(0.6, 321), 3000, 9000) * 0.4, tone(lambda t: 600 + 300 * np.sin(t * 20), 0.6) * 0.15)
+    S["plasma.sling"] = mix(tone(lambda t: 90 + 260 * t, 1.0) * swell(SR, 0.95, 2.5) * 0.4, sweep_band(noise(1.0, 322), 300, 5000, 0.6) * swell(SR, 0.95) * 0.5)
+    S["plasma.manta"] = reverb(mix(*[tone(f, 1.6) * swell(int(SR * 1.6), 0.5, 1.4) * 0.22 for f in (147, 220, 294, 392)], buzz(1.6, 74, 323) * 0.15), 1.0, 0.45)
+    S["plasma.pylon"] = mix(tone(lambda t: 120 + 40 * np.sin(t * 12), 0.6) * env(int(SR * 0.6), 0.02, 0.4) * 0.5, crackle(0.6, 70, 324, 7000) * 0.3)
+    S["plasma.field"] = mix(buzz(1.4, 60, 325, 0.2) * 0.5, sweep_band(noise(1.4, 326), 200, 1200, 1.0) * 0.4)
+    # ---------------------------------------------------------------- darkness
+    def paper(dur, seed):
+        return band(noise(dur, seed), 400, 3000) * (np.abs(np.sin(2 * np.pi * 7 * t_(dur))) ** 3) * env(int(SR * dur), 0.05, dur * 0.7)
+    S["darkness.charge"] = mix(band(noise(1.0, 401), 60, 400) * swell(SR, 0.8, 1.2) * 0.8, paper(1.0, 402) * 0.3)
+    S["darkness.release"] = mix(boom(0.6, 90, 40, 403, 0.6), whoosh(0.6, 2200, 300, 404, 0.15) * 0.5)
+    S["darkness.fold"] = mix(paper(0.5, 405), whoosh(0.5, 900, 300, 406, 0.4) * 0.5)
+    S["darkness.snap"] = mix(boom(0.5, 140, 50, 407, 0.9), band(noise(0.5, 408), 500, 2500) * env(int(SR * 0.5), 0.002, 0.08) * 0.8)
+    S["darkness.thud"] = reverb(boom(1.0, 70, 30, 409, 0.8), 0.6, 0.3)
+    S["darkness.whisper"] = band(noise(1.2, 410), 300, 1100) * swell(int(SR * 1.2), 0.5, 1.2) * (0.6 + 0.4 * np.sin(2 * np.pi * 2.5 * t_(1.2)))
+    S["darkness.latch"] = reverb(mix(bell(160, 0.9, 0, (1, 2.1, 3.3, 4.9), 1.2) * 0.4, boom(0.9, 110, 50, 411, 0.6),
+                                      band(noise(0.9, 412), 1500, 5000) * env(int(SR * 0.9), 0.001, 0.05) * 0.7), 0.5, 0.3)
+    S["darkness.curtain"] = mix(band(noise(1.6, 413), 150, 900) * swell(int(SR * 1.6), 0.3, 1.0) * 0.8, paper(1.6, 414) * 0.25)
+    S["darkness.glyph"] = mix(tone(lambda t: 220 - 80 * t, 0.5) * env(int(SR * 0.5), 0.05, 0.4) * 0.4, paper(0.5, 415) * 0.4)
+    S["darkness.step"] = mix(paper(0.3, 416) * 0.6, boom(0.3, 160, 90, 417, 0.3) * 0.4)
+    S["darkness.tile"] = mix(band(noise(0.25, 418), 800, 2600) * env(int(SR * 0.25), 0.002, 0.06) * 0.6, boom(0.25, 200, 120, 419, 0.2) * 0.3)
+    S["darkness.eclipse"] = reverb(mix(tone(55, 1.8) * swell(int(SR * 1.8), 0.5) * 0.5, band(noise(1.8, 420), 80, 500) * swell(int(SR * 1.8), 0.6) * 0.6), 0.9, 0.35)
+    S["darkness.court"] = reverb(mix(boom(2.0, 55, 24, 421, 1.2), paper(2.0, 422) * 0.3, tone(41, 2.0) * swell(int(SR * 2.0), 0.4) * 0.4), 1.0, 0.4)
+    S["darkness.edict"] = reverb(mix(boom(3.0, 48, 20, 423, 1.4), band(noise(3.0, 424), 60, 300) * swell(int(SR * 3.0), 0.6, 1.5) * 0.7,
+                                      paper(3.0, 425) * 0.2), 1.2, 0.45)
+    # ---------------------------------------------------------------- prism light
+    def glass(dur, f, seed):
+        return mix(bell(f, dur, seed, (1, 2.0, 3.01, 4.2), 0.9) * 0.5, bell(f * 1.5, dur, seed + 1, (1, 2.0, 3.0), 0.8) * 0.3)
+    S["prism_light.charge"] = mix(*[tone(f, 1.0) * swell(SR, 0.8, 1.5) * 0.16 for f in (660, 880, 990, 1320)])
+    S["prism_light.release"] = reverb(mix(glass(0.8, 1320, 501), sweep_band(noise(0.8, 502), 3000, 9000, 0.4) * env(int(SR * 0.8), 0.01, 0.3) * 0.3), 0.6, 0.35)
+    S["prism_light.chime"] = reverb(mix(glass(1.0, 1568, 503), glass(1.0, 2093, 504) * 0.6), 0.8, 0.4)
+    S["prism_light.beam"] = mix(tone(lambda t: 900 + 700 * t, 0.7) * env(int(SR * 0.7), 0.02, 0.5) * 0.3, tone(lambda t: 1800 + 1400 * t, 0.7) * env(int(SR * 0.7), 0.02, 0.4) * 0.15)
+    S["prism_light.shatter"] = reverb(mix(shatter(0.8, 505, 3400), glass(0.8, 2637, 506) * 0.4), 0.5, 0.3)
+    S["prism_light.hum"] = mix(*[tone(f, 1.4) * 0.12 for f in (523, 659, 784)]) * (0.75 + 0.25 * np.sin(2 * np.pi * 1.5 * t_(1.4)))
+    S["prism_light.heal"] = reverb(mix(*[tone(f, 2.0) * swell(int(SR * 2.0), 0.4, 1.2) * 0.14 for f in (523, 659, 784, 1046)], glass(2.0, 2093, 507) * 0.3), 1.2, 0.45)
+    S["prism_light.crown"] = reverb(mix(*[glass(3.0, f, 508 + i) * 0.4 for i, f in enumerate((523, 784, 1046, 1568))], boom(3.0, 90, 40, 512, 0.6) * 0.5), 1.4, 0.45)
+    S["prism_light.glass"] = glass(0.5, 2349, 513)
+    S["prism_light.sweep"] = mix(sweep_band(noise(1.0, 514), 1500, 7000, 0.3) * 0.4, tone(lambda t: 700 + 500 * np.sin(t * 6), 1.0) * 0.2)
+    S["prism_light.scan"] = mix(tone(lambda t: 1200 + 300 * np.sign(np.sin(t * 40)), 0.8) * env(int(SR * 0.8), 0.02, 0.6) * 0.2, glass(0.8, 3136, 515) * 0.3)
+    S["prism_light.sail"] = mix(whoosh(0.8, 500, 2500, 516, 0.5) * 0.6, glass(0.8, 1760, 517) * 0.25)
+    S["prism_light.focus"] = reverb(mix(tone(lambda t: 400 + 2400 * t * t, 0.9) * swell(int(SR * 0.9), 0.95, 2.0) * 0.4, glass(0.9, 2637, 518) * 0.4), 0.5, 0.3)
 
 
 def write_sounds(rp):

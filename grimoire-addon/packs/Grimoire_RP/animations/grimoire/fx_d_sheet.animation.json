@@ -1,0 +1,170 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_d_sheet.fold": {
+   "loop": true,
+   "bones": {
+    "fold0": {
+     "rotation": [
+      0.0,
+      0.0,
+      "math.max(0, math.sin(q.life_time * 120 - 0)) * 150"
+     ]
+    },
+    "fold1": {
+     "rotation": [
+      0.0,
+      0.0,
+      "math.max(0, math.sin(q.life_time * 120 - 70)) * 150"
+     ]
+    },
+    "fold2": {
+     "rotation": [
+      0.0,
+      0.0,
+      "math.max(0, math.sin(q.life_time * 120 - 140)) * 150"
+     ]
+    },
+    "fold3": {
+     "rotation": [
+      0.0,
+      0.0,
+      "math.max(0, math.sin(q.life_time * 120 - 210)) * 150"
+     ]
+    },
+    "spinner": {
+     "rotation": [
+      "math.sin(q.life_time * 50) * 20",
+      "q.life_time * 40",
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_d_sheet.form": {
+   "animation_length": 0.25,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       0.01,
+       0.01,
+       0.01
+      ],
+      "0.175": [
+       1.08,
+       1.08,
+       1.08
+      ],
+      "0.25": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_d_sheet.blade": {
+   "loop": true,
+   "bones": {
+    "fold0": {
+     "rotation": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "scale": [
+      1.7,
+      1.0,
+      1.0
+     ]
+    },
+    "fold1": {
+     "rotation": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "scale": [
+      0.7,
+      1.0,
+      1.0
+     ]
+    },
+    "fold2": {
+     "rotation": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "scale": [
+      1.7,
+      1.0,
+      1.0
+     ]
+    },
+    "fold3": {
+     "rotation": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "scale": [
+      0.7,
+      1.0,
+      1.0
+     ]
+    },
+    "spinner": {
+     "rotation": [
+      0.0,
+      "q.life_time * 900",
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_d_sheet.dissolve": {
+   "animation_length": 0.5,
+   "bones": {
+    "spinner": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.4": [
+       1.5,
+       0.01,
+       1.5
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_d_sheet.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

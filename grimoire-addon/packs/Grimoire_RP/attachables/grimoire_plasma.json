@@ -1,0 +1,49 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "grimoire:plasma",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "trans": "entity_alphablend",
+    "glow": "entity_beam_additive"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/book_plasma",
+    "flow": "textures/entity/grimoire/book_plasma_flow"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.book_plasma"
+   },
+   "animations": {
+    "pose": "animation.grimoire.book_plasma.pose",
+    "closed": "animation.grimoire.book_plasma.closed",
+    "open": "animation.grimoire.book_plasma.open",
+    "charge": "animation.grimoire.book_plasma.charge",
+    "release": "animation.grimoire.book_plasma.release",
+    "flip": "animation.grimoire.book_plasma.flip",
+    "emblem": "animation.grimoire.book_plasma.emblem",
+    "ctrl": "controller.animation.grimoire.book_plasma",
+    "extras": "animation.grimoire.book_plasma.extras"
+   },
+   "scripts": {
+    "initialize": [
+     "v.flip_t = 0; v.rel_t = 0; v.ck = 0;"
+    ],
+    "animate": [
+     "pose",
+     "emblem",
+     "ctrl",
+     "extras"
+    ],
+    "pre_animation": [
+     "v.ck = math.lerp(v.ck, q.is_using_item ? 1.0 : 0.0, 0.18);"
+    ]
+   },
+   "render_controllers": [
+    "controller.render.grimoire.book",
+    "controller.render.grimoire.book_flow"
+   ]
+  }
+ }
+}

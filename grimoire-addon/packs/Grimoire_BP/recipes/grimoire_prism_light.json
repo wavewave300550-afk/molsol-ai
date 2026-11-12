@@ -1,0 +1,39 @@
+{
+ "format_version": "1.26.60",
+ "minecraft:recipe_shaped": {
+  "description": {
+   "identifier": "grimoire:craft_prism_light"
+  },
+  "tags": [
+   "crafting_table"
+  ],
+  "pattern": [
+   "GQG",
+   "PXP",
+   "GQG"
+  ],
+  "key": {
+   "G": {
+    "item": "minecraft:gold_ingot"
+   },
+   "Q": {
+    "item": "minecraft:quartz"
+   },
+   "P": {
+    "item": "minecraft:glass_pane"
+   },
+   "X": {
+    "item": "minecraft:book"
+   }
+  },
+  "result": {
+   "item": "grimoire:prism_light",
+   "count": 1
+  },
+  "unlock": [
+   {
+    "item": "minecraft:book"
+   }
+  ]
+ }
+}

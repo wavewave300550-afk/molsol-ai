@@ -8,5 +8,11 @@
  },
  "grimoire:blood_thornwall": {
   "sound": "glass"
+ },
+ "grimoire:shadow_step_low": {
+  "sound": "glass"
+ },
+ "grimoire:shadow_step_high": {
+  "sound": "glass"
  }
 }

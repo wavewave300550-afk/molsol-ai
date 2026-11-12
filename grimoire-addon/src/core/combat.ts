@@ -210,10 +210,66 @@ function scaleFor(target: Entity): number {
   return target.typeId === "minecraft:player" ? r.damagePvP : r.damagePvE;
 }
 
+// ------------------------------------------------------------------ weak-point marks (PR12 Spectral Diagnosis)
+interface Vulnerability {
+  ownerId: string;
+  mult: number;
+  until: number;
+}
+const vulnerable = new Map<string, Vulnerability>();
+
+/** Mark a target: damage dealt to it by `ownerId` and their allies is multiplied by `mult` for `ticks`. */
+export function markVulnerable(target: Entity, ownerId: string, mult: number, ticks: number): void {
+  vulnerable.set(target.id, { ownerId, mult, until: system.currentTick + ticks });
+}
+
+export function clearVulnerable(targetId: string, ownerId: string): void {
+  if (vulnerable.get(targetId)?.ownerId === ownerId) vulnerable.delete(targetId);
+}
+
+export function clearVulnerableOf(ownerId: string): void {
+  for (const [k, v] of vulnerable) if (v.ownerId === ownerId) vulnerable.delete(k);
+}
+
+export function isMarkedVulnerable(e: Entity): boolean {
+  const v = vulnerable.get(e.id);
+  return !!v && v.until > system.currentTick;
+}
+
+/** Multiplier that applies when `attackerId` damages `target` (1 when not marked or not an ally of the marker). */
+export function vulnerabilityMult(target: Entity, attackerId: string | undefined): number {
+  const v = vulnerable.get(target.id);
+  if (!v) return 1;
+  if (v.until <= system.currentTick) {
+    vulnerable.delete(target.id);
+    return 1;
+  }
+  if (!attackerId) return 1;
+  if (attackerId === v.ownerId) return v.mult;
+  const attacker = world.getEntity(attackerId);
+  return attacker?.isValid && isAllyOrSelf(v.ownerId, attacker) ? v.mult : 1;
+}
+
+/**
+ * Non-spell damage (melee, arrows, summons) to a marked target gets its bonus as a deferred transfer hit
+ * (after the vanilla hurt cooldown, so it is not swallowed by invulnerability frames).
+ */
+export function vulnerabilityBonus(victim: Entity, damage: number, attacker: Entity | undefined): void {
+  if (!attacker || damageInFlight.has(victim.id) || damage <= 0) return;
+  const v = vulnerable.get(victim.id);
+  if (!v || v.until <= system.currentTick) return;
+  const mult = vulnerabilityMult(victim, attacker.id);
+  if (mult <= 1) return;
+  const extra = damage * (mult - 1);
+  const owner = v.ownerId;
+  system.runTimeout(() => hit(owner, victim, extra, { kind: "transfer" }), HURT_COOLDOWN + 1);
+}
+
 export function hit(caster: Player | string, target: Entity, amount: number, opts: HitOptions = {}): void {
   if (!target.isValid || amount <= 0) return;
   const casterId = typeof caster === "string" ? caster : caster.id;
   const kind = opts.kind ?? "spell";
+  if (kind === "spell") amount *= vulnerabilityMult(target, casterId);
   const now = system.currentTick;
   const last = lastApplied.get(target.id) ?? -999;
   const p = pending.get(target.id);

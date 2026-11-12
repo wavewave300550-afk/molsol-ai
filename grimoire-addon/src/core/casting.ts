@@ -38,8 +38,26 @@ const RELEASE_COLORS: Record<School, [typeof COLORS.white, typeof COLORS.white]>
   pressure: [COLORS.orange, COLORS.gold],
   ice: [COLORS.ice, COLORS.white],
   blood: [COLORS.crimson, COLORS.redgold],
+  plasma: [COLORS.violet, COLORS.whitehot],
+  darkness: [COLORS.emerald, COLORS.jade],
+  prism_light: [COLORS.pearl, COLORS.champagne],
 };
-const SIGIL: Record<School, string> = { pressure: "grimoire:fx_sigil_p", ice: "grimoire:fx_sigil_i", blood: "grimoire:fx_sigil_b" };
+const SIGIL: Record<School, string> = {
+  pressure: "grimoire:fx_sigil_p",
+  ice: "grimoire:fx_sigil_i",
+  blood: "grimoire:fx_sigil_b",
+  plasma: "grimoire:fx_sigil_pl",
+  darkness: "grimoire:fx_sigil_d",
+  prism_light: "grimoire:fx_sigil_pr",
+};
+const CHARGE_COLORS: Record<School, typeof COLORS.white> = {
+  pressure: COLORS.orange,
+  ice: COLORS.ice,
+  blood: COLORS.crimson,
+  plasma: COLORS.magenta,
+  darkness: COLORS.jade,
+  prism_light: COLORS.pearl,
+};
 
 function endSigil(playerId: string, flare: boolean): void {
   const s = sigils.get(playerId);
@@ -189,7 +207,7 @@ export function tickPreparation(p: Player, st: PlayerState): void {
     const head = p.getHeadLocation();
     const dir = p.getViewDirection();
     const at = { x: head.x + dir.x * 0.9, y: head.y - 0.35 + dir.y * 0.9, z: head.z + dir.z * 0.9 };
-    const c = prep.school === "pressure" ? COLORS.orange : prep.school === "ice" ? COLORS.ice : COLORS.crimson;
+    const c = CHARGE_COLORS[prep.school];
     particle(p.dimension, `grimoire:${prep.school}_charge`, at, { color: c, size: 0.4 + k * 0.6, radius: 1.4 - k * 0.8 });
   }
   if (t % 20 === 0 && t > 0) {

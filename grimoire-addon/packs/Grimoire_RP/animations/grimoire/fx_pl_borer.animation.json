@@ -1,0 +1,260 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_pl_borer.form": {
+   "animation_length": 0.4,
+   "bones": {
+    "g_helix_a": {
+     "scale": {
+      "0.0": [
+       3.0,
+       3.0,
+       0.2
+      ],
+      "0.4": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "g_helix_b": {
+     "scale": {
+      "0.0": [
+       3.0,
+       3.0,
+       0.2
+      ],
+      "0.4": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "g_core": {
+     "scale": {
+      "0.0": [
+       0.01,
+       0.01,
+       0.01
+      ],
+      "0.3": [
+       1.2,
+       1.2,
+       1.2
+      ],
+      "0.4": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_borer.spin": {
+   "loop": true,
+   "bones": {
+    "g_helix_a": {
+     "rotation": [
+      0.0,
+      0.0,
+      "q.life_time * 720"
+     ]
+    },
+    "g_helix_b": {
+     "rotation": [
+      0.0,
+      0.0,
+      "-q.life_time * 720"
+     ]
+    },
+    "collar": {
+     "rotation": [
+      0.0,
+      "q.life_time * 200",
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_borer.drill": {
+   "loop": true,
+   "bones": {
+    "g_helix_a": {
+     "rotation": [
+      0.0,
+      0.0,
+      "q.life_time * 1700"
+     ]
+    },
+    "g_helix_b": {
+     "rotation": [
+      0.0,
+      0.0,
+      "-q.life_time * 1700"
+     ]
+    },
+    "fade": {
+     "position": [
+      "math.sin(q.life_time * 3000) * 0.3",
+      "math.cos(q.life_time * 2600) * 0.3",
+      "math.sin(q.life_time * 1800) * 1.2"
+     ]
+    },
+    "g_tip": {
+     "scale": [
+      "1 + math.sin(q.life_time * 7200 + 0.0) * 0.12",
+      "1 + math.sin(q.life_time * 7200 + 0.0) * 0.12",
+      "1 + math.sin(q.life_time * 7200 + 0.0) * 0.12"
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_borer.unwind": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.6,
+   "bones": {
+    "g_helix_a": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.6": [
+       3.2,
+       3.2,
+       1.6
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.6": [
+       0.0,
+       0.0,
+       260.0
+      ]
+     }
+    },
+    "g_helix_b": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.6": [
+       3.2,
+       3.2,
+       1.6
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.6": [
+       0.0,
+       0.0,
+       -260.0
+      ]
+     }
+    },
+    "g_core": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.5": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "g_tip": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.3": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_borer.dissolve": {
+   "animation_length": 0.7,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       1.06,
+       1.06,
+       1.06
+      ],
+      "0.5": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       40.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_borer.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

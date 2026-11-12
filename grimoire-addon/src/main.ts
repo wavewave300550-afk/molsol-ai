@@ -23,7 +23,7 @@ import {
   onStopUse,
   tickPreparation,
 } from "./core/casting";
-import { FX_FAMILY, SUMMON_FAMILY, flushDamage, noteAggressor, pruneAggressors } from "./core/combat";
+import { FX_FAMILY, SUMMON_FAMILY, clearVulnerableOf, flushDamage, noteAggressor, pruneAggressors, vulnerabilityBonus } from "./core/combat";
 import { initDefense, removeWardsOf } from "./core/defense";
 import { isStaleConstruct, removeAllFxOf } from "./core/fx";
 import { renderHud } from "./core/hud";
@@ -41,11 +41,11 @@ import { endBindsOf, tickBinds } from "./core/status";
 system.beforeEvents.startup.subscribe((ev: StartupEvent) => {
   registerBlockComponents(ev);
   const reg = ev.customCommandRegistry;
-  reg.registerEnum("grimoire:book", ["pressure", "ice", "blood", "all"]);
+  reg.registerEnum("grimoire:book", ["pressure", "ice", "blood", "plasma", "darkness", "prism_light", "all"]);
   reg.registerCommand(
     {
       name: "grimoire:getbook",
-      description: "Give yourself a Grimoire (pressure, ice, blood or all).",
+      description: "Give yourself a Grimoire (pressure, ice, blood, plasma, darkness, prism_light or all).",
       permissionLevel: CommandPermissionLevel.GameDirectors,
       optionalParameters: [{ name: "grimoire:book", type: CustomCommandParamType.Enum }],
     },
@@ -168,6 +168,7 @@ world.afterEvents.playerSpawn.subscribe((e) => {
 
 function endPlayer(id: string, reason: string): void {
   cancelOwned(id, reason);
+  clearVulnerableOf(id);
   endBindsOf(id);
   removeWardsOf(id);
   removeAllFxOf(id);
@@ -216,6 +217,7 @@ world.afterEvents.entityHurt.subscribe((e) => {
   const victim = e.hurtEntity;
   const attacker = e.damageSource.damagingEntity;
   if (attacker && victim.isValid && (victim.typeId === "minecraft:player" || victim.hasTag("grimoire_summon"))) noteAggressor(victim, attacker);
+  if (victim.isValid) vulnerabilityBonus(victim, e.damage, attacker);
 });
 
 /** Remove constructs/summons left over from a previous session (crash, /reload, world reopen). */

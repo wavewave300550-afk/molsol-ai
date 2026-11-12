@@ -13,6 +13,9 @@ export const SCHOOL_COL: Record<string, { a: Rgb; b: Rgb }> = {
   pressure: { a: COLORS.orange, b: COLORS.gold },
   ice: { a: COLORS.ice, b: COLORS.white },
   blood: { a: COLORS.crimson, b: COLORS.scarlet },
+  plasma: { a: COLORS.violet, b: COLORS.magenta },
+  darkness: { a: COLORS.darkgreen, b: COLORS.jade },
+  prism_light: { a: COLORS.pearl, b: COLORS.champagne },
 };
 
 /** Approximately set an entity's velocity (players: applied client-side by the game). */

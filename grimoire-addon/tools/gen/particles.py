@@ -10,7 +10,9 @@ TEX = "textures/particle/grimoire_particles"
 
 SPRITES = ["soft", "ring", "thin_ring", "spark", "snowflake", "shard", "droplet", "petal",
            "hex", "rune_a", "rune_b", "smoke", "streak", "crescent", "heart", "hoofprint",
-           "ripple", "fragment", "square", "dot", "star", "thorn", "root", "prism"]
+           "ripple", "fragment", "square", "dot", "star", "thorn", "root", "prism",
+           # expansion 02 (appended: existing atlas cells keep their positions)
+           "filament", "triangle", "footprint", "glint", "lens", "slit"]
 
 
 def _heart(cx, cy, s):
@@ -94,6 +96,23 @@ def sprite(name):
         a.line([(6, 9), (5, 5)], W, 0.7)
     elif name == "prism":
         a.hexagon(c, c, 6.5, W, 1.0, fill=(200, 200, 200))
+    elif name == "filament":
+        a.line([(c + math.sin(t / 15 * math.tau * 1.5) * 2.4, 0.5 + t) for t in range(16)], W, 0.9)
+        a.radial_glow(c, c, 3, W, 0.5)
+    elif name == "triangle":
+        a.poly([(c, 1.5), (14.5, 14), (1.5, 14)], fill=W)
+    elif name == "footprint":
+        a.poly([(c - 2.5, 4), (c + 2.5, 3.5), (c + 3, 9), (c + 1.5, 14.5), (c - 2, 14.5), (c - 3.2, 9)], fill=W)
+        for k in range(4):
+            a.circle(c - 2.4 + k * 1.6, 1.8, 0.8, fill=W)
+    elif name == "glint":
+        a.poly([(c, 0.5), (c + 0.8, c - 0.8), (15.5, c), (c + 0.8, c + 0.8), (c, 15.5), (c - 0.8, c + 0.8), (0.5, c), (c - 0.8, c - 0.8)], fill=W)
+        a.poly([(c - 3, c - 3), (c, c - 0.8), (c + 3, c - 3), (c + 0.8, c), (c + 3, c + 3), (c, c + 0.8), (c - 3, c + 3), (c - 0.8, c)], fill=(150, 150, 150))
+    elif name == "lens":
+        a.circle(c, c, 6.6, outline=W, width=0.8)
+        a.circle(c - 1.8, c - 1.8, 1.6, fill=W)
+    elif name == "slit":
+        a.poly([(c, 0.5), (c + 2.2, c), (c, 15.5), (c - 2.2, c)], fill=W)
     out = a.finish(emissive=False, alpha_from_glow=False)
     lum = out[..., :3].max(-1)
     out[..., 3] = np.clip(lum, 0, 255)
@@ -266,6 +285,69 @@ def all_effects():
         shape=("sphere", {"radius": "0.3 * variable.radius", "direction": "outwards"}), lifetime=f"0.5 + {R}1 * 0.4",
         speed=f"(2 + {R}2 * 3) * variable.radius", drag=2.5, size=f"(0.08 + {R}3 * 0.1) * variable.size",
         rotation=f"{R}3 * 360", rot_rate="180", tint=MIX)
+    E.update(expansion_effects())
+    return E
+
+
+RAINBOW = [f"0.55 + 0.45 * math.cos(({R}4) * 360)", f"0.55 + 0.45 * math.cos(({R}4) * 360 - 120)",
+           f"0.55 + 0.45 * math.cos(({R}4) * 360 - 240)"]
+
+
+def expansion_effects():
+    E = {}
+    # preparation streams (templated by casting.ts: grimoire:<school>_charge)
+    E["grimoire:plasma_charge"] = effect("grimoire:plasma_charge", "filament", burst="5 + variable.size * 6",
+        shape=("sphere", {"radius": "0.6 * variable.radius + 0.25", "surface_only": True, "direction": "inwards"}),
+        lifetime="0.38", speed="2.4 * variable.radius + 0.6", drag=1.0, size=["0.05 + 0.04 * variable.size", "0.18 + 0.1 * variable.size"],
+        facing="lookat_direction", alpha=FADE_IN_OUT, tint=MIX)
+    E["grimoire:darkness_charge"] = effect("grimoire:darkness_charge", "triangle", material="particles_blend", burst="4 + variable.size * 5",
+        shape=("sphere", {"radius": "0.6 * variable.radius + 0.25", "surface_only": True, "direction": "inwards"}),
+        lifetime="0.45", speed="1.8 * variable.radius + 0.4", drag=1.2, size="0.05 + 0.06 * variable.size",
+        rotation=f"{R}3 * 360", rot_rate="160", tint=MIX, alpha=f"0.85 * {FADE_IN_OUT}")
+    E["grimoire:prism_light_charge"] = effect("grimoire:prism_light_charge", "glint", burst="5 + variable.size * 6",
+        shape=("sphere", {"radius": "0.6 * variable.radius + 0.25", "surface_only": True, "direction": "inwards"}),
+        lifetime="0.35", speed="2.2 * variable.radius + 0.5", drag=1.0, size="0.05 + 0.06 * variable.size",
+        rotation=f"{R}3 * 360", tint=RAINBOW, alpha=FADE_IN_OUT)
+    # plasma
+    E["grimoire:plasma_arc"] = effect("grimoire:plasma_arc", "filament", burst="6 * variable.count",
+        shape=("sphere", {"radius": "0.3 * variable.radius", "direction": "outwards"}), lifetime=f"0.25 + {R}1 * 0.2",
+        speed=f"(4 + {R}2 * 5) * variable.radius",
+        accel=(f"math.sin(variable.particle_age * 900 + {R}3 * 360) * 18", f"math.cos(variable.particle_age * 700) * 10", f"math.cos(variable.particle_age * 900 + {R}3 * 360) * 18"),
+        drag=3.0, size=["0.05 * variable.size", "0.32 * variable.size"], facing="lookat_direction", tint=MIX)
+    E["grimoire:plasma_trail"] = effect("grimoire:plasma_trail", "filament", burst="2 + variable.count", lifetime=f"0.45 * variable.life + {R}1 * 0.25",
+        shape=("sphere", {"radius": "0.15 * variable.radius"}), speed="0.2", drag=2,
+        size=["0.06 * variable.size", f"0.22 * variable.size * {FADE}"], facing="lookat_direction", rotation=f"{R}3 * 360", tint=MIX)
+    E["grimoire:plasma_burst"] = effect("grimoire:plasma_burst", "spark", burst="16 * variable.count",
+        shape=("sphere", {"radius": "0.25 * variable.radius", "direction": "outwards"}), lifetime=f"0.3 + {R}1 * 0.35",
+        speed=f"(4 + {R}2 * 7) * variable.radius",
+        accel=(f"math.sin(variable.particle_age * 600 + {R}3 * 360) * 10", 0, f"math.cos(variable.particle_age * 600 + {R}3 * 360) * 10"),
+        drag=3.0, size=f"(0.05 + {R}3 * 0.1) * variable.size", tint=MIX)
+    # darkness (alpha-blended: dark shapes that absorb light, never glowing smoke)
+    E["grimoire:shadow_sheets"] = effect("grimoire:shadow_sheets", "triangle", material="particles_blend", burst="12 * variable.count",
+        shape=("sphere", {"radius": "0.4 * variable.radius", "direction": "outwards"}), lifetime=f"0.7 + {R}1 * 0.6",
+        speed=f"(1 + {R}2 * 2.5) * variable.radius", accel=(0, -2.5, 0), drag=2.2, size=f"(0.1 + {R}3 * 0.16) * variable.size",
+        rotation=f"{R}3 * 360", rot_rate=f"({R}4 - 0.5) * 300", tint=MIX, alpha=f"0.9 * {FADE}")
+    E["grimoire:shadow_fold"] = effect("grimoire:shadow_fold", "square", material="particles_blend", burst="10 * variable.count",
+        shape=("sphere", {"radius": "variable.radius", "surface_only": True, "direction": "inwards"}), lifetime="0.4",
+        speed="2.4 * variable.radius", drag=1.0, size=f"(0.12 + {R}3 * 0.1) * variable.size * {FADE}",
+        rotation=f"{R}3 * 360", rot_rate="240", tint=MIX, alpha="0.9")
+    E["grimoire:shadow_print"] = effect("grimoire:shadow_print", "footprint", material="particles_blend", burst="1",
+        lifetime="3.2 * variable.life", size="0.22 * variable.size", facing="emitter_transform_xz",
+        rotation="variable.dir.direction_x * 0 + variable.radius * 57.3", tint=MIX, alpha=f"0.85 * {FADE_IN_OUT}")
+    E["grimoire:outline_mark"] = effect("grimoire:outline_mark", "slit", burst="3 * variable.count",
+        shape=("sphere", {"radius": "0.5 * variable.radius", "surface_only": True}), lifetime=f"0.5 + {R}1 * 0.3", speed="0.2",
+        size=["0.03 * variable.size", "0.16 * variable.size"], facing="lookat_direction", tint=MIX, alpha=f"0.7 * {FADE_IN_OUT}")
+    # prism light
+    E["grimoire:spectral_glint"] = effect("grimoire:spectral_glint", "glint", burst="10 * variable.count",
+        shape=("sphere", {"radius": "0.4 * variable.radius", "direction": "outwards"}), lifetime=f"0.5 + {R}1 * 0.5",
+        speed=f"(1 + {R}2 * 3) * variable.radius", drag=2.5, size=f"(0.05 + {R}3 * 0.08) * variable.size",
+        rotation=f"{R}3 * 360", rot_rate="180", tint=RAINBOW, alpha=FADE_IN_OUT)
+    E["grimoire:light_motes"] = effect("grimoire:light_motes", "soft", burst="12 * variable.count",
+        shape=("disc", {"radius": "variable.radius", "plane_normal": "y"}), lifetime=f"0.9 + {R}1 * 0.7", speed="0.6",
+        accel=(0, 1.6, 0), drag=1.0, size=f"(0.05 + {R}3 * 0.07) * variable.size", tint=MIX, alpha=FADE_IN_OUT)
+    E["grimoire:glass_sparkle"] = effect("grimoire:glass_sparkle", "lens", burst="14 * variable.count",
+        shape=("sphere", {"radius": "variable.radius"}), lifetime=f"0.7 + {R}1 * 0.8", speed="0.4", accel=(0, -1.0, 0), drag=1.5,
+        size=f"(0.04 + {R}3 * 0.06) * variable.size", rotation=f"{R}3 * 360", tint=RAINBOW, alpha=f"0.8 * {FADE_IN_OUT}")
     return E
 
 

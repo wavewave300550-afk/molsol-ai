@@ -9,7 +9,13 @@ import { V3, floor3 } from "./vec";
  *  - each spell block carries the "grimoire:temporary" custom component whose tick handler
  *    deletes any block that is no longer owned by a live spell (crash / reload safety net).
  */
-export const TEMP_BLOCK_IDS = ["grimoire:pressure_barrier", "grimoire:frost_wall", "grimoire:blood_thornwall"];
+export const TEMP_BLOCK_IDS = [
+  "grimoire:pressure_barrier",
+  "grimoire:frost_wall",
+  "grimoire:blood_thornwall",
+  "grimoire:shadow_step_low",
+  "grimoire:shadow_step_high",
+];
 
 const live = new Map<string, string>(); // key -> owner set id
 

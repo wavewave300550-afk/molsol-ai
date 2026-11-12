@@ -13,12 +13,36 @@ export interface HurtListener {
 
 const listeners = new Set<HurtListener>();
 
+/** Fires when `attackerId` hurts anything (D12 mirrors the caster's attacks). */
+export interface AttackListener {
+  attackerId: string;
+  fn(victim: Entity, damage: number, cause: EntityDamageCause): void;
+}
+
+const attackListeners = new Set<AttackListener>();
+
+export function onAttack(l: AttackListener): () => void {
+  attackListeners.add(l);
+  return () => attackListeners.delete(l);
+}
+
 export function onHurt(l: HurtListener): () => void {
   listeners.add(l);
   return () => listeners.delete(l);
 }
 
 function dispatch(e: EntityHurtAfterEvent): void {
+  const src = e.damageSource.damagingEntity;
+  if (src && attackListeners.size > 0) {
+    for (const l of [...attackListeners]) {
+      if (l.attackerId !== src.id) continue;
+      try {
+        l.fn(e.hurtEntity, e.damage, e.damageSource.cause);
+      } catch (err) {
+        log.error("attack listener failed", err);
+      }
+    }
+  }
   if (listeners.size === 0) return;
   const id = e.hurtEntity.id;
   for (const l of [...listeners]) {

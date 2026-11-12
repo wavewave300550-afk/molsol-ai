@@ -1,0 +1,149 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_d_silhouette.flatten": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.3,
+   "bones": {
+    "figure": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.3": [
+       -90.0,
+       0.0,
+       0.0
+      ]
+     },
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.3": [
+       1.1,
+       1.1,
+       0.12
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_d_silhouette.travel": {
+   "loop": true,
+   "bones": {
+    "figure": {
+     "rotation": [
+      -90.0,
+      0.0,
+      0.0
+     ],
+     "scale": [
+      "1.1 + math.sin(q.life_time * 900) * 0.06",
+      1.3,
+      0.12
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_d_silhouette.rise": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.4,
+   "bones": {
+    "figure": {
+     "rotation": {
+      "0.0": [
+       -90.0,
+       0.0,
+       0.0
+      ],
+      "0.3": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "scale": {
+      "0.0": [
+       1.1,
+       1.3,
+       0.12
+      ],
+      "0.3": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.4": [
+       1.05,
+       1.05,
+       1.05
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_d_silhouette.dissolve": {
+   "animation_length": 0.7,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       1.06,
+       1.06,
+       1.06
+      ],
+      "0.5": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       40.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_d_silhouette.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

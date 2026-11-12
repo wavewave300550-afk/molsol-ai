@@ -1,0 +1,174 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_pr_bloom.form": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.8,
+   "bones": {
+    "geo": {
+     "scale": {
+      "0.0": [
+       0.02,
+       0.02,
+       0.02
+      ],
+      "0.6": [
+       1.1,
+       1.1,
+       1.1
+      ],
+      "0.8": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "g_octa": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.8": [
+       0.0,
+       90.0,
+       0.0
+      ]
+     }
+    },
+    "g_cube": {
+     "rotation": {
+      "0.0": [
+       45.0,
+       0.0,
+       45.0
+      ],
+      "0.8": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pr_bloom.hold": {
+   "loop": true,
+   "bones": {
+    "g_octa": {
+     "rotation": [
+      0.0,
+      "q.life_time * 50",
+      0.0
+     ]
+    },
+    "g_cube": {
+     "rotation": [
+      "q.life_time * 30",
+      0.0,
+      "q.life_time * 20"
+     ]
+    },
+    "g_star": {
+     "rotation": [
+      0.0,
+      "-q.life_time * 40",
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_pr_bloom.fold": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.7,
+   "bones": {
+    "geo": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.6": [
+       0.02,
+       0.02,
+       0.02
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.6": [
+       0.0,
+       270.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pr_bloom.dissolve": {
+   "animation_length": 0.7,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       1.06,
+       1.06,
+       1.06
+      ],
+      "0.5": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       40.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pr_bloom.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

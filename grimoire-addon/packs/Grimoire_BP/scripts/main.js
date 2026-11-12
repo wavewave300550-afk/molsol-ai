@@ -5,8 +5,8 @@ import {
   CustomCommandStatus,
   EntityInitializationCause,
   ItemStack as ItemStack2,
-  Player as Player11,
-  system as system14,
+  Player as Player12,
+  system as system16,
   world as world10
 } from "@minecraft/server";
 
@@ -76,6 +76,10 @@ var flatNorm = (a) => norm(flat(a));
 var clamp = (v, lo, hi) => v < lo ? lo : v > hi ? hi : v;
 var floor3 = (l) => ({ x: Math.floor(l.x), y: Math.floor(l.y), z: Math.floor(l.z) });
 var DEG = Math.PI / 180;
+function dirFromYawPitch(yaw, pitch) {
+  const cp = Math.cos(pitch * DEG);
+  return { x: -Math.sin(yaw * DEG) * cp, y: -Math.sin(pitch * DEG), z: Math.cos(yaw * DEG) * cp };
+}
 function yawPitchOf(d) {
   const n = norm(d);
   const yaw = Math.atan2(-n.x, n.z) / DEG;
@@ -108,7 +112,13 @@ function rng(seed) {
 }
 
 // src/core/blocks.ts
-var TEMP_BLOCK_IDS = ["grimoire:pressure_barrier", "grimoire:frost_wall", "grimoire:blood_thornwall"];
+var TEMP_BLOCK_IDS = [
+  "grimoire:pressure_barrier",
+  "grimoire:frost_wall",
+  "grimoire:blood_thornwall",
+  "grimoire:shadow_step_low",
+  "grimoire:shadow_step_high"
+];
 var live = /* @__PURE__ */ new Map();
 var key = (dimId, l) => `${dimId}|${Math.floor(l.x)}|${Math.floor(l.y)}|${Math.floor(l.z)}`;
 var nextSet = 1;
@@ -180,7 +190,7 @@ function liveTempBlocks() {
 }
 
 // src/core/casting.ts
-import { EntityHealthComponent, system as system12, world as world8 } from "@minecraft/server";
+import { EntityHealthComponent, system as system14, world as world8 } from "@minecraft/server";
 
 // src/spells/context.ts
 import { system as system6 } from "@minecraft/server";
@@ -361,10 +371,43 @@ function scaleFor(target) {
   const r = rules();
   return target.typeId === "minecraft:player" ? r.damagePvP : r.damagePvE;
 }
+var vulnerable = /* @__PURE__ */ new Map();
+function markVulnerable(target, ownerId, mult, ticks) {
+  vulnerable.set(target.id, { ownerId, mult, until: system.currentTick + ticks });
+}
+function clearVulnerable(targetId, ownerId) {
+  if (vulnerable.get(targetId)?.ownerId === ownerId) vulnerable.delete(targetId);
+}
+function clearVulnerableOf(ownerId) {
+  for (const [k, v] of vulnerable) if (v.ownerId === ownerId) vulnerable.delete(k);
+}
+function vulnerabilityMult(target, attackerId) {
+  const v = vulnerable.get(target.id);
+  if (!v) return 1;
+  if (v.until <= system.currentTick) {
+    vulnerable.delete(target.id);
+    return 1;
+  }
+  if (!attackerId) return 1;
+  if (attackerId === v.ownerId) return v.mult;
+  const attacker = world3.getEntity(attackerId);
+  return attacker?.isValid && isAllyOrSelf(v.ownerId, attacker) ? v.mult : 1;
+}
+function vulnerabilityBonus(victim, damage, attacker) {
+  if (!attacker || damageInFlight.has(victim.id) || damage <= 0) return;
+  const v = vulnerable.get(victim.id);
+  if (!v || v.until <= system.currentTick) return;
+  const mult = vulnerabilityMult(victim, attacker.id);
+  if (mult <= 1) return;
+  const extra = damage * (mult - 1);
+  const owner = v.ownerId;
+  system.runTimeout(() => hit(owner, victim, extra, { kind: "transfer" }), HURT_COOLDOWN + 1);
+}
 function hit(caster, target, amount, opts = {}) {
   if (!target.isValid || amount <= 0) return;
   const casterId = typeof caster === "string" ? caster : caster.id;
   const kind = opts.kind ?? "spell";
+  if (kind === "spell") amount *= vulnerabilityMult(target, casterId);
   const now = system.currentTick;
   const last = lastApplied.get(target.id) ?? -999;
   const p = pending.get(target.id);
@@ -624,7 +667,27 @@ var COLORS = {
   scarlet: { r: 1, g: 0.14, b: 0.12 },
   burgundy: { r: 0.42, g: 0.02, b: 0.08 },
   bloodglow: { r: 1, g: 0.22, b: 0.25 },
-  redgold: { r: 1, g: 0.5, b: 0.25 }
+  redgold: { r: 1, g: 0.5, b: 0.25 },
+  // Plasma: deep violet / electric purple / ultraviolet / magenta / indigo / white-hot
+  violet: { r: 0.55, g: 0.18, b: 1 },
+  magenta: { r: 1, g: 0.25, b: 0.85 },
+  ultraviolet: { r: 0.42, g: 0.3, b: 1 },
+  indigo: { r: 0.3, g: 0.22, b: 0.95 },
+  whitehot: { r: 1, g: 0.92, b: 1 },
+  // Darkness: deep forest green / dark emerald / muted jade (never neon)
+  darkgreen: { r: 0.04, g: 0.2, b: 0.1 },
+  emerald: { r: 0.08, g: 0.38, b: 0.2 },
+  jade: { r: 0.42, g: 0.7, b: 0.52 },
+  // Prism Light: pearl / champagne gold / the seven spectral colours
+  pearl: { r: 1, g: 0.97, b: 0.93 },
+  champagne: { r: 0.96, g: 0.84, b: 0.58 },
+  sp_red: { r: 1, g: 0.16, b: 0.16 },
+  sp_orange: { r: 1, g: 0.55, b: 0.1 },
+  sp_yellow: { r: 1, g: 0.93, b: 0.2 },
+  sp_green: { r: 0.25, g: 1, b: 0.35 },
+  sp_blue: { r: 0.2, g: 0.5, b: 1 },
+  sp_indigo: { r: 0.36, g: 0.25, b: 1 },
+  sp_violet: { r: 0.72, g: 0.22, b: 1 }
 };
 function particle(dim, id, at, vars = {}, onlyFor) {
   const m = new MolangVariableMap();
@@ -1157,29 +1220,29 @@ var Cast = class extends SpellScope {
 import { EntityDamageCause as EntityDamageCause4, EntityTameableComponent as EntityTameableComponent2, system as system7 } from "@minecraft/server";
 
 // src/spells/types.ts
-var SCHOOLS = ["pressure", "ice", "blood"];
+var SCHOOLS = ["pressure", "ice", "blood", "plasma", "darkness", "prism_light"];
+var CODE_PREFIX = { pressure: "P", ice: "I", blood: "B", plasma: "PL", darkness: "D", prism_light: "PR" };
 var GRIMOIRE_ITEMS = {
   pressure: "grimoire:pressure",
   ice: "grimoire:ice",
-  blood: "grimoire:blood"
+  blood: "grimoire:blood",
+  plasma: "grimoire:plasma",
+  darkness: "grimoire:darkness",
+  prism_light: "grimoire:prism_light"
 };
 var SCHOOL_NAMES = {
   pressure: "Pressure Grimoire",
   ice: "Ice Grimoire",
-  blood: "Blood Grimoire"
+  blood: "Blood Grimoire",
+  plasma: "Plasma Grimoire",
+  darkness: "Darkness Grimoire",
+  prism_light: "Prism Light Grimoire"
 };
-var SCHOOL_COLOR = { pressure: "\xA76", ice: "\xA7b", blood: "\xA7c" };
+var SCHOOL_COLOR = { pressure: "\xA76", ice: "\xA7b", blood: "\xA7c", plasma: "\xA7d", darkness: "\xA72", prism_light: "\xA7f" };
 function schoolOfItem(typeId) {
-  switch (typeId) {
-    case "grimoire:pressure":
-      return "pressure";
-    case "grimoire:ice":
-      return "ice";
-    case "grimoire:blood":
-      return "blood";
-    default:
-      return void 0;
-  }
+  if (!typeId) return void 0;
+  for (const s of SCHOOLS) if (GRIMOIRE_ITEMS[s] === typeId) return s;
+  return void 0;
 }
 var Fizzle = class extends Error {
   constructor(reason) {
@@ -1192,11 +1255,27 @@ var Fizzle = class extends Error {
 // src/spells/hooks.ts
 import { world as world6 } from "@minecraft/server";
 var listeners = /* @__PURE__ */ new Set();
+var attackListeners = /* @__PURE__ */ new Set();
+function onAttack(l) {
+  attackListeners.add(l);
+  return () => attackListeners.delete(l);
+}
 function onHurt(l) {
   listeners.add(l);
   return () => listeners.delete(l);
 }
 function dispatch(e) {
+  const src = e.damageSource.damagingEntity;
+  if (src && attackListeners.size > 0) {
+    for (const l of [...attackListeners]) {
+      if (l.attackerId !== src.id) continue;
+      try {
+        l.fn(e.hurtEntity, e.damage, e.damageSource.cause);
+      } catch (err) {
+        log.error("attack listener failed", err);
+      }
+    }
+  }
   if (listeners.size === 0) return;
   const id = e.hurtEntity.id;
   for (const l of [...listeners]) {
@@ -1218,7 +1297,10 @@ var KB_GAIN = 2.56;
 var SCHOOL_COL = {
   pressure: { a: COLORS.orange, b: COLORS.gold },
   ice: { a: COLORS.ice, b: COLORS.white },
-  blood: { a: COLORS.crimson, b: COLORS.scarlet }
+  blood: { a: COLORS.crimson, b: COLORS.scarlet },
+  plasma: { a: COLORS.violet, b: COLORS.magenta },
+  darkness: { a: COLORS.darkgreen, b: COLORS.jade },
+  prism_light: { a: COLORS.pearl, b: COLORS.champagne }
 };
 function drive(e, vel) {
   if (!e.isValid) return;
@@ -2451,11 +2533,1034 @@ var BLOOD = [
   }
 ];
 
+// src/spells/kit2.ts
+import { EntityDamageCause as EntityDamageCause5, EntityProjectileComponent, system as system8 } from "@minecraft/server";
+var SPECTRUM = [
+  COLORS.sp_red,
+  COLORS.sp_orange,
+  COLORS.sp_yellow,
+  COLORS.sp_green,
+  COLORS.sp_blue,
+  COLORS.sp_indigo,
+  COLORS.sp_violet
+];
+function hostileProjectiles(c, center, radius, skip) {
+  const out = [];
+  let list = [];
+  try {
+    list = c.dim.getEntities({ location: center, maxDistance: radius });
+  } catch {
+    return out;
+  }
+  for (const e of list) {
+    if (skip?.has(e.id)) continue;
+    let proj;
+    try {
+      proj = e.getComponent(EntityProjectileComponent.componentId);
+    } catch {
+      continue;
+    }
+    if (!proj) continue;
+    const owner = proj.owner;
+    if (owner && (owner.id === c.player.id || isAllyOrSelf(c.player, owner))) continue;
+    out.push({ e, proj, vel: e.getVelocity() });
+  }
+  return out;
+}
+function redirect(inc, dir, speedMul = 1, claim) {
+  try {
+    const speed = Math.max(0.5, len(inc.vel)) * speedMul;
+    inc.e.clearVelocity();
+    inc.e.applyImpulse(mul(norm(dir), speed));
+    if (claim) inc.proj.owner = claim;
+    return true;
+  } catch {
+    return false;
+  }
+}
+function neutralize(inc) {
+  try {
+    inc.e.clearVelocity();
+    inc.e.remove();
+  } catch {
+  }
+}
+function spawnDecoy(c, at) {
+  return c.fx("grimoire:decoy", at, {});
+}
+function lure(mob, decoy) {
+  if (!decoy?.ok || !mob.isValid || mob.typeId === "minecraft:player") return;
+  try {
+    mob.applyDamage(1, { cause: EntityDamageCause5.entityAttack, damagingEntity: decoy.entity });
+  } catch {
+  }
+}
+function alliesNear(c, center, radius) {
+  return livingNear(c.dim, center, radius).filter((e) => e.id === c.player.id || isAllyOrSelf(c.player, e));
+}
+var NEGATIVE = ["poison", "wither", "slowness", "weakness", "blindness", "nausea", "mining_fatigue", "hunger", "darkness", "levitation"];
+function healAndCleanse(e, amount, cleanse) {
+  let restored = 0;
+  try {
+    const hp = e.getComponent("minecraft:health");
+    if (hp && hp.currentValue > 0) {
+      const next = Math.min(hp.effectiveMax, hp.currentValue + amount);
+      restored = next - hp.currentValue;
+      if (restored > 0) hp.setCurrentValue(next);
+    }
+  } catch {
+  }
+  if (cleanse) {
+    for (const id of NEGATIVE) {
+      try {
+        e.removeEffect(id);
+      } catch {
+      }
+    }
+  }
+  return restored;
+}
+function surfaceRoute(c, from, dir, maxDist, step2 = 0.5, stepUp = 1, stepDown = 3) {
+  const f = flatNorm(dir);
+  const pts = [];
+  let cur = { x: from.x, y: Math.floor(from.y), z: from.z };
+  for (let d = step2; d <= maxDist; d += step2) {
+    const nx = from.x + f.x * d;
+    const nz = from.z + f.z * d;
+    let found;
+    for (let dy = stepUp; dy >= -stepDown; dy--) {
+      const feet = { x: nx, y: cur.y + dy, z: nz };
+      const below = { x: nx, y: cur.y + dy - 1, z: nz };
+      if (isPassable(c.dim, feet) && isPassable(c.dim, add(feet, v3(0, 1, 0))) && !isPassable(c.dim, below)) {
+        found = feet;
+        break;
+      }
+    }
+    if (!found) break;
+    if (!isPassable(c.dim, { x: nx, y: Math.max(found.y, cur.y) + 1, z: nz })) break;
+    cur = found;
+    pts.push(found);
+  }
+  return pts;
+}
+function segmentClear(c, a, b) {
+  const d = dist(a, b);
+  const n = Math.max(1, Math.ceil(d * 2));
+  for (let i = 1; i <= n; i++) {
+    const p = add(a, mul(sub(b, a), i / n));
+    if (!isPassable(c.dim, p) || !isPassable(c.dim, add(p, v3(0, 1, 0)))) return false;
+  }
+  return true;
+}
+function arcPoint(a, ctrl, b, t) {
+  const u = 1 - t;
+  return { x: u * u * a.x + 2 * u * t * ctrl.x + t * t * b.x, y: u * u * a.y + 2 * u * t * ctrl.y + t * t * b.y, z: u * u * a.z + 2 * u * t * ctrl.z + t * t * b.z };
+}
+
+// src/spells/darkness/spells.ts
+var DG = COLORS.darkgreen;
+var EM = COLORS.emerald;
+var JD = COLORS.jade;
+var SHADE = { r: 0.02, g: 0.09, b: 0.05 };
+function* dissolveLater(fx, ticks, fade = 10) {
+  yield ticks;
+  fx?.dissolve(fade);
+}
+function sheets(c, at, radius = 1, count = 1) {
+  c.particle("grimoire:shadow_sheets", at, { color: SHADE, color2: EM, radius, count, size: 1.2 });
+}
+function primaryTarget(c, range, around = 6) {
+  const a = c.aim(range);
+  if (a.entity && c.isEnemy(a.entity)) return a.entity;
+  return nearestEnemies(c, a.point, around, 1)[0];
+}
+function* umbralOrigami(c) {
+  const n = c.p("sheets");
+  const right = rotY(flatNorm(c.dir), 90);
+  const a = c.aim(c.p("range"));
+  const goal = a.point;
+  const folded = [];
+  for (let k = 0; k < n; k++) {
+    const off = k - (n - 1) / 2;
+    const start2 = add(c.origin, add(add(mul(right, off * 1.4), v3(0, 0.6 + Math.abs(off) * 0.25, 0)), mul(c.dir, 1.2)));
+    folded.push({ start: start2, fx: c.fx("grimoire:fx_d_sheet", start2, { yaw: c.yaw + off * 20, phase: 1, size: c.area }), off });
+    c.sound("grimoire.darkness.fold", start2, 0.6, 1.1 + k * 0.08);
+    yield 2;
+  }
+  yield 6;
+  const hits = folded.map(() => /* @__PURE__ */ new Set());
+  folded.forEach((s) => s.fx?.phase(2));
+  c.sound("grimoire.darkness.release", c.origin, 1, 1.2);
+  const T = 12;
+  for (let t = 1; t <= T + 4; t++) {
+    folded.forEach((s, i) => {
+      const ctrl = add(lerp(s.start, goal, 0.5), add(mul(right, s.off * 3.5), v3(0, i % 2 ? 2.5 : -0.5, 0)));
+      const k = t / T;
+      const p = k <= 1 ? arcPoint(s.start, ctrl, goal, k) : add(goal, mul(norm(sub(goal, ctrl)), (k - 1) * 6));
+      const prev = s.fx?.location ?? s.start;
+      s.fx?.move(p).aim(sub(p, prev));
+      for (const e of c.along(prev, p, 1.2 * c.area)) {
+        if (hits[i].has(e.id)) continue;
+        hits[i].add(e.id);
+        c.hit(e, c.p("damage"));
+        sheets(c, bodyCenter(e), 0.6, 0.8);
+      }
+    });
+    yield 1;
+  }
+  folded.forEach((s) => s.fx?.phase(15));
+  yield 10;
+}
+function* mawOfTheUnseen(c) {
+  const target = primaryTarget(c, c.p("range"));
+  const base = c.ground(target ? target.location : c.aim(c.p("range")).point, 20);
+  const maw = c.fx("grimoire:fx_d_maw", base, { yaw: c.yaw, phase: 1, size: c.area });
+  c.particle("grimoire:shadow_fold", add(base, v3(0, 0.3, 0)), { color: SHADE, color2: EM, radius: 2.4, count: 1.5 });
+  c.sound("grimoire.darkness.whisper", base, 1.1, 0.8);
+  const R = c.p("radius") * c.area;
+  const caught = c.enemies(base, R);
+  for (const e of caught) c.bind(e, c.p("holdTicks") + 10, { pin: true, slowAmp: 6 });
+  yield 12;
+  maw?.phase(2);
+  yield c.p("holdTicks") - 12;
+  maw?.phase(3);
+  c.sound("grimoire.darkness.snap", base, 1.4, 0.9);
+  c.shake(base, 10, 0.4, 0.3);
+  for (const e of c.enemies(base, R + 0.5)) {
+    c.hit(e, c.p("damage"));
+    effect(e, "slowness", 60, 2);
+    sheets(c, bodyCenter(e), 1, 1.2);
+  }
+  yield 8;
+  maw?.phase(15);
+  sheets(c, add(base, v3(0, 1, 0)), 2, 2);
+  yield 12;
+}
+function* unwrittenSentence(c) {
+  const first = primaryTarget(c, c.p("range"));
+  if (!first) throw new Fizzle("No target for the sentence");
+  const targets = [first, ...nearestEnemies(c, first.location, 6, 3).filter((e) => e.id !== first.id)].slice(0, 3);
+  const marks = /* @__PURE__ */ new Map();
+  const right = rotY(flatNorm(c.dir), 90);
+  const n = c.p("glyphs");
+  const glyphs = [];
+  for (let k = 0; k < n; k++) {
+    const start2 = add(c.origin, add(add(mul(right, (k - (n - 1) / 2) * 1.5), v3(0, 1.1 + k % 2 * 0.5, 0)), mul(c.dir, 1.5)));
+    glyphs.push({ start: start2, fx: c.fx("grimoire:fx_d_glyph", start2, { yaw: c.yaw, variant: k, phase: 1, size: c.area }) });
+    c.sound("grimoire.darkness.glyph", start2, 0.8, 0.9 + k * 0.1);
+    yield 6;
+  }
+  for (let k = 0; k < n; k++) {
+    const g = glyphs[k];
+    const tgt = targets[k % targets.length];
+    g.fx?.phase(2);
+    for (let t = 1; t <= 8; t++) {
+      const to = tgt.isValid ? bodyCenter(tgt) : g.start;
+      const p = lerp(g.start, to, t / 8);
+      g.fx?.move(p).aim(sub(to, g.start));
+      yield 1;
+    }
+    if (tgt.isValid) {
+      c.hit(tgt, c.p("damage"));
+      const m = marks.get(tgt.id) ?? { e: tgt, n: 0, fx: void 0 };
+      m.n++;
+      if (!m.fx) {
+        m.fx = g.fx;
+        m.fx?.phase(3);
+      } else g.fx?.dissolve(6);
+      marks.set(tgt.id, m);
+      c.particle("grimoire:shadow_fold", bodyCenter(tgt), { color: SHADE, color2: JD, radius: 0.9, count: 0.8 });
+    } else g.fx?.dissolve(6);
+    for (const m of marks.values()) if (m.e.isValid) m.fx?.follow(m.e, v3(0, bodyHeight(m.e) + 0.6, 0), 0);
+  }
+  const fin = c.fx("grimoire:fx_d_glyph", add(c.origin, add(mul(c.dir, 2), v3(0, 1.4, 0))), { yaw: c.yaw, variant: 4, phase: 1, size: 1.5 * c.area });
+  c.sound("grimoire.darkness.glyph", c.origin, 1.2, 0.6);
+  yield 10;
+  fin?.phase(2);
+  const from = fin?.location ?? c.origin;
+  for (let t = 1; t <= 8; t++) {
+    const to = first.isValid ? bodyCenter(first) : from;
+    fin?.move(lerp(from, to, t / 8));
+    for (const m of marks.values()) if (m.e.isValid) m.fx?.follow(m.e, v3(0, bodyHeight(m.e) + 0.6, 0), 0);
+    yield 1;
+  }
+  c.sound("grimoire.darkness.snap", first.location, 1.2, 0.7);
+  for (const m of marks.values()) {
+    if (m.e.isValid) {
+      c.hit(m.e, c.p("finalDamage") * m.n, { immediate: true });
+      c.particle("grimoire:shadow_fold", bodyCenter(m.e), { color: SHADE, color2: EM, radius: 1.6, count: 1.6 });
+    }
+    m.fx?.dissolve(8);
+  }
+  fin?.dissolve(10);
+  yield 10;
+}
+function* sevenfoldEclipse(c) {
+  const { point } = c.aimGround(c.p("range"));
+  const R = c.p("radius") * c.area;
+  const n = c.p("discs");
+  const sky = add(point, v3(0, c.p("height"), 0));
+  const discs = [];
+  for (let i = 0; i < n; i++) {
+    discs.push({
+      disc: c.fx("grimoire:fx_d_eclipse", sky, { phase: 1, size: 0.55 * c.area }),
+      umbra: c.fx("grimoire:fx_d_umbra", point, { phase: 1, size: 0.55 * c.area }),
+      w: 0.05 + i * 0.011,
+      ph: i * 0.9,
+      ph2: i * 1.7
+    });
+  }
+  c.sound("grimoire.darkness.eclipse", sky, 1.4, 0.8);
+  yield 12;
+  for (const d of discs) d.disc?.phase(2);
+  const dur = c.p("duration") * 20;
+  const umbraR = 4.4 * 0.55 * c.area * 1.6;
+  for (let t = 0; t < dur; t++) {
+    const amp = R * Math.max(0, 1 - t / dur) * 0.8;
+    const pos = discs.map((d) => v3(Math.sin(t * d.w + d.ph) * amp, 0, Math.cos(t * d.w * 1.3 + d.ph2) * amp));
+    discs.forEach((d, i) => {
+      d.disc?.move(add(sky, add(pos[i], v3(0, (i - 3) * 0.3, 0))));
+      d.umbra?.move(add(point, pos[i]));
+    });
+    if (t % 10 === 0) {
+      for (const e of c.enemies(point, R + umbraR)) {
+        const overlaps = pos.filter((p) => hdist(add(point, p), e.location) < umbraR).length;
+        if (overlaps === 0) continue;
+        c.hit(e, c.p("damage") * overlaps);
+        if (overlaps >= 3) effect(e, "slowness", 20, 2);
+      }
+    }
+    yield 1;
+  }
+  for (const d of discs) {
+    d.disc?.phase(3);
+    d.umbra?.phase(3);
+  }
+  c.sound("grimoire.darkness.thud", point, 1.6, 0.6);
+  for (const p of c.dim.getPlayers({ location: point, maxDistance: umbraR + 4 })) {
+    try {
+      p.camera.fade({ fadeColor: { red: 0.02, green: 0.08, blue: 0.04 }, fadeTime: { fadeInTime: 0.1, holdTime: 0.25, fadeOutTime: 0.6 } });
+    } catch {
+    }
+  }
+  for (const e of c.enemies(point, umbraR)) {
+    c.hit(e, c.p("fullDamage"), { immediate: true });
+    effect(e, "blindness", 50, 0);
+    sheets(c, bodyCenter(e), 1.2, 1.4);
+  }
+  yield 16;
+}
+function* velvetOfTheHollowKing(c) {
+  const p = c.player;
+  const fx = c.fx("grimoire:fx_d_velvet", p.location, { yaw: c.yaw, phase: 1 });
+  c.sound("grimoire.darkness.curtain", p.location, 0.9, 1.4);
+  c.ward({
+    label: "Velvet of the Hollow King",
+    priority: 25,
+    protects: (e) => e.id === p.id,
+    absorb: (info) => PHYSICAL_CAUSES.has(info.cause) ? info.damage * (1 - c.p("reduction")) : info.damage * 0.85,
+    react: (info) => {
+      fx?.pulse();
+      sheets(c, add(info.hurt.location, v3(0, 1, 0)), 0.6, 0.6);
+      c.sound("grimoire.darkness.fold", info.hurt.location, 0.8, 1.3);
+    }
+  });
+  yield 8;
+  fx?.phase(2);
+  for (let t = 0; t < c.p("duration") * 20 && c.ok; t++) {
+    fx?.follow(p).yaw(p.getRotation().y);
+    yield 1;
+  }
+}
+function* shadowLatch(c) {
+  const p = c.player;
+  const lock = c.fx("grimoire:fx_d_lock", p.location, { yaw: c.yaw, phase: 1 });
+  c.sound("grimoire.darkness.latch", p.location, 0.7, 1.4);
+  let attacker;
+  const ward = c.ward({
+    label: "Shadow Latch",
+    priority: 40,
+    protects: (e) => e.id === p.id && !attacker,
+    absorb: (info) => {
+      if (attacker || info.cause !== "entityAttack" || !info.attacker || info.projectile) return info.damage;
+      if (dist(info.attacker.location, p.location) > 5) return info.damage;
+      attacker = info.attacker;
+      return info.damage * (1 - c.p("reduction"));
+    }
+  });
+  yield 8;
+  lock?.phase(2);
+  for (let t = 0; t < c.p("duration") * 20 && c.ok && !attacker; t++) {
+    lock?.follow(p, v3(0, 0.05, 0), 0);
+    yield 1;
+  }
+  if (!attacker) return;
+  ward.alive = false;
+  const a = attacker;
+  lock?.dissolve(6);
+  const latch = c.fx("grimoire:fx_d_latch", a.location, { yaw: yawPitchOf(sub(a.location, p.location)).yaw, phase: 1, size: Math.max(0.8, bodyHeight(a) / 1.9) });
+  c.particle("grimoire:shadow_fold", add(a.location, v3(0, 0.2, 0)), { color: SHADE, color2: EM, radius: 1.4, count: 1 });
+  c.bind(a, c.p("holdTicks"), { pin: true, slowAmp: 7 });
+  yield 5;
+  latch?.phase(2);
+  c.sound("grimoire.darkness.latch", a.location, 1.3, 0.8);
+  c.hit(a, c.p("damage"));
+  yield 6;
+  latch?.phase(3);
+  yield c.p("holdTicks") - 11;
+}
+function* curtainfallDivide(c) {
+  const fwd = flatNorm(c.dir);
+  const side = rotY(fwd, 90);
+  const half = c.p("width") * c.area / 2;
+  const curtains = [];
+  for (let k = 0; k < c.p("curtains"); k++) {
+    const at = c.ground(add(c.player.location, mul(fwd, 4 + k * c.p("spacing"))), 8);
+    curtains.push({ at, fx: c.fx("grimoire:fx_d_curtain", at, { yaw: c.yaw, phase: 1, size: c.area }) });
+    c.sound("grimoire.darkness.curtain", at, 1.1, 0.8 + k * 0.1);
+    yield 5;
+  }
+  yield 10;
+  for (const cu of curtains) cu.fx?.phase(2);
+  const lastSide = /* @__PURE__ */ new Map();
+  const decoys = [];
+  for (let t = 0; t < c.p("duration") * 20; t++) {
+    if (t % 4 === 0) {
+      for (const e of c.enemies(c.player.location, 4 + c.p("curtains") * c.p("spacing") + 6)) {
+        const sides = curtains.map((cu) => Math.sign(dot(sub(e.location, cu.at), fwd)));
+        const prev = lastSide.get(e.id);
+        lastSide.set(e.id, sides);
+        if (!prev) continue;
+        curtains.forEach((cu, i) => {
+          if (prev[i] === sides[i] || Math.abs(dot(sub(e.location, cu.at), side)) > half) return;
+          effect(e, "blindness", 60, 0);
+          effect(e, "weakness", 60, 1);
+          effect(e, "slowness", 40, 1);
+          sheets(c, bodyCenter(e), 0.8, 0.8);
+          const lureAt = c.ground(add(e.location, mul(fwd, sides[i] * 4)), 6);
+          const d = spawnDecoy(c, lureAt);
+          decoys.push(d);
+          lure(e, d);
+          c.run(dissolveLater(d, 80, 2), "decoy");
+        });
+      }
+      for (const a of alliesNear(c, c.player.location, 4 + c.p("curtains") * c.p("spacing") + 2)) {
+        for (const cu of curtains) {
+          const rel = sub(a.location, cu.at);
+          if (Math.abs(dot(rel, fwd)) < 1.6 && Math.abs(dot(rel, side)) < half) effect(a, "invisibility", 30, 0);
+        }
+      }
+    }
+    yield 1;
+  }
+}
+function mosaicJade(p, i, j) {
+  if (p === 0) return i === 3 || i === 4 || j === 3 || j === 4;
+  return i === j || i + j === 7 || (i === 0 || i === 7) && (j === 0 || j === 7);
+}
+function* duskMosaic(c) {
+  const { point } = c.aimGround(c.p("range"));
+  const center = v3(Math.floor(point.x) + 0.5, point.y, Math.floor(point.z) + 0.5);
+  const fx = c.fx("grimoire:fx_d_mosaic", center, { yaw: 0, phase: 1 });
+  c.sound("grimoire.darkness.tile", center, 1, 0.8);
+  yield 20;
+  let pat = 0;
+  fx?.phase(2);
+  const S7 = 1.25;
+  for (let t = 0; t < c.p("duration") * 20; t++) {
+    if (t > 0 && t % 50 === 0) {
+      pat = 1 - pat;
+      fx?.phase(pat === 0 ? 2 : 3);
+      c.sound("grimoire.darkness.tile", center, 1.2, pat ? 1.1 : 0.9);
+    }
+    if (t % 10 === 0 && t % 50 > 18) {
+      const cell = (pos) => {
+        const i = Math.floor((pos.x - center.x) / S7 + 4);
+        const j = Math.floor((pos.z - center.z) / S7 + 4);
+        return i >= 0 && i < 8 && j >= 0 && j < 8 && Math.abs(pos.y - center.y) < 2.5 ? [i, j] : void 0;
+      };
+      for (const e of c.enemies(center, 7)) {
+        const ij = cell(e.location);
+        if (!ij || mosaicJade(pat, ij[0], ij[1])) continue;
+        effect(e, "slowness", 14, c.p("slowAmp"));
+        if (t % 20 === 0) c.hit(e, c.p("damage"));
+      }
+      for (const a of alliesNear(c, center, 7)) {
+        const ij = cell(a.location);
+        if (ij && mosaicJade(pat, ij[0], ij[1])) effect(a, "speed", 14, 1);
+      }
+    }
+    yield 1;
+  }
+}
+function* censorsSeal(c) {
+  const target = primaryTarget(c, c.p("range"));
+  if (!target) throw new Fizzle("No target to seal");
+  const head = () => add(target.location, v3(0, bodyHeight(target) + 0.7, 0));
+  const fx = c.fx("grimoire:fx_d_mask", head(), { yaw: yawPitchOf(sub(c.player.location, target.location)).yaw, phase: 1, size: Math.max(0.8, bodyHeight(target) / 1.8) });
+  c.sound("grimoire.darkness.whisper", head(), 1.1, 0.7);
+  const isPlayer = target.typeId === "minecraft:player";
+  let decoy;
+  for (let t = 0; t < c.p("duration") * 20 && target.isValid; t++) {
+    fx?.follow(target, v3(0, bodyHeight(target) + 0.7, 0), 0);
+    if (t % 20 === 0) {
+      effect(target, "weakness", 30, 1);
+      effect(target, "slowness", 30, 0);
+      if (isPlayer) effect(target, "blindness", 30, 0);
+    }
+    if (t === 10 || t % 40 === 30) {
+      if (!isPlayer) {
+        decoy?.dissolve(2);
+        const ang = Math.random() * 360;
+        const at = c.ground(add(target.location, mul(rotY(v3(0, 0, 1), ang), c.p("decoyDistance"))), 6);
+        decoy = spawnDecoy(c, at);
+        lure(target, decoy);
+        c.particle("grimoire:shadow_fold", add(at, v3(0, 1, 0)), { color: SHADE, color2: EM, radius: 1, count: 0.8 });
+      }
+      c.particle("grimoire:outline_mark", head(), { color: JD, color2: EM, radius: 0.8, count: 1 });
+    }
+    yield 1;
+  }
+  decoy?.dissolve(2);
+}
+function* silhouetteTraverse(c) {
+  const p = c.player;
+  const route = surfaceRoute(c, p.location, c.dir, c.p("range") * c.area);
+  if (route.length < 4) throw new Fizzle("No surface to travel along");
+  const fx = c.fx("grimoire:fx_d_silhouette", p.location, { yaw: c.yaw, phase: 1 });
+  c.sound("grimoire.darkness.fold", p.location, 1, 0.8);
+  effect(p, "invisibility", 40, 0);
+  yield 5;
+  fx?.phase(2);
+  const rot = p.getRotation();
+  let idx = 0;
+  const step2 = c.p("speed") / 0.5;
+  while (idx < route.length - 1 && c.ok) {
+    idx = Math.min(route.length - 1, idx + step2);
+    const at = route[Math.floor(idx)];
+    fx?.move(at);
+    try {
+      p.teleport(at, { rotation: rot, keepVelocity: false });
+    } catch {
+      break;
+    }
+    c.particle("grimoire:shadow_print", add(at, v3(0, 0.05, 0)), { color: SHADE, color2: DG, size: 1.4, radius: rot.y * Math.PI / 180 });
+    yield 1;
+  }
+  fx?.phase(3);
+  try {
+    p.removeEffect("invisibility");
+  } catch {
+  }
+  grantFallImmunity(p.id, 20);
+  c.particle("grimoire:outline_mark", add(p.location, v3(0, 1, 0)), { color: JD, color2: EM, radius: 1, count: 1.2 });
+  c.sound("grimoire.darkness.step", p.location, 1, 1);
+  yield 10;
+}
+function* stairwayOfTheUnlitSky(c) {
+  const p = c.player;
+  const set = c.blocks();
+  const steps = [];
+  let frontier = { x: Math.floor(p.location.x), z: Math.floor(p.location.z), top: Math.round(p.location.y * 2) / 2 };
+  c.sound("grimoire.darkness.step", p.location, 1, 0.8);
+  for (let t = 0; t < c.p("duration") * 20 && c.ok; t++) {
+    grantFallImmunity(p.id, 40);
+    if (t % 2 === 0) {
+      const look = p.getViewDirection();
+      const pitch = p.getRotation().x;
+      const f = flatNorm(look);
+      const dx = Math.abs(f.x) > 0.38 ? Math.sign(f.x) : 0;
+      const dz = Math.abs(f.z) > 0.38 ? Math.sign(f.z) : 0;
+      let placed = 0;
+      while (placed < 2 && hdist(p.location, v3(frontier.x + 0.5, 0, frontier.z + 0.5)) < 2.6 && (dx || dz)) {
+        const rise = pitch < -12 ? 0.5 : pitch > 30 ? -0.5 : 0;
+        const next = { x: frontier.x + dx, z: frontier.z + dz, top: frontier.top + rise };
+        const cellY = Math.ceil(next.top) - 1;
+        const type = next.top - cellY <= 0.5 ? "grimoire:shadow_step_low" : "grimoire:shadow_step_high";
+        const loc = v3(next.x, cellY, next.z);
+        if (set.place(loc, type)) {
+          steps.push({ loc, top: next.top });
+          const sfx = c.fx("grimoire:fx_d_step", v3(next.x + 0.5, next.top, next.z + 0.5), { yaw: yawPitchOf(f).yaw, phase: 1 });
+          c.run(dissolveLater(sfx, 16, 4), "step");
+          c.sound("grimoire.darkness.step", loc, 0.6, 1 + rise);
+        }
+        frontier = next;
+        placed++;
+      }
+      while (steps.length > c.p("keep")) {
+        const old = steps.shift();
+        set.remove(old.loc);
+        const ffx = c.fx("grimoire:fx_d_step", v3(old.loc.x + 0.5, old.top, old.loc.z + 0.5), { phase: 3 });
+        c.run(dissolveLater(ffx, 8, 2), "fold");
+      }
+    }
+    yield 1;
+  }
+}
+function* inklessDoppelganger(c) {
+  const p = c.player;
+  const hist = [];
+  const delay = c.p("delay");
+  const fx = c.fx("grimoire:fx_d_double", p.location, { yaw: c.yaw, phase: 1 });
+  c.sound("grimoire.darkness.whisper", p.location, 1, 1.2);
+  sheets(c, add(p.location, v3(0, 0.2, 0)), 1, 1);
+  const attacks = [];
+  let tick = 0;
+  const off = onAttack({ attackerId: p.id, fn: () => attacks.push(tick + delay) });
+  c.onCleanup(off);
+  let last = p.location;
+  for (tick = 0; tick < c.p("duration") * 20 && c.ok; tick++) {
+    hist.push({ pos: p.location, yaw: p.getRotation().y });
+    if (tick >= 16) {
+      const s = hist[Math.max(0, hist.length - 1 - delay)];
+      const moved = hdist(s.pos, last);
+      last = s.pos;
+      fx?.move(s.pos).yaw(s.yaw);
+      fx?.phase(moved > 0.04 ? 3 : 2);
+      while (attacks.length && attacks[0] <= tick) {
+        attacks.shift();
+        fx?.pulse();
+        const victim = nearestEnemies(c, add(s.pos, v3(0, 1, 0)), c.p("reach"), 1)[0];
+        if (victim) {
+          c.hit(victim, c.p("damage"));
+          push(victim, sub(victim.location, s.pos), 0.5, 0.2);
+          sheets(c, bodyCenter(victim), 0.6, 0.8);
+        }
+        c.sound("grimoire.darkness.fold", s.pos, 0.8, 0.8);
+      }
+    }
+    if (hist.length > delay + 4) hist.shift();
+    yield 1;
+  }
+}
+function* footfallReversal(c) {
+  const target = primaryTarget(c, c.p("range"));
+  if (!target) throw new Fizzle("No target to track");
+  const tracker = c.fx("grimoire:fx_d_tracker", target.location, { phase: 1, size: Math.max(0.8, bodyHeight(target) / 1.9) });
+  c.sound("grimoire.darkness.glyph", target.location, 1, 0.6);
+  const path = [];
+  for (let t = 0; t < c.p("recordTicks") && target.isValid; t++) {
+    tracker?.follow(target, v3(0, 0.05, 0), 0);
+    if (t % 2 === 0) path.push(target.location);
+    if (t % 6 === 0) {
+      const yaw = target.getRotation().y;
+      c.particle("grimoire:shadow_print", add(target.location, v3(0, 0.05, 0)), { color: SHADE, color2: DG, size: 1.2, radius: yaw * Math.PI / 180 });
+    }
+    yield 1;
+  }
+  tracker?.dissolve(10);
+  if (path.length < 2) return;
+  const n = c.p("constructs");
+  const wraiths = [];
+  for (let i = 0; i < n; i++) {
+    const startIdx = Math.floor((path.length - 1) * (n - i) / n);
+    wraiths.push({ idx: startIdx, fx: c.fx("grimoire:fx_d_wraith", path[startIdx], { phase: 1, size: c.area }), hit: /* @__PURE__ */ new Set() });
+  }
+  c.sound("grimoire.darkness.fold", path[path.length - 1], 1.1, 0.7);
+  yield 8;
+  for (const w of wraiths) w.fx?.phase(2);
+  for (let t = 0; t < 24; t++) {
+    for (const w of wraiths) {
+      const prev = path[w.idx];
+      w.idx = Math.max(0, w.idx - 2);
+      const at = path[w.idx];
+      w.fx?.move(at).aim(sub(at, prev));
+      for (const e of c.enemies(add(at, v3(0, 1, 0)), 1.4)) {
+        if (w.hit.has(e.id)) continue;
+        w.hit.add(e.id);
+        c.hit(e, c.p("damage"));
+      }
+    }
+    yield 1;
+  }
+  for (const w of wraiths) {
+    if (target.isValid && dist(target.location, w.fx?.location ?? target.location) < 12 && !w.hit.has(target.id)) {
+      w.fx?.pulse();
+      w.fx?.move(lerp(w.fx?.location ?? target.location, target.location, 0.8));
+      c.hit(target, c.p("damage"));
+      sheets(c, bodyCenter(target), 0.7, 0.8);
+      yield 3;
+    }
+  }
+  c.sound("grimoire.darkness.snap", target.isValid ? target.location : path[0], 1, 1.1);
+  yield 10;
+}
+function* courtOfTheUnseen(c) {
+  const { point } = c.aimGround(c.p("range"));
+  const R = c.p("radius") * c.area;
+  const n = c.p("doors");
+  const lightDir = flatNorm(sub(point, c.player.location));
+  const doors = [];
+  for (let k = 0; k < n; k++) {
+    const ang = c.yaw + k * (360 / n) + k * 37 % 23 - 11;
+    const r = R * (0.75 + k * 13 % 5 * 0.08);
+    const at = c.ground(add(point, mul(rotY(v3(0, 0, 1), ang), r)), 8);
+    doors.push({
+      ang,
+      r,
+      at,
+      fx: c.fx("grimoire:fx_d_door", at, { yaw: ang + 90, phase: 1, size: c.area }),
+      shadow: c.fx("grimoire:fx_d_doorshadow", add(at, v3(0, 0.05, 0)), { dir: lightDir, phase: 1, size: c.area })
+    });
+    c.sound("grimoire.darkness.thud", at, 0.8, 0.7 + k * 0.05);
+    yield 3;
+  }
+  c.sound("grimoire.darkness.court", point, 1.5, 0.9);
+  c.fx("grimoire:fx_circle_d", add(point, v3(0, 0.07, 0)), { size: R, variant: 2, phase: 2 });
+  yield 10;
+  for (const d of doors) d.fx?.phase(2);
+  const total = c.p("duration") * 20;
+  for (let t = 0; t < total - 60; t++) {
+    if (t % 60 === 59) {
+      for (const d of doors) {
+        d.ang += 14;
+        d.at = c.ground(add(point, mul(rotY(v3(0, 0, 1), d.ang), d.r)), 8);
+      }
+    }
+    for (const d of doors) {
+      d.fx?.move(d.at).yaw(d.ang + 90 + Math.sin(t * 0.03 + d.r) * 20);
+      d.shadow?.move(add(d.at, v3(0, 0.05, 0)));
+    }
+    if (t % 10 === 0) {
+      const inShadow = [];
+      for (const e of c.enemies(point, R + 11)) {
+        const shaded = doors.some((d) => {
+          const rel = sub(e.location, d.at);
+          const along = dot(rel, lightDir);
+          return along > 0 && along < 10 * c.area && Math.abs(dot(rel, rotY(lightDir, 90))) < 1.4 * c.area;
+        });
+        if (shaded) {
+          inShadow.push(e);
+          effect(e, "slowness", 14, 2);
+        }
+      }
+      if (t % 30 === 0) {
+        for (const e of inShadow.slice(0, 6)) {
+          const f = c.fx("grimoire:fx_d_fold", c.ground(e.location, 4), { yaw: Math.random() * 360, phase: 1, size: Math.max(0.8, bodyHeight(e) / 1.9) });
+          c.run(dissolveLater(f, 14, 8), "fold");
+          c.hit(e, c.p("foldDamage"));
+          push(e, v3(0, 1, 0), 0, 0.35);
+        }
+        if (inShadow.length) c.sound("grimoire.darkness.snap", point, 0.9, 1.2);
+      }
+      for (const a of alliesNear(c, point, R + 3)) {
+        if (doors.some((d) => hdist(a.location, d.at) < 2)) effect(a, "resistance", 14, 1);
+      }
+      for (const d of doors) for (const inc of hostileProjectiles(c, add(d.at, v3(0, 2, 0)), 2.6)) neutralize(inc);
+    }
+    yield 1;
+  }
+  for (const d of doors) d.fx?.phase(3);
+  for (let t = 0; t < 30; t++) {
+    for (const d of doors) {
+      const at = c.ground(add(point, mul(rotY(v3(0, 0, 1), d.ang), d.r * (1 - t / 34))), 8);
+      d.fx?.move(at).yaw(d.ang + 90);
+      d.shadow?.move(add(at, v3(0, 0.05, 0)));
+    }
+    yield 1;
+  }
+  for (const d of doors) {
+    d.fx?.dissolve(4);
+    d.shadow?.dissolve(4);
+  }
+  const mono = c.fx("grimoire:fx_d_monolith", point, { yaw: c.yaw, phase: 1, size: c.area });
+  c.sound("grimoire.darkness.court", point, 1.8, 0.6);
+  yield 24;
+  mono?.phase(15);
+  c.shake(point, R * 3, 0.9, 0.8);
+  shock(c, point, R, c.p("finalDamage"), { knock: 0.6, up: 0.1, color: EM, color2: JD, minK: 0.6, particle: "grimoire:ring_h" });
+  for (let k = 0; k < 6; k++) sheets(c, add(point, v3((Math.random() - 0.5) * R, 2 + k, (Math.random() - 0.5) * R)), 2, 1.5);
+  yield 26;
+}
+function* worldWithoutAnOutline(c) {
+  const { point } = c.aimGround(c.p("range"));
+  const R = c.p("radius") * c.area;
+  const domain = c.fx("grimoire:fx_d_domain", add(point, v3(0, 0.05, 0)), { yaw: c.yaw, phase: 1, size: R / 20 * 1 });
+  c.fx("grimoire:fx_circle_d", add(c.player.location, v3(0, 0.06, 0)), { size: 3, variant: 1, phase: 1 });
+  c.sound("grimoire.darkness.edict", point, 2, 0.8);
+  const fogged = /* @__PURE__ */ new Set();
+  const fogTick = () => {
+    for (const pl of c.dim.getPlayers({ location: point, maxDistance: R + 4 })) {
+      if (fogged.has(pl.id)) continue;
+      fogged.add(pl.id);
+      try {
+        pl.runCommand("fog @s push grimoire:outline_void grimoire_d15");
+      } catch {
+      }
+    }
+  };
+  c.onCleanup(() => {
+    for (const id of fogged) {
+      const pl = c.dim.getPlayers().find((x) => x.id === id);
+      try {
+        pl?.runCommand("fog @s remove grimoire_d15");
+      } catch {
+      }
+    }
+  });
+  fogTick();
+  const marked = nearestEnemies(c, point, R, c.p("marks"));
+  const outlines = marked.map((e) => ({ e, fx: c.fx("grimoire:fx_d_outline", e.location, { phase: 1, size: Math.max(0.6, bodyHeight(e) / 1.9) }) }));
+  for (let t = 0; t < 40; t++) {
+    for (const o of outlines) if (o.e.isValid) o.fx?.follow(o.e, v3(0, 0, 0), 0);
+    if (t % 10 === 0) fogTick();
+    yield 1;
+  }
+  domain?.phase(2);
+  const replicas = marked.map((e) => ({ e, fx: c.fx("grimoire:fx_d_replica", e.location, { phase: 1, size: Math.max(0.7, bodyHeight(e) / 1.9) }) }));
+  const spirePts = [0, 1, 2].map((k) => c.ground(add(point, mul(rotY(v3(0, 0, 1), c.yaw + k * 120 + 30), R * 0.45)), 10));
+  c.sound("grimoire.darkness.whisper", point, 1.6, 0.6);
+  for (let t = 0; t < 120 && c.ok; t++) {
+    for (const o of outlines) if (o.e.isValid) o.fx?.follow(o.e, v3(0, 0, 0), 0);
+    replicas.forEach((r, i) => {
+      if (!r.e.isValid) return;
+      const away = flatNorm(sub(r.e.location, c.player.location));
+      const jitter = Math.floor(t / 4) % 2 ? 0.25 : -0.25;
+      r.fx?.move(add(r.e.location, add(mul(away, 1.3), mul(rotY(away, 90), jitter)))).aim(mul(away, -1));
+      if (t > 20 && (t + i * 5) % 25 === 0) {
+        r.fx?.pulse();
+        c.hit(r.e, c.p("replicaDamage"));
+        effect(r.e, "slowness", 20, 1);
+      }
+    });
+    if (t === 30 || t === 55 || t === 80) {
+      const at = spirePts[(t - 30) / 25];
+      const sp = c.fx("grimoire:fx_d_spire", at, { yaw: Math.random() * 360, phase: 1, size: c.area });
+      c.run(dissolveLater(sp, 70, 12), "spire");
+      for (const e of c.enemies(at, 2.6)) {
+        c.hit(e, c.p("replicaDamage") * 1.6);
+        push(e, sub(e.location, at), 0.9, 0.5);
+      }
+      c.sound("grimoire.darkness.fold", at, 1.3, 0.6);
+    }
+    if (t % 20 === 0) fogTick();
+    yield 1;
+  }
+  for (const r of replicas) r.fx?.dissolve(10);
+  const planes = [];
+  for (let k = 0; k < 7; k++) {
+    const at = c.ground(add(point, mul(rotY(v3(0, 0, 1), c.yaw + k * (360 / 7)), R + 1)), 10);
+    const dir = flatNorm(sub(point, at));
+    planes.push({ at, dir, fx: c.fx("grimoire:fx_d_plane", at, { dir, phase: 1, size: c.area * 0.85 }) });
+  }
+  c.sound("grimoire.darkness.court", point, 1.8, 0.7);
+  yield 20;
+  for (const pl of planes) pl.fx?.phase(2);
+  yield 10;
+  const L = 12 * 0.85 * c.area;
+  for (const pl of planes) {
+    pl.fx?.phase(3);
+    yield 6;
+    c.sound("grimoire.darkness.thud", add(pl.at, mul(pl.dir, L * 0.5)), 1.6, 0.6);
+    c.shake(point, R * 2, 0.6, 0.4);
+    const side = rotY(pl.dir, 90);
+    for (const e of c.enemies(point, R + 4)) {
+      const rel = sub(e.location, pl.at);
+      const along = dot(rel, pl.dir);
+      if (along < 0 || along > L || Math.abs(dot(rel, side)) > L * 0.5) continue;
+      c.hit(e, c.p("planeDamage"), { immediate: true });
+      push(e, pl.dir, 0.6, -0.4);
+    }
+    sheets(c, add(pl.at, add(mul(pl.dir, L * 0.5), v3(0, 0.5, 0))), 3, 2);
+    yield 4;
+  }
+  yield 8;
+  for (const pl of planes) pl.fx?.phase(15);
+  for (const o of outlines) o.fx?.dissolve(8);
+  domain?.phase(15);
+  yield 24;
+}
+
+// src/spells/darkness/index.ts
+var S2 = "darkness";
+var DARKNESS = [
+  {
+    code: "D01",
+    id: "darkness.umbral_origami",
+    school: S2,
+    name: "Umbral Origami",
+    cooldown: 7,
+    charge: 10,
+    enhanceable: true,
+    params: { sheets: 5, damage: 6, range: 14 },
+    blurb: "Paper-thin shadow sheets fold into blades and cut in from many directions.",
+    cast: umbralOrigami
+  },
+  {
+    code: "D02",
+    id: "darkness.maw_of_the_unseen",
+    school: S2,
+    name: "Maw of the Unseen",
+    cooldown: 17,
+    charge: 14,
+    enhanceable: true,
+    params: { damage: 22, holdTicks: 24, range: 24, radius: 2.4 },
+    blurb: "The shadow beneath the target splits into geometric jaws that hold it, then snap shut.",
+    cast: mawOfTheUnseen
+  },
+  {
+    code: "D03",
+    id: "darkness.unwritten_sentence",
+    school: S2,
+    name: "The Unwritten Sentence",
+    cooldown: 13,
+    charge: 12,
+    enhanceable: true,
+    params: { glyphs: 4, damage: 5, finalDamage: 6, range: 24 },
+    blurb: "Erased glyphs imprint themselves on enemies; the final glyph punishes every mark.",
+    cast: unwrittenSentence
+  },
+  {
+    code: "D04",
+    id: "darkness.sevenfold_eclipse",
+    school: S2,
+    name: "Sevenfold Eclipse",
+    cooldown: 26,
+    charge: 18,
+    enhanceable: true,
+    params: { discs: 7, radius: 10, height: 9, damage: 2, fullDamage: 20, duration: 5, range: 30 },
+    blurb: "Seven eclipse discs drift overhead; their shadows strike where they overlap, hardest at totality.",
+    cast: sevenfoldEclipse
+  },
+  {
+    code: "D05",
+    id: "darkness.velvet_of_the_hollow_king",
+    school: S2,
+    name: "Velvet of the Hollow King",
+    cooldown: 27,
+    charge: 12,
+    enhanceable: true,
+    params: { duration: 14, reduction: 0.45 },
+    blurb: "A weightless shadow cloak that folds into armour plates where you are struck.",
+    cast: velvetOfTheHollowKing
+  },
+  {
+    code: "D06",
+    id: "darkness.shadow_latch",
+    school: S2,
+    name: "Shadow Latch",
+    cooldown: 32,
+    charge: 12,
+    enhanceable: true,
+    params: { duration: 20, holdTicks: 60, reduction: 0.6, damage: 4 },
+    blurb: "The next melee attacker has its shadow pinned and is locked in place by a giant latch.",
+    cast: shadowLatch
+  },
+  {
+    code: "D07",
+    id: "darkness.curtainfall_divide",
+    school: S2,
+    name: "Curtainfall Divide",
+    cooldown: 35,
+    charge: 18,
+    enhanceable: true,
+    params: { curtains: 3, width: 8, duration: 15, spacing: 4 },
+    blurb: "Shadow curtains fall across the field, hiding allies and confusing enemies who cross them.",
+    cast: curtainfallDivide
+  },
+  {
+    code: "D08",
+    id: "darkness.dusk_mosaic",
+    school: S2,
+    name: "Dusk Mosaic",
+    cooldown: 38,
+    charge: 20,
+    enhanceable: true,
+    params: { duration: 14, slowAmp: 3, damage: 2, range: 24 },
+    blurb: "A ground mosaic of flipping plates: dark tiles bog enemies down, jade tiles speed allies.",
+    cast: duskMosaic
+  },
+  {
+    code: "D09",
+    id: "darkness.censors_seal",
+    school: S2,
+    name: "Censor's Seal",
+    cooldown: 42,
+    charge: 18,
+    enhanceable: true,
+    params: { duration: 10, range: 24, decoyDistance: 5 },
+    blurb: "A faceless mask seals the target's sight; its aim drifts toward phantoms of darkness.",
+    cast: censorsSeal
+  },
+  {
+    code: "D10",
+    id: "darkness.silhouette_traverse",
+    school: S2,
+    name: "Silhouette Traverse",
+    cooldown: 9,
+    charge: 6,
+    enhanceable: false,
+    params: { range: 14, speed: 1.4 },
+    blurb: "Flatten into your own shadow, race along the ground and rise again further ahead.",
+    cast: silhouetteTraverse
+  },
+  {
+    code: "D11",
+    id: "darkness.stairway_of_the_unlit_sky",
+    school: S2,
+    name: "Stairway of the Unlit Sky",
+    cooldown: 22,
+    charge: 12,
+    enhanceable: false,
+    params: { duration: 12, keep: 7 },
+    blurb: "Solid shadow steps unfold ahead of you as you climb; look up to rise, down to descend.",
+    cast: stairwayOfTheUnlitSky
+  },
+  {
+    code: "D12",
+    id: "darkness.inkless_doppelganger",
+    school: S2,
+    name: "The Inkless Doppelg\xE4nger",
+    cooldown: 55,
+    charge: 24,
+    enhanceable: true,
+    params: { duration: 18, delay: 30, damage: 7, reach: 3 },
+    blurb: "Your shadow rises as a faceless double that repeats your movement and attacks a moment later.",
+    cast: inklessDoppelganger
+  },
+  {
+    code: "D13",
+    id: "darkness.footfall_reversal",
+    school: S2,
+    name: "Footfall Reversal",
+    cooldown: 45,
+    charge: 18,
+    enhanceable: true,
+    params: { recordTicks: 60, constructs: 6, damage: 7, range: 24 },
+    blurb: "Record a target's footsteps, then send shadow constructs back along its path to strike.",
+    cast: footfallReversal
+  },
+  {
+    code: "D14",
+    id: "darkness.court_of_the_unseen",
+    school: S2,
+    name: "Grand Magic: Court of the Unseen",
+    cooldown: 90,
+    charge: 30,
+    enhanceable: true,
+    params: { doors: 7, radius: 9, duration: 20, foldDamage: 7, finalDamage: 24, range: 24 },
+    blurb: "Seven frameless doors of darkness form a court whose shadows slow and strike, then fold into one.",
+    cast: courtOfTheUnseen
+  },
+  {
+    code: "D15",
+    id: "darkness.world_without_an_outline",
+    school: S2,
+    name: "Imperial Edict: The World Without an Outline",
+    cooldown: 180,
+    charge: 40,
+    enhanceable: true,
+    params: { radius: 18, range: 36, replicaDamage: 5, planeDamage: 16, marks: 8 },
+    blurb: "Outlines vanish, shadows rise against their owners, and seven planes of darkness fold onto the field.",
+    cast: worldWithoutAnOutline
+  }
+];
+
 // src/spells/ice/spells.ts
-import { ButtonState, EntityProjectileComponent, EntityTameableComponent as EntityTameableComponent3, InputButton, system as system9, world as world7 } from "@minecraft/server";
+import { ButtonState, EntityProjectileComponent as EntityProjectileComponent2, EntityTameableComponent as EntityTameableComponent3, InputButton, system as system10, world as world7 } from "@minecraft/server";
 
 // src/core/state.ts
-import { system as system8 } from "@minecraft/server";
+import { system as system9 } from "@minecraft/server";
 var PROP = "grimoire:state";
 var states = /* @__PURE__ */ new Map();
 function stateOf(p) {
@@ -2464,7 +3569,7 @@ function stateOf(p) {
   st = {
     id: p.id,
     name: p.name,
-    selected: { pressure: 0, ice: 0, blood: 0 },
+    selected: Object.fromEntries(SCHOOLS.map((k) => [k, 0])),
     readyAt: /* @__PURE__ */ new Map(),
     activeUntilEnd: /* @__PURE__ */ new Set(),
     sneaking: p.isSneaking,
@@ -2478,11 +3583,11 @@ function stateOf(p) {
     const raw = p.getDynamicProperty(PROP);
     if (typeof raw === "string") {
       const saved = JSON.parse(raw);
-      for (const k of ["pressure", "ice", "blood"]) {
+      for (const k of SCHOOLS) {
         const v = saved.s?.[k];
         if (typeof v === "number" && v >= 0 && v < 15) st.selected[k] = Math.floor(v);
       }
-      const now = system8.currentTick;
+      const now = system9.currentTick;
       for (const [id, remaining] of Object.entries(saved.c ?? {})) {
         if (typeof remaining === "number" && remaining > 0) st.readyAt.set(id, now + Math.min(remaining, 20 * 600));
       }
@@ -2494,7 +3599,7 @@ function stateOf(p) {
   return st;
 }
 function save(p, st) {
-  const now = system8.currentTick;
+  const now = system9.currentTick;
   const c = {};
   for (const [id, t] of st.readyAt) if (t > now) c[id] = t - now;
   const data = { s: st.selected, c };
@@ -2511,11 +3616,11 @@ function forget(playerId) {
 function remainingTicks(st, spellId) {
   if (st.activeUntilEnd.has(spellId)) return Number.POSITIVE_INFINITY;
   const t = st.readyAt.get(spellId);
-  return t === void 0 ? 0 : Math.max(0, t - system8.currentTick);
+  return t === void 0 ? 0 : Math.max(0, t - system9.currentTick);
 }
 function startCooldown(st, spellId, seconds) {
   st.activeUntilEnd.delete(spellId);
-  st.readyAt.set(spellId, system8.currentTick + Math.round(seconds * 20));
+  st.readyAt.set(spellId, system9.currentTick + Math.round(seconds * 20));
   st.dirty = true;
 }
 function clearCooldowns(st) {
@@ -2525,7 +3630,7 @@ function clearCooldowns(st) {
 }
 function flash2(st, msg, ticks = 30) {
   st.message = msg;
-  st.messageUntil = system8.currentTick + ticks;
+  st.messageUntil = system9.currentTick + ticks;
   st.hudKey = "";
 }
 
@@ -2781,7 +3886,7 @@ function* crystalRain(c) {
   yield 22;
   const waves = c.p("waves");
   const per = Math.ceil(c.p("clusters") / waves);
-  const r = rng(system9.currentTick + 17);
+  const r = rng(system10.currentTick + 17);
   for (let w = 0; w < waves; w++) {
     formation?.phase(3 + w);
     const foes = nearestEnemies(c, point, R + 2, per);
@@ -2870,7 +3975,7 @@ function* frozenThroneMirrors(c) {
     }
     c.sound("grimoire.ice.shatter", at, 1, 1);
     const f = m.fx;
-    system9.runTimeout(() => f?.dissolve(4), 8);
+    system10.runTimeout(() => f?.dissolve(4), 8);
   };
   c.ward({
     label: "mirrors",
@@ -2893,11 +3998,11 @@ function* frozenThroneMirrors(c) {
   const handled = /* @__PURE__ */ new Set();
   for (let t = 0; t < c.p("duration") * 20 && mirrors.some((m) => m.alive); t++) {
     if (!c.ok) return;
-    const now = system9.currentTick;
+    const now = system10.currentTick;
     const center = add(p.location, v3(0, 1.3, 0));
     for (const e of c.dim.getEntities({ location: center, maxDistance: 12 })) {
       if (handled.has(e.id)) continue;
-      const proj = e.getComponent(EntityProjectileComponent.componentId);
+      const proj = e.getComponent(EntityProjectileComponent2.componentId);
       if (!proj || proj.owner && isAllyOrSelf(p, proj.owner)) continue;
       const vel = e.getVelocity();
       const toMe = sub(center, e.location);
@@ -2980,7 +4085,7 @@ function* paleMoonLabyrinth(c) {
     yield 2;
   }
   c.sound("grimoire.ice.wall", center, 1.3, 0.9);
-  let seed = system9.currentTick * 3 + 1;
+  let seed = system10.currentTick * 3 + 1;
   let current = new Map(grounded(c, mazeColumns(center, cells, cell, seed).values()).map((p) => [`${p.x},${p.z}`, p]));
   yield* raise(set, [...current.values()], 3, "grimoire:frost_wall", 80, 2);
   const total = c.p("duration") * 20;
@@ -3035,7 +4140,7 @@ function* whiteoutDominion(c) {
   c.onCleanup(() => {
     for (const pl of fogged.values()) if (pl.isValid) setFog(pl, void 0);
   });
-  const r = rng(system9.currentTick);
+  const r = rng(system10.currentTick);
   const owner = c.player;
   for (let t = 0; t < c.p("duration") * 20; t++) {
     if (t % 3 === 0) {
@@ -3190,7 +4295,7 @@ function* frostLegion(c) {
       if (!k.isValid) continue;
       setAct(k, 7);
       const kk = k;
-      system9.runTimeout(() => {
+      system10.runTimeout(() => {
         try {
           if (kk.isValid) kk.remove();
         } catch {
@@ -3202,7 +4307,7 @@ function* frostLegion(c) {
     const d = ev.damagingEntity;
     if (knights.some((k) => k.id === d.id)) {
       setAct(d, 1);
-      system9.runTimeout(() => setAct(d, 0), 10);
+      system10.runTimeout(() => setAct(d, 0), 10);
     }
   });
   c.onCleanup(() => world7.afterEvents.entityHitEntity.unsubscribe(hitSub));
@@ -3217,7 +4322,7 @@ function* frostLegion(c) {
     react: (info) => {
       if (!shield || !shield.isValid) return;
       setAct(shield, 3);
-      system9.runTimeout(() => setAct(shield, 0), 20);
+      system10.runTimeout(() => setAct(shield, 0), 20);
       const a = info.attacker;
       if (a && a.isValid && dist(a.location, shield.location) < 5 && c.isEnemy(a)) {
         c.hit(a, 4);
@@ -3242,7 +4347,7 @@ function* frostLegion(c) {
       const foes = c.enemies(sword.location, 3.6);
       if (foes.length) {
         setAct(sword, 2);
-        system9.runTimeout(() => setAct(sword, 0), 16);
+        system10.runTimeout(() => setAct(sword, 0), 16);
         for (const e of foes) {
           c.hit(e, 8);
           effect(e, "slowness", 40, 1);
@@ -3256,7 +4361,7 @@ function* frostLegion(c) {
       const foe = nearestEnemies(c, spear.location, 9, 1)[0];
       if (foe) {
         setAct(spear, 2);
-        system9.runTimeout(() => setAct(spear, 0), 14);
+        system10.runTimeout(() => setAct(spear, 0), 14);
         const dir = norm(sub(foe.location, spear.location));
         const from = add(spear.location, v3(0, 1.2, 0));
         try {
@@ -3273,7 +4378,7 @@ function* frostLegion(c) {
     }
     if (shield?.isValid && t % 4 === 0) {
       for (const e of c.dim.getEntities({ location: p.location, maxDistance: 3.5 })) {
-        const proj = e.getComponent(EntityProjectileComponent.componentId);
+        const proj = e.getComponent(EntityProjectileComponent2.componentId);
         if (proj && !(proj.owner && isAllyOrSelf(p, proj.owner)) && dist(shield.location, p.location) < 8) {
           c.particle("grimoire:shard_burst", e.location, { color: ICE, count: 0.5 });
           try {
@@ -3281,7 +4386,7 @@ function* frostLegion(c) {
           } catch {
           }
           setAct(shield, 3);
-          system9.runTimeout(() => setAct(shield, 0), 14);
+          system10.runTimeout(() => setAct(shield, 0), 14);
         }
       }
     }
@@ -3475,12 +4580,12 @@ function* theLastWinter(c) {
 }
 
 // src/spells/ice/index.ts
-var S2 = "ice";
+var S3 = "ice";
 var ICE2 = [
   {
     code: "I01",
     id: "ice.sovereign_lance",
-    school: S2,
+    school: S3,
     name: "Glacial Sovereign's Lance",
     cooldown: 8,
     charge: 12,
@@ -3493,7 +4598,7 @@ var ICE2 = [
   {
     code: "I02",
     id: "ice.boreal_dragon",
-    school: S2,
+    school: S3,
     name: "Boreal Dragon's Roar",
     cooldown: 20,
     charge: 16,
@@ -3505,7 +4610,7 @@ var ICE2 = [
   {
     code: "I03",
     id: "ice.winters_guillotine",
-    school: S2,
+    school: S3,
     name: "Winter's Guillotine",
     cooldown: 14,
     charge: 14,
@@ -3517,7 +4622,7 @@ var ICE2 = [
   {
     code: "I04",
     id: "ice.crystal_rain",
-    school: S2,
+    school: S3,
     name: "Thousandfold Crystal Rain",
     cooldown: 25,
     charge: 20,
@@ -3529,7 +4634,7 @@ var ICE2 = [
   {
     code: "I05",
     id: "ice.eternal_lotus",
-    school: S2,
+    school: S3,
     name: "Lotus of the Eternal Frost",
     cooldown: 28,
     charge: 14,
@@ -3541,7 +4646,7 @@ var ICE2 = [
   {
     code: "I06",
     id: "ice.frozen_throne_mirror",
-    school: S2,
+    school: S3,
     name: "Mirror of the Frozen Throne",
     cooldown: 32,
     charge: 14,
@@ -3553,7 +4658,7 @@ var ICE2 = [
   {
     code: "I07",
     id: "ice.chains_of_niflheim",
-    school: S2,
+    school: S3,
     name: "Chains of Niflheim",
     cooldown: 30,
     charge: 16,
@@ -3565,7 +4670,7 @@ var ICE2 = [
   {
     code: "I08",
     id: "ice.pale_moon_labyrinth",
-    school: S2,
+    school: S3,
     name: "Labyrinth of the Pale Moon",
     cooldown: 40,
     charge: 20,
@@ -3577,7 +4682,7 @@ var ICE2 = [
   {
     code: "I09",
     id: "ice.whiteout_dominion",
-    school: S2,
+    school: S3,
     name: "Whiteout Dominion",
     cooldown: 45,
     charge: 20,
@@ -3589,7 +4694,7 @@ var ICE2 = [
   {
     code: "I10",
     id: "ice.frost_mirror_traverse",
-    school: S2,
+    school: S3,
     name: "Frost Mirror Traverse",
     cooldown: 8,
     charge: 8,
@@ -3601,7 +4706,7 @@ var ICE2 = [
   {
     code: "I11",
     id: "ice.winter_seraph",
-    school: S2,
+    school: S3,
     name: "Wings of the Winter Seraph",
     cooldown: 20,
     charge: 14,
@@ -3614,7 +4719,7 @@ var ICE2 = [
   {
     code: "I12",
     id: "ice.frost_legion",
-    school: S2,
+    school: S3,
     name: "Imperial Frost Legion",
     cooldown: 60,
     charge: 24,
@@ -3626,7 +4731,7 @@ var ICE2 = [
   {
     code: "I13",
     id: "ice.still_winter_hourglass",
-    school: S2,
+    school: S3,
     name: "Hourglass of Still Winter",
     cooldown: 50,
     charge: 18,
@@ -3638,7 +4743,7 @@ var ICE2 = [
   {
     code: "I14",
     id: "ice.everlasting_citadel",
-    school: S2,
+    school: S3,
     name: "Grand Magic: Citadel of the Everlasting Winter",
     cooldown: 90,
     charge: 30,
@@ -3650,7 +4755,7 @@ var ICE2 = [
   {
     code: "I15",
     id: "ice.the_last_winter",
-    school: S2,
+    school: S3,
     name: "Imperial Edict: The Last Winter",
     cooldown: 180,
     charge: 40,
@@ -3661,11 +4766,900 @@ var ICE2 = [
   }
 ];
 
+// src/spells/plasma/spells.ts
+import { system as system11 } from "@minecraft/server";
+var VI = COLORS.violet;
+var MG = COLORS.magenta;
+var UV = COLORS.ultraviolet;
+var IN = COLORS.indigo;
+var WH2 = COLORS.whitehot;
+function filamentLine(c, a, b, n, color = VI, color2 = MG) {
+  for (let i = 0; i <= n; i++) c.particle("grimoire:plasma_trail", lerp(a, b, i / n), { color, color2, size: 1, count: 0.5 });
+}
+function* coronalLash(c) {
+  const hand = () => add(c.eye(), add(mul(c.look(), 0.5), v3(0, -0.45, 0)));
+  const whip = c.fx("grimoire:fx_pl_whip", hand(), { yaw: c.yaw, pitch: c.pitch, phase: 1, size: c.area });
+  c.sound("grimoire.plasma.hum", hand(), 0.9, 1.3);
+  for (let t = 0; t < 10; t++) {
+    whip?.move(hand());
+    if (t % 3 === 0) c.particle("grimoire:plasma_charge", hand(), { color: VI, color2: MG, size: 1, radius: 1 });
+    yield 1;
+  }
+  whip?.phase(2);
+  const reach = c.p("reach") * c.area;
+  const sweeps = [
+    { ph: 3, a0: -80, a1: 80, axis: "yaw" },
+    { ph: 4, a0: 80, a1: -80, axis: "yaw" },
+    { ph: 5, a0: -70, a1: 30, axis: "pitch" }
+  ];
+  for (const s of sweeps) {
+    whip?.move(hand()).yaw(c.player.getRotation().y).pitch(c.player.getRotation().x);
+    whip?.phase(s.ph);
+    c.sound("grimoire.plasma.whip", hand(), 1, 0.9 + s.ph * 0.08);
+    const hitIds = /* @__PURE__ */ new Set();
+    const baseYaw = c.player.getRotation().y;
+    const basePitch = c.player.getRotation().x;
+    for (let t = 0; t <= 7; t++) {
+      const k = t / 7;
+      const ang = s.a0 + (s.a1 - s.a0) * k;
+      const yaw = s.axis === "yaw" ? baseYaw + ang : baseYaw;
+      const pitch = s.axis === "pitch" ? Math.max(-80, Math.min(80, basePitch + ang)) : basePitch;
+      const dir = dirFromYawPitch(yaw, pitch);
+      const side = s.axis === "yaw" ? rotY(flatNorm(dir), 90) : v3(0, 1, 0);
+      const o = hand();
+      for (let d = 1; d <= reach; d += 1) {
+        const p = add(add(o, mul(dir, d)), mul(side, Math.sin(d * 0.75 - k * 4) * 0.35 * d * 0.25));
+        if (t % 2 === 0 && d % 2 === 0) c.particle("grimoire:plasma_trail", p, { color: d % 4 ? VI : MG, color2: WH2, size: 1.2, count: 0.5, life: 1.6 });
+        for (const e of c.enemies(p, c.p("width"))) {
+          if (hitIds.has(e.id)) continue;
+          hitIds.add(e.id);
+          c.hit(e, c.p("damage"));
+          push(e, s.axis === "yaw" ? mul(side, Math.sign(s.a1 - s.a0)) : dir, 0.7, s.axis === "pitch" ? -0.2 : 0.25);
+          c.particle("grimoire:plasma_arc", bodyCenter(e), { color: MG, color2: WH2, radius: 0.8, count: 1 });
+        }
+      }
+      whip?.move(hand());
+      yield 1;
+    }
+    yield 2;
+  }
+  whip?.phase(15);
+  yield 10;
+}
+function* helixBorer(c) {
+  const a = c.aim(c.p("range"));
+  const start2 = add(c.origin, mul(c.dir, 1.6));
+  const dir = norm(sub(a.point, start2));
+  const fx = c.fx("grimoire:fx_pl_borer", start2, { dir, phase: 1, size: c.area });
+  c.sound("grimoire.plasma.drill", start2, 0.9, 0.8);
+  yield 8;
+  fx?.phase(2);
+  let victim;
+  let end = start2;
+  yield* fly(c, {
+    fx,
+    from: start2,
+    dir,
+    speed: c.p("speed"),
+    range: c.p("range"),
+    radius: 0.9 * c.area,
+    pierce: 1,
+    homing: a.entity,
+    homingRate: 0.3,
+    trail: "grimoire:plasma_trail",
+    trailColor: VI,
+    trailColor2: MG,
+    onHit: (e) => victim = e,
+    onEnd: (pos) => end = pos
+  });
+  if (victim?.isValid) {
+    fx?.phase(3);
+    c.sound("grimoire.plasma.drill", end, 1.3, 1.2);
+    for (let i = 0; i < c.p("hits") && victim.isValid; i++) {
+      const vc = bodyCenter(victim);
+      const back = norm(sub(vc, c.player.location));
+      fx?.move(sub(vc, mul(back, 0.7))).aim(back);
+      c.hit(victim, c.p("damage"), { immediate: i % 2 === 0 });
+      effect(victim, "slowness", 10, 3);
+      c.particle("grimoire:plasma_arc", vc, { color: MG, color2: WH2, radius: 0.7, count: 1 });
+      yield 5;
+    }
+    end = victim.isValid ? bodyCenter(victim) : end;
+  }
+  fx?.phase(4);
+  c.sound("grimoire.plasma.crack", end, 1.2, 0.9);
+  c.particle("grimoire:plasma_burst", end, { color: VI, color2: WH2, radius: 1.4, count: 1.5 });
+  for (const e of c.enemies(end, 3)) if (e.id !== victim?.id) c.hit(e, c.p("fragmentDamage"));
+  yield 12;
+}
+function* prominenceUprising(c) {
+  const { point } = c.aimGround(c.p("range"));
+  const R = c.p("radius") * c.area;
+  const right = rotY(flatNorm(c.dir), 90);
+  const fx = c.fx("grimoire:fx_pl_prominence", point, { yaw: c.yaw + 90, phase: 1, size: R / 3.5 });
+  c.sound("grimoire.plasma.surge", point, 1.3, 1);
+  for (let t = 0; t < 14; t++) {
+    for (const sgn of [-1, 1]) c.particle("grimoire:plasma_arc", add(point, add(mul(right, sgn * R), v3(0, 0.3 + t * 0.2, 0))), { color: VI, color2: MG, radius: 0.8, count: 0.6, dir: v3(0, 1, 0) });
+    yield 1;
+  }
+  fx?.phase(2);
+  const lifted = c.enemies(point, R);
+  for (const e of lifted) {
+    effect(e, "levitation", c.p("liftTicks"), 1);
+    c.hit(e, c.p("liftDamage"));
+  }
+  for (let t = 0; t < c.p("liftTicks"); t++) {
+    if (t % 5 === 0) {
+      for (const e of lifted) if (e.isValid) pullToward(e, add(point, v3(0, 3, 0)), 0.15);
+    }
+    if (t % 6 === 0) c.particle("grimoire:plasma_arc", add(point, v3(0, 3.5, 0)), { color: MG, color2: WH2, radius: 1.8, count: 1 });
+    yield 1;
+  }
+  fx?.phase(3);
+  c.sound("grimoire.plasma.reconnect", point, 1, 1.4);
+  yield 6;
+  for (const e of lifted) {
+    if (!e.isValid) continue;
+    try {
+      e.removeEffect("levitation");
+    } catch {
+    }
+    drive(e, v3(0, -1.6, 0));
+  }
+  shock(c, point, R, c.p("damage"), { knock: 1.1, up: 0.2, color: VI, color2: WH2, shake: 0.6, minK: 0.6 });
+  c.particle("grimoire:plasma_burst", add(point, v3(0, 0.5, 0)), { color: MG, color2: WH2, radius: 2.4, count: 2 });
+  yield 16;
+}
+function* arcShearCascade(c) {
+  const { point } = c.aimGround(c.p("range"));
+  const R = c.p("radius") * c.area;
+  const n = c.p("membranes");
+  const dur = c.p("duration") * 20;
+  const paths = [];
+  for (let i = 0; i < n; i++) {
+    const dir = rotY(v3(0, 0, 1), c.yaw + 45 + i * (180 / n) * 1.6);
+    const perp = rotY(dir, 90);
+    const off = (i - (n - 1) / 2) * 1.7;
+    const a = add(add(point, mul(dir, -R)), mul(perp, off));
+    const b = add(add(point, mul(dir, R)), mul(perp, -off * 0.5));
+    paths.push({ a, b, hit: /* @__PURE__ */ new Set(), delay: i * 6, fx: c.fx("grimoire:fx_pl_membrane", a, { dir: flatNorm(sub(b, a)), phase: 1, size: c.area }) });
+  }
+  c.sound("grimoire.plasma.membrane", point, 1.2, 1);
+  yield 10;
+  for (const p of paths) p.fx?.phase(2);
+  const erupted = /* @__PURE__ */ new Set();
+  for (let t = 0; t < dur + 6 * n; t++) {
+    const pos = paths.map((p) => {
+      const k = Math.max(0, Math.min(1, (t - p.delay) / dur));
+      return lerp(p.a, p.b, k);
+    });
+    paths.forEach((p, i) => {
+      p.fx?.move(pos[i]).yaw(yawPitchOf(sub(p.b, p.a)).yaw + Math.sin((t + i * 7) * 0.15) * 25);
+      const fwd = flatNorm(sub(p.b, p.a));
+      const side = rotY(fwd, 90);
+      for (const e of c.enemies(pos[i], 2.6)) {
+        if (p.hit.has(e.id)) continue;
+        const rel = sub(e.location, pos[i]);
+        if (Math.abs(dot(rel, side)) < 1.8 * c.area && Math.abs(dot(rel, fwd)) < 0.9) {
+          p.hit.add(e.id);
+          c.hit(e, c.p("damage"));
+          push(e, fwd, 0.6, 0.2);
+        }
+      }
+    });
+    for (let i = 0; i < n; i++)
+      for (let j = i + 1; j < n; j++) {
+        const key2 = `${i}:${j}`;
+        if (erupted.has(key2) || t < paths[j].delay) continue;
+        if (hdist(pos[i], pos[j]) < 2.2) {
+          erupted.add(key2);
+          const at = c.ground(lerp(pos[i], pos[j], 0.5), 6);
+          const fl = c.fx("grimoire:fx_pl_flare", at, { phase: 1, size: 1.2 * c.area });
+          c.run(dissolveLater2(fl, 26), "flare");
+          c.blast(at, 3, c.p("intersectionDamage"));
+          c.particle("grimoire:plasma_burst", add(at, v3(0, 1, 0)), { color: WH2, color2: VI, radius: 1.6, count: 1.5 });
+          c.sound("grimoire.plasma.crack", at, 1.2, 0.8);
+        }
+      }
+    yield 1;
+  }
+  yield 6;
+}
+function* dissolveLater2(fx, ticks) {
+  yield ticks;
+  fx?.dissolve(10);
+}
+function* stellaratorWard(c) {
+  const p = c.player;
+  const fx = c.fx("grimoire:fx_pl_stellarator", p.location, { phase: 1, size: c.area });
+  c.sound("grimoire.plasma.field", p.location, 1, 1.2);
+  c.ward({
+    label: "Stellarator Ward",
+    priority: 30,
+    protects: (e) => e.id === p.id,
+    absorb: (info) => {
+      if (info.cause === "projectile") return 0;
+      return PHYSICAL_CAUSES.has(info.cause) ? info.damage * (1 - c.p("reduction")) : info.damage;
+    },
+    react: () => fx?.pulse()
+  });
+  yield 10;
+  fx?.phase(2);
+  const curving = [];
+  const seen = /* @__PURE__ */ new Set();
+  const R = c.p("radius") * c.area;
+  for (let t = 0; t < c.p("duration") * 20 && c.ok; t++) {
+    fx?.follow(p, v3(0, 0, 0));
+    if (t % 2 === 0) {
+      for (const inc of hostileProjectiles(c, p.location, R + 3, seen)) {
+        const to = sub(bodyCenter(p), inc.e.location);
+        if (dot(inc.vel, to) <= 0) continue;
+        seen.add(inc.e.id);
+        const spin = Math.random() < 0.5 ? 1 : -1;
+        redirect(inc, add(rotY(flatNorm(inc.vel), 80 * spin), v3(0, 0.25, 0)), 0.9, p);
+        curving.push({ inc, until: system11.currentTick + 6, spin });
+        fx?.pulse();
+        c.sound("grimoire.plasma.zap", inc.e.location, 0.8, 1.4);
+      }
+    }
+    for (let i = curving.length - 1; i >= 0; i--) {
+      const q = curving[i];
+      if (!q.inc.e.isValid) {
+        curving.splice(i, 1);
+        continue;
+      }
+      q.inc.vel = q.inc.e.getVelocity();
+      redirect(q.inc, rotY(flatNorm(q.inc.vel), 25 * q.spin), 1);
+      c.particle("grimoire:plasma_trail", q.inc.e.location, { color: MG, color2: WH2, size: 1, count: 0.5 });
+      if (system11.currentTick >= q.until) {
+        c.particle("grimoire:plasma_burst", q.inc.e.location, { color: VI, color2: WH2, radius: 0.6, count: 0.6 });
+        neutralize(q.inc);
+        curving.splice(i, 1);
+      }
+    }
+    yield 1;
+  }
+}
+function* coronaMolt(c) {
+  const p = c.player;
+  const fx = c.fx("grimoire:fx_pl_molt", p.location, { yaw: c.yaw, phase: 1 });
+  c.sound("grimoire.plasma.hum", p.location, 0.8, 1.6);
+  let triggered;
+  const ward = c.ward({
+    label: "Corona Molt",
+    priority: 60,
+    protects: (e) => e.id === p.id && !triggered,
+    absorb: (info) => {
+      if (triggered || info.damage < c.p("threshold")) return info.damage;
+      if (!PHYSICAL_CAUSES.has(info.cause) && info.cause !== "magic") return info.damage;
+      triggered = { attacker: info.attacker, at: info.hurt.location };
+      return Math.max(0, info.damage - c.p("maxAbsorb") * c.power);
+    }
+  });
+  yield 8;
+  fx?.phase(2);
+  for (let t = 0; t < c.p("duration") * 20 && c.ok && !triggered; t++) {
+    fx?.follow(p).yaw(p.getRotation().y);
+    yield 1;
+  }
+  if (!triggered) return;
+  ward.alive = false;
+  const at = triggered.at;
+  const away = triggered.attacker?.isValid ? flatNorm(sub(at, triggered.attacker.location)) : flatNorm(mul(c.look(), -1));
+  fx?.phase(3);
+  fx?.move(add(at, mul(away, -0.4)));
+  c.sound("grimoire.plasma.crack", at, 1.3, 0.7);
+  c.flash(at, 10, { r: 0.85, g: 0.5, b: 1 }, 0.08);
+  c.particle("grimoire:plasma_burst", add(at, v3(0, 1, 0)), { color: MG, color2: WH2, radius: 2.2, count: 2 });
+  for (const e of c.enemies(at, c.p("radius"))) {
+    c.hit(e, c.p("damage"));
+    push(e, sub(e.location, at), 1.3, 0.35);
+    effect(e, "slowness", 50, 2);
+    effect(e, "weakness", 60, 0);
+  }
+  yield 18;
+}
+function* fieldlineHarp(c) {
+  const { point } = c.aimGround(c.p("range"));
+  const R = c.p("radius") * c.area;
+  const n = c.p("anchors");
+  const anchors = [];
+  for (let i = 0; i < n; i++) {
+    const ang = c.yaw + 360 * i / n;
+    anchors.push(add(c.ground(add(point, mul(rotY(v3(0, 0, 1), ang), R)), 6), v3(0, 1.1 + i % 2 * 1, 0)));
+  }
+  for (const a of anchors) {
+    c.fx("grimoire:fx_pl_anchor", sub(a, v3(0, 1, 0)), { phase: 1 });
+    c.particle("grimoire:plasma_arc", a, { color: VI, color2: MG, radius: 0.6, count: 0.6 });
+    yield 2;
+  }
+  c.sound("grimoire.plasma.hum", point, 1.1, 0.8);
+  const pairs = [];
+  for (let i = 0; i < n; i++) pairs.push([i, (i + 1) % n]);
+  for (let i = 0; i < n / 2; i++) pairs.push([i, i + n / 2]);
+  const strings = pairs.map(([i, j]) => {
+    const a = anchors[i], b = anchors[j];
+    const fx = c.fx("grimoire:fx_pl_string", a, { dir: sub(b, a), len: dist(a, b), phase: 1 });
+    return { a, b, fx, last: /* @__PURE__ */ new Map() };
+  });
+  yield 10;
+  for (const s of strings) s.fx?.phase(2);
+  for (let t = 0; t < c.p("duration") * 20; t++) {
+    if (t % 2 === 0) {
+      for (const s of strings) {
+        for (const e of c.along(s.a, s.b, 0.8)) {
+          const last = s.last.get(e.id) ?? -99;
+          if (t - last < 20) continue;
+          s.last.set(e.id, t);
+          s.fx?.pulse();
+          c.sound("grimoire.plasma.zap", bodyCenter(e), 0.9, 0.8 + Math.random() * 0.4);
+          for (const v of c.along(s.a, s.b, 1.3)) {
+            c.hit(v, c.p("damage"));
+            effect(v, "slowness", 40, 2);
+          }
+          filamentLine(c, s.a, s.b, Math.ceil(dist(s.a, s.b)), MG, WH2);
+        }
+      }
+    }
+    yield 1;
+  }
+}
+function* polarityOrchestra(c) {
+  const { point } = c.aimGround(c.p("range"));
+  const R = c.p("radius") * c.area;
+  const n = c.p("pylons");
+  const pylons = [];
+  for (let i = 0; i < n; i++) {
+    const at = c.ground(add(point, mul(rotY(v3(0, 0, 1), c.yaw + 360 * i / n), R)), 6);
+    pylons.push({ at, fx: c.fx("grimoire:fx_pl_pylon", at, { phase: 1, size: c.area }) });
+    yield 2;
+  }
+  c.sound("grimoire.plasma.pylon", point, 1.2, 0.8);
+  yield 8;
+  const patterns = [
+    [1, 0, 1, 0, 1, 0],
+    [0, 1, 0, 1, 0, 1],
+    [1, 1, 1, 0, 0, 0],
+    [0, 0, 0, 1, 1, 1]
+  ];
+  let pat = patterns[0];
+  for (let t = 0; t < c.p("duration") * 20; t++) {
+    if (t % 30 === 0) {
+      pat = patterns[t / 30 % patterns.length];
+      pylons.forEach((p, i) => p.fx?.phase(pat[i % 6] ? 3 : 4));
+      c.sound("grimoire.plasma.pylon", point, 1, pat[0] ? 1.2 : 0.8);
+      pylons.forEach((p, i) => {
+        if (!pat[i % 6]) return;
+        for (const e of c.enemies(p.at, 2.6)) {
+          c.hit(e, c.p("damage"));
+          c.particle("grimoire:plasma_arc", bodyCenter(e), { color: MG, color2: WH2, radius: 0.7, count: 0.8 });
+        }
+      });
+    }
+    if (t % 4 === 0) {
+      for (const e of c.enemies(point, R + 2)) {
+        let force = v3(0, 0, 0);
+        pylons.forEach((p, i) => {
+          const d = sub(add(p.at, v3(0, 1, 0)), e.location);
+          const dd = len(d);
+          if (dd > 7 || dd < 0.6) return;
+          const k = (1 - dd / 7) * (pat[i % 6] ? 1 : -1);
+          force = add(force, mul(flatNorm(d), k));
+        });
+        if (len(force) > 0.05) drive(e, mul(force, c.p("force") * 0.25));
+      }
+    }
+    yield 1;
+  }
+}
+function* staticHorizon(c) {
+  const { point } = c.aimGround(c.p("range"));
+  const R = c.p("radius") * c.area;
+  const plane = add(point, v3(0, c.p("height"), 0));
+  const fx = c.fx("grimoire:fx_pl_horizon", plane, { yaw: c.yaw, phase: 1, size: R / 10 });
+  c.sound("grimoire.plasma.field", plane, 1.3, 0.7);
+  yield 16;
+  fx?.phase(2);
+  const seen = /* @__PURE__ */ new Set();
+  for (let t = 0; t < c.p("duration") * 20; t++) {
+    if (t % 2 === 0) {
+      for (const inc of hostileProjectiles(c, plane, R + 1, seen)) {
+        if (hdist(inc.e.location, plane) > R || Math.abs(inc.e.location.y - plane.y) > 3) continue;
+        seen.add(inc.e.id);
+        const v = flatNorm(inc.vel);
+        redirect(inc, add(rotY(v, (Math.random() - 0.5) * 220), v3(0, 0.6, 0)), 0.5, c.player);
+        c.particle("grimoire:plasma_arc", inc.e.location, { color: IN, color2: WH2, radius: 0.6, count: 0.6 });
+      }
+    }
+    if (t % 30 === 15) {
+      fx?.pulse();
+      c.sound("grimoire.plasma.zap", plane, 0.9, 0.6);
+      for (const e of c.enemies(point, R)) {
+        if (e.location.y > plane.y + 1) continue;
+        effect(e, "slowness", 40, 2);
+        effect(e, "weakness", 40, 0);
+        c.hit(e, c.p("damage"));
+        c.particle("grimoire:plasma_trail", bodyCenter(e), { color: IN, color2: VI, size: 1.3, count: 1 });
+      }
+    }
+    yield 1;
+  }
+}
+function* ionSkates(c) {
+  const p = c.player;
+  const fx = c.fx("grimoire:fx_pl_skates", p.location, { yaw: c.yaw, phase: 1, len: 1 });
+  c.sound("grimoire.plasma.skate", p.location, 1, 1);
+  let lastYaw = c.yaw;
+  for (let t = 0; t < c.p("duration") * 20 && c.ok; t++) {
+    effect(p, "speed", 25, c.p("speed"));
+    grantFallImmunity(p.id, 30);
+    const v = p.getVelocity();
+    const hs = Math.hypot(v.x, v.z);
+    const moveYaw = hs > 0.05 ? yawPitchOf(v3(v.x, 0, v.z)).yaw : p.getRotation().y;
+    const dy = (moveYaw - lastYaw + 540) % 360 - 180;
+    lastYaw = moveYaw;
+    fx?.follow(p, v3(0, 0.02, 0)).yaw(moveYaw).length(1 + Math.min(1.5, hs * 3));
+    if (t > 6) fx?.phase(Math.abs(dy) < 3 ? 2 : dy > 0 ? 4 : 3);
+    if (hs > 0.08 && t % 2 === 0) c.particle("grimoire:plasma_trail", add(p.location, v3(0, 0.1, 0)), { color: VI, color2: WH2, size: 0.9, count: 0.5, life: 2 });
+    if (hs > 0.08 && p.isOnGround && t % 5 === 0) drive(p, v3(v.x / hs * c.p("boost"), 0, v.z / hs * c.p("boost")));
+    if (t % 30 === 0 && hs > 0.1) c.sound("grimoire.plasma.skate", p.location, 0.6, 1 + hs);
+    yield 1;
+  }
+}
+function* prominenceSling(c) {
+  const p = c.player;
+  const fwd = flatNorm(c.dir);
+  const behind = add(p.location, mul(fwd, -1.4));
+  const fx = c.fx("grimoire:fx_pl_sling", behind, { yaw: c.yaw, phase: 1, size: c.area });
+  c.sound("grimoire.plasma.sling", behind, 1.2, 1);
+  yield 8;
+  fx?.phase(2);
+  for (let t = 0; t < 12 && c.ok; t++) {
+    if (t < 6) drive(p, mul(fwd, -0.12));
+    c.particle("grimoire:plasma_charge", add(behind, v3(0, 2.2, 0)), { color: VI, color2: MG, radius: 1.5, size: 1 });
+    yield 1;
+  }
+  if (!c.ok) return;
+  const look = c.look();
+  const launchDir = norm(add(flatNorm(look), v3(0, Math.max(0.25, -look.y * 0 + 0.35), 0)));
+  const free = freeDistance(c.dim, c.eye(), launchDir, 14);
+  const k = Math.max(0.35, Math.min(1, free / 12));
+  fx?.phase(3);
+  c.sound("grimoire.plasma.surge", p.location, 1.1, 1.4);
+  grantFallImmunity(p.id, 200);
+  drive(p, add(mul(flatNorm(look), c.p("power") * 0.5 * k), v3(0, c.p("lift") * k, 0)));
+  const tail = c.fx("grimoire:fx_pl_tail", p.location, { yaw: c.yaw, phase: 1 });
+  for (let t = 0; t < c.p("duration") * 20 && c.ok; t++) {
+    const v = p.getVelocity();
+    tail?.follow(p, v3(0, 0.2, 0));
+    if (len(v) > 0.05) tail?.aim(mul(v, -1));
+    if (t % 2 === 0) c.particle("grimoire:plasma_trail", add(p.location, v3(0, 0.8, 0)), { color: MG, color2: VI, size: 1.2, count: 1, life: 2 });
+    if (t > 8 && p.isOnGround) break;
+    yield 1;
+  }
+  c.particle("grimoire:plasma_burst", p.location, { color: VI, color2: WH2, radius: 1, count: 0.8 });
+}
+function* auroralManta(c) {
+  const p = c.player;
+  let pos = add(p.location, v3(0, 4.5, 0));
+  const fx = c.fx("grimoire:fx_pl_manta", pos, { yaw: c.yaw, phase: 1, size: c.area });
+  c.sound("grimoire.plasma.manta", pos, 1.3, 1);
+  for (let t = 0; t < 24; t++) {
+    if (t % 3 === 0) c.particle("grimoire:plasma_charge", pos, { color: VI, color2: MG, radius: 3, size: 1.5 });
+    yield 1;
+  }
+  fx?.phase(2);
+  let orbit = c.yaw;
+  let nextDive = 8;
+  let nextTail = 30;
+  const range = c.p("range");
+  for (let t = 0; t < c.p("duration") * 20 && c.ok; t++) {
+    const home = add(p.location, add(mul(rotY(v3(0, 0, 1), orbit), 3.6), v3(0, 4.5, 0)));
+    orbit += 3;
+    const target = nearestEnemies(c, p.location, range, 1)[0];
+    if (target && t >= nextDive) {
+      fx?.phase(3);
+      c.sound("grimoire.plasma.whip", pos, 1.2, 0.6);
+      const from = pos;
+      for (let i = 1; i <= 12; i++) {
+        const goal = target.isValid ? bodyCenter(target) : from;
+        const ctrl = add(lerp(from, goal, 0.5), v3(0, 3.5, 0));
+        const np = arcPoint(from, ctrl, goal, i / 12);
+        fx?.move(np).aim(sub(np, pos));
+        pos = np;
+        if (i % 2 === 0) c.particle("grimoire:plasma_trail", pos, { color: VI, color2: MG, size: 1.5, count: 1 });
+        yield 1;
+      }
+      if (target.isValid) {
+        c.hit(target, c.p("diveDamage"));
+        push(target, sub(target.location, from), 1, 0.45);
+        c.particle("grimoire:plasma_burst", bodyCenter(target), { color: MG, color2: WH2, radius: 1.4, count: 1.4 });
+        c.sound("grimoire.plasma.crack", pos, 1.1, 1);
+      }
+      const back = pos;
+      for (let i = 1; i <= 12; i++) {
+        const goal = add(p.location, v3(0, 4.5, 0));
+        const np = arcPoint(back, add(lerp(back, goal, 0.5), v3(0, 4, 0)), goal, i / 12);
+        fx?.move(np).aim(sub(np, pos));
+        pos = np;
+        yield 1;
+      }
+      fx?.phase(2);
+      nextDive = t + 24 + 70;
+      nextTail = t + 24 + 30;
+      t += 24;
+      continue;
+    }
+    pos = lerp(pos, home, 0.2);
+    fx?.move(pos).yaw(orbit + 90).pitch(0);
+    if (target && t >= nextTail && dist(pos, bodyCenter(target)) < range) {
+      fx?.pulse();
+      const tc = bodyCenter(target);
+      filamentLine(c, pos, tc, Math.ceil(dist(pos, tc) * 1.5), MG, WH2);
+      c.hit(target, c.p("tailDamage"));
+      c.sound("grimoire.plasma.zap", tc, 1, 1.1);
+      nextTail = t + 40;
+    }
+    yield 1;
+  }
+}
+function* magneticReconnection(c) {
+  const { point } = c.aimGround(c.p("range"));
+  const R = c.p("radius") * c.area;
+  const right = rotY(flatNorm(c.dir), 90);
+  const top = add(point, v3(0, 3, 0));
+  const loops = [-1, 1].map(
+    (sgn) => c.fx("grimoire:fx_pl_fieldloop", add(top, mul(right, sgn * 6)), { yaw: c.yaw + 90, phase: sgn > 0 ? 2 : 3, size: c.area })
+  );
+  const xp = c.fx("grimoire:fx_pl_xpoint", add(point, v3(0, 4.2, 0)), { yaw: c.yaw, phase: 1, size: c.area });
+  const seal = c.fx("grimoire:fx_circle_pl", add(point, v3(0, 0.06, 0)), { size: R / 1, variant: 1, phase: 1 });
+  c.sound("grimoire.plasma.field", top, 1.3, 0.6);
+  const delay = c.p("delay");
+  for (let t = 0; t < delay; t++) {
+    const k = t / delay;
+    loops.forEach((l, i) => l?.move(add(top, mul(right, (i ? 1 : -1) * (6 - 4 * k)))));
+    if (t === 10) xp?.phase(2);
+    if (t % 10 === 0) {
+      for (const e of c.enemies(point, R)) {
+        effect(e, "slowness", 14, 1);
+        pullToward(e, point, 0.12);
+      }
+      c.particle("grimoire:plasma_charge", add(point, v3(0, 4.2, 0)), { color: WH2, color2: MG, radius: 2.5, size: 1.5 });
+    }
+    yield 1;
+  }
+  xp?.phase(3);
+  seal?.phase(3);
+  for (const l of loops) l?.phase(4);
+  c.sound("grimoire.plasma.reconnect", point, 1.5, 1);
+  c.shake(point, 20, 0.7, 0.6);
+  c.flash(point, 18, { r: 0.9, g: 0.6, b: 1 }, 0.06);
+  shock(c, point, R * 0.6, c.p("damage"), { knock: 1.3, up: 0.45, color: WH2, color2: VI, minK: 0.6 });
+  const n = c.p("jets");
+  const jetLen = c.p("jetLength") * c.area;
+  for (let i = 0; i < n; i++) {
+    const dir = norm(add(rotY(v3(0, 0, 1), c.yaw + 360 * i / n + 15), v3(0, -0.12, 0)));
+    const from = add(point, v3(0, 1.4, 0));
+    const jet = c.fx("grimoire:fx_pl_jet", from, { dir, len: jetLen, phase: 1, size: c.area });
+    c.run(dissolveLater2(jet, 18), "jet");
+    for (const e of c.along(from, add(from, mul(dir, jetLen)), 1.6)) {
+      c.hit(e, c.p("jetDamage"));
+      push(e, dir, 1, 0.3);
+    }
+  }
+  yield 24;
+}
+function* stellaratorCathedral(c) {
+  const { point } = c.aimGround(c.p("range"));
+  const R = c.p("radius") * c.area;
+  const apex = add(point, v3(0, c.p("height"), 0));
+  const fx = c.fx("grimoire:fx_pl_cathedral", apex, { yaw: c.yaw, phase: 1, size: c.area });
+  c.sound("grimoire.plasma.surge", apex, 1.6, 0.6);
+  for (let t = 0; t < 40; t++) {
+    if (t % 4 === 0) filamentLine(c, add(c.player.location, v3(0, 1.5, 0)), apex, 8, VI, MG);
+    yield 1;
+  }
+  fx?.phase(2);
+  const total = c.p("duration") * 20;
+  for (let t = 0; t < total - 50; t++) {
+    if (t % 20 === 0) {
+      for (const e of c.dim.getPlayers({ location: point, maxDistance: c.p("allyRadius") })) {
+        if (e.id === c.player.id || !c.isEnemy(e)) effect(e, "resistance", 30, 1);
+      }
+      c.particle("grimoire:plasma_trail", add(point, v3(0, 0.3, 0)), { color: IN, color2: WH2, size: 2, count: 3, radius: c.p("allyRadius") });
+    }
+    if (t % c.p("interval") === 0) {
+      for (const e of nearestEnemies(c, point, R, c.p("targets"))) {
+        const from = add(apex, v3(0, -1.6, 0));
+        const to = bodyCenter(e);
+        const br = c.fx("grimoire:fx_pl_branch", from, { dir: sub(to, from), len: dist(from, to), phase: 1 });
+        c.run(dissolveLater2(br, 10), "branch");
+        c.hit(e, c.p("streamDamage"));
+        c.particle("grimoire:plasma_arc", to, { color: MG, color2: WH2, radius: 0.8, count: 1 });
+      }
+      c.sound("grimoire.plasma.zap", apex, 1.2, 0.7);
+    }
+    yield 1;
+  }
+  fx?.phase(3);
+  c.sound("grimoire.plasma.drill", apex, 1.5, 0.5);
+  yield 30;
+  const n = c.p("beams");
+  for (let i = 0; i < n; i++) {
+    const dir = norm(add(rotY(v3(0, 0, 1), c.yaw + 360 * i / n), v3(0, -0.75, 0)));
+    const from = add(apex, v3(0, -1, 0));
+    const bm = c.fx("grimoire:fx_pl_beam", from, { dir, len: c.p("beamLength"), phase: 1, size: c.area });
+    c.run(dissolveLater2(bm, 20), "beam");
+    for (const e of c.along(from, add(from, mul(dir, c.p("beamLength"))), 1.8)) c.hit(e, c.p("beamDamage"));
+  }
+  c.sound("grimoire.plasma.reconnect", point, 1.6, 1.2);
+  c.shake(point, 24, 0.8, 0.8);
+  c.flash(point, 22, { r: 0.85, g: 0.55, b: 1 }, 0.1);
+  yield 20;
+}
+function* heavenwideReconnection(c) {
+  const { point } = c.aimGround(c.p("range"));
+  const R = c.p("radius") * c.area;
+  const sky = add(point, v3(0, c.p("height"), 0));
+  c.sound("grimoire.plasma.surge", c.player.location, 1.6, 0.5);
+  c.fx("grimoire:fx_circle_pl", add(c.player.location, v3(0, 0.06, 0)), { size: 3, variant: 2, phase: 1 });
+  c.fx("grimoire:fx_circle_pl", add(point, v3(0, 0.08, 0)), { size: R, variant: 0, phase: 2 });
+  for (let t = 0; t < 14; t++) {
+    for (let k = 0; k < 3; k++) {
+      const off = rotY(v3(0, 0, 1), c.yaw + t * 26 + k * 120);
+      c.particle("grimoire:plasma_trail", add(c.player.location, add(mul(off, 1.2), v3(0, 1 + t * 0.8, 0))), { color: k ? VI : MG, color2: WH2, size: 1.6, count: 1, life: 2 });
+    }
+    yield 1;
+  }
+  const net = c.fx("grimoire:fx_pl_network", sky, { yaw: c.yaw, phase: 1, size: R / 16 * 1 });
+  c.shake(point, 30, 0.4, 1.5);
+  yield 44;
+  net?.phase(2);
+  c.sound("grimoire.plasma.field", point, 1.6, 0.5);
+  const junctions = /* @__PURE__ */ new Map();
+  for (let t = 0; t < 100 && c.ok; t++) {
+    if (t % 20 === 0) {
+      for (const e of nearestEnemies(c, point, R, 8)) {
+        if (!junctions.has(e.id)) junctions.set(e.id, { e, fx: c.fx("grimoire:fx_pl_junction", add(e.location, v3(0, 3, 0)), { phase: 1, size: c.area }) });
+        const from = add(sky, v3((Math.random() - 0.5) * 6, -1, (Math.random() - 0.5) * 6));
+        filamentLine(c, from, bodyCenter(e), 10, MG, WH2);
+        c.bind(e, 26, { pin: true, slowAmp: 3 });
+        c.hit(e, c.p("streamDamage"));
+      }
+      c.sound("grimoire.plasma.zap", sky, 1.4, 0.6);
+    }
+    for (const j of junctions.values()) if (j.e.isValid) j.fx?.follow(j.e, v3(0, 3, 0), 0);
+    yield 1;
+  }
+  net?.phase(3);
+  yield 14;
+  net?.phase(4);
+  c.sound("grimoire.plasma.reconnect", point, 2, 0.8);
+  c.flash(point, R * 2, { r: 0.9, g: 0.75, b: 1 }, 0.12);
+  c.shake(point, R * 3, 1, 1.2);
+  for (const j of junctions.values()) {
+    j.fx?.pulse();
+    if (j.e.isValid) {
+      c.hit(j.e, c.p("junctionDamage"), { immediate: true });
+      c.particle("grimoire:plasma_burst", bodyCenter(j.e), { color: WH2, color2: MG, radius: 1.8, count: 1.6 });
+    }
+  }
+  const jets = [0, 90, 180, 270].map((a) => ({ a, fx: c.fx("grimoire:fx_pl_sweepjet", add(sky, v3(0, -2, 0)), { yaw: c.yaw + a, pitch: 32, len: R * 1.15, phase: 1, size: c.area }), hit: /* @__PURE__ */ new Set() }));
+  for (let t = 0; t < 24; t++) {
+    jets.forEach((j, i) => {
+      const yaw = c.yaw + j.a + t * 4.5;
+      const dir = dirFromYawPitch(yaw, 32);
+      j.fx?.yaw(yaw);
+      const from = add(sky, v3(0, -2, 0));
+      for (const e of c.along(from, add(from, mul(dir, R * 1.15)), 2)) {
+        if (j.hit.has(e.id)) continue;
+        j.hit.add(e.id);
+        c.hit(e, c.p("jetDamage"));
+        push(e, flatNorm(dir), 0.8, 0.3);
+      }
+      if (t % 4 === i) c.particle("grimoire:plasma_burst", c.ground(add(from, mul(dir, R)), 14), { color: VI, color2: WH2, radius: 1.6, count: 1 });
+    });
+    yield 1;
+  }
+  for (const j of jets) j.fx?.dissolve(12);
+  for (const j of junctions.values()) j.fx?.dissolve(12);
+  net?.phase(15);
+  for (let t = 0; t < 26; t++) {
+    if (t % 3 === 0) c.particle("grimoire:plasma_trail", add(sky, v3((Math.random() - 0.5) * R, (Math.random() - 0.5) * 4, (Math.random() - 0.5) * R)), { color: MG, color2: VI, size: 2, count: 2, life: 2 });
+    yield 1;
+  }
+}
+
+// src/spells/plasma/index.ts
+var S4 = "plasma";
+var PLASMA = [
+  {
+    code: "PL01",
+    id: "plasma.coronal_lash",
+    school: S4,
+    name: "Coronal Lash",
+    cooldown: 7,
+    charge: 10,
+    enhanceable: true,
+    params: { damage: 7, reach: 8, width: 1.4 },
+    blurb: "Three plasma filaments braid into a whip that strikes in three S-curved sweeps.",
+    cast: coronalLash
+  },
+  {
+    code: "PL02",
+    id: "plasma.helix_borer",
+    school: S4,
+    name: "Helix Borer",
+    cooldown: 12,
+    charge: 12,
+    enhanceable: true,
+    params: { damage: 4, hits: 8, range: 36, speed: 1.4, fragmentDamage: 4 },
+    blurb: "Counter-rotating helices around a white-hot core drill repeatedly into one target.",
+    cast: helixBorer
+  },
+  {
+    code: "PL03",
+    id: "plasma.prominence_uprising",
+    school: S4,
+    name: "Prominence Uprising",
+    cooldown: 19,
+    charge: 16,
+    enhanceable: true,
+    params: { radius: 5, liftTicks: 40, damage: 16, liftDamage: 4, range: 32 },
+    blurb: "Twin prominence arches lift enemies inside their formation, then collapse onto them.",
+    cast: prominenceUprising
+  },
+  {
+    code: "PL04",
+    id: "plasma.arc_shear_cascade",
+    school: S4,
+    name: "Arc-Shear Cascade",
+    cooldown: 24,
+    charge: 18,
+    enhanceable: true,
+    params: { membranes: 4, damage: 6, intersectionDamage: 10, radius: 9, range: 30, duration: 3 },
+    blurb: "Folding plasma membranes sweep the field; where two cross, the plasma erupts.",
+    cast: arcShearCascade
+  },
+  {
+    code: "PL05",
+    id: "plasma.stellarator_ward",
+    school: S4,
+    name: "Stellarator Ward",
+    cooldown: 25,
+    charge: 14,
+    enhanceable: true,
+    params: { duration: 14, radius: 3.2, reduction: 0.35 },
+    blurb: "A twisted toroidal confinement field curves incoming projectiles around you.",
+    cast: stellaratorWard
+  },
+  {
+    code: "PL06",
+    id: "plasma.corona_molt",
+    school: S4,
+    name: "Corona Molt",
+    cooldown: 30,
+    charge: 12,
+    enhanceable: true,
+    params: { duration: 20, threshold: 3, maxAbsorb: 14, radius: 5, damage: 6 },
+    blurb: "A plasma skin sheds one strong blow as an expanding afterimage that blasts nearby foes.",
+    cast: coronaMolt
+  },
+  {
+    code: "PL07",
+    id: "plasma.fieldline_harp",
+    school: S4,
+    name: "Fieldline Harp",
+    cooldown: 29,
+    charge: 18,
+    enhanceable: true,
+    params: { anchors: 6, radius: 6, duration: 12, damage: 6, range: 28 },
+    blurb: "Plasma strings between floating anchors resonate and pulse when enemies cross them.",
+    cast: fieldlineHarp
+  },
+  {
+    code: "PL08",
+    id: "plasma.polarity_orchestra",
+    school: S4,
+    name: "Polarity Orchestra",
+    cooldown: 38,
+    charge: 20,
+    enhanceable: true,
+    params: { pylons: 6, radius: 7, duration: 10, damage: 3, force: 0.7, range: 30 },
+    blurb: "Six magnetic pylons switch polarity in rhythm, pulling and pushing enemies between them.",
+    cast: polarityOrchestra
+  },
+  {
+    code: "PL09",
+    id: "plasma.static_horizon",
+    school: S4,
+    name: "Static Horizon",
+    cooldown: 42,
+    charge: 20,
+    enhanceable: true,
+    params: { radius: 10, duration: 14, height: 2.6, damage: 3, range: 30 },
+    blurb: "A low interference membrane scatters projectiles and slows everything beneath it.",
+    cast: staticHorizon
+  },
+  {
+    code: "PL10",
+    id: "plasma.ion_skates",
+    school: S4,
+    name: "Ion Skates",
+    cooldown: 10,
+    charge: 6,
+    enhanceable: false,
+    params: { duration: 8, speed: 3, boost: 0.35 },
+    blurb: "Plasma skates with energy fins: glide fast along the ground for 8 seconds.",
+    cast: ionSkates
+  },
+  {
+    code: "PL11",
+    id: "plasma.prominence_sling",
+    school: S4,
+    name: "Prominence Sling",
+    cooldown: 18,
+    charge: 14,
+    enhanceable: false,
+    params: { power: 3.2, lift: 1.15, duration: 3 },
+    blurb: "A celestial slingshot draws you back and launches you on a long arc.",
+    cast: prominenceSling
+  },
+  {
+    code: "PL12",
+    id: "plasma.auroral_manta",
+    school: S4,
+    name: "Living Circuit: The Auroral Manta",
+    cooldown: 55,
+    charge: 24,
+    enhanceable: true,
+    params: { duration: 22, diveDamage: 10, tailDamage: 5, range: 16 },
+    blurb: "A manta of living plasma circles above you, diving at enemies and lashing with its tail.",
+    cast: auroralManta
+  },
+  {
+    code: "PL13",
+    id: "plasma.magnetic_reconnection",
+    school: S4,
+    name: "Magnetic Reconnection",
+    cooldown: 45,
+    charge: 22,
+    enhanceable: true,
+    params: { radius: 7, jets: 6, jetLength: 9, damage: 18, jetDamage: 10, range: 32, delay: 50 },
+    blurb: "Two opposing field structures meet; their filaments break and reconnect in violent jets.",
+    cast: magneticReconnection
+  },
+  {
+    code: "PL14",
+    id: "plasma.stellarator_cathedral",
+    school: S4,
+    name: "Grand Magic: Stellarator Cathedral",
+    cooldown: 90,
+    charge: 30,
+    enhanceable: true,
+    params: { radius: 12, duration: 20, streamDamage: 8, interval: 25, targets: 4, beams: 6, beamDamage: 18, beamLength: 14, height: 9, range: 24, allyRadius: 5 },
+    blurb: "A floating twisted confinement cathedral strikes with branching streams, then fires its beams.",
+    cast: stellaratorCathedral
+  },
+  {
+    code: "PL15",
+    id: "plasma.heavenwide_reconnection",
+    school: S4,
+    name: "Imperial Edict: Heavenwide Reconnection",
+    cooldown: 180,
+    charge: 40,
+    enhanceable: true,
+    params: { radius: 16, range: 40, streamDamage: 5, junctionDamage: 14, jetDamage: 16, height: 12 },
+    blurb: "The sky becomes a living plasma network that confines, then reconnects in sweeping jets.",
+    cast: heavenwideReconnection
+  }
+];
+
 // src/spells/pressure/spells.ts
-import { EntityProjectileComponent as EntityProjectileComponent2, system as system10 } from "@minecraft/server";
+import { EntityProjectileComponent as EntityProjectileComponent3, system as system12 } from "@minecraft/server";
 var OR = COLORS.orange;
 var GD = COLORS.gold;
-var WH2 = COLORS.white;
+var WH3 = COLORS.white;
 var CU = COLORS.copper;
 function* pressureLance(c) {
   const dir = c.dir;
@@ -3675,7 +5669,7 @@ function* pressureLance(c) {
   c.particle("grimoire:converge", start2, { color: OR, color2: GD, radius: 2.4, life: 0.35, count: 1.5 });
   yield 6;
   fx?.phase(2);
-  c.particle("grimoire:ring_dir", start2, { color: GD, color2: WH2, radius: 3.2, dir });
+  c.particle("grimoire:ring_dir", start2, { color: GD, color2: WH3, radius: 3.2, dir });
   c.shake(start2, 8, 0.15, 0.2);
   let end = start2;
   yield* fly(c, {
@@ -3690,12 +5684,12 @@ function* pressureLance(c) {
       c.hit(e, c.p("damage"));
       push(e, dir, 1.3, 0.3);
       c.particle("grimoire:ring_dir", at, { color: OR, color2: GD, radius: 2.6, dir });
-      c.particle("grimoire:spark_burst", at, { color: GD, color2: WH2, radius: 1, count: 1 });
+      c.particle("grimoire:spark_burst", at, { color: GD, color2: WH3, radius: 1, count: 1 });
       c.sound("grimoire.pressure.thud", at, 0.9, 1.2);
     },
     onTick: (pos, i) => {
       if (i % 2 === 0) c.particle("grimoire:ring_dir", pos, { color: OR, radius: 1.2 + Math.min(2.5, i * 0.12), dir, life: 1.2 });
-      if (i % 3 === 1) c.particle("grimoire:ripple_dir", pos, { color: WH2, radius: 2, dir, life: 1.4 });
+      if (i % 3 === 1) c.particle("grimoire:ripple_dir", pos, { color: WH3, radius: 2, dir, life: 1.4 });
     },
     onEnd: (pos) => {
       end = pos;
@@ -3703,7 +5697,7 @@ function* pressureLance(c) {
   });
   fx?.phase(3);
   shock(c, end, c.p("impactRadius"), c.p("impactDamage"), { knock: 1.1, up: 0.35, sound: "grimoire.pressure.boom", shake: 0.35 });
-  c.particle("grimoire:ring_dir", end, { color: WH2, color2: OR, radius: 6, dir });
+  c.particle("grimoire:ring_dir", end, { color: WH3, color2: OR, radius: 6, dir });
   yield 8;
 }
 function* atlasPiston(c) {
@@ -3733,7 +5727,7 @@ function* atlasPiston(c) {
   for (let k = 1; k <= 2; k++) {
     yield 6;
     const r = R + (c.p("waveRadius") * c.area - R) * (k / 2);
-    c.particle("grimoire:ring_h", add(point, v3(0, 0.2, 0)), { color: OR, color2: WH2, radius: r * 2.2, life: 1.2 });
+    c.particle("grimoire:ring_h", add(point, v3(0, 0.2, 0)), { color: OR, color2: WH3, radius: r * 2.2, life: 1.2 });
     c.particle("grimoire:dust_ring", point, { color: { r: 0.7, g: 0.62, b: 0.5 }, radius: r * 0.45, size: 1.5, count: 1.5 });
     for (const e of c.enemies(point, r)) {
       if (dist(e.location, point) < inner - 0.5) continue;
@@ -3772,11 +5766,11 @@ function* isobaricSeverance(c) {
         hitIds.add(e.id);
         c.hit(e, c.p("damage"));
         push(e, dir, 0.6, 0.15);
-        c.particle("grimoire:spark_burst", bodyCenter(e), { color: OR, color2: WH2, count: 1.2 });
+        c.particle("grimoire:spark_burst", bodyCenter(e), { color: OR, color2: WH3, count: 1.2 });
       }
     }
     if (step2 % 2 === 0) {
-      for (const s of [-0.66, 0, 0.66]) eruptions.push({ at: c.ground(add(next, mul(right, half * s)), 6), tick: system10.currentTick + c.p("delay") });
+      for (const s of [-0.66, 0, 0.66]) eruptions.push({ at: c.ground(add(next, mul(right, half * s)), 6), tick: system12.currentTick + c.p("delay") });
     }
     fx?.move(next);
     pos = next;
@@ -3792,12 +5786,12 @@ function* isobaricSeverance(c) {
   }
 }
 function* erupt(c, list) {
-  const now = system10.currentTick;
+  const now = system12.currentTick;
   for (let i = list.length - 1; i >= 0; i--) {
     if (list[i].tick > now) continue;
     const e = list.splice(i, 1)[0];
     c.particle("grimoire:ring_h", add(e.at, v3(0, 0.15, 0)), { color: OR, color2: GD, radius: 5, life: 0.8 });
-    c.particle("grimoire:beam_up", e.at, { color: GD, color2: WH2, radius: 1.2, size: 0.8, count: 0.6 });
+    c.particle("grimoire:beam_up", e.at, { color: GD, color2: WH3, radius: 1.2, size: 0.8, count: 0.6 });
     for (const t of c.enemies(e.at, 2.6)) {
       c.hit(t, c.p("delayedDamage"));
       push(t, v3(0, 0, 0), 0, 0.55);
@@ -3818,7 +5812,7 @@ function* cataclysmSalvo(c) {
   const discs = c.p("discs");
   const volleys = c.p("volleys");
   const perVolley = Math.ceil(discs / volleys);
-  const r = rng(system10.currentTick);
+  const r = rng(system12.currentTick);
   for (let v = 0; v < volleys; v++) {
     const targets = nearestEnemies(c, aim.point, 14, 12);
     for (let k = 0; k < perVolley; k++) {
@@ -3843,7 +5837,7 @@ function* cataclysmSalvo(c) {
         onEnd: (at) => {
           disc?.dissolve(3);
           shock(c, at, c.p("blastRadius"), c.p("damage"), { knock: 0.9, up: 0.35, sound: "grimoire.pressure.disc", pitch: 0.8 + r() * 0.4, ringLife: 0.7 });
-          c.particle("grimoire:spark_burst", at, { color: OR, color2: WH2, count: 0.8 });
+          c.particle("grimoire:spark_burst", at, { color: OR, color2: WH3, count: 0.8 });
         }
       }), "disc");
     }
@@ -3891,7 +5885,7 @@ function* aegisOfIsobars(c) {
     if (t % 2 === 0) {
       for (const e of c.dim.getEntities({ location: center, maxDistance: R + 2.5 })) {
         if (redirected.has(e.id)) continue;
-        const proj = e.getComponent(EntityProjectileComponent2.componentId);
+        const proj = e.getComponent(EntityProjectileComponent3.componentId);
         if (!proj) continue;
         const owner2 = proj.owner;
         if (owner2 && isAllyOrSelf(owner, owner2)) continue;
@@ -3907,7 +5901,7 @@ function* aegisOfIsobars(c) {
           proj.owner = owner;
         } catch {
         }
-        c.particle("grimoire:ring_dir", e.location, { color: GD, color2: WH2, radius: 1.6, dir: out });
+        c.particle("grimoire:ring_dir", e.location, { color: GD, color2: WH3, radius: 1.6, dir: out });
         c.sound("grimoire.pressure.thud", e.location, 0.6, 1.6);
         dome?.pulse();
       }
@@ -3936,16 +5930,16 @@ function* counterpressureMantle(c) {
     react: (info) => {
       const a = info.attacker;
       if (!a || !a.isValid || relation(p, a) === "self") return;
-      const now = system10.currentTick;
+      const now = system12.currentTick;
       if ((lastReflect.get(a.id) ?? -99) > now - 10) return;
       lastReflect.set(a.id, now);
       mantle?.pulse();
       c.sound("grimoire.pressure.pulse", p.location, 1, 1.4);
-      system10.runTimeout(() => {
+      system12.runTimeout(() => {
         if (!p.isValid || !a.isValid) return;
         push(a, sub(a.location, p.location), c.p("knock"), 0.55);
         if (isEnemy(p, a) || a.typeId !== "minecraft:player") c.hit(a, c.p("reflectDamage"), { kind: "reflect" });
-        c.particle("grimoire:ring_h", add(p.location, v3(0, 1, 0)), { color: OR, color2: WH2, radius: 7, life: 0.6 });
+        c.particle("grimoire:ring_h", add(p.location, v3(0, 1, 0)), { color: OR, color2: WH3, radius: 7, life: 0.6 });
         c.particle("grimoire:ring_dir", bodyCenter(a), { color: GD, radius: 2.5, dir: norm(sub(a.location, p.location)) });
         for (const e of c.enemies(p.location, 3)) if (e.id !== a.id) push(e, sub(e.location, p.location), 1, 0.3);
         c.sound("grimoire.pressure.boom", p.location, 0.7, 1.5);
@@ -3998,7 +5992,7 @@ function titansVise(c) {
       it.fx?.phase(3);
       if (it.t.isValid) {
         c.hit(it.t, c.p("finalDamage"), { immediate: true });
-        c.particle("grimoire:spark_burst", bodyCenter(it.t), { color: GD, color2: WH2, count: 2 });
+        c.particle("grimoire:spark_burst", bodyCenter(it.t), { color: GD, color2: WH3, count: 2 });
       }
       endBind(it.b, false);
     }
@@ -4020,7 +6014,7 @@ function* atmosphericLabyrinth(c) {
     yield 1;
   }
   c.sound("grimoire.pressure.rise", center, 1.2, 1);
-  let seed = system10.currentTick;
+  let seed = system12.currentTick;
   let current = new Map(grounded(c, mazeColumns(center, cells, cell, seed).values()).map((p) => [`${p.x},${p.z}`, p]));
   yield* raise(set, [...current.values()], c.p("height"), "grimoire:pressure_barrier", 70, 2);
   const fallback = !set.enabled;
@@ -4070,7 +6064,7 @@ function* resonanceCage(c) {
     }
     cage?.pulse();
     c.sound("grimoire.pressure.pulse", center, 1.1, 0.9 + k * 0.06);
-    c.particle("grimoire:converge", center, { color: OR, color2: WH2, radius: R, life: 0.35, count: 2 });
+    c.particle("grimoire:converge", center, { color: OR, color2: WH3, radius: R, life: 0.35, count: 2 });
     for (const e of c.enemies(center, R)) {
       c.hit(e, c.p("pulseDamage"));
       pullToward(e, center, 0.6);
@@ -4111,8 +6105,8 @@ function* pressureStep(c) {
   for (let t = 0; t < ticks; t++) {
     drive(p, { x: dir.x * (d / ticks) * 1.05, y: t === 0 ? 0.12 : 0.02, z: dir.z * (d / ticks) * 1.05 });
     const back = add(p.location, v3(0, 0.9, 0));
-    c.particle("grimoire:ring_dir", back, { color: OR, color2: WH2, radius: 1.6 + t * 0.2, dir, life: 1 });
-    c.particle("grimoire:ripple_dir", back, { color: WH2, radius: 2.2, dir, life: 1.3 });
+    c.particle("grimoire:ring_dir", back, { color: OR, color2: WH3, radius: 1.6 + t * 0.2, dir, life: 1 });
+    c.particle("grimoire:ripple_dir", back, { color: WH3, radius: 2.2, dir, life: 1.3 });
     yield 1;
   }
   c.particle("grimoire:streak_dir", add(start2, v3(0, 1, 0)), { color: GD, dir, speed: 1, count: 1.5 });
@@ -4157,7 +6151,7 @@ function skylineRail(c) {
         if (!r.passed && dist(here, r.at) < 2.2) {
           r.passed = true;
           r.fx?.phase(3);
-          c.particle("grimoire:ring_dir", r.at, { color: OR, color2: WH2, radius: 4.5, dir });
+          c.particle("grimoire:ring_dir", r.at, { color: OR, color2: WH3, radius: 4.5, dir });
           c.sound("grimoire.pressure.ring", r.at, 0.9, 1 + rings.indexOf(r) * 0.04);
         }
       }
@@ -4247,7 +6241,7 @@ function* equilibriumTheft(c) {
   yield 6;
   field?.phase(2);
   for (let t2 = 0; t2 < 36; t2++) {
-    if (t2 % 6 === 0) c.particle("grimoire:converge", add(p.location, v3(0, 1.5, 0)), { color: OR, color2: WH2, radius: R, life: 0.6, count: 1.5 });
+    if (t2 % 6 === 0) c.particle("grimoire:converge", add(p.location, v3(0, 1.5, 0)), { color: OR, color2: WH3, radius: R, life: 0.6, count: 1.5 });
     if (t2 % 3 === 0) {
       for (const e of c.enemies(center, R)) {
         pullToward(e, center, 0.35);
@@ -4258,13 +6252,13 @@ function* equilibriumTheft(c) {
   }
   field?.dissolve(6);
   const st = stateOf(p);
-  st.empowered = { until: system10.currentTick + c.p("buffSeconds") * 20, source: "equilibrium" };
+  st.empowered = { until: system12.currentTick + c.p("buffSeconds") * 20, source: "equilibrium" };
   st.hudKey = "";
   flash2(st, `\xA76Equilibrium stolen: your next spell is empowered (x1.6, ${c.p("buffSeconds")}s)`, 50);
   const crystal = c.fx("grimoire:fx_p_crystal", add(p.location, v3(0.8, 2.2, 0)), { phase: 1 });
   c.sound("grimoire.pressure.crystal", p.location, 1, 1);
   let t = 0;
-  while (st.empowered && st.empowered.until > system10.currentTick) {
+  while (st.empowered && st.empowered.until > system12.currentTick) {
     if (!c.ok) return;
     const a = t * 0.08;
     crystal?.move(add(p.location, v3(Math.cos(a) * 0.9, 2.1 + Math.sin(t * 0.15) * 0.1, Math.sin(a) * 0.9)));
@@ -4272,8 +6266,8 @@ function* equilibriumTheft(c) {
     t++;
     yield 1;
   }
-  if (st.empowered && st.empowered.until <= system10.currentTick) st.empowered = void 0;
-  c.particle("grimoire:spark_burst", add(p.location, v3(0, 2, 0)), { color: GD, color2: WH2, count: 1.5 });
+  if (st.empowered && st.empowered.until <= system12.currentTick) st.empowered = void 0;
+  c.particle("grimoire:spark_burst", add(p.location, v3(0, 2, 0)), { color: GD, color2: WH3, count: 1.5 });
 }
 function* isobaricCitadel(c) {
   const center = { x: Math.floor(c.feet.x) + 0.5, y: Math.floor(c.feet.y), z: Math.floor(c.feet.z) + 0.5 };
@@ -4307,7 +6301,7 @@ function* isobaricCitadel(c) {
     if (t % 20 === 0) {
       for (const e of livingNear(c.dim, center, R)) if (isAllyOrSelf(owner, e)) effect(e, "resistance", 30, 0);
       for (const e of c.dim.getEntities({ location: center, maxDistance: R + 1.5 })) {
-        const proj = e.getComponent(EntityProjectileComponent2.componentId);
+        const proj = e.getComponent(EntityProjectileComponent3.componentId);
         if (proj && !(proj.owner && isAllyOrSelf(owner, proj.owner))) {
           c.particle("grimoire:spark_burst", e.location, { color: OR, count: 0.6 });
           try {
@@ -4329,7 +6323,7 @@ function* isobaricCitadel(c) {
         const from = add(col.at, v3(0, 5.5, 0));
         const to = bodyCenter(f);
         const n = Math.ceil(dist(from, to));
-        for (let i = 0; i <= n; i += 2) c.particle("grimoire:ring_dir", lerp(from, to, i / n), { color: OR, color2: WH2, radius: 1.4, dir: norm(sub(to, from)), life: 0.6 });
+        for (let i = 0; i <= n; i += 2) c.particle("grimoire:ring_dir", lerp(from, to, i / n), { color: OR, color2: WH3, radius: 1.4, dir: norm(sub(to, from)), life: 0.6 });
         c.hit(f, c.p("damage"));
         push(f, sub(f.location, center), 1.6, 0.5);
         c.particle("grimoire:spark_burst", to, { color: GD, count: 1 });
@@ -4379,7 +6373,7 @@ function* thousandAtmospheres(c) {
   const n = c.p("collapses");
   for (let k = 0; k < n; k++) {
     const r = Math.max(2, R * (1 - k / n));
-    c.particle("grimoire:ring_h", add(point, v3(0, 3, 0)), { color: GD, color2: WH2, radius: r * 2.2, life: 0.8 });
+    c.particle("grimoire:ring_h", add(point, v3(0, 3, 0)), { color: GD, color2: WH3, radius: r * 2.2, life: 0.8 });
     c.particle("grimoire:hex_flash", add(point, v3(0, 3.5, 0)), { color: OR, radius: r * 1.6, life: 1 });
     for (const e of c.enemies(point, r + 1.5)) {
       const d = dist(e.location, point);
@@ -4397,22 +6391,22 @@ function* thousandAtmospheres(c) {
   for (let f = 0; f < 3; f++) {
     c.fx("grimoire:fx_p_front", point, { phase: 1, size: R / 4 * (0.55 + f * 0.25) });
     shock(c, point, R * (0.6 + f * 0.25), c.p("frontDamage") * (1 - f * 0.3), { knock: 2.2 - f * 0.4, up: 0.9 - f * 0.2, shake: 1 - f * 0.25, minK: 0.4 });
-    c.particle("grimoire:glow_flash", add(point, v3(0, 2, 0)), { color: WH2, size: 12 - f * 3 });
+    c.particle("grimoire:glow_flash", add(point, v3(0, 2, 0)), { color: WH3, size: 12 - f * 3 });
     yield 6;
   }
-  c.particle("grimoire:spark_burst", add(point, v3(0, 2, 0)), { color: GD, color2: WH2, radius: 4, count: 4 });
+  c.particle("grimoire:spark_burst", add(point, v3(0, 2, 0)), { color: GD, color2: WH3, radius: 4, count: 4 });
   ground?.phase(3);
   yield 20;
   void sky;
 }
 
 // src/spells/pressure/index.ts
-var S3 = "pressure";
+var S5 = "pressure";
 var PRESSURE = [
   {
     code: "P01",
     id: "pressure.lance",
-    school: S3,
+    school: S5,
     name: "Pressure Lance",
     cooldown: 6,
     charge: 8,
@@ -4424,7 +6418,7 @@ var PRESSURE = [
   {
     code: "P02",
     id: "pressure.atlas_piston",
-    school: S3,
+    school: S5,
     name: "Atlas Piston",
     cooldown: 18,
     charge: 14,
@@ -4436,7 +6430,7 @@ var PRESSURE = [
   {
     code: "P03",
     id: "pressure.isobaric_severance",
-    school: S3,
+    school: S5,
     name: "Isobaric Severance",
     cooldown: 10,
     charge: 10,
@@ -4448,7 +6442,7 @@ var PRESSURE = [
   {
     code: "P04",
     id: "pressure.cataclysm_salvo",
-    school: S3,
+    school: S5,
     name: "Cataclysm Salvo",
     cooldown: 22,
     charge: 16,
@@ -4460,7 +6454,7 @@ var PRESSURE = [
   {
     code: "P05",
     id: "pressure.aegis_of_isobars",
-    school: S3,
+    school: S5,
     name: "Aegis of Isobars",
     cooldown: 25,
     charge: 12,
@@ -4472,7 +6466,7 @@ var PRESSURE = [
   {
     code: "P06",
     id: "pressure.counterpressure_mantle",
-    school: S3,
+    school: S5,
     name: "Counterpressure Mantle",
     cooldown: 22,
     charge: 10,
@@ -4484,7 +6478,7 @@ var PRESSURE = [
   {
     code: "P07",
     id: "pressure.titans_vise",
-    school: S3,
+    school: S5,
     name: "Titan's Vise",
     cooldown: 30,
     charge: 16,
@@ -4496,7 +6490,7 @@ var PRESSURE = [
   {
     code: "P08",
     id: "pressure.atmospheric_labyrinth",
-    school: S3,
+    school: S5,
     name: "Atmospheric Labyrinth",
     cooldown: 35,
     charge: 20,
@@ -4508,7 +6502,7 @@ var PRESSURE = [
   {
     code: "P09",
     id: "pressure.resonance_cage",
-    school: S3,
+    school: S5,
     name: "Resonance Cage",
     cooldown: 28,
     charge: 14,
@@ -4520,7 +6514,7 @@ var PRESSURE = [
   {
     code: "P10",
     id: "pressure.pressure_step",
-    school: S3,
+    school: S5,
     name: "Pressure Step",
     cooldown: 5,
     charge: 4,
@@ -4532,7 +6526,7 @@ var PRESSURE = [
   {
     code: "P11",
     id: "pressure.skyline_rail",
-    school: S3,
+    school: S5,
     name: "Skyline Pressure Rail",
     cooldown: 14,
     charge: 12,
@@ -4544,7 +6538,7 @@ var PRESSURE = [
   {
     code: "P12",
     id: "pressure.barometric_omniscience",
-    school: S3,
+    school: S5,
     name: "Barometric Omniscience",
     cooldown: 25,
     charge: 12,
@@ -4556,7 +6550,7 @@ var PRESSURE = [
   {
     code: "P13",
     id: "pressure.equilibrium_theft",
-    school: S3,
+    school: S5,
     name: "Equilibrium Theft",
     cooldown: 35,
     charge: 16,
@@ -4568,7 +6562,7 @@ var PRESSURE = [
   {
     code: "P14",
     id: "pressure.isobaric_citadel",
-    school: S3,
+    school: S5,
     name: "Isobaric Citadel",
     cooldown: 75,
     charge: 30,
@@ -4580,7 +6574,7 @@ var PRESSURE = [
   {
     code: "P15",
     id: "pressure.thousand_atmospheres",
-    school: S3,
+    school: S5,
     name: "Imperial Edict: Thousand Atmospheres",
     cooldown: 180,
     charge: 40,
@@ -4591,15 +6585,900 @@ var PRESSURE = [
   }
 ];
 
+// src/spells/prism_light/spells.ts
+var PE = COLORS.pearl;
+var CH = COLORS.champagne;
+var WT = COLORS.white;
+var WHITE_VARIANT = 7;
+function* dissolveLater3(fx, ticks, fade = 10) {
+  yield ticks;
+  fx?.dissolve(fade);
+}
+function glints(c, at, radius = 1, count = 1) {
+  c.particle("grimoire:spectral_glint", at, { radius, count, size: 1.2 });
+}
+function ray(c, a, b, variant = WHITE_VARIANT, size = 1) {
+  const fx = c.fx("grimoire:fx_pr_ray", a, { dir: sub(b, a), len: 0.05, variant, phase: 1, size });
+  fx?.length(dist(a, b));
+  return fx;
+}
+function primaryTarget2(c, range, around = 6) {
+  const a = c.aim(range);
+  if (a.entity && c.isEnemy(a.entity)) return a.entity;
+  return nearestEnemies(c, a.point, around, 1)[0];
+}
+function* sevenfoldVerdict(c) {
+  const a = c.aim(c.p("range"));
+  const goal = a.entity ? bodyCenter(a.entity) : a.point;
+  const at = add(c.origin, add(mul(flatNorm(c.dir), 0.8), v3(0, 1.6, 0)));
+  const prism = c.fx("grimoire:fx_pr_prism", at, { dir: sub(goal, at), phase: 1, size: c.area });
+  c.sound("grimoire.prism_light.glass", at, 1, 1);
+  yield 8;
+  prism?.phase(2);
+  c.sound("grimoire.prism_light.beam", at, 1, 1);
+  yield 8;
+  const side = rotY(flatNorm(sub(goal, at)), 90);
+  const ribbons = SPECTRUM.map((_, i) => ({
+    fx: c.fx("grimoire:fx_pr_ribbon", at, { dir: sub(goal, at), variant: i, phase: 1, size: c.area }),
+    ctrl: add(lerp(at, goal, 0.5), add(mul(side, (i - 3) * 3.2), v3(0, i % 2 ? 3 : -1.5, 0))),
+    start: 2 + i * 2,
+    done: false
+  }));
+  const T = 12;
+  for (let t = 0; t < T + 16; t++) {
+    ribbons.forEach((r, i) => {
+      if (r.done || t < r.start) return;
+      const k = Math.min(1, (t - r.start) / T);
+      const p = arcPoint(at, r.ctrl, a.entity?.isValid ? bodyCenter(a.entity) : goal, k);
+      const prev = r.fx?.location ?? at;
+      r.fx?.move(p).aim(sub(p, prev));
+      if (k >= 1) {
+        r.done = true;
+        for (const e of c.enemies(p, 1.6)) c.hit(e, c.p("damage"));
+        c.particle("grimoire:spectral_glint", p, { color: SPECTRUM[i], radius: 0.6, count: 0.6 });
+        r.fx?.dissolve(4);
+      }
+    });
+    yield 1;
+  }
+  const end = a.entity?.isValid ? bodyCenter(a.entity) : goal;
+  const star = c.fx("grimoire:fx_pr_star", end, { yaw: c.yaw, phase: 1, size: c.area });
+  c.sound("grimoire.prism_light.chime", end, 1.2, 1);
+  for (const e of c.enemies(end, c.p("starRadius"))) c.hit(e, c.p("starDamage"));
+  glints(c, end, 1.6, 2);
+  prism?.dissolve(10);
+  c.run(dissolveLater3(star, 14), "star");
+  yield 14;
+}
+function* totalInternalReflection(c) {
+  const target = primaryTarget2(c, c.p("range"));
+  const goal = target ? bodyCenter(target) : c.aim(c.p("range")).point;
+  const r = c.p("radius") * c.area;
+  const base = yawPitchOf(sub(c.player.location, goal)).yaw;
+  const angles = [35, -70, 110, -150, 175];
+  const route = [c.eye()];
+  const prisms = [];
+  for (let k = 0; k < c.p("prisms"); k++) {
+    let placed;
+    for (const sgn of [1, -1]) {
+      const p = add(goal, add(mul(rotY(v3(0, 0, 1), base + angles[k] * sgn), r), v3(0, 0.4 + k % 2 * 1.2, 0)));
+      const prev = route[route.length - 1];
+      if (freeDistance(c.dim, prev, sub(p, prev), dist(prev, p)) >= dist(prev, p) - 0.2) {
+        placed = p;
+        break;
+      }
+    }
+    if (!placed) continue;
+    route.push(placed);
+    const fx = c.fx("grimoire:fx_pr_tri", sub(placed, v3(0, 0.75, 0)), { yaw: base + k * 40, phase: 1, size: c.area });
+    if (fx) prisms.push(fx);
+    yield 2;
+  }
+  route.push(goal);
+  c.sound("grimoire.prism_light.glass", goal, 1, 1.2);
+  yield 6;
+  for (const p of prisms) p.phase(2);
+  for (let k = 0; k < route.length - 1; k++) {
+    const A = route[k], B = route[k + 1];
+    const last = k === route.length - 2;
+    const beam = ray(c, A, B, last ? 4 : WHITE_VARIANT, last ? 1.4 : 1);
+    c.run(dissolveLater3(beam, 18 - Math.min(10, k * 2), 6), "beam");
+    c.sound("grimoire.prism_light.beam", B, 0.7, 1 + k * 0.12);
+    for (const e of c.along(A, B, 0.8)) if (!last) c.hit(e, c.p("beamDamage"));
+    yield 3;
+  }
+  if (target?.isValid) {
+    c.hit(target, c.p("damage"), { immediate: true });
+    glints(c, bodyCenter(target), 1, 1.5);
+  }
+  for (const p of prisms) {
+    p.phase(3);
+    glints(c, p.location, 1.2, 1);
+  }
+  c.sound("grimoire.prism_light.shatter", goal, 1, 1.1);
+  yield 12;
+}
+function* causticBloom(c) {
+  const { point } = c.aimGround(c.p("range"));
+  const n = c.p("lenses");
+  const sets = [];
+  for (let k = 0; k < n; k++) {
+    const off = mul(rotY(v3(0, 0, 1), c.yaw + k * (360 / n)), c.p("spread"));
+    const g = c.ground(add(point, off), 10);
+    sets.push({
+      pos: g,
+      lens: c.fx("grimoire:fx_pr_lens", add(g, v3(0, 9, 0)), { phase: 1, size: c.area }),
+      flower: c.fx("grimoire:fx_pr_caustic", add(g, v3(0, 0.05, 0)), { phase: 1, size: c.area })
+    });
+  }
+  c.sound("grimoire.prism_light.hum", point, 1.2, 1);
+  yield 12;
+  const targets = nearestEnemies(c, point, c.p("spread") + 8, n);
+  for (let t = 0; t < 40; t++) {
+    sets.forEach((s, k) => {
+      const tgt = targets[k % Math.max(1, targets.length)];
+      if (tgt?.isValid) s.pos = lerp(s.pos, c.ground(tgt.location, 4), 0.12);
+      s.flower?.move(add(s.pos, v3(0, 0.05, 0)));
+      s.lens?.move(add(s.pos, v3(0, 9, 0)));
+    });
+    yield 1;
+  }
+  for (let k = 0; k < n; k++) {
+    const s = sets[k];
+    s.flower?.phase(3);
+    c.sound("grimoire.prism_light.focus", s.pos, 1, 1 + k * 0.1);
+    yield 8;
+    c.particle("grimoire:glow_flash", add(s.pos, v3(0, 0.6, 0)), { color: CH, size: 3 });
+    c.particle("grimoire:light_motes", s.pos, { color: CH, color2: WT, radius: 1.5, count: 1 });
+    for (const e of c.enemies(s.pos, c.p("radius"))) c.hit(e, c.p("damage"));
+    s.flower?.dissolve(6);
+    yield 4;
+  }
+  for (const s of sets) s.lens?.dissolve(12);
+  yield 10;
+}
+function* fraunhoferLattice(c) {
+  const fwd = flatNorm(c.dir);
+  const origin = c.ground(add(c.player.location, mul(fwd, 2.5)), 6);
+  const grating = c.fx("grimoire:fx_pr_grating", origin, { yaw: c.yaw, phase: 1, size: 0.6 * c.area });
+  c.sound("grimoire.prism_light.sweep", origin, 1.2, 1);
+  yield 12;
+  const n = c.p("bands");
+  const spread = c.p("spread");
+  const L = c.p("length") * c.area;
+  const variants = [6, 4, 2, WHITE_VARIANT, 3, 1, 0];
+  const bands = [];
+  for (let k = 0; k < n; k++) {
+    bands.push(c.fx("grimoire:fx_pr_band", add(origin, v3(0, 0.05, 0)), { yaw: c.yaw + (k - (n - 1) / 2) * spread, len: L, variant: variants[k % 7], phase: 1 }));
+  }
+  const dur = c.p("duration") * 20;
+  const last = /* @__PURE__ */ new Map();
+  for (let t = 0; t < dur; t++) {
+    const swing = Math.sin(t / dur * Math.PI * 2) * (c.p("sweep") / 2);
+    const baseYaw = c.yaw + swing;
+    grating?.yaw(baseYaw);
+    bands.forEach((b, k) => b?.yaw(baseYaw + (k - (n - 1) / 2) * spread));
+    if (t % 4 === 0) {
+      for (const e of c.enemies(add(origin, mul(fwd, L / 2)), L / 2 + 2)) {
+        const rel = sub(e.location, origin);
+        const d = Math.hypot(rel.x, rel.z);
+        if (d > L || d < 0.5) continue;
+        const ang = yawPitchOf(rel).yaw;
+        const inBand = bands.some((_, k) => {
+          const by = baseYaw + (k - (n - 1) / 2) * spread;
+          return Math.abs((ang - by + 540) % 360 - 180) < spread * 0.28 + 57 / Math.max(1, d) * 0.6;
+        });
+        if (!inBand || t - (last.get(e.id) ?? -99) < 10) continue;
+        last.set(e.id, t);
+        c.hit(e, c.p("damage"));
+        glints(c, bodyCenter(e), 0.5, 0.5);
+      }
+    }
+    yield 1;
+  }
+  for (const b of bands) b?.dissolve(10);
+}
+function* brewstersVeil(c) {
+  const p = c.player;
+  const n = c.p("panels");
+  const panels = [];
+  for (let k = 0; k < n; k++) panels.push(c.fx("grimoire:fx_pr_panel", p.location, { yaw: c.yaw, phase: 1, size: c.area }));
+  c.sound("grimoire.prism_light.glass", p.location, 1, 0.9);
+  const front = (dir) => dot(flatNorm(dir), flatNorm(p.getViewDirection())) > 0.2;
+  c.ward({
+    label: "Brewster's Veil",
+    priority: 30,
+    protects: (e) => e.id === p.id,
+    absorb: (info) => {
+      const src = info.attacker ?? info.projectile;
+      if (!src || !front(sub(src.location, p.location))) return info.damage;
+      if (info.cause === "projectile") return 0;
+      return PHYSICAL_CAUSES.has(info.cause) ? info.damage * (1 - c.p("reduction")) : info.damage;
+    },
+    react: () => panels[1]?.pulse()
+  });
+  const seen = /* @__PURE__ */ new Set();
+  for (let t = 0; t < c.p("duration") * 20 && c.ok; t++) {
+    const yaw = p.getRotation().y;
+    const fwd = flatNorm(p.getViewDirection());
+    panels.forEach((fx, k) => {
+      const ang = (k - (n - 1) / 2) * 38;
+      const pos = add(p.location, mul(rotY(fwd, ang), 1.7));
+      fx?.move(pos).yaw(yaw + ang);
+    });
+    if (t % 2 === 0) {
+      for (const inc of hostileProjectiles(c, add(p.location, mul(fwd, 2)), 4, seen)) {
+        const to = sub(p.location, inc.e.location);
+        if (dot(inc.vel, to) <= 0 || !front(mul(to, -1))) continue;
+        seen.add(inc.e.id);
+        const side = Math.sign(dot(sub(inc.e.location, p.location), rotY(fwd, 90))) || 1;
+        redirect(inc, add(mul(rotY(fwd, 90), side), v3(0, 0.15, 0)), 0.8, p);
+        panels[side > 0 ? n - 1 : 0]?.pulse();
+        glints(c, inc.e.location, 0.8, 1);
+        c.sound("grimoire.prism_light.glass", inc.e.location, 0.7, 1.4);
+      }
+    }
+    yield 1;
+  }
+}
+function* parallaxDisplacement(c) {
+  const p = c.player;
+  const side = () => rotY(flatNorm(p.getViewDirection()), 90);
+  const falsePos = () => add(p.location, mul(side(), c.p("offset")));
+  const fx = c.fx("grimoire:fx_pr_rgb", falsePos(), { yaw: c.yaw, phase: 1 });
+  const decoy = spawnDecoy(c, falsePos());
+  c.sound("grimoire.prism_light.beam", p.location, 0.9, 1.3);
+  let hit2;
+  const ward = c.ward({
+    label: "Parallax Displacement",
+    priority: 70,
+    protects: (e) => e.id === p.id && !hit2,
+    absorb: (info) => {
+      if (hit2 || info.damage < 1 || !PHYSICAL_CAUSES.has(info.cause) && info.cause !== "magic") return info.damage;
+      hit2 = { from: info.attacker };
+      return 0;
+    }
+  });
+  yield 10;
+  fx?.phase(2);
+  for (let t = 0; t < c.p("duration") * 20 && c.ok && !hit2; t++) {
+    fx?.move(falsePos()).yaw(p.getRotation().y);
+    decoy?.move(falsePos());
+    if (t % 40 === 0) for (const e of c.enemies(p.location, 12)) lure(e, decoy);
+    yield 1;
+  }
+  if (!hit2) return;
+  ward.alive = false;
+  fx?.phase(3);
+  c.sound("grimoire.prism_light.shatter", p.location, 1.1, 1);
+  glints(c, add(p.location, v3(0, 1, 0)), 1.4, 1.5);
+  const away = hit2.from?.isValid ? flatNorm(sub(p.location, hit2.from.location)) : flatNorm(mul(p.getViewDirection(), -1));
+  for (const turn of [70, -70, 110, -110, 0]) {
+    const dest = safeSpot(c.dim, add(p.location, mul(rotY(away, turn), c.p("hop"))));
+    if (dest && segmentClear(c, add(p.location, v3(0, 0.2, 0)), add(dest, v3(0, 0.2, 0)))) {
+      try {
+        p.teleport(dest, { rotation: p.getRotation(), keepVelocity: false });
+      } catch {
+      }
+      break;
+    }
+  }
+  effect(p, "invisibility", 20, 0);
+  yield 12;
+}
+function* chromaticTurnstile(c) {
+  const { point } = c.aimGround(c.p("range"));
+  const R = c.p("radius") * c.area;
+  const n = c.p("gates");
+  const gates = [];
+  for (let k = 0; k < n; k++) {
+    const ang = c.yaw + k * (360 / n);
+    const at = c.ground(add(point, mul(rotY(v3(0, 0, 1), ang), R)), 8);
+    const out = ang + 90 + (k % 2 ? 25 : -25);
+    gates.push({ at, out, fx: c.fx("grimoire:fx_pr_gate", at, { yaw: out, variant: k % 7, phase: 1, size: c.area }), last: /* @__PURE__ */ new Map() });
+    yield 2;
+  }
+  c.sound("grimoire.prism_light.hum", point, 1.2, 1.1);
+  for (let t = 0; t < c.p("duration") * 20; t++) {
+    if (t % 2 === 0) {
+      for (const g of gates) {
+        const dir = rotY(v3(0, 0, 1), g.out);
+        const plane = rotY(dir, 90);
+        for (const e of c.enemies(g.at, 2.2)) {
+          const rel = sub(e.location, g.at);
+          if (Math.abs(dot(rel, plane)) > 1.5 * c.area || Math.abs(dot(rel, dir)) > 1.2) continue;
+          if (t - (g.last.get(e.id) ?? -99) < 20) continue;
+          g.last.set(e.id, t);
+          g.fx?.pulse();
+          drive(e, add(mul(dir, c.p("force") * 0.5), v3(0, 0.25, 0)));
+          effect(e, "slowness", 20, 1);
+          c.particle("grimoire:spectral_glint", bodyCenter(e), { color: SPECTRUM[gates.indexOf(g) % 7], radius: 0.6, count: 0.8 });
+          c.sound("grimoire.prism_light.glass", e.location, 0.6, 1.3);
+        }
+      }
+    }
+    yield 1;
+  }
+}
+function* kaleidoscopeTheater(c) {
+  const center = c.player.location;
+  const theater = c.fx("grimoire:fx_pr_kaleido", center, { yaw: c.yaw, phase: 1, size: c.p("radius") / 6 * c.area });
+  c.sound("grimoire.prism_light.hum", center, 1.3, 0.8);
+  yield 18;
+  theater?.phase(2);
+  const n = c.p("figures");
+  const figs = [];
+  for (let k = 0; k < n; k++) {
+    figs.push({ fx: c.fx("grimoire:fx_pr_figure", center, { yaw: c.yaw, phase: 1 }), decoy: spawnDecoy(c, center), slot: k });
+  }
+  let rot = c.yaw;
+  for (let t = 0; t < c.p("duration") * 20 && c.ok; t++) {
+    rot += 1.2;
+    if (t % 40 === 39) {
+      theater?.pulse();
+      for (const f of figs) {
+        f.slot = (f.slot + 2) % n;
+        f.fx?.pulse();
+      }
+      c.sound("grimoire.prism_light.chime", center, 0.8, 1.2);
+    }
+    figs.forEach((f) => {
+      const pos = c.ground(add(center, mul(rotY(v3(0, 0, 1), rot + f.slot * 360 / n), 3.6)), 4);
+      f.fx?.move(pos).yaw(c.player.getRotation().y + (f.slot % 2 ? 180 : 0));
+      f.decoy?.move(pos);
+    });
+    if (t % 30 === 5) {
+      for (const e of c.enemies(center, c.p("radius") + 8)) {
+        const nearest = figs.reduce((a, b) => hdist(a.fx?.location ?? center, e.location) < hdist(b.fx?.location ?? center, e.location) ? a : b);
+        lure(e, nearest.decoy);
+        if (e.typeId === "minecraft:player") effect(e, "blindness", 30, 0);
+      }
+    }
+    yield 1;
+  }
+}
+function* interferenceTapestry(c) {
+  const { point } = c.aimGround(c.p("range"));
+  const side = rotY(flatNorm(c.dir), 90);
+  const half = c.p("width") * c.area / 2;
+  const A = c.ground(add(point, mul(side, -half)), 8);
+  const B = c.ground(add(point, mul(side, half)), 8);
+  const ea = c.fx("grimoire:fx_pr_emitter", A, { phase: 1, size: c.area });
+  const eb = c.fx("grimoire:fx_pr_emitter", B, { phase: 1, size: c.area });
+  c.sound("grimoire.prism_light.hum", point, 1.2, 1.3);
+  yield 10;
+  const tap = c.fx("grimoire:fx_pr_tapestry", A, { dir: sub(B, A), len: dist(A, B), phase: 1, size: c.area });
+  const decoys = [spawnDecoy(c, A), spawnDecoy(c, B)];
+  yield 10;
+  const base = Math.min(A.y, B.y);
+  for (let t = 0; t < c.p("duration") * 20; t++) {
+    if (t % 10 === 0) {
+      const shift = t / 20 * 6 % 16;
+      const inVeil = (e) => {
+        const ab = sub(B, A);
+        const k = Math.max(0, Math.min(1, dot(sub(e.location, A), ab) / dot(ab, ab)));
+        const nearest = lerp(A, B, k);
+        return hdist(e.location, nearest) < 2.4 && e.location.y - base < 4.5;
+      };
+      const bright = (e) => (((e.location.y + bodyHeight(e) * 0.5 - base) * 16 - shift) % 16 + 16) % 16 < 8;
+      for (const e of c.enemies(point, half + 4)) {
+        if (!inVeil(e) || !bright(e)) continue;
+        effect(e, "weakness", 30, 1);
+        if (e.typeId === "minecraft:player") effect(e, "blindness", 30, 0);
+        else lure(e, decoys[t % 20 === 0 ? 0 : 1]);
+        glints(c, bodyCenter(e), 0.5, 0.5);
+      }
+      for (const a of alliesNear(c, point, half + 4)) if (inVeil(a) && !bright(a)) effect(a, "invisibility", 24, 0);
+    }
+    yield 1;
+  }
+  tap?.dissolve(12);
+  ea?.dissolve(12);
+  eb?.dissolve(12);
+}
+function* raylineStride(c) {
+  const p = c.player;
+  const fwd = flatNorm(c.dir);
+  const side = rotY(fwd, 90);
+  const feet = p.location;
+  const wanted = [add(feet, add(add(mul(fwd, 4), mul(side, 1.4)), v3(0, 0.6, 0))), add(feet, add(add(mul(fwd, 8), mul(side, -1.4)), v3(0, 0.6, 0))), add(feet, mul(fwd, c.p("range")))];
+  const route = [feet];
+  for (const w of wanted) {
+    const s = safeSpot(c.dim, w);
+    if (!s || !segmentClear(c, add(route[route.length - 1], v3(0, 0.1, 0)), add(s, v3(0, 0.1, 0)))) break;
+    route.push(s);
+  }
+  if (route.length < 2 || dist(route[route.length - 1], feet) < 3) throw new Fizzle("No clear light path");
+  const marks = route.slice(1, -1).map((m) => c.fx("grimoire:fx_pr_waypoint", add(m, v3(0, 1.4, 0)), { phase: 1 }));
+  for (let k = 0; k < route.length - 1; k++) {
+    const r = ray(c, add(route[k], v3(0, 1, 0)), add(route[k + 1], v3(0, 1, 0)), k === 0 ? WHITE_VARIANT : k * 2);
+    c.run(dissolveLater3(r, 16, 6), "path");
+  }
+  c.sound("grimoire.prism_light.beam", feet, 1, 1.3);
+  yield 4;
+  grantFallImmunity(p.id, 40);
+  const rot = p.getRotation();
+  let i = 0;
+  for (let k = 0; k < route.length - 1; k++) {
+    const A = route[k], B = route[k + 1];
+    const steps = Math.max(2, Math.ceil(dist(A, B) / 1.3));
+    for (let s = 1; s <= steps && c.ok; s++) {
+      const at = lerp(A, B, s / steps);
+      try {
+        p.teleport(at, { rotation: rot, keepVelocity: false });
+      } catch {
+        break;
+      }
+      if (i++ % 2 === 0) {
+        const after = c.fx("grimoire:fx_pr_afterimage", at, { yaw: rot.y, variant: i % 7, phase: 1 });
+        c.run(dissolveLater3(after, 8, 6), "after");
+      }
+      yield 1;
+    }
+  }
+  glints(c, add(p.location, v3(0, 1, 0)), 1, 1);
+  for (const m of marks) m?.dissolve(8);
+  yield 6;
+}
+function* iridescentSail(c) {
+  const p = c.player;
+  const fx = c.fx("grimoire:fx_pr_sail", p.location, { yaw: c.yaw, phase: 1 });
+  c.sound("grimoire.prism_light.sail", p.location, 1, 1);
+  for (let t = 0; t < c.p("duration") * 20 && c.ok; t++) {
+    fx?.follow(p).yaw(p.getRotation().y);
+    grantFallImmunity(p.id, 30);
+    if (!p.isOnGround) {
+      effect(p, "slow_falling", 12, 0);
+      if (t % 3 === 0) {
+        const look = flatNorm(p.getViewDirection());
+        drive(p, mul(look, c.p("glide") * 0.6));
+      }
+      if (t % 4 === 0) glints(c, add(p.location, v3(0, 2.4, 0)), 1.2, 0.4);
+    }
+    if (t === 10) fx?.phase(2);
+    yield 1;
+  }
+}
+function* spectralDiagnosis(c) {
+  const target = primaryTarget2(c, c.p("range"));
+  if (!target) throw new Fizzle("Nothing to analyse");
+  const at = add(c.eye(), add(mul(flatNorm(c.dir), 0.6), v3(0, 0.8, 0)));
+  const scope = c.fx("grimoire:fx_pr_spectroscope", at, { dir: sub(bodyCenter(target), at), len: 1, phase: 1 });
+  c.sound("grimoire.prism_light.scan", at, 1, 1);
+  yield 14;
+  scope?.phase(2);
+  for (let t = 0; t < 20 && target.isValid; t++) {
+    const tc = bodyCenter(target);
+    scope?.aim(sub(tc, at)).length(dist(at, tc) / 1);
+    if (t % 4 === 0) glints(c, tc, 0.6, 0.5);
+    yield 1;
+  }
+  if (!target.isValid) return;
+  scope?.phase(3);
+  c.sound("grimoire.prism_light.chime", at, 1, 1.4);
+  yield 16;
+  scope?.dissolve(10);
+  const ticks = c.p("duration") * 20;
+  markVulnerable(target, c.player.id, c.p("mult"), ticks);
+  c.onCleanup(() => clearVulnerable(target.id, c.player.id));
+  const mark = c.fx("grimoire:fx_pr_weakpoint", bodyCenter(target), { phase: 1, size: Math.max(0.7, bodyHeight(target) / 1.9) });
+  for (let t = 0; t < ticks && target.isValid; t++) {
+    mark?.follow(target, v3(0, bodyHeight(target) * 0.6, 0), 0);
+    yield 1;
+  }
+}
+function* whitepointBenediction(c) {
+  const p = c.player;
+  const fx = c.fx("grimoire:fx_pr_benediction", p.location, { yaw: c.yaw, phase: 1 });
+  c.sound("grimoire.prism_light.charge", p.location, 0.8, 1.2);
+  for (let t = 0; t < 10; t++) {
+    fx?.follow(p);
+    yield 1;
+  }
+  fx?.phase(2);
+  c.sound("grimoire.prism_light.hum", p.location, 1, 1.2);
+  for (let t = 0; t < 24; t++) {
+    fx?.follow(p);
+    yield 1;
+  }
+  fx?.phase(3);
+  c.sound("grimoire.prism_light.heal", p.location, 1.2, 1);
+  const pulses = c.p("pulses");
+  for (let k = 0; k < pulses; k++) {
+    for (const a of alliesNear(c, p.location, c.p("radius"))) {
+      healAndCleanse(a, c.p("heal") / pulses, k === 0);
+      c.particle("grimoire:light_motes", a.location, { color: PE, color2: CH, radius: 0.8, count: 0.8 });
+    }
+    c.particle("grimoire:glow_flash", add(p.location, v3(0, 1.5, 0)), { color: WT, size: 4 });
+    for (let t = 0; t < 10; t++) {
+      fx?.follow(p);
+      yield 1;
+    }
+  }
+  c.particle("grimoire:glass_sparkle", add(p.location, v3(0, 2, 0)), { radius: 2, count: 2, size: 1 });
+  fx?.phase(15);
+  yield 10;
+}
+function* chromaticObservatory(c) {
+  const { point } = c.aimGround(c.p("range"));
+  const R = c.p("radius") * c.area;
+  const apex = add(point, v3(0, c.p("height"), 0));
+  const obs = c.fx("grimoire:fx_pr_observatory", apex, { yaw: c.yaw, phase: 1, size: c.area });
+  c.fx("grimoire:fx_circle_pr", add(point, v3(0, 0.06, 0)), { size: c.p("allyRadius"), variant: 0, phase: 2 });
+  c.sound("grimoire.prism_light.crown", apex, 1.2, 1.2);
+  yield 30;
+  obs?.phase(2);
+  const focals = [];
+  for (let k = 0; k < c.p("focals"); k++) {
+    const at = c.ground(add(point, mul(rotY(v3(0, 0, 1), c.yaw + k * 120), R * 0.4)), 10);
+    focals.push({ pos: at, fx: c.fx("grimoire:fx_pr_focal", at, { phase: 1, size: c.area }) });
+  }
+  const total = c.p("duration") * 20;
+  for (let t = 0; t < total - 40; t++) {
+    const targets = nearestEnemies(c, point, R, focals.length);
+    focals.forEach((f, k) => {
+      const tgt = targets[k % Math.max(1, targets.length)];
+      if (tgt?.isValid) f.pos = lerp(f.pos, c.ground(tgt.location, 4), 0.14);
+      f.fx?.move(f.pos);
+    });
+    if (t % c.p("interval") === c.p("interval") - 1) {
+      for (const f of focals) {
+        f.fx?.pulse();
+        for (const e of c.enemies(f.pos, 2)) c.hit(e, c.p("focalDamage"));
+        c.particle("grimoire:glow_flash", add(f.pos, v3(0, 0.5, 0)), { color: CH, size: 3 });
+      }
+      c.sound("grimoire.prism_light.focus", point, 1, 1.2);
+    }
+    if (t % 20 === 0) {
+      for (const a of alliesNear(c, point, c.p("allyRadius"))) {
+        effect(a, "resistance", 30, 1);
+        effect(a, "regeneration", 30, 0);
+      }
+      c.particle("grimoire:light_motes", point, { color: PE, color2: CH, radius: c.p("allyRadius"), count: 1 });
+    }
+    yield 1;
+  }
+  obs?.phase(3);
+  for (const f of focals) f.fx?.dissolve(6);
+  c.sound("grimoire.prism_light.focus", apex, 1.5, 0.8);
+  yield 22;
+  obs?.phase(4);
+  const ill = c.fx("grimoire:fx_pr_illumination", add(point, v3(0, 0.2, 0)), { yaw: c.yaw, phase: 1, size: R / 10 * 1 });
+  c.sound("grimoire.prism_light.crown", point, 1.6, 1);
+  c.flash(point, R * 2, { r: 1, g: 0.98, b: 0.92 }, 0.12);
+  shock(c, point, R, c.p("finalDamage"), { knock: 0.9, up: 0.3, color: WT, color2: CH, minK: 0.55, particle: "grimoire:ring_h" });
+  c.run(dissolveLater3(ill, 30, 12), "illumination");
+  yield 30;
+}
+function segIntersect(a, b, c, d) {
+  const r = { x: b.x - a.x, z: b.z - a.z };
+  const s = { x: d.x - c.x, z: d.z - c.z };
+  const den = r.x * s.z - r.z * s.x;
+  if (Math.abs(den) < 1e-6) return void 0;
+  const t = ((c.x - a.x) * s.z - (c.z - a.z) * s.x) / den;
+  const u = ((c.x - a.x) * r.z - (c.z - a.z) * r.x) / den;
+  if (t <= 0.05 || t >= 0.95 || u <= 0.05 || u >= 0.95) return void 0;
+  return { x: a.x + r.x * t, y: a.y, z: a.z + r.z * t };
+}
+function* colorlessCoronation(c) {
+  const { point } = c.aimGround(c.p("range"));
+  const R = c.p("radius") * c.area;
+  const H = c.p("height");
+  const fogged = /* @__PURE__ */ new Set();
+  const fog = () => {
+    for (const pl of c.dim.getPlayers({ location: point, maxDistance: R + 6 })) {
+      if (fogged.has(pl.id)) continue;
+      fogged.add(pl.id);
+      try {
+        pl.runCommand("fog @s push grimoire:coronation grimoire_pr15");
+      } catch {
+      }
+    }
+  };
+  c.onCleanup(() => {
+    for (const id of fogged) {
+      try {
+        c.dim.getPlayers().find((x) => x.id === id)?.runCommand("fog @s remove grimoire_pr15");
+      } catch {
+      }
+    }
+  });
+  fog();
+  c.fx("grimoire:fx_circle_pr", add(point, v3(0, 0.06, 0)), { size: R * 0.8, variant: 2, phase: 1 });
+  const prisms = [];
+  for (let k = 0; k < 7; k++) {
+    const at = add(point, add(mul(rotY(v3(0, 0, 1), c.yaw + k * (360 / 7)), R * 0.72), v3(0, H, 0)));
+    prisms.push({ at, fx: c.fx("grimoire:fx_pr_colossus", at, { phase: 1, size: c.area }) });
+    yield 2;
+  }
+  const shaft = ray(c, add(point, v3(0, H + 16, 0)), add(point, v3(0, H, 0)), WHITE_VARIANT, 3);
+  c.sound("grimoire.prism_light.crown", point, 1.8, 0.7);
+  yield 16;
+  const curtains = [];
+  for (let k = 0; k < 7; k++) {
+    const ang = c.yaw + k * (360 / 7) + 25;
+    const a = c.ground(add(point, mul(rotY(v3(0, 0, 1), ang), R)), 12);
+    const b = c.ground(add(point, mul(rotY(v3(0, 0, 1), ang), -R * 0.6)), 12);
+    curtains.push({ a, b, fx: c.fx("grimoire:fx_pr_curtain", a, { dir: flatNorm(sub(b, a)), variant: k, phase: 1, size: 0.5 * c.area }), hit: /* @__PURE__ */ new Set() });
+  }
+  for (let t = 0; t < 60; t++) {
+    curtains.forEach((cu, k) => {
+      const kk = Math.max(0, Math.min(1, (t - k * 3) / 45));
+      const pos = lerp(cu.a, cu.b, kk);
+      cu.fx?.move(pos);
+      for (const e of c.enemies(pos, 3)) {
+        if (cu.hit.has(e.id)) continue;
+        cu.hit.add(e.id);
+        c.hit(e, c.p("curtainDamage"));
+        c.particle("grimoire:spectral_glint", bodyCenter(e), { color: SPECTRUM[k], radius: 0.6, count: 0.6 });
+      }
+    });
+    if (t % 10 === 0) fog();
+    yield 1;
+  }
+  for (const cu of curtains) cu.fx?.dissolve(10);
+  for (const p of prisms) p.fx?.phase(2);
+  c.sound("grimoire.prism_light.sweep", point, 1.6, 0.8);
+  for (let wave = 0; wave < 3 && c.ok; wave++) {
+    const chords = [];
+    for (let k = 0; k < 7; k++) {
+      const a = prisms[k].at, b = prisms[(k + 3 + wave) % 7].at;
+      chords.push([a, b]);
+      const r = ray(c, a, b, k, 1.4);
+      c.run(dissolveLater3(r, 24, 6), "chord");
+    }
+    const crossings = [];
+    for (let i = 0; i < 7 && crossings.length < 7; i++)
+      for (let j = i + 1; j < 7 && crossings.length < 7; j++) {
+        const x = segIntersect(chords[i][0], chords[i][1], chords[j][0], chords[j][1]);
+        if (x && crossings.every((q) => hdist(q, x) > 3)) crossings.push(x);
+      }
+    yield 8;
+    for (const x of crossings) {
+      const g = c.ground(x, 20);
+      const fl = c.fx("grimoire:fx_pr_flower", g, { yaw: Math.random() * 360, phase: 1, size: c.area });
+      c.run((function* () {
+        yield 12;
+        fl?.phase(3);
+        yield 10;
+        fl?.dissolve(6);
+      })(), "flower");
+      for (const e of c.enemies(g, 3)) c.hit(e, c.p("bloomDamage"));
+      glints(c, add(g, v3(0, 1.5, 0)), 1.6, 1);
+    }
+    c.sound("grimoire.prism_light.chime", point, 1.3, 0.9 + wave * 0.15);
+    fog();
+    yield 22;
+  }
+  for (const p of prisms) p.fx?.phase(3);
+  for (const p of prisms) {
+    const back = ray(c, p.at, add(point, v3(0, H, 0)), prisms.indexOf(p), 1.2);
+    c.run(dissolveLater3(back, 18, 6), "return");
+  }
+  yield 16;
+  const crown = c.fx("grimoire:fx_pr_crown", add(point, v3(0, H, 0)), { yaw: c.yaw, phase: 1, size: c.area });
+  c.sound("grimoire.prism_light.crown", point, 2, 1);
+  yield 34;
+  crown?.phase(2);
+  shaft?.dissolve(10);
+  c.sound("grimoire.prism_light.focus", point, 1.8, 0.7);
+  yield 20;
+  const bloom = c.fx("grimoire:fx_pr_bloom", point, { yaw: c.yaw, phase: 1, size: R / 12 * 1 });
+  c.flash(point, R * 2.5, { r: 1, g: 1, b: 1 }, 0.25);
+  c.shake(point, R * 3, 0.7, 1);
+  shock(c, point, R * 0.65, c.p("finalDamage"), { knock: 1.2, up: 0.5, color: WT, color2: CH, minK: 0.6, particle: "grimoire:ring_h" });
+  yield 24;
+  bloom?.phase(3);
+  crown?.phase(3);
+  yield 18;
+  for (const p of prisms) p.fx?.dissolve(10);
+  c.particle("grimoire:glass_sparkle", add(point, v3(0, H, 0)), { radius: R * 0.5, count: 3, size: 1.4 });
+  crown?.dissolve(14);
+  bloom?.dissolve(10);
+  yield 16;
+}
+
+// src/spells/prism_light/index.ts
+var S6 = "prism_light";
+var PRISM_LIGHT = [
+  {
+    code: "PR01",
+    id: "prism_light.sevenfold_verdict",
+    school: S6,
+    name: "Sevenfold Verdict",
+    cooldown: 7,
+    charge: 10,
+    enhanceable: true,
+    params: { damage: 3, starDamage: 10, starRadius: 3, range: 30 },
+    blurb: "A prism splits one white beam into seven ribbons that strike from seven sides, then converge in a star.",
+    cast: sevenfoldVerdict
+  },
+  {
+    code: "PR02",
+    id: "prism_light.total_internal_reflection",
+    school: S6,
+    name: "Total Internal Reflection",
+    cooldown: 13,
+    charge: 12,
+    enhanceable: true,
+    params: { prisms: 5, radius: 4.5, damage: 14, beamDamage: 3, range: 28 },
+    blurb: "A beam zigzags through a ring of prisms and leaves toward the target from an unexpected angle.",
+    cast: totalInternalReflection
+  },
+  {
+    code: "PR03",
+    id: "prism_light.caustic_bloom",
+    school: S6,
+    name: "Caustic Bloom",
+    cooldown: 19,
+    charge: 16,
+    enhanceable: true,
+    params: { lenses: 3, damage: 9, radius: 2.6, range: 28, spread: 5 },
+    blurb: "Giant lenses cast flower-shaped caustics that hunt enemies, then contract into burning focal points.",
+    cast: causticBloom
+  },
+  {
+    code: "PR04",
+    id: "prism_light.fraunhofer_lattice",
+    school: S6,
+    name: "Fraunhofer Lattice",
+    cooldown: 26,
+    charge: 18,
+    enhanceable: true,
+    params: { bands: 7, damage: 7, length: 14, spread: 9, duration: 5, sweep: 60 },
+    blurb: "A diffraction grating fans bright spectral bands across the field; the dark gaps between are safe.",
+    cast: fraunhoferLattice
+  },
+  {
+    code: "PR05",
+    id: "prism_light.brewsters_veil",
+    school: S6,
+    name: "Brewster's Veil",
+    cooldown: 27,
+    charge: 12,
+    enhanceable: true,
+    params: { duration: 15, panels: 3, reduction: 0.4 },
+    blurb: "Polarising panels in front of you turn projectiles aside along their edges.",
+    cast: brewstersVeil
+  },
+  {
+    code: "PR06",
+    id: "prism_light.parallax_displacement",
+    school: S6,
+    name: "Parallax Displacement",
+    cooldown: 32,
+    charge: 12,
+    enhanceable: true,
+    params: { duration: 20, offset: 1.6, hop: 4 },
+    blurb: "Your image splits into red, green and blue at a false position; the first blow shatters it and you slip away.",
+    cast: parallaxDisplacement
+  },
+  {
+    code: "PR07",
+    id: "prism_light.chromatic_turnstile",
+    school: S6,
+    name: "Chromatic Turnstile",
+    cooldown: 35,
+    charge: 18,
+    enhanceable: true,
+    params: { gates: 7, radius: 8, duration: 15, force: 1.3, range: 26 },
+    blurb: "Seven prism gates refract enemies who pass through them along their marked direction.",
+    cast: chromaticTurnstile
+  },
+  {
+    code: "PR08",
+    id: "prism_light.kaleidoscope_theater",
+    school: S6,
+    name: "Kaleidoscope Theater",
+    cooldown: 40,
+    charge: 20,
+    enhanceable: true,
+    params: { duration: 14, figures: 6, radius: 6 },
+    blurb: "A kaleidoscope of mirrors multiplies your image; enemies turn on the reflections.",
+    cast: kaleidoscopeTheater
+  },
+  {
+    code: "PR09",
+    id: "prism_light.interference_tapestry",
+    school: S6,
+    name: "Interference Tapestry",
+    cooldown: 43,
+    charge: 20,
+    enhanceable: true,
+    params: { width: 14, duration: 15, range: 24 },
+    blurb: "Two coherent light fields weave a veil of bright and dark bands: bright blinds, dark conceals.",
+    cast: interferenceTapestry
+  },
+  {
+    code: "PR10",
+    id: "prism_light.rayline_stride",
+    school: S6,
+    name: "Rayline Stride",
+    cooldown: 9,
+    charge: 6,
+    enhanceable: false,
+    params: { range: 11 },
+    blurb: "Two floating prisms bend a light path ahead; you race along it in colour-separated afterimages.",
+    cast: raylineStride
+  },
+  {
+    code: "PR11",
+    id: "prism_light.iridescent_sail",
+    school: S6,
+    name: "Iridescent Sail",
+    cooldown: 20,
+    charge: 12,
+    enhanceable: false,
+    params: { duration: 15, glide: 0.32 },
+    blurb: "An iridescent delta sail lets you glide where you look and fall softly for 15 seconds.",
+    cast: iridescentSail
+  },
+  {
+    code: "PR12",
+    id: "prism_light.spectral_diagnosis",
+    school: S6,
+    name: "Spectral Diagnosis",
+    cooldown: 48,
+    charge: 18,
+    enhanceable: false,
+    params: { duration: 15, mult: 1.35, range: 28 },
+    blurb: "A spectroscope analyses the target and marks a weak point: you and your allies deal more damage to it.",
+    cast: spectralDiagnosis
+  },
+  {
+    code: "PR13",
+    id: "prism_light.whitepoint_benediction",
+    school: S6,
+    name: "Whitepoint Benediction",
+    cooldown: 55,
+    charge: 20,
+    enhanceable: false,
+    params: { radius: 8, heal: 10, pulses: 3 },
+    blurb: "Seven spectral ribbons recombine into white light that heals and cleanses you and nearby allies.",
+    cast: whitepointBenediction
+  },
+  {
+    code: "PR14",
+    id: "prism_light.chromatic_observatory",
+    school: S6,
+    name: "Grand Magic: The Chromatic Observatory",
+    cooldown: 90,
+    charge: 30,
+    enhanceable: true,
+    params: { radius: 12, duration: 20, focalDamage: 9, focals: 3, interval: 30, finalDamage: 26, height: 10, range: 24, allyRadius: 4 },
+    blurb: "A floating optical observatory hunts enemies with focal points and ends in one geometric illumination.",
+    cast: chromaticObservatory
+  },
+  {
+    code: "PR15",
+    id: "prism_light.colorless_coronation",
+    school: S6,
+    name: "Imperial Edict: The Colorless Coronation",
+    cooldown: 180,
+    charge: 40,
+    enhanceable: true,
+    params: { radius: 16, range: 40, curtainDamage: 8, bloomDamage: 10, finalDamage: 40, height: 14 },
+    blurb: "White light is unwoven into seven curtains, refracted across the field, then crowned back into pure white.",
+    cast: colorlessCoronation
+  }
+];
+
 // src/spells/registry.ts
-var BY_SCHOOL = { pressure: PRESSURE, ice: ICE2, blood: BLOOD };
+var BY_SCHOOL = {
+  pressure: PRESSURE,
+  ice: ICE2,
+  blood: BLOOD,
+  plasma: PLASMA,
+  darkness: DARKNESS,
+  prism_light: PRISM_LIGHT
+};
 var BY_ID = /* @__PURE__ */ new Map();
 for (const s of SCHOOLS) {
   const list = BY_SCHOOL[s];
   if (list.length !== 15) throw new Error(`${s} grimoire must contain exactly 15 spells, has ${list.length}`);
   list.forEach((sp, i) => {
     if (sp.school !== s) throw new Error(`${sp.code} is registered in the wrong grimoire`);
-    const expected = `${s[0].toUpperCase()}${String(i + 1).padStart(2, "0")}`;
+    const expected = `${CODE_PREFIX[s]}${String(i + 1).padStart(2, "0")}`;
     if (sp.code !== expected) throw new Error(`spell order mismatch: ${sp.code} at position ${expected}`);
     if (BY_ID.has(sp.id)) throw new Error(`duplicate spell id ${sp.id}`);
     BY_ID.set(sp.id, sp);
@@ -4613,18 +7492,21 @@ function spellById(id) {
   return BY_ID.get(id);
 }
 function allSpells() {
-  return [...PRESSURE, ...ICE2, ...BLOOD];
+  return SCHOOLS.flatMap((s) => BY_SCHOOL[s]);
 }
 function spellsOf(school) {
   return BY_SCHOOL[school];
 }
 
 // src/core/hud.ts
-import { system as system11 } from "@minecraft/server";
+import { system as system13 } from "@minecraft/server";
 var GLYPH = {
   pressure: "\uE500",
   ice: "\uE501",
   blood: "\uE502",
+  plasma: "\uE509",
+  darkness: "\uE50A",
+  prism_light: "\uE50B",
   barFull: "\uE503",
   barEmpty: "\uE504",
   ready: "\uE505",
@@ -4640,7 +7522,7 @@ function bar(k, n = 10) {
   return GLYPH.barFull.repeat(full) + GLYPH.barEmpty.repeat(n - full);
 }
 function renderHud(p, st, school) {
-  const now = system11.currentTick;
+  const now = system13.currentTick;
   const idx = st.selected[school];
   const spell = spellAt(school, idx);
   const col = schoolColor(school);
@@ -4691,9 +7573,27 @@ var sigils = /* @__PURE__ */ new Map();
 var RELEASE_COLORS = {
   pressure: [COLORS.orange, COLORS.gold],
   ice: [COLORS.ice, COLORS.white],
-  blood: [COLORS.crimson, COLORS.redgold]
+  blood: [COLORS.crimson, COLORS.redgold],
+  plasma: [COLORS.violet, COLORS.whitehot],
+  darkness: [COLORS.emerald, COLORS.jade],
+  prism_light: [COLORS.pearl, COLORS.champagne]
 };
-var SIGIL = { pressure: "grimoire:fx_sigil_p", ice: "grimoire:fx_sigil_i", blood: "grimoire:fx_sigil_b" };
+var SIGIL = {
+  pressure: "grimoire:fx_sigil_p",
+  ice: "grimoire:fx_sigil_i",
+  blood: "grimoire:fx_sigil_b",
+  plasma: "grimoire:fx_sigil_pl",
+  darkness: "grimoire:fx_sigil_d",
+  prism_light: "grimoire:fx_sigil_pr"
+};
+var CHARGE_COLORS = {
+  pressure: COLORS.orange,
+  ice: COLORS.ice,
+  blood: COLORS.crimson,
+  plasma: COLORS.magenta,
+  darkness: COLORS.jade,
+  prism_light: COLORS.pearl
+};
 function endSigil(playerId, flare) {
   const s = sigils.get(playerId);
   sigils.delete(playerId);
@@ -4701,7 +7601,7 @@ function endSigil(playerId, flare) {
   if (flare) {
     s.phase(3);
     s.size(2.2);
-    system12.runTimeout(() => s.dissolve(8), 5);
+    system14.runTimeout(() => s.dissolve(8), 5);
   } else s.dissolve(6);
 }
 function cancelPrep(p, st, reason) {
@@ -4767,7 +7667,7 @@ function onStartUse(p, item) {
     slot: p.selectedSlotIndex,
     itemType: item.typeId,
     dimensionId: p.dimension.id,
-    startTick: system12.currentTick,
+    startTick: system14.currentTick,
     readyAnnounced: false
   };
   st.hudKey = "";
@@ -4815,7 +7715,7 @@ function tickPreparation(p, st) {
     cancelPrep(p, st, void 0);
     return;
   }
-  const t = system12.currentTick - prep.startTick;
+  const t = system14.currentTick - prep.startTick;
   const k = Math.min(1, t / Math.max(1, spell.charge));
   const sig = sigils.get(p.id);
   if (sig) {
@@ -4827,7 +7727,7 @@ function tickPreparation(p, st) {
     const head = p.getHeadLocation();
     const dir = p.getViewDirection();
     const at = { x: head.x + dir.x * 0.9, y: head.y - 0.35 + dir.y * 0.9, z: head.z + dir.z * 0.9 };
-    const c = prep.school === "pressure" ? COLORS.orange : prep.school === "ice" ? COLORS.ice : COLORS.crimson;
+    const c = CHARGE_COLORS[prep.school];
     particle(p.dimension, `grimoire:${prep.school}_charge`, at, { color: c, size: 0.4 + k * 0.6, radius: 1.4 - k * 0.8 });
   }
   if (t % 20 === 0 && t > 0) {
@@ -4863,7 +7763,7 @@ function onReleaseUse(p) {
     scope?.cleanup();
     return;
   }
-  const held = system12.currentTick - prep.startTick;
+  const held = system14.currentTick - prep.startTick;
   if (held < spell.charge) {
     scope?.cleanup(6);
     flash2(st, `\xA77Hold longer to prepare \xA7f${spell.name}`, 40);
@@ -4884,7 +7784,7 @@ function onCompleteUse(p) {
   if (st.prep) cancelPrep(p, st, "Preparation expired (release to cast)");
 }
 function activate(p, st, spell, scope) {
-  const now = system12.currentTick;
+  const now = system14.currentTick;
   const empowered = spell.enhanceable && !!st.empowered && st.empowered.until > now;
   const ctx = new Cast(p, spell, empowered ? EMPOWER : 1, empowered);
   if (scope) ctx.adopted = scope.adopt();
@@ -4938,16 +7838,16 @@ function* emptyRoutine() {
 }
 
 // src/core/diagnostics.ts
-import { system as system13, world as world9 } from "@minecraft/server";
+import { system as system15, world as world9 } from "@minecraft/server";
 function reply(payload) {
   const text = JSON.stringify(payload);
-  system13.sendScriptEvent("grimoire:debug_reply", text);
+  system15.sendScriptEvent("grimoire:debug_reply", text);
 }
 function findPlayer(name) {
   return world9.getAllPlayers().find((p) => p.name === name);
 }
 function initDiagnostics() {
-  system13.afterEvents.scriptEventReceive.subscribe(
+  system15.afterEvents.scriptEventReceive.subscribe(
     (e) => {
       if (e.id === "grimoire:config") {
         const [rule, value] = e.message.trim().split(/\s+/);
@@ -4969,14 +7869,14 @@ function initDiagnostics() {
         reply({
           kind: "state",
           name,
-          tick: system13.currentTick,
+          tick: system15.currentTick,
           selected: st.selected,
           cooldowns,
-          preparing: st.prep ? { spell: st.prep.spellId, ticks: system13.currentTick - st.prep.startTick } : null,
-          empowered: !!st.empowered && st.empowered.until > system13.currentTick
+          preparing: st.prep ? { spell: st.prep.spellId, ticks: system15.currentTick - st.prep.startTick } : null,
+          empowered: !!st.empowered && st.empowered.until > system15.currentTick
         });
       } else if (cmd === "world") {
-        reply({ kind: "world", tick: system13.currentTick, fx: fxCount(), tempBlocks: liveTempBlocks(), routines: activeRoutines().map((r) => r.label) });
+        reply({ kind: "world", tick: system15.currentTick, fx: fxCount(), tempBlocks: liveTempBlocks(), routines: activeRoutines().map((r) => r.label) });
       } else if (cmd === "reset") {
         const p = findPlayer(name);
         if (!p) return;
@@ -4991,22 +7891,22 @@ function initDiagnostics() {
 }
 
 // src/main.ts
-system14.beforeEvents.startup.subscribe((ev) => {
+system16.beforeEvents.startup.subscribe((ev) => {
   registerBlockComponents(ev);
   const reg = ev.customCommandRegistry;
-  reg.registerEnum("grimoire:book", ["pressure", "ice", "blood", "all"]);
+  reg.registerEnum("grimoire:book", ["pressure", "ice", "blood", "plasma", "darkness", "prism_light", "all"]);
   reg.registerCommand(
     {
       name: "grimoire:getbook",
-      description: "Give yourself a Grimoire (pressure, ice, blood or all).",
+      description: "Give yourself a Grimoire (pressure, ice, blood, plasma, darkness, prism_light or all).",
       permissionLevel: CommandPermissionLevel.GameDirectors,
       optionalParameters: [{ name: "grimoire:book", type: CustomCommandParamType.Enum }]
     },
     (origin, book) => {
       const p = origin.sourceEntity;
-      if (!(p instanceof Player11)) return { status: CustomCommandStatus.Failure, message: "Run this as a player." };
+      if (!(p instanceof Player12)) return { status: CustomCommandStatus.Failure, message: "Run this as a player." };
       const which = !book || book === "all" ? SCHOOLS : [book];
-      system14.run(() => {
+      system16.run(() => {
         const inv = p.getComponent("minecraft:inventory")?.container;
         for (const s of which) inv?.addItem(new ItemStack2(GRIMOIRE_ITEMS[s], 1));
       });
@@ -5026,7 +7926,7 @@ system14.beforeEvents.startup.subscribe((ev) => {
     (_o, rule, value) => {
       if (!rule || value === void 0) return { status: CustomCommandStatus.Success, message: JSON.stringify(rules()) };
       let msg = "";
-      system14.run(() => {
+      system16.run(() => {
         msg = setRule(rule, value);
         world10.sendMessage(`\xA76[Grimoire]\xA7r ${msg}`);
       });
@@ -5042,8 +7942,8 @@ system14.beforeEvents.startup.subscribe((ev) => {
     },
     (origin) => {
       const p = origin.sourceEntity;
-      if (!(p instanceof Player11)) return { status: CustomCommandStatus.Failure, message: "Run this as a player." };
-      system14.run(() => {
+      if (!(p instanceof Player12)) return { status: CustomCommandStatus.Failure, message: "Run this as a player." };
+      system16.run(() => {
         const st = stateOf(p);
         clearCooldowns(st);
         save(p, st);
@@ -5059,8 +7959,8 @@ system14.beforeEvents.startup.subscribe((ev) => {
     },
     (origin) => {
       const p = origin.sourceEntity;
-      if (!(p instanceof Player11)) return { status: CustomCommandStatus.Failure };
-      system14.run(() => showGuide(p));
+      if (!(p instanceof Player12)) return { status: CustomCommandStatus.Failure };
+      system16.run(() => showGuide(p));
       return { status: CustomCommandStatus.Success };
     }
   );
@@ -5088,13 +7988,13 @@ world10.afterEvents.itemCompleteUse.subscribe((e) => {
 });
 world10.afterEvents.entityStartSneaking.subscribe(
   (e) => {
-    if (e.entity instanceof Player11) onSneakEdge(e.entity, true);
+    if (e.entity instanceof Player12) onSneakEdge(e.entity, true);
   },
   { entityFilter: { type: "minecraft:player" } }
 );
 world10.afterEvents.entityStopSneaking.subscribe(
   (e) => {
-    if (e.entity instanceof Player11) onSneakEdge(e.entity, false);
+    if (e.entity instanceof Player12) onSneakEdge(e.entity, false);
   },
   { entityFilter: { type: "minecraft:player" } }
 );
@@ -5102,7 +8002,7 @@ world10.afterEvents.playerSpawn.subscribe((e) => {
   const st = stateOf(e.player);
   st.sneaking = e.player.isSneaking;
   if (e.initialSpawn) {
-    system14.runTimeout(() => {
+    system16.runTimeout(() => {
       if (!e.player.isValid) return;
       e.player.sendMessage("\xA76[Grimoire]\xA7r \xA77Hold a Grimoire: \xA7eCrouch\xA77 to select, \xA7eHold Use\xA77 standing to prepare, \xA7eRelease\xA77 to cast. \xA78/grimoire:guide");
     }, 60);
@@ -5110,6 +8010,7 @@ world10.afterEvents.playerSpawn.subscribe((e) => {
 });
 function endPlayer(id, reason) {
   cancelOwned(id, reason);
+  clearVulnerableOf(id);
   endBindsOf(id);
   removeWardsOf(id);
   removeAllFxOf(id);
@@ -5123,7 +8024,7 @@ world10.beforeEvents.playerLeave.subscribe((e) => {
     save(p, st);
   } catch {
   }
-  system14.run(() => {
+  system16.run(() => {
     endPlayer(id, "owner left");
     forget(id);
     lastDimension.delete(id);
@@ -5140,7 +8041,7 @@ world10.afterEvents.playerDimensionChange.subscribe((e) => {
 });
 world10.afterEvents.entityDie.subscribe((e) => {
   const d = e.deadEntity;
-  if (d instanceof Player11) {
+  if (d instanceof Player12) {
     cancelPreparation(d);
   }
 });
@@ -5148,6 +8049,7 @@ world10.afterEvents.entityHurt.subscribe((e) => {
   const victim = e.hurtEntity;
   const attacker = e.damageSource.damagingEntity;
   if (attacker && victim.isValid && (victim.typeId === "minecraft:player" || victim.hasTag("grimoire_summon"))) noteAggressor(victim, attacker);
+  if (victim.isValid) vulnerabilityBonus(victim, e.damage, attacker);
 });
 function sweepStale(e) {
   try {
@@ -5174,8 +8076,8 @@ world10.afterEvents.worldLoad.subscribe(() => {
 initDefense();
 initHooks();
 initDiagnostics();
-system14.runInterval(() => {
-  const now = system14.currentTick;
+system16.runInterval(() => {
+  const now = system16.currentTick;
   tickRoutines(now);
   tickBinds(now);
   flushDamage(now);

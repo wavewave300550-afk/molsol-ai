@@ -16,5 +16,11 @@
   "atlas_tile": "grimoire_blood_thornwall",
   "ticks_per_frame": 3,
   "blend_frames": true
+ },
+ {
+  "flipbook_texture": "textures/blocks/grimoire/shadow_step",
+  "atlas_tile": "grimoire_shadow_step",
+  "ticks_per_frame": 3,
+  "blend_frames": true
  }
 ]

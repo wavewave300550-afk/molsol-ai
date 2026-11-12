@@ -1,0 +1,143 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_pl_molt.form": {
+   "animation_length": 0.5,
+   "bones": {
+    "shell": {
+     "scale": {
+      "0.0": [
+       1.4,
+       1.4,
+       1.4
+      ],
+      "0.5": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_molt.idle": {
+   "loop": true,
+   "bones": {
+    "shell": {
+     "scale": [
+      "1 + math.sin(q.life_time * 2520 + 0.0) * 0.012",
+      "1 + math.sin(q.life_time * 2520 + 0.0) * 0.012",
+      "1 + math.sin(q.life_time * 2520 + 0.0) * 0.012"
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_molt.molt": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.8,
+   "bones": {
+    "shell": {
+     "position": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.8": [
+       0.0,
+       2.0,
+       10.0
+      ]
+     },
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.25": [
+       1.25,
+       1.25,
+       1.25
+      ],
+      "0.8": [
+       2.4,
+       2.4,
+       2.4
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.8": [
+       0.0,
+       25.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_molt.dissolve": {
+   "animation_length": 0.7,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       1.06,
+       1.06,
+       1.06
+      ],
+      "0.5": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       40.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_molt.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

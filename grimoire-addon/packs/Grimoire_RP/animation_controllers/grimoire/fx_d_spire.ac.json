@@ -1,0 +1,49 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.grimoire.fx_d_spire": {
+   "initial_state": "p0",
+   "states": {
+    "p0": {
+     "transitions": [
+      {
+       "p1": "q.property('grimoire:phase') == 1"
+      },
+      {
+       "p15": "q.property('grimoire:phase') == 15"
+      }
+     ],
+     "blend_transition": 0.12
+    },
+    "p1": {
+     "transitions": [
+      {
+       "p0": "q.property('grimoire:phase') == 0"
+      },
+      {
+       "p15": "q.property('grimoire:phase') == 15"
+      }
+     ],
+     "blend_transition": 0.12,
+     "animations": [
+      "unfold"
+     ]
+    },
+    "p15": {
+     "transitions": [
+      {
+       "p0": "q.property('grimoire:phase') == 0"
+      },
+      {
+       "p1": "q.property('grimoire:phase') == 1"
+      }
+     ],
+     "blend_transition": 0.12,
+     "animations": [
+      "dissolve"
+     ]
+    }
+   }
+  }
+ }
+}

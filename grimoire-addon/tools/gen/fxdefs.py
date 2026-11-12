@@ -55,6 +55,7 @@ class Fx:
         self.images = {}  # rp-relative path (no extension) -> RGBA array, saved at write time
         self.center = center
         self.components = components or {}
+        self.tints = None  # list of RGB multipliers -> one texture variant each (selected by grimoire:variant)
         REGISTRY.append(self)
 
     # ---------------------------------------------------------------- model helpers
@@ -188,8 +189,25 @@ class Fx:
             },
         }
 
+    def apply_tints(self):
+        """Tinted copies of the atlas: only bright, unsaturated (white light / glass) texels take the colour,
+        metal frames and dark parts keep theirs."""
+        import numpy as np
+        base = self.model.atlas.img
+        rgb = base[..., :3]
+        mask = ((rgb.min(-1) > 165) & (rgb.max(-1) - rgb.min(-1) < 70))[..., None]
+        self.variants = []
+        for i, t in enumerate(self.tints):
+            arr = base.copy()
+            arr[..., :3] = np.where(mask, np.clip(rgb * np.array(t, np.float32), 0, 255), rgb)
+            rel = f"textures/entity/grimoire/{self.name}_t{i}"
+            self.images[rel] = arr
+            self.variants.append(rel)
+
     def write(self, rp, bp):
         self.finalize()
+        if self.tints:
+            self.apply_tints()
         os.makedirs(f"{rp}/models/entity/grimoire", exist_ok=True)
         os.makedirs(f"{rp}/textures/entity/grimoire", exist_ok=True)
         os.makedirs(f"{rp}/animations/grimoire", exist_ok=True)

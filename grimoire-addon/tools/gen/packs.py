@@ -13,7 +13,7 @@ RP_UUID = "bfec4fe7-3e6a-47d3-b8c3-f667105b9234"
 RP_RES_UUID = "f87b2246-6194-4786-9b07-769dc75fb7de"
 
 NAME = "Grimoire: Imperial Magic"
-DESC = "Three Grimoires (Pressure, Ice, Blood) with 15 spells each. No mana - only cooldowns. Crouch to select, hold Use to prepare, release to cast."
+DESC = "Six Grimoires (Pressure, Ice, Blood, Plasma, Darkness, Prism Light) with 15 spells each. No mana - only cooldowns. Crouch to select, hold Use to prepare, release to cast."
 
 
 def manifests(bp, rp):
@@ -43,6 +43,9 @@ SCHOOL_TEXT = {
     "pressure": ("Pressure Grimoire", "gold"),
     "ice": ("Ice Grimoire", "aqua"),
     "blood": ("Blood Grimoire", "red"),
+    "plasma": ("Plasma Grimoire", "light_purple"),
+    "darkness": ("Darkness Grimoire", "dark_green"),
+    "prism_light": ("Prism Light Grimoire", "white"),
 }
 
 
@@ -77,6 +80,9 @@ RECIPES = {
     "pressure": (["CBC", "RXR", "CBC"], {"C": "minecraft:copper_ingot", "B": "minecraft:breeze_rod", "R": "minecraft:blaze_powder", "X": "minecraft:book"}),
     "ice": (["DPD", "AXA", "DPD"], {"D": "minecraft:diamond", "P": "minecraft:blue_ice", "A": "minecraft:amethyst_shard", "X": "minecraft:book"}),
     "blood": (["RNR", "GXG", "RNR"], {"R": "minecraft:redstone_block", "N": "minecraft:nether_wart_block", "G": "minecraft:ghast_tear", "X": "minecraft:book"}),
+    "plasma": (["AGA", "LXL", "AGA"], {"A": "minecraft:amethyst_block", "G": "minecraft:glowstone_dust", "L": "minecraft:lightning_rod", "X": "minecraft:book"}),
+    "darkness": (["SOS", "IXI", "SOS"], {"S": "minecraft:sculk", "O": "minecraft:obsidian", "I": "minecraft:ink_sac", "X": "minecraft:book"}),
+    "prism_light": (["GQG", "PXP", "GQG"], {"G": "minecraft:gold_ingot", "Q": "minecraft:quartz", "P": "minecraft:glass_pane", "X": "minecraft:book"}),
 }
 
 
@@ -99,17 +105,36 @@ BLOCKS = {
     "pressure_barrier": ("grimoire_pressure_barrier", 7),
     "frost_wall": ("grimoire_frost_wall", 6),
     "blood_thornwall": ("grimoire_blood_thornwall", 6),
+    "shadow_step_low": ("grimoire_shadow_step", 2),
+    "shadow_step_high": ("grimoire_shadow_step", 2),
 }
+
+# D11 Stairway of the Unlit Sky: thin walkable panels. Low panels top out at half a block, high panels at a full
+# block, so successive steps rise 0.5 (inside the player's automatic step height).
+STEP_PANELS = {"shadow_step_low": 4, "shadow_step_high": 12}
 
 
 def blocks(bp, rp):
     for name, (tex, light) in BLOCKS.items():
+        comps_extra = {}
+        geometry = "minecraft:geometry.full_block"
+        if name in STEP_PANELS:
+            y0 = STEP_PANELS[name]
+            geometry = f"geometry.grimoire.{name}"
+            comps_extra = {"minecraft:collision_box": {"origin": [-8, y0, -8], "size": [16, 4, 16]},
+                           "minecraft:selection_box": {"origin": [-8, y0, -8], "size": [16, 4, 16]}}
+            dump(f"{rp}/models/blocks/grimoire/{name}.geo.json", {"format_version": "1.12.0", "minecraft:geometry": [{
+                "description": {"identifier": geometry, "texture_width": 16, "texture_height": 16},
+                "bones": [{"name": "panel", "pivot": [0, 0, 0], "cubes": [{"origin": [-8, y0, -8], "size": [16, 4, 16], "uv": {
+                    f: {"uv": [0, 0], "uv_size": [16, 16 if f in ("up", "down") else 4]} for f in ("north", "south", "east", "west", "up", "down")}}]}],
+            }]})
         dump(f"{bp}/blocks/{name}.json", {
             "format_version": "1.26.60",
             "minecraft:block": {
                 "description": {"identifier": f"grimoire:{name}", "menu_category": {"category": "none", "is_hidden_in_commands": True}},
                 "components": {
-                    "minecraft:geometry": {"identifier": "minecraft:geometry.full_block"},
+                    **comps_extra,
+                    "minecraft:geometry": {"identifier": geometry},
                     "minecraft:material_instances": {"*": {"texture": tex, "render_method": "blend", "ambient_occlusion": 0.0, "face_dimming": False}},
                     "minecraft:light_emission": light,
                     "minecraft:light_dampening": 0,
@@ -117,7 +142,7 @@ def blocks(bp, rp):
                     "minecraft:destructible_by_explosion": False,
                     "minecraft:flammable": False,
                     "minecraft:loot": "loot_tables/grimoire/empty.json",
-                    "minecraft:map_color": {"pressure_barrier": "#ff9a3a", "frost_wall": "#9fd8ff", "blood_thornwall": "#a0101e"}[name],
+                    "minecraft:map_color": {"pressure_barrier": "#ff9a3a", "frost_wall": "#9fd8ff", "blood_thornwall": "#a0101e"}.get(name, "#123a26"),
                     "minecraft:tick": {"interval_range": [60, 90], "looping": True},
                     "grimoire:temporary": {},
                 },
@@ -130,11 +155,11 @@ def blocks(bp, rp):
         "texture_name": "atlas.terrain",
         "padding": 8,
         "num_mip_levels": 4,
-        "texture_data": {tex: {"textures": f"textures/blocks/grimoire/{name}"} for name, (tex, _) in BLOCKS.items()},
+        "texture_data": {tex: {"textures": f"textures/blocks/grimoire/{tex[len('grimoire_'):]}"} for name, (tex, _) in BLOCKS.items()},
     })
     dump(f"{rp}/textures/flipbook_textures.json", [
-        {"flipbook_texture": f"textures/blocks/grimoire/{name}", "atlas_tile": tex, "ticks_per_frame": 3, "blend_frames": True}
-        for name, (tex, _) in BLOCKS.items()
+        {"flipbook_texture": f"textures/blocks/grimoire/{tex[len('grimoire_'):]}", "atlas_tile": tex, "ticks_per_frame": 3, "blend_frames": True}
+        for tex in dict.fromkeys(t for t, _ in BLOCKS.values())
     ])
 
 

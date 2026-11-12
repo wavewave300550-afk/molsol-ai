@@ -6,6 +6,7 @@ from .art import Art, vein_paths, voronoi_facets
 from .modelkit import Model, geometry_file
 from .anim import Anim, anim_file, controller_file
 from .fxdefs import dump
+from . import book_ext as EXT
 
 K = 0.28  # model pixels per centimetre (books rendered ~1.75x real size; proportions exact)
 
@@ -14,6 +15,7 @@ BOOKS = {
     "pressure": (35, 27, 7),
     "ice": (36, 28, 7),
     "blood": (36, 27, 7),
+    **EXT.DIMS,
 }
 
 ART_W, ART_H = 96, 124      # front/back cover art resolution
@@ -263,8 +265,8 @@ def paint_sigil(school, size=64):
     """Small magic circle shown behind the open book while charging (additive)."""
     a = Art(size, size)
     c = size / 2
-    col = {"pressure": (255, 150, 40), "ice": (110, 220, 255), "blood": (255, 40, 60)}[school]
-    hi = {"pressure": (255, 236, 190), "ice": (230, 250, 255), "blood": (255, 200, 200)}[school]
+    col = {"pressure": (255, 150, 40), "ice": (110, 220, 255), "blood": (255, 40, 60), **{k: v[0] for k, v in EXT.SIGIL_COL.items()}}[school]
+    hi = {"pressure": (255, 236, 190), "ice": (230, 250, 255), "blood": (255, 200, 200), **{k: v[1] for k, v in EXT.SIGIL_COL.items()}}[school]
     a.circle(c, c, size * 0.46, outline=col, width=1.4)
     a.circle(c, c, size * 0.40, outline=hi, width=0.6)
     a.ring_ticks(c, c, size * 0.40, size * 0.46, 48, col, 0.4)
@@ -275,6 +277,8 @@ def paint_sigil(school, size=64):
         a.hexagon(c, c, size * 0.34, hi, 0.9)
         a.hexagon(c, c, size * 0.28, col, 0.7, rot=0)
         a.star6(c, c, size * 0.22, hi, 0.9)
+    elif school in EXT.DIMS:
+        EXT.paint_sigil(school, a, c, size, col, hi)
     else:
         for k in range(8):
             ang = math.radians(45 * k)
@@ -288,7 +292,7 @@ def paint_sigil(school, size=64):
 
 def paint_flow(school, w=128, h=128):
     """Seamlessly tiling (vertical) flow texture for the uv_anim overlay (additive, sparse & subtle)."""
-    rs = np.random.RandomState({"pressure": 41, "ice": 42, "blood": 43}[school])
+    rs = np.random.RandomState({"pressure": 41, "ice": 42, "blood": 43, "plasma": 44, "darkness": 45, "prism_light": 46}[school])
     img = np.zeros((h, w, 3), np.float32)
     y, x = np.mgrid[0:h, 0:w].astype(np.float32)
     if school == "pressure":
@@ -302,6 +306,8 @@ def paint_flow(school, w=128, h=128):
             px, py = rs.rand() * w, rs.rand() * h
             d2 = (x - px) ** 2 + ((y - py + h / 2) % h - h / 2) ** 2
             img += np.exp(-d2 / 1.5)[..., None] * np.array([170, 235, 255], np.float32) * 0.8
+    elif school in EXT.DIMS:
+        EXT.paint_flow(school, img, x, y, rs, w, h)
     else:
         # blood flowing down a few branching vessels, brighter in pulses
         for _ in range(5):
@@ -328,19 +334,19 @@ def build_book(school):
     s = p                        # spine half width (closed book thickness = 2(p+c) = T)
     m = Model(f"geometry.grimoire.book_{school}", 256, 256, bounds=(2.5, 2.5, (0, 0, 0)))
     at = m.atlas
-    front, back, spine, page = {"pressure": paint_pressure, "ice": paint_ice, "blood": paint_blood}[school]()
+    front, back, spine, page = EXT.paint(school) if school in EXT.DIMS else {"pressure": paint_pressure, "ice": paint_ice, "blood": paint_blood}[school]()
     R_front = ('rect',) + at.put_image('front', front)
     R_back = ('rect',) + at.put_image('back', back)
     R_spine = ('rect',) + at.put_image('spine', spine)
     R_page = ('rect',) + at.put_image('page', page)
     R_sigil = ('rect',) + at.put_image('sigil', paint_sigil(school))
-    edge_style = {"pressure": "pg_parch", "ice": "pg_ice", "blood": "pg_blood"}[school]
-    cover_side = {"pressure": "p_charcoal", "ice": "i_sapphire", "blood": "b_burgundy"}[school]
-    metal = {"pressure": "p_copper", "ice": "i_silver", "blood": "b_silver"}[school]
-    metal_hi = {"pressure": "p_gold", "ice": "i_silver", "blood": "b_silver_light"}[school]
-    glow = {"pressure": "p_glow_band", "ice": "i_glow_band", "blood": "b_glow_band"}[school]
-    core = {"pressure": "p_core", "ice": "i_core", "blood": "b_core"}[school]
-    gem = {"pressure": "p_channel", "ice": "i_crystal_glow", "blood": "b_ruby"}[school]
+    edge_style = {"pressure": "pg_parch", "ice": "pg_ice", "blood": "pg_blood", **EXT.STYLE["edge"]}[school]
+    cover_side = {"pressure": "p_charcoal", "ice": "i_sapphire", "blood": "b_burgundy", **EXT.STYLE["cover_side"]}[school]
+    metal = {"pressure": "p_copper", "ice": "i_silver", "blood": "b_silver", **EXT.STYLE["metal"]}[school]
+    metal_hi = {"pressure": "p_gold", "ice": "i_silver", "blood": "b_silver_light", **EXT.STYLE["metal_hi"]}[school]
+    glow = {"pressure": "p_glow_band", "ice": "i_glow_band", "blood": "b_glow_band", **EXT.STYLE["glow"]}[school]
+    core = {"pressure": "p_core", "ice": "i_core", "blood": "b_core", **EXT.STYLE["core"]}[school]
+    gem = {"pressure": "p_channel", "ice": "i_crystal_glow", "blood": "b_ruby", **EXT.STYLE["gem"]}[school]
 
     # binding: hand in both views (dynamic Molang like the vanilla spyglass)
     m.bone("book", pivot=(0, 0, 0), binding="q.item_slot_to_bone_name(c.item_slot)")
@@ -375,6 +381,8 @@ def build_book(school):
                     orn.cbox((xx + 0.6, yy + 0.6, -c - 0.34), (0.42, 0.42, 0.42), "i_crystal_glow", rotation=(45, 45, 0))
                 if school == "blood":
                     orn.cbox((xx + 0.6, yy + 0.6, -c - 0.3), (0.34, 0.34, 0.34), "b_ruby", rotation=(0, 0, 45))
+                if school in EXT.DIMS:
+                    EXT.corner(orn, school, xx, yy, c)
         # frame strips along the outer edges
         orn.box((x0 + 0.05, -H / 2 + 1.25, -c - 0.08), (0.28, H - 2.5, 0.09), metal)
         orn.box((x0 + W - 0.33, -H / 2 + 1.25, -c - 0.08), (0.28, H - 2.5, 0.09), metal)
@@ -403,6 +411,8 @@ def build_book(school):
             arm.cbox((ex + 1.3, ey + 0.16, ez), (0.3, 0.14, 0.3), "i_crystal_glow", rotation=(0, 45, 0))
         cr.cbox((ex, ey + 0.2, ez), (0.42, 0.3, 0.42), "i_crystal_glow", rotation=(0, 45, 0))
         m.bone("g_core", "emblem", pivot=(ex, ey, ez)).cbox((ex, ey + 0.32, ez), (0.26, 0.1, 0.26), core)
+    elif school in EXT.DIMS:
+        EXT.emblem(m, school, ex, ey, ez, glow, metal, core)
     else:
         m.bone("emblem", "half_l", pivot=(ex, ey - 0.3, ez), rotation=(90, 0, 0))
         hb = m.bone("heart", "emblem", pivot=(ex, ey - 0.3, ez))
@@ -437,7 +447,10 @@ def build_book(school):
     sg = m.bone("g_sigil", "lift", pivot=(0, 0, -0.8))
     sgr = m.bone("g_sigil_spin", "g_sigil", pivot=(0, 0, -0.8), rotation=(90, 0, 0))
     sgr.box((-5.2, 0, -0.8 - 5.2), (10.4, 0.0, 10.4), None, faces={"up": R_sigil, "down": R_sigil})
-    return m, dict(H=H, W=W, T=T, s=s, p=p, c=c)
+    dims = dict(H=H, W=W, T=T, s=s, p=p, c=c)
+    if school in EXT.DIMS:
+        EXT.extra_geometry(m, school, dims)
+    return m, dims
 
 
 # ============================================================================== animations
@@ -502,11 +515,15 @@ def book_animations(school, dims):
         life.rot("crystal", [0, "q.life_time * 30", 0])
         life.rot("hexrings", [0, "-q.life_time * 12", 0])
         life.scale("g_core", ["1 + math.sin(q.life_time * 260) * 0.15"] * 3)
+    elif school in EXT.DIMS:
+        EXT.emblem_life(life, school)
     else:
         beat = "1 + math.pow(math.max(0, math.sin(q.life_time * 216)), 12) * 0.22"
         life.scale("heart", [beat, beat, beat])
         life.scale("g_heartglow", [f"({beat}) * 1.15"] * 3)
     A.append(life)
+    if school in EXT.DIMS:
+        A.append(EXT.extras(n, school))
     return A
 
 
@@ -549,6 +566,17 @@ def book_controller(school):
 
 def attachable(school):
     n = f"book_{school}"
+    out = _attachable(school, n)
+    if school in EXT.DIMS:
+        d = out["minecraft:attachable"]["description"]
+        d["animations"]["extras"] = f"animation.grimoire.{n}.extras"
+        d["scripts"]["initialize"] = ["v.flip_t = 0; v.rel_t = 0; v.ck = 0;"]
+        d["scripts"]["pre_animation"] = ["v.ck = math.lerp(v.ck, q.is_using_item ? 1.0 : 0.0, 0.18);"]
+        d["scripts"]["animate"].append("extras")
+    return out
+
+
+def _attachable(school, n):
     return {
         "format_version": "1.10.0",
         "minecraft:attachable": {

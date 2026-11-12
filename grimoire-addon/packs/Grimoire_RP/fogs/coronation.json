@@ -1,0 +1,22 @@
+{
+ "format_version": "1.16.100",
+ "minecraft:fog_settings": {
+  "description": {
+   "identifier": "grimoire:coronation"
+  },
+  "distance": {
+   "air": {
+    "fog_start": 0.45,
+    "fog_end": 1.0,
+    "fog_color": "#F4F0FF",
+    "render_distance_type": "render"
+   },
+   "weather": {
+    "fog_start": 0.36000000000000004,
+    "fog_end": 1.0,
+    "fog_color": "#F4F0FF",
+    "render_distance_type": "render"
+   }
+  }
+ }
+}

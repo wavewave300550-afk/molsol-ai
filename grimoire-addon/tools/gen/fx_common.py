@@ -1,8 +1,9 @@
 """Constructs shared by all three Grimoires: preparation sigils and great magic circles."""
 from .fxdefs import Fx
 from .circles import PAINTERS
+from . import circles2  # noqa: F401  (registers the expansion 02 painters)
 
-SCH = {"pressure": "p", "ice": "i", "blood": "b"}
+SCH = {"pressure": "p", "ice": "i", "blood": "b", "plasma": "pl", "darkness": "d", "prism_light": "pr"}
 FULL = ('rect', 0, 0, 256, 256)
 
 

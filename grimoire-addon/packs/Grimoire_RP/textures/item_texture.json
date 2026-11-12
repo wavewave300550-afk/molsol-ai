@@ -10,6 +10,15 @@
   },
   "grimoire_blood": {
    "textures": "textures/items/grimoire_blood"
+  },
+  "grimoire_plasma": {
+   "textures": "textures/items/grimoire_plasma"
+  },
+  "grimoire_darkness": {
+   "textures": "textures/items/grimoire_darkness"
+  },
+  "grimoire_prism_light": {
+   "textures": "textures/items/grimoire_prism_light"
   }
  }
 }

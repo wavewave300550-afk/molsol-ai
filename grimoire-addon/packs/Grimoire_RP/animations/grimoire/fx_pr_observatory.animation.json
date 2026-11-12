@@ -1,0 +1,444 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_pr_observatory.form": {
+   "animation_length": 1.5,
+   "bones": {
+    "frame": {
+     "scale": {
+      "0.0": [
+       0.2,
+       0.2,
+       0.2
+      ],
+      "1.3": [
+       1.03,
+       1.03,
+       1.03
+      ],
+      "1.5": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "arm0": {
+     "scale": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "1.0": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "arm1": {
+     "scale": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.65": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "1.15": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "arm2": {
+     "scale": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.8": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "1.3": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "arm3": {
+     "scale": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.95": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "1.45": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "ring_a": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       180.0,
+       0.0
+      ],
+      "1.5": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pr_observatory.active": {
+   "loop": true,
+   "bones": {
+    "ring_a": {
+     "rotation": [
+      0.0,
+      "q.life_time * 18",
+      0.0
+     ]
+    },
+    "ring_b": {
+     "rotation": [
+      0.0,
+      "-q.life_time * 12",
+      0.0
+     ]
+    },
+    "core": {
+     "rotation": [
+      0.0,
+      "q.life_time * 60",
+      0.0
+     ]
+    },
+    "arm0": {
+     "rotation": [
+      0.0,
+      "0 + math.sin(q.life_time * 40 + 0) * 25",
+      0.0
+     ]
+    },
+    "lensp0": {
+     "rotation": [
+      "math.sin(q.life_time * 70 + 0) * 20",
+      0.0,
+      0.0
+     ]
+    },
+    "arm1": {
+     "rotation": [
+      0.0,
+      "90 + math.sin(q.life_time * 40 + 70) * 25",
+      0.0
+     ]
+    },
+    "lensp1": {
+     "rotation": [
+      "math.sin(q.life_time * 70 + 50) * 20",
+      0.0,
+      0.0
+     ]
+    },
+    "arm2": {
+     "rotation": [
+      0.0,
+      "180 + math.sin(q.life_time * 40 + 140) * 25",
+      0.0
+     ]
+    },
+    "lensp2": {
+     "rotation": [
+      "math.sin(q.life_time * 70 + 100) * 20",
+      0.0,
+      0.0
+     ]
+    },
+    "arm3": {
+     "rotation": [
+      0.0,
+      "270 + math.sin(q.life_time * 40 + 210) * 25",
+      0.0
+     ]
+    },
+    "lensp3": {
+     "rotation": [
+      "math.sin(q.life_time * 70 + 150) * 20",
+      0.0,
+      0.0
+     ]
+    },
+    "mirror0": {
+     "rotation": [
+      0.0,
+      "60 + math.sin(q.life_time * 50 + 0) * 30",
+      0.0
+     ]
+    },
+    "mirror1": {
+     "rotation": [
+      0.0,
+      "180 + math.sin(q.life_time * 50 + 40) * 30",
+      0.0
+     ]
+    },
+    "mirror2": {
+     "rotation": [
+      0.0,
+      "300 + math.sin(q.life_time * 50 + 80) * 30",
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_pr_observatory.converge": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 1.0,
+   "bones": {
+    "lensp0": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.8": [
+       -60.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "arm0": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.8": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "lensp1": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.8": [
+       -60.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "arm1": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       90.0,
+       0.0
+      ],
+      "0.8": [
+       0.0,
+       90.0,
+       0.0
+      ]
+     }
+    },
+    "lensp2": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.8": [
+       -60.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "arm2": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       180.0,
+       0.0
+      ],
+      "0.8": [
+       0.0,
+       180.0,
+       0.0
+      ]
+     }
+    },
+    "lensp3": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.8": [
+       -60.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "arm3": {
+     "rotation": {
+      "0.0": [
+       0.0,
+       270.0,
+       0.0
+      ],
+      "0.8": [
+       0.0,
+       270.0,
+       0.0
+      ]
+     }
+    },
+    "core": {
+     "rotation": [
+      0.0,
+      "q.life_time * 400",
+      0.0
+     ]
+    },
+    "g_input": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.8": [
+       2.6,
+       1.0,
+       2.6
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pr_observatory.flash": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.6,
+   "bones": {
+    "core": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.15": [
+       2.2,
+       2.2,
+       2.2
+      ],
+      "0.6": [
+       1.4,
+       1.4,
+       1.4
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pr_observatory.dissolve": {
+   "animation_length": 0.7,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       1.06,
+       1.06,
+       1.06
+      ],
+      "0.5": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       40.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pr_observatory.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

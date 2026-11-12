@@ -98,3 +98,61 @@ style('p_amber', 'crystal', c1='#ffe0a0', c2='#d87a10', emissive=True)
 style('p_gold_glow', 'glow', c1='#fff4cc', c2='#ffb030', mode='edge', rim=2.0, floor=0.3)
 style('i_glass', 'grad', c1='#e8f8ff', c2='#7fb8f0', a=120, a2=70)
 style('b_glass', 'grad', c1='#ff8a8a', c2='#8a0614', a=170, a2=120)
+
+# ================================================================== Expansion 02
+# ------------------------------------------------------------------ Plasma: deep violet / electric purple / ultraviolet /
+# magenta / electric indigo / white-hot. Ceramic-metal containment hardware, never flames.
+style('pl_ceramic', 'metal', c='#2a1452', hi='#7c5cd8', lo='#090316')
+style('pl_dark_metal', 'metal', c='#1a0f30', hi='#5a3c96', lo='#04020a')
+style('pl_titanium', 'metal', c='#a9afc4', hi='#f6f7ff', lo='#2e3348')
+style('pl_channel', 'glow', c1='#ffe6ff', c2='#c43cff', mode='band', emissive=True, floor=0.6)
+style('pl_glow_band', 'glow', c1='#fff0ff', c2='#b42cff', mode='band', floor=0.35)
+style('pl_glow_vband', 'glow', c1='#fff0ff', c2='#b42cff', mode='vband', floor=0.35)
+style('pl_core', 'glow', c1='#ffffff', c2='#ff8cff', mode='radial', pow=0.7, floor=0.6)
+style('pl_filament', 'glow', c1='#ffd4ff', c2='#d41cff', mode='band', floor=0.4)
+style('pl_magenta', 'glow', c1='#ffe2f8', c2='#ff2cc4', mode='band', floor=0.4)
+style('pl_indigo', 'glow', c1='#dcdcff', c2='#4434ff', mode='band', floor=0.4)
+style('pl_uv', 'glow', c1='#efe4ff', c2='#7a3cff', mode='radial', pow=1.1, floor=0.3)
+style('pl_edge', 'glow', c1='#ffd8ff', c2='#9a20ff', mode='edge', rim=2.5, floor=0.12)
+style('pl_membrane', 'air', c='#a84cff', a=56)
+style('pl_membrane_dense', 'air', c='#c064ff', a=110)
+style('pl_tube', 'grad', c1='#dca8ff', c2='#5420b4', a=150, a2=96)
+style('pl_hex', 'hex', c1='#9c3cff', c2='#ffd4ff', a=60, k=2.0)
+style('pl_runes', 'runes', c1='#120624', c2='#e488ff')
+style('pg_plasma', 'pages', c1='#eee8ff', c2='#9c8ad4')
+
+# ------------------------------------------------------------------ Darkness: deep forest green / very dark emerald /
+# muted jade / dark green glass. Light-absorbing, never toxic or neon.
+style('d_glass', 'crystal', c1='#235e3e', c2='#03130a')
+style('d_plate', 'metal', c='#0e2a1b', hi='#3c7656', lo='#020805')
+style('d_emerald', 'metal', c='#1c4831', hi='#78b494', lo='#06160d')
+style('d_void', 'solid', c='#020604', noise=0.1)
+style('d_shadow', 'grad', c1='#164430', c2='#03100a', a=205, a2=160)
+style('d_shadow_thin', 'grad', c1='#1c4c34', c2='#06180e', a=130, a2=86)
+style('d_jade_line', 'glow', c1='#b4e2c4', c2='#3a8460', mode='band', floor=0.22)
+style('d_jade_vline', 'glow', c1='#b4e2c4', c2='#3a8460', mode='vband', floor=0.22)
+style('d_jade_edge', 'glow', c1='#9ad4b0', c2='#286444', mode='edge', rim=2.5, floor=0.08)
+style('d_jade_tile', 'crystal', c1='#62a07c', c2='#1c4a32')
+style('d_runes', 'runes', c1='#4a705c', c2='#020805')
+style('d_hex', 'hex', c1='#1c5a3a', c2='#7ac49a', a=70, k=2.0)
+style('pg_dark', 'pages', c1='#4c6858', c2='#1a3024')
+
+# ------------------------------------------------------------------ Prism Light: pearlescent ivory / champagne gold /
+# transparent glass; the spectrum appears only where light passes through optics.
+style('pr_pearl', 'grad', c1='#fffdf6', c2='#e4dcf0', dir='h', mirror=True)
+style('pr_gold', 'metal', c='#d6b676', hi='#fff6dc', lo='#64491c')
+style('pr_gold_dark', 'metal', c='#9a7a40', hi='#f0dca8', lo='#3a2808')
+style('pr_glass', 'grad', c1='#ffffff', c2='#d6e6ff', a=88, a2=56)
+style('pr_glass_thick', 'grad', c1='#f8fbff', c2='#c6d6f0', a=150, a2=108)
+style('pr_mirror', 'grad', c1='#f8faff', c2='#a6b6d6')
+style('pr_iris', 'grad', c1='#ffe2f4', c2='#c2f2ff', a=150, a2=104, dir='h')
+style('pr_beam', 'glow', c1='#ffffff', c2='#fff2da', mode='band', floor=0.55)
+style('pr_vbeam', 'glow', c1='#ffffff', c2='#fff2da', mode='vband', floor=0.55)
+style('pr_core', 'glow', c1='#ffffff', c2='#fff0cc', mode='radial', pow=0.7, floor=0.6)
+style('pr_edge', 'glow', c1='#fffaf0', c2='#e8c888', mode='edge', rim=2.0, floor=0.15)
+SPECTRUM = [('#ff3434', '#ffd0d0'), ('#ff8c22', '#ffe2c8'), ('#ffe834', '#fff8d0'), ('#40ff64', '#d4ffdc'),
+            ('#3484ff', '#d4e4ff'), ('#5c44ff', '#dcd6ff'), ('#b444ff', '#f0d8ff')]
+for _i, (_c2, _c1) in enumerate(SPECTRUM):
+    style(f'pr_s{_i}', 'glow', c1=_c1, c2=_c2, mode='band', floor=0.4)
+    style(f'pr_sv{_i}', 'glow', c1=_c1, c2=_c2, mode='vband', floor=0.4)
+style('pg_prism', 'pages', c1='#fcfaf4', c2='#d8d0c0', a=232)

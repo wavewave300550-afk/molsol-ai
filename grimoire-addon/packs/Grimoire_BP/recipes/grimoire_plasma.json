@@ -1,0 +1,39 @@
+{
+ "format_version": "1.26.60",
+ "minecraft:recipe_shaped": {
+  "description": {
+   "identifier": "grimoire:craft_plasma"
+  },
+  "tags": [
+   "crafting_table"
+  ],
+  "pattern": [
+   "AGA",
+   "LXL",
+   "AGA"
+  ],
+  "key": {
+   "A": {
+    "item": "minecraft:amethyst_block"
+   },
+   "G": {
+    "item": "minecraft:glowstone_dust"
+   },
+   "L": {
+    "item": "minecraft:lightning_rod"
+   },
+   "X": {
+    "item": "minecraft:book"
+   }
+  },
+  "result": {
+   "item": "grimoire:plasma",
+   "count": 1
+  },
+  "unlock": [
+   {
+    "item": "minecraft:book"
+   }
+  ]
+ }
+}

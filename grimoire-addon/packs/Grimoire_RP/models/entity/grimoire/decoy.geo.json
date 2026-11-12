@@ -1,0 +1,56 @@
+{
+ "format_version": "1.16.0",
+ "minecraft:geometry": [
+  {
+   "description": {
+    "identifier": "geometry.grimoire.decoy",
+    "texture_width": 128,
+    "texture_height": 128,
+    "visible_bounds_width": 1,
+    "visible_bounds_height": 2,
+    "visible_bounds_offset": [
+     0,
+     1,
+     0
+    ]
+   },
+   "bones": [
+    {
+     "name": "root",
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    {
+     "name": "yaw",
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "parent": "root"
+    },
+    {
+     "name": "pitch",
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "parent": "yaw"
+    },
+    {
+     "name": "fade",
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "parent": "pitch"
+    }
+   ]
+  }
+ ]
+}

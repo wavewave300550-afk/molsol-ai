@@ -1,0 +1,49 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "grimoire:prism_light",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "trans": "entity_alphablend",
+    "glow": "entity_beam_additive"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/book_prism_light",
+    "flow": "textures/entity/grimoire/book_prism_light_flow"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.book_prism_light"
+   },
+   "animations": {
+    "pose": "animation.grimoire.book_prism_light.pose",
+    "closed": "animation.grimoire.book_prism_light.closed",
+    "open": "animation.grimoire.book_prism_light.open",
+    "charge": "animation.grimoire.book_prism_light.charge",
+    "release": "animation.grimoire.book_prism_light.release",
+    "flip": "animation.grimoire.book_prism_light.flip",
+    "emblem": "animation.grimoire.book_prism_light.emblem",
+    "ctrl": "controller.animation.grimoire.book_prism_light",
+    "extras": "animation.grimoire.book_prism_light.extras"
+   },
+   "scripts": {
+    "initialize": [
+     "v.flip_t = 0; v.rel_t = 0; v.ck = 0;"
+    ],
+    "animate": [
+     "pose",
+     "emblem",
+     "ctrl",
+     "extras"
+    ],
+    "pre_animation": [
+     "v.ck = math.lerp(v.ck, q.is_using_item ? 1.0 : 0.0, 0.18);"
+    ]
+   },
+   "render_controllers": [
+    "controller.render.grimoire.book",
+    "controller.render.grimoire.book_flow"
+   ]
+  }
+ }
+}

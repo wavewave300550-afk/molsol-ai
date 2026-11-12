@@ -231,6 +231,26 @@ export const COLORS = {
   burgundy: { r: 0.42, g: 0.02, b: 0.08 },
   bloodglow: { r: 1.0, g: 0.22, b: 0.25 },
   redgold: { r: 1.0, g: 0.5, b: 0.25 },
+  // Plasma: deep violet / electric purple / ultraviolet / magenta / indigo / white-hot
+  violet: { r: 0.55, g: 0.18, b: 1.0 },
+  magenta: { r: 1.0, g: 0.25, b: 0.85 },
+  ultraviolet: { r: 0.42, g: 0.3, b: 1.0 },
+  indigo: { r: 0.3, g: 0.22, b: 0.95 },
+  whitehot: { r: 1.0, g: 0.92, b: 1.0 },
+  // Darkness: deep forest green / dark emerald / muted jade (never neon)
+  darkgreen: { r: 0.04, g: 0.2, b: 0.1 },
+  emerald: { r: 0.08, g: 0.38, b: 0.2 },
+  jade: { r: 0.42, g: 0.7, b: 0.52 },
+  // Prism Light: pearl / champagne gold / the seven spectral colours
+  pearl: { r: 1.0, g: 0.97, b: 0.93 },
+  champagne: { r: 0.96, g: 0.84, b: 0.58 },
+  sp_red: { r: 1.0, g: 0.16, b: 0.16 },
+  sp_orange: { r: 1.0, g: 0.55, b: 0.1 },
+  sp_yellow: { r: 1.0, g: 0.93, b: 0.2 },
+  sp_green: { r: 0.25, g: 1.0, b: 0.35 },
+  sp_blue: { r: 0.2, g: 0.5, b: 1.0 },
+  sp_indigo: { r: 0.36, g: 0.25, b: 1.0 },
+  sp_violet: { r: 0.72, g: 0.22, b: 1.0 },
 } satisfies Record<string, Rgb>;
 
 export interface ParticleVars {

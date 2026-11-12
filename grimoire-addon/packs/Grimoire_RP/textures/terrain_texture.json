@@ -12,6 +12,9 @@
   },
   "grimoire_blood_thornwall": {
    "textures": "textures/blocks/grimoire/blood_thornwall"
+  },
+  "grimoire_shadow_step": {
+   "textures": "textures/blocks/grimoire/shadow_step"
   }
  }
 }

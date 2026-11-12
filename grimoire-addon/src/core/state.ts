@@ -1,5 +1,5 @@
 import { Player, system } from "@minecraft/server";
-import type { School } from "../spells/types";
+import { SCHOOLS, School } from "../spells/types";
 import { log } from "./log";
 
 /**
@@ -53,7 +53,7 @@ export function stateOf(p: Player): PlayerState {
   st = {
     id: p.id,
     name: p.name,
-    selected: { pressure: 0, ice: 0, blood: 0 },
+    selected: Object.fromEntries(SCHOOLS.map((k) => [k, 0])) as Record<School, number>,
     readyAt: new Map(),
     activeUntilEnd: new Set(),
     sneaking: p.isSneaking,
@@ -67,7 +67,7 @@ export function stateOf(p: Player): PlayerState {
     const raw = p.getDynamicProperty(PROP);
     if (typeof raw === "string") {
       const saved = JSON.parse(raw) as Saved;
-      for (const k of ["pressure", "ice", "blood"] as School[]) {
+      for (const k of SCHOOLS) {
         const v = saved.s?.[k];
         if (typeof v === "number" && v >= 0 && v < 15) st.selected[k] = Math.floor(v);
       }

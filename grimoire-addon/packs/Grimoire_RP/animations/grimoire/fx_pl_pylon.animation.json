@@ -1,0 +1,343 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.grimoire.fx_pl_pylon.form": {
+   "animation_length": 0.6,
+   "bones": {
+    "seg0": {
+     "scale": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.1": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.25": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "seg1": {
+     "scale": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.2": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.35": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "seg2": {
+     "scale": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.3": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.45": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "seg3": {
+     "scale": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.4": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.55": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    },
+    "t_core": {
+     "scale": {
+      "0.0": [
+       1.0,
+       0.0,
+       1.0
+      ],
+      "0.6": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_pylon.rest": {
+   "loop": true,
+   "bones": {
+    "g_attract": {
+     "scale": [
+      0.6,
+      0.6,
+      0.6
+     ]
+    },
+    "g_repel": {
+     "scale": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "seg0": {
+     "rotation": [
+      0.0,
+      "q.life_time * -30",
+      0.0
+     ]
+    },
+    "seg1": {
+     "rotation": [
+      0.0,
+      "q.life_time * 40",
+      0.0
+     ]
+    },
+    "seg2": {
+     "rotation": [
+      0.0,
+      "q.life_time * -50",
+      0.0
+     ]
+    },
+    "seg3": {
+     "rotation": [
+      0.0,
+      "q.life_time * 60",
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_pylon.attract": {
+   "loop": true,
+   "bones": {
+    "g_attract": {
+     "rotation": [
+      0.0,
+      "q.life_time * 900",
+      0.0
+     ],
+     "scale": [
+      1.3,
+      1.0,
+      1.3
+     ]
+    },
+    "g_repel": {
+     "scale": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "g_crown": {
+     "rotation": [
+      0.0,
+      "-q.life_time * 400",
+      0.0
+     ]
+    },
+    "seg0": {
+     "rotation": [
+      0.0,
+      "q.life_time * -120",
+      0.0
+     ]
+    },
+    "seg1": {
+     "rotation": [
+      0.0,
+      "q.life_time * 150",
+      0.0
+     ]
+    },
+    "seg2": {
+     "rotation": [
+      0.0,
+      "q.life_time * -180",
+      0.0
+     ]
+    },
+    "seg3": {
+     "rotation": [
+      0.0,
+      "q.life_time * 210",
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_pylon.repel": {
+   "loop": true,
+   "bones": {
+    "g_repel": {
+     "rotation": [
+      0.0,
+      "-q.life_time * 900",
+      0.0
+     ],
+     "scale": [
+      1.3,
+      1.0,
+      1.3
+     ]
+    },
+    "g_attract": {
+     "scale": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "g_top": {
+     "scale": [
+      "1.4 + math.sin(q.life_time * 900) * 0.2",
+      "1.4 + math.sin(q.life_time * 900) * 0.2",
+      "1.4 + math.sin(q.life_time * 900) * 0.2"
+     ]
+    },
+    "seg0": {
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "scale": [
+      1.25,
+      1.0,
+      1.25
+     ]
+    },
+    "seg1": {
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "scale": [
+      1.25,
+      1.0,
+      1.25
+     ]
+    },
+    "seg2": {
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "scale": [
+      1.25,
+      1.0,
+      1.25
+     ]
+    },
+    "seg3": {
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "scale": [
+      1.25,
+      1.0,
+      1.25
+     ]
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_pylon.dissolve": {
+   "animation_length": 0.7,
+   "bones": {
+    "fade": {
+     "scale": {
+      "0.0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.2": [
+       1.06,
+       1.06,
+       1.06
+      ],
+      "0.5": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "rotation": {
+      "0.0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.5": [
+       0.0,
+       40.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.grimoire.fx_pl_pylon.orient": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": "math.max(0.0001, v.size)"
+    },
+    "yaw": {
+     "rotation": [
+      0.0,
+      "v.yaw",
+      0.0
+     ]
+    },
+    "pitch": {
+     "rotation": [
+      "v.pitch",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}
