@@ -56,9 +56,60 @@ export const SPELLS = {
     { code: "B14", id: "blood.scarlet_sea", kind: "damage", targets: 4, dist: 10, wait: 420 },
     { code: "B15", id: "blood.crimson_moon_heart", kind: "damage", targets: 4, dist: 10, wait: 420 },
   ],
+  plasma: [
+    { code: "PL01", id: "plasma.coronal_lash", kind: "damage", targets: 3, dist: 5, wait: 70 },
+    { code: "PL02", id: "plasma.helix_borer", kind: "damage", targets: 1, dist: 8, wait: 90 },
+    { code: "PL03", id: "plasma.prominence_uprising", kind: "damage", targets: 3, dist: 8, wait: 110 },
+    { code: "PL04", id: "plasma.arc_shear_cascade", kind: "damage", targets: 3, dist: 9, wait: 120 },
+    { code: "PL05", id: "plasma.stellarator_ward", kind: "ward", targets: 1, dist: 3, wait: 30, after: 300 },
+    { code: "PL06", id: "plasma.corona_molt", kind: "ward", targets: 1, dist: 2.5, wait: 30, after: 60 },
+    { code: "PL07", id: "plasma.fieldline_harp", kind: "damage", targets: 3, dist: 9, line: true, wait: 120, after: 200 },
+    { code: "PL08", id: "plasma.polarity_orchestra", kind: "damage", targets: 3, dist: 9, wait: 160, after: 80 },
+    { code: "PL09", id: "plasma.static_horizon", kind: "damage", targets: 3, dist: 9, wait: 120, after: 200 },
+    { code: "PL10", id: "plasma.ion_skates", kind: "move", targets: 0, wait: 40, after: 160 },
+    { code: "PL11", id: "plasma.prominence_sling", kind: "move", targets: 0, wait: 50, after: 60 },
+    { code: "PL12", id: "plasma.auroral_manta", kind: "damage", targets: 2, dist: 6, wait: 140, after: 340 },
+    { code: "PL13", id: "plasma.magnetic_reconnection", kind: "damage", targets: 3, dist: 9, wait: 110 },
+    { code: "PL14", id: "plasma.stellarator_cathedral", kind: "damage", targets: 3, dist: 9, wait: 200, after: 260 },
+    { code: "PL15", id: "plasma.heavenwide_reconnection", kind: "damage", targets: 4, dist: 10, wait: 260, after: 40 },
+  ],
+  darkness: [
+    { code: "D01", id: "darkness.umbral_origami", kind: "damage", targets: 3, dist: 7, wait: 60 },
+    { code: "D02", id: "darkness.maw_of_the_unseen", kind: "damage", targets: 1, dist: 8, wait: 70, bind: true },
+    { code: "D03", id: "darkness.unwritten_sentence", kind: "damage", targets: 3, dist: 8, wait: 110 },
+    { code: "D04", id: "darkness.sevenfold_eclipse", kind: "damage", targets: 3, dist: 9, wait: 140 },
+    { code: "D05", id: "darkness.velvet_of_the_hollow_king", kind: "ward", targets: 1, dist: 2.5, wait: 30, after: 260 },
+    { code: "D06", id: "darkness.shadow_latch", kind: "ward", targets: 1, dist: 2.5, wait: 30, after: 80, latch: true },
+    { code: "D07", id: "darkness.curtainfall_divide", kind: "decoy", targets: 2, dist: 9, wait: 240, after: 120 },
+    { code: "D08", id: "darkness.dusk_mosaic", kind: "damage", targets: 3, dist: 9, wait: 160, after: 140 },
+    { code: "D09", id: "darkness.censors_seal", kind: "decoy", targets: 1, dist: 7, wait: 80, after: 140, effect: "weakness" },
+    { code: "D10", id: "darkness.silhouette_traverse", kind: "teleport", targets: 0, dist: 10, wait: 30 },
+    { code: "D11", id: "darkness.stairway_of_the_unlit_sky", kind: "steps", targets: 0, wait: 30, after: 230, lookUp: true },
+    { code: "D12", id: "darkness.inkless_doppelganger", kind: "mirror", targets: 1, dist: 2.2, wait: 90, after: 280 },
+    { code: "D13", id: "darkness.footfall_reversal", kind: "damage", targets: 1, dist: 8, wait: 130 },
+    { code: "D14", id: "darkness.court_of_the_unseen", kind: "damage", targets: 3, dist: 9, wait: 500, after: 40 },
+    { code: "D15", id: "darkness.world_without_an_outline", kind: "damage", targets: 4, dist: 10, wait: 360, after: 40 },
+  ],
+  prism_light: [
+    { code: "PR01", id: "prism_light.sevenfold_verdict", kind: "damage", targets: 2, dist: 8, wait: 70 },
+    { code: "PR02", id: "prism_light.total_internal_reflection", kind: "damage", targets: 1, dist: 8, wait: 70 },
+    { code: "PR03", id: "prism_light.caustic_bloom", kind: "damage", targets: 3, dist: 9, wait: 110 },
+    { code: "PR04", id: "prism_light.fraunhofer_lattice", kind: "damage", targets: 3, dist: 7, wait: 120 },
+    { code: "PR05", id: "prism_light.brewsters_veil", kind: "ward", targets: 1, dist: 2.5, wait: 30, after: 280 },
+    { code: "PR06", id: "prism_light.parallax_displacement", kind: "ward", targets: 1, dist: 2.5, wait: 30, after: 60 },
+    { code: "PR07", id: "prism_light.chromatic_turnstile", kind: "control", targets: 2, dist: 9, wait: 120, after: 220 },
+    { code: "PR08", id: "prism_light.kaleidoscope_theater", kind: "decoy", targets: 2, dist: 6, wait: 80, after: 220 },
+    { code: "PR09", id: "prism_light.interference_tapestry", kind: "decoy", targets: 3, dist: 9, wait: 120, after: 220 },
+    { code: "PR10", id: "prism_light.rayline_stride", kind: "teleport", targets: 0, dist: 10, wait: 30 },
+    { code: "PR11", id: "prism_light.iridescent_sail", kind: "move", targets: 0, wait: 40, after: 280 },
+    { code: "PR12", id: "prism_light.spectral_diagnosis", kind: "vuln", targets: 1, dist: 3, wait: 60, after: 300 },
+    { code: "PR13", id: "prism_light.whitepoint_benediction", kind: "heal", targets: 0, wait: 90 },
+    { code: "PR14", id: "prism_light.chromatic_observatory", kind: "damage", targets: 3, dist: 9, wait: 300, after: 160 },
+    { code: "PR15", id: "prism_light.colorless_coronation", kind: "damage", targets: 4, dist: 10, wait: 360, after: 80 },
+  ],
 };
 
-const ITEMS = { pressure: "grimoire:pressure", ice: "grimoire:ice", blood: "grimoire:blood" };
+const ITEMS = { pressure: "grimoire:pressure", ice: "grimoire:ice", blood: "grimoire:blood", plasma: "grimoire:plasma", darkness: "grimoire:darkness", prism_light: "grimoire:prism_light" };
 const CHARGE = { ...CHARGES };
 
 function hp(e) {
@@ -70,6 +121,7 @@ function countType(h, type) {
 }
 
 function blocksAround(h, center, r, id) {
+  if (Array.isArray(id)) return id.reduce((n, x) => n + blocksAround(h, center, r, x), 0);
   let n = 0;
   for (let x = -r; x <= r; x++) for (let z = -r; z <= r; z++) for (let y = 0; y < 6; y++) {
     try {
@@ -114,6 +166,17 @@ async function runSpell(h, school, i, spec, arenaX, arenaZ) {
   const charge = CHARGE[spec.id] ?? 20;
   const pos0 = { ...caster.location };
   // record every hurt event on the caster: a casting cost would show up as self/no-source damage
+  let healBase = 0;
+  if (spec.kind === "heal") {
+    // no natural regeneration (hunger below 18), then a real wound and poison for the spell to treat
+    try { caster.getComponent("minecraft:player.hunger").setCurrentValue(6); } catch {}
+    const biter = h.dim().spawnEntity("minecraft:husk", { x: arenaX + 2.5, y: -60, z: arenaZ + 0.5 });
+    caster.applyDamage(10, { cause: EntityDamageCause.entityAttack, damagingEntity: biter });
+    try { biter.remove(); } catch {}
+    caster.addEffect("poison", 400, { amplifier: 0 });
+    await h.wait(3);
+    healBase = hp(caster);
+  }
   const hurts = [];
   const hurtSub = h.world.afterEvents.entityHurt.subscribe((ev) => {
     if (ev.hurtEntity.id !== caster.id) return;
@@ -201,6 +264,54 @@ async function runSpell(h, school, i, spec, arenaX, arenaZ) {
     const head = h.dim().getBlock({ x: Math.floor(caster.location.x), y: Math.floor(caster.location.y) + 1, z: Math.floor(caster.location.z) });
     h.check(S, `${spec.code} teleports the caster to a safe spot`, moved > 3 && feet?.isAir !== false && head?.isAir !== false, { moved, feet: feet?.typeId, head: head?.typeId });
   }
+  if (spec.kind === "steps") {
+    await h.wait(10);
+    const n = blocksAround(h, caster.location, 6, ["grimoire:shadow_step_low", "grimoire:shadow_step_high"]);
+    h.check(S, `${spec.code} unfolds walkable shadow steps ahead of the caster`, n >= 2, { steps: n });
+  }
+  if (spec.kind === "decoy") {
+    let decoys = 0;
+    for (let t = 0; t < (spec.wait ?? 80) && decoys === 0; t += 5) {
+      decoys = countType(h, "grimoire:decoy");
+      await h.wait(5);
+    }
+    h.check(S, `${spec.code} creates a misdirection decoy that enemies are turned toward`, decoys > 0, { decoys });
+    if (spec.effect) {
+      const has = targets.some((t) => { try { return !!t.getEffect(spec.effect); } catch { return false; } });
+      h.check(S, `${spec.code} applies ${spec.effect} to its target`, has, {});
+    }
+  }
+  if (spec.kind === "vuln") {
+    await h.wait(spec.wait ?? 60);
+    const before = hp(targets[0]);
+    targets[0].applyDamage(8, { cause: EntityDamageCause.entityAttack, damagingEntity: caster });
+    await h.wait(25);
+    const dealt = before - hp(targets[0]);
+    h.check(S, `${spec.code} weak point makes the marked target take extra damage from the caster`, dealt > 8.5, { before, dealt });
+  }
+  if (spec.kind === "heal") {
+    await h.wait(spec.wait ?? 90);
+    const now = hp(caster);
+    let poisoned = true;
+    try { poisoned = !!caster.getEffect("poison"); } catch {}
+    h.check(S, `${spec.code} restores HP to the caster`, now > healBase + 4, { before: healBase, after: now });
+    h.check(S, `${spec.code} removes poison`, !poisoned, {});
+  }
+  if (spec.kind === "mirror") {
+    await h.wait(20);
+    const ev = [];
+    const sub = h.world.afterEvents.entityHurt.subscribe((e) => {
+      if (e.hurtEntity.id === targets[0].id) ev.push(h.system.currentTick);
+    });
+    try { caster.attackEntity(targets[0]); } catch (err) { h.out({ note: `attackEntity failed ${err}` }); }
+    await h.wait(60);
+    h.world.afterEvents.entityHurt.unsubscribe(sub);
+    h.check(S, `${spec.code} doppelganger repeats the caster's melee attack after a delay`, ev.length >= 2 && ev[ev.length - 1] - ev[0] >= 20, { hurtTicks: ev });
+  }
+  if (spec.latch) {
+    await h.wait(8);
+    h.check(S, `${spec.code} latch immobilises the melee attacker`, countType(h, "grimoire:fx_d_latch") > 0, {});
+  }
   if (spec.kind === "move") {
     const moved = Math.hypot(caster.location.x - pos0.x, caster.location.z - pos0.z);
     h.out({ note: `${spec.code} simulated players have no client physics; knockback-driven motion is not observable in BDS`, moved });
@@ -211,7 +322,7 @@ async function runSpell(h, school, i, spec, arenaX, arenaZ) {
     h.check(S, `${spec.code} damages enemies`, dealt.some((d) => d > 0), { dealt });
   }
   h.world.afterEvents.entityHurt.unsubscribe(hurtSub);
-  const selfCost = hurts.filter((x) => !(x.src && x.src !== "minecraft:player") && !(spec.kind === "ward" && x.src));
+  const selfCost = hurts.filter((x) => !(x.src && x.src !== "minecraft:player") && !(spec.kind === "ward" && x.src) && !(spec.kind === "heal" && x.cause === "magic"));
   h.check(S, `${spec.code} costs the caster no health (no self-inflicted damage)`, selfCost.length === 0, { hurts });
   await h.wait(spec.after ?? 40);
   const w2 = await h.worldInfo();
@@ -245,4 +356,7 @@ export const SPELL_SUITES = {
   pressure: suiteFor("pressure"),
   ice: suiteFor("ice"),
   blood: suiteFor("blood"),
+  plasma: suiteFor("plasma"),
+  darkness: suiteFor("darkness"),
+  prism_light: suiteFor("prism_light"),
 };

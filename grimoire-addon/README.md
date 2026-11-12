@@ -1,12 +1,16 @@
 # Grimoire: Imperial Magic
 
-A Minecraft **Bedrock Edition** add-on with three grimoires (**Pressure**, **Ice** and **Blood**), each holding
-**15 spells** (45 in total), all available from the start.
+A Minecraft **Bedrock Edition** add-on with six grimoires, each holding **15 spells** (90 in total), all available
+from the start:
+
+* **Grimoires 01–03:** Pressure, Ice and Blood.
+* **Grimoires 04–06 (Expansion 02):** Plasma, Darkness and Prism Light.
 
 **No mana.** There is no MP, gauge, ammunition, stamina, health or blood cost, charge counter or consumable. The only
 limit is a **per-spell cooldown**, tracked separately for every player, grimoire and spell.
 
-![The three grimoires](docs/images/grimoires.png)
+![Pressure, Ice and Blood grimoires](docs/images/grimoires.png)
+![Plasma, Darkness and Prism Light grimoires](docs/images/grimoires_expansion.png)
 
 | | |
 |---|---|
@@ -33,7 +37,11 @@ limit is a **per-spell cooldown**, tracked separately for every player, grimoire
      | Pressure | book in the center, blaze powder left/right, breeze rods top/bottom, copper ingots in the corners |
      | Ice | book in the center, amethyst shards left/right, blue ice top/bottom, diamonds in the corners |
      | Blood | book in the center, ghast tears left/right, nether wart blocks top/bottom, redstone blocks in the corners |
-   * **Or, as an operator with cheats on:** `/grimoire:getbook all` (or `pressure`, `ice`, `blood`).
+     | Plasma | book in the center, lightning rods left/right, glowstone dust top/bottom, amethyst blocks in the corners |
+     | Darkness | book in the center, ink sacs left/right, obsidian top/bottom, sculk in the corners |
+     | Prism Light | book in the center, glass panes left/right, quartz top/bottom, gold ingots in the corners |
+   * **Or, as an operator with cheats on:** `/grimoire:getbook all` (or `pressure`, `ice`, `blood`, `plasma`,
+     `darkness`, `prism_light`).
 
 ## Controls
 
@@ -44,7 +52,7 @@ limit is a **per-spell cooldown**, tracked separately for every player, grimoire
 | **Cast** | **Release** right mouse | Lift your finger | Release the trigger |
 
 * One crouch press advances **exactly one** spell. Holding crouch never keeps cycling. Every player keeps a separate
-  selection for each of the three grimoires.
+  selection for each of the six grimoires.
 * **Nothing is cast when you press Use, and nothing is cast when preparation finishes.** The spell fires once, on
   release.
   * Releasing before the spell's minimum preparation time *fizzles*: nothing is cast and no cooldown starts.
@@ -73,6 +81,8 @@ limit is a **per-spell cooldown**, tracked separately for every player, grimoire
 ## Spells and cooldowns
 
 <!-- COOLDOWNS -->
+**Grimoires 01-03**
+
 | # | Pressure (orange) | CD | # | Ice (sapphire) | CD | # | Blood (crimson) | CD |
 |---|---|---|---|---|---|---|---|---|
 | P01 | Pressure Lance | 6 s | I01 | Glacial Sovereign's Lance | 8 s | B01 | Crimson Stiletto Rain | 7 s |
@@ -91,6 +101,26 @@ limit is a **per-spell cooldown**, tracked separately for every player, grimoire
 | P14 | Isobaric Citadel | 75 s | I14 | Grand Magic: Citadel of the Everlasting Winter | 90 s | B14 | Grand Magic: Scarlet Sea of Lament | 90 s |
 | P15 | Imperial Edict: Thousand Atmospheres | 180 s | I15 | Imperial Edict: The Last Winter | 180 s | B15 | Imperial Edict: Heart of the Crimson Moon | 180 s |
 
+**Grimoires 04-06 (Expansion 02)**
+
+| # | Plasma (violet) | CD | # | Darkness (dark green) | CD | # | Prism Light (pearl) | CD |
+|---|---|---|---|---|---|---|---|---|
+| PL01 | Coronal Lash | 7 s | D01 | Umbral Origami | 7 s | PR01 | Sevenfold Verdict | 7 s |
+| PL02 | Helix Borer | 12 s | D02 | Maw of the Unseen | 17 s | PR02 | Total Internal Reflection | 13 s |
+| PL03 | Prominence Uprising | 19 s | D03 | The Unwritten Sentence | 13 s | PR03 | Caustic Bloom | 19 s |
+| PL04 | Arc-Shear Cascade | 24 s | D04 | Sevenfold Eclipse | 26 s | PR04 | Fraunhofer Lattice | 26 s |
+| PL05 | Stellarator Ward | 25 s | D05 | Velvet of the Hollow King | 27 s | PR05 | Brewster's Veil | 27 s |
+| PL06 | Corona Molt | 30 s | D06 | Shadow Latch | 32 s | PR06 | Parallax Displacement | 32 s |
+| PL07 | Fieldline Harp | 29 s | D07 | Curtainfall Divide | 35 s | PR07 | Chromatic Turnstile | 35 s |
+| PL08 | Polarity Orchestra | 38 s | D08 | Dusk Mosaic | 38 s | PR08 | Kaleidoscope Theater | 40 s |
+| PL09 | Static Horizon | 42 s | D09 | Censor's Seal | 42 s | PR09 | Interference Tapestry | 43 s |
+| PL10 | Ion Skates | 10 s | D10 | Silhouette Traverse | 9 s | PR10 | Rayline Stride | 9 s |
+| PL11 | Prominence Sling | 18 s | D11 | Stairway of the Unlit Sky | 22 s | PR11 | Iridescent Sail | 20 s |
+| PL12 | Living Circuit: The Auroral Manta | 55 s | D12 | The Inkless Doppelgänger | 55 s | PR12 | Spectral Diagnosis | 48 s |
+| PL13 | Magnetic Reconnection | 45 s | D13 | Footfall Reversal | 45 s | PR13 | Whitepoint Benediction | 55 s |
+| PL14 | Grand Magic: Stellarator Cathedral | 90 s | D14 | Grand Magic: Court of the Unseen | 90 s | PR14 | Grand Magic: The Chromatic Observatory | 90 s |
+| PL15 | Imperial Edict: Heavenwide Reconnection | 180 s | D15 | Imperial Edict: The World Without an Outline | 180 s | PR15 | Imperial Edict: The Colorless Coronation | 180 s |
+
 \* I11's cooldown starts when the flight ends (the only exception).
 <!-- /COOLDOWNS -->
 
@@ -103,6 +133,17 @@ Constructs and summons are offline renders of the shipped models. They are **not
 * [Ice constructs](docs/images/constructs_ice.png)
 * [Blood constructs](docs/images/constructs_blood.png)
 * [Summons: the Frost Legion and the Royal Stag](docs/images/summons.png)
+* [Plasma constructs](docs/images/constructs_plasma.png)
+* [Darkness constructs](docs/images/constructs_darkness.png)
+* [Prism Light constructs](docs/images/constructs_prism_light.png)
+
+### The expansion grimoires at a glance
+
+| Grimoire | Visual language | Signature mechanics |
+|---|---|---|
+| **04 Plasma**, the Celestial Ion Furnace | Violet-indigo ceramic metal, titanium-silver reinforcements, braided plasma filaments, white-hot cores. Never flames or plain lightning. | Whips, drills and arches; magnetic confinement wards; polarity pylons; the Auroral Manta companion; reconnection events |
+| **05 Darkness**, the Hollow Codex | Dark forest-green, light-absorbing planes with muted jade edges. No smoke, vines or purple voids. | Origami blades, jaws, erased glyphs; eclipse overlap; curtains and masks that misdirect mobs; a delayed doppelgänger; walkable shadow stairs |
+| **06 Prism Light**, the Chromatic Codex | Pearlescent ivory and champagne gold, with prisms, lenses, mirrors and gratings. Colour appears only where light is dispersed. | Dispersion and recombination, timed multi-reflection routes, diffraction bands, polarising deflection, weak-point analysis, healing white light |
 
 ## Rules for operators
 
@@ -172,7 +213,7 @@ No third-party art or audio is included. three.js and Playwright are used only b
 |---|---|
 | `src/core/` | Controls state machine, cooldown state, HUD, damage bus, wards, binds, temporary blocks, FX constructs, routines scheduler, diagnostics |
 | `src/spells/{pressure,ice,blood}/` | Spell definitions (`index.ts`) and implementations (`spells.ts`) |
-| `tools/gen/` | Model kit, texture painters, the three books, 75 construct models, 4 mobs, particles, sounds, fogs, player poses |
+| `tools/gen/` | Model kit, texture painters, the six books, 160 construct models, 4 mobs, particles, sounds, fogs, player poses |
 | `tests/` | BDS runner, world generator, development-only harness pack with the test suites |
 | `packs/`, `dist/` | Built behavior and resource packs, `.mcaddon` and `.mcpack` files |
 | `docs/` | Spell reference, testing matrix, test evidence, offline renders |
@@ -262,5 +303,19 @@ The target versions were checked when the add-on was built:
   done.
 * **The test worlds were flat.** Line of sight, ground snapping and teleport safety were checked on flat ground with
   walls. Caves, water and steep terrain were not covered by automated tests.
+* **Expansion 02: mob misdirection** (D07 Curtainfall Divide, D09 Censor's Seal, PR06 Parallax Displacement,
+  PR08 Kaleidoscope Theater, PR09 Interference Tapestry) works through vanilla AI.
+  * An invisible decoy strikes the mob for 1 damage, and the mob's own `hurt_by_target` behaviour turns it on the
+    decoy.
+  * Mobs without that behaviour ignore decoys.
+  * Other players are blinded instead; no spell ever takes control of a player.
+* **Expansion 02: player movement** for PL10 Ion Skates, PL11 Prominence Sling and PR11 Iridescent Sail uses speed and
+  slow-falling effects plus knockback impulses. As with P11, I11 and B11, the feel is untested without a client.
+* **Expansion 02: D11 stairs** are real blocks, placed only into air and removed afterwards. Each step rises half a
+  block, which is within the player's automatic step height. Walking up them has not been tried by a person.
+* **Expansion 02: D12 doppelgänger** repeats the caster's movement and melee hits after 1.5 s. It does not repeat
+  spells or ranged attacks.
+* **Expansion 02: PR12 weak point.** Spell damage to the marked target is multiplied immediately. Melee and other
+  vanilla damage get their bonus as a separate hit 0.55 s later, after Bedrock's hurt cooldown.
 * `/grimoire:getbook`, `/grimoire:config` and `/grimoire:resetcooldowns` need operator permission and cheats.
   Survival players without cheats use the crafting recipes.

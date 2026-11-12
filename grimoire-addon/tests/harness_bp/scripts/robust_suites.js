@@ -227,9 +227,38 @@ async function blocks(h) {
   setAll("minecraft:air");
 }
 
+// ------------------------------------------------------------------------------------ six books
+async function sixBooks(h) {
+  const S = "robust:six";
+  const books = ["grimoire:pressure", "grimoire:ice", "grimoire:blood", "grimoire:plasma", "grimoire:darkness", "grimoire:prism_light"];
+  const schools = ["pressure", "ice", "blood", "plasma", "darkness", "prism_light"];
+  const sp = h.spawnPlayer("Sixa", 16, -50);
+  await h.wait(20);
+  books.forEach((b, i) => h.give(sp, i, b));
+  await h.resetCd("Sixa");
+  for (let i = 0; i < 6; i++) {
+    sp.selectedSlotIndex = i;
+    await h.wait(4);
+    for (let k = 0; k <= i; k++) await h.crouch(sp, 2);
+  }
+  const s = await h.state("Sixa");
+  const ok = schools.every((sc, i) => s?.selected?.[sc] === i + 1);
+  h.check(S, "six grimoires keep six independent selections in one hotbar", ok, s?.selected);
+  sp.selectedSlotIndex = 3; // plasma, selection 02 Helix Borer
+  await h.wait(12);
+  sp.useItemInSlot(3);
+  await h.wait(18);
+  sp.stopUsingItem();
+  await h.wait(4);
+  const s2 = await h.state("Sixa");
+  h.check(S, "a plasma cast starts only that spell's cooldown", Object.keys(s2?.cooldowns ?? {}).join() === "plasma.helix_borer", s2?.cooldowns);
+  sp.disconnect();
+  await h.wait(10);
+}
+
 export const ROBUST_SUITES = {
   robustness: async (h) => {
-    for (const [name, fn] of [["dimension", dimension], ["pvp", pvp], ["multiplayer", multiplayer], ["blocks", blocks]]) {
+    for (const [name, fn] of [["dimension", dimension], ["pvp", pvp], ["multiplayer", multiplayer], ["blocks", blocks], ["six", sixBooks]]) {
       if (h.only && h.only.length && !h.only.includes(name)) continue;
       try {
         await fn(h);

@@ -120,8 +120,8 @@ def paint(school):
         return front, back, spine, page
 
     if school == "darkness":
-        g0, plate_cols = (14, 40, 26), [(20, 58, 38), (16, 50, 32), (24, 64, 42), (12, 44, 28), (18, 54, 36), (22, 60, 40), (14, 46, 30)]
-        emer, jade, void = (34, 84, 58), (92, 150, 116), (3, 9, 6)
+        g0, plate_cols = (16, 44, 29), [(30, 80, 54), (22, 62, 41), (36, 92, 62), (18, 54, 36), (27, 72, 49), (33, 86, 58), (20, 58, 39)]
+        emer, jade, void = (54, 112, 82), (108, 170, 134), (2, 6, 4)
         a = Art(W, H)
         a.grain(g0, 0.25, 1.2, seed=31)
         # seven asymmetrical overlapping armour plates of light-absorbing green glass
@@ -130,7 +130,8 @@ def paint(school):
         for k, (x0, y0, x1, y1, sk) in enumerate(plates):
             pts = [(x0 + sk, y0), (x1, y0 + sk), (x1 - sk, y1), (x0, y1 - sk)]
             a.poly(pts, fill=plate_cols[k], outline=emer, width=0.9)
-            a.line([pts[0], pts[1]], (60, 110, 84), 0.4)            # faint top bevel
+            a.line([pts[0], pts[1]], (80, 140, 108), 0.5)           # faint top bevel
+            a.line([pts[1], pts[2]], (8, 24, 16), 0.6)              # shadowed side bevel
         a.rect(1.5, 1.5, W - 1.5, H - 1.5, outline=emer, width=1.8)
         # The Hollow Eye: layered shutters around a darker vertical diamond absence
         for i, (w, h) in enumerate(((20, 34), (15, 26), (10, 18))):
@@ -192,17 +193,17 @@ def paint(school):
         ang = math.tau * k / 7 - math.pi / 2
         mx, my = cx + math.cos(ang) * 30, cy + math.sin(ang) * 38
         a.line([(mx - 3, my - 2), (mx + 3, my + 2)], gold, 1.2)
-    front = _iridescence(a.finish(), 0.12)
+    front = _iridescence(a.finish(), 0.05)
     b = Art(W, H, bg=pearl)
     b.grain(pearl, 0.06, 1.6, seed=42)
     b.rect(2, 2, W - 2, H - 2, outline=gold, width=1.4)
     b.circle(cx, cy, 16, outline=gold, width=0.9)
     b.circle(cx, cy, 11, fill=glass)
-    back = _iridescence(b.finish(), 0.12)
+    back = _iridescence(b.finish(), 0.05)
     s = Art(SW, H, bg=pearl)
     for y0 in range(6, H - 6, 12):                                     # layered translucent components
         s.rect(2, y0, SW - 2, y0 + 7, fill=glass, outline=gold, width=0.5)
-    spine = _iridescence(s.finish(), 0.15)
+    spine = _iridescence(s.finish(), 0.07)
     p = Art(64, 80, bg=(252, 250, 244))
     p.grain((252, 250, 244), 0.05, 2, seed=43)
     for row in range(8, 78, 5):                                        # letters drawn by moving light paths

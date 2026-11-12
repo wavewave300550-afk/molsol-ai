@@ -373,13 +373,12 @@ export function* polarityOrchestra(c: Cast): Routine {
       pat = patterns[(t / 30) % patterns.length];
       pylons.forEach((p, i) => p.fx?.phase(pat[i % 6] ? 3 : 4));
       c.sound("grimoire.plasma.pylon", point, 1, pat[0] ? 1.2 : 0.8);
-      pylons.forEach((p, i) => {
-        if (!pat[i % 6]) return;
-        for (const e of c.enemies(p.at, 2.6)) {
-          c.hit(e, c.p("damage"));
-          c.particle("grimoire:plasma_arc", bodyCenter(e), { color: MG, color2: WH, radius: 0.7, count: 0.8 });
-        }
-      });
+      // each polarity change shears everything inside the orchestra; enemies held at an attracting pylon take more
+      for (const e of c.enemies(point, R + 2)) {
+        const atPylon = pylons.some((p, i) => pat[i % 6] && dist(p.at, e.location) < 2.6);
+        c.hit(e, c.p("damage") * (atPylon ? 2 : 1));
+        c.particle("grimoire:plasma_arc", bodyCenter(e), { color: atPylon ? WH : MG, color2: VI, radius: 0.7, count: 0.8 });
+      }
     }
     if (t % 4 === 0) {
       for (const e of c.enemies(point, R + 2)) {

@@ -61,12 +61,15 @@ def sheet(cells, cols, out, title=None, cell=320):
 
 def book_jobs():
     jobs, cells = [], []
-    for s in ("pressure", "ice", "blood"):
+    for s in BOOK_SCHOOLS:
         geo = f"{RP}/models/entity/grimoire/book_{s}.geo.json"
         anim = f"{RP}/animations/grimoire/book_{s}.animation.json"
         n = f"animation.grimoire.book_{s}"
         tex = {"default": f"{RP}/textures/entity/grimoire/book_{s}.png", "flow": f"{RP}/textures/entity/grimoire/book_{s}_flow.png"}
-        anims = [{"file": anim, "name": f"{n}.{k}"} for k in ("closed", "open", "charge", "flip", "emblem", "release")]
+        keys = ["closed", "open", "charge", "flip", "emblem", "release"]
+        if s in ("plasma", "darkness", "prism_light"):
+            keys.append("extras")
+        anims = [{"file": anim, "name": f"{n}.{k}"} for k in keys]
         views = [
             ("front cover", 0.5, [0, 4], {"yaw": 90, "pitch": 12, "dist": 34}),
             ("closed 3/4", 1.0, [0, 4], {"yaw": 130, "pitch": 18, "dist": 34}),
@@ -75,10 +78,12 @@ def book_jobs():
         ]
         for i, (label, t, use, cam) in enumerate(views):
             out = f"{TMP}/book_{s}_{i}.png"
+            use = list(use) + ([6] if len(keys) > 6 else [])
+            v = {"ck": 1.0 if 2 in use else 0.0, "flip_t": 0.001 if 3 in use else 0.0, "rel_t": 0.0}
             jobs.append({"out": out, "geo": geo, "textures": tex, "anims": anims, "flow": True, "size": 512,
                          "camera": {**cam, "target": [0, 1.0, 0], "fov": 30},
-                         "frames": [{"t": t, "anims": use}]})
-            cells.append((out, f"{s.title()} Grimoire - {label}"))
+                         "frames": [{"t": t, "anims": use, "v": v}]})
+            cells.append((out, f"{s.replace('_', ' ').title()} - {label}"))
     return jobs, cells
 
 
@@ -87,6 +92,8 @@ def fx_jobs(names=None):
     jobs, groups = [], {}
     for ident in meta["constructs"]:
         name = ident.split(":")[1]
+        if not name.startswith("fx_"):
+            continue
         if names and not any(name.startswith(n) for n in names):
             continue
         ent = json.load(open(f"{RP}/entity/grimoire/{name}.entity.json"))["minecraft:client_entity"]["description"]
@@ -146,6 +153,7 @@ MOB_VIEWS = {
     "royal_stag": [("idle", 0.5, ["idle"]), ("run", 0.25, ["run"]), ("prepare charge", 0.5, ["prepare"]), ("defensive magic", 0.4, ["defend"])],
 }
 
+BOOK_SCHOOLS = ("pressure", "ice", "blood")
 MOB_CAMERA = {"royal_stag": {"yaw": -38, "pitch": 14, "dist": 132, "target": [0, 32, -4], "fov": 38}}
 
 PREVIEW_HINTS = {}
@@ -159,10 +167,15 @@ except Exception:
 def main():
     bundle()
     what = sys.argv[1] if len(sys.argv) > 1 else "books"
-    if what == "books":
+    if what in ("books", "books2"):
+        global BOOK_SCHOOLS
+        if what == "books2":
+            BOOK_SCHOOLS = ("plasma", "darkness", "prism_light")
         jobs, cells = book_jobs()
         render(jobs)
-        print(sheet(cells, 4, os.path.join(OUT, "grimoires.png"), "The three Grimoires (offline render of the shipped geometry, textures and animations)"))
+        out = "grimoires.png" if what == "books" else "grimoires_expansion.png"
+        title = "The Grimoires" if what == "books" else "Expansion 02 Grimoires: Plasma, Darkness, Prism Light"
+        print(sheet(cells, 4, os.path.join(OUT, out), f"{title} (offline render of the shipped geometry, textures and animations)"))
     elif what == "mobs":
         jobs, cells = mob_jobs(sys.argv[2:] or list(MOB_VIEWS))
         render(jobs)
@@ -173,7 +186,7 @@ def main():
         render(jobs)
         by_school = {}
         for name, cells in groups.items():
-            school = {"p": "pressure", "i": "ice", "b": "blood"}.get(name.split("_")[1][0], "common") if name.startswith("fx_") else "summons"
+            school = {"p": "pressure", "i": "ice", "b": "blood", "pl": "plasma", "d": "darkness", "pr": "prism_light"}.get(name.split("_")[1], "common") if name.startswith("fx_") else "summons"
             by_school.setdefault(school, []).extend(cells)
         for school, cells in by_school.items():
             print(sheet(cells, 4, os.path.join(OUT, f"constructs_{school}.png"), f"{school.title()} constructs (offline render)"))

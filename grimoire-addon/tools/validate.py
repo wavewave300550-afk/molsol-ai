@@ -440,6 +440,13 @@ def main():
             err(f"terrain texture {k} -> {t} missing")
     for path in glob.glob(f"{BP}/blocks/*.json"):
         d = load(path)["minecraft:block"]
+        cb = d.get("components", {}).get("minecraft:collision_box")
+        if isinstance(cb, dict) and ("origin" in cb or "size" in cb):
+            err(f"block {d['description']['identifier']}: collision_box must use min/max in 1.26 (origin/size is rejected)")
+        if isinstance(cb, dict) and "min" in cb:
+            lim = (16, 24, 16)
+            if any(not (0 <= cb[k][i] <= lim[i]) for k in ("min", "max") for i in range(3)) or any(cb["min"][i] > cb["max"][i] for i in range(3)):
+                err(f"block {d['description']['identifier']}: collision_box out of range")
         for inst in d.get("components", {}).get("minecraft:material_instances", {}).values():
             if inst.get("texture") not in terrain:
                 err(f"block {d['description']['identifier']} texture {inst.get('texture')} not in terrain_texture.json")

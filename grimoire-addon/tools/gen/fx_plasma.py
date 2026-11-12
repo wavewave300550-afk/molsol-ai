@@ -21,14 +21,14 @@ def whip():
         wd = 1.0 - k * 0.055
         for f in range(3):
             a0 = f * 120 + k * 42
-            seg.cbox((math.cos(math.radians(a0)) * 0.6 * wd, math.sin(math.radians(a0)) * 0.6 * wd, z0 - L / 2),
-                     (0.45 * wd, 0.45 * wd, L + 0.5), FIL[f], rotation=(0, 0, a0 + 25))
-        seg.cbox((0, 0, z0 - L / 2), (0.22, 0.22, L), "pl_core")
+            seg.cbox((math.cos(math.radians(a0)) * 1.3 * wd, math.sin(math.radians(a0)) * 1.3 * wd, z0 - L / 2),
+                     (1.1 * wd, 1.1 * wd, L + 0.5), FIL[f], rotation=(0, 0, a0 + 25))
+        seg.cbox((0, 0, z0 - L / 2), (0.6 * wd, 0.6 * wd, L), "pl_core")
         prev = f"g_seg{k}"
     tip = w.bone("g_tip", prev, pivot=(0, 0, -10 * L))
     for i, (ry, rx) in enumerate(((0, 0), (28, 12), (-28, -10), (14, -24))):
         b = w.bone(f"g_br{i}", "g_tip", pivot=(0, 0, -10 * L), rotation=(rx, ry, 0))
-        b.cbox((0, 0, -10 * L - 3), (0.3, 0.3, 6 - i), FIL[i % 3])
+        b.cbox((0, 0, -10 * L - 3.5), (0.7, 0.7, 7 - i), FIL[i % 3])
     w.bone("g_knot", None, pivot=(0, 0, 0)).cbox((0, 0, 0), (1.6, 1.6, 1.6), "pl_core", rotation=(45, 45, 0))
     form = w.anim("form", length=0.5)
     for k in range(10):
@@ -344,8 +344,8 @@ def skates():
         r.cbox((x, 1.2, 0), (0.6, 0.8, 7), "pl_ceramic")
         s.bone(f"g_blade_{side}", f"runner_{side}", pivot=(x, 0, 0)).cbox((x, 0.05, 0), (0.5, 0.25, 10.4), "pl_core")
         fb = s.bone(f"g_fin_{side}", "stretch", pivot=(x, 1, 3))
-        for i, (rx, h) in enumerate(((-18, 0.6), (-34, 0.4))):
-            fb.cbox((x, 1 + 1.6 * (i + 1), 3 + 5), (0.2, h, 10), FIL[i], rotation=(rx, 0, 0))
+        for i, (rx, h) in enumerate(((-12, 1.4), (-26, 1.0))):
+            fb.cbox((x, 1.4 + 0.9 * i, 3 + 4.5), (0.3, h, 9), FIL[i], rotation=(rx, 0, 0))
     form = s.anim("form", length=0.3)
     form.scale("fade", {0: [0.01, 0.01, 0.01], 0.3: [1, 1, 1]})
     s.phase(1, "form", "glide")

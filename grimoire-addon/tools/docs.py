@@ -14,9 +14,11 @@ from collections import OrderedDict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCS = os.path.join(ROOT, "docs")
-SCHOOLS = OrderedDict([("pressure", "Pressure Magic"), ("ice", "Ice Magic"), ("blood", "Blood Magic")])
-MOVEMENT = {"P10", "P11", "I10", "I11", "B10", "B11"}
-KNOCKBACK_PLAYER = {"P11", "I11", "B11"}
+SCHOOLS = OrderedDict([("pressure", "Pressure Magic"), ("ice", "Ice Magic"), ("blood", "Blood Magic"),
+                       ("plasma", "Plasma Magic"), ("darkness", "Darkness Magic"), ("prism_light", "Prism Light Magic")])
+MOVEMENT = {"P10", "P11", "I10", "I11", "B10", "B11", "PL10", "PL11", "D10", "D11", "PR10", "PR11"}
+KNOCKBACK_PLAYER = {"P11", "I11", "B11", "PL10", "PL11", "PR11"}
+AI_MISDIRECTION = {"D07", "D09", "PR06", "PR08", "PR09"}
 
 
 def fmt_params(p):
@@ -46,17 +48,26 @@ def spells_md(meta):
 
 
 def cooldown_table(meta):
-    rows = ["| # | Pressure (orange) | CD | # | Ice (sapphire) | CD | # | Blood (crimson) | CD |", "|---|---|---|---|---|---|---|---|---|"]
     by = {k: [s for s in meta["spells"] if s["school"] == k] for k in SCHOOLS}
-    for i in range(15):
-        cells = []
-        for k in SCHOOLS:
-            s = by[k][i]
-            cells += [s["code"], s["name"], f"{s['cooldown']} s" + ("*" if s["cooldownAfterEnd"] else "")]
-        rows.append("| " + " | ".join(cells) + " |")
+    rows = ["**Grimoires 01-03**", "", "| # | Pressure (orange) | CD | # | Ice (sapphire) | CD | # | Blood (crimson) | CD |", "|---|---|---|---|---|---|---|---|---|"]
+    rows += _cd_rows(by, ("pressure", "ice", "blood"))
+    rows += ["", "**Grimoires 04-06 (Expansion 02)**", "", "| # | Plasma (violet) | CD | # | Darkness (dark green) | CD | # | Prism Light (pearl) | CD |",
+             "|---|---|---|---|---|---|---|---|---|"]
+    rows += _cd_rows(by, ("plasma", "darkness", "prism_light"))
     rows.append("")
     rows.append("\\* I11's cooldown starts when the flight ends (the only exception).")
     return "\n".join(rows)
+
+
+def _cd_rows(by, schools):
+    rows = []
+    for i in range(15):
+        cells = []
+        for k in schools:
+            s = by[k][i]
+            cells += [s["code"], s["name"], f"{s['cooldown']} s" + ("*" if s["cooldownAfterEnd"] else "")]
+        rows.append("| " + " | ".join(cells) + " |")
+    return rows
 
 
 def bp_hash():
@@ -111,7 +122,7 @@ def testing_md(meta, report, validate_out, evidence_rel):
            "* Add-on: `@minecraft/server` **2.11.0** (stable), no experiments enabled in the add-on's world settings",
            "* Test harness: a separate development-only behaviour pack (`tests/harness_bp`) that uses `@minecraft/server-gametest`"
            " (Beta APIs) **only in the generated test world**; it is not part of the shipped `.mcaddon`",
-           "* Run: `python3 tests/run_bds.py --bds <bds dir> controls reuse_gap pressure ice blood robustness cleanup`",
+           f"* Run: `python3 tests/run_bds.py --bds <bds dir> {' '.join(report.get('suites', [])) or 'controls reuse_gap pressure ice blood plasma darkness prism_light robustness cleanup'}`",
            f"* Result: **{passed}/{total} checks passed**, {len(report['log_problems'])} Content Log errors/warnings,"
            f" run completed: {report['completed']}",
            f"* Behaviour pack under test: content hash `{bp_hash()[:16]}` (sha256 over `packs/Grimoire_BP`); it is the"
@@ -149,7 +160,9 @@ def testing_md(meta, report, validate_out, evidence_rel):
             if s["code"] in KNOCKBACK_PLAYER:
                 notes.append("player flight/dash velocity is applied with knockback, which simulated players ignore; the feel of the movement is unverified")
             elif s["code"] in MOVEMENT:
-                notes.append("teleport destination safety verified; movement feel unverified")
+                notes.append("destination/route safety verified; movement feel unverified")
+            if s["code"] in AI_MISDIRECTION:
+                notes.append("mob retargeting relies on vanilla hurt_by_target reacting to the decoy; the decoy's existence is verified, mob behaviour per species is not")
             out.append(f"| {s['code']} | {s['name']} | {s['cooldown']} s | {status} | {n_ok}/{len(checks)} | Not tested in client (offline render only) | {'; '.join(notes)} |")
         out.append("")
 

@@ -121,7 +121,8 @@ def blocks(bp, rp):
         if name in STEP_PANELS:
             y0 = STEP_PANELS[name]
             geometry = f"geometry.grimoire.{name}"
-            comps_extra = {"minecraft:collision_box": {"origin": [-8, y0, -8], "size": [16, 4, 16]},
+            # 1.26 collision boxes use min/max in block space (0..16, height up to 24); selection boxes keep origin/size
+            comps_extra = {"minecraft:collision_box": {"min": [0, y0, 0], "max": [16, y0 + 4, 16]},
                            "minecraft:selection_box": {"origin": [-8, y0, -8], "size": [16, 4, 16]}}
             dump(f"{rp}/models/blocks/grimoire/{name}.geo.json", {"format_version": "1.12.0", "minecraft:geometry": [{
                 "description": {"identifier": geometry, "texture_width": 16, "texture_height": 16},

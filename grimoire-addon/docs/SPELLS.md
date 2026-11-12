@@ -70,3 +70,63 @@ without starting the cooldown. Holding longer is always safe: nothing fires unti
 | B14 | **Grand Magic: Scarlet Sea of Lament** | 90 s | 1.50 s | yes | A sea of blood with pillars, roses and beasts, ending in a tidal wave. | duration 20, radius 16, beastDamage 10, waveDamage 25, range 36 |
 | B15 | **Imperial Edict: Heart of the Crimson Moon** | 180 s | 2.00 s | yes | Awakening, the emperor's circulation, and the final heartbeat. | radius 24, range 36, pulseDamage 4, attackDamage 8, finalDamage 40 |
 
+## Plasma Magic
+
+| # | Spell | Cooldown | Prep | Empowerable | Description | Tuning |
+|---|---|---|---|---|---|---|
+| PL01 | **Coronal Lash** | 7 s | 0.50 s | yes | Three plasma filaments braid into a whip that strikes in three S-curved sweeps. | damage 7, reach 8, width 1.4 |
+| PL02 | **Helix Borer** | 12 s | 0.60 s | yes | Counter-rotating helices around a white-hot core drill repeatedly into one target. | damage 4, hits 8, range 36, speed 1.4, fragmentDamage 4 |
+| PL03 | **Prominence Uprising** | 19 s | 0.80 s | yes | Twin prominence arches lift enemies inside their formation, then collapse onto them. | radius 5, liftTicks 40, damage 16, liftDamage 4, range 32 |
+| PL04 | **Arc-Shear Cascade** | 24 s | 0.90 s | yes | Folding plasma membranes sweep the field; where two cross, the plasma erupts. | membranes 4, damage 6, intersectionDamage 10, radius 9, range 30, duration 3 |
+| PL05 | **Stellarator Ward** | 25 s | 0.70 s | yes | A twisted toroidal confinement field curves incoming projectiles around you. | duration 14, radius 3.2, reduction 0.35 |
+| PL06 | **Corona Molt** | 30 s | 0.60 s | yes | A plasma skin sheds one strong blow as an expanding afterimage that blasts nearby foes. | duration 20, threshold 3, maxAbsorb 14, radius 5, damage 6 |
+| PL07 | **Fieldline Harp** | 29 s | 0.90 s | yes | Plasma strings between floating anchors resonate and pulse when enemies cross them. | anchors 6, radius 6, duration 12, damage 6, range 28 |
+| PL08 | **Polarity Orchestra** | 38 s | 1.00 s | yes | Six magnetic pylons switch polarity in rhythm, pulling and pushing enemies between them. | pylons 6, radius 7, duration 10, damage 3, force 0.7, range 30 |
+| PL09 | **Static Horizon** | 42 s | 1.00 s | yes | A low interference membrane scatters projectiles and slows everything beneath it. | radius 10, duration 14, height 2.6, damage 3, range 30 |
+| PL10 | **Ion Skates** | 10 s | 0.30 s | no | Plasma skates with energy fins: glide fast along the ground for 8 seconds. | duration 8, speed 3, boost 0.35 |
+| PL11 | **Prominence Sling** | 18 s | 0.70 s | no | A celestial slingshot draws you back and launches you on a long arc. | power 3.2, lift 1.15, duration 3 |
+| PL12 | **Living Circuit: The Auroral Manta** | 55 s | 1.20 s | yes | A manta of living plasma circles above you, diving at enemies and lashing with its tail. | duration 22, diveDamage 10, tailDamage 5, range 16 |
+| PL13 | **Magnetic Reconnection** | 45 s | 1.10 s | yes | Two opposing field structures meet; their filaments break and reconnect in violent jets. | radius 7, jets 6, jetLength 9, damage 18, jetDamage 10, range 32, delay 50 |
+| PL14 | **Grand Magic: Stellarator Cathedral** | 90 s | 1.50 s | yes | A floating twisted confinement cathedral strikes with branching streams, then fires its beams. | radius 12, duration 20, streamDamage 8, interval 25, targets 4, beams 6, beamDamage 18, beamLength 14, height 9, range 24, allyRadius 5 |
+| PL15 | **Imperial Edict: Heavenwide Reconnection** | 180 s | 2.00 s | yes | The sky becomes a living plasma network that confines, then reconnects in sweeping jets. | radius 16, range 40, streamDamage 5, junctionDamage 14, jetDamage 16, height 12 |
+
+## Darkness Magic
+
+| # | Spell | Cooldown | Prep | Empowerable | Description | Tuning |
+|---|---|---|---|---|---|---|
+| D01 | **Umbral Origami** | 7 s | 0.50 s | yes | Paper-thin shadow sheets fold into blades and cut in from many directions. | sheets 5, damage 6, range 14 |
+| D02 | **Maw of the Unseen** | 17 s | 0.70 s | yes | The shadow beneath the target splits into geometric jaws that hold it, then snap shut. | damage 22, holdTicks 24, range 24, radius 2.4 |
+| D03 | **The Unwritten Sentence** | 13 s | 0.60 s | yes | Erased glyphs imprint themselves on enemies; the final glyph punishes every mark. | glyphs 4, damage 5, finalDamage 6, range 24 |
+| D04 | **Sevenfold Eclipse** | 26 s | 0.90 s | yes | Seven eclipse discs drift overhead; their shadows strike where they overlap, hardest at totality. | discs 7, radius 10, height 9, damage 2, fullDamage 20, duration 5, range 30 |
+| D05 | **Velvet of the Hollow King** | 27 s | 0.60 s | yes | A weightless shadow cloak that folds into armour plates where you are struck. | duration 14, reduction 0.45 |
+| D06 | **Shadow Latch** | 32 s | 0.60 s | yes | The next melee attacker has its shadow pinned and is locked in place by a giant latch. | duration 20, holdTicks 60, reduction 0.6, damage 4 |
+| D07 | **Curtainfall Divide** | 35 s | 0.90 s | yes | Shadow curtains fall across the field, hiding allies and confusing enemies who cross them. | curtains 3, width 8, duration 15, spacing 4 |
+| D08 | **Dusk Mosaic** | 38 s | 1.00 s | yes | A ground mosaic of flipping plates: dark tiles bog enemies down, jade tiles speed allies. | duration 14, slowAmp 3, damage 2, range 24 |
+| D09 | **Censor's Seal** | 42 s | 0.90 s | yes | A faceless mask seals the target's sight; its aim drifts toward phantoms of darkness. | duration 10, range 24, decoyDistance 5 |
+| D10 | **Silhouette Traverse** | 9 s | 0.30 s | no | Flatten into your own shadow, race along the ground and rise again further ahead. | range 14, speed 1.4 |
+| D11 | **Stairway of the Unlit Sky** | 22 s | 0.60 s | no | Solid shadow steps unfold ahead of you as you climb; look up to rise, down to descend. | duration 12, keep 7 |
+| D12 | **The Inkless Doppelgänger** | 55 s | 1.20 s | yes | Your shadow rises as a faceless double that repeats your movement and attacks a moment later. | duration 18, delay 30, damage 7, reach 3 |
+| D13 | **Footfall Reversal** | 45 s | 0.90 s | yes | Record a target's footsteps, then send shadow constructs back along its path to strike. | recordTicks 60, constructs 6, damage 7, range 24 |
+| D14 | **Grand Magic: Court of the Unseen** | 90 s | 1.50 s | yes | Seven frameless doors of darkness form a court whose shadows slow and strike, then fold into one. | doors 7, radius 9, duration 20, foldDamage 7, finalDamage 24, range 24 |
+| D15 | **Imperial Edict: The World Without an Outline** | 180 s | 2.00 s | yes | Outlines vanish, shadows rise against their owners, and seven planes of darkness fold onto the field. | radius 18, range 36, replicaDamage 5, planeDamage 16, marks 8 |
+
+## Prism Light Magic
+
+| # | Spell | Cooldown | Prep | Empowerable | Description | Tuning |
+|---|---|---|---|---|---|---|
+| PR01 | **Sevenfold Verdict** | 7 s | 0.50 s | yes | A prism splits one white beam into seven ribbons that strike from seven sides, then converge in a star. | damage 3, starDamage 10, starRadius 3, range 30 |
+| PR02 | **Total Internal Reflection** | 13 s | 0.60 s | yes | A beam zigzags through a ring of prisms and leaves toward the target from an unexpected angle. | prisms 5, radius 4.5, damage 14, beamDamage 3, range 28 |
+| PR03 | **Caustic Bloom** | 19 s | 0.80 s | yes | Giant lenses cast flower-shaped caustics that hunt enemies, then contract into burning focal points. | lenses 3, damage 9, radius 2.6, range 28, spread 5 |
+| PR04 | **Fraunhofer Lattice** | 26 s | 0.90 s | yes | A diffraction grating fans bright spectral bands across the field; the dark gaps between are safe. | bands 7, damage 7, length 14, spread 9, duration 5, sweep 60 |
+| PR05 | **Brewster's Veil** | 27 s | 0.60 s | yes | Polarising panels in front of you turn projectiles aside along their edges. | duration 15, panels 3, reduction 0.4 |
+| PR06 | **Parallax Displacement** | 32 s | 0.60 s | yes | Your image splits into red, green and blue at a false position; the first blow shatters it and you slip away. | duration 20, offset 1.6, hop 4 |
+| PR07 | **Chromatic Turnstile** | 35 s | 0.90 s | yes | Seven prism gates refract enemies who pass through them along their marked direction. | gates 7, radius 8, duration 15, force 1.3, range 26 |
+| PR08 | **Kaleidoscope Theater** | 40 s | 1.00 s | yes | A kaleidoscope of mirrors multiplies your image; enemies turn on the reflections. | duration 14, figures 6, radius 6 |
+| PR09 | **Interference Tapestry** | 43 s | 1.00 s | yes | Two coherent light fields weave a veil of bright and dark bands: bright blinds, dark conceals. | width 14, duration 15, range 24 |
+| PR10 | **Rayline Stride** | 9 s | 0.30 s | no | Two floating prisms bend a light path ahead; you race along it in colour-separated afterimages. | range 11 |
+| PR11 | **Iridescent Sail** | 20 s | 0.60 s | no | An iridescent delta sail lets you glide where you look and fall softly for 15 seconds. | duration 15, glide 0.32 |
+| PR12 | **Spectral Diagnosis** | 48 s | 0.90 s | no | A spectroscope analyses the target and marks a weak point: you and your allies deal more damage to it. | duration 15, mult 1.35, range 28 |
+| PR13 | **Whitepoint Benediction** | 55 s | 1.00 s | no | Seven spectral ribbons recombine into white light that heals and cleanses you and nearby allies. | radius 8, heal 10, pulses 3 |
+| PR14 | **Grand Magic: The Chromatic Observatory** | 90 s | 1.50 s | yes | A floating optical observatory hunts enemies with focal points and ends in one geometric illumination. | radius 12, duration 20, focalDamage 9, focals 3, interval 30, finalDamage 26, height 10, range 24, allyRadius 4 |
+| PR15 | **Imperial Edict: The Colorless Coronation** | 180 s | 2.00 s | yes | White light is unwoven into seven curtains, refracted across the field, then crowned back into pure white. | radius 16, range 40, curtainDamage 8, bloomDamage 10, finalDamage 40, height 14 |
+

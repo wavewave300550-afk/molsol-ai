@@ -10,14 +10,14 @@
   },
   "components": {
    "minecraft:collision_box": {
-    "origin": [
-     -8,
+    "min": [
+     0,
      12,
-     -8
+     0
     ],
-    "size": [
+    "max": [
      16,
-     4,
+     16,
      16
     ]
    },
