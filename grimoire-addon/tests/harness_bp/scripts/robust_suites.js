@@ -244,14 +244,14 @@ async function sixBooks(h) {
   const s = await h.state("Sixa");
   const ok = schools.every((sc, i) => s?.selected?.[sc] === i + 1);
   h.check(S, "six grimoires keep six independent selections in one hotbar", ok, s?.selected);
-  sp.selectedSlotIndex = 3; // plasma, selection 02 Helix Borer
+  sp.selectedSlotIndex = 3; // plasma: four crouches above selected spell 05, Stellarator Ward (charge 14)
   await h.wait(12);
   sp.useItemInSlot(3);
   await h.wait(18);
   sp.stopUsingItem();
   await h.wait(4);
   const s2 = await h.state("Sixa");
-  h.check(S, "a plasma cast starts only that spell's cooldown", Object.keys(s2?.cooldowns ?? {}).join() === "plasma.helix_borer", s2?.cooldowns);
+  h.check(S, "a plasma cast starts only the selected spell's cooldown", Object.keys(s2?.cooldowns ?? {}).join() === "plasma.stellarator_ward", s2?.cooldowns);
   sp.disconnect();
   await h.wait(10);
 }

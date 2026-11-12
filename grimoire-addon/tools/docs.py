@@ -129,6 +129,8 @@ def testing_md(meta, report, validate_out, evidence_rel):
            " pack shipped in `dist/` (later commits changed only resource-pack visuals and documentation)",
            ""]
     facts = log_facts(os.path.join(ROOT, evidence_rel))
+    for note in report.get("notes", []):
+        out.insert(len(out) - 1, f"* Note: {note}")
     if report.get("parts"):
         out.insert(len(out) - 1, "* Two servers ran side by side on the same build: " + "; ".join(
             f"`{', '.join(pt['suites'])}` ({pt['passed']}/{pt['total']})" for pt in report["parts"]))
@@ -176,6 +178,7 @@ def testing_md(meta, report, validate_out, evidence_rel):
                           ("robust:pvp", "PvP and team rules, no costs"),
                           ("robust:multiplayer", "Two casters at once, ownership, disconnect"),
                           ("robust:blocks", "Temporary blocks and disconnect mid-spell"),
+                          ("robust:six", "Six grimoires in one hotbar"),
                           ("cleanup", "World state after every suite")])
     out += ["## Systems", ""]
     for key, title in titles.items():

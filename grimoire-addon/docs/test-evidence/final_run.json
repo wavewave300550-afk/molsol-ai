@@ -2,8 +2,7 @@
  "server_version": "1.26.63.1",
  "completed": true,
  "summary": {
-  "DONE": true,
-  "total": 294,
+  "total": 524,
   "failed": 0
  },
  "results": [
@@ -18,7 +17,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     },
     "cooldowns": {},
     "preparing": null,
@@ -32,7 +34,10 @@
    "detail": {
     "pressure": 0,
     "ice": 0,
-    "blood": 0
+    "blood": 0,
+    "plasma": 0,
+    "darkness": 0,
+    "prism_light": 0
    }
   },
   {
@@ -42,7 +47,10 @@
    "detail": {
     "pressure": 1,
     "ice": 0,
-    "blood": 0
+    "blood": 0,
+    "plasma": 0,
+    "darkness": 0,
+    "prism_light": 0
    }
   },
   {
@@ -52,7 +60,10 @@
    "detail": {
     "pressure": 2,
     "ice": 0,
-    "blood": 0
+    "blood": 0,
+    "plasma": 0,
+    "darkness": 0,
+    "prism_light": 0
    }
   },
   {
@@ -62,7 +73,10 @@
    "detail": {
     "pressure": 0,
     "ice": 0,
-    "blood": 0
+    "blood": 0,
+    "plasma": 0,
+    "darkness": 0,
+    "prism_light": 0
    }
   },
   {
@@ -76,7 +90,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     },
     "cooldowns": {},
     "preparing": {
@@ -134,7 +151,10 @@
    "detail": {
     "pressure": 1,
     "ice": 0,
-    "blood": 0
+    "blood": 0,
+    "plasma": 0,
+    "darkness": 0,
+    "prism_light": 0
    }
   },
   {
@@ -165,7 +185,10 @@
     "selected": {
      "pressure": 3,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     },
     "cooldowns": {
      "pressure.lance": 23,
@@ -191,7 +214,10 @@
    "detail": {
     "pressure": 3,
     "ice": 0,
-    "blood": 0
+    "blood": 0,
+    "plasma": 0,
+    "darkness": 0,
+    "prism_light": 0
    }
   },
   {
@@ -205,7 +231,10 @@
     "selected": {
      "pressure": 3,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     },
     "cooldowns": {
      "pressure.atlas_piston": 294
@@ -233,7 +262,10 @@
     "selected": {
      "pressure": 4,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     },
     "cooldowns": {
      "pressure.atlas_piston": 263
@@ -257,7 +289,10 @@
    "detail": {
     "pressure": 4,
     "ice": 1,
-    "blood": 0
+    "blood": 0,
+    "plasma": 0,
+    "darkness": 0,
+    "prism_light": 0
    }
   },
   {
@@ -271,7 +306,10 @@
     "selected": {
      "pressure": 4,
      "ice": 1,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     },
     "cooldowns": {
      "pressure.atlas_piston": 248
@@ -291,7 +329,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     },
     "cooldowns": {},
     "preparing": null,
@@ -317,7 +358,10 @@
     "selected": {
      "pressure": 4,
      "ice": 1,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     },
     "cooldowns": {
      "pressure.atlas_piston": 214
@@ -390,7 +434,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -453,7 +500,10 @@
     "selected": {
      "pressure": 1,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -516,7 +566,10 @@
     "selected": {
      "pressure": 2,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -579,7 +632,10 @@
     "selected": {
      "pressure": 3,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -648,7 +704,10 @@
     "selected": {
      "pressure": 4,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -708,7 +767,10 @@
     "selected": {
      "pressure": 5,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -782,7 +844,10 @@
     "selected": {
      "pressure": 6,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -845,7 +910,10 @@
     "selected": {
      "pressure": 7,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -904,7 +972,10 @@
     "selected": {
      "pressure": 8,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -966,7 +1037,10 @@
     "selected": {
      "pressure": 9,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -1015,7 +1089,10 @@
     "selected": {
      "pressure": 10,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -1066,7 +1143,10 @@
     "selected": {
      "pressure": 11,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -1125,7 +1205,10 @@
     "selected": {
      "pressure": 12,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -1157,7 +1240,10 @@
     "selected": {
      "pressure": 12,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     },
     "cooldowns": {
      "pressure.equilibrium_theft": 608
@@ -1177,7 +1263,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     },
     "cooldowns": {
      "pressure.lance": 113
@@ -1232,7 +1321,10 @@
     "selected": {
      "pressure": 13,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -1302,7 +1394,10 @@
     "selected": {
      "pressure": 14,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -1366,7 +1461,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -1429,7 +1527,10 @@
     "selected": {
      "pressure": 0,
      "ice": 1,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -1492,7 +1593,10 @@
     "selected": {
      "pressure": 0,
      "ice": 2,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -1555,7 +1659,10 @@
     "selected": {
      "pressure": 0,
      "ice": 3,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -1622,7 +1729,10 @@
     "selected": {
      "pressure": 0,
      "ice": 4,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -1682,7 +1792,10 @@
     "selected": {
      "pressure": 0,
      "ice": 5,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -1742,7 +1855,10 @@
     "selected": {
      "pressure": 0,
      "ice": 6,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -1805,7 +1921,10 @@
     "selected": {
      "pressure": 0,
      "ice": 7,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -1864,7 +1983,10 @@
     "selected": {
      "pressure": 0,
      "ice": 8,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -1891,7 +2013,7 @@
    "ok": true,
    "detail": {
     "dealt": [
-     15,
+     13.80000114440918,
      18,
      18
     ]
@@ -1927,7 +2049,10 @@
     "selected": {
      "pressure": 0,
      "ice": 9,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -1988,7 +2113,10 @@
     "selected": {
      "pressure": 0,
      "ice": 10,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -2052,7 +2180,10 @@
     "selected": {
      "pressure": 0,
      "ice": 11,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -2115,7 +2246,10 @@
     "selected": {
      "pressure": 0,
      "ice": 12,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -2178,7 +2312,10 @@
     "selected": {
      "pressure": 0,
      "ice": 13,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -2248,7 +2385,10 @@
     "selected": {
      "pressure": 0,
      "ice": 14,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -2312,7 +2452,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -2375,7 +2518,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 1
+     "blood": 1,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -2403,7 +2549,7 @@
    "detail": {
     "dealt": [
      20,
-     8,
+     0,
      8
     ]
    }
@@ -2438,7 +2584,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 2
+     "blood": 2,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -2466,7 +2615,7 @@
    "detail": {
     "dealt": [
      15,
-     9.200000762939453,
+     10,
      15
     ]
    }
@@ -2501,7 +2650,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 3
+     "blood": 3,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -2564,7 +2716,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 4
+     "blood": 4,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -2624,7 +2779,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 5
+     "blood": 5,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -2692,7 +2850,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 6
+     "blood": 6,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -2755,7 +2916,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 7
+     "blood": 7,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -2818,7 +2982,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 8
+     "blood": 8,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -2881,7 +3048,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 9
+     "blood": 9,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -2942,7 +3112,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 10
+     "blood": 10,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -2993,7 +3166,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 11
+     "blood": 11,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -3054,7 +3230,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 12
+     "blood": 12,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -3139,7 +3318,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 13
+     "blood": 13,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -3166,7 +3348,7 @@
    "ok": true,
    "detail": {
     "dealt": [
-     7,
+     9,
      20,
      20,
      20
@@ -3203,7 +3385,10 @@
     "selected": {
      "pressure": 0,
      "ice": 0,
-     "blood": 14
+     "blood": 14,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     }
    }
   },
@@ -3258,12 +3443,3077 @@
    }
   },
   {
+   "suite": "cleanup",
+   "name": "constructs dissolved after spells ended",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 20159,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "cleanup",
+   "name": "temporary blocks removed",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 20159,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "cleanup",
+   "name": "no routines left running",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 20159,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "cleanup",
+   "name": "no construct entities remain in the world",
+   "ok": true,
+   "detail": 0
+  },
+  {
+   "suite": "plasma:PL01",
+   "name": "PL01 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 138,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL01",
+   "name": "PL01 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 604,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "PL01:TPL01"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL01",
+   "name": "PL01 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     14,
+     14
+    ]
+   }
+  },
+  {
+   "suite": "plasma:PL01",
+   "name": "PL01 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "plasma:PL01",
+   "name": "PL01 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 705,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "plasma:PL02",
+   "name": "PL02 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 238,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 1,
+     "darkness": 0,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL02",
+   "name": "PL02 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 785,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "PL02:TPL02"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL02",
+   "name": "PL02 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20
+    ]
+   }
+  },
+  {
+   "suite": "plasma:PL02",
+   "name": "PL02 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "plasma:PL02",
+   "name": "PL02 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 906,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "plasma:PL03",
+   "name": "PL03 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 378,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 2,
+     "darkness": 0,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL03",
+   "name": "PL03 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 995,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "PL03:TPL03"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL03",
+   "name": "PL03 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     13.600000381469727,
+     13.600000381469727,
+     13.600000381469727
+    ]
+   }
+  },
+  {
+   "suite": "plasma:PL03",
+   "name": "PL03 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "plasma:PL03",
+   "name": "PL03 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 1136,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "plasma:PL04",
+   "name": "PL04 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 478,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 3,
+     "darkness": 0,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL04",
+   "name": "PL04 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 5,
+    "w1": {
+     "kind": "world",
+     "tick": 1232,
+     "fx": 5,
+     "tempBlocks": 0,
+     "routines": [
+      "PL04:TPL04"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL04",
+   "name": "PL04 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     0,
+     6
+    ]
+   }
+  },
+  {
+   "suite": "plasma:PL04",
+   "name": "PL04 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "plasma:PL04",
+   "name": "PL04 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 1383,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "plasma:PL05",
+   "name": "PL05 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 498,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 4,
+     "darkness": 0,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL05",
+   "name": "PL05 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 1480,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "PL05:TPL05"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL05",
+   "name": "PL05 absorbs/reduces a real attack on the caster",
+   "ok": true,
+   "detail": {
+    "before": 20,
+    "after": 16.100000381469727
+   }
+  },
+  {
+   "suite": "plasma:PL05",
+   "name": "PL05 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": [
+     {
+      "cause": "entityAttack",
+      "src": "minecraft:husk",
+      "dmg": 3.9000000953674316
+     }
+    ]
+   }
+  },
+  {
+   "suite": "plasma:PL05",
+   "name": "PL05 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 1808,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "plasma:PL06",
+   "name": "PL06 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 598,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 5,
+     "darkness": 0,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL06",
+   "name": "PL06 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 1908,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "PL06:TPL06"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL06",
+   "name": "PL06 absorbs/reduces a real attack on the caster",
+   "ok": true,
+   "detail": {
+    "before": 20,
+    "after": 20
+   }
+  },
+  {
+   "suite": "plasma:PL06",
+   "name": "PL06 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "plasma:PL06",
+   "name": "PL06 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 1996,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "plasma:PL07",
+   "name": "PL07 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 578,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 6,
+     "darkness": 0,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL07",
+   "name": "PL07 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 15,
+    "w1": {
+     "kind": "world",
+     "tick": 2125,
+     "fx": 15,
+     "tempBlocks": 0,
+     "routines": [
+      "PL07:TPL07"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL07",
+   "name": "PL07 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "plasma:PL07",
+   "name": "PL07 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "plasma:PL07",
+   "name": "PL07 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 2418,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "plasma:PL08",
+   "name": "PL08 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 758,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 7,
+     "darkness": 0,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL08",
+   "name": "PL08 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 7,
+    "w1": {
+     "kind": "world",
+     "tick": 2536,
+     "fx": 7,
+     "tempBlocks": 0,
+     "routines": [
+      "PL08:TPL08"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL08",
+   "name": "PL08 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     15,
+     15,
+     15
+    ]
+   }
+  },
+  {
+   "suite": "plasma:PL08",
+   "name": "PL08 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "plasma:PL08",
+   "name": "PL08 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 2767,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "plasma:PL09",
+   "name": "PL09 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 838,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 8,
+     "darkness": 0,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL09",
+   "name": "PL09 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 2890,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "PL09:TPL09"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL09",
+   "name": "PL09 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     12,
+     12,
+     12
+    ]
+   }
+  },
+  {
+   "suite": "plasma:PL09",
+   "name": "PL09 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "plasma:PL09",
+   "name": "PL09 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 3201,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "plasma:PL10",
+   "name": "PL10 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 198,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 9,
+     "darkness": 0,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL10",
+   "name": "PL10 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 3315,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "PL10:TPL10"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL10",
+   "name": "PL10 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "plasma:PL10",
+   "name": "PL10 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 3506,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "plasma:PL11",
+   "name": "PL11 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 358,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 10,
+     "darkness": 0,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL11",
+   "name": "PL11 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 3651,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "PL11:TPL11"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL11",
+   "name": "PL11 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "plasma:PL11",
+   "name": "PL11 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 3734,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "plasma:PL12",
+   "name": "PL12 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 1098,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 11,
+     "darkness": 0,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL12",
+   "name": "PL12 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 3876,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "PL12:TPL12"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL12",
+   "name": "PL12 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     0,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "plasma:PL12",
+   "name": "PL12 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "plasma:PL12",
+   "name": "PL12 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 4347,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "plasma:PL13",
+   "name": "PL13 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 898,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 12,
+     "darkness": 0,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL13",
+   "name": "PL13 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 5,
+    "w1": {
+     "kind": "world",
+     "tick": 4492,
+     "fx": 5,
+     "tempBlocks": 0,
+     "routines": [
+      "PL13:TPL13"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL13",
+   "name": "PL13 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "plasma:PL13",
+   "name": "PL13 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "plasma:PL13",
+   "name": "PL13 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 4633,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "plasma:PL14",
+   "name": "PL14 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 1798,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 13,
+     "darkness": 0,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL14",
+   "name": "PL14 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 4791,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "PL14:TPL14"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL14",
+   "name": "PL14 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "plasma:PL14",
+   "name": "PL14 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "plasma:PL14",
+   "name": "PL14 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 5242,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "plasma:PL15",
+   "name": "PL15 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 3598,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 14,
+     "darkness": 0,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL15",
+   "name": "PL15 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 3,
+    "w1": {
+     "kind": "world",
+     "tick": 5433,
+     "fx": 3,
+     "tempBlocks": 0,
+     "routines": [
+      "PL15:TPL15"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "plasma:PL15",
+   "name": "PL15 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "plasma:PL15",
+   "name": "PL15 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "plasma:PL15",
+   "name": "PL15 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 5706,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "darkness:D01",
+   "name": "D01 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 138,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "darkness:D01",
+   "name": "D01 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 6,
+    "w1": {
+     "kind": "world",
+     "tick": 5779,
+     "fx": 6,
+     "tempBlocks": 0,
+     "routines": [
+      "D01:TD01"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "darkness:D01",
+   "name": "D01 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     18,
+     12
+    ]
+   }
+  },
+  {
+   "suite": "darkness:D01",
+   "name": "D01 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "darkness:D01",
+   "name": "D01 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 5870,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "darkness:D02",
+   "name": "D02 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 338,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 1,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "darkness:D02",
+   "name": "D02 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 5952,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "D02:TD02"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "darkness:D02",
+   "name": "D02 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20
+    ]
+   }
+  },
+  {
+   "suite": "darkness:D02",
+   "name": "D02 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "darkness:D02",
+   "name": "D02 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 6053,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "darkness:D03",
+   "name": "D03 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 258,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 2,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "darkness:D03",
+   "name": "D03 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 4,
+    "w1": {
+     "kind": "world",
+     "tick": 6156,
+     "fx": 4,
+     "tempBlocks": 0,
+     "routines": [
+      "D03:TD03"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "darkness:D03",
+   "name": "D03 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     11,
+     11
+    ]
+   }
+  },
+  {
+   "suite": "darkness:D03",
+   "name": "D03 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "darkness:D03",
+   "name": "D03 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 6279,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "darkness:D04",
+   "name": "D04 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 518,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 3,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "darkness:D04",
+   "name": "D04 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 15,
+    "w1": {
+     "kind": "world",
+     "tick": 6375,
+     "fx": 15,
+     "tempBlocks": 0,
+     "routines": [
+      "D04:TD04"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "darkness:D04",
+   "name": "D04 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     16,
+     18,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "darkness:D04",
+   "name": "D04 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "darkness:D04",
+   "name": "D04 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 6546,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "darkness:D05",
+   "name": "D05 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 538,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 4,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "darkness:D05",
+   "name": "D05 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 6641,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "D05:TD05"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "darkness:D05",
+   "name": "D05 absorbs/reduces a real attack on the caster",
+   "ok": true,
+   "detail": {
+    "before": 20,
+    "after": 16.700000762939453
+   }
+  },
+  {
+   "suite": "darkness:D05",
+   "name": "D05 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": [
+     {
+      "cause": "entityAttack",
+      "src": "minecraft:husk",
+      "dmg": 3.299999952316284
+     }
+    ]
+   }
+  },
+  {
+   "suite": "darkness:D05",
+   "name": "D05 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 6969,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "darkness:D06",
+   "name": "D06 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 638,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 5,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "darkness:D06",
+   "name": "D06 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 7069,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "D06:TD06"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "darkness:D06",
+   "name": "D06 absorbs/reduces a real attack on the caster",
+   "ok": true,
+   "detail": {
+    "before": 20,
+    "after": 17.600000381469727
+   }
+  },
+  {
+   "suite": "darkness:D06",
+   "name": "D06 latch immobilises the melee attacker",
+   "ok": true,
+   "detail": {}
+  },
+  {
+   "suite": "darkness:D06",
+   "name": "D06 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": [
+     {
+      "cause": "entityAttack",
+      "src": "minecraft:husk",
+      "dmg": 2.4000000953674316
+     }
+    ]
+   }
+  },
+  {
+   "suite": "darkness:D06",
+   "name": "D06 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 7185,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "darkness:D07",
+   "name": "D07 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 698,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 6,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "darkness:D07",
+   "name": "D07 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 4,
+    "w1": {
+     "kind": "world",
+     "tick": 7296,
+     "fx": 4,
+     "tempBlocks": 0,
+     "routines": [
+      "D07:TD07"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "darkness:D07",
+   "name": "D07 creates a misdirection decoy that enemies are turned toward",
+   "ok": true,
+   "detail": {
+    "decoys": 1
+   }
+  },
+  {
+   "suite": "darkness:D07",
+   "name": "D07 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "darkness:D07",
+   "name": "D07 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 7777,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "darkness:D08",
+   "name": "D08 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 758,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 7,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "darkness:D08",
+   "name": "D08 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 7895,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "D08:TD08"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "darkness:D08",
+   "name": "D08 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     2,
+     6,
+     6
+    ]
+   }
+  },
+  {
+   "suite": "darkness:D08",
+   "name": "D08 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "darkness:D08",
+   "name": "D08 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 8246,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "darkness:D09",
+   "name": "D09 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 838,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 8,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "darkness:D09",
+   "name": "D09 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 3,
+    "w1": {
+     "kind": "world",
+     "tick": 8367,
+     "fx": 3,
+     "tempBlocks": 0,
+     "routines": [
+      "D09:TD09"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "darkness:D09",
+   "name": "D09 creates a misdirection decoy that enemies are turned toward",
+   "ok": true,
+   "detail": {
+    "decoys": 1
+   }
+  },
+  {
+   "suite": "darkness:D09",
+   "name": "D09 applies weakness to its target",
+   "ok": true,
+   "detail": {}
+  },
+  {
+   "suite": "darkness:D09",
+   "name": "D09 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "darkness:D09",
+   "name": "D09 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 8583,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "darkness:D10",
+   "name": "D10 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 178,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 9,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "darkness:D10",
+   "name": "D10 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 8697,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "D10:TD10"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "darkness:D10",
+   "name": "D10 teleports the caster to a safe spot",
+   "ok": true,
+   "detail": {
+    "moved": 14.00000293590264,
+    "feet": "minecraft:air",
+    "head": "minecraft:air"
+   }
+  },
+  {
+   "suite": "darkness:D10",
+   "name": "D10 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "darkness:D10",
+   "name": "D10 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 8779,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "darkness:D11",
+   "name": "D11 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 438,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 10,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "darkness:D11",
+   "name": "D11 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 4,
+    "w1": {
+     "kind": "world",
+     "tick": 8904,
+     "fx": 4,
+     "tempBlocks": 3,
+     "routines": [
+      "D11:TD11",
+      "D11:step",
+      "D11:step",
+      "D11:step"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "darkness:D11",
+   "name": "D11 unfolds walkable shadow steps ahead of the caster",
+   "ok": true,
+   "detail": {
+    "steps": 3
+   }
+  },
+  {
+   "suite": "darkness:D11",
+   "name": "D11 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "darkness:D11",
+   "name": "D11 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 9166,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "darkness:D12",
+   "name": "D12 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 1098,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 11,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "darkness:D12",
+   "name": "D12 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 9308,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "D12:TD12"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "darkness:D12",
+   "name": "D12 doppelganger repeats the caster's melee attack after a delay",
+   "ok": true,
+   "detail": {
+    "hurtTicks": [
+     9349,
+     9379
+    ]
+   }
+  },
+  {
+   "suite": "darkness:D12",
+   "name": "D12 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "darkness:D12",
+   "name": "D12 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 9749,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "darkness:D13",
+   "name": "D13 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 898,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 12,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "darkness:D13",
+   "name": "D13 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 9890,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "D13:TD13"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "darkness:D13",
+   "name": "D13 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20
+    ]
+   }
+  },
+  {
+   "suite": "darkness:D13",
+   "name": "D13 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "darkness:D13",
+   "name": "D13 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 10051,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "darkness:D14",
+   "name": "D14 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 1798,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 13,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "darkness:D14",
+   "name": "D14 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 15,
+    "w1": {
+     "kind": "world",
+     "tick": 10227,
+     "fx": 15,
+     "tempBlocks": 0,
+     "routines": [
+      "D14:TD14"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "darkness:D14",
+   "name": "D14 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20,
+     14
+    ]
+   }
+  },
+  {
+   "suite": "darkness:D14",
+   "name": "D14 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": [
+     {
+      "cause": "entityAttack",
+      "src": "minecraft:husk",
+      "dmg": 3
+     },
+     {
+      "cause": "entityAttack",
+      "src": "minecraft:husk",
+      "dmg": 3
+     },
+     {
+      "cause": "entityAttack",
+      "src": "minecraft:husk",
+      "dmg": 3
+     },
+     {
+      "cause": "entityAttack",
+      "src": "minecraft:husk",
+      "dmg": 3
+     },
+     {
+      "cause": "entityAttack",
+      "src": "minecraft:husk",
+      "dmg": 3
+     },
+     {
+      "cause": "entityAttack",
+      "src": "minecraft:husk",
+      "dmg": 3
+     },
+     {
+      "cause": "entityAttack",
+      "src": "minecraft:husk",
+      "dmg": 3
+     }
+    ]
+   }
+  },
+  {
+   "suite": "darkness:D14",
+   "name": "D14 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 10740,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "darkness:D15",
+   "name": "D15 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 3598,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 14,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "darkness:D15",
+   "name": "D15 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 7,
+    "w1": {
+     "kind": "world",
+     "tick": 10913,
+     "fx": 7,
+     "tempBlocks": 0,
+     "routines": [
+      "D15:TD15"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "darkness:D15",
+   "name": "D15 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     15,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "darkness:D15",
+   "name": "D15 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "darkness:D15",
+   "name": "D15 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 11304,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "prism_light:PR01",
+   "name": "PR01 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 138,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR01",
+   "name": "PR01 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 8,
+    "w1": {
+     "kind": "world",
+     "tick": 11395,
+     "fx": 8,
+     "tempBlocks": 0,
+     "routines": [
+      "PR01:TPR01"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR01",
+   "name": "PR01 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     10,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "prism_light:PR01",
+   "name": "PR01 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "prism_light:PR01",
+   "name": "PR01 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 11478,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "prism_light:PR02",
+   "name": "PR02 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 258,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 1
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR02",
+   "name": "PR02 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 10,
+    "w1": {
+     "kind": "world",
+     "tick": 11576,
+     "fx": 10,
+     "tempBlocks": 0,
+     "routines": [
+      "PR02:TPR02",
+      "PR02:beam",
+      "PR02:beam",
+      "PR02:beam",
+      "PR02:beam",
+      "PR02:beam"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR02",
+   "name": "PR02 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     17
+    ]
+   }
+  },
+  {
+   "suite": "prism_light:PR02",
+   "name": "PR02 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "prism_light:PR02",
+   "name": "PR02 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 11659,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "prism_light:PR03",
+   "name": "PR03 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 378,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 2
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR03",
+   "name": "PR03 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 7,
+    "w1": {
+     "kind": "world",
+     "tick": 11748,
+     "fx": 7,
+     "tempBlocks": 0,
+     "routines": [
+      "PR03:TPR03"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR03",
+   "name": "PR03 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     9,
+     9,
+     9
+    ]
+   }
+  },
+  {
+   "suite": "prism_light:PR03",
+   "name": "PR03 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "prism_light:PR03",
+   "name": "PR03 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 11889,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "prism_light:PR04",
+   "name": "PR04 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 518,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 3
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR04",
+   "name": "PR04 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 8,
+    "w1": {
+     "kind": "world",
+     "tick": 12003,
+     "fx": 8,
+     "tempBlocks": 0,
+     "routines": [
+      "PR04:TPR04"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR04",
+   "name": "PR04 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "prism_light:PR04",
+   "name": "PR04 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "prism_light:PR04",
+   "name": "PR04 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 12136,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "prism_light:PR05",
+   "name": "PR05 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 538,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 4
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR05",
+   "name": "PR05 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 4,
+    "w1": {
+     "kind": "world",
+     "tick": 12231,
+     "fx": 4,
+     "tempBlocks": 0,
+     "routines": [
+      "PR05:TPR05"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR05",
+   "name": "PR05 absorbs/reduces a real attack on the caster",
+   "ok": true,
+   "detail": {
+    "before": 20,
+    "after": 16.399999618530273
+   }
+  },
+  {
+   "suite": "prism_light:PR05",
+   "name": "PR05 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": [
+     {
+      "cause": "entityAttack",
+      "src": "minecraft:husk",
+      "dmg": 3.5999999046325684
+     }
+    ]
+   }
+  },
+  {
+   "suite": "prism_light:PR05",
+   "name": "PR05 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 12599,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "prism_light:PR06",
+   "name": "PR06 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 638,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 5
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR06",
+   "name": "PR06 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 3,
+    "w1": {
+     "kind": "world",
+     "tick": 12699,
+     "fx": 3,
+     "tempBlocks": 0,
+     "routines": [
+      "PR06:TPR06"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR06",
+   "name": "PR06 absorbs/reduces a real attack on the caster",
+   "ok": true,
+   "detail": {
+    "before": 20,
+    "after": 20
+   }
+  },
+  {
+   "suite": "prism_light:PR06",
+   "name": "PR06 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "prism_light:PR06",
+   "name": "PR06 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 12787,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "prism_light:PR07",
+   "name": "PR07 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 698,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 6
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR07",
+   "name": "PR07 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 7,
+    "w1": {
+     "kind": "world",
+     "tick": 12916,
+     "fx": 7,
+     "tempBlocks": 0,
+     "routines": [
+      "PR07:TPR07"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR07",
+   "name": "PR07 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "prism_light:PR07",
+   "name": "PR07 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 13229,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "prism_light:PR08",
+   "name": "PR08 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 798,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 7
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR08",
+   "name": "PR08 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 13,
+    "w1": {
+     "kind": "world",
+     "tick": 13365,
+     "fx": 13,
+     "tempBlocks": 0,
+     "routines": [
+      "PR08:TPR08"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR08",
+   "name": "PR08 creates a misdirection decoy that enemies are turned toward",
+   "ok": true,
+   "detail": {
+    "decoys": 6
+   }
+  },
+  {
+   "suite": "prism_light:PR08",
+   "name": "PR08 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "prism_light:PR08",
+   "name": "PR08 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 13703,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "prism_light:PR09",
+   "name": "PR09 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 858,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 8
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR09",
+   "name": "PR09 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 6,
+    "w1": {
+     "kind": "world",
+     "tick": 13826,
+     "fx": 6,
+     "tempBlocks": 0,
+     "routines": [
+      "PR09:TPR09"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR09",
+   "name": "PR09 creates a misdirection decoy that enemies are turned toward",
+   "ok": true,
+   "detail": {
+    "decoys": 2
+   }
+  },
+  {
+   "suite": "prism_light:PR09",
+   "name": "PR09 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "prism_light:PR09",
+   "name": "PR09 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 14162,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "prism_light:PR10",
+   "name": "PR10 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 178,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 9
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR10",
+   "name": "PR10 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 11,
+    "w1": {
+     "kind": "world",
+     "tick": 14282,
+     "fx": 11,
+     "tempBlocks": 0,
+     "routines": [
+      "PR10:TPR10",
+      "PR10:after",
+      "PR10:after",
+      "PR10:after"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR10",
+   "name": "PR10 teleports the caster to a safe spot",
+   "ok": true,
+   "detail": {
+    "moved": 10.51189802081432,
+    "feet": "minecraft:air",
+    "head": "minecraft:air"
+   }
+  },
+  {
+   "suite": "prism_light:PR10",
+   "name": "PR10 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "prism_light:PR10",
+   "name": "PR10 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 14358,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "prism_light:PR11",
+   "name": "PR11 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 398,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 10
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR11",
+   "name": "PR11 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 14483,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "PR11:TPR11"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR11",
+   "name": "PR11 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "prism_light:PR11",
+   "name": "PR11 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 14794,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "prism_light:PR12",
+   "name": "PR12 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 958,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 11
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR12",
+   "name": "PR12 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 14930,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "PR12:TPR12"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR12",
+   "name": "PR12 weak point makes the marked target take extra damage from the caster",
+   "ok": true,
+   "detail": {
+    "before": 20,
+    "dealt": 11.591519355773926
+   }
+  },
+  {
+   "suite": "prism_light:PR12",
+   "name": "PR12 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "prism_light:PR12",
+   "name": "PR12 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 15366,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "prism_light:PR13",
+   "name": "PR13 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 1098,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 12
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR13",
+   "name": "PR13 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 2,
+    "w1": {
+     "kind": "world",
+     "tick": 15512,
+     "fx": 2,
+     "tempBlocks": 0,
+     "routines": [
+      "PR13:TPR13"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR13",
+   "name": "PR13 restores HP to the caster",
+   "ok": true,
+   "detail": {
+    "before": 10,
+    "after": 14.999999046325684
+   }
+  },
+  {
+   "suite": "prism_light:PR13",
+   "name": "PR13 removes poison",
+   "ok": true,
+   "detail": {}
+  },
+  {
+   "suite": "prism_light:PR13",
+   "name": "PR13 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": [
+     {
+      "cause": "magic",
+      "src": null,
+      "dmg": 1
+     },
+     {
+      "cause": "magic",
+      "src": null,
+      "dmg": 1
+     },
+     {
+      "cause": "magic",
+      "src": null,
+      "dmg": 1
+     },
+     {
+      "cause": "magic",
+      "src": null,
+      "dmg": 1
+     },
+     {
+      "cause": "magic",
+      "src": null,
+      "dmg": 1
+     }
+    ]
+   }
+  },
+  {
+   "suite": "prism_light:PR13",
+   "name": "PR13 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 15723,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "prism_light:PR14",
+   "name": "PR14 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 1798,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 13
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR14",
+   "name": "PR14 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 3,
+    "w1": {
+     "kind": "world",
+     "tick": 15881,
+     "fx": 3,
+     "tempBlocks": 0,
+     "routines": [
+      "PR14:TPR14"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR14",
+   "name": "PR14 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "prism_light:PR14",
+   "name": "PR14 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "prism_light:PR14",
+   "name": "PR14 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 16332,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "prism_light:PR15",
+   "name": "PR15 activates via crouch-select + hold/release (cooldown started)",
+   "ok": true,
+   "detail": {
+    "cd": 3598,
+    "preparing": null,
+    "selected": {
+     "pressure": 0,
+     "ice": 0,
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 14
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR15",
+   "name": "PR15 spawns its constructs",
+   "ok": true,
+   "detail": {
+    "maxFx": 9,
+    "w1": {
+     "kind": "world",
+     "tick": 16523,
+     "fx": 9,
+     "tempBlocks": 0,
+     "routines": [
+      "PR15:TPR15"
+     ]
+    }
+   }
+  },
+  {
+   "suite": "prism_light:PR15",
+   "name": "PR15 damages enemies",
+   "ok": true,
+   "detail": {
+    "dealt": [
+     20,
+     20,
+     20,
+     20
+    ]
+   }
+  },
+  {
+   "suite": "prism_light:PR15",
+   "name": "PR15 costs the caster no health (no self-inflicted damage)",
+   "ok": true,
+   "detail": {
+    "hurts": []
+   }
+  },
+  {
+   "suite": "prism_light:PR15",
+   "name": "PR15 cleans up constructs/blocks after it ends",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 16936,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "cleanup",
+   "name": "constructs dissolved after spells ended",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 16986,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "cleanup",
+   "name": "temporary blocks removed",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 16986,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "cleanup",
+   "name": "no routines left running",
+   "ok": true,
+   "detail": {
+    "kind": "world",
+    "tick": 16986,
+    "fx": 0,
+    "tempBlocks": 0,
+    "routines": []
+   }
+  },
+  {
+   "suite": "cleanup",
+   "name": "no construct entities remain in the world",
+   "ok": true,
+   "detail": 0
+  },
+  {
    "suite": "robust:dimension",
    "name": "an active cast is running before the dimension change",
    "ok": true,
    "detail": {
     "kind": "world",
-    "tick": 18858,
+    "tick": 619,
     "fx": 2,
     "tempBlocks": 0,
     "routines": [
@@ -3278,11 +6528,14 @@
    "detail": {
     "kind": "state",
     "name": "Dana",
-    "tick": 18870,
+    "tick": 631,
     "selected": {
      "pressure": 5,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     },
     "cooldowns": {
      "pressure.aegis_of_isobars": 476
@@ -3307,11 +6560,14 @@
    "detail": {
     "kind": "state",
     "name": "Dana",
-    "tick": 18882,
+    "tick": 643,
     "selected": {
      "pressure": 5,
      "ice": 0,
-     "blood": 0
+     "blood": 0,
+     "plasma": 0,
+     "darkness": 0,
+     "prism_light": 0
     },
     "cooldowns": {
      "pressure.aegis_of_isobars": 464
@@ -3326,7 +6582,7 @@
    "ok": true,
    "detail": {
     "kind": "world",
-    "tick": 18882,
+    "tick": 643,
     "fx": 1,
     "tempBlocks": 0,
     "routines": []
@@ -3338,7 +6594,7 @@
    "ok": true,
    "detail": {
     "kind": "world",
-    "tick": 18887,
+    "tick": 648,
     "fx": 0,
     "tempBlocks": 0,
     "routines": []
@@ -3486,9 +6742,9 @@
    "ok": true,
    "detail": {
     "kind": "world",
-    "tick": 19467,
+    "tick": 1228,
     "fx": 10,
-    "tempBlocks": 273,
+    "tempBlocks": 264,
     "routines": [
      "P08:Hank"
     ]
@@ -3510,7 +6766,7 @@
    "detail": {
     "w": {
      "kind": "world",
-     "tick": 19807,
+     "tick": 1568,
      "fx": 0,
      "tempBlocks": 0,
      "routines": []
@@ -3533,7 +6789,7 @@
    "ok": true,
    "detail": {
     "kind": "world",
-    "tick": 19896,
+    "tick": 1657,
     "fx": 10,
     "tempBlocks": 255,
     "routines": [
@@ -3548,7 +6804,7 @@
    "detail": {
     "w": {
      "kind": "world",
-     "tick": 19926,
+     "tick": 1687,
      "fx": 0,
      "tempBlocks": 0,
      "routines": []
@@ -3562,7 +6818,7 @@
    "ok": true,
    "detail": {
     "kind": "world",
-    "tick": 19926,
+    "tick": 1687,
     "fx": 0,
     "tempBlocks": 0,
     "routines": []
@@ -3578,47 +6834,63 @@
    }
   },
   {
-   "suite": "cleanup",
-   "name": "constructs dissolved after spells ended",
+   "suite": "robust:six",
+   "name": "six grimoires keep six independent selections in one hotbar",
    "ok": true,
    "detail": {
-    "kind": "world",
-    "tick": 19966,
-    "fx": 0,
-    "tempBlocks": 0,
-    "routines": []
+    "pressure": 1,
+    "ice": 2,
+    "blood": 3,
+    "plasma": 4,
+    "darkness": 5,
+    "prism_light": 6
    }
   },
   {
-   "suite": "cleanup",
-   "name": "temporary blocks removed",
+   "suite": "robust:six",
+   "name": "a plasma cast starts only the selected spell's cooldown",
    "ok": true,
    "detail": {
-    "kind": "world",
-    "tick": 19966,
-    "fx": 0,
-    "tempBlocks": 0,
-    "routines": []
+    "plasma.stellarator_ward": 496
    }
-  },
-  {
-   "suite": "cleanup",
-   "name": "no routines left running",
-   "ok": true,
-   "detail": {
-    "kind": "world",
-    "tick": 19966,
-    "fx": 0,
-    "tempBlocks": 0,
-    "routines": []
-   }
-  },
-  {
-   "suite": "cleanup",
-   "name": "no construct entities remain in the world",
-   "ok": true,
-   "detail": 0
   }
  ],
- "log_problems": []
+ "log_problems": [],
+ "parts": [
+  {
+   "file": "controls_reuse_gap_pressure_ice_blood_robustness_cleanup.json",
+   "suites": [
+    "controls",
+    "reuse_gap",
+    "pressure",
+    "ice",
+    "blood",
+    "cleanup"
+   ],
+   "passed": 264,
+   "total": 264
+  },
+  {
+   "file": "plasma_darkness_prism_light_cleanup.json",
+   "suites": [
+    "plasma",
+    "darkness",
+    "prism_light",
+    "cleanup"
+   ],
+   "passed": 228,
+   "total": 228
+  },
+  {
+   "file": "robustness.json",
+   "suites": [
+    "robust"
+   ],
+   "passed": 32,
+   "total": 32
+  }
+ ],
+ "notes": [
+  "32 checks of `robust` from controls_reuse_gap_pressure_ice_blood_robustness_cleanup.json were replaced by the re-run robustness.json (1 of them had failed: a plasma cast starts only that spell's cooldown). The failure was a wrong expectation in the new test (four crouches select spell 05, the test expected 02); the add-on had cast the selected spell and started only its cooldown. The test was corrected and the robustness suite re-run on the identical behaviour pack."
+ ]
 }

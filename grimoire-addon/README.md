@@ -251,12 +251,17 @@ No third-party art or audio is included. three.js and Playwright are used only b
 [docs/TESTING.md](docs/TESTING.md) has the full per-spell matrix and every check. The raw harness output is in
 `docs/test-evidence/`.
 
-**Final run:** **294 of 294** automated checks passed on Bedrock Dedicated Server 1.26.63.1, with 0 Content Log
-errors or warnings. All 45 spells passed. The behavior pack under test is byte-identical to the one in `dist/`.
+**Final run:** **524 of 524** automated checks passed on Bedrock Dedicated Server 1.26.63.1, with 0 Content Log
+errors or warnings.
+
+* All 90 spells passed: the original 45 (regression) and the 45 of Expansion 02.
+* The behavior pack under test is byte-identical to the one in `dist/`.
+* One robustness check failed in the first pass because the new test expected the wrong spell number. The test was
+  corrected and the suite re-run; [docs/TESTING.md](docs/TESTING.md) records this.
 
 * **Verified in-engine (automated):** all of the following were run on Bedrock Dedicated Server 1.26.63.1 by
   simulated players using the real inputs (crouch, hold Use, release, switch slots):
-  * the 45 spells,
+  * all 90 spells (Pressure, Ice, Blood, Plasma, Darkness, Prism Light),
   * the controls and cancellation rules,
   * cooldown independence,
   * PvP and team rules,
