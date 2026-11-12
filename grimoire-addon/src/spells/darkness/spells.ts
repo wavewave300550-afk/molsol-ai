@@ -487,9 +487,9 @@ export function* inklessDoppelganger(c: Cast): Routine {
   const fx = c.fx("grimoire:fx_d_double", p.location, { yaw: c.yaw, phase: 1 });
   c.sound("grimoire.darkness.whisper", p.location, 1, 1.2);
   sheets(c, add(p.location, v3(0, 0.2, 0)), 1, 1);
-  const attacks: number[] = [];
+  const attacks: { due: number; victim: Entity }[] = [];
   let tick = 0;
-  const off = onAttack({ attackerId: p.id, fn: () => attacks.push(tick + delay) });
+  const off = onAttack({ attackerId: p.id, fn: (v) => attacks.push({ due: tick + delay, victim: v }) });
   c.onCleanup(off);
   let last = p.location;
   for (tick = 0; tick < c.p("duration") * 20 && c.ok; tick++) {
@@ -500,10 +500,13 @@ export function* inklessDoppelganger(c: Cast): Routine {
       last = s.pos;
       fx?.move(s.pos).yaw(s.yaw);
       fx?.phase(moved > 0.04 ? 3 : 2);
-      while (attacks.length && attacks[0] <= tick) {
-        attacks.shift();
+      while (attacks.length && attacks[0].due <= tick) {
+        const a = attacks.shift()!;
         fx?.pulse();
-        const victim = nearestEnemies(c, add(s.pos, v3(0, 1, 0)), c.p("reach"), 1)[0];
+        // the double repeats the strike on the same victim (lunging up to 2.5 blocks further), else on whoever is closest
+        const same = a.victim.isValid && c.isEnemy(a.victim) && hdist(a.victim.location, s.pos) <= c.p("reach") + 2.5 ? a.victim : undefined;
+        const victim = same ?? nearestEnemies(c, add(s.pos, v3(0, 1, 0)), c.p("reach"), 1)[0];
+        if (victim && same) fx?.move(lerp(s.pos, victim.location, 0.5));
         if (victim) {
           c.hit(victim, c.p("damage"));
           push(victim, sub(victim.location, s.pos), 0.5, 0.2);

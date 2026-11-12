@@ -72,9 +72,15 @@ def ensure_template(bds):
     return tpl
 
 
+PORT = None
+
+
 def configure(bds):
     props = os.path.join(bds, "server.properties")
     s = open(props).read()
+    if PORT:
+        s = re.sub(r"^server-port=.*$", f"server-port={PORT}", s, flags=re.M)
+        s = re.sub(r"^server-portv6=.*$", f"server-portv6={PORT + 1}", s, flags=re.M)
     for k, v in {"level-name": WORLD, "allow-cheats": "true", "online-mode": "false", "content-log-console-output-enabled": "true",
                  "content-log-file-enabled": "true", "content-log-level": "info", "difficulty": "normal", "allow-list": "false",
                  "view-distance": "10", "tick-distance": "6", "gamemode": "survival"}.items():
@@ -161,8 +167,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--bds", default=os.environ.get("GRIMOIRE_BDS"))
     ap.add_argument("--timeout", type=int, default=900)
+    ap.add_argument("--port", type=int, default=None, help="run a second server side by side on another port")
     ap.add_argument("suites", nargs="*")
     a = ap.parse_args()
+    global PORT
+    PORT = a.port
     if not a.bds or not os.path.exists(os.path.join(a.bds, "bedrock_server")):
         sys.exit("Bedrock Dedicated Server not found: pass --bds or set GRIMOIRE_BDS")
     results, problems, summary, done, lines = run(a.bds, a.suites, a.timeout)

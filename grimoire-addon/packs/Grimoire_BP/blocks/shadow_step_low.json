@@ -9,18 +9,20 @@
    }
   },
   "components": {
-   "minecraft:collision_box": {
-    "min": [
-     0,
-     4,
-     0
-    ],
-    "max": [
-     16,
-     8,
-     16
-    ]
-   },
+   "minecraft:collision_box": [
+    {
+     "origin": [
+      -8,
+      4,
+      -8
+     ],
+     "size": [
+      16,
+      4,
+      16
+     ]
+    }
+   ],
    "minecraft:selection_box": {
     "origin": [
      -8,

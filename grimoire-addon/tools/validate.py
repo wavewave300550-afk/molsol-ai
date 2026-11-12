@@ -441,12 +441,17 @@ def main():
     for path in glob.glob(f"{BP}/blocks/*.json"):
         d = load(path)["minecraft:block"]
         cb = d.get("components", {}).get("minecraft:collision_box")
-        if isinstance(cb, dict) and ("origin" in cb or "size" in cb):
-            err(f"block {d['description']['identifier']}: collision_box must use min/max in 1.26 (origin/size is rejected)")
-        if isinstance(cb, dict) and "min" in cb:
-            lim = (16, 24, 16)
-            if any(not (0 <= cb[k][i] <= lim[i]) for k in ("min", "max") for i in range(3)) or any(cb["min"][i] > cb["max"][i] for i in range(3)):
-                err(f"block {d['description']['identifier']}: collision_box out of range")
+        if isinstance(cb, dict):
+            err(f"block {d['description']['identifier']}: format 1.26.60 needs collision_box as an array of {{origin, size}} boxes")
+        if isinstance(cb, list):
+            for box in cb:
+                if "min" in box or "max" in box:
+                    err(f"block {d['description']['identifier']}: collision_box min/max requires an experiment")
+                    continue
+                o, z = box.get("origin", [-8, 0, -8]), box.get("size", [16, 16, 16])
+                lo, hi = (-8, 0, -8), (8, 24, 8)
+                if any(not (lo[i] <= o[i] and o[i] + z[i] <= hi[i]) for i in range(3)):
+                    err(f"block {d['description']['identifier']}: collision_box out of range")
         for inst in d.get("components", {}).get("minecraft:material_instances", {}).values():
             if inst.get("texture") not in terrain:
                 err(f"block {d['description']['identifier']} texture {inst.get('texture')} not in terrain_texture.json")

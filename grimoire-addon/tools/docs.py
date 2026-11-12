@@ -129,6 +129,9 @@ def testing_md(meta, report, validate_out, evidence_rel):
            " pack shipped in `dist/` (later commits changed only resource-pack visuals and documentation)",
            ""]
     facts = log_facts(os.path.join(ROOT, evidence_rel))
+    if report.get("parts"):
+        out.insert(len(out) - 1, "* Two servers ran side by side on the same build: " + "; ".join(
+            f"`{', '.join(pt['suites'])}` ({pt['passed']}/{pt['total']})" for pt in report["parts"]))
     extra = []
     if facts.get("build"):
         extra.append(f"* Server build id {facts['build']}, commit {facts.get('commit', '?')[:12]}")
@@ -226,6 +229,9 @@ def main():
             open(readme, "w").write(txt)
     if os.path.exists(evidence):
         report = json.load(open(evidence))
+        parts = report.get("parts")
+        if parts:
+            report["suites"] = [x for part in parts for x in part["suites"]]
         v = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "validate.py")], capture_output=True, text=True)
         with open(os.path.join(DOCS, "TESTING.md"), "w") as f:
             f.write(testing_md(meta, report, v.stdout, os.path.relpath(evidence, ROOT)))

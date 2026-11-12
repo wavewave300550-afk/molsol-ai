@@ -3106,7 +3106,7 @@ function* inklessDoppelganger(c) {
   sheets(c, add(p.location, v3(0, 0.2, 0)), 1, 1);
   const attacks = [];
   let tick = 0;
-  const off = onAttack({ attackerId: p.id, fn: () => attacks.push(tick + delay) });
+  const off = onAttack({ attackerId: p.id, fn: (v) => attacks.push({ due: tick + delay, victim: v }) });
   c.onCleanup(off);
   let last = p.location;
   for (tick = 0; tick < c.p("duration") * 20 && c.ok; tick++) {
@@ -3117,10 +3117,12 @@ function* inklessDoppelganger(c) {
       last = s.pos;
       fx?.move(s.pos).yaw(s.yaw);
       fx?.phase(moved > 0.04 ? 3 : 2);
-      while (attacks.length && attacks[0] <= tick) {
-        attacks.shift();
+      while (attacks.length && attacks[0].due <= tick) {
+        const a = attacks.shift();
         fx?.pulse();
-        const victim = nearestEnemies(c, add(s.pos, v3(0, 1, 0)), c.p("reach"), 1)[0];
+        const same = a.victim.isValid && c.isEnemy(a.victim) && hdist(a.victim.location, s.pos) <= c.p("reach") + 2.5 ? a.victim : void 0;
+        const victim = same ?? nearestEnemies(c, add(s.pos, v3(0, 1, 0)), c.p("reach"), 1)[0];
+        if (victim && same) fx?.move(lerp(s.pos, victim.location, 0.5));
         if (victim) {
           c.hit(victim, c.p("damage"));
           push(victim, sub(victim.location, s.pos), 0.5, 0.2);
