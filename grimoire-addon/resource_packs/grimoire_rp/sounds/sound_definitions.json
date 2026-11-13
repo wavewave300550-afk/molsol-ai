@@ -3179,6 +3179,305 @@
      "pitch": 1.0
     }
    ]
+  },
+  "grimoire.ed_tide_emerge": {
+   "category": "neutral",
+   "max_distance": 72,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_emerge",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_click": {
+   "category": "neutral",
+   "max_distance": 40,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_click",
+     "volume": 0.6,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_step": {
+   "category": "neutral",
+   "max_distance": 40,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_step",
+     "volume": 0.7,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_tide_step_2",
+     "volume": 0.7,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_tide_step_3",
+     "volume": 0.7,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_land": {
+   "category": "neutral",
+   "max_distance": 64,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_land",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_sail": {
+   "category": "neutral",
+   "max_distance": 72,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_sail",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_sweep": {
+   "category": "neutral",
+   "max_distance": 56,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_sweep",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_swing": {
+   "category": "neutral",
+   "max_distance": 56,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_swing",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_flare": {
+   "category": "neutral",
+   "max_distance": 64,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_flare",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_roar": {
+   "category": "neutral",
+   "max_distance": 96,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_roar",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_hurt": {
+   "category": "neutral",
+   "max_distance": 48,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_hurt",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_depart": {
+   "category": "neutral",
+   "max_distance": 72,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_depart",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_currents": {
+   "category": "neutral",
+   "max_distance": 64,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_currents",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_mass": {
+   "category": "neutral",
+   "max_distance": 80,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_mass",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_flow": {
+   "category": "neutral",
+   "max_distance": 56,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_flow",
+     "volume": 1.0,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_tide_flow_2",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_freeze": {
+   "category": "neutral",
+   "max_distance": 64,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_freeze",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_spiral": {
+   "category": "neutral",
+   "max_distance": 56,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_spiral",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_crown": {
+   "category": "neutral",
+   "max_distance": 80,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_crown",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_impact": {
+   "category": "neutral",
+   "max_distance": 80,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_impact",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_fracture": {
+   "category": "neutral",
+   "max_distance": 72,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_fracture",
+     "volume": 1.0,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_tide_fracture_2",
+     "volume": 1.0,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_tide_fracture_3",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_shatter": {
+   "category": "neutral",
+   "max_distance": 40,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_shatter",
+     "volume": 0.75,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_tide_shatter_2",
+     "volume": 0.75,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_tide_shatter_3",
+     "volume": 0.75,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_finale": {
+   "category": "neutral",
+   "max_distance": 96,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_finale",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_tide_splash": {
+   "category": "neutral",
+   "max_distance": 56,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_tide_splash",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
   }
  }
 }

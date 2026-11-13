@@ -1,0 +1,37 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:ed_tide_stream",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "blend": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/ed_tide_stream"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.ed_tide_stream"
+   },
+   "render_controllers": [
+    "controller.render.grimoire.ed_tide_stream"
+   ],
+   "animations": {
+    "flow": "animation.grimoire.ed_tide_stream.flow",
+    "hidden": "animation.grimoire.ed_tide_stream.hidden",
+    "form": "animation.grimoire.ed_tide_stream.form",
+    "hold": "animation.grimoire.ed_tide_stream.hold",
+    "fade": "animation.grimoire.ed_tide_stream.fade",
+    "ctl_main": "controller.animation.grimoire.ed_tide_stream.main"
+   },
+   "scripts": {
+    "scale": "(1.0) * q.property('grimoire:size')",
+    "animate": [
+     "ctl_main",
+     "flow"
+    ],
+    "should_update_bones_and_effects_offscreen": true
+   }
+  }
+ }
+}

@@ -65,6 +65,7 @@ SICK = "#9aa58a"   # muted unnatural accent
 VISION_STATES = {"hidden": 0, "show": 1}
 CHARGE_STATES = {"hidden": 0, "form": 1, "loop": 2, "release": 3, "cancel": 4}
 VISION_LEN, FORM_LEN, RELEASE_LEN, CANCEL_LEN = 1.2, 1.5, 0.5, 0.4
+VS, CS, FS = 0.55, 1.3, 1.2      # centrepiece scale in the vision / in the charge construct; fragment scale
 
 DREAM_SCRIPT = list(glyphs.DREAM.values())
 
@@ -254,7 +255,7 @@ def leaf_mat(seed=0):
         for k, (cu, cv) in enumerate(((0.3, 0.3), (0.68, 0.66))):
             g = glyphs.bitmap(pics[(seed * 3 + k * 5) % len(pics)])
             gh, gw = g.shape
-            sc = max(1, ctx.w // 16)
+            sc = max(1, ctx.w // 30)
             ox, oy = int(cu * ctx.w - gw * sc / 2), int(cv * ctx.h - gh * sc / 2)
             gx, gy = (ix - ox) // sc, (iy - oy) // sc
             ok = (gx >= 0) & (gx < gw) & (gy >= 0) & (gy < gh)
@@ -265,6 +266,27 @@ def leaf_mat(seed=0):
         t[..., :3] = np.where((d == 0)[..., None], kg, t[..., :3])
         return tex.grain(ctx, t, 0.02)
     return _P(f"leaf{seed}", fn, directional=False)
+
+
+def endpaper():
+    """Inside of the cover: marbled dusty-pink endpaper with a printed staircase-and-moon frieze."""
+    def fn(ctx):
+        U, V = ctx.U, ctx.V
+        ix, iy = tex.px(ctx)
+        t = tex.tile(ctx, PINK, 1, 0.15)
+        n = tex.fbm(ix / 7.0, iy / 5.0, 61)
+        sw = np.sin(ix * 0.25 + n * 9.0)
+        col = mix(rgb("#e8b4c8"), rgb("#f6dbe2"), (sw * 0.5 + 0.5)[..., None])
+        col = mix(col, rgb("#bcd6f0"), np.clip((n - 0.62) * 3, 0, 1)[..., None])
+        d = _dist_edge(ctx)
+        fr = (d >= 3) & (d <= 4)
+        col = np.where(fr[..., None], rgb(SGOLD), col)
+        stp = (d >= 5) & (d <= 8) & (((ix + iy) // 2) % 4 < 2)
+        col = np.where(stp[..., None], rgb("#fff1dc"), col)
+        t[..., :3] = col
+        t[..., 4] = np.where(fr, 0.4, 0.15)
+        return tex.grain(ctx, t, 0.02)
+    return _P("endpaper", fn)
 
 
 def page_open():
@@ -354,7 +376,7 @@ def wall_mat(nm=False):
 def backwall_mat():
     """Back wall: wallpaper with a doorway onto an endless corridor of receding door frames whose far
     end glows - the room appears much deeper than the book is thick."""
-    cu, cv, hw, hh = 0.612, 0.667, 0.135, 0.30
+    cu, cv, hw, hh = 0.612, 0.667, 0.17, 0.33
 
     def fn(ctx):
         U, V = ctx.U, ctx.V
@@ -372,15 +394,15 @@ def backwall_mat():
             inside = (np.abs(U - vx) < hw * s) & (V < vy + hh * s) & (V > vy - hh * s * 0.55)
             inside |= (np.hypot((U - vx) / (hw * s), (V - (vy - hh * s * 0.55)) / (hh * s * 0.45)) < 1)
             layer = np.where(inside, k, layer)
-        palette = [rgb("#f7d0bc"), rgb("#fff1dc"), rgb("#f2c0cf"), rgb("#fff6e2"), rgb("#ffe0c4"),
-                   rgb("#fff8ea"), rgb("#ffeec0"), rgb("#fffbe8")]
+        palette = [rgb("#b97b8e"), rgb("#f3d2c0"), rgb("#9a6f8f"), rgb("#f7e0cc"), rgb("#b88aa6"),
+                   rgb("#fbe9d4"), rgb("#ffe7b0"), rgb("#fffbe8")]
         for k in range(8):
             col = np.where((layer == k)[..., None], palette[k], col)
             glow = np.where(layer == k, 0.45 + 0.08 * k, glow)
         # frame lines between layers
         pad = np.pad(layer, 1, mode="edge")
         edge = (pad[1:-1, 1:-1] != pad[:-2, 1:-1]) | (pad[1:-1, 1:-1] != pad[1:-1, :-2])
-        col = np.where((edge & (layer >= 0))[..., None], rgb(FGOLD), col)
+        col = np.where((edge & (layer >= 0))[..., None], rgb("#e9c77a"), col)
         col = np.where((layer == 7)[..., None], rgb("#fffdf0"), col)
         glow = np.where(layer == 7, 1.0, glow)
         t[..., :3] = col
@@ -549,10 +571,17 @@ def backdrop(kind):
                 col = np.where(fr[..., None], rgb(CGRAY) * (0.9 - k * 0.12), col)
             end = (np.abs(u) < 0.22) & (np.abs(v) < 0.3)
             col = np.where(end[..., None], rgb("#c0485e"), col)
-        elif kind == 2:   # warm house interior, wallpaper turning odd
-            col = mix(rgb("#ffe0c4"), rgb("#c9a6d6"), V[..., None])
-            stp = ((ix + iy) % 6 == 0)
-            col = np.where(stp[..., None], rgb(SGOLD), col)
+        elif kind == 2:   # one-point-perspective room with doors on every wall, slightly askew
+            col = mix(rgb("#ffe0c4"), rgb("#d9b0d0"), V[..., None])
+            bx = (np.abs(u - 0.05) < 0.38) & (np.abs(v + 0.05) < 0.4)
+            col = np.where(bx[..., None], rgb("#f7d2b8"), col)
+            diag = (np.abs(np.abs(u - 0.05) - np.abs(v + 0.05) * 0.95) < 0.04) & ~bx
+            col = np.where(diag[..., None], rgb(SGOLD), col)
+            for dx in (-0.62, 0.05, 0.7):
+                dr = (np.abs(u - dx) < 0.1) & (v > 0.0) & (v < 0.32 if dx == 0.05 else v < 0.55)
+                col = np.where(dr[..., None], rgb(MAUVE) if dx > 0.5 else rgb("#c77b95"), col)
+            fl = (v > 0.35) & ((((u * 6).astype(int) + (v * 8).astype(int)) % 2) == 0)
+            col = np.where(fl[..., None], col * 0.9, col)
         elif kind == 3:   # split: lullaby half / scream half
             col = np.where((u < 0)[..., None], mix(rgb("#ffd9b8"), rgb(PINK), V[..., None]),
                            mix(rgb(INDIGO), rgb(BURG), V[..., None]))
@@ -789,10 +818,10 @@ def core_k1(k, parent):
     k.box(fr, (0, -6.7, -0.2), (6.6, 0.6, 1.8), mt["stone"])
     k.plane(fr, "z", (0, 0, 0.35), 4.6, 12.8, tex.vgrad("#d0506a", "#2a1020", var=0, glow_top=1.0, glow_bottom=0.6,
                                                           edge_dark=0))
-    leaf = k.bone("leaf", fr, pivot=(-2.25, 0, 0), rot=(0, 26, 0))
+    leaf = k.bone("leaf", fr, pivot=(-2.25, 0, 0), rot=(0, 36, 0))
     k.box(leaf, (0, 0, 0), (4.5, 12.6, 0.35), mt["door"])
     eye = k.bone("eye", fr, pivot=(1.4, 2.4, 0.25))
-    k.plane(eye, "z", (1.4, 2.4, 0.25), 1.8, 1.1, tex.eye_mat("#b8405a", AIVORY, "#0c0c18", "#1d1f3c", 1.0,
+    k.plane(eye, "z", (1.2, 2.4, 0.25), 2.6, 1.6, tex.eye_mat("#b8405a", AIVORY, "#0c0c18", "#1d1f3c", 1.0,
                                                                 slit=True, ring="#ff7088"))
     hand = k.bone("hand", fr, pivot=(2.3, 1.0, 0))
     bone_m = tex.porcelain(AIVORY, "#9d968a", "#6e2f3a", crack=1.0)
@@ -933,9 +962,9 @@ def core_k5(k, parent):
     por = tex.porcelain("#fbf6ee", "#e6d8c6", crack=0.3)
     k.box(head, (2.9, -2.0, 0), (1.5, 1.4, 1.5), por, mats={"up": tex.stamped(por, ARCH_DOOR, SGOLD, glow=0.8,
                                                                                  key="sleepdoor")})
-    for i, (x, z, w) in enumerate(((0, 2.6, 8.0), (-3.0, -2.6, 2.2))):
+    for i, (x, z, w, h) in enumerate(((0, 2.6, 8.0, 3.0), (-3.2, -2.6, 2.0, 7.4))):
         cb = k.bone(f"curt{i + 1}", bed, pivot=(x, 3.6, z))
-        k.plane(cb, "z", (x, 0.2, z), w, 6.8, tex.fabric(PINK if i == 0 else MAUVE, None, glow=0.1, fringe=True),
+        k.plane(cb, "z", (x, 3.6 - h / 2, z), w, h, tex.fabric(PINK if i == 0 else MAUVE, None, glow=0.1, fringe=True),
                 variant=i)
     dream = k.bone("dream", parent, pivot=(0, 8.0, 0))
     part_moon(k, dream, (0, 8.0, 0), D, 3.4)
@@ -1032,7 +1061,7 @@ FRAGS = [
     [("door", "dream", 0.5), ("moon", "dream", 3.0), ("window", "night", -1.0), ("stairs", "dream", 1.5),
      ("frame", "night", -0.5), ("cloud", "dream", 2.5)],
 ]
-ORBIT_R = 13.0
+ORBIT_R = 15.0
 
 
 def frag_centers(kind):
@@ -1102,7 +1131,7 @@ def book_model():
 
     # ---- front cover: hinge at the spine
     cover = k.bone("cover", book, pivot=(-13.5, 0, -3.45))
-    k.box(cover, (0, 0, -3.45), (27, 38, 1.1), cer, mats={"north": cer_cover})
+    k.box(cover, (0, 0, -3.45), (27, 38, 1.1), cer, mats={"north": cer_cover, "south": endpaper()})
     for (c, s) in (((0, 18.3, -4.15), (27, 1.4, 0.5)), ((0, -18.3, -4.15), (27, 1.4, 0.5)),
                    ((-12.8, 0, -4.15), (1.4, 38, 0.5)), ((12.8, 0, -4.15), (1.4, 38, 0.5))):
         k.box(cover, c, s, gilt, variant=int(s[0] > 2))
@@ -1149,7 +1178,8 @@ def book_model():
                                                                     outline=FGOLD, key="oculus"))
     for nm, cx in (("curt_l", -5.9), ("curt_r", 4.9)):
         cb = k.bone(nm, shell, pivot=(cx, 9.0, -7.1))
-        k.plane(cb, "z", (cx, 2.0, -7.1), 1.8, 14.0, tex.fabric(PINK, None, glow=0.1, fringe=True), variant=int(cx > 0))
+        k.plane(cb, "z", (cx + (-0.3 if cx < 0 else 0.3), 2.0, -7.1), 1.1, 14.0,
+                tex.fabric(PINK, None, glow=0.1, fringe=True), variant=int(cx > 0))
 
     room = k.bone("room", cover)
     k.plane(room, "y", (-0.5, -4.2, -5.775), 14.0, 4.6, floor_mat(), rot=(-51.6, 0, 0), faces=("up",))
@@ -1179,13 +1209,13 @@ def book_model():
               pivot=(-3.3 + i * 0.7, -3.4, -5.6))
 
     win = k.bone("window", room, pivot=(-2.5, 2.8, -4.45))
-    k.box(win, (-2.5, 2.8, -4.5), (2.6, 3.0, 0.2), gilt2, mats={"north": sky_pane(False)})
+    k.box(win, (-2.5, 2.8, -4.5), (2.6, 3.0, 0.2), gilt2, mats={"north": sky_pane(False)}, density=6)
     k.box(win, (-2.5, 1.2, -4.65), (3.0, 0.3, 0.5), relief)
     for nm, sx, sg in (("shut_l", -3.8, -1), ("shut_r", -1.2, 1)):
         sb = k.bone(nm, win, pivot=(sx, 2.8, -4.62))
         k.plane(sb, "z", (sx + sg * 0.65, 2.8, -4.62), 1.3, 3.0, tex.wood("#bcd6f0", "#8aa6c8", vertical=True))
     nmw = k.bone("nm_window", win, pivot=(-2.5, 2.8, -4.62))
-    k.plane(nmw, "z", (-2.5, 2.8, -4.62), 2.5, 2.9, sky_pane(True))
+    k.plane(nmw, "z", (-2.5, 2.8, -4.62), 2.5, 2.9, sky_pane(True), density=7)
 
     rwall = k.bone("rwall", room, pivot=(4.3, 1.5, -5.775), rot=(0, -40.1, 0))
     k.box(rwall, (4.15, -1.75, -5.775), (0.25, 5.2, 2.3), gilt2)
@@ -1199,8 +1229,8 @@ def book_model():
                                           (3.0, 1.0, -5.25, 0), (3.0, 3.0, -5.0, 90), (2.7, 4.8, -5.4, 90),
                                           (2.0, 6.7, -6.0, 180), (0.7, 7.3, -6.6, 180))):
         sb = k.bone(f"st{i + 1}", room, pivot=(sx, sy, sz))
-        k.box(sb, (sx, sy, sz), (1.8, 0.45, 0.6), relief if i % 2 else gilt2, rot=(0, 0, rz) if rz else None,
-              variant=i % 2)
+        k.box(sb, (sx, sy, sz), (1.8, 0.8, 0.8), relief, rot=(0, 0, rz) if rz else None, variant=i % 2,
+              mats={"north": gilt2})
 
     mob = k.bone("mobile", room, pivot=(-0.5, 7.4, -5.9))
     k.box(mob, (-0.5, 6.5, -5.9), (0.1, 1.8, 0.1), gilt)
@@ -1213,9 +1243,14 @@ def book_model():
     # nightmare geometry that grows out of the cover during the bad dream
     spires = k.bone("nm_spires", cover, pivot=(-0.5, 13.5, -5.8))
     sp = pearl(CGRAY, "#5a5d6a", crack=1.0, sheen=0.0, key="spire")
-    for i, (sx, h, r) in enumerate(((-4.5, 7, 14), (-0.5, 10, -4), (3.5, 6, -18))):
-        k.box(spires, (sx, 13.5 + h / 2, -5.8), (0.9, h, 0.9), sp, rot=(8 * (i - 1), 25 * i, r),
-              pivot=(sx, 13.0, -5.8), variant=i)
+    tip = tex.glow_flat("#c0485e", 0.9, core="#ff9aa8")
+    for i, (sx, h, r) in enumerate(((-6.0, 6, 24), (-3.4, 9, 12), (-0.5, 12, -3), (2.6, 8, -15), (5.2, 5.5, -28))):
+        k.box(spires, (sx, 13.0 + h * 0.3, -5.8), (1.2, h * 0.6, 1.2), sp, rot=(6 * (i - 2), 30 * i, r),
+              pivot=(sx, 12.6, -5.8), variant=i % 3)
+        k.box(spires, (sx, 13.0 + h * 0.75, -5.8), (0.6, h * 0.5, 0.6), sp, rot=(6 * (i - 2) + 10, 30 * i + 45, r * 1.5),
+              pivot=(sx, 12.6, -5.8), variant=(i + 1) % 3)
+        k.box(spires, (sx, 13.0 + h * 1.02, -5.8), (0.35, 0.9, 0.35), tip, rot=(6 * (i - 2) + 10, 30 * i + 45, r * 1.5),
+              pivot=(sx, 12.6, -5.8))
     cr = k.bone("nm_cracks", cover, pivot=(0, 0, -4.02))
     k.plane(cr, "z", (0, 0, -4.03), 26.0, 37.0, crack_overlay(), density=1.5)
     return m
@@ -1271,7 +1306,7 @@ def book_anims():
 
     opn = Anim("open", length=0.6, loop="hold")
     opn.rot("cover", MR({0: (0, 0, 0), 0.35: (0, 156, 0), 0.5: (0, 148, 0), 0.6: (0, 150, 0)}))
-    for i, (t0, ang) in enumerate(((0.06, 141), (0.12, 132), (0.18, 24))):
+    for i, (t0, ang) in enumerate(((0.06, 143), (0.12, 133), (0.18, 116))):
         opn.rot(f"leaf{i + 1}", MR({0: (0, 0, 0), t0: (0, 0, 0), t0 + 0.34: (0, ang + 4, 0), 0.6: (0, ang, 0)}))
     opn.pos("float", {0: (0, 0, 0), 0.4: (0, RISE * 1.08, 0), 0.6: (0, RISE, 0)})
     opn.rot("float", {0: (0, 0, 0), 0.6: (OPEN_TILT, 0, 0)})
@@ -1284,7 +1319,7 @@ def book_anims():
     for i in range(4):
         shut.scl(f"pop{i + 1}", 0.0)
     opn_loop = Anim("open_loop", loop=True)
-    opn_loop.rot("leaf3", MR((0, LIFE(9, 1.3), 0)))
+    opn_loop.rot("leaf3", MR((0, LIFE(11, 1.3), 0)))
     opn_loop.rot("leaf2", MR((0, LIFE(3, 1.7, 0.3), 0)))
     opn_loop.rot("spiral", MR((0, spin(140), 0)))
     for i in range(4):
@@ -1365,7 +1400,7 @@ def vision_model(kind):
     bd.plane("z", (0, 0, 0.6), 6, 10, backdrop(kind), faces=("north",))
     page.locator("door", (0, 0, -1.0))
     scene = m.bone("scene", root, pivot=(0, 0, 0))
-    k = K(m, 0.42, (0, 0, 0), pre=f"k{kind}_")
+    k = K(m, VS, (0, 0, 0), pre=f"k{kind}_")
     CORES[kind](k, scene)
     return m
 
@@ -1389,7 +1424,7 @@ def vision_anims():
     show.particle(0.6, "spill", locator="door")
     life = Anim("life", loop=True)
     for kd in range(6):
-        core_motion(life, kd, 0.42)
+        core_motion(life, kd, VS)
     return [hidden, show, life]
 
 
@@ -1411,11 +1446,11 @@ def charge_model(kind):
                                                            lines=(0.76, 0.97, 0.5), star=0, core=0.0,
                                                            key=f"bdnplate{kind}"), faces=("up", "down"))
     core = m.bone("core", rig, pivot=(0, -7, 0))
-    CORES[kind](K(m, 1.0, (0, 0, 0), pre=f"k{kind}_"), core)
+    CORES[kind](K(m, CS, (0, 0, 0), pre=f"k{kind}_"), core)
     orbit = m.bone("orbit", rig)
     for i, ((part, pal, _h), (x, y, z, ang)) in enumerate(zip(FRAGS[kind], frag_centers(kind))):
         fb = m.bone(f"frag{i + 1}", orbit, pivot=(x, y, z), rot=(0, -(90 + ang), 0))
-        kk = K(m, 0.95, (x, y, z))
+        kk = K(m, FS, (x, y, z))
         PARTS[part](kk, fb, (0, 0, 0), palette(pal))
     return m
 
@@ -1432,7 +1467,7 @@ def charge_anims():
         life.rot(f"frag{i + 1}", (LIFE(6, 3.1 + i * 0.37, i / 6), LIFE(12, 4.3 + i * 0.29, i / 5), LIFE(5, 2.7 + i * 0.4)))
         life.pos(f"frag{i + 1}", (0, LIFE(0.8, 2.4 + i * 0.21, i / 6), 0))
     for kd in range(6):
-        core_motion(life, kd, 1.0)
+        core_motion(life, kd, CS)
 
     form = Anim("form", length=FORM_LEN, loop="hold")
     form.scl("plate", {0: 0.0, 0.45: 1.12, 0.65: 1.0})
@@ -1442,7 +1477,7 @@ def charge_anims():
     form.rot("core", {0: (0, 160, 0), 0.2: (0, 160, 0), 1.05: (0, 0, 0)})
     for sgn, nm in ((-1, "k2_front_l"), (1, "k2_front_r")):
         form.rot(nm, {0: (0, sgn * 118, 0), 0.8: (0, sgn * 118, 0), 1.25: (0, -sgn * 8, 0), 1.4: (0, 0, 0)})
-    form.rot("k1_leaf", {0: (0, -26, 0), 0.85: (0, -26, 0), 1.2: (0, 12, 0), 1.4: (0, 0, 0)})
+    form.rot("k1_leaf", {0: (0, -36, 0), 0.85: (0, -36, 0), 1.2: (0, 12, 0), 1.4: (0, 0, 0)})
     form.scl("k5_hands", {0: 0.0, 1.0: 0.0, 1.4: 1.0})
     form.scl("k4_astair", {0: 0.0, 0.9: 0.0, 1.35: 1.0})
     form.scl("k3_tring", {0: (1, 0, 1), 0.7: (1, 0, 1), 1.2: (1, 1.1, 1), 1.4: (1, 1, 1)})
@@ -1590,7 +1625,7 @@ def previews(pack, book, banims, visions, vanims, charges, canims):
     idle, flip, opn, opl = by["idle"], by["flip"], by["open"], by["open_loop"]
     poses = [_merge((idle, 0.0)), _merge((idle, 6.0)), _merge((idle, 1.0), (flip, 0.42)),
              _merge((idle, 1.0), (opn, 0.6), (opl, 0.5))]
-    views = ((0, 6), (35, 18), (-90, 6), (180, 12))
+    views = ((0, 6), (35, 18), (90, 6), (180, 12))
     rows = [[render(book, p, yaw=y, pitch=pt, size=(340, 340)) for (y, pt) in views] for p in poses]
     _grid(rows, os.path.join(PREVIEW, "book_dn.png"))
     rows = [[render(book, poses[0], yaw=8, pitch=4, size=(700, 700), fit=((-2.5, 2, -5), 10.5)),

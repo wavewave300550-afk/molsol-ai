@@ -37,24 +37,21 @@ from kit.tex import _hash, fbm, grain, mix, rgb, tile
 from .a_fx_common import particles
 
 # =====================================================================================
-# ATTACHABLE PLACEMENT -- every hand offset lives here (bb space: +X right, +Y up, -Z front).
-# The held book cannot be checked without the game, so it re-uses the anchor frame of the
-# vanilla shield attachable (bedrock-samples attachables/shield.entity.json + shield.geo.json),
-# the closest vanilla analogue of a large flat object held in the main hand:
-#   * root bone bound with q.item_slot_to_bone_name(c.item_slot), pivot = shield pivot
-#   * the closed book's centre sits where the shield plate's centre sits
-#   * FIRST / THIRD are the shield's main-hand first- and third-person transforms converted to
-#     bb space (x / y rotations and x position negated; the third-person scale (1,-1,-1) folded
-#     into the rotation as an extra 180 deg about X), plus our own tweaks:
-#       turn  : extra spin about the book's own vertical axis (first person: show the cover /
-#               pages to the camera instead of the back board)
-#       lift  : hover offset in the book's own frame (units, before `scale`)
-#       scale : the book is modelled at 20 x 14 x 5 units (~ 40 x 29 x 9 cm proportions)
-# To tune in game, change only these numbers.
-HAND_PIVOT = (-1.0, 15.5, 3.0)
-BOOK_CENTER = (-1.0, 28.0, -0.5)
-FIRST = dict(pos=(-5.3, 26.0, 0.4), rot=(-91.0, -65.0, -43.0), turn=180.0, lift=(0.0, 1.5, -1.0), scale=0.62)
-THIRD = dict(pos=(0.4, 9.0, 9.3), rot=(-90.0, 0.0, 90.0), turn=0.0, lift=(0.0, 2.0, -2.5), scale=0.72)
+# ATTACHABLE PLACEMENT -- every hand offset lives here (bb space: +X = the holder's right, +Y up,
+# -Z = the holder's forward; units 1/16 block; degrees).  The root bone is bound with
+# q.item_slot_to_bone_name(c.item_slot); its space is the player model's space (right hand at about
+# (6, 12..15, 1)).  This is deliberately the SAME frame and the same numbers as the Divine Word book
+# (tools/assets/books_dw.py, worker M1) so all three Grimoires sit in the same place and are tuned the
+# same way after an in-game look.  The book is modelled upright, centred on its own origin, cover
+# facing -Z, spine on +X, 20 x 14 x 5 units; the scales make it ~8% larger than the Divine Word book
+# (40 x 29 x 9 cm vs 38 x 28 x 8 cm).
+#   rot  : ry 180 turns the cover (and, when open, the pages) toward the caster; rx tips it up.
+#   turn : extra spin about the book's own vertical axis; lift: hover offset in the book's own frame.
+# The open-while-using motion (rise 2.5, tilt 16 deg, open spread re-centred) is in build_book_anims.
+HAND_PIVOT = (0.0, 0.0, 0.0)
+BOOK_CENTER = (0.0, 0.0, 0.0)
+FIRST = dict(pos=(5.0, 21.0, -9.0), rot=(20.0, 196.0, -6.0), turn=0.0, lift=(0.0, 0.0, 0.0), scale=0.31)
+THIRD = dict(pos=(9.5, 19.0, -5.5), rot=(18.0, 180.0, -8.0), turn=0.0, lift=(0.0, 0.0, 0.0), scale=0.405)
 # Charge construct / vision face: their front (-Z, the readable page side) points along the actor
 # yaw.  The presenter should spawn them with the yaw that faces the player (player yaw + 180).
 FACE_YAW = 0.0

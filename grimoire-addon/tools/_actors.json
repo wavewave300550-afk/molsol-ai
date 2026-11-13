@@ -3066,7 +3066,7 @@
   },
   "lifetime": 40,
   "cubes": [
-   120
+   122
   ],
   "bones": [
    69
@@ -3074,7 +3074,7 @@
   "tex": [
    [
     256,
-    256
+    128
    ]
   ]
  },
@@ -3133,7 +3133,7 @@
   },
   "lifetime": 150,
   "cubes": [
-   227
+   232
   ],
   "bones": [
    60
@@ -3141,7 +3141,7 @@
   "tex": [
    [
     256,
-    128
+    256
    ]
   ]
  },
@@ -3554,7 +3554,7 @@
    ],
    [
     128,
-    64
+    128
    ],
    [
     128,
@@ -3619,11 +3619,292 @@
     128
    ],
    [
+    256,
+    128
+   ],
+   [
+    128,
+    128
+   ]
+  ]
+ },
+ "dragon_tide": {
+  "id": "grimoire:dragon_tide",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default",
+   "cryo"
+  ],
+  "anims": {
+   "hidden": null,
+   "breathe": null,
+   "sail_life": null,
+   "fins_life": null,
+   "frost": null,
+   "idle": 6.0,
+   "move": 1.6,
+   "swim": 1.2,
+   "turn_r": 1.0,
+   "turn_l": 1.0,
+   "arrive": 1.0,
+   "land": 0.8,
+   "power": 1.5,
+   "attack_a": 1.5,
+   "attack_b": 1.7,
+   "attack_c": 1.1,
+   "react": 0.8,
+   "rest": 6.0,
+   "depart": 1.6,
+   "roar": 1.4
+  },
+  "lifetime": 150,
+  "cubes": [
+   230
+  ],
+  "bones": [
+   88
+  ],
+  "tex": [
+   [
+    256,
+    256
+   ]
+  ]
+ },
+ "ed_tide_stream": {
+  "id": "grimoire:ed_tide_stream",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "flow": null,
+   "hidden": null,
+   "form": 0.4,
+   "hold": null,
+   "fade": 0.4
+  },
+  "lifetime": 60,
+  "cubes": [
+   15
+  ],
+  "bones": [
+   8
+  ],
+  "tex": [
+   [
+    64,
+    64
+   ]
+  ]
+ },
+ "ed_tide_mass": {
+  "id": "grimoire:ed_tide_mass",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "churn": null,
+   "hidden": null,
+   "gather": 1.0,
+   "hold": null,
+   "burst": 0.6,
+   "disperse": 1.0
+  },
+  "lifetime": 60,
+  "cubes": [
+   47
+  ],
+  "bones": [
+   10
+  ],
+  "tex": [
+   [
+    256,
+    128
+   ]
+  ]
+ },
+ "ed_tide_current": {
+  "id": "grimoire:ed_tide_current",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "kinds": 2,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "form": 0.8,
+   "flow": 1.0,
+   "freeze": 0.95,
+   "spiral": 0.6,
+   "ice": null,
+   "rise": 0.8,
+   "shatter": 0.35
+  },
+  "lifetime": 60,
+  "cubes": [
+   56,
+   56
+  ],
+  "bones": [
+   25,
+   25
+  ],
+  "tex": [
+   [
     128,
     128
    ],
    [
     128,
+    128
+   ]
+  ]
+ },
+ "ed_tide_crown": {
+  "id": "grimoire:ed_tide_crown",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "assemble": 1.2,
+   "hold": null,
+   "frac1": 0.5,
+   "frac2": 0.5,
+   "frac3": 0.6
+  },
+  "lifetime": 60,
+  "cubes": [
+   144
+  ],
+  "bones": [
+   49
+  ],
+  "tex": [
+   [
+    128,
+    128
+   ]
+  ]
+ },
+ "ed_tide_shard": {
+  "id": "grimoire:ed_tide_shard",
+  "states": [
+   0,
+   1,
+   2
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "spin": null,
+   "hidden": null,
+   "launch": 0.2,
+   "hit": 0.3
+  },
+  "lifetime": 60,
+  "cubes": [
+   6
+  ],
+  "bones": [
+   3
+  ],
+  "tex": [
+   [
+    128,
+    128
+   ]
+  ]
+ },
+ "ed_tide_frozen": {
+  "id": "grimoire:ed_tide_frozen",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "encase": 0.5,
+   "hold": null,
+   "shatter": 0.35
+  },
+  "lifetime": 60,
+  "cubes": [
+   14
+  ],
+  "bones": [
+   8
+  ],
+  "tex": [
+   [
+    256,
     128
    ]
   ]

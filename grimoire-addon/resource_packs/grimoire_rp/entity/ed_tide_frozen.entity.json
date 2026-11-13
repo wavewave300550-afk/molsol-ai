@@ -1,0 +1,34 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:ed_tide_frozen",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "blend": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/ed_tide_frozen"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.ed_tide_frozen"
+   },
+   "render_controllers": [
+    "controller.render.grimoire.ed_tide_frozen"
+   ],
+   "animations": {
+    "hidden": "animation.grimoire.ed_tide_frozen.hidden",
+    "encase": "animation.grimoire.ed_tide_frozen.encase",
+    "hold": "animation.grimoire.ed_tide_frozen.hold",
+    "shatter": "animation.grimoire.ed_tide_frozen.shatter",
+    "ctl_main": "controller.animation.grimoire.ed_tide_frozen.main"
+   },
+   "scripts": {
+    "animate": [
+     "ctl_main"
+    ],
+    "should_update_bones_and_effects_offscreen": true
+   }
+  }
+ }
+}

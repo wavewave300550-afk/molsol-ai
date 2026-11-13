@@ -81,9 +81,9 @@ STATE_IDS = {v[0]: k for k, v in STATES.items()}
 NV, NP, NT = 6, 6, 7          # vents per flank, dorsal plate pairs, tail bones
 
 # ---------------------------------------------------------------- materials
-SK = {None: dict(fis="#7a2008", fg=0.35, gap="#0a0403", gg=0.0, warm=0.0),
-      "ignited": dict(fis="#ff7a22", fg=1.0, gap="#3a0c06", gg=0.1, warm=0.0),
-      "whitehot": dict(fis="#fff6d2", fg=1.0, gap="#ff8a30", gg=0.55, warm=0.18)}
+SK = {None: dict(fis="#6e1e0a", fg=0.3, halo=None, hg=0.0, hw=0.0, gap="#0a0403", gg=0.0, warm=0.0),
+      "ignited": dict(fis="#ff8c2c", fg=1.0, halo="#b8340c", hg=0.55, hw=1.5, gap=None, gg=0.0, warm=0.0),
+      "whitehot": dict(fis="#fff8dc", fg=1.0, halo="#ff8a2a", hg=0.9, hw=2.3, gap="#a8300c", gg=0.3, warm=0.22)}
 
 
 def _t(ctx, col, glow, a=1.0):
@@ -110,7 +110,7 @@ def worley_edges(ix, iy, cell, seed):
     return f2 - f1
 
 
-def _hide(base, dark, light, size=3, crack=1.0, key="hide", cell=7):
+def _hide(base, dark, light, size=3, crack=1.0, key="hide", cell=10):
     """Pebbled theropod hide over a polygonal network of thermal fissures that light up per skin."""
     kb, kd, kl = tex.rgb(base), tex.rgb(dark), tex.rgb(light)
 
@@ -126,20 +126,20 @@ def _hide(base, dark, light, size=3, crack=1.0, key="hide", cell=7):
         hi = (ly == 1) & (lx == 1)
         col = np.where(hi[..., None], col * 0.75 + kl * 0.3, col)
         gap = (lx == 0) | (ly == 0)
-        col = np.where(gap[..., None], col * 0.7 if ctx.alt is None else tex.mix(col, tex.rgb(P["gap"]), 0.6), col)
+        col = np.where(gap[..., None], col * 0.7 if P["gap"] is None or ctx.alt is None else tex.mix(col, tex.rgb(P["gap"]), 0.5), col)
         glow = np.where(gap, P["gg"], 0.0)
         e = worley_edges(ix + ctx.variant * 13, iy + ctx.variant * 7, cell, 41)
-        fis = e < 0.85 * crack
-        halo = (e < 1.9 * crack) & ~fis
-        col = np.where(fis[..., None], tex.rgb(P["fis"]), col)
-        if ctx.alt is not None:
-            col = np.where(halo[..., None], tex.mix(col, tex.rgb(P["fis"]), 0.35), col)
-            glow = np.where(halo, P["fg"] * 0.35, glow)
-        glow = np.where(fis, P["fg"], glow)
+        fis = e < 0.75 * crack
         if P["warm"]:
-            body = ~fis & ~halo
-            col = np.where(body[..., None], np.clip(col * 1.25 + np.array([0.16, 0.03, 0.0]), 0, 1), col)
+            body = ~fis
+            col = np.where(body[..., None], np.clip(col * 1.3 + np.array([0.2, 0.03, 0.0]), 0, 1), col)
             glow = np.where(body & ~gap, P["warm"], glow)
+        if P["halo"]:
+            halo = (e < P["hw"] * crack) & ~fis
+            col = np.where(halo[..., None], tex.mix(col, tex.rgb(P["halo"]), 0.75), col)
+            glow = np.where(halo, P["hg"], glow)
+        col = np.where(fis[..., None], tex.rgb(P["fis"]), col)
+        glow = np.where(fis, P["fg"], glow)
         t = tex.grain(ctx, _t(ctx, col, glow), 0.04)
         return tex.edge(ctx, t, 0.12)
     return Mat(fn, f"edheat_{key}{base}{size}{crack}{cell}")
@@ -150,7 +150,7 @@ def _horn(level):
     def fn(ctx):
         ix, iy = tex.px(ctx)
         f = level / 3.0
-        col = np.broadcast_to(tex.mix(tex.rgb("#2c1b14"), tex.rgb("#6e4c34"), f), (ctx.h, ctx.w, 3)).copy()
+        col = np.broadcast_to(tex.mix(tex.rgb("#24160f"), tex.rgb("#a88a64"), f ** 1.3), (ctx.h, ctx.w, 3)).copy()
         ridge = (ix + 2 * iy) % 4 == 0
         col[ridge] *= 0.65
         glow = np.full((ctx.h, ctx.w), 0.03 * level)
@@ -215,13 +215,11 @@ def _plate():
         ix, iy = tex.px(ctx)
         n = tex.fbm(ix / 3.0 + ctx.variant * 5.1, iy / 3.0, 3)
         col = tex.mix(tex.rgb("#1c0c0a"), tex.rgb("#3e1a14"), n[..., None])
-        pit = tex._hash(ix // 3, iy // 3 + ctx.variant * 13, 4) > 0.82
-        col = np.where(pit[..., None], col * 0.5, col)
         d = np.minimum(np.minimum(ix, ctx.w - 1 - ix), np.minimum(iy, ctx.h - 1 - iy))
         rc, rg = rim[ctx.alt]
         edge = d == 0
         col = np.where(edge[..., None], tex.rgb(rc), col)
-        glow = np.where(edge, rg, 0.15 if ctx.alt == "whitehot" else 0.0)
+        glow = np.where(edge, rg, 0.0)
         return tex.grain(ctx, _t(ctx, col, glow), 0.05)
     return Mat(fn, "edheat_plate")
 
@@ -250,15 +248,16 @@ def seg(b, p0, p1, w, h, mat, axis="y", grow=0.0, **kw):
 # leg joints (y, z) in bind pose
 HIP, KNEE0, ANK0, BALL0 = (50.0, 6.0), (32.0, -4.0), (13.0, 8.0), (2.0, 4.0)
 LEG_X = 12.5
+BACK = 59.0
 TAIL_J = [(52, 18), (51, 28), (49.8, 38), (48.3, 48), (46.8, 58), (45.2, 67), (43.6, 75), (42, 83)]
 
 
 def build_model():
-    m = Model(ACTOR, density=1.0, bounds=(30, 16, (0, 5, 0)), alts=("ignited", "whitehot"))
-    hide = _hide("#3b1411", "#170806", "#5e2117", 3, 1.0, "body")
-    limb = _hide("#33120f", "#140705", "#552015", 3, 0.8, "limb")
-    belly = _hide("#5c2a1e", "#2a120c", "#7a3e2a", 4, 0.5, "belly")
-    skull = _hide("#431713", "#180806", "#6a2a1c", 2, 1.2, "skull")
+    m = Model(ACTOR, density=1.5, bounds=(30, 16, (0, 5, 0)), alts=("ignited", "whitehot"))
+    hide = _hide("#34110e", "#100505", "#56201a", 3, 1.0, "body")
+    limb = _hide("#2e100d", "#0e0404", "#4e1c16", 3, 0.85, "limb", cell=9)
+    belly = _hide("#4e2219", "#1e0b08", "#6e3424", 4, 0.6, "belly", cell=13)
+    skull = _hide("#3a1310", "#120606", "#5e2419", 2, 1.1, "skull", cell=8)
     plate, vent, core, bed = _plate(), _vent_inner(), _core(), _bed()
     horn = [_horn(i) for i in range(4)]
     throat, mouth = _bellows(), _mouth()
@@ -269,88 +268,90 @@ def build_model():
 
     root = m.bone("root")
     body = m.bone("body", root, pivot=(0, 50, 6))
-    body.box((0, 50, 8), (20, 17, 22), hide)                                  # pelvis
-    body.box((0, 43, 9), (15, 4, 16), belly)
-    body.plane("y", (0, 58.56, 7), 19, 16, bed, faces=("up",))
+    body.box((0, 49.5, 8), (20, 19, 22), hide)                                # pelvis
+    body.box((0, 41.5, 9), (15, 4, 16), belly)
+    body.box((0, 40.5, -1), (18, 9, 8), belly, variant=1)                     # gut bulge between ribs and pelvis
+    body.plane("y", (0, BACK + 0.06, 7), 19, 16, bed, faces=("up",))
     for z in (0, 7, 14):
         for sx in (1, -1):
-            body.box((sx * 10.3, 55.5, z), (1.6, 2.2, 3.2), plate, variant=z % 2)
+            body.box((sx * 10.3, 56, z), (1.6, 2.2, 3.2), plate, variant=z % 2)
     body.locator("tailroot", (0, 54, 20))
 
     chest = m.bone("chest", body, pivot=(0, 51, -3))
-    chest.box((0, 52, -29), (18, 12, 8), hide, variant=1)                     # shoulder hump
-    chest.box((0, 46.5, -31), (15, 11, 6), belly, variant=1)                  # pectoral keel
-    chest.locator("core", (0, 62, -12))
-    ribs = m.bone("ribs", chest, pivot=(0, 48, -15))
-    ribs.box((0, 48, -15), (22, 21, 26), hide, variant=2)
-    ribs.box((0, 38, -14), (17, 5, 22), belly)
-    ribs.plane("y", (0, 58.56, -15.5), 21, 25, bed, faces=("up",), variant=1)
-    ribs.locator("vent_r", (12.5, 47, -14)).locator("vent_l", (-12.5, 47, -14))
+    chest.box((0, 52.5, -29), (19, 13, 8), hide, variant=1)                   # shoulder hump
+    chest.box((0, 44, -31), (16, 12, 7), belly, variant=1)                    # pectoral keel
+    chest.locator("core", (0, 63, -12))
+    ribs = m.bone("ribs", chest, pivot=(0, 47, -15))
+    ribs.box((0, 47, -15), (23, 24, 26), hide, variant=2)                     # deep ribcage y 35..59
+    ribs.box((0, 34.5, -14), (17, 5, 22), belly)                              # belly keel y 32..37
+    ribs.plane("y", (0, BACK + 0.06, -15.5), 22, 25, bed, faces=("up",), variant=1)
+    ribs.locator("vent_r", (13, 46, -14)).locator("vent_l", (-13, 46, -14))
     for k in range(NV):
         zc = -25 + k * 4.4
         for s, sx in (("r", 1), ("l", -1)):
-            ribs.plane("x", (sx * 11.03, 47, zc), 3.4, 12, vent, variant=k % 2)
-            f = m.bone(f"vent_{s}_{k + 1}", ribs, pivot=(sx * 11, 47, zc - 2.0))
-            x0 = 11.0 if sx > 0 else -11.9
-            f.cube((x0, 40.5, zc - 2.0), (0.9, 13, 4.3), limb, variant=k % 3,
+            ribs.plane("x", (sx * 11.53, 46, zc), 3.4, 12.5, vent, variant=k % 2)
+            f = m.bone(f"vent_{s}_{k + 1}", ribs, pivot=(sx * 11.5, 46, zc - 2.0))
+            x0 = 11.5 if sx > 0 else -12.4
+            f.cube((x0, 39.2, zc - 2.0), (0.9, 13.6, 4.3), limb, variant=k % 3,
                    mats={("west" if sx > 0 else "east"): vent})
-            f.cube((x0 + (0.9 if sx > 0 else -0.6), 51.0, zc - 1.0), (0.6, 1.4, 2.4), plate)   # flap stud
+            f.cube((x0 + (0.9 if sx > 0 else -0.6), 50.5, zc - 1.0), (0.6, 1.4, 2.4), plate)   # flap stud
 
-    # dorsal plates + furnace core
+    # dorsal plates (glowing undersides) + furnace core
     for i in range(NP):
         zc = -29 + 8 * i
         par = chest if i < 4 else body
         for s, sx in (("r", 1), ("l", -1)):
-            p = m.bone(f"dplate_{s}_{i + 1}", par, pivot=(sx * 10, 58.5, zc))
+            p = m.bone(f"dplate_{s}_{i + 1}", par, pivot=(sx * 10, BACK, zc))
             x0 = 0.25 if sx > 0 else -10.55
-            p.cube((x0, 58.3, zc - 3.9), (10.3, 3.0, 7.8), plate, variant=i % 2)
+            p.cube((x0, BACK - 0.2, zc - 3.9), (10.3, 3.0, 7.8), plate, variant=i % 2,
+                   mats={"down": vent, ("west" if sx > 0 else "east"): vent})
             for xo in (3.4, 7.4):
-                p.box((sx * xo, 61.9, zc + (0.6 if xo > 4 else -0.6)), (1.8, 1.4, 3.6), plate, variant=1)
+                p.box((sx * xo, BACK + 3.4, zc + (0.6 if xo > 4 else -0.6)), (1.8, 1.4, 3.6), plate, variant=1)
     for name, par, z0, z1 in (("core_1", chest, -33, -1), ("core_2", body, -1, 15)):
         zc = (z0 + z1) / 2
-        c = m.bone(name, par, pivot=(0, 58.5, zc))
-        c.box((0, 59.4, zc), (2.6, 1.8, z1 - z0), core)
+        c = m.bone(name, par, pivot=(0, BACK, zc))
+        c.box((0, BACK + 0.9, zc), (2.6, 1.8, z1 - z0), core)
         for z in np.arange(z0 + 2, z1 - 1, 4.0):
-            c.box((0, 59.9, float(z)), (1.3, 2.8, 1.6), core, variant=1)                  # neural spine fins
-            c.box((0, 58.9, float(z) + 2), (17, 0.8, 1.0), core, variant=2)               # glowing ribs
+            c.box((0, BACK + 1.4, float(z)), (1.3, 2.8, 1.6), core, variant=1)              # neural spine fins
+            c.box((0, BACK + 0.4, float(z) + 2), (17, 0.8, 1.0), core, variant=2)           # glowing ribs
 
-    # neck, throat bellows, head
+    # neck, throat bellows, head (Carnotaurus: short, deep, blunt skull)
     n1 = m.bone("neck1", chest, pivot=(0, 54, -31))
-    seg(n1, (0, 54.5, -29), (0, 57, -42), 14, 15, hide, axis="z", grow=2)
+    seg(n1, (0, 55, -29), (0, 60, -41), 15, 16, hide, axis="z", grow=2)
     for zz in (-33, -38):
         for sx in (1, -1):
-            n1.box((sx * 7.0, 58.5, zz), (1.4, 2, 3), plate, variant=1)
-    thr = m.bone("throat", n1, pivot=(0, 50, -36))
-    thr.box((0, 48.6, -41), (9, 5, 15), throat)
-    n2 = m.bone("neck2", n1, pivot=(0, 57, -41))
-    seg(n2, (0, 57, -40), (0, 59.5, -50), 12.5, 13.5, hide, axis="z", grow=2, variant=1)
-    head = m.bone("head", n2, pivot=(0, 60, -49))
-    head.box((0, 62, -55.5), (12, 10, 13), skull)                             # cranium
-    head.box((0, 60.5, -64.5), (10.5, 9, 7), skull, variant=1)                # deep blunt snout
-    head.box((0, 55.5, -58.5), (11, 3, 19), skull, variant=2)                 # maxilla
-    head.box((0, 65.6, -63), (5, 1.6, 6), plate)                              # nasal rugosity
-    head.box((0, 67.6, -57), (6, 1.4, 6), plate, variant=1)
+            n1.box((sx * 7.5, 60, zz), (1.4, 2, 3), plate, variant=1)
+    thr = m.bone("throat", n1, pivot=(0, 50, -37))
+    thr.box((0, 50, -42), (10, 6, 15), throat)
+    n2 = m.bone("neck2", n1, pivot=(0, 60, -40))
+    seg(n2, (0, 60, -39), (0, 63, -48), 13.5, 15, hide, axis="z", grow=2.5, variant=1)
+    head = m.bone("head", n2, pivot=(0, 63, -47))
+    head.box((0, 65, -54), (14, 12, 14), skull)                               # cranium y 59..71
+    head.box((0, 63.5, -64.5), (12, 11, 8), skull, variant=1)                 # deep blunt snout
+    head.box((0, 57.5, -58), (12.5, 3, 21), skull, variant=2)                 # maxilla
+    head.box((0, 69.8, -64.5), (6, 1.6, 5), plate)                            # nasal rugosity
+    head.box((0, 71.6, -58), (7, 1.4, 7), plate, variant=1)
     for sx in (1, -1):
-        head.box((sx * 4.6, 66.8, -53.5), (3.6, 2.6, 6.2), skull, variant=1)  # brow ridge
-        head.box((sx * 6.0, 59.5, -54), (1.2, 5, 9), skull, variant=2)        # jugal
-        head.box((sx * 6.4, 63.2, -56), (0.6, 3, 4.2), eye, faces=("east",) if sx > 0 else ("west",))
-        for k, z in enumerate(np.arange(-66.5, -50, 2.3)):
-            head.box((sx * 5.05, 53.2, float(z)), (0.9, 1.9, 0.9), tooth, variant=k % 2)
-    for x in (-3, -1, 1, 3):
-        head.box((x, 53.3, -67.6), (0.9, 1.8, 0.9), tooth)
-    head.plane("y", (0, 54.02, -58.5), 10, 18.5, mouth, faces=("down",))
-    head.locator("mouth", (0, 55, -67))
+        head.box((sx * 5.4, 71.2, -53), (4.2, 3, 7), skull, variant=1)        # brow ridge (horn boss)
+        head.box((sx * 6.9, 61.5, -54), (1.4, 5.5, 10), skull, variant=2)     # jugal
+        head.box((sx * 7.3, 66.6, -56.6), (0.6, 3.2, 4.4), eye, faces=("east",) if sx > 0 else ("west",))
+        for k, z in enumerate(np.arange(-67.5, -49, 2.3)):
+            head.box((sx * 5.75, 55.2, float(z)), (0.9, 2.0, 0.9), tooth, variant=k % 2)
+    for x in (-3.6, -1.2, 1.2, 3.6):
+        head.box((x, 55.3, -68.0), (0.9, 1.8, 0.9), tooth)
+    head.plane("y", (0, 56.02, -58), 11.5, 20.5, mouth, faces=("down",))
+    head.locator("mouth", (0, 57, -69))
     for s, sx in (("r", 1), ("l", -1)):
-        h = m.bone(f"horn_{s}", head, pivot=(sx * 5, 66, -54), rot=(0, -12 * sx, 32 * sx))
-        for k, (dx, sz) in enumerate(((3.0, 6.4), (7.2, 5.0), (10.6, 3.6), (13.4, 2.4), (15.3, 1.4))):
-            h.box((sx * (5 + dx), 66, -54), (sz if k else 6.0, sz, sz), horn[min(k, 3)], variant=k // 4)
-        h.locator(f"horn_{s}", (sx * 20.5, 66, -54))
-    jaw = m.bone("jaw", head, pivot=(0, 55.5, -49.5))
-    jaw.box((0, 52.6, -58), (9.8, 3.8, 17.5), skull, mats={"up": mouth})
-    jaw.box((0, 51.6, -63.5), (8, 2.6, 6), skull, variant=1)
+        h = m.bone(f"horn_{s}", head, pivot=(sx * 6, 70.5, -53), rot=(0, -10 * sx, 38 * sx))
+        for k, (dx, sz) in enumerate(((3.4, 7.2), (8.0, 5.6), (12.0, 4.3), (15.2, 3.1), (17.7, 2.1), (19.5, 1.2))):
+            h.box((sx * (6 + dx), 70.5, -53), (sz if k else 6.8, sz, sz), horn[min(k, 3)], variant=1 if k > 3 else 0)
+        h.locator(f"horn_{s}", (sx * 26, 70.5, -53))
+    jaw = m.bone("jaw", head, pivot=(0, 57.5, -48.5))
+    jaw.box((0, 54.6, -57.5), (11, 3.8, 19), skull, mats={"up": mouth})
+    jaw.box((0, 53.4, -63.5), (9, 2.6, 7), skull, variant=1)
     for sx in (1, -1):
-        for z in np.arange(-65, -51, 2.6):
-            jaw.box((sx * 4.2, 55.1, float(z)), (0.8, 1.4, 0.8), tooth)
+        for z in np.arange(-65.5, -50, 2.6):
+            jaw.box((sx * 4.8, 57.1, float(z)), (0.8, 1.4, 0.8), tooth)
 
     # vestigial arms
     for s, sx in (("r", 1), ("l", -1)):
@@ -361,31 +362,31 @@ def build_model():
         for k, xo in enumerate((-0.8, 0.0, 0.8)):
             a2.box((sx * 10.6 + xo, 34.4, -35.0), (0.6, 1.4, 0.7), claw)
 
-    # legs
+    # legs (massive thighs, digitigrade three-toed feet)
     for s, sx in (("r", 1), ("l", -1)):
         X = sx * LEG_X
         th = m.bone(f"thigh_{s}", body, pivot=(X, HIP[0], HIP[1]))
-        seg(th, (X, HIP[0], HIP[1]), (X + sx * 0.5, KNEE0[0], KNEE0[1]), 10.5, 14, limb)
-        th.box((X, 45.5, 7), (11.5, 11, 18), limb, variant=1)                 # drumstick muscle
+        seg(th, (X, HIP[0], HIP[1]), (X + sx * 0.5, KNEE0[0], KNEE0[1]), 11.5, 15, limb)
+        th.box((X, 45, 7.5), (13, 13, 21), limb, variant=1)                   # drumstick muscle
         sh = m.bone(f"shin_{s}", th, pivot=(X, KNEE0[0], KNEE0[1]))
-        seg(sh, (X, KNEE0[0], KNEE0[1]), (X, ANK0[0], ANK0[1]), 7.5, 8.5, limb, variant=2)
-        seg(sh, (X, 31, -3), (X, 21, 2), 8.5, 10, limb, variant=1)            # calf
+        seg(sh, (X, KNEE0[0], KNEE0[1]), (X, ANK0[0], ANK0[1]), 8, 9, limb, variant=2)
+        seg(sh, (X, 31, -3), (X, 20, 2.5), 9.5, 11, limb, variant=1)          # calf
         mt = m.bone(f"meta_{s}", sh, pivot=(X, ANK0[0], ANK0[1]))
-        seg(mt, (X, ANK0[0], ANK0[1]), (X, BALL0[0], BALL0[1]), 5.5, 5, limb)
-        mt.box((X - sx * 2.6, 8, 9.6), (1.2, 1.2, 2.6), claw)                 # dewclaw spur
-        for name, xo, ry in (("in", -1.9, 15), ("mid", 0.0, 0), ("out", 1.9, -15)):
+        seg(mt, (X, ANK0[0], ANK0[1]), (X, BALL0[0], BALL0[1]), 6, 5.5, limb)
+        mt.box((X - sx * 2.8, 8, 9.8), (1.2, 1.2, 2.6), claw)                 # dewclaw spur
+        for name, xo, ry in (("in", -2.1, 15), ("mid", 0.0, 0), ("out", 2.1, -15)):
             px = X + sx * xo
             to = m.bone(f"toe_{s}_{name}", mt, pivot=(px, BALL0[0], BALL0[1] + 0.5), rot=(0, ry * sx, 0))
-            ln = 12 if name == "mid" else 9.5
-            to.box((px, 1.3, BALL0[1] + 0.5 - ln / 2), (3.2 if name == "mid" else 2.6, 2.6, ln), limb, variant=1)
-            to.box((px, 1.0, BALL0[1] + 0.5 - ln - 1.1), (2.0, 2.0, 2.6), claw)
+            ln = 13 if name == "mid" else 10.5
+            to.box((px, 1.4, BALL0[1] + 0.5 - ln / 2), (3.6 if name == "mid" else 3.0, 2.8, ln), limb, variant=1)
+            to.box((px, 1.1, BALL0[1] + 0.5 - ln - 1.2), (2.2, 2.2, 2.8), claw)
             if name == "mid":
                 to.locator(f"foot_{s}", (px, 0.5, -1))
 
     # tail
     par = body
-    W = [16, 14, 12, 10, 8, 6, 4.5]
-    H = [15, 13, 11, 9, 7.5, 6, 4.5]
+    W = [17, 15, 12.5, 10, 8, 6, 4.5]
+    H = [16, 13.5, 11, 9, 7.5, 6, 4.5]
     for i in range(NT):
         (y0, z0), (y1, z1) = TAIL_J[i], TAIL_J[i + 1]
         tb = m.bone(f"tail{i + 1}", par, pivot=(0, y0, z0))

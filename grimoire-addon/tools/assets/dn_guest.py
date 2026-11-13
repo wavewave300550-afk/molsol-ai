@@ -37,7 +37,7 @@ from .a_fx_common import particles
 # ---------------------------------------------------------------- palette (nightmare side of the book)
 INDIGO, MAUVE, BURG, AIV, CGRAY = "#2a2d52", "#6a4a6e", "#6e2f3a", "#cfc6b0", "#8b8f9a"
 FRAME_P, FRAME_DK, WOOD_UNDER = "#5b2f37", "#3a2128", "#2a1a1b"
-LAMP, COLD, FOG, GILT = "#efdca6", "#e6defc", "#121226", "#8a7448"
+LAMP, COLD, FOG, GILT = "#efdca6", "#e6defc", "#1a1830", "#8a7448"
 
 # ---------------------------------------------------------------- shared geometry constants (keep in sync with TS)
 OPEN_W, OPEN_H = 18.0, 78.0        # half width / height of the doorway
@@ -92,9 +92,9 @@ def _cracks(ctx, t, a, b, seed):
     """'cracked' skin: glowing fractures and a scorched, darkened surface."""
     if ctx.alt != "cracked":
         return t
-    r1 = np.abs(tex.fbm(a / 7.0 + seed, b / 7.0, 61) - 0.5) < 0.03
-    r2 = np.abs(tex.vnoise(a / 3.0, b / 3.0 + seed, 67) - 0.5) < 0.03
-    c = r1 | (r2 & (tex.fbm(a / 10.0, b / 10.0, 71) > 0.52))
+    r1 = np.abs(tex.fbm(a / 9.0 + seed, b / 9.0, 61) - 0.5) < 0.011
+    r2 = np.abs(tex.vnoise(a / 4.0, b / 4.0 + seed, 67) - 0.5) < 0.009
+    c = r1 | (r2 & (tex.fbm(a / 12.0, b / 12.0, 71) > 0.6))
     t[..., :3] = np.where(c[..., None], rgb("#f1e9ff"), t[..., :3] * 0.72)
     t[..., 4] = np.where(c, 1.0, t[..., 4] * 0.3)
     return t
@@ -148,16 +148,16 @@ def wallpaper(i, fog):
         ix, iy = tex.px(ctx)
         a, b = U * 14.0, V * 78.0
         stripe = (np.floor(a / 3.5) % 2 == 0)
-        col = np.where(stripe[..., None], rgb("#62435f"), rgb("#53375a"))
+        col = np.where(stripe[..., None], rgb("#7f5a7c"), rgb("#6c4a70"))
         med = np.cos(((a % 7.0) - 3.5) * 0.9) * np.cos(((b % 10.0) - 5.0) * 0.63)
-        col = np.where((med > 0.55)[..., None], rgb("#7d5a7d"), col)
+        col = np.where((med > 0.55)[..., None], rgb("#a07ea0"), col)
         wain = V > 0.66
-        col = np.where(wain[..., None], rgb("#4a2630") * (0.9 + 0.12 * np.cos(a * 1.7))[..., None], col)
+        col = np.where(wain[..., None], rgb("#6a3440") * (0.9 + 0.12 * np.cos(a * 1.7))[..., None], col)
         col = np.where(((V > 0.64) & (V < 0.675))[..., None], rgb("#2e1b1c"), col)
         col = np.where((V < 0.035)[..., None], rgb("#2e1b1c"), col)
         n = tex.fbm(ix / 3.0 + i * 3.1, iy / 3.0, 31)
         col = col * (0.8 + 0.32 * n)[..., None]
-        glow = np.full(U.shape, 0.04)
+        glow = np.full(U.shape, 0.14)
         if i % 2 == 0:
             fr = (np.abs(U - 0.5) < 0.2) & (V > 0.08) & (V < 0.27)
             bw, bh = 1.2 / max(ctx.w, 1), 1.2 / max(ctx.h, 1)
@@ -166,9 +166,9 @@ def wallpaper(i, fog):
             col = np.where(inner[..., None], rgb("#17152b"), col)
         if ctx.alt != "cracked":
             d = np.hypot((U - 0.5) * 1.3, (V - 0.38) * 1.0)
-            pool = np.clip(1 - d / 0.42, 0, 1) ** 2
-            col = col + pool[..., None] * rgb(LAMP) * 0.5
-            glow = glow + pool * 0.45
+            pool = np.clip(1 - d / 0.55, 0, 1) ** 1.6
+            col = col + pool[..., None] * rgb(LAMP) * 0.55
+            glow = glow + pool * 0.5
         else:
             col = col * 0.55
         col = tex.mix(col, rgb(FOG), fog)
@@ -185,19 +185,19 @@ def floor_mat(i, fog):
         U, V = ctx.U, ctx.V
         ix, iy = tex.px(ctx)
         n = tex.fbm(ix / 1.2 + i * 5, iy / 6.0, 33)
-        col = tex.mix(rgb("#2e1f1d"), rgb("#4c3328"), n[..., None])
+        col = tex.mix(rgb("#3e2a25"), rgb("#634434"), n[..., None])
         bw = max(2, int(round(ctx.w / 9)))
         col = np.where(((ix % bw) == 0)[..., None], rgb("#1a1112"), col)
         c = np.abs(U - 0.5)
         run = c < 0.24
         dia = (np.abs((V * 5 + 0.5 * i) % 1 - 0.5) + np.abs(((U - 0.5) / 0.4 * 3) % 1 - 0.5)) < 0.22
-        rc = np.where(dia[..., None], rgb("#7a4a62"), rgb("#5e2632"))
+        rc = np.where(dia[..., None], rgb("#9a6482"), rgb("#7e3242"))
         col = np.where(run[..., None], rc * (0.85 + 0.2 * n)[..., None], col)
         col = np.where(((c > 0.195) & (c < 0.225))[..., None], rgb("#a89c80"), col)
         if ctx.alt == "cracked":
             col = col * 0.6
         col = tex.mix(col, rgb(FOG), fog)
-        t = tex.tile(ctx, "#000000", 1, 0.03)
+        t = tex.tile(ctx, "#000000", 1, 0.12)
         t[..., :3] = np.clip(col, 0, 1)
         return t
     return Mat(fn, f"dngd_floor{i}")
@@ -207,7 +207,7 @@ def ceil_mat(i, fog):
     def fn(ctx):
         ix, iy = tex.px(ctx)
         n = tex.fbm(ix / 2.5 + i, iy / 2.5, 35)
-        col = tex.mix(rgb("#262439"), rgb("#3b3852"), n[..., None])
+        col = tex.mix(rgb("#34314b"), rgb("#4d4966"), n[..., None])
         cr = np.abs(tex.vnoise(ix / 3.0 + i * 7, iy / 3.0, 37) - 0.5) < 0.03
         col = np.where(cr[..., None], rgb("#15131f"), col)
         col = tex.mix(col, rgb(FOG), fog)
@@ -447,8 +447,8 @@ def build_door(m, P=""):
     for i in range(N_SEG):
         a, b = seg[i], seg[i + 1]
         s = a["s"]
-        fog = min(0.82, (1 - s) * 0.95)
-        fog_n = min(0.82, (1 - b["s"]) * 0.95)
+        fog = min(0.62, (1 - s) * 0.7)
+        fog_n = min(0.62, (1 - b["s"]) * 0.7)
         sb = m.bone(n(f"corr_s{i}"), corr, pivot=(0, VP, a["z"]))
         z0, z1 = a["z"], b["z"]
         d, w, yf, yc = z1 - z0, a["w"], a["yf"], a["yc"]
@@ -466,7 +466,7 @@ def build_door(m, P=""):
         sb.plane("z", (0, (yo0 + yo1) / 2, z1 - 0.03), W, H, ring_mat(i, hole, W, H, b["s"], fog_n))
         # sconces and pendants
         lamp = lamp_mat(round(fog, 2))
-        ls = max(0.3, s)
+        ls = max(0.5, s)
         ly, lz = yf + h * 0.62, z0 + d * 0.5
         for sx in (1, -1):
             sb.box((sx * (w - 0.45 * ls), ly, lz), (0.9 * ls, 1.6 * ls, 0.9 * ls), lamp)

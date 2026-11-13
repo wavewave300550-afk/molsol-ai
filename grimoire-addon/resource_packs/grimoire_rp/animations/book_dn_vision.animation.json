@@ -489,7 +489,7 @@
      ],
      "position": [
       0.0,
-      "(math.mod(q.life_time,4)/4)*(4.032)",
+      "(math.mod(q.life_time,4)/4)*(5.28)",
       0.0
      ],
      "scale": [
@@ -554,7 +554,7 @@
       1.0
      ],
      "position": [
-      "-(0+0.105*math.sin(q.life_time*276.9231+0))",
+      "-(0+0.1375*math.sin(q.life_time*276.9231+0))",
       0.0,
       0.0
      ]
@@ -594,7 +594,7 @@
       0.0
      ],
      "position": [
-      "-(0+0.21*math.sin(q.life_time*163.6364+0))",
+      "-(0+0.275*math.sin(q.life_time*163.6364+0))",
       0.0,
       0.0
      ]
@@ -735,42 +735,42 @@
     "k3_note1": {
      "position": [
       0.0,
-      "0+0.378*math.sin(q.life_time*200+0)",
+      "0+0.495*math.sin(q.life_time*200+0)",
       0.0
      ]
     },
     "k3_note2": {
      "position": [
       0.0,
-      "0+0.378*math.sin(q.life_time*200+60)",
+      "0+0.495*math.sin(q.life_time*200+60)",
       0.0
      ]
     },
     "k3_note3": {
      "position": [
       0.0,
-      "0+0.378*math.sin(q.life_time*200+120)",
+      "0+0.495*math.sin(q.life_time*200+120)",
       0.0
      ]
     },
     "k3_note4": {
      "position": [
       0.0,
-      "0+0.378*math.sin(q.life_time*200+180)",
+      "0+0.495*math.sin(q.life_time*200+180)",
       0.0
      ]
     },
     "k3_note5": {
      "position": [
       0.0,
-      "0+0.378*math.sin(q.life_time*200+240)",
+      "0+0.495*math.sin(q.life_time*200+240)",
       0.0
      ]
     },
     "k3_note6": {
      "position": [
       0.0,
-      "0+0.378*math.sin(q.life_time*200+300)",
+      "0+0.495*math.sin(q.life_time*200+300)",
       0.0
      ]
     },
@@ -891,7 +891,7 @@
      "position": [
       0.0,
       0.0,
-      "-0.21+-0.378*math.sin(q.life_time*80+0)"
+      "-0.275+-0.495*math.sin(q.life_time*80+0)"
      ],
      "rotation": [
       "-(0+4*math.sin(q.life_time*276.9231+0))",
