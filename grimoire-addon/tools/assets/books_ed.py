@@ -492,6 +492,10 @@ def build_book():
     body.cube((-HX - 0.2, -H / 2 - 0.3, 1.8), (W + 0.4, H + 0.6, 0.8), board)
     body.cube((-HX + 0.2, -H / 2 + 0.2, 0.0), (W - 0.6, H - 0.4, 1.8), edge_side, mats={"north": art_l, "up": edge_ud, "down": edge_ud},
               density=5)
+    body.plane("z", (0, 0, 2.63), 10.0, 10.0, tex.magic_circle(glyphs.DRACONIC, BRONZE_HI, GOLD, glow=0.15,
+                                                                bands=((0.62, 0.9, 12),), lines=(0.58, 0.95), star=4,
+                                                                star_r=(0.15, 0.55), core=0.1, key="edback"), density=5)
+    body.plane("z", (0, 0, 2.65), 2.6, 2.6, spiral_mat("#d8c7a0", "back"))
     for sx, sy in ((-1, 1), (-1, -1)):          # back corners (fore-edge side)
         body.box((sx * (HX - 0.6), sy * (H / 2 - 0.6), 2.45), (1.6, 1.6, 0.5), gold, variant=1)
     # spine board + vertebrae
@@ -1228,9 +1232,9 @@ def build_k_carno(m, grow, C):
     """Carnotaur horns and jaws: a great horned skull bursting from the page amid ember vents."""
     bm = tex.bone_mat("#ecdcc0", "#9c845c", glow=0.06)
     neck = chain(m, "ck", grow, [(0, 0.3, 1.6), (0, 3.0, 1.4), (0, 5.4, 0.9)], lambda i: 2.4 - i * 0.3, bm)
-    sk, jaw = skull(m, "h", "ch_", neck[-1], (0, 4.6, 2.2), 4.2, face=(-8, 34, 0), bone_mat=bm, jaw_open=20)
-    throat = m.bone("ch_throat", sk, pivot=(0, 7.5, -3))
-    throat.box((0, 7.0, -4.5), (4.2, 1.6, 5.0), tex.glow_flat(EMBER, 1.0, core="#ffe6a0"))
+    sk, jaw = skull(m, "h", "ch_", neck[-1], (0, 4.6, 2.2), 4.2, face=(-14, 34, 0), bone_mat=bm, jaw_open=28)
+    throat = m.bone("ch_throat", sk, pivot=(0, 6.6, -2))
+    throat.box((0, 6.4, -3.2), (5.2, 1.2, 6.4), tex.glow_flat(EMBER, 1.0, core="#fff0b8"))
     m.bones[sk].locator("maw", (0, 7.0, -12.0))
     vents = m.bone("cvents", grow, pivot=(0, 0.5, 0))
     for i in range(7):

@@ -44,7 +44,7 @@ OPEN_W, OPEN_H = 18.0, 78.0        # half width / height of the doorway
 VP = 30.0                          # vanishing point height (viewer eye level)
 N_SEG, RATIO, D0, Z0 = 9, 0.78, 5.0, 3.0
 KEY_P = (-14.0, 32.6, -1.8)        # keyhole: the door folds into it when it vanishes
-GRAB_Z, PULL_Z, HAND_Y, HAND_X = -50.0, -18.0, 17.0, 4.2   # TS: standoff 50/16, pullStop 18/16
+GRAB_Z, PULL_Z, HAND_Y, HAND_X = -56.0, -18.0, 17.0, 4.2   # TS: standoff 56/16, pullStop 18/16
 GUEST_Z = 5.0                      # the Guest stands just behind the threshold
 G_FRAME = (-20.0, 50.0, -4.4)      # where its left hand grips the door frame
 
@@ -539,10 +539,12 @@ def build_guest(m, P=""):
     n2 = m.bone(n("neck2"), n1, pivot=(0, 86.5, 0.4))
     n2.box((0, 89.6, 0.4), (2.4, 6.6, 2.4), skin, variant=1)
     hb = m.bone(n("head"), n2, pivot=(0, 92.5, 0.4))
-    hb.box((0, 100, 0), (7, 15, 8), head, mats={"north": face})
-    hb.box((0, 99.5, 0.4), (8.4, 10, 6.6), head, variant=1)
-    hb.box((0, 100.2, 0.4), (5.2, 17.4, 6.0), head, variant=2)
-    hb.box((0, 101.2, 0.8), (6.2, 12, 9.0), head, variant=3)
+    hb.box((0, 100.4, 0), (7.2, 11.6, 8.2), head, mats={"north": face})       # the egg: long crown, small chin
+    hb.box((0, 93.6, 0.4), (4.6, 2.2, 5.6), head, variant=1)
+    hb.box((0, 95.4, 0.2), (6.2, 2.4, 7.2), head, variant=2)
+    hb.box((0, 106.9, 0.5), (6.4, 2.6, 7.8), head, variant=3)
+    hb.box((0, 108.8, 0.7), (5.0, 1.6, 6.2), head, variant=1)
+    hb.box((0, 102.2, 1.0), (6.6, 10.6, 9.2), head, variant=2)               # skull bulges backward
     hb.locator("mouth", (0, 97, -5))
 
     for s, sx in (("r", 1), ("l", -1)):
@@ -729,7 +731,7 @@ def skirt_flare(front, side=0.0):
     d = {}
     for k, a in enumerate(SKIRT):
         c = math.cos(math.radians(a))
-        if c > 0.3:
+        if c > 0.6:
             d[f"skirt{k}_1"] = (front * c, 0, 0)
             d[f"skirt{k}_2"] = (-front * 0.4 * c, 0, 0)
     return d
@@ -743,11 +745,12 @@ def spine(body, s1, s2, s3, n1, n2, head, roll=0.0):
 LURK = {**spine(-6, -12, -14, -10, 10, 8, (6, 0, -10)), **legs(34, -58), **skirt_flare(26)}
 WALK_A = {**spine(-7, -13, -14, -10, 12, 8, (6, 0, -16), roll=-3), **legs(46, -50, 14, -52), **skirt_flare(32)}
 WALK_B = {**spine(-7, -13, -14, -10, 12, 8, (4, 0, -4), roll=3), **legs(14, -52, 46, -50), **skirt_flare(32)}
-CROUCH = {**spine(-6, -12, -14, -10, 4, 2, (16, 0, -14)), **legs(56, -88), **skirt_flare(40)}
-PEEK = {**spine(-8, -16, -18, -14, 12, 12, (6, 18, 44), roll=9), **legs(30, -48), **skirt_flare(24)}
+# too tall for the door: it waits behind the lintel, head hidden above the opening
+CROUCH = {**spine(-2, -3, -3, -2, 0, 0, (4, 0, -6)), **legs(56, -92), **skirt_flare(34)}
+PEEK = {**spine(-8, -16, -18, -14, 12, 12, (6, 18, 44), roll=9), **legs(30, -48), **skirt_flare(24)}   # head out sideways
 STOOP = {**spine(-10, -19, -21, -15, 20, 14, (8, 0, 18)), **legs(16, -26), **skirt_flare(12)}
-REACH = {**spine(-6, -10, -10, -8, 16, 12, (14, 0, 28)), **legs(8, -14), **skirt_flare(8)}
-LEANB = {**spine(4, -4, -5, -3, 10, 8, (-2, 0, -16)), **legs(30, -48), **skirt_flare(26)}
+REACH = {**spine(-6, -14, -16, -10, -14, -12, (10, 0, 26)), **legs(10, -16), **skirt_flare(8)}   # vulture: shoulders high, head hung
+LEANB = {**spine(4, -4, -12, -16, -24, -16, (22, 0, -16)), **legs(70, -110), **skirt_flare(40)}   # sits back on its haunches
 
 
 def gpose(body, root=(0, 0, GUEST_Z), s=1.0, arms=None, fingers=None, floor=0.0, m=None):
@@ -896,15 +899,15 @@ def guest_anims(m):
     frames = {}
     for t, s, body in ((0.0, 0.12, WALK_A), (0.3, 0.16, WALK_B), (0.56, 0.24, WALK_A), (0.76, 0.38, WALK_B),
                        (0.93, 0.62, WALK_A), (1.1, 1.0, CROUCH)):
-        z = max(zs(s), GUEST_Z + 1.0)
+        z = max(zs(s), GUEST_Z + 4.0)
         frames[t] = gpose(body, root=(0, 0, z), s=s, floor=VP * (1 - s) if s < 1 else 0.0, m=m)
     crouch = frames[1.1]
     lift = with_arms(m, crouch, {"l": (G_FRAME[0] + 4, G_FRAME[1] - 10, G_FRAME[2] + 6)}, stretch=False,
                      fingers=hands(*REL, left=SPLAY))
     frames[1.28] = lift
-    grip_body = gpose({**CROUCH, "head": (8, 0, -6)}, root=(0, 0, GUEST_Z + 1.0), m=m)
+    grip_body = gpose({**CROUCH, "head": (8, 0, -2)}, root=(0, 0, GUEST_Z + 4.0), m=m)
     frames[1.45] = with_arms(m, grip_body, {"l": G_FRAME}, stretch=False, fingers=hands(*REL, left=GRIP))
-    frames[1.62] = with_arms(m, gpose({**CROUCH, "head": (8, 0, -10)}, root=(0, 0, GUEST_Z + 1.0), m=m),
+    frames[1.62] = with_arms(m, gpose({**CROUCH, "head": (8, 0, -10)}, root=(0, 0, GUEST_Z + 4.0), m=m),
                              {"l": G_FRAME}, stretch=False, fingers=hands(*REL, left=GRIP))
     peek = gpose(PEEK, root=(0, 0, GUEST_Z), m=m)
     frames[1.95] = with_arms(m, peek, {"l": G_FRAME}, stretch=False, fingers=hands(*REL, left=GRIP))
@@ -960,7 +963,7 @@ def guest_anims(m):
     frames = {}
     for p in (0.0, 0.25, 0.5, 0.75, 1.0):
         f = smooth(p)
-        body = gpose(lerp_pose(REACH, LEANB, f), root=(0, 0, GUEST_Z + 2.5 * p), m=m)
+        body = gpose(lerp_pose(REACH, LEANB, f), root=(0, 0, GUEST_Z + 2.5 * f), m=m)
         z = GRAB_Z + (PULL_Z - GRAB_Z) * f
         frames[p * GUEST_LEN["pull"]] = tremble(with_arms(m, body, {"r": (HAND_X, HAND_Y, z), "l": (-HAND_X, HAND_Y, z)},
                                                           fingers=hands(*CLOSED)))

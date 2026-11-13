@@ -357,7 +357,7 @@ def codex_anims():
         op.scl(f"page{k + 1}", {0: 1.0, t0 + 0.4: 1.0, t0 + 0.75: 0.0}, smooth=False)
     for k in range(6):
         t0 = 1.5 + k * 0.18
-        op.scl(f"ps{k + 1}", {0: 0.0, t0: 0.0, t0 + 0.45: 1.2, t0 + 0.6: 1.0}, smooth=False)
+        op.scl(f"ps{k + 1}", {0: 0.0, t0: 0.0, t0 + 0.45: 1.95, t0 + 0.6: 1.7}, smooth=False)
     op.scl("inlay", 0.0)
     A.append(op)
     orb = Anim("hold", loop=True)
@@ -365,11 +365,13 @@ def codex_anims():
     orb.scl("inlay", 0.0)
     for k in range(4):
         orb.scl(f"page{k + 1}", 0.0)
+    for k in range(6):
+        orb.scl(f"ps{k + 1}", 1.7)
     A.append(orb)
     ga = Anim("gather", length=2.0, loop="hold")    # the structures fold back into pages
     for k in range(6):
         t0 = k * 0.15
-        ga.scl(f"ps{k + 1}", {0: 1.0, t0 + 0.6: 1.0, t0 + 1.0: 0.0}, smooth=False)
+        ga.scl(f"ps{k + 1}", {0: 1.7, t0 + 0.6: 1.7, t0 + 1.0: 0.0}, smooth=False)
     ga.rot("orbit", {0: (0, 0, 0), 1.6: (0, 300, 0)})
     for k in range(4):
         t0 = 0.8 + k * 0.2
