@@ -231,12 +231,12 @@ def horse_model():
 
     # carousel pole: the horse carries its own gilt pole and star finial
     pole = m.bone("pole", body, pivot=(0, 34, 1.5))
-    pole.box((0, 47, 1.5), (1.8, 26, 1.8), pole_m)
-    pole.box((0, 60.6, 1.5), (3.4, 1.4, 3.4), GILT)
+    pole.box((0, 42, 1.5), (1.8, 16, 1.8), pole_m)
+    pole.box((0, 50.6, 1.5), (3.4, 1.4, 3.4), GILT)
     pole.box((0, 35.6, 1.5), (3.0, 1.2, 3.0), GILT, variant=1)
-    star = m.bone("pole_star", pole, pivot=(0, 65, 1.5))
-    star.plane("z", (0, 65, 1.5), 7, 7, star_m)
-    star.plane("x", (0, 65, 1.5), 7, 7, star_m)
+    star = m.bone("pole_star", pole, pivot=(0, 55, 1.5))
+    star.plane("z", (0, 55, 1.5), 7, 7, star_m)
+    star.plane("x", (0, 55, 1.5), 7, 7, star_m)
 
     # neck (authored upright, bent by bind rotations)
     n1 = m.bone("neck1", body, pivot=(0, 30, -11), rot=(-16, 0, 0))
@@ -964,17 +964,17 @@ def road_model(kind):
         arch = m.bone("arch", tilt, pivot=(0, 0, 0))
         col = tex.banded(pm, SGOLD, every=8, width=1, glow=0.5)
         for sx in (1, -1):
-            arch.box((sx * 25, 21, 0), (4.5, 42, 4.5), col)
+            arch.box((sx * 25, 31, 0), (4.5, 62, 4.5), col)
             arch.box((sx * 25, 1.5, 0), (6.5, 3, 6.5), GILT)
-            arch.box((sx * 25, 42.5, 0), (6, 2, 6), GILT, variant=1)
-        ring(arch, (0, 43, 0), 25, 12, (7.2, 4.4, 4.4), pm, axis="z", start=0, sweep=180)
-        ring(arch, (0, 43, 0), 22.2, 12, (6.2, 1.0, 4.8), GILT_B, axis="z", start=0, sweep=180)
-        arch.plane("z", (0, 75, 0), 14, 14, tex.shaped(m_cres(0.38), "#fff3c4", SGOLD, glow=1.0, var=0,
+            arch.box((sx * 25, 62.5, 0), (6, 2, 6), GILT, variant=1)
+        ring(arch, (0, 63, 0), 25, 12, (7.2, 4.4, 4.4), pm, axis="z", start=0, sweep=180)
+        ring(arch, (0, 63, 0), 22.2, 12, (6.2, 1.0, 4.8), GILT_B, axis="z", start=0, sweep=180)
+        arch.plane("z", (0, 95, 0), 14, 14, tex.shaped(m_cres(0.38), "#fff3c4", SGOLD, glow=1.0, var=0,
                                                          outline="#d9a94a", key="archmoon"))
-        pend = m.bone("pendant", arch, pivot=(0, 63, 0))
-        pend.box((0, 59, 0), (0.4, 8, 0.4), GILT)
-        pend.plane("z", (0, 53.5, 0), 5, 5, tex.shaped(tex.m_star(5, 0.45), "#fff3c4", SGOLD, glow=1.0, var=0, key="pstar"))
-        pend.plane("x", (0, 53.5, 0), 5, 5, tex.shaped(tex.m_star(5, 0.45), "#fff3c4", SGOLD, glow=1.0, var=0, key="pstar"))
+        pend = m.bone("pendant", arch, pivot=(0, 85, 0))
+        pend.box((0, 83, 0), (0.4, 4, 0.4), GILT)
+        pend.plane("z", (0, 79.5, 0), 5, 5, tex.shaped(tex.m_star(5, 0.45), "#fff3c4", SGOLD, glow=1.0, var=0, key="pstar"))
+        pend.plane("x", (0, 79.5, 0), 5, 5, tex.shaped(tex.m_star(5, 0.45), "#fff3c4", SGOLD, glow=1.0, var=0, key="pstar"))
     elif kind == 2:  # ceremonial banners outside the rails
         for s, sx in (("r", 1), ("l", -1)):
             p = m.bone(f"pole_{s}", tilt, pivot=(sx * 25, 0, 0))
@@ -1330,7 +1330,7 @@ def build(pack):
                particles={"hoofdust": "grimoire:dn_parade_hoofdust"}, display="Porcelain Horse", blend=0.15)
     sm = stag_model()
     sa = stag_anims()
-    pack.actor("dn_parade_stag", sm, sa, STAG_STATES, always=["life"], scale=1.3, lifetime=40, props=TILT,
+    pack.actor("dn_parade_stag", sm, sa, STAG_STATES, always=["life"], scale=1.15, lifetime=40, props=TILT,
                sounds={"step": "grimoire.dn_parade_step", "bell": "grimoire.dn_parade_bell"},
                particles={"mistpuff": "grimoire:dn_parade_mistpuff"}, display="Mist-Glass Stag", blend=0.12)
     bm = bird_model()
@@ -1345,7 +1345,7 @@ def build(pack):
                display="Floating Star Doll", blend=0.1)
     roads = [road_model(k) for k in range(4)]
     ra = road_anims()
-    pack.actor("dn_parade_road", roads[0], ra, ROAD_STATES, always=["life"], kinds=roads[1:], lifetime=40, props=TILT,
+    pack.actor("dn_parade_road", roads[0], ra, ROAD_STATES, always=["life"], kinds=roads[1:], lifetime=40, props=TILT, size_prop=True,
                display="Dream-Road", blend=0.0)
     mm = moon_model()
     ma = moon_anims()

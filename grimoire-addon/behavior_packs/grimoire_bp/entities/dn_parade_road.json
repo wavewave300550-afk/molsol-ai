@@ -25,6 +25,15 @@
      "default": 0,
      "client_sync": true
     },
+    "grimoire:size": {
+     "type": "float",
+     "range": [
+      0.0,
+      64.0
+     ],
+     "default": 1.0,
+     "client_sync": true
+    },
     "grimoire:tilt": {
      "type": "float",
      "range": [

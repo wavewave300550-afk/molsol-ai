@@ -1009,9 +1009,9 @@ def build_wave():
     root = m.bone("root")
     rim = m.bone("rim", root)
     rim.plane("y", (0, 0.15, 0), 34, 34, tex.shaped(tex.m_ring(0.86, 1.0), "#fff6e6", "#ffd9b8", glow=1.0, var=0, key="dncwrim"),
-              faces=("up", "down"), density=6.0)
+              faces=("up", "down"), density=2.5)
     rim.plane("y", (0, 0.1, 0), 34, 34, tex.shaped(tex.m_ring(0.7, 0.84), "#e8b4c8", "#bcd6f0", glow=0.9, var=0, key="dncwrim2"),
-              faces=("up", "down"), density=6.0)
+              faces=("up", "down"), density=2.5)
 
     def aurora(ctx):
         t = tex.tile(ctx, PINK, 1, 0.9)
