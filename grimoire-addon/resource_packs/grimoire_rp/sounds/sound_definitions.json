@@ -2745,6 +2745,153 @@
      "pitch": 1.0
     }
    ]
+  },
+  "grimoire.dn_guest_manifest": {
+   "category": "neutral",
+   "max_distance": 48,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_guest_manifest",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_guest_handle": {
+   "category": "neutral",
+   "max_distance": 40,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_guest_handle",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_guest_creak": {
+   "category": "neutral",
+   "max_distance": 48,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_guest_creak",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_guest_drone": {
+   "category": "neutral",
+   "max_distance": 40,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_guest_drone",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_guest_voice": {
+   "category": "neutral",
+   "max_distance": 32,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_guest_voice",
+     "volume": 0.9,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/dn_guest_voice_2",
+     "volume": 0.9,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/dn_guest_voice_3",
+     "volume": 0.9,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_guest_clicks": {
+   "category": "neutral",
+   "max_distance": 28,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_guest_clicks",
+     "volume": 0.8,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/dn_guest_clicks_2",
+     "volume": 0.8,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_guest_approach": {
+   "category": "neutral",
+   "max_distance": 36,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_guest_approach",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_guest_grab": {
+   "category": "neutral",
+   "max_distance": 32,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_guest_grab",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_guest_drag": {
+   "category": "neutral",
+   "max_distance": 36,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_guest_drag",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_guest_slam": {
+   "category": "neutral",
+   "max_distance": 72,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_guest_slam",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_guest_hush": {
+   "category": "neutral",
+   "max_distance": 40,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_guest_hush",
+     "volume": 0.8,
+     "pitch": 1.0
+    }
+   ]
   }
  }
 }

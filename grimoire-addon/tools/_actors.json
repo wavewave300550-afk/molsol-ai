@@ -2994,5 +2994,88 @@
     128
    ]
   ]
+ },
+ "dn_guest_door": {
+  "id": "grimoire:dn_guest_door",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default",
+   "cracked"
+  ],
+  "anims": {
+   "hidden": null,
+   "door_idle": null,
+   "manifest": 1.2,
+   "closed": null,
+   "handle": 1.4,
+   "open": 1.2,
+   "held": null,
+   "slam": 0.6,
+   "vanish": 1.0
+  },
+  "lifetime": 40,
+  "cubes": [
+   144
+  ],
+  "bones": [
+   21
+  ],
+  "tex": [
+   [
+    512,
+    512
+   ]
+  ]
+ },
+ "dn_guest": {
+  "id": "grimoire:dn_guest",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "guest_idle": null,
+   "emerge": 2.6,
+   "reach": 1.2,
+   "grab": 0.5,
+   "miss": 0.9,
+   "pull": 1.6,
+   "withdraw": 1.1
+  },
+  "lifetime": 40,
+  "cubes": [
+   120
+  ],
+  "bones": [
+   69
+  ],
+  "tex": [
+   [
+    256,
+    256
+   ]
+  ]
  }
 }
