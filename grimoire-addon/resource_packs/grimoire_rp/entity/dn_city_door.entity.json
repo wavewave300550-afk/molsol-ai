@@ -1,0 +1,38 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:dn_city_door",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "blend": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/dn_city_door"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.dn_city_door"
+   },
+   "render_controllers": [
+    "controller.render.grimoire.dn_city_door"
+   ],
+   "animations": {
+    "hidden": "animation.grimoire.dn_city_door.hidden",
+    "flutter": "animation.grimoire.dn_city_door.flutter",
+    "arrive": "animation.grimoire.dn_city_door.arrive",
+    "fly": "animation.grimoire.dn_city_door.fly",
+    "swoop": "animation.grimoire.dn_city_door.swoop",
+    "depart": "animation.grimoire.dn_city_door.depart",
+    "ctl_main": "controller.animation.grimoire.dn_city_door.main"
+   },
+   "scripts": {
+    "scale": "2.0",
+    "animate": [
+     "ctl_main",
+     "flutter"
+    ],
+    "should_update_bones_and_effects_offscreen": true
+   }
+  }
+ }
+}

@@ -453,6 +453,7 @@ def tapestry_anims():
     for n in PN:
         u.rot(f"low_{n}", {0: (-165, 0, 0), 0.55 + DIST[n] * 0.08: (-165, 0, 0), 1.15 + DIST[n] * 0.05: (14, 0, 0), 1.5: (0, 0, 0)})
     u.scl("hanger", {0: 0.0, 0.9: 0.0, 1.2: 1.3, 1.5: 1.0})
+    u.scl(["roll_r", "roll_l"], {0: (1, 0.45, 1), 0.9: (1, 0.45, 1), 1.3: (1, 1.04, 1), 1.5: (1, 1, 1)})
     u.rot("hanger", {0: (0, 0, 0), 0.9: (0, 0, -30), 1.5: (0, 0, 0)})
     _hide_nm(u)
     A.append(u)
@@ -539,6 +540,7 @@ def tapestry_anims():
     un.pos("root", {0: (0, 0, 0), 1.0: (0, 3, 0), 1.8: (0, -26, 8)})
     un.rot("root", {0: (0, 0, 0), 1.1: (0, 0, 0), 1.8: (0, 200, 0)})
     un.scl("hanger", {0: 1.0, 1.3: 1.25, 1.6: 0.0})
+    un.scl(["roll_r", "roll_l"], {0: (1, 1, 1), 0.6: (1, 1, 1), 1.2: (1, 0.45, 1), 1.8: (1, 0.45, 1)})
     A.append(un)
     return A
 
@@ -783,7 +785,8 @@ def phrase(notes, chords, mode="dream"):
     if mode == "dis":   # reversed tail swelling into the next downbeat
         tail = sy.reverb(sy.at(0.5, (0, tine(hz(notes[0][0] + 12), 0.5)), (0, tine(hz(notes[0][0] + 18), 0.5, 0.6))), 1.2, 1.0)[::-1]
         sig = sy.at(PHRASE, (0, sig), (max(0.0, PHRASE - len(tail) / SR), sy.norm(tail) * 0.35))
-    return sy.reverb(sig, 0.9, 0.35 if mode == "dream" else 0.4)
+    sig = sy.fade(sig[:int(SR * (PHRASE + 0.3))], 0.0, 0.35)   # the next phrase takes over on its downbeat
+    return sy.reverb(sig, 0.7, 0.35 if mode == "dream" else 0.4)
 
 
 def scream(k=1.0):
@@ -805,7 +808,7 @@ def build_sounds(pack):
     op = sy.at(2.2, *clicks, *gl, (0.5, sy.choir(hz(0), 1.5, "oo", voices=4, attack=0.6) * 0.35),
                (0.5, sy.choir(hz(7), 1.5, "oo", voices=3, attack=0.7) * 0.25), (0.8, sy.shimmer(1.2, 2400, 14) * 0.25),
                (1.25, tine(hz(26), 1.0, 0.6)))
-    sy.save(pack, "dn_lull_open", sy.reverb(op, 1.2, 0.35), max_distance=48)
+    sy.save(pack, "dn_lull_open", sy.reverb(op[:int(SR * 2.3)], 0.8, 0.35), max_distance=48)
     sy.save(pack, "dn_lull_lull1", phrase(PH_A, CH_A, "dream"), max_distance=48)
     sy.save(pack, "dn_lull_lull2", phrase(PH_B, CH_B, "dream"), max_distance=48)
     sy.save(pack, "dn_lull_dis1", phrase(PH_A, CH_A, "dis"), max_distance=48)
@@ -818,7 +821,7 @@ def build_sounds(pack):
     drone = sy.norm(sy.lowpass(sy.osc(sy.sweep(hz(-12), hz(-13.5), 1.4), wave_="saw"), 650)) * sy.env(1.4, 0.05, 0.1, 0.8, 0.6)
     sw = sy.at(2.2, (0, sy.norm(rev), 0.5), (0.95, rip, 0.6), (0.95, sy.crack(0.4, 4000, 18), 0.4), (0.95, drone, 0.4),
                (1.0, sy.bell(hz(18), 1.0, inharm=1.4), 0.3))
-    sy.save(pack, "dn_lull_tear", sy.reverb(sw, 1.0, 0.3), max_distance=48)
+    sy.save(pack, "dn_lull_tear", sy.reverb(sw, 0.8, 0.3), max_distance=48)
     sy.save(pack, "dn_lull_scream", scream(1.0), variants=[scream(0.93), scream(1.08)], max_distance=64)
     # the first faint wave: a whisper of the scream
     wh = morph_voice(sy.sweep(400, 560, 1.1), 1.1, [(0, "oo"), (0.5, "ee"), (1.0, "ah")], breath=2.5)
@@ -852,7 +855,7 @@ def build_sounds(pack):
         t += n8 * E8 * (1 + 0.16 * i) * 0.7
     parts += [(0, sy.whoosh(1.4, 3000, 500)[::-1], 0.3), (0, dark_voice(hz(-16), 1.6, "oo", slide=-0.15), 0.25),
               (t + 0.15, sy.thump(0.25, 220, 120, 0.6), 0.4), (t + 0.15, sy.crack(0.05, 3000, 2), 0.3)]
-    sy.save(pack, "dn_lull_unravel", sy.reverb(sy.at(2.4, *parts), 1.0, 0.35), max_distance=48)
+    sy.save(pack, "dn_lull_unravel", sy.reverb(sy.at(2.4, *parts)[:int(SR * 2.5)], 0.7, 0.35), max_distance=48)
 
 
 # ---------------------------------------------------------------------------- build

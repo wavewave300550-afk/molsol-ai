@@ -93,6 +93,20 @@ class Cube:
                 faces = FACES
         self.faces = tuple(faces)
         self.uv = {}  # face -> (u, v, w, h) in atlas pixels
+        sx, sy, sz = self.size
+        self.plane = "x" if sx == 0 else "y" if sy == 0 else "z" if sz == 0 else None
+
+    FRONT = {"x": "east", "y": "up", "z": "north"}
+    BACK = {"x": "west", "y": "down", "z": "south"}
+
+    def paint_faces(self):
+        """Faces that get their own quad.  A zero-thickness plane is ONE sheet: when both of its
+        sides are requested only the front (north / east / up) is painted, and the sheet is seen
+        mirrored from behind.  This avoids two coincident, differently-mapped faces fighting each
+        other under the double-sided entity materials."""
+        if self.plane and self.FRONT[self.plane] in self.faces and self.BACK[self.plane] in self.faces:
+            return tuple(f for f in self.faces if f != self.BACK[self.plane])
+        return self.faces
 
     def face_dims(self, face):
         sx, sy, sz = self.size
@@ -229,7 +243,7 @@ class Model:
         uniq = 0
         for bn in self.order:
             for ci, c in enumerate(self.bones[bn].cubes):
-                for f in c.faces:
+                for f in c.paint_faces():
                     mat = c.mats.get(f) or c.mat
                     dens = c.density or mat.density or self.density
                     fw, fh = c.face_dims(f)
@@ -351,7 +365,7 @@ class Model:
                 m = bm
                 if c.rot:
                     m = bm @ _trs(c.pivot or tuple(c.origin[i] + c.size[i] / 2 for i in range(3)), c.rot)
-                for f in c.faces:
+                for f in c.paint_faces():
                     pts = np.array([list(p) + [1.0] for p in c.corners(f)])
                     w = (m @ pts.T).T[:, :3]
                     quads.append((w, c.uv[f], (c.mats.get(f) or c.mat).mode))
@@ -413,12 +427,20 @@ class Model:
             j["pivot"] = _r3((-pv[0], pv[1], pv[2]))
             j["rotation"] = _r3((-c.rot[0], -c.rot[1], c.rot[2]))
         uv = {}
-        for f in c.faces:
+        painted = c.paint_faces()
+        for f in painted:
             u, v, w, h = c.uv[f]
             if f in ("up", "down"):
                 uv[f] = {"uv": [u + w, v + h], "uv_size": [-w, -h]}
             else:
                 uv[f] = {"uv": [u, v], "uv_size": [w, h]}
+        if len(painted) < len(c.faces):
+            # the dropped back of a plane: translucent sheets keep a back face (the blend material may
+            # cull back faces) mapped so both sides show the same texel at every point of the sheet
+            front, back = c.FRONT[c.plane], c.BACK[c.plane]
+            if (c.mats.get(front) or c.mat).mode == "blend":
+                u, v, w, h = c.uv[front]
+                uv[back] = {"uv": [u + w, v], "uv_size": [-w, h]}
         j["uv"] = uv
         return j
 

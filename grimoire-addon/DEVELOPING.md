@@ -64,7 +64,7 @@ b = m.bone("body", parent=None|"root"|bone, pivot=(x, y, z), rot=(rx, ry, rz))
 b.cube(origin_min_corner, size, mat, rot=None, pivot=None, inflate=0, density=None, variant=0,
        faces=None, mats={"north": other_mat})
 b.box(center, size, mat, ...)                # cube by centre
-b.plane("x"|"y"|"z", center, w, h, mat, ...) # zero-thickness quad, both sides drawn
+b.plane("x"|"y"|"z", center, w, h, mat, ...) # zero-thickness sheet: ONE image, seen mirrored from behind
 b.locator("name", (x, y, z))                 # anchor for animation particles
 ring(bone, center, radius, n, (tangent, radial, thick), mat, axis="y"|"x"|"z")
 ```

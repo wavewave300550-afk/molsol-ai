@@ -112,12 +112,12 @@ def feather_mat(base, tip, rachis, bars=0, taper=0.75, notch=0.15, key=""):
                 nb = pad[:-2, 1:-1] & pad[2:, 1:-1] & pad[1:-1, :-2] & pad[1:-1, 2:]
                 rim = inside & ~nb
                 mid = (np.abs(ix - (ctx.w - 1) / 2) < 0.75) & inside
-                lit = rim | mid
-                t[..., :3] = np.where(lit[..., None], tex.mix(t[..., :3], kg, 0.85), t[..., :3])
-                t[..., 4] = np.where(lit, edge_glow, np.maximum(t[..., 4], 0.12))
+                lit = (rim & (v > 0.55)) | (mid & (v > 0.15))
+                t[..., :3] = np.where(lit[..., None], tex.mix(t[..., :3], kg, 0.7), t[..., :3])
+                t[..., 4] = np.where(lit, edge_glow, t[..., 4])
             return t
         return tex.overlay(f, post, f"edf{bars}{edge_glow}{key}")
-    return qz(tex.alt(make(0.0, 0.1, 0), aether=make(0.12, 0.5, 0.95)))
+    return qz(tex.alt(make(0.0, 0.1, 0), aether=make(0.0, 0.25, 0.95)))
 
 
 def plumage(top, belly, edge, cell=4, edge_glow=0.0, key="plum"):
@@ -146,8 +146,9 @@ def plumage(top, belly, edge, cell=4, edge_glow=0.0, key="plum"):
         t = tex.tile(ctx, top, 1.0, 0.0)
         t[..., :3] = col * (0.93 + 0.12 * tex._hash(ox // cell, row, 3 + ctx.variant))[..., None]
         if eg:
-            t[..., :3] = np.where(rounded[..., None], tex.mix(t[..., :3], kg, 0.7), t[..., :3])
-            t[..., 4] = np.where(rounded, eg, 0.05)
+            lit = rounded & (tex._hash(ox // cell, row, 9) > 0.55)
+            t[..., :3] = np.where(lit[..., None], tex.mix(t[..., :3], kg, 0.6), t[..., :3])
+            t[..., 4] = np.where(lit, eg, 0.0)
         return tex.grain(ctx, t, 0.03)
     base = Mat(lambda c: paint(c, edge_glow), f"{key}{top}{belly}{edge}{cell}{edge_glow}")
     lit = Mat(lambda c: paint(c, 0.75), f"{key}{top}{belly}{edge}{cell}lit")
@@ -205,20 +206,20 @@ def _feather(m, name, parent, pivot, length, width, mat, ang, side, variant=0, d
 
 def build_model():
     m = Model("dragon_air", density=1.0, bounds=(40, 30, (0, 2, 0)), alts=("aether",))
-    plum = plumage(SILVER, PALE, MID)
-    plum_dark = plumage(MID, SILVER, DARK, key="plumd")
-    plum_fine = plumage(SILVER, PALE, MID, cell=3, key="plumf")
+    plum = plumage("#9fb3cc", PALE, DARK)
+    plum_dark = plumage("#6f84a3", MID, BAR, key="plumd")
+    plum_fine = plumage("#a9bcd3", PALE, DARK, cell=3, key="plumf")
     claw = tex.bone_mat(IVORY, "#b8a985", glow=0.0)
     beak = tex.bone_mat("#d9d2c0", "#9a8f78")
     bronze = tex.metal(BRONZE, "#d9b77a", "#4a3820", bands=1.5)
-    f_prim = feather_mat("#d5e1ee", DARK, "#8a9bb3", bars=4, key="prim")
-    f_sec = feather_mat("#dbe6f1", "#7189ab", "#9aabc2", bars=3, key="sec")
-    f_ter = feather_mat("#e2ebf5", "#9fb3cc", "#b0bfd2", bars=2, key="ter")
-    f_cov = feather_mat("#cbd8e8", "#95abc6", "#a9b9cd", bars=0, taper=0.9, notch=0.0, key="cov")
-    f_leg = feather_mat("#d3dfec", "#5d7192", "#8a9bb3", bars=3, key="leg")
-    f_tail = feather_mat("#dfe8f3", DARK, "#8a9bb3", bars=5, key="tail")
+    f_prim = feather_mat("#c6d4e6", BAR, "#8a9bb3", bars=4, key="prim")
+    f_sec = feather_mat("#cfdbea", "#5a7093", "#9aabc2", bars=3, key="sec")
+    f_ter = feather_mat("#d6e1ee", "#7c92b2", "#b0bfd2", bars=2, key="ter")
+    f_cov = feather_mat("#a9bcd3", "#7d93b3", "#a9b9cd", bars=0, taper=0.9, notch=0.0, key="cov")
+    f_leg = feather_mat("#c9d6e6", "#46597a", "#8a9bb3", bars=3, key="leg")
+    f_tail = feather_mat("#d3dfec", BAR, "#8a9bb3", bars=5, key="tail")
     f_crest = feather_mat("#eef4fb", "#7fa3d6", "#c3d2e4", bars=0, taper=0.6, notch=0.0, key="crest")
-    f_small = feather_mat("#d9e4f0", "#a3b7cf", "#b6c4d6", bars=0, taper=0.85, notch=0.05, key="small")
+    f_small = feather_mat("#b4c6db", "#8197b6", "#b6c4d6", bars=0, taper=0.85, notch=0.05, key="small")
     eye = tex.eye_mat(iris="#7fe0ff", sclera="#f2f6ff", pupil="#0d1424", lid=MID, glow=0.95, slit=True,
                       ring="#fff3c4")
 
@@ -476,12 +477,17 @@ class Poser:
             raw[pat] = (twist * (seg + 1) / 3, fold * d_fold + (1 - fold) * d_fan, 0)
         return raw
 
-    def hw(self, l1, l2, l3, l4, fan=1.0, fold=0.0, twist=0.0):
+    def hw(self, l1, l2, l3, l4, fan=1.0, fold=0.0, twist=0.0, perch=True):
+        """Hind-wing pose.  fold with perch=True swings the leg feathers to trail backward as vertical
+        'trousers' behind a standing leg; perch=False lays them along the trailing leg."""
         raw = {"leg_{s}_1": l1, "leg_{s}_2": l2, "leg_{s}_3": l3, "leg_{s}_4": l4}
         for k, (pat, seg, ang) in enumerate(self.info["hw"]):
-            d_fold = -ang + 4 + 2 * (k % 4)
             d_fan = max(min((fan - 1) * ang, 105 - ang), -ang)
-            raw[pat] = (twist, fold * d_fold + (1 - fold) * d_fan, fold * 84)
+            if perch:
+                rxf = (-40 if seg == 1 else -82) + 5 * (k % 4)
+                raw[pat] = (fold * rxf + twist, fold * (80 - ang) + (1 - fold) * d_fan, 0)
+            else:
+                raw[pat] = (twist, fold * (-ang + 4 + 2 * (k % 4)) + (1 - fold) * d_fan, 0)
         return raw
 
     def tail(self, rx=(0,) * 7, ry=(0,) * 7, fan=1.0, fan_rx=0.0, fan_rz=0.0):
@@ -529,7 +535,7 @@ def build_poses(info):
     Z["bank_r"] = bank_r
     Z["bank_l"] = flip(bank_r)
     Z["stoop"] = P({**flight, "fly": (-40, 0, 0), **q.neck(4, 0, 0, 0, 8, crest=10),
-                    **q.fw((0, -52, -10), (0, 96, 0), (0, -100, 0), fold=0.85),
+                    **q.fw((0, -64, -16), (0, 118, 0), (0, -114, 0), fold=0.9),
                     **q.hw((-6, 3, 0), (0, 0, 0), (0, 0, 0), (-20, 0, 0), fan=0.25),
                     **q.tail(rx=(4, 0, 0, 0, 0, 0, 0), fan=0.15)})
     Z["flare"] = P({**flight, "fly": (48, 0, 0), **q.neck(-8, -10, -10, -10, -12, jaw=-12, crest=-14),
@@ -546,7 +552,7 @@ def build_poses(info):
                     **q.tail(rx=(14, 6, 2, 0, 0, 0, 0), fan=1.2)})
     Z["tuck"] = P({**flight, "fly": (-30, 0, 0), **q.neck(6, 0, 0, 0, 6, crest=12),
                    **q.fw((0, -66, -22), (0, 130, 0), (0, -128, 0), fold=1.0),
-                   **q.hw((-4, 2, 0), (0, 0, 0), (0, 0, 0), (-20, 0, 0), fold=0.8),
+                   **q.hw((-4, 2, 0), (0, 0, 0), (0, 0, 0), (-20, 0, 0), fold=0.8, perch=False),
                    **q.tail(fan=0.1)})
     Z["rest"] = merge(Z["perch"], P({"@root": (0, -3.5, 0), "fly": (6, 0, 0), **q.neck(14, 4, -2, -6, 22, crest=14),
                                      **q.fw((0, -80, -66), (0, 160, 0), (0, -158, 0), fold=1.0, spread=3.0),

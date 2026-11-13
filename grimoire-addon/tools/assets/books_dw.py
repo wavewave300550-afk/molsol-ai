@@ -176,10 +176,10 @@ def M_():
         windows1=tex.windowed("#efe8d6", GOLD, "#fff3c4", glow=0.95, cols=1, rows=2, arch=True),
         rose=tex.magic_circle(FW, WGOLD, GOLD, bands=((0.55, 0.9, 10),), lines=(0.5, 0.95), star=8,
                               star_r=(0.1, 0.5), core=0.12, fill="#2b3f8f", fill_glow=0.35, key="dwrose"),
-        seal=tex.magic_circle(FW, WGOLD, GOLD, bands=((0.8, 0.95, 32), (0.55, 0.68, 18)), lines=(0.77, 0.98, 0.52, 0.7),
-                              star=6, star_r=(0.15, 0.5), key="dwbseal"),
-        letter_front=tex.glow_flat("#fffbea", 0.95, core="#ffffff"),
-        letter_side=tex.metal("#d9b45a", "#fff3c4", "#8a6a26", bands=1.0, glow=0.35),
+        letter_front=tex.glow_flat("#ffe596", 0.85, core="#fffaf0"),
+        letter_side=tex.metal("#b88c34", "#e9c66a", "#6a4a16", bands=1.0, glow=0.08),
+        seal_thin=tex.magic_circle(FW, "#e9c66a", "#a8842e", glow=0.5, bands=((0.86, 0.95, 40),), lines=(0.83, 0.975, 0.6),
+                                   key="dwbsealthin"),
     )
 
 
@@ -240,9 +240,9 @@ def emblem(kind, m, parent, c, R, mt):
         for i, (phi, lf) in enumerate(dirs):
             dx, dy = math.sin(math.radians(phi)), math.cos(math.radians(phi))
             b = m.bone(f"em_a{i + 1}", parent, pivot=c, rot=(0, 0, dir_rz(dx, dy)))
-            feathers(b, (cx, cy, cz + 0.05 * i), R * lf, R * 0.24,
+            feathers(b, (cx, cy, cz + 0.05 * i), R * lf, R * 0.3,
                      [mt["fwhite"], mt["fivory"], mt["fwhite"]] if i < 2 else [mt["fivory"], mt["fgold"], mt["fivory"]],
-                     arm=mt["goldg"], r0=R * 0.16)
+                     arm=mt["goldg"], r0=R * 0.16, n=4, spread=11)
         ring(r1, (cx, cy, cz + seg * 2), R * 0.42, 12, (R * 0.22, seg, seg), mt["goldg"], axis="z")
         ring(r2, (cx, cy, cz + seg * 3), R * 1.08, 20, (R * 0.3, seg * 0.6, seg * 0.6), mt["wgold"], axis="z")
     elif kind == 1:   # CHERUBIM: four faces (human, lion, ox, eagle) on a winged wheel
@@ -351,8 +351,8 @@ def emblem(kind, m, parent, c, R, mt):
         for j, (x, y, w, h) in enumerate(rects):
             bones[j % 6].cube((ox - (x + w) * p, oy - (y + h) * p, oz), (w * p, h * p, p), mt["letter_side"],
                               mats={"north": mt["letter_front"]})
-        core.box((cx, cy, cz + p), (R * 0.3, R * 0.3, R * 0.3), mt["white"], rot=(45, 45, 0), pivot=(cx, cy, cz + p))
-        core.plane("z", (cx, cy, cz + p * 1.6), R * 1.5, R * 1.5, mt["glow_disc"])
+        core.box((cx, cy, cz + p * 1.5), (R * 0.16, R * 0.16, R * 0.16), mt["white"], rot=(45, 45, 0), pivot=(cx, cy, cz + p * 1.5))
+        core.plane("z", (cx, cy, cz + p * 3.0), R * 0.5, R * 0.5, mt["glow_disc"])
         for k in range(12):
             glyph_plate(r1, (cx, cy + R * 1.08, cz), R * 0.18, R * 0.25, k * 5 + 2, rot=(0, 0, k * 30), pivot=c)
         for k in range(10):
@@ -470,10 +470,11 @@ def book_model(mt):
 
     # rising lines of writing (charging) and drifting letters (idle)
     for i in range(3):
-        b = m.bone(f"ln{i + 1}", book, pivot=(5.2, 3.0, -2.0))
-        b.plane("z", (5.2, 3.0, -2.0 - 0.1 * i), 9.0, 1.3, mt["line"], variant=i)
-    glow = m.bone("spread_glow", book, pivot=(5.2, 0, -0.6))
-    glow.plane("z", (5.2, 0.5, -0.8), 14, 14, mt["glow_disc"])
+        b = m.bone(f"ln{i + 1}", book, pivot=(5.2, 1.0, -2.2))
+        b.plane("z", (5.2, 1.0, -2.2 - 0.1 * i), 11.0, 1.5, mt["line"], variant=i)
+    glow = m.bone("spread_glow", book, pivot=(5.2, 7.6, -0.8))   # radiance above the spine while open
+    glow.plane("z", (5.2, 8.6, -0.8), 3.2, 3.2, mt["glow_disc"])
+    glow.plane("z", (5.2, 8.6, -1.0), 1.4, 1.4, mt["diamond"])
     for i in range(5):
         b = m.bone(f"dr{i + 1}", book, pivot=(-3.2 + i * 1.7, 7.3, -0.5 + 0.25 * i))
         glyph_plate(b, (-3.2 + i * 1.7, 7.3, -0.5 + 0.25 * i), 0.9, 1.25, i * 3 + 2)
@@ -657,7 +658,7 @@ def vision_model(kind, mt):
     em = m.bone("emblem", root, pivot=(0, 5.0, -0.5))
     emblem(kind, m, em, (0, 5.0, -0.5), 3.3, mt)
     gl = m.bone("gleam", em, pivot=(0, 5.0, 0.6))
-    gl.plane("z", (0, 5.0, 0.6), 8.5, 8.5, mt["glow_disc"])
+    gl.plane("z", (0, 5.0, 0.6), 5.0, 5.0, mt["glow_disc"])
     return m
 
 
@@ -713,7 +714,7 @@ def layout(kind):
     if kind == 0:     # Seraphic Litany: two ascending wing-rows and a base line, a V of praise
         for s in (1, -1):
             for i in range(4):
-                L.append(((s * (8.4 + 3.0 * i), -6.5 + 4.2 * i, 1.0 + 0.6 * i), (0, s * 14, -s * 18), None, "words"))
+                L.append(((s * (8.2 + 2.8 * i), -6.5 + 4.2 * i, 1.0 + 0.6 * i), (0, s * 14, -s * 18), None, "words"))
         for i in range(4):
             L.append((((1.5 - i) * 4.4, -11.5, 0.0), (0, 0, 0), None, "words"))
         em = ((0, 1.5, 3.0), 7.4)
@@ -762,11 +763,11 @@ LINE_Y = (-8.0, -2.5, 3.0)
 
 
 def charge_model(kind, mt):
-    m = Model(f"book_dw_charge_k{kind}", density=2.0, bounds=(5, 5, (0, 0, 0)))
+    m = Model(f"book_dw_charge_k{kind}", density=2.5, bounds=(5, 5, (0, 0, 0)))
     root = m.bone("root")
     body = m.bone("body", root)
-    seal = m.bone("seal", body, pivot=(0, 0, 7.5))
-    seal.plane("z", (0, 0, 7.5), 34, 34, mt["seal"])
+    seal = m.bone("seal", body, pivot=(0, 0, 9.0))
+    seal.plane("z", (0, 0, 9.0), 27, 27, mt["seal_thin"])
     words = m.bone("words", body)
     wr = m.bone("wring", body)                                  # letters turning in the picture plane
     wo = m.bone("worbit", body, rot=(14, 0, 0))                  # letters orbiting around the emblem
@@ -777,7 +778,7 @@ def charge_model(kind, mt):
                        mats={"north": mt["letter_front"]})
     for i, y in enumerate(LINE_Y):
         b = m.bone(f"ln{i + 1}", body, pivot=(0, y, -2.0))
-        b.plane("z", (0, y, -2.0 - 0.1 * i), 22, 1.6, mt["line"], variant=i)
+        b.plane("z", (0, y, -2.0 - 0.1 * i), 14, 1.2, mt["line"], variant=i)
     em = m.bone("emblem", body, pivot=ec)
     emblem(kind, m, em, ec, R, mt)
     fl = m.bone("flash", body, pivot=(0, 0, -3))
@@ -790,7 +791,7 @@ def charge_anims():
     hidden = Anim("hidden", loop=True)
     hidden.scl("root", 0.0)
     A.append(hidden)
-    NW = 14
+    NW = max(len(layout(k)[0]) for k in range(6))   # letter bones w1..wNW
 
     form = Anim("form", length=FORM_LEN, loop="hold")
     form.scl("root", {0: 0.6, 0.25: 1.0})
@@ -1048,7 +1049,8 @@ def build(pack):
         ic.resize((128, 128), Image.NEAREST).save(os.path.join(PREVIEW, "book_dw_icon.png"))
         pi.save(os.path.join(PREVIEW, "book_dw_packicon.png"))
     PV["open"] = 0.0
-    pack.preview("book_dw_closed", bm, [(by["idle"], 0.6), [(by["idle"], 1.4), (by["turn"], 0.4)]],
+    pack.preview("book_dw_closed", bm, [[(by["idle"], 0.6), (by["open"], 0.6)],
+                                        [(by["idle"], 1.4), (by["open"], 1.4), (by["turn"], 0.4)]],
                  views=((25, 12), (155, 12), (-60, 8), (0, 0)), cell=(360, 360))
     PV["open"] = 1.0
     pack.preview("book_dw_open", bm, [[(by["idle"], 0.6), (by["open"], 0.6)], [(by["idle"], 1.3), (by["open"], 1.3)]],
@@ -1060,5 +1062,5 @@ def build(pack):
                      views=((15, 20), (0, 50)), cell=(300, 300))
     cb = {a.name: a for a in ca}
     for k in range(6):
-        pack.preview(f"book_dw_charge_k{k}", cms[k], [(cb["form"], 0.55), [(cb["loop"], 0.3)]],
-                     views=((0, 0), (35, 15)), cell=(320, 320))
+        pack.preview(f"book_dw_charge_k{k}", cms[k], [(cb["form"], 0.6), (cb["loop"], 0.3)],
+                     views=((0, 0), (35, 15)), cell=(440, 440))

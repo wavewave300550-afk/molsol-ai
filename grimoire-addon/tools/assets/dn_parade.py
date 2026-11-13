@@ -45,8 +45,13 @@ def sstep(x):
 
 
 # ================================================================= shared materials
-def porc(base="#f8f3e8", shade="#ddd2c0", crack=0.6, gilt=None, glow=0.0):
+def porc(base="#f8f3e8", shade="#ddd2c0", crack=0.6, gilt=None, glow=0.07):
     return tex.porcelain(base, shade, "#c2b49c", crack=crack, gilt=gilt, glow=glow)
+
+
+def m_cres(off=0.42):
+    """Crescent with horns pointing up (mirror-symmetric, so both faces of a plane agree)."""
+    return lambda u, v: ((np.hypot(u, v) <= 1.0) & (np.hypot(u, v - off) > 0.8)).astype(float)
 
 
 GILT = tex.metal("#e2c27a", "#fff1c8", "#9a7838", bands=2.0, glow=0.18)
@@ -176,13 +181,13 @@ def mist(a=0.35):
         n = tex.fbm(ix / 3.0 + ctx.variant * 4, iy / 2.5, 13)
         t = tex.tile(ctx, "#e4eefc", 1, 0.35)
         t[..., :3] = tex.mix(tex.rgb("#c6d6f2"), tex.rgb("#f6f0ff"), n[..., None])
-        t[..., 3] = np.clip(a * (0.6 + n) * (1 - ctx.V ** 1.5), 0, 1)
+        t[..., 3] = np.clip(a * np.clip(n * 1.6 - 0.35 - ctx.V * 0.7, 0, 1) * 1.8, 0, 1)
         return t
     return Mat(fn, f"dnmist{a}", mode="blend")
 
 
 def glass(a=0.36):
-    return tex.crystal("#dbe9fb", "#a9bfe9", "#ffffff", a=a, mode="blend", glow=0.35, facets=4.0)
+    return tex.crystal("#d4e4ff", "#b7a8e6", "#ffffff", a=a, mode="blend", glow=0.5, facets=4.0)
 
 
 # ================================================================= 1. PORCELAIN HORSE
@@ -222,7 +227,6 @@ def horse_model():
     for sx in (1, -1):
         body.box((sx * 3.6, 24.8, -14.0), (1.4, 1.4, 0.6), pink_j)
     body.box((0, 21.0, 0), (6, 1.0, 16), tex.vgrad("#e7dccb", "#d2c5b0", var=0.02))   # belly shade
-    body.box((0, 18.5, 1.5), (2.4, 2.4, 2.4), GILT)                     # pole knob under belly
     body.locator("heart", (0, 28, 0))
 
     # carousel pole: the horse carries its own gilt pole and star finial
@@ -235,11 +239,11 @@ def horse_model():
     star.plane("x", (0, 65, 1.5), 7, 7, star_m)
 
     # neck (authored upright, bent by bind rotations)
-    n1 = m.bone("neck1", body, pivot=(0, 30, -11), rot=(-26, 0, 0))
+    n1 = m.bone("neck1", body, pivot=(0, 30, -11), rot=(-16, 0, 0))
     n1.box((0, 35, -11), (6.8, 11, 7.6), pm, variant=2)
-    n2 = m.bone("neck2", n1, pivot=(0, 40, -11), rot=(-8, 0, 0))
+    n2 = m.bone("neck2", n1, pivot=(0, 40, -11), rot=(-22, 0, 0))
     n2.box((0, 43.5, -11), (6, 8, 6.6), pm)
-    head = m.bone("head", n2, pivot=(0, 47, -11), rot=(-82, 0, 0))
+    head = m.bone("head", n2, pivot=(0, 47, -11), rot=(-86, 0, 0))
     head.box((0, 50.5, -11.2), (6.4, 7.5, 7), pm, mats={"east": head_m, "west": head_m}, density=2)   # skull (+Y = forward after the bend)
     head.box((0, 56.5, -11.6), (5, 6.5, 5.6), pm, variant=1)            # muzzle
     head.box((0, 59.6, -11.6), (4.6, 0.8, 5.2), tex.flat("#d9b8b0"))    # nose tip
@@ -248,6 +252,7 @@ def horse_model():
     head.box((0, 50.0, -7.4), (1.8, 1.8, 0.6), pink_j)
     for sx in (1, -1):
         head.box((sx * 2.0, 48.5, -6.4), (1.4, 1.2, 3.6), pm, rot=(0, 0, sx * -12))   # ears
+        head.box((sx * 3.25, 51.5, -10.0), (0.4, 1.4, 1.4), jewel)                   # glowing pale eyes
     plume = m.bone("plume", n2, pivot=(0, 47, -8.6))
     for k, (c0, c1) in enumerate(((PINK, "#fff0f6"), (PEACH, "#fff6ea"), (PBLUE, "#f2f8ff"))):
         f = tex.feather(c0, c1, SGOLD, glow=0.1, glow_tip=0.4)
@@ -398,7 +403,7 @@ def stag_model():
     m = Model("dn_parade_stag", density=1.0, bounds=(6, 7, (0, 2.5, 0)))
     frame = tex.metal("#eef1f8", "#ffffff", "#9aa6c4", bands=2.0, glow=0.35)
     frame_b = tex.metal("#f3ead2", "#ffffff", "#b8a57a", bands=3.0, glow=0.5)
-    gl, gl2 = glass(0.34), glass(0.44)
+    gl, gl2 = glass(0.26), glass(0.36)
     heart = tex.glow_flat("#ffe2c0", 1.0, core="#ffffff")
     light = tex.glow_flat("#fff2c8", 1.0, core="#ffffff")
     blue_l = tex.glow_flat("#cfe4ff", 1.0, core="#ffffff")
@@ -424,13 +429,13 @@ def stag_model():
         v.plane("x", (0, 22.5, -6 + k * 6 + 2), 7, 7, mist(0.42), variant=k)
         v.plane("z", (0, 22.5, -6 + k * 6 + 2), 9, 7, mist(0.42), variant=k + 1)
 
-    n1 = m.bone("neck1", body, pivot=(0, 34, -11), rot=(-14, 0, 0))
+    n1 = m.bone("neck1", body, pivot=(0, 34, -11), rot=(-26, 0, 0))
     n1.box((0, 40, -11), (1.3, 12, 1.3), frame)
     n1g = m.bone("neck1_g", n1, pivot=(0, 34, -11))
     n1g.box((0, 40, -11.2), (5.4, 12.5, 6.2), gl2)
-    n2 = m.bone("neck2", n1, pivot=(0, 46, -11), rot=(-6, 0, 0))
+    n2 = m.bone("neck2", n1, pivot=(0, 46, -11), rot=(-10, 0, 0))
     n2.box((0, 48.5, -11), (1.2, 5, 1.2), frame, variant=1)
-    head = m.bone("head", n2, pivot=(0, 51, -11), rot=(-72, 0, 0))
+    head = m.bone("head", n2, pivot=(0, 51, -11), rot=(-58, 0, 0))
     head.box((0, 54.5, -11), (1.2, 8, 1.2), frame)                       # skull bar (forward after bend)
     head.box((0, 51.5, -12.3), (3.8, 1.2, 1.2), frame, variant=1)  # brow
     for s_ in (1, -1):
@@ -442,26 +447,30 @@ def stag_model():
         hg.box((s_ * 3.4, 51.6, -9.2), (2.6, 0, 1.6), gl2, faces=("up", "down"))
         hg.box((s_ * 3.2, 51.6, -9.4), (0, 1.6, 3.4), gl2, rot=(0, 0, s_ * 20), faces=("east", "west"))
 
-    # antlers: frame beams branching into tiny lit window panes and lights
+    # antlers: a lyre-shaped crown of frame beams branching into tiny lit window panes and lights.
+    # 'crown' cancels the head bend so the antlers are authored upright.
+    crown = m.bone("crown", head, pivot=(0, 51.5, -9), rot=(100, 0, 0))
     for s, sx in (("r", 1), ("l", -1)):
-        a1 = m.bone(f"antler_{s}_1", head, pivot=(sx * 1.5, 51.5, -9), rot=(88, 0, -sx * 30))
-        a1.box((sx * 1.5, 56, -9), (1.1, 9, 1.1), frame_b)
-        a1.box((sx * 1.5, 54.5, -10.5), (0.8, 0.8, 3.5), frame_b, variant=1)     # brow tine
-        a1.box((sx * 1.5, 54.5, -12.6), (1.2, 1.2, 1.2), light)
-        a2 = m.bone(f"antler_{s}_2", a1, pivot=(sx * 1.5, 60.5, -9), rot=(10, 0, -sx * 12))
-        a2.box((sx * 1.5, 65, -9), (0.9, 9, 0.9), frame_b, variant=2)
-        a2.box((sx * 3.5, 63, -9), (4, 0.8, 0.8), frame_b, variant=1)            # outward tine
-        a2.box((sx * 5.8, 63, -9), (1.2, 1.2, 1.2), light)
-        a2.plane("z", (sx * 3.2, 65.4, -9), 3.2, 4.0, win, density=4)            # window between tines
-        a2.box((sx * 1.5, 69.8, -9), (1.3, 1.3, 1.3), light)
-        a3 = m.bone(f"antler_{s}_3", a2, pivot=(sx * 1.5, 67, -9), rot=(-30, 0, -sx * 10))
-        a3.box((sx * 1.5, 67, -11.5), (0.8, 0.8, 5), frame_b)                   # forward tine
-        a3.box((sx * 1.5, 70.2, -13.6), (0.8, 6, 0.8), frame_b, variant=1)
-        a3.box((sx * 1.5, 73.4, -13.6), (1.2, 1.2, 1.2), light)
-        a3.plane("x", (sx * 1.5, 69.8, -11.2), 4.2, 4.6, win, density=4)
-        a3.box((sx * 1.5, 67, -6.8), (0.8, 0.8, 4), frame_b, variant=2)         # back tine
-        a3.box((sx * 1.5, 67, -4.6), (1.1, 1.1, 1.1), light)
-        a1.locator(f"antler_tip_{s}", (sx * 5.8, 63, -9))
+        x = sx * 1.6
+        a1 = m.bone(f"antler_{s}_1", crown, pivot=(x, 51.5, -9), rot=(0, 0, -sx * 32))
+        a1.box((x, 57, -9), (1.3, 11, 1.3), frame_b)
+        a1.box((x, 54.5, -11.5), (0.8, 0.8, 5), frame_b, variant=1)              # brow tine
+        a1.box((x, 54.5, -14.2), (1.3, 1.3, 1.3), light)
+        a2 = m.bone(f"antler_{s}_2", a1, pivot=(x, 62.5, -9), rot=(-8, 0, sx * 22))
+        a2.box((x, 67.5, -9), (1.1, 10, 1.1), frame_b, variant=2)
+        a2.box((x + sx * 3.4, 65, -9), (6, 0.8, 0.8), frame_b, variant=1)        # outward tine
+        a2.box((x + sx * 6.6, 65, -9), (1.3, 1.3, 1.3), light)
+        a2.plane("z", (x + sx * 3.4, 68.0, -9), 4.4, 5.0, win, density=4)       # window between beam and tine
+        a2.box((x, 66, -11.5), (0.8, 0.8, 5), frame_b)                           # forward tine
+        a2.box((x, 66, -14.2), (1.2, 1.2, 1.2), light)
+        a2.plane("x", (x, 68.8, -11.8), 4.4, 4.6, win, density=4)
+        a3 = m.bone(f"antler_{s}_3", a2, pivot=(x, 72.5, -9), rot=(-12, 0, -sx * 14))
+        a3.box((x, 76, -9), (0.9, 7, 0.9), frame_b)
+        a3.box((x + sx * 2.2, 78, -9), (3.6, 0.8, 0.8), frame_b, variant=1, rot=(0, 0, sx * 35))
+        a3.box((x, 79.8, -9), (1.3, 1.3, 1.3), light)
+        a3.box((x + sx * 3.6, 79.6, -9), (1.2, 1.2, 1.2), light)
+        a3.plane("z", (x + sx * 1.9, 81.5, -9), 3.2, 3.8, win, density=4)
+        a3.locator(f"antler_tip_{s}", (x, 80, -9))
 
     # tail tuft
     tl = m.bone("tail", body, pivot=(0, 35, 12))
@@ -592,13 +601,13 @@ def bird_model():
     m = Model("dn_parade_bird", density=1.0, bounds=(8, 6, (0, 0, 0)))
     body_m = tex.sgrad("#fbf6ee", "#d9e6f6", axis="y", lo=-6, hi=6, glow0=0.05, glow1=0.15)
     pm = porc(crack=0.3)
-    velvet = curtain("#e8b4c8", "#b9809b", key="velvet")
-    lining = curtain("#ffd9b8", "#e8b494", fringe="#ffffff", folds=2.0, key="lining")
+    velvet = curtain("#e8b4c8", "#b9809b", folds=2.0, key="velvet").but(density=2)
+    lining = curtain("#ffd9b8", "#e8b494", fringe="#ffffff", folds=1.5, key="lining").but(density=2)
     valance = tex.trimmed(tex.fabric("#c98aa6", "#d9a0b8", stripe_w=2, glow=0.1, fringe=True), SGOLD, 1, 0, glow=0.5)
     rod = tex.metal("#e6c77e", "#fff4d0", "#9a7838", bands=2.0, glow=0.3)
     tassel = tex.vgrad("#ffe6a0", "#d9a94a", glow_top=0.4, glow_bottom=0.2)
     star = tex.shaped(tex.m_star(5, 0.45), "#fff3c4", SGOLD, glow=1.0, var=0, key="bstar")
-    moon = tex.shaped(tex.m_crescent(0.4), "#fff3c4", SGOLD, glow=1.0, var=0, key="bmoon")
+    moon = tex.shaped(m_cres(0.4), "#fff3c4", SGOLD, glow=1.0, var=0, key="bmoon")
     eye = ["     ", " ### ", "#   #", "     "]
     head_m = tex.stamped(porc(crack=0.0), eye, "#6a5a7a", key="beye")
 
@@ -664,15 +673,16 @@ def bird_model():
         fin.plane("z", (x + sx * 2.8, 2.5, -3), 3.4, 3.4, star)
         fin.locator(f"wingtip_{s}", (x + sx * 2.8, 2.5, -3))
 
-    # tail: a train of three curtain ribbons with tassels
-    prev = "body"
-    for j in range(3):
-        z = 7 + j * 6
-        b = m.bone(f"tail{j + 1}", prev, pivot=(0, 1, z), rot=((8 if j == 0 else 4), 0, 0))
-        b.plane("y", (0, 1, z + 3), 7 - j * 1.5, 6.4, velvet, variant=j, mats={"down": lining})
-        b.box((0, 1, z + 3), (0, 3.5, 6.4), lining, faces=("east", "west"), variant=j)
-        prev = b.name
-    b.box((0, 0.2, 25.5), (1.8, 2.4, 1.8), tassel)
+    # tail: a fanned train of three curtain ribbons, each three bones long, ending in tassels
+    for f, yaw in enumerate((-24, 0, 24)):
+        prev = "body"
+        for j in range(3):
+            z = 7 + j * 6
+            b = m.bone(f"tail{f + 1}_{j + 1}", prev, pivot=(0, 1.5, z), rot=((10 if j == 0 else 5), (yaw if j == 0 else 0), 0))
+            w = 6.4 - j * 1.2
+            b.plane("y", (0, 1.5, z + 3), w, 6.4, velvet if f != 1 else lining, variant=j + f, mats={"down": lining})
+            prev = b.name
+        b.box((0, 1.0, 25.5), (1.6, 2.4, 1.6), tassel)
     return m
 
 
@@ -680,7 +690,8 @@ def bird_anims():
     A = []
     life = Anim("life", loop=True)
     life.rot("tilt", (tilt_expr(), 0, 0))
-    wave(life, ["tail1", "tail2", "tail3"], 0, 7, 1.4, lag=0.15, grow=1.2, clock="q.life_time")
+    for f in range(3):
+        wave(life, [f"tail{f + 1}_{j + 1}" for j in range(3)], 0, 8, 1.4, lag=0.15 + f * 0.04, grow=1.2, clock="q.life_time")
     life.rot("crest", (LIFE(6, 1.2), 0, 0))
     life.rot("neck1", (LIFE(3, 2.4), 0, 0))
     life.rot("finial_r", (spin(120), 0, 0))
@@ -773,22 +784,28 @@ def doll_model():
     body.box((0, 27.6, 0), (7, 1.2, 5.4), ruff)                          # collar ruff
     body.box((0, 19.0, 0), (6.4, 1.4, 5.0), ruff, variant=1)             # waist frill
     body.box((0, 23.5, -2.3), (1.6, 1.6, 0.6), tex.glow_flat("#ffe9a8", 1.0, core="#ffffff"))   # star brooch
+    skirt = m.bone("skirt", body, pivot=(0, 19.5, 0))
+    ring(skirt, (0, 17.4, 0), 4.2, 10, (3.0, 1.0, 4.4), tex.trimmed(tex.fabric("#e8b4c8", "#f3cbd8", stripe_w=1, glow=0.12),
+                                                                   "#fff6f0", 1, 0, 0.5), axis="y", tilt=-28)
     body.locator("heart", (0, 23, 0))
     # five-point star body
     for k in range(5):
         a = k * 72
-        sb = m.bone(f"star{k + 1}", body, pivot=(0, 23, 1.6), rot=(0, 0, a))
-        sb.box((0, 29.5, 1.6), (4.6, 7, 1.2), star_pt, variant=k % 2)
-        sb.box((0, 34.5, 1.6), (2.4, 4, 1.0), star_pt, variant=2)
-        sb.box((0, 37.0, 1.6), (1.2, 1.4, 1.2), tex.glow_flat("#ffffff", 1.0, core="#ffffff"))
-    sbk = m.bone("star_core", body, pivot=(0, 23, 2.4))
-    sbk.box((0, 23, 2.4), (8, 8, 1.0), tex.trimmed(tex.flat("#fff3d0", glow=0.6), SGOLD, 1, 0, 0.9), rot=(0, 0, 45))
+        sb = m.bone(f"star{k + 1}", body, pivot=(0, 25, 1.6), rot=(0, 0, a))
+        sb.box((0, 31.5, 1.6), (5.2, 7, 1.2), star_pt, variant=k % 2)
+        sb.box((0, 36.5, 1.6), (2.8, 4, 1.0), star_pt, variant=2)
+        sb.box((0, 39.2, 1.6), (1.4, 1.6, 1.2), tex.glow_flat("#ffffff", 1.0, core="#ffffff"))
+    sbk = m.bone("star_core", body, pivot=(0, 25, 2.4))
+    sbk.box((0, 25, 2.4), (8, 8, 1.0), tex.trimmed(tex.flat("#fff3d0", glow=0.6), SGOLD, 1, 0, 0.9), rot=(0, 0, 45))
 
     head = m.bone("head", body, pivot=(0, 28.5, 0))
     head.box((0, 29.4, 0), (2.2, 1.6, 2.2), joint)
     head.box((0, 33.8, 0), (8, 7.6, 7.2), pm, mats={"north": face_m}, density=2)
     head.box((0, 37.9, 0.6), (8.6, 1.6, 7.8), hair)                       # hair cap
     head.box((0, 34.5, 3.6), (8.4, 6, 1.2), hair, variant=1)             # back hair
+    head.box((0, 37.0, -3.7), (8.4, 1.6, 0.8), hair, variant=2)          # bangs
+    for sx in (1, -1):
+        head.box((sx * 2.6, 36.0, -3.8), (2.4, 1.2, 0.6), hair, variant=1)
     for sx in (1, -1):
         for k in range(3):                                               # ringlets
             head.box((sx * 4.4, 35 - k * 2.4, 1.4), (1.4, 2.2, 1.4), hair, variant=k)
@@ -952,7 +969,7 @@ def road_model(kind):
             arch.box((sx * 25, 42.5, 0), (6, 2, 6), GILT, variant=1)
         ring(arch, (0, 43, 0), 25, 12, (7.2, 4.4, 4.4), pm, axis="z", start=0, sweep=180)
         ring(arch, (0, 43, 0), 22.2, 12, (6.2, 1.0, 4.8), GILT_B, axis="z", start=0, sweep=180)
-        arch.plane("z", (0, 75, 0), 14, 14, tex.shaped(tex.m_crescent(0.38), "#fff3c4", SGOLD, glow=1.0, var=0,
+        arch.plane("z", (0, 75, 0), 14, 14, tex.shaped(m_cres(0.38), "#fff3c4", SGOLD, glow=1.0, var=0,
                                                          outline="#d9a94a", key="archmoon"))
         pend = m.bone("pendant", arch, pivot=(0, 63, 0))
         pend.box((0, 59, 0), (0.4, 8, 0.4), GILT)
@@ -963,7 +980,7 @@ def road_model(kind):
             p = m.bone(f"pole_{s}", tilt, pivot=(sx * 25, 0, 0))
             p.box((sx * 25, 26, 0), (1.8, 52, 1.8), tex.banded(GILT, IVORY, every=6, width=2))
             p.box((sx * 29, 50, 0), (9, 1.2, 1.2), GILT)
-            p.plane("z", (sx * 25, 56, 0), 6, 6, tex.shaped(tex.m_crescent(0.4), "#fff3c4", SGOLD, glow=1.0, var=0, key="polemoon"))
+            p.plane("z", (sx * 25, 56, 0), 6, 6, tex.shaped(m_cres(0.4), "#fff3c4", SGOLD, glow=1.0, var=0, key="polemoon"))
             emblem = ["   #   ", "  ###  ", " ##### ", "  ###  ", "   #   "] if s == "r" else \
                 ["  ###  ", " ##    ", "##     ", " ##    ", "  ###  "]
             bmat = tex.stamped(tex.fabric(PINK if s == "r" else PBLUE, None, glow=0.15), emblem, "#fff3c4", glow=0.9,
@@ -1059,9 +1076,10 @@ def moon_model():
         rock.box(p, (th, tl, 7), mat if i % 3 else rim, rot=(0, 0, a), pivot=p, variant=i % 3)
     # the profile face on the inner edge: nose, closed eye, cheek
     face = m.bone("face", rock, pivot=(-8, 0, 0))
-    face.box((-6.6, -1.5, 0), (3, 3, 5), mat, variant=1)                              # nose
+    face.box((-6.2, -0.5, 0), (4, 3.2, 5), mat, variant=1)                            # nose
+    face.box((-4.6, -1.2, 0), (1.6, 2.0, 4), mat, variant=2)
     face.box((-7.6, -5.2, 0), (2.2, 1.6, 4.6), tex.flat("#e9a8a8", glow=0.3))         # lips
-    face.plane("z", (-11.5, 3.5, -3.6), 5, 2.4, tex.bitmap_cut(["#     #", " #   # ", "  ###  ", " # # # "], "#7a6a8a"))
+    face.plane("z", (-12.0, 4.0, -3.6), 6.5, 3.2, tex.bitmap_cut(["#     #", " #   # ", "  ###  ", " # # # "], "#6a5a7a"), density=2)
     face.plane("z", (-11.5, -3.0, -3.6), 3.4, 3.4, tex.shaped(tex.m_disc(1.0), "#f4b0b8", glow=0.4, var=0, key="mcheek"))
     # nightcap draped over the upper horn, star pompom
     cp = m.bone("cap1", rock, pivot=(-4, 16, 0), rot=(0, 0, -30))
@@ -1114,8 +1132,8 @@ def mark_model():
     order = ("default", "two", "three", "four")
     cols = ("#ffe9b8", "#ffd2e4", "#d8e8ff", "#fff6d8")
     for k in range(4):
-        dim = tex.shaped(tex.m_crescent(0.42), "#8a7aa8", "#6a5a8a", glow=0.15, var=0, key=f"mkd{k}")
-        lit = [tex.shaped(tex.m_crescent(0.42), cols[k], "#fffbe8", glow=0.55 + 0.15 * lv, var=0, outline=SGOLD,
+        dim = tex.shaped(m_cres(0.42), "#8a7aa8", "#6a5a8a", glow=0.15, var=0, key=f"mkd{k}")
+        lit = [tex.shaped(m_cres(0.42), cols[k], "#fffbe8", glow=0.55 + 0.15 * lv, var=0, outline=SGOLD,
                           key=f"mkl{k}{lv}") for lv in range(4)]
         # crescent k lights from skin index k; every lit crescent gets brighter as the count grows
         skins = {order[i]: (lit[i] if i >= k else dim) for i in range(1, 4)}

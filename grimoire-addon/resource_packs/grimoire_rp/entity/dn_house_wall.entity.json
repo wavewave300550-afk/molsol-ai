@@ -1,0 +1,43 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:dn_house_wall",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "blend": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/dn_house_wall_plain",
+    "k1": "textures/entity/grimoire/dn_house_wall_door",
+    "k2": "textures/entity/grimoire/dn_house_wall_window",
+    "k3": "textures/entity/grimoire/dn_house_wall_stairs"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.dn_house_wall_plain",
+    "k1": "geometry.grimoire.dn_house_wall_door",
+    "k2": "geometry.grimoire.dn_house_wall_window",
+    "k3": "geometry.grimoire.dn_house_wall_stairs"
+   },
+   "render_controllers": [
+    "controller.render.grimoire.dn_house_wall"
+   ],
+   "animations": {
+    "hidden": "animation.grimoire.dn_house_wall.hidden",
+    "fly": "animation.grimoire.dn_house_wall.fly",
+    "rise": "animation.grimoire.dn_house_wall.rise",
+    "idle": "animation.grimoire.dn_house_wall.idle",
+    "slide": "animation.grimoire.dn_house_wall.slide",
+    "settle": "animation.grimoire.dn_house_wall.settle",
+    "fold": "animation.grimoire.dn_house_wall.fold",
+    "ctl_main": "controller.animation.grimoire.dn_house_wall.main"
+   },
+   "scripts": {
+    "animate": [
+     "ctl_main"
+    ],
+    "should_update_bones_and_effects_offscreen": true
+   }
+  }
+ }
+}

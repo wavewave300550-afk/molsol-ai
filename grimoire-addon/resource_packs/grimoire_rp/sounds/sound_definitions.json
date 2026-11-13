@@ -2070,6 +2070,549 @@
      "pitch": 1.0
     }
    ]
+  },
+  "grimoire.book_dw_select": {
+   "category": "neutral",
+   "max_distance": 24,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/book_dw_select",
+     "volume": 0.8,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.book_dw_charge": {
+   "category": "neutral",
+   "max_distance": 24,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/book_dw_charge",
+     "volume": 0.75,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.book_dw_release": {
+   "category": "neutral",
+   "max_distance": 40,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/book_dw_release",
+     "volume": 0.9,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.book_dw_deny": {
+   "category": "neutral",
+   "max_distance": 16,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/book_dw_deny",
+     "volume": 0.6,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_house_windup": {
+   "category": "neutral",
+   "max_distance": 48,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_house_windup",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_house_land": {
+   "category": "neutral",
+   "max_distance": 48,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_house_land",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_house_open": {
+   "category": "neutral",
+   "max_distance": 56,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_house_open",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_house_unfold": {
+   "category": "neutral",
+   "max_distance": 56,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_house_unfold",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_house_slide": {
+   "category": "neutral",
+   "max_distance": 40,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_house_slide",
+     "volume": 0.8,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/dn_house_slide_2",
+     "volume": 0.8,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/dn_house_slide_3",
+     "volume": 0.8,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_house_settle": {
+   "category": "neutral",
+   "max_distance": 40,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_house_settle",
+     "volume": 0.9,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/dn_house_settle_2",
+     "volume": 0.9,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/dn_house_settle_3",
+     "volume": 0.9,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_house_pop": {
+   "category": "neutral",
+   "max_distance": 40,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_house_pop",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_house_tick": {
+   "category": "neutral",
+   "max_distance": 24,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_house_tick",
+     "volume": 0.6,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/dn_house_tick_2",
+     "volume": 0.6,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/dn_house_tick_3",
+     "volume": 0.6,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_house_lullaby": {
+   "category": "neutral",
+   "max_distance": 56,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_house_lullaby",
+     "volume": 0.8,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_house_lullaby_warp": {
+   "category": "neutral",
+   "max_distance": 56,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_house_lullaby_warp",
+     "volume": 0.8,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/dn_house_lullaby_warp_2",
+     "volume": 0.8,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_house_loop": {
+   "category": "neutral",
+   "max_distance": 40,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_house_loop",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_house_chime": {
+   "category": "neutral",
+   "max_distance": 48,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_house_chime",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_house_crystal": {
+   "category": "neutral",
+   "max_distance": 40,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_house_crystal",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_house_bed": {
+   "category": "neutral",
+   "max_distance": 24,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_house_bed",
+     "volume": 0.7,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_house_scuttle": {
+   "category": "neutral",
+   "max_distance": 32,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_house_scuttle",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_house_fold": {
+   "category": "neutral",
+   "max_distance": 56,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_house_fold",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.dn_house_clack": {
+   "category": "neutral",
+   "max_distance": 56,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/dn_house_clack",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_nature_call": {
+   "category": "neutral",
+   "max_distance": 96,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_nature_call",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_nature_bellow": {
+   "category": "neutral",
+   "max_distance": 96,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_nature_bellow",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_nature_groan": {
+   "category": "neutral",
+   "max_distance": 64,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_nature_groan",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_nature_moan": {
+   "category": "neutral",
+   "max_distance": 80,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_nature_moan",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_nature_strain": {
+   "category": "neutral",
+   "max_distance": 80,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_nature_strain",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_nature_lash": {
+   "category": "neutral",
+   "max_distance": 64,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_nature_lash",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_nature_step": {
+   "category": "neutral",
+   "max_distance": 72,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_nature_step",
+     "volume": 1.0,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_nature_step_2",
+     "volume": 1.0,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_nature_step_3",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_nature_quake": {
+   "category": "neutral",
+   "max_distance": 56,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_nature_quake",
+     "volume": 1.0,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_nature_quake_2",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_nature_rumble": {
+   "category": "neutral",
+   "max_distance": 96,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_nature_rumble",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_nature_strata": {
+   "category": "neutral",
+   "max_distance": 80,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_nature_strata",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_nature_grow": {
+   "category": "neutral",
+   "max_distance": 72,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_nature_grow",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_nature_root": {
+   "category": "neutral",
+   "max_distance": 48,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_nature_root",
+     "volume": 1.0,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_nature_root_2",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_nature_bind": {
+   "category": "neutral",
+   "max_distance": 40,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_nature_bind",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_nature_pillar": {
+   "category": "neutral",
+   "max_distance": 64,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_nature_pillar",
+     "volume": 1.0,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_nature_pillar_2",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_nature_slam": {
+   "category": "neutral",
+   "max_distance": 128,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_nature_slam",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_nature_erupt": {
+   "category": "neutral",
+   "max_distance": 72,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_nature_erupt",
+     "volume": 1.0,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_nature_erupt_2",
+     "volume": 1.0,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_nature_erupt_3",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_nature_topple": {
+   "category": "neutral",
+   "max_distance": 72,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_nature_topple",
+     "volume": 1.0,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_nature_topple_2",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_nature_petrify": {
+   "category": "neutral",
+   "max_distance": 80,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_nature_petrify",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
   }
  }
 }

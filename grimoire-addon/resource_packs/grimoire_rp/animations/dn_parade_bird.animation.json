@@ -11,23 +11,65 @@
       0.0
      ]
     },
-    "tail1": {
+    "tail1_1": {
      "rotation": [
-      "-(0+7*math.sin(q.life_time*257.1429+0))",
+      "-(0+8*math.sin(q.life_time*257.1429+0))",
       0.0,
       0.0
      ]
     },
-    "tail2": {
+    "tail1_2": {
      "rotation": [
-      "-(0+8.4*math.sin(q.life_time*257.1429+-54))",
+      "-(0+9.6*math.sin(q.life_time*257.1429+-54))",
       0.0,
       0.0
      ]
     },
-    "tail3": {
+    "tail1_3": {
      "rotation": [
-      "-(0+10.08*math.sin(q.life_time*257.1429+-108))",
+      "-(0+11.52*math.sin(q.life_time*257.1429+-108))",
+      0.0,
+      0.0
+     ]
+    },
+    "tail2_1": {
+     "rotation": [
+      "-(0+8*math.sin(q.life_time*257.1429+0))",
+      0.0,
+      0.0
+     ]
+    },
+    "tail2_2": {
+     "rotation": [
+      "-(0+9.6*math.sin(q.life_time*257.1429+-68.4))",
+      0.0,
+      0.0
+     ]
+    },
+    "tail2_3": {
+     "rotation": [
+      "-(0+11.52*math.sin(q.life_time*257.1429+-136.8))",
+      0.0,
+      0.0
+     ]
+    },
+    "tail3_1": {
+     "rotation": [
+      "-(0+8*math.sin(q.life_time*257.1429+0))",
+      0.0,
+      0.0
+     ]
+    },
+    "tail3_2": {
+     "rotation": [
+      "-(0+9.6*math.sin(q.life_time*257.1429+-82.8))",
+      0.0,
+      0.0
+     ]
+    },
+    "tail3_3": {
+     "rotation": [
+      "-(0+11.52*math.sin(q.life_time*257.1429+-165.6))",
       0.0,
       0.0
      ]

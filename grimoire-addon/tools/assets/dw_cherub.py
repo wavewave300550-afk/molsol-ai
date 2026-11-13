@@ -395,6 +395,11 @@ V_DOWN = dict(wu=((0, 30, -14), (0, 10, -10), (0, 0, -6)), wl=((0, 26, -62), (0,
 COCOON = dict(wu=aim_wing(((0.45, 0.45, -0.77), DN), ((-0.55, 0.35, -0.76), DN), ((-0.95, 0.1, 0.1), DN)),
               wl=aim_wing(((0.45, -0.45, -0.77), DN), ((-0.6, -0.35, -0.72), DN), ((-0.95, -0.1, 0.1), DN)))
 
+ARISE = dict(wu=aim_wing(((0.7, 0.45, -0.55), DN), ((0.62, 0.7, -0.3), DN), ((0.42, 0.9, -0.1), DN)),
+             wl=aim_wing(((0.6, -0.5, -0.62), DN), ((-0.5, -0.5, -0.7), DN), ((-0.9, -0.2, -0.1), DN)))
+SHIELD_IN = dict(wu=aim_wing(((0.75, 0.4, -0.5), DN), ((0.2, 0.5, -0.85), DN), ((-0.5, 0.5, -0.7), DN)),
+                 wl=aim_wing(((0.7, -0.3, -0.6), DN), ((0.1, -0.3, -0.95), DN), ((-0.6, -0.2, -0.75), DN)))
+
 # arm presets (right side): (arm_1, arm_2, hand)
 A_REST = ((-8, 0, 6), (-20, 0, 0), (0, 0, 0))
 A_PRAY = ((-46, 0, -10), (-72, 0, -24), (0, 0, 10))
@@ -471,7 +476,7 @@ def build_anims(wings):
     arrive.pos("col2", {0: (0, -10, 0), 0.25: (0, -10, 0), 0.6: (0, 1, 0), 0.75: (0, 0, 0)})
     arrive.scl("col1", {0: 0.2, 0.35: 0.2, 0.75: 1.0})
     arrive.scl("col2", {0: 0.3, 0.25: 0.3, 0.6: 1.0})
-    _wings(arrive, {0: COCOON, 0.6: COCOON, 1.25: _mixp(IDLE, V_UP, 0.25), 1.6: IDLE})
+    _wings(arrive, {0: COCOON, 0.6: COCOON, 0.95: ARISE, 1.25: _mixp(IDLE, V_UP, 0.25), 1.6: IDLE})
     _arms(arrive, {0: A_PRAY, 1.0: A_PRAY, 1.6: A_REST})
     arrive.rot("drum", {0: (0, 720, 0), 1.1: (0, -12, 0), 1.35: (0, 5, 0), 1.6: (0, 0, 0)})
     arrive.rot("head", {0: (18, 0, 0), 1.1: (-8, 0, 0), 1.6: (0, 0, 0)})
@@ -503,7 +508,7 @@ def build_anims(wings):
     ox = Anim("ox", length=T_OX, loop="hold")
     ox.rot("drum", {0: (0, 0, 0), 0.1: (0, 10, 0), 0.45: (0, -98, 0), 0.6: (0, -90, 0)})
     ox.rot("head", {0: (0, 0, 0), 0.45: (-6, 0, 0), OX_LOCK: (8, 0, 0), T_OX: (6, 0, 0)})
-    _wings(ox, {0: IDLE, 0.2: _mixp(IDLE, BLAST, 0.3), 0.6: OX_PRE, OX_LOCK: OX, T_OX: OX})
+    _wings(ox, {0: IDLE, 0.2: _mixp(IDLE, BLAST, 0.3), 0.45: SHIELD_IN, 0.62: OX_PRE, OX_LOCK: OX, T_OX: OX})
     _arms(ox, {0: A_REST, 0.5: A_BRACE, T_OX: A_BRACE})
     ox.pos("root", {0: (0, 0, 0), 0.6: (0, 1, 0), OX_LOCK: (0, -3, 0), T_OX: (0, -2, 0)})
     ox.rot("body", {0: (0, 0, 0), OX_LOCK: (-6, 0, 0), T_OX: (-4, 0, 0)})
@@ -587,7 +592,7 @@ def build_anims(wings):
     # the sealed figure is drawn up into a single line of light
     depart = Anim("depart", length=T_DEPART, loop="hold")
     depart.rot("drum", {0: (0, 0, 0), 0.5: (0, 90, 0), T_DEPART: (0, 540, 0)})
-    _wings(depart, {0: IDLE, 0.6: COCOON, T_DEPART: COCOON})
+    _wings(depart, {0: IDLE, 0.35: ARISE, 0.6: COCOON, T_DEPART: COCOON})
     _arms(depart, {0: A_REST, 0.5: A_PRAY, T_DEPART: A_PRAY})
     depart.pos("col1", {0: (0, 0, 0), 0.6: (0, 0, 0), 1.0: (0, -14, 0)})
     depart.scl("col1", {0: 1.0, 0.6: 1.0, 1.0: 0.0})
@@ -857,8 +862,8 @@ def build(pack):
                                  [(by["eagle"], 1.2), br]], views=((25, 12), (-70, 10), (0, 55)))
     pack.preview("cherub_head", m, [[(by["idle"], 0), br]], views=((0, 5), (90, 5), (180, 5), (-90, 5)),
                  hide=("wing", "wu_", "wl_", "halo", "arm_", "banner", "ring_"), fit=None, cell=(360, 360))
-    pack.preview("cherub_c", m, [[(by["arrive"], 0.6), br], [(by["verdict"], VERDICT_HIT), br], [(by["depart"], 1.3), br]],
-                 views=((25, 12), (0, 55)))
+    pack.preview("cherub_c", m, [[(by["arrive"], 0.85), br], [(by["arrive"], 1.1), br], [(by["ox"], 0.4), br],
+                                 [(by["ox"], 0.6), br], [(by["depart"], 0.45), br]], views=((35, 12), (-60, 10)))
     pack.preview("dw_cherub_helpers", bm, [(ba[2], 0.2), (ba[3], 0.2), (ba[4], 0.25)], views=((20, 10), (0, 60)))
     pack.preview("dw_cherub_roar", rm, [(ra[1], 0.3)], views=((0, 0), (40, 20)))
     print(f"    cherub: {m.cube_count()} cubes, {len(m.order)} bones, tex {m.tex_size}; "
