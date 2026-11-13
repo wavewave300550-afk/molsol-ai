@@ -44,7 +44,7 @@ OPEN_W, OPEN_H = 18.0, 78.0        # half width / height of the doorway
 VP = 30.0                          # vanishing point height (viewer eye level)
 N_SEG, RATIO, D0, Z0 = 9, 0.78, 5.0, 3.0
 KEY_P = (-14.0, 32.6, -1.8)        # keyhole: the door folds into it when it vanishes
-GRAB_Z, PULL_Z, HAND_Y, HAND_X = -42.0, -18.0, 17.0, 4.2   # TS: standoff 42/16, pullStop 18/16
+GRAB_Z, PULL_Z, HAND_Y, HAND_X = -50.0, -18.0, 17.0, 4.2   # TS: standoff 50/16, pullStop 18/16
 GUEST_Z = 5.0                      # the Guest stands just behind the threshold
 G_FRAME = (-20.0, 50.0, -4.4)      # where its left hand grips the door frame
 
@@ -743,10 +743,10 @@ def spine(body, s1, s2, s3, n1, n2, head, roll=0.0):
 LURK = {**spine(-6, -12, -14, -10, 10, 8, (6, 0, -10)), **legs(34, -58), **skirt_flare(26)}
 WALK_A = {**spine(-7, -13, -14, -10, 12, 8, (6, 0, -16), roll=-3), **legs(46, -50, 14, -52), **skirt_flare(32)}
 WALK_B = {**spine(-7, -13, -14, -10, 12, 8, (4, 0, -4), roll=3), **legs(14, -52, 46, -50), **skirt_flare(32)}
-CROUCH = {**spine(-8, -16, -18, -12, 14, 10, (8, 0, -14)), **legs(40, -66), **skirt_flare(30)}
+CROUCH = {**spine(-6, -12, -14, -10, 4, 2, (16, 0, -14)), **legs(56, -88), **skirt_flare(40)}
 PEEK = {**spine(-8, -16, -18, -14, 12, 12, (6, 18, 44), roll=9), **legs(30, -48), **skirt_flare(24)}
 STOOP = {**spine(-10, -19, -21, -15, 20, 14, (8, 0, 18)), **legs(16, -26), **skirt_flare(12)}
-REACH = {**spine(-12, -21, -23, -17, 24, 16, (12, 0, 28)), **legs(12, -22), **skirt_flare(10)}
+REACH = {**spine(-6, -10, -10, -8, 16, 12, (14, 0, 28)), **legs(8, -14), **skirt_flare(8)}
 LEANB = {**spine(4, -4, -5, -3, 10, 8, (-2, 0, -16)), **legs(30, -48), **skirt_flare(26)}
 
 
@@ -938,7 +938,7 @@ def guest_anims(m):
     # ---- grab: fingers snap shut, a jolt, the grip tightens
     gb = Anim("grab", length=GUEST_LEN["grab"], loop="hold")
     goals = {"r": (HAND_X, HAND_Y, GRAB_Z), "l": (-HAND_X, HAND_Y, GRAB_Z)}
-    jolt = gpose({**REACH, "spine3": (-21, 0, 0), "head": (14, 0, 38)}, root=(0, 0, GUEST_Z), m=m)
+    jolt = gpose({**REACH, "spine3": (-13, 0, 0), "head": (16, 0, 38)}, root=(0, 0, GUEST_Z), m=m)
     grabbed = with_arms(m, reach_body, goals, fingers=hands(*CLOSED))
     keyed(gb, {0: reach_end, 0.1: with_arms(m, jolt, goals, fingers=hands(*CLOSED)), 0.5: grabbed})
     A.append(gb)
@@ -983,8 +983,7 @@ def guest_anims(m):
         pr, pl_ = palm_pos(m, pd, "r"), palm_pos(m, pd, "l")
         print(f"    dn_guest {nm}: palms r={np.round(pr, 1)} l={np.round(pl_, 1)} "
               f"armF={_v('s', pd['arm_r_1@s'])[1]:.2f}")
-    return A, dict(emerged=emerged, reach_end=reach_end, grabbed=grabbed, pull_end=pull_end, crouch=crouch,
-                   peek=frames and None)
+    return A
 
 
 # ================================================================ particles + sounds
@@ -1085,7 +1084,9 @@ def build_sounds(pack):
     # its voice: breathy reversed whispers, no words
     def voice(vs, p, tone):
         w = _whisper(1.7, vs)
-        tn = sy.osc(sy.sweep(tone, tone * 0.93, 1.7)) * sy.env(1.7, 0.9, 0.1, 0.7, 0.3) * 0.06
+        dw = len(w) / sy.SR
+        tn = sy.osc(sy.sweep(tone, tone * 0.93, dw))[:len(w)] * sy.env(dw, 0.9, 0.1, 0.7, 0.3)[:len(w)] * 0.06
+        w = w[:len(tn)]
         sig = sy.reverb(w + tn, 1.3, 0.45)[::-1]
         return sy.pitch(sig, p)
     sy.save(pack, "dn_guest_voice", voice(["oo", "eh", "ah", "oo", "ee"], 1.0, 310),
@@ -1166,7 +1167,7 @@ def build(pack):
                visibility=[{"corr*": "q.property('grimoire:state') >= 4 && q.property('grimoire:state') <= 6"}],
                particles={"dust": "grimoire:dn_guest_dust"}, display="The Door Behind You")
     guest = build_guest(Model("dn_guest", density=2.0, bounds=(10, 9, (0, 3.5, -1))))
-    ga, keyp = guest_anims(guest)
+    ga = guest_anims(guest)
     pack.actor("dn_guest", guest, ga, GUEST_STATES, always=["guest_idle"], lifetime=40, blend=0.15,
                particles={"breath": "grimoire:dn_guest_breath"}, display="The Guest")
     build_sounds(pack)
