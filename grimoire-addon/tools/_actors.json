@@ -1,0 +1,50 @@
+{
+ "seraph": {
+  "id": "grimoire:seraph",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default",
+   "inscribed"
+  ],
+  "anims": {
+   "hover": null,
+   "flap": 3.0,
+   "hidden": null,
+   "arrive": 2.4,
+   "veiled": null,
+   "unfurl": 2.0,
+   "open": null,
+   "chant1": 1.5,
+   "chant2": 1.5,
+   "chant3": 1.6,
+   "verdict": 1.2,
+   "depart": 2.2
+  },
+  "lifetime": 120,
+  "cubes": [
+   314
+  ],
+  "bones": [
+   133
+  ],
+  "tex": [
+   [
+    256,
+    256
+   ]
+  ]
+ }
+}

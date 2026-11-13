@@ -1,0 +1,54 @@
+{
+ "format_version": 2,
+ "header": {
+  "name": "Grimoire: Rebirth of the Arcane",
+  "description": "Three Grimoires, eighteen spells. Behavior pack.",
+  "uuid": "dd6d51d0-2fbc-4e22-9c57-01ae607e0b30",
+  "version": [
+   1,
+   0,
+   0
+  ],
+  "min_engine_version": [
+   1,
+   26,
+   60
+  ]
+ },
+ "modules": [
+  {
+   "type": "data",
+   "uuid": "db9a21f4-f433-4c55-8e69-9c25396f729a",
+   "version": [
+    1,
+    0,
+    0
+   ]
+  },
+  {
+   "type": "script",
+   "language": "javascript",
+   "uuid": "b7ee4cd8-c9fe-43e8-968a-2c2af5c02de3",
+   "version": [
+    1,
+    0,
+    0
+   ],
+   "entry": "scripts/main.js"
+  }
+ ],
+ "dependencies": [
+  {
+   "uuid": "5174510b-07c5-4e7b-96fc-68e09a3a4e38",
+   "version": [
+    1,
+    0,
+    0
+   ]
+  },
+  {
+   "module_name": "@minecraft/server",
+   "version": "2.11.0"
+  }
+ ]
+}
