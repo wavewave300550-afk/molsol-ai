@@ -17,6 +17,9 @@ const wanted = filter === "spells" && arg ? arg.split(",") : null;
 const isolate = {
   name: "isolate-spells",
   setup(b) {
+    // spell-filtered runs do not exercise the book presentation (another slice owns it)
+    b.onLoad({ filter: /[\\/]core[\\/]books\.ts$/ }, () => (wanted
+      ? { loader: "ts", contents: "export function installBooks(): void {}" } : undefined));
     b.onLoad({ filter: /[\\/]spells[\\/](dw|dn|ed)\d\d_[^\\/]*\.ts$/ }, (args) => {
       const id = path.basename(args.path).slice(0, 4);
       if (!wanted || wanted.includes(id)) return undefined;
