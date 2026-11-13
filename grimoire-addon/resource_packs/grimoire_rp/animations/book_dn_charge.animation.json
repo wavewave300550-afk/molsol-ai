@@ -1762,12 +1762,6 @@
       ]
      }
     }
-   },
-   "particle_effects": {
-    "0": {
-     "effect": "burst",
-     "locator": "core"
-    }
    }
   },
   "animation.grimoire.book_dn_charge.cancel": {

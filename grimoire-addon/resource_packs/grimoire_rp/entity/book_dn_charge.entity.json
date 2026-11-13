@@ -43,8 +43,7 @@
     "should_update_bones_and_effects_offscreen": true
    },
    "particle_effects": {
-    "mote": "grimoire:book_dn_mote",
-    "burst": "grimoire:book_dn_burst"
+    "mote": "grimoire:book_dn_mote"
    }
   }
  }

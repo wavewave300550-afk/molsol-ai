@@ -1514,7 +1514,6 @@ def charge_anims():
     for i, (x, y, z, _a) in enumerate(frag_centers(0)):
         rel.pos(f"frag{i + 1}", {0: (0, 0, 0), 0.5: (x * 0.9, y * 0.5 + 5, z * 0.9)})
         rel.rot(f"frag{i + 1}", {0: (0, 0, 0), 0.5: (0, 0, 120 if i % 2 else -120)})
-    rel.particle(0.0, "burst", locator="core")
 
     can = Anim("cancel", length=CANCEL_LEN, loop="hold")
     can.scl("root", {0: 1.0, 0.3: 0.9, 0.4: 0.0})
@@ -1540,6 +1539,15 @@ def build_fx(pack):
               speed=(0.4, 1.4), direction=(0, 0.2, -1), drag=1.5, colors=["#fff6e0ff", "#ffd9b8aa", "#e8b4c800"])
 
 
+def _cut(sig, dur):
+    """Trim a reverb tail to `dur` seconds with a gentle fade (keeps clips short for phones)."""
+    n = int(sy.SR * dur)
+    sig = np.array(sig[:n], dtype=float)
+    f = min(len(sig), int(sy.SR * 0.35))
+    sig[-f:] *= np.linspace(1, 0, f)
+    return sig
+
+
 def build_sounds(pack):
     def mbox(f, dur=0.7, warp=0.0):
         """Music-box tine: bright pluck + faint bell, with an optional slow detune (dream warp)."""
@@ -1560,7 +1568,7 @@ def build_sounds(pack):
                 (0.3, sy.crack(0.08, 3200, 3) * 0.25), (0.31, sy.thump(0.15, 420, 180, 0.2) * 0.25),
                 *[(t, mbox(f, 0.7, 0.012 * i) * (0.55 - 0.06 * i)) for i, (t, f) in enumerate(motif)],
                 (0.36, sy.pad(311.1, 1.0, 3, "tri", 1200, 0.2, 0.6) * 0.18))
-    sy.save(pack, "book_dn_select", sy.reverb(sel, 1.6, 0.4), volume=0.75, max_distance=24)
+    sy.save(pack, "book_dn_select", _cut(sy.reverb(sel, 1.4, 0.4), 2.4), volume=0.75, max_distance=24)
 
     # charge: a 2 s swell - warm pad drifting out of tune, reversed shimmer rising, faint clockwork and a
     # door hinge somewhere far off; ends on a held breath so it can retrigger.
@@ -1579,7 +1587,7 @@ def build_sounds(pack):
     hinge = sy.creak(0.6, 260, 380, 0.3) * 0.12
     ch = sy.at(dur, (0.0, sy.norm(pad1) * 0.7), (0.5, shim * 0.4), (0.0, ticks), (1.1, hinge),
                (1.4, sy.whoosh(0.7, 400, 2600) * 0.25))
-    sy.save(pack, "book_dn_charge", sy.reverb(ch, 1.8, 0.4), volume=0.7, max_distance=24)
+    sy.save(pack, "book_dn_charge", _cut(sy.reverb(ch, 1.2, 0.38), 2.6), volume=0.7, max_distance=24)
 
     # release: the little door flung open - hinge snap, a gust out of it, a glittering bell cluster that
     # bends half a step flat (dream tipping toward nightmare), a soft low thud underneath
@@ -1587,18 +1595,18 @@ def build_sounds(pack):
     bend = sy.pitch(cl, 1.03)[: int(sy.SR * 1.3)]
     rel = sy.at(1.8, (0.0, sy.creak(0.18, 420, 620, 0.2) * 0.35), (0.06, sy.whoosh(0.6, 3200, 500) * 0.6),
                 (0.08, bend * 0.6), (0.08, sy.thump(0.6, 120, 45, 0.3) * 0.55), (0.2, sy.shimmer(1.2, 2600, 18) * 0.3))
-    sy.save(pack, "book_dn_release", sy.reverb(rel, 2.0, 0.42), volume=0.9, max_distance=40)
+    sy.save(pack, "book_dn_release", _cut(sy.reverb(rel, 1.6, 0.42), 2.8), volume=0.9, max_distance=40)
 
     # deny: a music box winding down - three tines, each slower and flatter - then the door shuts softly
     den = sy.at(1.0, (0.0, mbox(880.0, 0.4) * 0.5), (0.16, mbox(830.6, 0.4, 0.02) * 0.42),
                 (0.36, mbox(739.99, 0.5, 0.05) * 0.36), (0.6, sy.thump(0.25, 220, 90, 0.4) * 0.45),
                 (0.6, sy.crack(0.06, 2400, 2) * 0.15))
-    sy.save(pack, "book_dn_deny", sy.reverb(den, 1.0, 0.3), volume=0.6, max_distance=16)
+    sy.save(pack, "book_dn_deny", _cut(sy.reverb(den, 0.8, 0.3), 1.5), volume=0.6, max_distance=16)
 
     # vision door: short creak opening onto a breath of warm air and one high tine
     door = sy.at(0.9, (0.0, sy.creak(0.4, 300, 520, 0.25) * 0.45), (0.25, sy.whoosh(0.5, 600, 2400) * 0.35),
                  (0.3, mbox(1568.0, 0.6, 0.01) * 0.4))
-    sy.save(pack, "book_dn_door", sy.reverb(door, 1.2, 0.35), volume=0.55, max_distance=16)
+    sy.save(pack, "book_dn_door", _cut(sy.reverb(door, 1.0, 0.35), 1.6), volume=0.55, max_distance=16)
 
 
 # ------------------------------------------------------------------------------- previews
@@ -1683,6 +1691,6 @@ def build(pack):
     pack.actor("book_dn_charge", charges[0], canims,
                {0: ["hidden"], 1: ["form"], 2: ["loop"], 3: ["release"], 4: ["cancel"]}, always=["life"],
                kinds=charges[1:], lifetime=120,
-               particles={"mote": "grimoire:book_dn_mote", "burst": "grimoire:book_dn_burst"},
+               particles={"mote": "grimoire:book_dn_mote"},
                display="Unawakened Codex Construct", blend=0.15)
     previews(pack, book, banims, visions, vanims, charges, canims)
