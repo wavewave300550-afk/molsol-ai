@@ -27,7 +27,7 @@ LAPIS = tex.marble("#2b3f8f", "#1b275c", vein2="#d8dde3", scale=5)
 GOLD_M = gold_metal(0.35)
 GOLD_HOT = tex.metal("#ffe08a", "#ffffff", "#c9a24a", bands=2.0, glow=0.85)
 SILV = tex.metal("#d8dde3", "#ffffff", "#8a93a6", bands=2.0, glow=0.5)
-HALO = tex.shaped(tex.m_ring(0.55, 1.0), "#fff3c4", "#e9c15a", glow=1.0, var=0, a=0.45, mode="blend", key="dw6tabhalo")
+HALO = tex.shaped(tex.m_ring(0.55, 1.0), "#fff3c4", "#e9c15a", glow=1.0, var=0, a=0.32, mode="blend", key="dw6tabhalo")
 
 
 def _glyph_plate(code, color=WGOLD):
@@ -39,7 +39,7 @@ def _tablet_base(kind, w, h, y0=4, mat=None, header=None):
     root = m.bone("root")
     body = m.bone("body", root, pivot=(0, y0 + h / 2, 0))
     halo = m.bone("halo", body, pivot=(0, y0 + h / 2, 4))
-    halo.plane("z", (0, y0 + h / 2, 4), max(w, h) * 1.6, max(w, h) * 1.6, HALO)
+    halo.plane("z", (0, y0 + h / 2, 4), max(w, h) * 1.25, max(w, h) * 1.25, HALO)
     insc = m.bone("insc", body, pivot=(0, y0 + 6, -2.6))
     insc.plane("z", (0, y0 + 6, -2.6), w - 6, 7, text_band(seed=30 + kind))
     hb = m.bone("head", body, pivot=(0, y0 + h, 0))

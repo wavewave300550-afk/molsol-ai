@@ -1,0 +1,192 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.grimoire.dn_guest.main": {
+   "initial_state": "s0",
+   "states": {
+    "s0": {
+     "animations": [
+      "hidden"
+     ],
+     "transitions": [
+      {
+       "s1": "q.property('grimoire:state') == 1"
+      },
+      {
+       "s2": "q.property('grimoire:state') == 2"
+      },
+      {
+       "s3": "q.property('grimoire:state') == 3"
+      },
+      {
+       "s4": "q.property('grimoire:state') == 4"
+      },
+      {
+       "s5": "q.property('grimoire:state') == 5"
+      },
+      {
+       "s6": "q.property('grimoire:state') == 6"
+      }
+     ],
+     "blend_transition": 0.15
+    },
+    "s1": {
+     "animations": [
+      "emerge"
+     ],
+     "transitions": [
+      {
+       "s0": "q.property('grimoire:state') == 0"
+      },
+      {
+       "s2": "q.property('grimoire:state') == 2"
+      },
+      {
+       "s3": "q.property('grimoire:state') == 3"
+      },
+      {
+       "s4": "q.property('grimoire:state') == 4"
+      },
+      {
+       "s5": "q.property('grimoire:state') == 5"
+      },
+      {
+       "s6": "q.property('grimoire:state') == 6"
+      }
+     ],
+     "blend_transition": 0.15
+    },
+    "s2": {
+     "animations": [
+      "reach"
+     ],
+     "transitions": [
+      {
+       "s0": "q.property('grimoire:state') == 0"
+      },
+      {
+       "s1": "q.property('grimoire:state') == 1"
+      },
+      {
+       "s3": "q.property('grimoire:state') == 3"
+      },
+      {
+       "s4": "q.property('grimoire:state') == 4"
+      },
+      {
+       "s5": "q.property('grimoire:state') == 5"
+      },
+      {
+       "s6": "q.property('grimoire:state') == 6"
+      }
+     ],
+     "blend_transition": 0.15
+    },
+    "s3": {
+     "animations": [
+      "grab"
+     ],
+     "transitions": [
+      {
+       "s0": "q.property('grimoire:state') == 0"
+      },
+      {
+       "s1": "q.property('grimoire:state') == 1"
+      },
+      {
+       "s2": "q.property('grimoire:state') == 2"
+      },
+      {
+       "s4": "q.property('grimoire:state') == 4"
+      },
+      {
+       "s5": "q.property('grimoire:state') == 5"
+      },
+      {
+       "s6": "q.property('grimoire:state') == 6"
+      }
+     ],
+     "blend_transition": 0.15
+    },
+    "s4": {
+     "animations": [
+      "pull"
+     ],
+     "transitions": [
+      {
+       "s0": "q.property('grimoire:state') == 0"
+      },
+      {
+       "s1": "q.property('grimoire:state') == 1"
+      },
+      {
+       "s2": "q.property('grimoire:state') == 2"
+      },
+      {
+       "s3": "q.property('grimoire:state') == 3"
+      },
+      {
+       "s5": "q.property('grimoire:state') == 5"
+      },
+      {
+       "s6": "q.property('grimoire:state') == 6"
+      }
+     ],
+     "blend_transition": 0.15
+    },
+    "s5": {
+     "animations": [
+      "withdraw"
+     ],
+     "transitions": [
+      {
+       "s0": "q.property('grimoire:state') == 0"
+      },
+      {
+       "s1": "q.property('grimoire:state') == 1"
+      },
+      {
+       "s2": "q.property('grimoire:state') == 2"
+      },
+      {
+       "s3": "q.property('grimoire:state') == 3"
+      },
+      {
+       "s4": "q.property('grimoire:state') == 4"
+      },
+      {
+       "s6": "q.property('grimoire:state') == 6"
+      }
+     ],
+     "blend_transition": 0.15
+    },
+    "s6": {
+     "animations": [
+      "miss"
+     ],
+     "transitions": [
+      {
+       "s0": "q.property('grimoire:state') == 0"
+      },
+      {
+       "s1": "q.property('grimoire:state') == 1"
+      },
+      {
+       "s2": "q.property('grimoire:state') == 2"
+      },
+      {
+       "s3": "q.property('grimoire:state') == 3"
+      },
+      {
+       "s4": "q.property('grimoire:state') == 4"
+      },
+      {
+       "s5": "q.property('grimoire:state') == 5"
+      }
+     ],
+     "blend_transition": 0.15
+    }
+   }
+  }
+ }
+}

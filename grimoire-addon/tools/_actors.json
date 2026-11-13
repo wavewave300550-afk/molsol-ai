@@ -2852,5 +2852,147 @@
     128
    ]
   ]
+ },
+ "book_ed_vision": {
+  "id": "grimoire:book_ed_vision",
+  "states": [
+   0,
+   1
+  ],
+  "kinds": 6,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "show": 1.2,
+   "show_k0": 1.2,
+   "show_k1": 1.2,
+   "show_k2": 1.2,
+   "show_k3": 1.2,
+   "show_k4": 1.2,
+   "show_k5": 1.2
+  },
+  "lifetime": 30,
+  "cubes": [
+   63,
+   60,
+   70,
+   64,
+   81,
+   187
+  ],
+  "bones": [
+   27,
+   23,
+   25,
+   26,
+   21,
+   81
+  ],
+  "tex": [
+   [
+    128,
+    64
+   ],
+   [
+    128,
+    64
+   ],
+   [
+    128,
+    64
+   ],
+   [
+    128,
+    64
+   ],
+   [
+    128,
+    128
+   ],
+   [
+    128,
+    64
+   ]
+  ]
+ },
+ "book_ed_charge": {
+  "id": "grimoire:book_ed_charge",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
+  "kinds": 6,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "life": null,
+   "form": 1.5,
+   "release": 0.5,
+   "cancel": 0.4,
+   "form_k0": 1.5,
+   "loop_k0": 4.0,
+   "form_k1": 1.5,
+   "loop_k1": 4.0,
+   "form_k2": 1.5,
+   "loop_k2": 4.0,
+   "form_k3": 1.5,
+   "loop_k3": 4.0,
+   "form_k4": 1.5,
+   "loop_k4": 4.0,
+   "form_k5": 1.5,
+   "loop_k5": 4.0
+  },
+  "lifetime": 120,
+  "cubes": [
+   116,
+   88,
+   87,
+   158,
+   69,
+   118
+  ],
+  "bones": [
+   26,
+   21,
+   34,
+   81,
+   25,
+   36
+  ],
+  "tex": [
+   [
+    256,
+    128
+   ],
+   [
+    256,
+    128
+   ],
+   [
+    256,
+    128
+   ],
+   [
+    256,
+    128
+   ],
+   [
+    256,
+    128
+   ],
+   [
+    256,
+    128
+   ]
+  ]
  }
 }

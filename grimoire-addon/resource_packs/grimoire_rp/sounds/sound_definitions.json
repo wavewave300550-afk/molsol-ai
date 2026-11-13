@@ -2613,6 +2613,138 @@
      "pitch": 1.0
     }
    ]
+  },
+  "grimoire.book_ed_select": {
+   "category": "neutral",
+   "max_distance": 24,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/book_ed_select",
+     "volume": 0.9,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.book_ed_flip": {
+   "category": "neutral",
+   "max_distance": 10,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/book_ed_flip",
+     "volume": 0.35,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.book_ed_charge": {
+   "category": "neutral",
+   "max_distance": 24,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/book_ed_charge",
+     "volume": 0.9,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.book_ed_release": {
+   "category": "neutral",
+   "max_distance": 32,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/book_ed_release",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.book_ed_deny": {
+   "category": "neutral",
+   "max_distance": 16,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/book_ed_deny",
+     "volume": 0.7,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.book_ed_call_n": {
+   "category": "neutral",
+   "max_distance": 20,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/book_ed_call_n",
+     "volume": 0.7,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.book_ed_call_h": {
+   "category": "neutral",
+   "max_distance": 20,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/book_ed_call_h",
+     "volume": 0.7,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.book_ed_call_w": {
+   "category": "neutral",
+   "max_distance": 20,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/book_ed_call_w",
+     "volume": 0.7,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.book_ed_call_a": {
+   "category": "neutral",
+   "max_distance": 20,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/book_ed_call_a",
+     "volume": 0.7,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.book_ed_call_f": {
+   "category": "neutral",
+   "max_distance": 20,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/book_ed_call_f",
+     "volume": 0.7,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.book_ed_call_all": {
+   "category": "neutral",
+   "max_distance": 20,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/book_ed_call_all",
+     "volume": 0.75,
+     "pitch": 1.0
+    }
+   ]
   }
  }
 }

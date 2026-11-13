@@ -1,5 +1,7 @@
 entity.grimoire:book_dw_charge.name=Rising Word
 entity.grimoire:book_dw_vision.name=Codex Vision
+entity.grimoire:book_ed_charge.name=Codex Manifestation
+entity.grimoire:book_ed_vision.name=Codex Vision
 entity.grimoire:cherub.name=Cherubim
 entity.grimoire:dn_city_balcony.name=Falling Balcony
 entity.grimoire:dn_city_corridor.name=Folding Corridor
