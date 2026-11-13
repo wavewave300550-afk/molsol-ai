@@ -361,7 +361,7 @@ def wall_mat(nm=False):
         f = -np.log(1 - 0.75 * b) * 6
         stripe = (f % 1.0) < 0.35
         col = np.where(stripe[..., None], rgb(c1), rgb(c0))
-        dots = (tex._hash(ix // 2, iy // 2, 11) > 0.9) & ~stripe
+        dots = (tex._hash(ix // 3, iy // 3, 11) > 0.9) & (ix % 3 == 1) & (iy % 3 == 1) & ~stripe
         col = np.where(dots[..., None], rgb(SGOLD), col)
         wains = V > 0.78
         col = np.where(wains[..., None], rgb("#f1d2b8") if not nm else rgb(CGRAY), col)
@@ -383,7 +383,7 @@ def backwall_mat():
         ix, iy = tex.px(ctx)
         t = tex.tile(ctx, PINK, 1, 0.35)
         col = mix(rgb(PINK), rgb("#f7d6c8"), (V * 0.6)[..., None])
-        dots = tex._hash(ix // 2, iy // 2, 12) > 0.88
+        dots = (tex._hash(ix // 3, iy // 3, 12) > 0.93) & (ix % 3 == 1) & (iy % 3 == 1)
         col = np.where(dots[..., None], rgb(SGOLD), col)
         glow = np.full(U.shape, 0.42)
         # corridor: nested arched frames toward a vanishing point slightly above centre
@@ -1182,11 +1182,11 @@ def book_model():
                 tex.fabric(PINK, None, glow=0.1, fringe=True), variant=int(cx > 0))
 
     room = k.bone("room", cover)
-    k.plane(room, "y", (-0.5, -4.2, -5.775), 14.0, 4.6, floor_mat(), rot=(-51.6, 0, 0), faces=("up",))
-    k.plane(room, "y", (-0.5, 7.8, -5.775), 14.0, 3.75, ceiling_mat(), rot=(40.1, 0, 0), faces=("down",))
-    k.plane(room, "x", (-5.3, 1.5, -5.775), 3.75, 15.0, wall_mat(), rot=(0, 40.1, 0))
-    k.plane(room, "x", (4.3, 1.5, -5.775), 3.75, 15.0, wall_mat(), rot=(0, -40.1, 0))
-    k.plane(room, "z", (-0.5, 2.1, -4.35), 9.8, 9.6, backwall_mat(), faces=("north",))
+    k.plane(room, "y", (-0.5, -4.2, -5.775), 14.0, 4.6, floor_mat(), rot=(-51.6, 0, 0), faces=("up",), density=5)
+    k.plane(room, "y", (-0.5, 7.8, -5.775), 14.0, 3.75, ceiling_mat(), rot=(40.1, 0, 0), faces=("down",), density=4)
+    k.plane(room, "x", (-5.3, 1.5, -5.775), 3.75, 15.0, wall_mat(), rot=(0, 40.1, 0), density=4)
+    k.plane(room, "x", (4.3, 1.5, -5.775), 3.75, 15.0, wall_mat(), rot=(0, -40.1, 0), density=4)
+    k.plane(room, "z", (-0.5, 2.1, -4.35), 9.8, 9.6, backwall_mat(), faces=("north",), density=8)
 
     bed = k.bone("bed", room, pivot=(-2.7, -3.0, -5.3))
     bwood = tex.wood("#e2b98f", "#a7764e")
@@ -1225,12 +1225,12 @@ def book_model():
     dl = k.bone("door_leaf", rwall, pivot=(3.95, -1.8, -4.8))
     k.box(dl, (3.9, -1.8, -5.775), (0.15, 4.6, 1.95), md["door"])
 
-    for i, (sx, sy, sz, rz) in enumerate(((2.4, -4.6, -6.9, 0), (2.6, -2.8, -6.35, 0), (2.8, -0.9, -5.8, 0),
-                                          (3.0, 1.0, -5.25, 0), (3.0, 3.0, -5.0, 90), (2.7, 4.8, -5.4, 90),
-                                          (2.0, 6.7, -6.0, 180), (0.7, 7.3, -6.6, 180))):
-        sb = k.bone(f"st{i + 1}", room, pivot=(sx, sy, sz))
-        k.box(sb, (sx, sy, sz), (1.8, 0.8, 0.8), relief, rot=(0, 0, rz) if rz else None, variant=i % 2,
-              mats={"north": gilt2})
+    # impossible staircase: climbs the right wall from the door's lintel, then walks on along the ceiling
+    for i, (sx, sy, sz, w) in enumerate(((3.6, 1.6, -6.75, 1.2), (3.6, 2.6, -6.3, 1.2), (3.6, 3.6, -5.85, 1.2),
+                                         (3.6, 4.6, -5.4, 1.2), (3.6, 5.6, -4.95, 1.2), (3.3, 6.5, -4.6, 1.6),
+                                         (2.4, 7.05, -4.9, 1.6), (1.4, 7.3, -5.4, 1.6))):
+        sb = k.bone(f"st{i + 1}", rwall, pivot=(sx, sy, sz))
+        k.box(sb, (sx, sy, sz), (w, 0.5, 0.8), relief, variant=i % 2, mats={"north": gilt2, "south": gilt2})
 
     mob = k.bone("mobile", room, pivot=(-0.5, 7.4, -5.9))
     k.box(mob, (-0.5, 6.5, -5.9), (0.1, 1.8, 0.1), gilt)
@@ -1313,7 +1313,7 @@ def book_anims():
     for i in range(4):
         t0 = 0.22 + 0.06 * i
         opn.scl(f"pop{i + 1}", {0: 0.0, t0: 0.0, t0 + 0.12: 1.0, 0.6: 1.0})
-        opn.rot(f"pop{i + 1}", {0: (0, 0, 0), t0: (0, 0, 0), t0 + 0.26: (-80, 0, 0), 0.6: (-72, 0, 0)})
+        opn.rot(f"pop{i + 1}", {0: (0, 0, 0), t0: (0, 0, 0), t0 + 0.26: (-60, 0, 0), 0.6: (-52, 0, 0)})
     opn.scl("nm_veil", 0.0)
     shut = Anim("shut", loop=True)     # pop-ups stay folded away while the book is closed
     for i in range(4):
@@ -1370,14 +1370,26 @@ def build_attachable(pack, model, anims):
 
 
 def write_icon(pack, model, idle):
-    img = render(model, idle.pose(0.0), yaw=24, pitch=10, size=(32, 32), bg=(48, 32, 48, 0), ss=6,
+    """32x32 inventory icon: supersampled render, contrast/saturation lift, crisp alpha, dark outline."""
+    img = render(model, idle.pose(0.0), yaw=16, pitch=8, size=(32, 32), bg=(58, 40, 62, 0), ss=8, margin=0.02,
                  hide=("nm_",))
-    a = np.asarray(img).copy()
-    a[..., 3] = np.where(a[..., 3] >= 110, 255, 0)
+    a = np.asarray(img).astype(float)
+    rgb_ = a[..., :3] / 255.0
+    lum = rgb_.mean(axis=2, keepdims=True)
+    rgb_ = np.clip(lum + (rgb_ - lum) * 1.3, 0, 1)
+    rgb_ = np.clip((rgb_ - 0.5) * 1.18 + 0.52, 0, 1)
+    on = a[..., 3] >= 110
+    pad = np.pad(on, 1)
+    near = (pad[:-2, 1:-1] | pad[2:, 1:-1] | pad[1:-1, :-2] | pad[1:-1, 2:]) & ~on
+    out = np.zeros((32, 32, 4), dtype=np.uint8)
+    out[..., :3] = np.round(rgb_ * 255)
+    out[..., 3] = np.where(on, 255, 0)
+    out[near] = (52, 34, 58, 255)
     p = os.path.join(pack.rp, "textures", "items", f"grimoire_{ITEM_SUFFIX}.png")
     os.makedirs(os.path.dirname(p), exist_ok=True)
-    Image.fromarray(a, "RGBA").save(p, optimize=True)
-    return img
+    Image.fromarray(out, "RGBA").save(p, optimize=True)
+    if getattr(pack.preview, "enabled", False):
+        Image.fromarray(out, "RGBA").resize((256, 256), Image.NEAREST).save(os.path.join(PREVIEW, "book_dn_icon.png"))
 
 
 # ------------------------------------------------------------------------------- selection vision
@@ -1641,11 +1653,11 @@ def previews(pack, book, banims, visions, vanims, charges, canims):
     rows = []
     for kd, cm in enumerate(charges):
         rows.append([render(cm, _merge((cb["form"], 0.75), (cb["life"], 0.75)), yaw=25, pitch=18, size=(260, 260),
-                            fit=((0, 0, 0), 19)),
+                            fit=((0, 0, 0), 23)),
                      render(cm, _merge((cb["form"], 1.5), (cb["life"], 2.0)), yaw=25, pitch=18, size=(260, 260),
-                            fit=((0, 0, 0), 19)),
+                            fit=((0, 0, 0), 23)),
                      render(cm, _merge((cb["form"], 1.5), (cb["life"], 3.0)), yaw=-150, pitch=10, size=(260, 260),
-                            fit=((0, 0, 0), 19)),
+                            fit=((0, 0, 0), 23)),
                      render(cm, _merge((cb["form"], 1.5), (cb["life"], 2.0)), yaw=10, pitch=12, size=(260, 260),
                             fit=((0, 0, 0), 9), hide=("frag", "plate"))])
     _grid(rows, os.path.join(PREVIEW, "book_dn_charge.png"))

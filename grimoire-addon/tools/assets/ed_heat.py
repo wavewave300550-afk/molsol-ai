@@ -83,7 +83,7 @@ NV, NP, NT = 6, 6, 7          # vents per flank, dorsal plate pairs, tail bones
 # ---------------------------------------------------------------- materials
 SK = {None: dict(fis="#6e1e0a", fg=0.3, halo=None, hg=0.0, hw=0.0, gap="#0a0403", gg=0.0, warm=0.0),
       "ignited": dict(fis="#ff8c2c", fg=1.0, halo="#b8340c", hg=0.55, hw=1.5, gap=None, gg=0.0, warm=0.0),
-      "whitehot": dict(fis="#fff8dc", fg=1.0, halo="#ff8a2a", hg=0.9, hw=2.3, gap="#a8300c", gg=0.3, warm=0.22)}
+      "whitehot": dict(fis="#fff8dc", fg=1.0, halo="#ff8a2a", hg=0.9, hw=2.3, gap=None, gg=0.0, warm=0.22)}
 
 
 def _t(ctx, col, glow, a=1.0):
@@ -209,12 +209,14 @@ def _mouth():
 
 def _plate():
     """Basalt-dark dorsal armour with osteoderm pits; plate rims glow when the furnace is lit."""
-    rim = {None: ("#4a1a0e", 0.08), "ignited": ("#ff7a2a", 0.85), "whitehot": ("#fff0c0", 1.0)}
+    rim = {None: ("#4a1a0e", 0.08), "ignited": ("#ff7a2a", 0.85), "whitehot": ("#ffb050", 1.0)}
 
     def fn(ctx):
         ix, iy = tex.px(ctx)
         n = tex.fbm(ix / 3.0 + ctx.variant * 5.1, iy / 3.0, 3)
         col = tex.mix(tex.rgb("#1c0c0a"), tex.rgb("#3e1a14"), n[..., None])
+        if ctx.alt == "whitehot":
+            col = col * 1.6 + np.array([0.25, 0.05, 0.0])
         d = np.minimum(np.minimum(ix, ctx.w - 1 - ix), np.minimum(iy, ctx.h - 1 - iy))
         rc, rg = rim[ctx.alt]
         edge = d == 0
@@ -305,8 +307,7 @@ def build_model():
             x0 = 0.25 if sx > 0 else -10.55
             p.cube((x0, BACK - 0.2, zc - 3.9), (10.3, 3.0, 7.8), plate, variant=i % 2,
                    mats={"down": vent, ("west" if sx > 0 else "east"): vent})
-            for xo in (3.4, 7.4):
-                p.box((sx * xo, BACK + 3.4, zc + (0.6 if xo > 4 else -0.6)), (1.8, 1.4, 3.6), plate, variant=1)
+            p.box((sx * 5.2, BACK + 3.3, zc), (2.2, 1.2, 6.4), plate, variant=1)          # osteoderm keel
     for name, par, z0, z1 in (("core_1", chest, -33, -1), ("core_2", body, -1, 15)):
         zc = (z0 + z1) / 2
         c = m.bone(name, par, pivot=(0, BACK, zc))
@@ -936,7 +937,7 @@ def build_anims(info=None):
 # ---------------------------------------------------------------- constructs
 def _shimmer_mat(seed, tint, a_scale=1.0, key="sh"):
     """Translucent heat-distortion curtain (blend): wavering refraction bands, warm at the base."""
-    kt, kw = tex.rgb(tint), tex.rgb("#fff8ec")
+    kt, kw = tex.rgb(tint), tex.rgb("#fffaf0")
 
     def fn(ctx):
         u, v = ctx.U, ctx.V
@@ -944,7 +945,7 @@ def _shimmer_mat(seed, tint, a_scale=1.0, key="sh"):
         w1 = np.sin((u * 3 + 0.35 * np.sin(v * 8 + sd)) * 2 * np.pi) * 0.5 + 0.5
         w2 = np.sin((u * 9 + 0.6 * np.sin(v * 13 + sd * 2)) * 2 * np.pi) * 0.5 + 0.5
         fadev = np.clip(v * 1.3, 0, 1) ** 1.4
-        a = (0.06 + 0.32 * w1 ** 5 + 0.16 * w2 ** 10) * fadev * a_scale
+        a = (0.1 + 0.42 * w1 ** 5 + 0.2 * w2 ** 10) * fadev * a_scale
         col = kw + (kt - kw) * np.clip((1 - w1) * 0.6 + 0.4 * v, 0, 1)[..., None]
         sp = ctx.rng.random((ctx.h, ctx.w)) < 0.004
         a = np.where(sp, 0.9, a)
@@ -980,7 +981,7 @@ def _seam_mat():
 
 def shimmer_model():
     """Heat-shimmer wall: 9 x 8 blocks at scale 2; two folding curtains of hot air over a glowing seam."""
-    m = Model("ed_heat_shimmer", density=0.5, bounds=(12, 10, (0, 4, 0)))
+    m = Model("ed_heat_shimmer", density=1.0, bounds=(12, 10, (0, 4, 0)))
     root = m.bone("root")
     seam = m.bone("seam", root)
     seam.plane("y", (0, 0.3, 0), 74, 6, _seam_mat(), faces=("up",))
@@ -1028,7 +1029,7 @@ def shimmer_anims():
 
 def wave_model():
     """Superheated air front: three nested translucent arcs bulging forward (-Z) + an ember skirt."""
-    m = Model("ed_heat_wave", density=0.5, bounds=(14, 8, (0, 2, 0)))
+    m = Model("ed_heat_wave", density=1.0, bounds=(14, 8, (0, 2, 0)))
     root = m.bone("root")
     for j, (R, Hh, tint) in enumerate(((52, 46, "#ffb060"), (44, 36, "#ff8a3a"), (36, 26, "#ff5a20"))):
         b = m.bone(f"arc{j + 1}", root, pivot=(0, 0, 8 * j))
@@ -1069,8 +1070,8 @@ def _glass_mat():
         r, ang = np.hypot(u, v), np.arctan2(v, u)
         rim = 0.84 + 0.1 * np.sin(ang * 5 + 1.3 + ctx.variant) + 0.05 * np.sin(ang * 11)
         ix, iy = tex.px(ctx)
-        n = tex.fbm(ix / 5.0 + ctx.variant * 7, iy / 5.0, 5)
-        crack = (np.abs(n - 0.5) < 0.035) | ((np.abs(np.sin(ang * 7 + n * 3)) < 0.07) & (r > 0.18))
+        n = tex.fbm(ix / 6.0 + ctx.variant * 7, iy / 6.0, 5)
+        crack = (worley_edges(ix, iy, 9, 77 + ctx.variant) < 0.8) | ((np.abs(np.sin(ang * 4 + n * 2)) < 0.05) & (r > 0.15))
         hot = ctx.alt is None
         pc = tex.mix(tex.rgb("#7a1e08"), tex.rgb("#d0581a"), n[..., None]) if hot else \
             tex.mix(tex.rgb("#0e080c"), tex.rgb("#2a2232"), n[..., None])
@@ -1268,6 +1269,19 @@ DRAGON_PARTICLES = {k: f"grimoire:ed_heat_{k}" for k in ("step", "scorch", "haze
                                                          "steam", "slag", "skid")}
 
 
+def _fx_sheet(items):
+    """One contact sheet for the helper constructs (local helper: the kit sheet takes one model)."""
+    import os
+    from PIL import Image
+    from kit.pack import PREVIEW
+    from kit.render import render
+    out = Image.new("RGBA", (360 * len(items), 360))
+    for i, (mdl, skin, (yw, pt)) in enumerate(items):
+        out.paste(render(mdl, None, yaw=yw, pitch=pt, size=(360, 360), skin=skin), (360 * i, 0))
+    os.makedirs(PREVIEW, exist_ok=True)
+    out.save(os.path.join(PREVIEW, "ed_heat_fx.png"))
+
+
 def build(pack):
     build_particles(pack)
     m, info = build_model()
@@ -1277,12 +1291,14 @@ def build(pack):
     by = {a.name: a for a in anims}
     br = (by["breathe"], 0.0)
     side = ((-90, 6), (35, 14), (150, 16), (0, 82))
-    pack.preview("ed_heat_a", m, [[(by["idle"], 0.0), br]], views=side)
+    pack.preview("ed_heat_a", m, [[(by["idle"], 0.0), br]], views=((-90, 4), (32, 10)), cell=(800, 440))
     pack.preview("ed_heat_b", m, [[(by["move"], 0.0), br], [(by["move"], 0.15), br], [(by["charge"], 0.3), br]],
                  views=((-90, 4), (40, 12)), skin="ignited")
-    pack.preview("ed_heat_c", m, [[(by["ignite"], 1.15), br], [(by["power"], 1.4), br], [(by["depart"], 1.2), br]],
-                 views=((-90, 6), (40, 30)), skin="whitehot")
-
+    pack.preview("ed_heat_c", m, [[(by["power"], 1.4), br], [(by["attack_a"], ATTACK_A_HIT + 0.12), br],
+                                  [(by["skid"], 0.3), br], [(by["turn_r"], 0.2), br]],
+                 views=((-90, 6), (40, 30), (0, 80)), skin="ignited")
+    pack.preview("ed_heat_d", m, [[(by["ignite"], 1.15), br], [(by["depart"], 1.0), br], [(by["rest"], 0.0), br],
+                                  [(by["arrive"], 0.25), br]], views=((-90, 6), (40, 25)), skin="whitehot")
     sm_ = shimmer_model()
     pack.actor("ed_heat_shimmer", sm_, shimmer_anims(), {0: ["hidden"], 1: ["form"], 2: ["hold"], 3: ["part"], 4: ["fade"]},
                always=["ripple"], scale=2.0, lifetime=60, display="Heat Shimmer", blend=0.1)
@@ -1297,9 +1313,9 @@ def build(pack):
     pack.actor("ed_heat_lane", lm, lane_anims(), {0: ["hidden"], 1: ["appear"], 2: ["armed"], 3: ["surge"], 4: ["fade"]},
                scale=1.0, lifetime=60, display="Charge Lane", blend=0.0, visibility=vis,
                props={"len": {"type": "float", "range": [0.0, 64.0], "default": 16.0, "client_sync": True}})
-    pack.preview("ed_heat_fx", sm_, [None], views=((20, 10),))
-    pack.preview("ed_heat_fx2", wm, [None], views=((25, 25),))
-    pack.preview("ed_heat_fx3", gm, [None], views=((10, 60),))
+    if getattr(pack.preview, "enabled", False):
+        _fx_sheet([(sm_, None, (20, 10)), (wm, None, (25, 25)), (gm, None, (10, 60)), (gm, "cool", (10, 60)),
+                   (lm, None, (15, 45))])
     build_sounds(pack)
     print(f"    dragon_heat: {m.cube_count()} cubes, {len(m.order)} bones, tex {m.tex_size}, "
           f"run {RUN_SPEED:.3f} b/s, walk {WALK_SPEED:.3f} b/s")

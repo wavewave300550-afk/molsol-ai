@@ -47,7 +47,7 @@ from .a_fx_common import particles
 # (40 x 29 x 9 cm vs 38 x 28 x 8 cm).
 #   rot  : ry 180 turns the cover (and, when open, the pages) toward the caster; rx tips it up.
 #   turn : extra spin about the book's own vertical axis; lift: hover offset in the book's own frame.
-# The open-while-using motion (rise 2.5, tilt 16 deg, open spread re-centred) is in build_book_anims.
+# The open-while-using motion (rise 10 units = ~4 px, tilt 28 deg, spread re-centred) is in build_book_anims.
 HAND_PIVOT = (0.0, 0.0, 0.0)
 BOOK_CENTER = (0.0, 0.0, 0.0)
 FIRST = dict(pos=(5.0, 21.0, -9.0), rot=(20.0, 196.0, -6.0), turn=0.0, lift=(0.0, 0.0, 0.0), scale=0.31)
@@ -727,10 +727,10 @@ def build_book_anims(info):
     op.rot("front", {0: (0, 0, 0), 0.15: (0, -10, 0), 0.5: (0, -172, 0), 0.62: (0, -166, 0), 0.75: (0, -170, 0)})
     op.rot("spine", {0: (0, 0, 0), 0.15: (0, 0, 0), 0.5: (0, -86, 0), 0.75: (0, -85, 0)})
     op.pos("spine", {0: (0, 0, 0), 0.15: (0, 0, 0), 0.5: (0, 0, 2.4), 0.75: (0, 0, 2.4)})
-    op.pos("body", {0: (0, 0, 0), 0.5: (-HX, 2.8, 0), 0.75: (-HX, 2.5, 0)})
-    op.rot("body", {0: (0, 0, 0), 0.5: (20, 0, 0), 0.75: (16, 0, 0)})
+    op.pos("body", {0: (0, 0, 0), 0.5: (-HX, 10.5, 0), 0.75: (-HX, 10.0, 0)})
+    op.rot("body", {0: (0, 0, 0), 0.5: (32, 0, 0), 0.75: (28, 0, 0)})
     op.scl("halo", {0: 0.0, 0.3: 0.0, 0.6: 1.08, 0.75: 1.0})
-    op.pos("halo", {0: (0, 0, 0), 0.75: (-HX, 2.5, 0)})
+    op.pos("halo", {0: (0, 0, 0), 0.75: (-HX, 10.0, 0)})
     for lin in LIN:
         op.scl(f"glow_{lin}", {0: 1.0, 0.5: 1.6, 0.75: 1.35})
     A.append(op)
