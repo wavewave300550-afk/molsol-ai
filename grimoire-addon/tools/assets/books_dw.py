@@ -555,9 +555,6 @@ def book_anims():
         op.scl(f"ln{i + 1}", (s, s, s))
     A.append(op)
 
-    hidden_bits = Anim("closed_bits", loop=True)  # rising lines / glow are gone while closed
-    A.append(hidden_bits)
-
     turn = Anim("turn", length=0.95, loop=False)   # selection flourish: open, riffle three pages, close
     turn.rot("front", {0: (0, 0, 0), 0.16: (0, -150, 0), 0.72: (0, -150, 0), 0.95: (0, 0, 0)})
     turn.rot("back", {0: (0, 0, 0), 0.16: (0, -8, 0), 0.72: (0, -8, 0), 0.95: (0, 0, 0)})
@@ -589,7 +586,7 @@ def book_anims():
 def write_attachable(pack, m, anims):
     geo, texp = pack.model(m)
     rp = pack.rp
-    by = {a.name: a for a in anims if a.name != "closed_bits"}
+    by = {a.name: a for a in anims}
     _write(os.path.join(rp, "animations", "book_dw.animation.json"), animations_file(list(by.values())))
     ctl = "controller.animation.grimoire.book_dw.turn"
     _write(os.path.join(rp, "animation_controllers", "book_dw.animation_controllers.json"), {

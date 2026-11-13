@@ -169,7 +169,7 @@ def mats():
                    nightmare=tex.stone("#55506c", INDIGO, "#76708a", scale=4, cracks=0.5, glow_crack=0.7, crack_color="#d070a8"))
     d["lamp"] = a(tex.glow_flat("#ffd59a", 1.0, core="#fffbe8"), nightmare=tex.glow_flat("#a85a9a", 0.95, core="#ffd0f0"))
     d["cloud"] = a(cloud_mat("#fff4ee", "#f2c6d8", "dncl1"), nightmare=cloud_mat("#5a4a78", "#2a2d52", "dncl1n", glow=0.15))
-    d["puff"] = a(cloud_mat("#fffaf4", "#ffd9c0", "dncl2", a=0.8, soft=0), nightmare=cloud_mat("#6a4a6e", "#24264a", "dncl2n", a=0.8, glow=0.1, soft=0))
+    d["puff"] = a(cloud_mat("#fffaf4", "#ffd9c0", "dncl2", a=0.85), nightmare=cloud_mat("#6a4a6e", "#24264a", "dncl2n", a=0.85, glow=0.1))
     d["window"] = a(arch_window_mat("#ffd77a", "#c9a24a", "w1"),
                     nightmare=tex.eye_mat(iris="#c45a90", sclera="#efe3cf", pupil="#120c18", lid=BURG, glow=0.95, slit=True,
                                           ring="#ffd0e0"))
@@ -788,6 +788,10 @@ def build_ring():
                 b.box((4.4, 10.4, z - 0.6), (2.0, 2.0, 2.0), M_["lamp"], rot=(0, 45, 0))
             else:
                 b.box((0, -3.4, z - L / 2), (1.6, 1.6, 1.6), M_["lamp"], rot=(45, 45, 0))
+                for sx in (-1, 1):   # a dream archway over the middle of the bridge
+                    b.box((sx * 4.4, 9.0, z - L / 2), (1.2, 9.0, 1.2), M_["marble"])
+                b.box((0, 14.0, z - L / 2), (10.0, 1.6, 1.6), M_["gold_glow"])
+                b.box((0, 15.8, z - L / 2), (3.0, 3.0, 1.0), M_["roof"], rot=(0, 0, 45))
             segs.append(b.name)
             par = b
             z -= L
@@ -813,6 +817,13 @@ def build_ring():
             q = ((R + 5.2) * math.cos(ar), 8.4, (R + 5.2) * math.sin(ar))
             b.box(q, (0.7, 5.0, 0.7), M_["gold"])
             b.box((q[0], 11.2, q[2]), (2.0, 2.0, 2.0), M_["lamp"], rot=(0, 45, 0))
+            if s == 1:   # floating archway where the road is re-routed
+                for sr in (-1, 1):
+                    q = ((R + sr * 5.0) * math.cos(ar), 12.0, (R + sr * 5.0) * math.sin(ar))
+                    b.box(q, (1.4, 16.0, 1.4), M_["marble"])
+                q = (R * math.cos(ar), 20.5, R * math.sin(ar))
+                b.box(q, (12.0, 2.0, 2.0), M_["gold_glow"], rot=(0, -a, 0), pivot=q)
+                b.plane("x", (q[0], q[1] + 3.2, q[2]), 4.0, 4.0, M_["moon"], rot=(0, -a, 0), pivot=q)
             segs.append(b.name)
         arcs.append((base.name, segs))
     return m, bridges, arcs
@@ -994,7 +1005,7 @@ WAVE_KEYS = {0: 0.03, 0.35: 0.42, 0.7: 0.74, 1.0: 0.92, T_WAVE: 1.0}   # radius 
 def build_wave():
     """Dream-wave: a luminous ring with an aurora wall that leans inward like a dome.
     Base radius 1 block (16 units); the script sets grimoire:size = radius in blocks."""
-    m = Model("dn_city_wave", density=4.0, bounds=(80, 20, (0, 2, 0)))
+    m = Model("dn_city_wave", density=3.0, bounds=(80, 20, (0, 2, 0)))
     root = m.bone("root")
     rim = m.bone("rim", root)
     rim.plane("y", (0, 0.15, 0), 34, 34, tex.shaped(tex.m_ring(0.86, 1.0), "#fff6e6", "#ffd9b8", glow=1.0, var=0, key="dncwrim"),
