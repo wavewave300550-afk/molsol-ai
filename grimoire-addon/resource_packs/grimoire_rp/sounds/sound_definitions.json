@@ -2892,6 +2892,233 @@
      "pitch": 1.0
     }
    ]
+  },
+  "grimoire.ed_heat_roar": {
+   "category": "neutral",
+   "max_distance": 80,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_heat_roar",
+     "volume": 1.0,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_heat_roar_2",
+     "volume": 1.0,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_heat_roar_3",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_heat_bellow": {
+   "category": "neutral",
+   "max_distance": 72,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_heat_bellow",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_heat_snarl": {
+   "category": "neutral",
+   "max_distance": 48,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_heat_snarl",
+     "volume": 1.0,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_heat_snarl_2",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_heat_snort": {
+   "category": "neutral",
+   "max_distance": 40,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_heat_snort",
+     "volume": 0.8,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_heat_hiss": {
+   "category": "neutral",
+   "max_distance": 56,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_heat_hiss",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_heat_thrum": {
+   "category": "neutral",
+   "max_distance": 48,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_heat_thrum",
+     "volume": 0.9,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_heat_ignite": {
+   "category": "neutral",
+   "max_distance": 72,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_heat_ignite",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_heat_step": {
+   "category": "neutral",
+   "max_distance": 40,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_heat_step",
+     "volume": 0.9,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_heat_step_2",
+     "volume": 0.9,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_heat_step_3",
+     "volume": 0.9,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_heat_hit": {
+   "category": "neutral",
+   "max_distance": 48,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_heat_hit",
+     "volume": 1.0,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_heat_hit_2",
+     "volume": 1.0,
+     "pitch": 1.0
+    },
+    {
+     "name": "sounds/grimoire/ed_heat_hit_3",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_heat_skid": {
+   "category": "neutral",
+   "max_distance": 56,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_heat_skid",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_heat_shimmer": {
+   "category": "neutral",
+   "max_distance": 48,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_heat_shimmer",
+     "volume": 0.8,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_heat_wave": {
+   "category": "neutral",
+   "max_distance": 80,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_heat_wave",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_heat_cool": {
+   "category": "neutral",
+   "max_distance": 48,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_heat_cool",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_heat_depart": {
+   "category": "neutral",
+   "max_distance": 64,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_heat_depart",
+     "volume": 1.0,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_heat_glass": {
+   "category": "neutral",
+   "max_distance": 32,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_heat_glass",
+     "volume": 0.6,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.ed_heat_lane": {
+   "category": "neutral",
+   "max_distance": 48,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/ed_heat_lane",
+     "volume": 0.8,
+     "pitch": 1.0
+    }
+   ]
   }
  }
 }

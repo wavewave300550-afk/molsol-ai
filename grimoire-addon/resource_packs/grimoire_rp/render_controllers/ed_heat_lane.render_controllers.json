@@ -1,0 +1,77 @@
+{
+ "format_version": "1.8.0",
+ "render_controllers": {
+  "controller.render.grimoire.ed_heat_lane": {
+   "geometry": "Geometry.default",
+   "materials": [
+    {
+     "*": "Material.default"
+    }
+   ],
+   "textures": [
+    "Array.skin[q.property('grimoire:skin')]"
+   ],
+   "arrays": {
+    "textures": {
+     "Array.skin": [
+      "Texture.default",
+      "Texture.s1"
+     ]
+    }
+   },
+   "part_visibility": [
+    {
+     "*": true
+    },
+    {
+     "seg1": "q.property('grimoire:len') > 0.5"
+    },
+    {
+     "seg2": "q.property('grimoire:len') > 2.5"
+    },
+    {
+     "seg3": "q.property('grimoire:len') > 4.5"
+    },
+    {
+     "seg4": "q.property('grimoire:len') > 6.5"
+    },
+    {
+     "seg5": "q.property('grimoire:len') > 8.5"
+    },
+    {
+     "seg6": "q.property('grimoire:len') > 10.5"
+    },
+    {
+     "seg7": "q.property('grimoire:len') > 12.5"
+    },
+    {
+     "seg8": "q.property('grimoire:len') > 14.5"
+    },
+    {
+     "seg9": "q.property('grimoire:len') > 16.5"
+    },
+    {
+     "seg10": "q.property('grimoire:len') > 18.5"
+    },
+    {
+     "seg11": "q.property('grimoire:len') > 20.5"
+    },
+    {
+     "seg12": "q.property('grimoire:len') > 22.5"
+    },
+    {
+     "seg13": "q.property('grimoire:len') > 24.5"
+    },
+    {
+     "seg14": "q.property('grimoire:len') > 26.5"
+    },
+    {
+     "seg15": "q.property('grimoire:len') > 28.5"
+    },
+    {
+     "seg16": "q.property('grimoire:len') > 30.5"
+    }
+   ]
+  }
+ }
+}

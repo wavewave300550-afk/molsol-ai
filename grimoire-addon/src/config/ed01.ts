@@ -13,7 +13,7 @@ export const ED01 = {
   landDamage: 6,
   landRadius: 5,
   /** Geological shockwave of every footfall: damage, radius, horizontal / vertical knockback. */
-  stepDamage: 4,
+  stepDamage: 3,
   stepRadius: 3.4,
   stepKnockH: 0.7,
   stepKnockV: 0.35,
@@ -42,7 +42,7 @@ export const ED01 = {
   // ---- Stage III: Continental Descent
   /** Forelimb slam: radius (also the telegraph), damage, knockback (a jolt; the roots still hold). */
   slamRadius: 7,
-  slamDamage: 14,
+  slamDamage: 12,
   slamKnockH: 0.4,
   slamKnockV: 0.55,
   /** Strata structures erupting: damage and radius per structure. */
@@ -56,7 +56,7 @@ export const ED01 = {
   pillarDamage: 6,
   pillarWidth: 2.2,
   /** Ring convergence: the finishing blow at each ring centre, with strong knockback. */
-  convergeDamage: 10,
+  convergeDamage: 9,
   convergeKnockH: 2.4,
   convergeKnockV: 0.8,
 };

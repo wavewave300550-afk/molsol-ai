@@ -1293,7 +1293,7 @@ def build(pack):
                  views=(side, q34, back, top), cell=(420, 300))
     pack.preview("ed_nature_walk", m, [[(by["move"], t), br] for t in (0.0, 0.8, 1.6, 2.4)], views=(side, (20, 10)),
                  cell=(480, 300))
-    pack.preview("ed_nature_poses", m, [[(by["arrive"], 1.3), br], [(by["arrive"], 2.1), br],
+    pack.preview("ed_nature_poses", m, [[(by["arrive"], 1.3), br, (by["forest"], 0)], [(by["move"], 1.2), br, (by["forest"], 0)],
                                         [(by["power"], 2.6), br, (full, 0)], [(by["attack_a"], 1.9), br, (full, 0)],
                                         [(by["attack_a"], 2.3), br, (full, 0)], [(by["attack_b"], 1.35), br, (full, 0)],
                                         [(by["rest"], 1.0), br], [(by["depart"], 2.0), br]],
@@ -1301,7 +1301,7 @@ def build(pack):
     pack.preview("ed_nature_skins", m, [[(by["idle"], 0.5), br, (full, 0)], [(by["turn_l"], 0.6), br]],
                  views=((60, 20), (120, 25)), cell=(420, 300), skin="stone")
     pack.preview("ed_nature_head", m, [[(by["idle"], 0.5), br, (full, 0)]], views=((60, 10), (0, 5)), cell=(420, 300),
-                 fit=((0, 100, -135), 34))
+                 fit=((0, 106, -141), 24))
     sa = {a.name: a for a in strata_anims(slabs)}
     pa = {a.name: a for a in pillar_anims()}
     ra = {a.name: a for a in root_anims()}
