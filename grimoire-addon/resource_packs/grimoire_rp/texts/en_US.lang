@@ -1,4 +1,8 @@
+entity.grimoire:dw_circle.name=Inscription Circle
+entity.grimoire:dw_column.name=Column of Judgment
+entity.grimoire:dw_mark.name=Sacred Mark
 entity.grimoire:seraph.name=Seraphim
+entity.grimoire:telegraph.name=Warning Sigil
 item.grimoire:divine_word=Codex of the First Word
 item.grimoire:dream_nightmare=The Unawakened Codex
 item.grimoire:elemental_dragon=Codex of the Four Primordial Dragons

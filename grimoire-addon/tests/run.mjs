@@ -12,15 +12,29 @@ const out = path.join(here, ".out");
 fs.mkdirSync(path.join(out, "node_modules/@minecraft/server"), { recursive: true });
 fs.writeFileSync(path.join(out, "node_modules/@minecraft/server/package.json"), JSON.stringify({ name: "@minecraft/server", type: "module", main: "index.mjs" }));
 fs.writeFileSync(path.join(out, "node_modules/@minecraft/server/index.mjs"), `export * from ${JSON.stringify(pathToFileURL(path.join(here, "mock/server.mjs")).href)};\n`);
+const [filter, arg] = process.argv.slice(2);
+const wanted = filter === "spells" && arg ? arg.split(",") : null;
+const isolate = {
+  name: "isolate-spells",
+  setup(b) {
+    b.onLoad({ filter: /[\\/]spells[\\/](dw|dn|ed)\d\d_[^\\/]*\.ts$/ }, (args) => {
+      const id = path.basename(args.path).slice(0, 4);
+      if (!wanted || wanted.includes(id)) return undefined;
+      return { loader: "ts", resolveDir: path.dirname(args.path),
+        contents: `import { defineSpell } from "../core/registry";\nexport default defineSpell("${id}", (c) => { c.scene.endAt(1); });` };
+    });
+  },
+};
 await build({ entryPoints: [path.join(here, "../src/main.ts")], bundle: true, format: "esm", target: "es2022",
-  external: ["@minecraft/server"], outfile: path.join(out, "main.mjs"), logLevel: "error" });
+  external: ["@minecraft/server"], outfile: path.join(out, `main_${process.pid}.mjs`), logLevel: "error", plugins: [isolate] });
 
 const mock = await import(pathToFileURL(path.join(here, "mock/server.mjs")).href);
 mock.loadAssets();
 const warnings = [];
 const origWarn = console.warn;
 console.warn = (...a) => { warnings.push(a.join(" ")); };
-await import(pathToFileURL(path.join(out, "main.mjs")).href);
+await import(pathToFileURL(path.join(out, `main_${process.pid}.mjs`)).href);
+fs.rmSync(path.join(out, `main_${process.pid}.mjs`), { force: true });
 const commands = mock.startup();
 
 let failed = 0, passed = 0;
@@ -42,7 +56,6 @@ const ctx = {
   eq(a, b, msg = "") { if (a !== b) throw new Error(`${msg} expected ${JSON.stringify(b)}, got ${JSON.stringify(a)}`); },
   ok(v, msg = "assertion failed") { if (!v) throw new Error(msg); },
 };
-const [filter, arg] = process.argv.slice(2);
 ctx.arg = arg;
 for (const f of fs.readdirSync(here).filter((f) => f.endsWith(".test.mjs")).sort()) {
   if (filter && !f.includes(filter)) continue;

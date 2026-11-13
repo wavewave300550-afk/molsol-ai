@@ -1,0 +1,38 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:dw_mark",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "blend": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/dw_mark",
+    "s1": "textures/entity/grimoire/dw_mark__two",
+    "s2": "textures/entity/grimoire/dw_mark__three"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.dw_mark"
+   },
+   "render_controllers": [
+    "controller.render.grimoire.dw_mark"
+   ],
+   "animations": {
+    "turn": "animation.grimoire.dw_mark.turn",
+    "appear": "animation.grimoire.dw_mark.appear",
+    "hold": "animation.grimoire.dw_mark.hold",
+    "burst": "animation.grimoire.dw_mark.burst",
+    "hidden": "animation.grimoire.dw_mark.hidden",
+    "ctl_main": "controller.animation.grimoire.dw_mark.main"
+   },
+   "scripts": {
+    "animate": [
+     "ctl_main",
+     "turn"
+    ],
+    "should_update_bones_and_effects_offscreen": true
+   }
+  }
+ }
+}

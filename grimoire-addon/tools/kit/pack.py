@@ -1,6 +1,8 @@
 """Pack registry: turns kit models/animations into Bedrock behavior + resource pack files."""
 from __future__ import annotations
 
+import contextlib
+import fcntl
 import json
 import os
 
@@ -12,6 +14,18 @@ RP = os.path.join(ROOT, "resource_packs", "grimoire_rp")
 PREVIEW = os.path.join(ROOT, "tools", "_preview")
 
 ENTITY_FORMAT = "1.21.90"
+
+
+@contextlib.contextmanager
+def _locked():
+    """Serialise read-merge-write of shared files when several builds run at once."""
+    os.makedirs(os.path.join(ROOT, "tools"), exist_ok=True)
+    with open(os.path.join(ROOT, "tools", ".build.lock"), "w") as lk:
+        fcntl.flock(lk, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lk, fcntl.LOCK_UN)
 
 
 def _write(path, obj):
@@ -214,6 +228,10 @@ class Pack:
         }
 
     def flush(self):
+        with _locked():
+            self._flush()
+
+    def _flush(self):
         if self.sound_defs:
             p = os.path.join(self.rp, "sounds", "sound_definitions.json")
             data = {"format_version": "1.20.20", "sound_definitions": {}}

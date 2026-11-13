@@ -633,3 +633,111 @@ def alt(base: Mat, **alts):
     return Mat(fn, base.key + "|alt" + "".join(f"{k}:{v.key}" for k, v in sorted(alts.items())), mode=base.mode,
                spatial=base.spatial or any(a.spatial for a in alts.values()),
                directional=base.directional or any(a.directional for a in alts.values()), density=base.density)
+
+
+# ---------------------------------------------------------------- lettering
+def _glyph_stack(script):
+    import numpy as _np
+    return _np.array([[[c == "#" for c in row] for row in g] for g in script], dtype=bool)
+
+
+def inscription(color="#fff3c4", glow=1.0, density=0.55, key="insc", taper=True):
+    """Transparent plane sprinkled with tiny luminous letter-marks (3x4 px cells)."""
+    kc = rgb(color)
+
+    def fn(ctx):
+        ix, iy = px(ctx)
+        cx, cy = ix // 3, iy // 4
+        lx, ly = ix % 3, iy % 4
+        h = _hash(cx, cy, 17 + ctx.variant)
+        bits = (_hash(cx * 3 + lx, cy * 4 + ly, 23 + ctx.variant) > 0.45) | (lx == 1)
+        on = (h < density) & bits & (ly < 3) & (lx < 3)
+        if taper:
+            on &= np.abs(ctx.U * 2 - 1) < (0.35 + ctx.V * 0.6)
+        t = tile(ctx, color, 0.0, glow)
+        t[..., :3] = kc
+        t[..., 3] = np.where(on, 1.0, 0.0)
+        return t
+    return Mat(fn, f"{key}{color}{glow}{density}{taper}")
+
+
+def glyph_rows(script, color, glow=1.0, color2=None, scale=1, fill=0.8, bg=None, bg_glow=0.0, vertical=False,
+               seed=0, key=None):
+    """Lines of real glyphs from a script (kit.glyphs) covering the tile; transparent elsewhere
+    unless bg is given.  vertical=True stacks glyphs top-to-bottom in columns."""
+    stack = _glyph_stack(script)
+    ng, gh, gw = stack.shape
+    cw, ch = (gw + 1) * scale, (gh + 2) * scale
+    k0 = rgb(color)
+    k1 = rgb(color2) if color2 is not None else k0
+
+    def fn(ctx):
+        ix, iy = px(ctx)
+        cx, cy = ix // cw, iy // ch
+        lx, ly = (ix % cw) // scale, (iy % ch) // scale
+        gi = (_hash(cx, cy, 131 + seed + ctx.variant) * 997).astype(int) % ng
+        inside = (lx < gw) & (ly < gh)
+        on = stack[gi, np.clip(ly, 0, gh - 1), np.clip(lx, 0, gw - 1)] & inside
+        on &= _hash(cx, cy, 177 + seed + ctx.variant) < fill
+        t = tile(ctx, bg if bg is not None else color, 1.0 if bg is not None else 0.0, bg_glow)
+        col = mix(k0, k1, (ctx.V if not vertical else ctx.U)[..., None])
+        t[..., :3] = np.where(on[..., None], col, t[..., :3])
+        t[..., 3] = np.where(on, 1.0, t[..., 3])
+        t[..., 4] = np.where(on, glow, t[..., 4])
+        return t
+    return Mat(fn, key or f"grows{id(script)}{color}{glow}{color2}{scale}{fill}{bg}{bg_glow}{seed}")
+
+
+def magic_circle(script, color, color2=None, glow=1.0, bands=((0.80, 0.97, 28),), lines=(0.78, 0.99), star=0,
+                 star_r=(0.3, 0.72), fill=None, fill_glow=0.3, spokes=0, key=None, core=0.0):
+    """Top-down magic circle for a horizontal plane.
+
+    bands: (r0, r1, n_glyphs) rings of lettering.  lines: radii of thin circles.  star: n-pointed
+    star polygon drawn between star_r.  fill: optional translucent disc colour.  core: inner dot radius.
+    """
+    stack = _glyph_stack(script)
+    ng, gh, gw = stack.shape
+    k0 = rgb(color)
+    k1 = rgb(color2) if color2 is not None else k0
+
+    def fn(ctx):
+        u, v = ctx.U * 2 - 1, ctx.V * 2 - 1
+        r = np.hypot(u, v)
+        a = (np.arctan2(v, u) / (2 * math.pi)) % 1.0
+        pxl = 2.0 / ctx.w
+        on = np.zeros((ctx.h, ctx.w), dtype=bool)
+        for (r0, r1, n) in bands:
+            inb = (r >= r0) & (r <= r1)
+            col = np.clip(((a * n) % 1.0 * (gw + 2)).astype(int) - 1, -1, gw)
+            row = np.clip((((r1 - r) / (r1 - r0)) * (gh + 2)).astype(int) - 1, -1, gh)
+            gi = (np.floor(a * n).astype(int) * 7 + int(r0 * 100)) % ng
+            ok = inb & (col >= 0) & (col < gw) & (row >= 0) & (row < gh)
+            on |= ok & stack[gi, np.clip(row, 0, gh - 1), np.clip(col, 0, gw - 1)]
+        for lr in lines:
+            on |= np.abs(r - lr) < pxl * 0.75
+        if star:
+            for k in range(star):
+                a0 = 2 * math.pi * k / star
+                a1 = 2 * math.pi * ((k + (star // 2 if star % 2 else star // 2 - 1)) % star) / star
+                p0 = (math.cos(a0) * star_r[1], math.sin(a0) * star_r[1])
+                p1 = (math.cos(a1) * star_r[1], math.sin(a1) * star_r[1])
+                dx, dy = p1[0] - p0[0], p1[1] - p0[1]
+                tt = np.clip(((u - p0[0]) * dx + (v - p0[1]) * dy) / (dx * dx + dy * dy), 0, 1)
+                d = np.hypot(u - (p0[0] + tt * dx), v - (p0[1] + tt * dy))
+                on |= d < pxl * 0.8
+        if spokes:
+            sa = np.abs(((a * spokes) % 1.0) - 0.5) * 2
+            on |= (sa > 1 - 0.06 * spokes / max(r, 0.05) / 8) & (r > star_r[0]) & (r < lines[0] if lines else 1)
+        if core:
+            on |= r < core
+        t = tile(ctx, color, 0.0, glow)
+        t[..., :3] = mix(k1, k0, np.clip(r, 0, 1)[..., None])
+        t[..., 3] = np.where(on, 1.0, 0.0)
+        if fill is not None:
+            disc = (r <= (lines[-1] if lines else 1.0)) & ~on & (((px(ctx)[0] + px(ctx)[1]) % 2) == 0)
+            t[..., :3] = np.where(disc[..., None], rgb(fill), t[..., :3])
+            t[..., 3] = np.where(disc, 1.0, t[..., 3])
+            t[..., 4] = np.where(disc, fill_glow, t[..., 4])
+        return t
+    return Mat(fn, key or f"mcircle{id(script)}{color}{color2}{glow}{bands}{lines}{star}{fill}{spokes}{core}",
+               directional=True)

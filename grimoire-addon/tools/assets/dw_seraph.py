@@ -14,24 +14,7 @@ from kit.parts import feather_wing, flutter, sym, wave
 IVORY, GOLD, WGOLD, SILVER, BLUE = "#f5f0e1", "#c9a24a", "#fff3c4", "#d8dde3", "#2b3f8f"
 
 
-def inscription(color=WGOLD, glow=1.0, density=0.55, key="insc"):
-    """Transparent plane sprinkled with tiny luminous letter-marks."""
-    kc = tex.rgb(color)
-
-    def fn(ctx):
-        ix, iy = tex.px(ctx)
-        cx, cy = ix // 3, iy // 4
-        lx, ly = ix % 3, iy % 4
-        h = tex._hash(cx, cy, 17 + ctx.variant)
-        bits = (tex._hash(cx * 3 + lx, cy * 4 + ly, 23 + ctx.variant) > 0.45) | (lx == 1)
-        on = (h < density) & bits & (ly < 3) & (lx < 3)
-        u = np.abs(ctx.U * 2 - 1)
-        on &= u < (0.35 + ctx.V * 0.6)
-        t = tex.tile(ctx, color, 0.0, glow)
-        t[..., :3] = kc
-        t[..., 3] = np.where(on, 1.0, 0.0)
-        return t
-    return Mat(fn, f"{key}{color}{glow}{density}")
+inscription = tex.inscription
 
 
 def face_mat():
@@ -203,14 +186,14 @@ def build_anims(wings):
     hidden.scl("root", 0.0)
     A.append(hidden)
 
-    arrive = Anim("arrive", length=2.4, loop="hold")
-    arrive.scl("root", {0: 0.05, 0.5: (0.5, 0.25, 0.5), 1.4: (0.95, 1.05, 0.95), 2.0: 1.0})
-    arrive.pos("root", {0: (0, -30, 0), 1.6: (0, 4, 0), 2.4: (0, 0, 0)})
-    arrive.rot("root", {0: (0, -220, 0), 2.0: (0, 0, 0)})
-    _set_wings(arrive, {0: COCOON, 1.5: COCOON, 2.4: VEIL})
-    sym(arrive, "arm_{s}_1", rot={0: (-20, 0, 0), 2.4: (-52, 0, -8)})
-    sym(arrive, "arm_{s}_2", rot={0: (-40, 0, 0), 2.4: (-78, 0, -20)})
-    arrive.rot("head", {0: (24, 0, 0), 2.4: (12, 0, 0)})
+    arrive = Anim("arrive", length=1.5, loop="hold")
+    arrive.scl("root", {0: 0.05, 0.35: (0.5, 0.25, 0.5), 0.95: (0.95, 1.05, 0.95), 1.3: 1.0})
+    arrive.pos("root", {0: (0, -30, 0), 1.0: (0, 4, 0), 1.5: (0, 0, 0)})
+    arrive.rot("root", {0: (0, -220, 0), 1.3: (0, 0, 0)})
+    _set_wings(arrive, {0: COCOON, 0.9: COCOON, 1.5: VEIL})
+    sym(arrive, "arm_{s}_1", rot={0: (-20, 0, 0), 1.5: (-52, 0, -8)})
+    sym(arrive, "arm_{s}_2", rot={0: (-40, 0, 0), 1.5: (-78, 0, -20)})
+    arrive.rot("head", {0: (24, 0, 0), 1.5: (12, 0, 0)})
     A.append(arrive)
 
     veiled = Anim("veiled", loop=True)
@@ -220,16 +203,16 @@ def build_anims(wings):
     veiled.rot("head", (12, 0, 0))
     A.append(veiled)
 
-    unfurl = Anim("unfurl", length=2.0, loop="hold")
+    unfurl = Anim("unfurl", length=1.3, loop="hold")
     half = _mix(VEIL, SPREAD, 0.5)
-    for w, (t0, t1) in (("wl", (0.0, 0.8)), ("wm", (0.35, 1.25)), ("wu", (0.9, 1.9))):   # sequential opening
+    for w, (t0, t1) in (("wl", (0.0, 0.5)), ("wm", (0.22, 0.82)), ("wu", (0.55, 1.2))):   # sequential opening
         for j in range(3):
             sym(unfurl, f"{w}_{{s}}_a{j + 1}", rot={0: VEIL[w][j], t0: VEIL[w][j], (t0 + t1) / 2 + 0.05 * j: half[w][j],
-                                                  t1 + 0.04 * j: SPREAD[w][j], 2.0: SPREAD[w][j]})
-    sym(unfurl, "arm_{s}_1", rot={0: (-52, 0, -8), 1.0: (-52, 0, -8), 2.0: (-18, 0, 24)})
-    sym(unfurl, "arm_{s}_2", rot={0: (-78, 0, -20), 1.0: (-78, 0, -20), 2.0: (-30, 0, 6)})
-    unfurl.rot("head", {0: (12, 0, 0), 1.2: (12, 0, 0), 2.0: (-6, 0, 0)})
-    unfurl.pos("root", {0: (0, 0, 0), 1.4: (0, 3, 0), 2.0: (0, 5, 0)})
+                                                  t1 + 0.03 * j: SPREAD[w][j], 1.3: SPREAD[w][j]})
+    sym(unfurl, "arm_{s}_1", rot={0: (-52, 0, -8), 0.6: (-52, 0, -8), 1.3: (-18, 0, 24)})
+    sym(unfurl, "arm_{s}_2", rot={0: (-78, 0, -20), 0.6: (-78, 0, -20), 1.3: (-30, 0, 6)})
+    unfurl.rot("head", {0: (12, 0, 0), 0.7: (12, 0, 0), 1.3: (-6, 0, 0)})
+    unfurl.pos("root", {0: (0, 0, 0), 0.9: (0, 3, 0), 1.3: (0, 5, 0)})
     A.append(unfurl)
 
     open_idle = Anim("open", loop=True)
@@ -286,14 +269,14 @@ def build_anims(wings):
     verdict.pos("root", {0: (0, 13, 0), 0.3: (0, 17, 2), 0.55: (0, 4, -3), 1.2: (0, 6, -2)})
     A.append(verdict)
 
-    depart = Anim("depart", length=2.2, loop="hold")
-    _set_wings(depart, {0: SPREAD, 0.9: VEIL, 1.5: COCOON, 2.2: COCOON})
-    sym(depart, "arm_{s}_1", rot={0: (-18, 0, 24), 0.9: (-52, 0, -8), 2.2: (-52, 0, -8)})
-    sym(depart, "arm_{s}_2", rot={0: (-30, 0, 6), 0.9: (-78, 0, -20), 2.2: (-78, 0, -20)})
-    depart.rot("head", {0: (-6, 0, 0), 0.9: (14, 0, 0), 2.2: (20, 0, 0)})
-    depart.pos("root", {0: (0, 5, 0), 1.2: (0, 10, 0), 2.2: (0, 60, 0)})
-    depart.rot("root", {0: (0, 0, 0), 1.2: (0, 0, 0), 2.2: (0, 300, 0)})
-    depart.scl("root", {0: 1.0, 1.3: 1.0, 2.0: (0.35, 1.5, 0.35), 2.2: 0.0})
+    depart = Anim("depart", length=1.6, loop="hold")
+    _set_wings(depart, {0: SPREAD, 0.6: VEIL, 1.0: COCOON, 1.6: COCOON})
+    sym(depart, "arm_{s}_1", rot={0: (-18, 0, 24), 0.6: (-52, 0, -8), 1.6: (-52, 0, -8)})
+    sym(depart, "arm_{s}_2", rot={0: (-30, 0, 6), 0.6: (-78, 0, -20), 1.6: (-78, 0, -20)})
+    depart.rot("head", {0: (-6, 0, 0), 0.6: (14, 0, 0), 1.6: (20, 0, 0)})
+    depart.pos("root", {0: (0, 5, 0), 0.8: (0, 10, 0), 1.6: (0, 60, 0)})
+    depart.rot("root", {0: (0, 0, 0), 0.8: (0, 0, 0), 1.6: (0, 300, 0)})
+    depart.scl("root", {0: 1.0, 0.9: 1.0, 1.45: (0.35, 1.5, 0.35), 1.6: 0.0})
     A.append(depart)
     return A
 

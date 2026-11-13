@@ -23,15 +23,15 @@
    "hover": null,
    "flap": 3.0,
    "hidden": null,
-   "arrive": 2.4,
+   "arrive": 1.5,
    "veiled": null,
-   "unfurl": 2.0,
+   "unfurl": 1.3,
    "open": null,
    "chant1": 1.5,
    "chant2": 1.5,
    "chant3": 1.6,
    "verdict": 1.2,
-   "depart": 2.2
+   "depart": 1.6
   },
   "lifetime": 120,
   "cubes": [
@@ -44,6 +44,169 @@
    [
     256,
     256
+   ]
+  ]
+ },
+ "telegraph": {
+  "id": "grimoire:telegraph",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
+  "kinds": 3,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "warn": 1.0,
+   "hold": null,
+   "flash": 0.35,
+   "hidden": null,
+   "warn_slow": 2.0
+  },
+  "lifetime": 40,
+  "cubes": [
+   2,
+   2,
+   2
+  ],
+  "bones": [
+   3,
+   3,
+   3
+  ],
+  "tex": [
+   [
+    256,
+    128
+   ],
+   [
+    256,
+    128
+   ],
+   [
+    256,
+    128
+   ]
+  ]
+ },
+ "dw_circle": {
+  "id": "grimoire:dw_circle",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "spin": null,
+   "form": 0.8,
+   "hold": null,
+   "fade": 0.6,
+   "hidden": null
+  },
+  "lifetime": 120,
+  "cubes": [
+   11
+  ],
+  "bones": [
+   13
+  ],
+  "tex": [
+   [
+    512,
+    256
+   ]
+  ]
+ },
+ "dw_column": {
+  "id": "grimoire:dw_column",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 3,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "turn": null,
+   "hidden": null,
+   "descend": 0.5,
+   "hold": null,
+   "dissolve": 0.6
+  },
+  "lifetime": 60,
+  "cubes": [
+   78,
+   78,
+   78
+  ],
+  "bones": [
+   7,
+   7,
+   7
+  ],
+  "tex": [
+   [
+    256,
+    256
+   ],
+   [
+    256,
+    256
+   ],
+   [
+    256,
+    256
+   ]
+  ]
+ },
+ "dw_mark": {
+  "id": "grimoire:dw_mark",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default",
+   "two",
+   "three"
+  ],
+  "anims": {
+   "turn": null,
+   "appear": 0.3,
+   "hold": null,
+   "burst": 0.35,
+   "hidden": null
+  },
+  "lifetime": 120,
+  "cubes": [
+   4
+  ],
+  "bones": [
+   5
+  ],
+  "tex": [
+   [
+    64,
+    64
    ]
   ]
  }

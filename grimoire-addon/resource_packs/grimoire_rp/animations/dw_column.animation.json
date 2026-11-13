@@ -1,0 +1,311 @@
+{
+ "format_version": "1.8.0",
+ "animations": {
+  "animation.grimoire.dw_column.turn": {
+   "loop": true,
+   "bones": {
+    "ring1": {
+     "rotation": [
+      0.0,
+      "-(q.life_time*90)",
+      0.0
+     ]
+    },
+    "ring2": {
+     "rotation": [
+      0.0,
+      "-(q.life_time*-130)",
+      0.0
+     ]
+    },
+    "ring3": {
+     "rotation": [
+      0.0,
+      "-(q.life_time*110)",
+      0.0
+     ]
+    },
+    "ring4": {
+     "rotation": [
+      0.0,
+      "-(q.life_time*-150)",
+      0.0
+     ]
+    },
+    "seal": {
+     "rotation": [
+      0.0,
+      "-(q.life_time*60)",
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.dw_column.hidden": {
+   "loop": true,
+   "bones": {
+    "root": {
+     "scale": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.grimoire.dw_column.descend": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.5,
+   "bones": {
+    "seal": {
+     "position": {
+      "0": [
+       0.0,
+       192.0,
+       0.0
+      ],
+      "0.3": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "scale": {
+      "0": {
+       "post": [
+        0.5,
+        0.5,
+        0.5
+       ],
+       "lerp_mode": "catmullrom"
+      },
+      "0.3": {
+       "post": [
+        1.0,
+        1.0,
+        1.0
+       ],
+       "lerp_mode": "catmullrom"
+      },
+      "0.4": {
+       "post": [
+        1.5,
+        1.5,
+        1.5
+       ],
+       "lerp_mode": "catmullrom"
+      },
+      "0.5": {
+       "post": [
+        1.15,
+        1.15,
+        1.15
+       ],
+       "lerp_mode": "catmullrom"
+      }
+     }
+    },
+    "col": {
+     "scale": {
+      "0": {
+       "post": [
+        0.3,
+        0.0,
+        0.3
+       ],
+       "lerp_mode": "catmullrom"
+      },
+      "0.3": {
+       "post": [
+        1.25,
+        1.0,
+        1.25
+       ],
+       "lerp_mode": "catmullrom"
+      },
+      "0.42": {
+       "post": [
+        0.9,
+        1.0,
+        0.9
+       ],
+       "lerp_mode": "catmullrom"
+      },
+      "0.5": {
+       "post": [
+        1.0,
+        1.0,
+        1.0
+       ],
+       "lerp_mode": "catmullrom"
+      }
+     }
+    }
+   }
+  },
+  "animation.grimoire.dw_column.hold": {
+   "loop": true,
+   "bones": {
+    "col": {
+     "scale": [
+      "1+0.07*math.sin(q.life_time*1028.5714+0)",
+      1.0,
+      "1+0.07*math.sin(q.life_time*1028.5714+0)"
+     ]
+    }
+   }
+  },
+  "animation.grimoire.dw_column.dissolve": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.6,
+   "bones": {
+    "col": {
+     "scale": {
+      "0": {
+       "post": [
+        1.0,
+        1.0,
+        1.0
+       ],
+       "lerp_mode": "catmullrom"
+      },
+      "0.35": {
+       "post": [
+        0.25,
+        1.0,
+        0.25
+       ],
+       "lerp_mode": "catmullrom"
+      },
+      "0.6": {
+       "post": [
+        0.0,
+        1.0,
+        0.0
+       ],
+       "lerp_mode": "catmullrom"
+      }
+     }
+    },
+    "seal": {
+     "scale": {
+      "0": [
+       1.15,
+       1.15,
+       1.15
+      ],
+      "0.6": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "ring1": {
+     "scale": {
+      "0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.6": [
+       3.2,
+       3.2,
+       3.2
+      ]
+     },
+     "position": {
+      "0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.6": [
+       0.0,
+       26.0,
+       0.0
+      ]
+     }
+    },
+    "ring2": {
+     "scale": {
+      "0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.6": [
+       3.2,
+       3.2,
+       3.2
+      ]
+     },
+     "position": {
+      "0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.6": [
+       0.0,
+       34.0,
+       0.0
+      ]
+     }
+    },
+    "ring3": {
+     "scale": {
+      "0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.6": [
+       3.2,
+       3.2,
+       3.2
+      ]
+     },
+     "position": {
+      "0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.6": [
+       0.0,
+       42.0,
+       0.0
+      ]
+     }
+    },
+    "ring4": {
+     "scale": {
+      "0": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.6": [
+       3.2,
+       3.2,
+       3.2
+      ]
+     },
+     "position": {
+      "0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.6": [
+       0.0,
+       50.0,
+       0.0
+      ]
+     }
+    }
+   }
+  }
+ }
+}
