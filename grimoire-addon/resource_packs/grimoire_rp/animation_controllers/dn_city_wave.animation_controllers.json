@@ -1,0 +1,52 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.grimoire.dn_city_wave.main": {
+   "initial_state": "s0",
+   "states": {
+    "s0": {
+     "animations": [
+      "hidden"
+     ],
+     "transitions": [
+      {
+       "s1": "q.property('grimoire:state') == 1"
+      },
+      {
+       "s2": "q.property('grimoire:state') == 2"
+      }
+     ],
+     "blend_transition": 0.0
+    },
+    "s1": {
+     "animations": [
+      "expand"
+     ],
+     "transitions": [
+      {
+       "s0": "q.property('grimoire:state') == 0"
+      },
+      {
+       "s2": "q.property('grimoire:state') == 2"
+      }
+     ],
+     "blend_transition": 0.0
+    },
+    "s2": {
+     "animations": [
+      "fade"
+     ],
+     "transitions": [
+      {
+       "s0": "q.property('grimoire:state') == 0"
+      },
+      {
+       "s1": "q.property('grimoire:state') == 1"
+      }
+     ],
+     "blend_transition": 0.0
+    }
+   }
+  }
+ }
+}

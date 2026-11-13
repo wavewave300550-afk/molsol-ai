@@ -1,0 +1,41 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:dn_lull_tapestry",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "blend": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/dn_lull_tapestry",
+    "s1": "textures/entity/grimoire/dn_lull_tapestry__torn"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.dn_lull_tapestry"
+   },
+   "render_controllers": [
+    "controller.render.grimoire.dn_lull_tapestry"
+   ],
+   "animations": {
+    "breathe": "animation.grimoire.dn_lull_tapestry.breathe",
+    "hidden": "animation.grimoire.dn_lull_tapestry.hidden",
+    "unfurl": "animation.grimoire.dn_lull_tapestry.unfurl",
+    "lullaby": "animation.grimoire.dn_lull_tapestry.lullaby",
+    "dissonance": "animation.grimoire.dn_lull_tapestry.dissonance",
+    "dual": "animation.grimoire.dn_lull_tapestry.dual",
+    "scream": "animation.grimoire.dn_lull_tapestry.scream",
+    "unravel": "animation.grimoire.dn_lull_tapestry.unravel",
+    "ctl_main": "controller.animation.grimoire.dn_lull_tapestry.main"
+   },
+   "scripts": {
+    "scale": "1.25",
+    "animate": [
+     "ctl_main",
+     "breathe"
+    ],
+    "should_update_bones_and_effects_offscreen": true
+   }
+  }
+ }
+}

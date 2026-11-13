@@ -1,0 +1,36 @@
+{
+ "format_version": "1.8.0",
+ "render_controllers": {
+  "controller.render.grimoire.dw_sanct_gate": {
+   "geometry": "Geometry.default",
+   "materials": [
+    {
+     "*": "Material.default"
+    }
+   ],
+   "textures": [
+    "Texture.default"
+   ],
+   "part_visibility": [
+    {
+     "*": true
+    },
+    {
+     "letter*": "q.property('grimoire:state') == 1 || q.property('grimoire:state') == 2"
+    },
+    {
+     "shard*": "q.property('grimoire:state') == 4"
+    },
+    {
+     "quill*": "q.property('grimoire:state') == 2"
+    },
+    {
+     "ribbon*": "q.property('grimoire:state') == 5"
+    },
+    {
+     "flare*": "q.property('grimoire:state') == 6"
+    }
+   ]
+  }
+ }
+}

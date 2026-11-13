@@ -1,0 +1,91 @@
+{
+ "format_version": "1.10.0",
+ "particle_effect": {
+  "description": {
+   "identifier": "grimoire:dw_sanct_law",
+   "basic_render_parameters": {
+    "material": "particles_add",
+    "texture": "textures/particle/grimoire_particles"
+   }
+  },
+  "components": {
+   "minecraft:emitter_rate_instant": {
+    "num_particles": 7
+   },
+   "minecraft:emitter_lifetime_once": {
+    "active_time": 0.1
+   },
+   "minecraft:emitter_shape_disc": {
+    "offset": [
+     0,
+     0,
+     0
+    ],
+    "radius": 1.2,
+    "plane_normal": "y",
+    "surface_only": false,
+    "direction": [
+     0.0,
+     1.0,
+     0.0
+    ]
+   },
+   "minecraft:particle_lifetime_expression": {
+    "max_lifetime": "math.random(0.4, 0.7)"
+   },
+   "minecraft:particle_initial_speed": "math.random(1.0, 2.5)",
+   "minecraft:particle_motion_dynamic": {
+    "linear_acceleration": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "linear_drag_coefficient": 2.0
+   },
+   "minecraft:particle_appearance_billboard": {
+    "size": [
+     "0.35 + (-0.24999999999999997) * (v.particle_age / v.particle_lifetime)",
+     "0.35 + (-0.24999999999999997) * (v.particle_age / v.particle_lifetime)"
+    ],
+    "facing_camera_mode": "lookat_xyz",
+    "uv": {
+     "texture_width": 128,
+     "texture_height": 128,
+     "uv": [
+      "v.particle_random_1 * 5 < 1 ? 112 : (v.particle_random_1 * 5 < 2 ? 0 : (v.particle_random_1 * 5 < 3 ? 16 : (v.particle_random_1 * 5 < 4 ? 32 : (64))))",
+      "v.particle_random_1 * 5 < 1 ? 64 : (v.particle_random_1 * 5 < 2 ? 80 : (v.particle_random_1 * 5 < 3 ? 80 : (v.particle_random_1 * 5 < 4 ? 64 : (64))))"
+     ],
+     "uv_size": [
+      16,
+      16
+     ]
+    }
+   },
+   "minecraft:particle_appearance_tinting": {
+    "color": {
+     "interpolant": "v.particle_age / v.particle_lifetime",
+     "gradient": {
+      "0.000": [
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "0.500": [
+       0.561,
+       0.659,
+       0.91,
+       1.0
+      ],
+      "1.000": [
+       0.169,
+       0.247,
+       0.561,
+       0.0
+      ]
+     }
+    }
+   }
+  }
+ }
+}

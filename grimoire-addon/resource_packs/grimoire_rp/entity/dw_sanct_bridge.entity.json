@@ -1,0 +1,40 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:dw_sanct_bridge",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "blend": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/dw_sanct_bridge"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.dw_sanct_bridge"
+   },
+   "render_controllers": [
+    "controller.render.grimoire.dw_sanct_bridge"
+   ],
+   "animations": {
+    "hidden": "animation.grimoire.dw_sanct_bridge.hidden",
+    "idle": "animation.grimoire.dw_sanct_bridge.idle",
+    "letter": "animation.grimoire.dw_sanct_bridge.letter",
+    "form": "animation.grimoire.dw_sanct_bridge.form",
+    "stand": "animation.grimoire.dw_sanct_bridge.stand",
+    "break": "animation.grimoire.dw_sanct_bridge.break",
+    "unwrite": "animation.grimoire.dw_sanct_bridge.unwrite",
+    "flare": "animation.grimoire.dw_sanct_bridge.flare",
+    "ctl_main": "controller.animation.grimoire.dw_sanct_bridge.main"
+   },
+   "scripts": {
+    "scale": "2.0",
+    "animate": [
+     "ctl_main",
+     "idle"
+    ],
+    "should_update_bones_and_effects_offscreen": true
+   }
+  }
+ }
+}

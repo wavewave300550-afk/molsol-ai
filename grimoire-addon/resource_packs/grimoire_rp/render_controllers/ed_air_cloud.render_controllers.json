@@ -1,0 +1,73 @@
+{
+ "format_version": "1.8.0",
+ "render_controllers": {
+  "controller.render.grimoire.ed_air_cloud": {
+   "geometry": "Geometry.default",
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "puff_l1": "Material.blend"
+    },
+    {
+     "puff_l2": "Material.blend"
+    },
+    {
+     "puff_l3": "Material.blend"
+    },
+    {
+     "puff_l4": "Material.blend"
+    },
+    {
+     "puff_l5": "Material.blend"
+    },
+    {
+     "puff_l6": "Material.blend"
+    },
+    {
+     "puff_l7": "Material.blend"
+    },
+    {
+     "puff_l8": "Material.blend"
+    },
+    {
+     "puff_l9": "Material.blend"
+    },
+    {
+     "puff_r1": "Material.blend"
+    },
+    {
+     "puff_r2": "Material.blend"
+    },
+    {
+     "puff_r3": "Material.blend"
+    },
+    {
+     "puff_r4": "Material.blend"
+    },
+    {
+     "puff_r5": "Material.blend"
+    },
+    {
+     "puff_r6": "Material.blend"
+    },
+    {
+     "puff_r7": "Material.blend"
+    },
+    {
+     "puff_r8": "Material.blend"
+    },
+    {
+     "puff_r9": "Material.blend"
+    },
+    {
+     "shafts": "Material.blend"
+    }
+   ],
+   "textures": [
+    "Texture.default"
+   ]
+  }
+ }
+}
