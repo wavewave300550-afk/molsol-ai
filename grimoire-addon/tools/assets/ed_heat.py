@@ -81,9 +81,9 @@ STATE_IDS = {v[0]: k for k, v in STATES.items()}
 NV, NP, NT = 6, 6, 7          # vents per flank, dorsal plate pairs, tail bones
 
 # ---------------------------------------------------------------- materials
-SK = {None: dict(fis="#6a1a0a", fg=0.2, gap="#120604", gg=0.0, warm=0.0),
-      "ignited": dict(fis="#ff6c1c", fg=0.95, gap="#6a1a08", gg=0.28, warm=0.0),
-      "whitehot": dict(fis="#fff6d2", fg=1.0, gap="#ffa040", gg=0.8, warm=0.14)}
+SK = {None: dict(fis="#7a2008", fg=0.35, gap="#0a0403", gg=0.0, warm=0.0),
+      "ignited": dict(fis="#ff7a22", fg=1.0, gap="#3a0c06", gg=0.1, warm=0.0),
+      "whitehot": dict(fis="#fff6d2", fg=1.0, gap="#ff8a30", gg=0.55, warm=0.18)}
 
 
 def _t(ctx, col, glow, a=1.0):
@@ -94,8 +94,24 @@ def _t(ctx, col, glow, a=1.0):
     return t
 
 
-def _hide(base, dark, light, size=3, crack=1.0, key="hide"):
-    """Pebbled theropod hide with a network of thermal fissures that light up per skin."""
+def worley_edges(ix, iy, cell, seed):
+    """F2 - F1 distance (pixels) of a jittered-grid Worley pattern: small values = crack lines."""
+    cx, cy = ix // cell, iy // cell
+    f1 = np.full(ix.shape, 1e9)
+    f2 = np.full(ix.shape, 1e9)
+    for ox in (-1, 0, 1):
+        for oy in (-1, 0, 1):
+            gx, gy = cx + ox, cy + oy
+            px_ = (gx + 0.15 + 0.7 * tex._hash(gx, gy, seed)) * cell
+            py_ = (gy + 0.15 + 0.7 * tex._hash(gx, gy, seed + 31)) * cell
+            d = np.hypot(ix + 0.5 - px_, iy + 0.5 - py_)
+            f2 = np.where(d < f1, f1, np.minimum(f2, d))
+            f1 = np.minimum(f1, d)
+    return f2 - f1
+
+
+def _hide(base, dark, light, size=3, crack=1.0, key="hide", cell=7):
+    """Pebbled theropod hide over a polygonal network of thermal fissures that light up per skin."""
     kb, kd, kl = tex.rgb(base), tex.rgb(dark), tex.rgb(light)
 
     def fn(ctx):
@@ -104,24 +120,29 @@ def _hide(base, dark, light, size=3, crack=1.0, key="hide"):
         row = iy // size
         ox = ix + (row % 2) * ((size + 1) // 2)
         lx, ly = ox % size, iy % size
-        cell = tex._hash(ox // size, row + 97 * ctx.variant, 7)
-        col = kd + (kb - kd) * (0.45 + 0.55 * cell)[..., None]
-        hi = (ly == 1) & (lx >= 1)
-        col = np.where(hi[..., None], col * 0.6 + kl * 0.45, col)
+        cell_v = tex._hash(ox // size, row + 97 * ctx.variant, 7)
+        mott = tex.fbm(ix / 5.0 + ctx.variant * 3.3, iy / 5.0, 2 + ctx.variant)
+        col = kd + (kb - kd) * (0.55 + 0.25 * cell_v + 0.35 * (mott - 0.5))[..., None]
+        hi = (ly == 1) & (lx == 1)
+        col = np.where(hi[..., None], col * 0.75 + kl * 0.3, col)
         gap = (lx == 0) | (ly == 0)
-        col = np.where(gap[..., None], tex.rgb(P["gap"]) if ctx.alt else col * 0.55, col)
+        col = np.where(gap[..., None], col * 0.7 if ctx.alt is None else tex.mix(col, tex.rgb(P["gap"]), 0.6), col)
         glow = np.where(gap, P["gg"], 0.0)
-        n = tex.fbm(ix / 7.0 + ctx.variant * 9.3 + 3.1, iy / 7.0 + ctx.variant * 4.7, 11 + ctx.variant)
-        fis = np.abs(n - 0.5) < 0.03 * crack
+        e = worley_edges(ix + ctx.variant * 13, iy + ctx.variant * 7, cell, 41)
+        fis = e < 0.85 * crack
+        halo = (e < 1.9 * crack) & ~fis
         col = np.where(fis[..., None], tex.rgb(P["fis"]), col)
+        if ctx.alt is not None:
+            col = np.where(halo[..., None], tex.mix(col, tex.rgb(P["fis"]), 0.35), col)
+            glow = np.where(halo, P["fg"] * 0.35, glow)
         glow = np.where(fis, P["fg"], glow)
         if P["warm"]:
-            body = ~fis & ~gap
-            col = np.where(body[..., None], np.clip(col * 1.3 + np.array([0.2, 0.04, 0.0]), 0, 1), col)
-            glow = np.where(body, P["warm"], glow)
-        t = tex.grain(ctx, _t(ctx, col, glow), 0.05)
-        return tex.edge(ctx, t, 0.1)
-    return Mat(fn, f"edheat_{key}{base}{size}{crack}")
+            body = ~fis & ~halo
+            col = np.where(body[..., None], np.clip(col * 1.25 + np.array([0.16, 0.03, 0.0]), 0, 1), col)
+            glow = np.where(body & ~gap, P["warm"], glow)
+        t = tex.grain(ctx, _t(ctx, col, glow), 0.04)
+        return tex.edge(ctx, t, 0.12)
+    return Mat(fn, f"edheat_{key}{base}{size}{crack}{cell}")
 
 
 def _horn(level):

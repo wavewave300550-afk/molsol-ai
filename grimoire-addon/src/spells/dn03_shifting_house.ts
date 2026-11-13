@@ -502,7 +502,6 @@ export default defineSpell("dn03", ({ caster, scene, aim }) => {
     const p = plan(round);
     // pair walls that must leave with places that need a wall
     const target = p.walls;
-    const keep = walls.filter((w) => w.key !== null && target.has(w.key));
     let leaving = walls.filter((w) => w.key === null || !target.has(w.key));
     const occupied = new Set(walls.map((w) => w.key));
     let arriving = [...target.keys()].filter((k) => !occupied.has(k));
@@ -551,7 +550,6 @@ export default defineSpell("dn03", ({ caster, scene, aim }) => {
       moveWall(m.w, m.e, final.get(ek(m.e))!.door, t + k * C.moveStagger);
       m.w.e = m.e;
     });
-    void keep;
   }
 
   const shiftTicks: number[] = [];
@@ -656,7 +654,7 @@ export default defineSpell("dn03", ({ caster, scene, aim }) => {
       if (distXZ(e.location, g) > C.loopRadius || Math.abs(e.location.y - gy) > 2.5) continue;
       if ((looped.get(e.id) ?? -999) > scene.tick - C.loopCooldown) continue;
       let dest = cellCenter(loopStart);
-      if (allies(dim, dest, 2, caster).length) dest = cellCenter(cellAt(Math.floor(N / 2), N - 1 - 0));
+      if (allies(dim, dest, 2, caster).length) dest = cellCenter(cellOf(gridMid));
       looped.set(e.id, scene.tick);
       particle(dim, "dn_house_loop", up(g, 1));
       drag(e, up(dest, 0.1));
@@ -681,7 +679,6 @@ export default defineSpell("dn03", ({ caster, scene, aim }) => {
     for (const f of furn) f.a.state(FS.move);
   });
   scene.span(tFold + 4, tClose - 2, (p) => { housePos = lerp(hover, gc, smooth(p)); house.move(housePos); });
-  walls.length; // walls array is filled by the time the fold runs
   scene.at(tFold + secs(L.wFold), () => {
     walls.forEach((w, k) => {
       const t0 = tFold + secs(L.wFold) + Math.floor(k / 2);
@@ -706,6 +703,5 @@ export default defineSpell("dn03", ({ caster, scene, aim }) => {
   scene.at(tClose + 13, () => { sound(dim, "dn_house_clack", gc, 1.2); particle(dim, "fx_dust", up(gc, 0.3)); });
   scene.at(tVanish, () => { house.state(HS.vanish); burst(dim, "dn_house_note", up(gc, 3), 2.5, 6); });
   scene.at(tVanish + secs(L.vanish) - 2, () => { particle(dim, "dn_house_glow", up(gc, 1.5)); burst(dim, "dn_house_key", up(gc, 1.5), 1.2, 5); });
-  scene.onEnd(() => { for (const k of [...placed]) release(k); });
   scene.endAt(tEnd);
 });

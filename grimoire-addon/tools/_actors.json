@@ -2876,12 +2876,12 @@
   },
   "lifetime": 30,
   "cubes": [
-   63,
-   60,
-   70,
-   64,
-   81,
-   187
+   68,
+   69,
+   71,
+   65,
+   97,
+   203
   ],
   "bones": [
    27,
@@ -2953,12 +2953,12 @@
   },
   "lifetime": 120,
   "cubes": [
-   116,
-   88,
+   121,
+   97,
    87,
-   158,
+   159,
    69,
-   118
+   134
   ],
   "bones": [
    26,
@@ -2971,27 +2971,27 @@
   "tex": [
    [
     256,
-    128
+    256
    ],
    [
     256,
-    128
+    256
    ],
    [
     256,
-    128
+    256
    ],
    [
     256,
-    128
+    256
    ],
    [
     256,
-    128
+    256
    ],
    [
     256,
-    128
+    256
    ]
   ]
  },
@@ -3279,6 +3279,349 @@
    17
   ],
   "tex": [
+   [
+    128,
+    128
+   ]
+  ]
+ },
+ "dn_dreamer_bed": {
+  "id": "grimoire:dn_dreamer_bed",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default",
+   "nightmare"
+  ],
+  "anims": {
+   "drift": null,
+   "hidden": null,
+   "arrive": 2.5,
+   "float": null,
+   "occupied": 4.0,
+   "dip": 2.0,
+   "empty": null,
+   "fold": 1.5,
+   "swing": 2.4,
+   "vanish": 2.5
+  },
+  "lifetime": 120,
+  "cubes": [
+   149
+  ],
+  "bones": [
+   63
+  ],
+  "tex": [
+   [
+    512,
+    256
+   ]
+  ]
+ },
+ "dn_dreamer_pillow": {
+  "id": "grimoire:dn_dreamer_pillow",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "tumble": 1.2,
+   "slam": 0.6,
+   "fade": 0.8,
+   "hidden": null
+  },
+  "lifetime": 60,
+  "cubes": [
+   6
+  ],
+  "bones": [
+   2
+  ],
+  "tex": [
+   [
+    128,
+    64
+   ]
+  ]
+ },
+ "dn_dreamer_codex": {
+  "id": "grimoire:dn_dreamer_codex",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "turn": null,
+   "hidden": null,
+   "open": 3.0,
+   "hold": null,
+   "gather": 2.0,
+   "close": 2.6
+  },
+  "lifetime": 120,
+  "cubes": [
+   28
+  ],
+  "bones": [
+   16
+  ],
+  "tex": [
+   [
+    128,
+    128
+   ]
+  ]
+ },
+ "dn_dreamer_bedroom": {
+  "id": "grimoire:dn_dreamer_bedroom",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "appear": 0.8,
+   "float": null,
+   "settle": 0.9
+  },
+  "lifetime": 60,
+  "cubes": [
+   15
+  ],
+  "bones": [
+   2
+  ],
+  "tex": [
+   [
+    256,
+    256
+   ]
+  ]
+ },
+ "dn_dreamer_mark": {
+  "id": "grimoire:dn_dreamer_mark",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default",
+   "awake"
+  ],
+  "anims": {
+   "turn": null,
+   "hidden": null,
+   "appear": 0.5,
+   "hold": null,
+   "pop": 0.4
+  },
+  "lifetime": 120,
+  "cubes": [
+   4
+  ],
+  "bones": [
+   2
+  ],
+  "tex": [
+   [
+    64,
+    64
+   ]
+  ]
+ },
+ "dn_dreamer_domain": {
+  "id": "grimoire:dn_dreamer_domain",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default",
+   "nightmare"
+  ],
+  "anims": {
+   "spin": null,
+   "hidden": null,
+   "form": 1.6,
+   "hold": null,
+   "shrink": 1.6
+  },
+  "lifetime": 120,
+  "cubes": [
+   26
+  ],
+  "bones": [
+   12
+  ],
+  "tex": [
+   [
+    256,
+    256
+   ]
+  ]
+ },
+ "book_dn_vision": {
+  "id": "grimoire:book_dn_vision",
+  "states": [
+   0,
+   1
+  ],
+  "kinds": 6,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "show": 1.2,
+   "life": null
+  },
+  "lifetime": 30,
+  "cubes": [
+   47,
+   24,
+   34,
+   39,
+   39,
+   30
+  ],
+  "bones": [
+   21,
+   13,
+   13,
+   41,
+   17,
+   15
+  ],
+  "tex": [
+   [
+    128,
+    64
+   ],
+   [
+    128,
+    64
+   ],
+   [
+    128,
+    128
+   ],
+   [
+    128,
+    64
+   ],
+   [
+    128,
+    64
+   ],
+   [
+    128,
+    64
+   ]
+  ]
+ },
+ "book_dn_charge": {
+  "id": "grimoire:book_dn_charge",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
+  "kinds": 6,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "life": null,
+   "form": 1.5,
+   "loop": 2.0,
+   "release": 0.5,
+   "cancel": 0.4
+  },
+  "lifetime": 120,
+  "cubes": [
+   69,
+   45,
+   62,
+   51,
+   56,
+   49
+  ],
+  "bones": [
+   24,
+   16,
+   16,
+   44,
+   20,
+   18
+  ],
+  "tex": [
+   [
+    128,
+    128
+   ],
+   [
+    128,
+    128
+   ],
+   [
+    256,
+    128
+   ],
+   [
+    128,
+    128
+   ],
+   [
+    128,
+    128
+   ],
    [
     128,
     128

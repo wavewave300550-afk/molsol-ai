@@ -1,0 +1,38 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:dn_dreamer_domain",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "blend": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/dn_dreamer_domain",
+    "s1": "textures/entity/grimoire/dn_dreamer_domain__nightmare"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.dn_dreamer_domain"
+   },
+   "render_controllers": [
+    "controller.render.grimoire.dn_dreamer_domain"
+   ],
+   "animations": {
+    "spin": "animation.grimoire.dn_dreamer_domain.spin",
+    "hidden": "animation.grimoire.dn_dreamer_domain.hidden",
+    "form": "animation.grimoire.dn_dreamer_domain.form",
+    "hold": "animation.grimoire.dn_dreamer_domain.hold",
+    "shrink": "animation.grimoire.dn_dreamer_domain.shrink",
+    "ctl_main": "controller.animation.grimoire.dn_dreamer_domain.main"
+   },
+   "scripts": {
+    "scale": "(1.0) * q.property('grimoire:size')",
+    "animate": [
+     "ctl_main",
+     "spin"
+    ],
+    "should_update_bones_and_effects_offscreen": true
+   }
+  }
+ }
+}

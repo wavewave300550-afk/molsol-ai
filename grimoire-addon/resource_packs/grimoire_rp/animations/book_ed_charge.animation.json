@@ -3129,7 +3129,7 @@
      "rotation": [
       0.0,
       "-(0+6*math.sin(q.anim_time*360+36))",
-      "6+26*math.sin(q.anim_time*360+0)"
+      "22+26*math.sin(q.anim_time*360+0)"
      ]
     },
     "fw_r_a2": {
@@ -3234,7 +3234,7 @@
      "rotation": [
       0.0,
       "-(0+6*math.sin(q.anim_time*360+36))",
-      "-6+-26*math.sin(q.anim_time*360+0)"
+      "-22+-26*math.sin(q.anim_time*360+0)"
      ]
     },
     "fw_l_a2": {
@@ -3339,7 +3339,7 @@
      "rotation": [
       0.0,
       "-(0+6*math.sin(q.anim_time*360+216))",
-      "-10+26*math.sin(q.anim_time*360+180)"
+      "-18+26*math.sin(q.anim_time*360+180)"
      ]
     },
     "hw_r_a2": {
@@ -3437,7 +3437,7 @@
      "rotation": [
       0.0,
       "-(0+6*math.sin(q.anim_time*360+216))",
-      "10+-26*math.sin(q.anim_time*360+180)"
+      "18+-26*math.sin(q.anim_time*360+180)"
      ]
     },
     "hw_l_a2": {

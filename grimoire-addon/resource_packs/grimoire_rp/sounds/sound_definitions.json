@@ -3119,6 +3119,66 @@
      "pitch": 1.0
     }
    ]
+  },
+  "grimoire.book_dn_select": {
+   "category": "neutral",
+   "max_distance": 24,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/book_dn_select",
+     "volume": 0.75,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.book_dn_charge": {
+   "category": "neutral",
+   "max_distance": 24,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/book_dn_charge",
+     "volume": 0.7,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.book_dn_release": {
+   "category": "neutral",
+   "max_distance": 40,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/book_dn_release",
+     "volume": 0.9,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.book_dn_deny": {
+   "category": "neutral",
+   "max_distance": 16,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/book_dn_deny",
+     "volume": 0.6,
+     "pitch": 1.0
+    }
+   ]
+  },
+  "grimoire.book_dn_door": {
+   "category": "neutral",
+   "max_distance": 16,
+   "min_distance": 3.0,
+   "sounds": [
+    {
+     "name": "sounds/grimoire/book_dn_door",
+     "volume": 0.55,
+     "pitch": 1.0
+    }
+   ]
   }
  }
 }

@@ -1,0 +1,110 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.grimoire.dn_dreamer_codex.main": {
+   "initial_state": "s0",
+   "states": {
+    "s0": {
+     "animations": [
+      "hidden"
+     ],
+     "transitions": [
+      {
+       "s1": "q.property('grimoire:state') == 1"
+      },
+      {
+       "s2": "q.property('grimoire:state') == 2"
+      },
+      {
+       "s3": "q.property('grimoire:state') == 3"
+      },
+      {
+       "s4": "q.property('grimoire:state') == 4"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "s1": {
+     "animations": [
+      "open"
+     ],
+     "transitions": [
+      {
+       "s0": "q.property('grimoire:state') == 0"
+      },
+      {
+       "s2": "q.property('grimoire:state') == 2"
+      },
+      {
+       "s3": "q.property('grimoire:state') == 3"
+      },
+      {
+       "s4": "q.property('grimoire:state') == 4"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "s2": {
+     "animations": [
+      "hold"
+     ],
+     "transitions": [
+      {
+       "s0": "q.property('grimoire:state') == 0"
+      },
+      {
+       "s1": "q.property('grimoire:state') == 1"
+      },
+      {
+       "s3": "q.property('grimoire:state') == 3"
+      },
+      {
+       "s4": "q.property('grimoire:state') == 4"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "s3": {
+     "animations": [
+      "gather"
+     ],
+     "transitions": [
+      {
+       "s0": "q.property('grimoire:state') == 0"
+      },
+      {
+       "s1": "q.property('grimoire:state') == 1"
+      },
+      {
+       "s2": "q.property('grimoire:state') == 2"
+      },
+      {
+       "s4": "q.property('grimoire:state') == 4"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "s4": {
+     "animations": [
+      "close"
+     ],
+     "transitions": [
+      {
+       "s0": "q.property('grimoire:state') == 0"
+      },
+      {
+       "s1": "q.property('grimoire:state') == 1"
+      },
+      {
+       "s2": "q.property('grimoire:state') == 2"
+      },
+      {
+       "s3": "q.property('grimoire:state') == 3"
+      }
+     ],
+     "blend_transition": 0.2
+    }
+   }
+  }
+ }
+}

@@ -213,8 +213,8 @@ def bed_anims(curtains, spills):
     fold = Anim("fold", length=1.5, loop="hold")     # it folds into a cradle, ready to swing
     fold.scl("lump", (1, 0.0, 1))
     fold.scl("pillow_r", 0.0)
-    fold.rot("canopy", {0: (0, 0, 0), 0.8: (0, 90, 0), 1.5: (0, 90, 0)})
-    fold.scl("canopy", {0: 1.0, 0.8: (0.9, 1.4, 0.9), 1.5: (0.8, 1.3, 0.8)})
+    fold.rot("canopy", {0: (0, 0, 0), 0.8: (0, 25, 0), 1.5: (0, 45, 0)})
+    fold.scl("canopy", {0: 1.0, 0.8: (0.9, 0.5, 0.9), 1.5: (0.75, 0.4, 0.75)})
     fold.rot("bed", {0: (0, 0, 0), 0.6: (0, 0, 20), 1.5: (0, 0, SWING_A)})
     fold.rot("nightstand", {0: (0, 0, 0), 1.5: (0, 360, 0)})
     A.append(fold)
@@ -226,15 +226,15 @@ def bed_anims(curtains, spills):
     sw.rot("bed", keys, smooth=False)
     sw.scl("lump", (1, 0.0, 1))
     sw.scl("pillow_r", 0.0)
-    sw.rot("canopy", (0, 90, 0))
-    sw.scl("canopy", (0.8, 1.3, 0.8))
+    sw.rot("canopy", (0, spin(90), 0))
+    sw.scl("canopy", (0.75, 0.4, 0.75))
     A.append(sw)
     van = Anim("vanish", length=2.5, loop="hold")    # folds up into nothing on its way to the book
     van.rot("bed", {0: (0, 0, -SWING_A), 1.0: (0, 180, -10), 2.5: (0, 540, 0)})
     van.scl("root", {0: 1.0, 0.6: 0.8, 2.5: 0.0}, smooth=False)
     van.scl("lump", (1, 0.0, 1))
     van.scl("pillow_r", 0.0)
-    van.scl("canopy", {0: (0.8, 1.3, 0.8), 1.0: (0.2, 0.2, 0.2), 1.6: 0.0}, smooth=False)
+    van.scl("canopy", {0: (0.75, 0.4, 0.75), 1.0: (0.2, 0.2, 0.2), 1.6: 0.0}, smooth=False)
     A.append(van)
     return A
 

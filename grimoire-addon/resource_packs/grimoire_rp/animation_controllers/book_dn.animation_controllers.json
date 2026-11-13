@@ -1,0 +1,51 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.grimoire.book_dn.pose": {
+   "initial_state": "rest",
+   "states": {
+    "rest": {
+     "animations": [
+      "shut"
+     ],
+     "transitions": [
+      {
+       "use": "q.main_hand_item_use_duration > 0.0"
+      },
+      {
+       "flip": "q.is_sneaking"
+      }
+     ],
+     "blend_transition": 0.25
+    },
+    "flip": {
+     "animations": [
+      "flip",
+      "shut"
+     ],
+     "blend_transition": 0.15,
+     "transitions": [
+      {
+       "use": "q.main_hand_item_use_duration > 0.0"
+      },
+      {
+       "rest": "!q.is_sneaking && q.all_animations_finished"
+      }
+     ]
+    },
+    "use": {
+     "animations": [
+      "open",
+      "open_loop"
+     ],
+     "blend_transition": 0.3,
+     "transitions": [
+      {
+       "rest": "q.main_hand_item_use_duration <= 0.0"
+      }
+     ]
+    }
+   }
+  }
+ }
+}

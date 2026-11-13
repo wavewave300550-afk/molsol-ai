@@ -399,9 +399,14 @@ def skull(m, lin, prefix, parent, at, s, face=(0, 0, 0), bone_mat=None, glow=Non
     if lin == "n":          # sauropod: high nasal arch, blunt broad snout, peg teeth
         tw = 1.3
         B((0, 1.1, -0.9), (1.8, 1.7, 1.9))
-        B((0, 2.15, -1.7), (1.3, 1.0, 1.3), variant=1)
-        B((0, 0.85, -2.65), (1.5, 1.1, 1.3), variant=2)
-        B((0, 2.66, -1.7), (0.7, 0.05, 0.7), dark)
+        B((0, 1.95, -0.55), (1.5, 0.5, 1.1), variant=1)                     # skull roof
+        B((0, 2.2, -1.75), (1.3, 1.1, 1.3), variant=1)                      # high nasal arch
+        B((0, 2.85, -1.75), (0.9, 0.35, 0.9), variant=2)
+        B((0, 0.85, -2.65), (1.55, 1.1, 1.3), variant=2)                    # broad muzzle
+        B((0, 1.45, -2.45), (1.1, 0.5, 0.9))
+        B((0, 3.04, -1.75), (0.6, 0.05, 0.6), dark)                         # naris on the dome
+        for sx in (1, -1):
+            B((sx * 0.93, 0.95, -0.55), (0.06, 0.7, 0.9), dark)             # temporal openings
         for sx in (1, -1):
             B((sx * 0.91, 1.45, -1.05), (0.06, 0.55, 0.6), dark)
             B((sx * 0.88, 1.45, -1.05), (0.06, 0.28, 0.3), eye)
@@ -412,9 +417,17 @@ def skull(m, lin, prefix, parent, at, s, face=(0, 0, 0), bone_mat=None, glow=Non
         B((0, 1.3, -1.0), (1.9, 2.0, 2.0))
         B((0, 1.05, -2.45), (1.5, 1.6, 1.1), variant=1)
         B((0, 2.35, -1.55), (1.95, 0.3, 0.7), variant=2)
+        for k in range(3):                                                  # rugose nasal bosses
+            B((0, 1.95 - k * 0.12, -2.1 - k * 0.45), (0.7, 0.3, 0.4), variant=k)
+        hm = tex.bone_mat("#d7c7a0", "#8f7a52")
         for sx in (1, -1):
-            sk.box((x0 + sx * 0.8 * s, y0 + 2.9 * s, z0 - 1.25 * s), (0.45 * s, 1.3 * s, 0.5 * s),
-                   tex.bone_mat("#d7c7a0", "#8f7a52"), rot=(0, 0, -sx * 38), pivot=(x0 + sx * 0.8 * s, y0 + 2.3 * s, z0 - 1.25 * s))
+            B((sx * 1.0, 0.85, -1.2), (0.25, 0.9, 1.6), variant=2)            # flared jugal
+            hp = (x0 + sx * 0.8 * s, y0 + 2.3 * s, z0 - 1.25 * s)
+            sk.box((x0 + sx * 0.8 * s, y0 + 2.85 * s, z0 - 1.25 * s), (0.6 * s, 1.2 * s, 0.6 * s), hm,
+                   rot=(-10, 0, -sx * 52), pivot=hp)
+            sk.box((x0 + sx * 0.8 * s, y0 + 3.7 * s, z0 - 1.25 * s), (0.35 * s, 0.8 * s, 0.35 * s), hm,
+                   rot=(-10, 0, -sx * 52), pivot=hp, variant=1)
+            B((sx * 0.78, 1.15, -2.45), (0.06, 0.5, 0.6), dark)               # antorbital fenestra
             B((sx * 0.96, 1.55, -1.45), (0.06, 0.55, 0.6), dark)
             B((sx * 0.98, 1.55, -1.45), (0.06, 0.3, 0.3), eye)
             B((sx * 0.96, 0.95, -2.1), (0.06, 0.35, 0.8), tex.glow_flat(EMBER, 0.9, core="#ffd08a"))
@@ -424,6 +437,7 @@ def skull(m, lin, prefix, parent, at, s, face=(0, 0, 0), bone_mat=None, glow=Non
         tw = 0.95
         B((0, 1.0, -0.8), (1.4, 1.5, 1.7))
         B((0, 0.65, -2.85), (0.8, 0.65, 2.8), variant=1)
+        B((0, 1.05, -2.0), (0.55, 0.35, 1.6), variant=2)                     # nasal ridge
         B((0, 0.62, -4.45), (1.1, 0.8, 0.6), variant=2)
         sk.plane("x", (x0, y0 + 2.05 * s, z0 - 1.5 * s), 1.8 * s, 1.0 * s,
                  tex.shaped(tex.m_crescent(0.0), "#9fd8ff", "#3f7fd0", glow=0.5, key="edcrest"))
@@ -435,6 +449,7 @@ def skull(m, lin, prefix, parent, at, s, face=(0, 0, 0), bone_mat=None, glow=Non
     else:                   # microraptor: round cranium, great orbit, slender beak, crest feathers
         tw = 0.7
         B((0, 1.0, -0.7), (1.3, 1.3, 1.4))
+        B((0, 1.55, -0.55), (1.0, 0.3, 1.0), variant=2)
         B((0, 0.78, -1.85), (0.7, 0.6, 1.2), variant=1)
         B((0, 0.66, -2.65), (0.42, 0.38, 0.6), variant=2)
         for sx in (1, -1):
@@ -1327,13 +1342,13 @@ def build_k_skulls(m, grow, C):
     """Four skulls together: the four lineage skulls on vertebral stalks fanned toward the reader."""
     heads = []
     for i, lin in enumerate(LIN):
-        yaw = -60 + i * 40
+        yaw = (-84, -28, 28, 84)[i]
         hb = m.bone(f"khold{i}", grow, pivot=(0, 0.5, 0), rot=(0, yaw, 0))
         bm = tex.bone_mat(EL[lin][2], IVORY_SH, glow=0.12)
-        h0 = 4.5 + (i % 2) * 2.5
-        stalk = chain(m, f"kst{i}_", hb, [(0, 0.5, -3.0), (0, h0 * 0.5, -4.0), (0, h0, -5.2)], 1.1, bm)
-        s = {"n": 2.2, "h": 2.0, "w": 1.8, "a": 2.4}[lin]
-        sk, jaw = skull(m, lin, f"k{i}_", stalk[-1], (0, h0 - 0.6, -5.0), s, face=(0, 0, 0), bone_mat=bm)
+        h0 = (6.0, 10.5, 10.5, 6.0)[i]
+        stalk = chain(m, f"kst{i}_", hb, [(0, 0.5, -2.0), (0, h0 * 0.5, -4.0), (0, h0, -5.6)], 1.2, bm)
+        s = {"n": 2.6, "h": 2.5, "w": 2.1, "a": 3.0}[lin]
+        sk, jaw = skull(m, lin, f"k{i}_", stalk[-1], (0, h0 - 0.8, -5.0), s, face=(-6, 0, 0), bone_mat=bm)
         heads.append(dict(hold=hb.name, stalk=stalk, skull=sk, jaw=jaw))
     core = m.bone("kcore", grow, pivot=(0, 4, 0))
     for i, lin in enumerate(LIN):
@@ -1446,7 +1461,7 @@ def build_charge_anims(kinfo):
                 sg = 1 if wn.endswith("_r") else -1
                 f.rot(a1, {0: (0, 0, sg * -70), 0.7: (0, 0, sg * -70), 1.2: (0, 0, sg * 8), 1.5: (0, 0, 0)})
                 period, ph = 1.0, (0.0 if fwd else 0.5)
-                lp.rot(a1, (0, S(6, period, ph + 0.1), S(26 * sg, period, ph, sg * (6 if fwd else -10))))
+                lp.rot(a1, (0, S(6, period, ph + 0.1), S(26 * sg, period, ph, sg * (22 if fwd else -18))))
                 lp.rot(w["arms"][1], (0, 0, S(12 * sg, period, ph - 0.12)))
                 lp.rot(w["arms"][2], (0, 0, S(10 * sg, period, ph - 0.24)))
                 flutter(lp, w["feathers"], amp=3.0, period=1.0, clock="q.anim_time")
@@ -1661,9 +1676,11 @@ def build(pack):
     # ---------------- previews
     by = {a.name: a for a in banims}
     idle = (by["idle"], 1.3)
+    shut = (by["closed"], 0)
     _grid(pack, "book_ed_held", [
-        [(book, [idle], (25, 15)), (book, [idle], (-35, 10)), (book, [idle], (155, 15)), (book, [idle], (90, 5))],
-        [(book, [(by["turn"], 0.5), idle], (25, 15)), (book, [(by["turn"], 0.75), idle], (-30, 20)),
+        [(book, [idle, shut], (25, 15)), (book, [idle, shut], (-35, 10)), (book, [idle, shut], (155, 15)),
+         (book, [idle, shut], (90, 5))],
+        [(book, [(by["turn"], 0.5), idle, shut], (25, 15)), (book, [(by["turn"], 0.75), idle, shut], (-30, 20)),
          (book, [(by["open"], 0.75), (by["open_loop"], 0.5), idle], (5, 10)),
          (book, [(by["open"], 0.75), (by["open_loop"], 1.1), idle], (-40, 30))],
     ], cell=320)

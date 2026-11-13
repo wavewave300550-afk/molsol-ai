@@ -1241,7 +1241,7 @@ def book_anims():
     idle.rot("spiral", MR((0, spin(45) + NM * LIFE(12, 0.4), 0)))
     idle.rot("bed", MR((0, 0, LIFE(1.4, 5.3) + NM * LIFE(5, 0.3))))
     idle.scl("blanket", (1, LIFE(0.2, 3.4, 0, 1.0), 1))
-    idle.pos("window", MP((LIFE(0.7, 9.1) + NM * 2.2, LIFE(0.45, 6.7) - NM * 1.2, 0)))
+    idle.pos("window", MP((LIFE(0.7, 9.1) + NM * 2.2, LIFE(0.45, 6.7) + NM * -1.2, 0)))
     idle.rot("shut_l", MR((0, -(LIFE(20, 4.8, 0, 26) + NM * 50), 0)))
     idle.rot("shut_r", MR((0, LIFE(20, 5.3, 0.3, 26) + NM * 50, 0)))
     idle.rot("door_leaf", MR((0, -(LIFE(16, 6.7, 0, 18) + NM * 60), 0)))

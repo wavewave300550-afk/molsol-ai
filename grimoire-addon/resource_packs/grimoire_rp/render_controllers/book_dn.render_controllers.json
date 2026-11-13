@@ -1,0 +1,19 @@
+{
+ "format_version": "1.8.0",
+ "render_controllers": {
+  "controller.render.grimoire.book_dn": {
+   "geometry": "Geometry.default",
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "nm_veil": "Material.blend"
+    }
+   ],
+   "textures": [
+    "Texture.default"
+   ]
+  }
+ }
+}
