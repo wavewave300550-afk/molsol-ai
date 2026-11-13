@@ -21,7 +21,7 @@ export const ED04 = {
   passBend: 2.0,
   /** Flight speed during passes and during the banked hairpin turns (blocks/second). */
   passSpeed: 24,
-  turnSpeed: 20,
+  turnSpeed: 24,
   /** Size of the climbing hairpin loop at each pentagram vertex (blocks). */
   hairpinSize: 2.6,
   hairpinLift: 3.0,
@@ -53,8 +53,8 @@ export const ED04 = {
   /** Hold point of the full-spread beat: height above ground and distance behind the formation. */
   holdHeight: 13,
   holdBack: 15,
-  climbSpeed: 20,
-  holdTicks: 18,
+  climbSpeed: 24,
+  holdTicks: 16,
   /** Dive: duration (ticks), where it bottoms out before the focus and how far it runs past it. */
   diveTicks: 20,
   diveLead: 7,

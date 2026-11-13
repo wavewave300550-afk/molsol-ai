@@ -632,6 +632,9 @@ def write_attachable(pack, m, anims):
 
 
 # =================================================================================== selection vision
+LINES_V = (1.2, -1.2, -3.6)    # vision text line heights (each line is one full glyph row tall)
+
+
 def vision_model(kind, mt):
     m = Model(f"book_dw_vision_k{kind}", density=4.0, bounds=(2, 2, (0, 0.2, 0)))
     root = m.bone("root")
@@ -644,17 +647,18 @@ def vision_model(kind, mt):
     pr.cube((-6.1, -5.6, 0.0), (6.1, 8.2, 0.5), mt["pearl"], faces=("south", "east", "west", "up", "down"))
     spread.box((0, -1.5, 0.2), (0.6, 8.4, 0.6), mt["goldg"])
     for i in range(3):   # the previous sentence (on the left page) dissolves
-        b = m.bone(f"o{i + 1}", pl, pivot=(3.0, 0.8 - i * 1.6, -0.08))
-        b.plane("z", (3.0, 0.8 - i * 1.6, -0.08), 4.6, 0.9, mt["line_old"], variant=i)
+        y = LINES_V[i]
+        b = m.bone(f"o{i + 1}", pl, pivot=(3.0, y, -0.08))
+        b.plane("z", (3.0, y, -0.08), 4.6, 2.25, mt["line_old"], variant=i)
     t = m.bone("turn", spread, pivot=(0, -1.5, 0), rot=(0, -14, 0))
     t.plane("z", (-3.0, -1.5, -0.05), 5.8, 7.8, mt["page"])
-    for i in range(4):   # the new sentence is written on the right page, left to right
-        y = 1.0 - i * 1.5
+    for i in range(3):   # the new sentence is written on the right page, left to right
+        y = LINES_V[i]
         b = m.bone(f"n{i + 1}", pr, pivot=(-0.6, y, -0.1))
-        b.plane("z", (-2.9, y, -0.1), 4.6, 0.85, mt["line_new"], variant=i)
-    nib = m.bone("nib", pr, pivot=(-0.6, 1.0, -0.4))
-    nib.plane("z", (-0.6, 1.0, -0.4), 0.9, 0.9, mt["diamond"])
-    nib.plane("z", (-0.6, 1.0, -0.35), 1.6, 1.6, mt["glow_disc"])
+        b.plane("z", (-2.9, y, -0.1), 4.6, 2.25, mt["line_new"], variant=i)
+    nib = m.bone("nib", pr, pivot=(-0.6, LINES_V[0], -0.4))
+    nib.plane("z", (-0.6, LINES_V[0], -0.4), 0.9, 0.9, mt["diamond"])
+    nib.plane("z", (-0.6, LINES_V[0], -0.35), 1.6, 1.6, mt["glow_disc"])
     em = m.bone("emblem", root, pivot=(0, 5.0, -0.5))
     emblem(kind, m, em, (0, 5.0, -0.5), 3.3, mt)
     gl = m.bone("gleam", em, pivot=(0, 5.0, 0.6))
@@ -677,14 +681,15 @@ def vision_anims():
         s.pos(f"o{i + 1}", {0: (0, 0, 0), t0: (0, 0, 0), t0 + 0.2: (0, 1.2, -1.2)})
     s.rot("turn", {0: (0, 0, 0), 0.12: (0, 0, 0), 0.26: (0, -70, 0), 0.42: (0, -152, 0), 1.2: (0, -152, 0)})
     s.scl("turn", {0: 1.0, 0.42: 1.0, 0.46: 0.0})          # the turned page settles onto the left page
-    for i in range(4):
-        t0 = 0.44 + 0.12 * i
-        s.scl(f"n{i + 1}", {0: (0, 1, 1), t0: (0, 1, 1), t0 + 0.12: (1, 1, 1)}, smooth=False)
+    for i in range(3):
+        t0 = 0.44 + 0.15 * i
+        s.scl(f"n{i + 1}", {0: (0, 1, 1), t0: (0, 1, 1), t0 + 0.15: (1, 1, 1)}, smooth=False)
     nib_keys = {0: (0, 0, 0), 0.44: (0, 0, 0)}
-    for i in range(4):
-        t0 = 0.44 + 0.12 * i
-        nib_keys[t0 + 0.001] = (0, -1.5 * i, 0)
-        nib_keys[t0 + 0.12] = (-4.6, -1.5 * i, 0)
+    for i in range(3):
+        t0 = 0.44 + 0.15 * i
+        dy = LINES_V[i] - LINES_V[0]
+        nib_keys[t0 + 0.001] = (0, dy, 0)
+        nib_keys[t0 + 0.15] = (-4.6, dy, 0)
     s.pos("nib", nib_keys, smooth=False)
     s.scl("nib", {0: 0.0, 0.43: 0.0, 0.46: 1.0, 0.9: 1.0, 0.94: 0.0})
     s.scl("emblem", {0: 0.0, 0.5: 0.0, 0.78: 1.2, 0.92: 1.0, 1.2: 1.1})

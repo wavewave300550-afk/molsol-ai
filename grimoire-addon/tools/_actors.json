@@ -1503,7 +1503,7 @@
   },
   "lifetime": 60,
   "cubes": [
-   200
+   248
   ],
   "bones": [
    42
@@ -2568,6 +2568,283 @@
   ],
   "bones": [
    11
+  ],
+  "tex": [
+   [
+    128,
+    128
+   ]
+  ]
+ },
+ "dn_city_stair": {
+  "id": "grimoire:dn_city_stair",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "descend": 1.6,
+   "stand": null,
+   "retract": 1.2
+  },
+  "lifetime": 60,
+  "cubes": [
+   124
+  ],
+  "bones": [
+   8
+  ],
+  "tex": [
+   [
+    128,
+    128
+   ]
+  ]
+ },
+ "dn_city_balcony": {
+  "id": "grimoire:dn_city_balcony",
+  "states": [
+   0,
+   1,
+   2
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "drop": 0.8,
+   "impact": 0.9
+  },
+  "lifetime": 30,
+  "cubes": [
+   26
+  ],
+  "bones": [
+   6
+  ],
+  "tex": [
+   [
+    128,
+    64
+   ]
+  ]
+ },
+ "dn_city_street": {
+  "id": "grimoire:dn_city_street",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "appear": 0.6,
+   "roll": null,
+   "crumble": 0.6
+  },
+  "lifetime": 30,
+  "cubes": [
+   34
+  ],
+  "bones": [
+   3
+  ],
+  "tex": [
+   [
+    128,
+    128
+   ]
+  ]
+ },
+ "dn_city_door": {
+  "id": "grimoire:dn_city_door",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "flutter": null,
+   "arrive": 1.0,
+   "fly": 1.2,
+   "swoop": 0.8,
+   "depart": 0.8
+  },
+  "lifetime": 40,
+  "cubes": [
+   18
+  ],
+  "bones": [
+   10
+  ],
+  "tex": [
+   [
+    128,
+    64
+   ]
+  ]
+ },
+ "dn_city_window": {
+  "id": "grimoire:dn_city_window",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "bob": null,
+   "arrive": 0.8,
+   "hover": 2.0,
+   "blink": 0.8,
+   "stare": 1.0,
+   "shatter": 0.7
+  },
+  "lifetime": 40,
+  "cubes": [
+   26
+  ],
+  "bones": [
+   12
+  ],
+  "tex": [
+   [
+    256,
+    128
+   ]
+  ]
+ },
+ "dn_city_corridor": {
+  "id": "grimoire:dn_city_corridor",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "unfold": 1.0,
+   "snap": 0.35,
+   "clamp": null,
+   "fold": 0.8
+  },
+  "lifetime": 40,
+  "cubes": [
+   50
+  ],
+  "bones": [
+   18
+  ],
+  "tex": [
+   [
+    128,
+    128
+   ]
+  ]
+ },
+ "dn_city_stairfall": {
+  "id": "grimoire:dn_city_stairfall",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "slam": 2.2,
+   "rest": null,
+   "sink": 0.8
+  },
+  "lifetime": 40,
+  "cubes": [
+   65
+  ],
+  "bones": [
+   6
+  ],
+  "tex": [
+   [
+    256,
+    128
+   ]
+  ]
+ },
+ "dn_city_fragment": {
+  "id": "grimoire:dn_city_fragment",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "breathe": null,
+   "arrive": 0.8,
+   "idle": 1.2,
+   "hop": 0.6,
+   "bite": 0.5,
+   "crumble": 0.7
+  },
+  "lifetime": 40,
+  "cubes": [
+   29
+  ],
+  "bones": [
+   13
   ],
   "tex": [
    [
