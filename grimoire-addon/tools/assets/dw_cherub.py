@@ -776,8 +776,8 @@ def build_sounds(pack):
     # arrival: bronze ground-swell, rising choir, scribbling letters, a heavy bronze strike
     arr = sy.at(2.4, (0.0, sy.rumble(2.0, 46) * 0.55), (0.0, sy.scribble(1.2, 9) * 0.35),
                 (0.3, chord(110.0, "oh", 1.8, (1.0, 1.5, 2.0)) * 0.6), (0.9, sy.choir(330, 1.2, "ah", voices=4) * 0.35),
-                (1.3, sy.bell(98.0, 1.6, bright=0.7, inharm=1.25) * 0.7), (1.3, sy.thump(0.8, 120, 34, 0.5) * 0.6))
-    sy.save(pack, "dw_cherub_arrive", sy.reverb(arr, 2.2, 0.42), max_distance=72)
+                (1.3, sy.bell(98.0, 1.1, bright=0.7, inharm=1.25) * 0.7), (1.3, sy.thump(0.8, 120, 34, 0.5) * 0.6))
+    sy.save(pack, "dw_cherub_arrive", sy.reverb(arr, 1.2, 0.4), max_distance=72)
     # the drum of faces turning: grinding bronze and a soft toll
     turn = sy.at(1.0, (0.0, sy.creak(0.6, 70, 110, 0.15) * 0.45), (0.0, sy.lowpass(sy.noise(0.6), 400) * 0.3),
                  (0.45, sy.bell(196.0, 0.6, bright=0.6, inharm=1.3) * 0.45))
@@ -788,7 +788,7 @@ def build_sounds(pack):
                (0.05, sy.choir(370.0, 0.55, "ah", attack=0.08, release=0.25) * 0.6),
                (0.45, sy.choir(440.0, 0.55, "ah", attack=0.08, release=0.25) * 0.55),
                (0.85, sy.choir(415.3, 0.9, "eh", attack=0.1, release=0.5) * 0.6), (0.3, sy.scribble(1.0, 8) * 0.25))
-    sy.save(pack, "dw_cherub_human", sy.reverb(ph, 2.2, 0.45), max_distance=64)
+    sy.save(pack, "dw_cherub_human", sy.reverb(ph, 1.2, 0.42), max_distance=64)
     gl = sy.at(0.6, (0.0, sy.scribble(0.25, 3) * 0.6), (0.08, sy.pluck(1567.98, 0.4, 0.8) * 0.6),
                (0.12, sy.pluck(2349.3, 0.35, 0.8) * 0.4))
     sy.save(pack, "dw_cherub_glyph", sy.reverb(gl, 0.9, 0.3), volume=0.7, max_distance=32,
@@ -797,8 +797,8 @@ def build_sounds(pack):
     src = sy.osc(sy.sweep(58.0, 62.0, 2.2), wave_="saw") + 0.4 * sy.osc(sy.sweep(116.0, 124.0, 2.2), wave_="saw")
     horn = sy.formants(src, [(380, 120, 1.0), (760, 160, 0.55), (1500, 260, 0.2)])
     horn = sy.norm(horn * sy.env(2.2, 0.5, 0.2, 0.85, 0.7))
-    ox = sy.at(2.4, (0.0, horn * 0.8), (0.0, sy.choir(123.5, 2.2, "oo", voices=4) * 0.3), (0.2, sy.rumble(1.8, 40) * 0.4))
-    sy.save(pack, "dw_cherub_ox", sy.reverb(ox, 2.0, 0.35), max_distance=72)
+    ox = sy.at(2.2, (0.0, horn * 0.8), (0.0, sy.choir(123.5, 2.2, "oo", voices=4) * 0.3), (0.2, sy.rumble(1.8, 40) * 0.4))
+    sy.save(pack, "dw_cherub_ox", sy.reverb(ox, 1.0, 0.33), max_distance=72)
     sh = sy.at(1.3, (0.0, sy.whoosh(0.5, 300, 1800) * 0.5), (0.4, sy.bell(146.8, 0.9, bright=0.8, inharm=1.4) * 0.6),
                (0.4, sy.thump(0.6, 90, 40, 0.6) * 0.6), (0.45, sy.shimmer(0.8, 1600, 14) * 0.3))
     sy.save(pack, "dw_cherub_shield", sy.reverb(sh, 1.4, 0.35), max_distance=56)
@@ -808,12 +808,12 @@ def build_sounds(pack):
     rt = sy.at(1.8, (0.0, sy.thump(1.1, 140, 28, 0.8)), (0.0, sy.crack(0.5, 4500, 12) * 0.35),
                (0.02, horn[:int(sy.SR * 1.2)] * np.linspace(1, 0, int(sy.SR * 1.2)) * 0.7),
                (0.05, sy.whoosh(0.7, 2400, 300) * 0.4))
-    sy.save(pack, "dw_cherub_retaliate", sy.reverb(rt, 1.8, 0.35), max_distance=72)
+    sy.save(pack, "dw_cherub_retaliate", sy.reverb(rt, 1.2, 0.33), max_distance=72)
     # LION voice: a roar blended with a bright choir
-    li = sy.at(2.4, (0.0, sy.roar(1.9, 125, 62, growl=30, rough=0.7, formant=(520, 1250), breath=0.45, bend=0.3) * 0.9),
+    li = sy.at(2.0, (0.0, sy.roar(1.9, 125, 62, growl=30, rough=0.7, formant=(520, 1250), breath=0.45, bend=0.3) * 0.9),
                (0.08, chord(146.8, "ah", 1.7, (1.0, 1.5, 2.0), bright=1.3) * 0.45), (0.0, sy.thump(0.7, 80, 30, 0.5) * 0.5),
                (0.15, sy.wind(1.4, 600, 2600, 1.5, 0.3) * 0.25))
-    sy.save(pack, "dw_cherub_lion", sy.reverb(li, 2.4, 0.38), max_distance=80)
+    sy.save(pack, "dw_cherub_lion", sy.reverb(li, 1.2, 0.36), max_distance=80)
     # EAGLE voice: a piercing descending cry with a high choir halo
     cry_f = np.concatenate([sy.sweep(1350, 2500, 0.18, 0.6), sy.sweep(2500, 1250, 0.75, 1.4)])
     cry = sy.osc(cry_f * (1 + 0.02 * np.sin(2 * np.pi * 23 * np.arange(len(cry_f)) / sy.SR)), wave_="saw")
@@ -821,7 +821,7 @@ def build_sounds(pack):
     cry = sy.norm(cry * sy.env(len(cry_f) / sy.SR, 0.03, 0.1, 0.8, 0.35))
     ea = sy.at(1.8, (0.0, cry * 0.7), (0.05, sy.bandpass(sy.noise(0.8), 3200, 2.0) * sy.env(0.8, 0.02, 0.1, 0.5, 0.4) * 0.25),
                (0.1, sy.choir(880.0, 1.2, "ee", voices=3) * 0.3), (0.0, sy.whoosh(0.6, 800, 4000) * 0.3))
-    sy.save(pack, "dw_cherub_eagle", sy.reverb(ea, 1.8, 0.35), max_distance=80)
+    sy.save(pack, "dw_cherub_eagle", sy.reverb(ea, 1.2, 0.33), max_distance=80)
     bl = sy.at(1.0, (0.0, sy.shimmer(0.7, 2600, 14) * 0.5), (0.0, sy.whoosh(0.5, 900, 5000) * 0.35),
                (0.25, sy.bell(1318.5, 0.6, bright=1.3) * 0.35))
     sy.save(pack, "dw_cherub_blade", sy.reverb(bl, 1.0, 0.3), volume=0.8, max_distance=48)
@@ -834,10 +834,10 @@ def build_sounds(pack):
     rr = sy.at(1.2, (0.0, sy.whoosh(1.0, 300, 2400) * 0.6), (0.0, sy.scribble(0.6, 6) * 0.3))
     sy.save(pack, "dw_cherub_ring", sy.reverb(rr, 1.0, 0.3), volume=0.8, max_distance=48)
     # departure: the four voices fold into one sustained chord that rises and thins away
-    dp = sy.at(2.4, (0.0, chord(146.8, "oo", 2.0, (1.0, 1.5, 2.0, 3.0), voices=3) * 0.55),
-               (0.0, sy.whoosh(1.8, 200, 3600) * 0.3), (0.6, sy.shimmer(1.6, 2800, 18)[::-1] * 0.35),
+    dp = sy.at(2.2, (0.0, chord(146.8, "oo", 2.0, (1.0, 1.5, 2.0, 3.0), voices=3) * 0.55),
+               (0.0, sy.whoosh(1.6, 200, 3600) * 0.3), (0.6, sy.shimmer(1.5, 2800, 18)[::-1] * 0.35),
                (0.0, sy.lowpass(horn, 400)[:int(sy.SR * 1.2)] * 0.25))
-    sy.save(pack, "dw_cherub_depart", sy.reverb(dp, 2.2, 0.45), max_distance=72)
+    sy.save(pack, "dw_cherub_depart", sy.reverb(dp, 1.2, 0.42), max_distance=72)
 
 
 def build(pack):

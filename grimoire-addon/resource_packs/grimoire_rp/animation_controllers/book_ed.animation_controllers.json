@@ -1,0 +1,65 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.grimoire.book_ed.main": {
+   "initial_state": "idle",
+   "states": {
+    "idle": {
+     "animations": [
+      "closed"
+     ],
+     "transitions": [
+      {
+       "use": "q.main_hand_item_use_duration > 0.0"
+      },
+      {
+       "turn": "q.is_sneaking"
+      }
+     ],
+     "blend_transition": 0.3
+    },
+    "turn": {
+     "animations": [
+      "closed",
+      "turn"
+     ],
+     "transitions": [
+      {
+       "use": "q.main_hand_item_use_duration > 0.0"
+      },
+      {
+       "wait": "q.all_animations_finished"
+      }
+     ],
+     "blend_transition": 0.12
+    },
+    "wait": {
+     "animations": [
+      "closed"
+     ],
+     "transitions": [
+      {
+       "use": "q.main_hand_item_use_duration > 0.0"
+      },
+      {
+       "idle": "!q.is_sneaking"
+      }
+     ],
+     "blend_transition": 0.1
+    },
+    "use": {
+     "animations": [
+      "open",
+      "open_loop"
+     ],
+     "transitions": [
+      {
+       "idle": "!(q.main_hand_item_use_duration > 0.0)"
+      }
+     ],
+     "blend_transition": 0.35
+    }
+   }
+  }
+ }
+}

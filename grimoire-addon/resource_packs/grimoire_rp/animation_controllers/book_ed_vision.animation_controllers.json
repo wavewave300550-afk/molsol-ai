@@ -1,0 +1,50 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.grimoire.book_ed_vision.main": {
+   "initial_state": "s0",
+   "states": {
+    "s0": {
+     "animations": [
+      "hidden"
+     ],
+     "transitions": [
+      {
+       "s1": "q.property('grimoire:state') == 1"
+      }
+     ],
+     "blend_transition": 0.0
+    },
+    "s1": {
+     "animations": [
+      "show",
+      {
+       "show_k0": "q.property('grimoire:kind') == 0"
+      },
+      {
+       "show_k1": "q.property('grimoire:kind') == 1"
+      },
+      {
+       "show_k2": "q.property('grimoire:kind') == 2"
+      },
+      {
+       "show_k3": "q.property('grimoire:kind') == 3"
+      },
+      {
+       "show_k4": "q.property('grimoire:kind') == 4"
+      },
+      {
+       "show_k5": "q.property('grimoire:kind') == 5"
+      }
+     ],
+     "transitions": [
+      {
+       "s0": "q.property('grimoire:state') == 0"
+      }
+     ],
+     "blend_transition": 0.0
+    }
+   }
+  }
+ }
+}

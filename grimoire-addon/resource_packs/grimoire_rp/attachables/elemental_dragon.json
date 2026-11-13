@@ -1,0 +1,40 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "grimoire:elemental_dragon",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "blend": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/book_ed"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.book_ed"
+   },
+   "animations": {
+    "place": "animation.grimoire.book_ed.place",
+    "idle": "animation.grimoire.book_ed.idle",
+    "closed": "animation.grimoire.book_ed.closed",
+    "turn": "animation.grimoire.book_ed.turn",
+    "open": "animation.grimoire.book_ed.open",
+    "open_loop": "animation.grimoire.book_ed.open_loop",
+    "ctl": "controller.animation.grimoire.book_ed.main"
+   },
+   "scripts": {
+    "animate": [
+     "place",
+     "idle",
+     "ctl"
+    ]
+   },
+   "sound_effects": {
+    "flip": "grimoire.book_ed_flip"
+   },
+   "render_controllers": [
+    "controller.render.grimoire.book_ed"
+   ]
+  }
+ }
+}

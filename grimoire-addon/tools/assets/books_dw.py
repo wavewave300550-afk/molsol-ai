@@ -911,7 +911,7 @@ def build_sounds(pack):
     write = sy.scribble(d, 9) * (0.3 + 0.4 * swell)
     shim = sy.shimmer(d, 2100, 26) * swell
     ch = sy.mixdown([choirs * swell, write * 0.45, shim * 0.35, sy.pad(146.8, d, cutoff=900, attack=1.0) * 0.25])
-    sy.save(pack, "book_dw_charge", sy.reverb(ch, 1.6, 0.35), volume=0.75, max_distance=24)
+    sy.save(pack, "book_dw_charge", sy.reverb(ch, 0.9, 0.3), volume=0.75, max_distance=24)
 
     # release: the sentence ignites -- impact, struck bells, a bright held chord, rising air
     rel = sy.at(1.6, (0.0, sy.thump(0.6, 160, 48, 0.4) * 0.6), (0.0, sy.whoosh(0.5, 600, 5200) * 0.45),
@@ -920,7 +920,7 @@ def build_sounds(pack):
                                    sy.choir(370.0, 1.2, "ah", voices=4, attack=0.02, release=0.8),
                                    sy.choir(440.0, 1.2, "ee", voices=3, attack=0.02, release=0.8)]) * 0.6),
                 (0.05, sy.shimmer(1.0, 2600, 20) * 0.3))
-    sy.save(pack, "book_dw_release", sy.reverb(rel, 2.0, 0.42), volume=0.9, max_distance=40)
+    sy.save(pack, "book_dw_release", sy.reverb(rel, 1.3, 0.4), volume=0.9, max_distance=40)
 
     # deny: a muted descending pair on a dull bell and the cover softly shutting
     den = sy.at(0.7, (0.0, sy.pluck(392.0, 0.35, 0.2) * 0.5), (0.13, sy.pluck(369.9, 0.45, 0.15) * 0.45),
