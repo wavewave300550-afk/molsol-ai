@@ -127,7 +127,7 @@ def hide_mat(top, mid, belly, key, spots=True, frost=0.4):
             else:
                 amt = np.full((ctx.h, ctx.w), frost * 1.5 if ctx.group == "up" else 0.0)
             t[..., :3] = mix(t[..., :3], ki, (amt * 0.75)[..., None])
-            sparkle = (tex._hash(ix, iy, 77 + ctx.variant) > 0.92) & (amt > 0.12)
+            sparkle = (tex._hash(ix, iy, 77 + ctx.variant) > 0.975) & (amt > 0.2)
             t[..., :3] = np.where(sparkle[..., None], ki, t[..., :3])
             t[..., 4] = np.where(sparkle, 0.7, t[..., 4])
         return tex.grain(ctx, t, 0.045)
@@ -158,7 +158,7 @@ def membrane_mat(key, f0, f1, seed=0):
             col = mix(hi, deep, y[..., None])
             rip = 0.5 + 0.5 * np.sin((zf * 5 + v * 13 + seed * 0.7) * np.pi)
             col = np.clip(col * (0.86 + 0.22 * rip[..., None]), 0, 1)
-            a = 0.3 + 0.32 * y
+            a = 0.42 + 0.33 * y
         rimm = inside & (v < top + 2.0 / ctx.h)
         col = np.where(rimm[..., None], rim, col)
         a = np.where(rimm, 0.85, a)
@@ -182,8 +182,7 @@ def veins_mat(key, f0, f1, seed=0):
         else:
             l1 = ((ix * 2 + iy + seed) % 11) == 0
             l2 = ((iy - ix * 3 + seed * 5) % 17) == 0
-            stem = (np.abs(ctx.U - 0.5) < 0.6 / ctx.w) & (iy % 2 == 0)
-            on = inside & (l1 | l2 | stem) & (tex._hash(ix // 2, iy // 2, 41 + seed) < 0.86)
+            on = inside & (l1 | l2) & (tex._hash(ix // 2, iy // 2, 41 + seed) < 0.86)
             col, g = GLOW, 0.95
         t[..., :3] = rgb(col)
         t[..., 3] = np.where(on, 1.0, 0.0)
@@ -372,7 +371,7 @@ def build_model():
         fw.plane("y", (sx * 11, 1.25, 9.6), 7.2, 4.6, finm2, density=2)
 
     # tail: deep paddle with tall dorsal and ventral fins (spinosaur neural spines)
-    fin_t = [5, 7, 9, 12, 14, 16, 17, 17, 15, 11]
+    fin_t = [3, 4, 6, 8, 11, 13, 14, 14, 13, 10]
     fin_b = [0, 0, 0, 0, 4, 6, 8, 9, 9, 8]
     z, y = 29.0, 31.0
     par = body.name
@@ -682,7 +681,7 @@ def build_anims(info=None):
     wu = [0.9, 1.0, 1.0, 0.9, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4]
     for i, tb in enumerate(TAIL):
         w, d = TW[i], 0.018 * i
-        ab.rot(tb, {0: R(), 0.55 + d: R(-9 * wu[i], -8 * w), hb + d * 0.5: R(7 * w, 20 * w), 1.15 + d: R(-2 * w, 14 * w),
+        ab.rot(tb, {0: R(), 0.55 + d: R(-9 * wu[i], -8 * w), hb + d * 0.5: R(2.5 * w, 20 * w), 1.15 + d: R(-2 * w, 14 * w),
                     1.7: R()})
     ab.pos("body", {0: R(), 0.5: R(0, -1.5, 0), 0.75: R(0, 1.8, 0), hb: R(0, -2.2, 0), 1.2: R(0, 0.3, 0), 1.7: R()})
     ab.rot("body", {0: R(), 0.55: R(-2, -7, 2), hb: R(2, 12, -3), 1.2: R(0, 9, -1), 1.7: R()})
@@ -761,7 +760,7 @@ def build_anims(info=None):
         dp.rot(tb, {0: R(), t0: R(0, 4 * TW[i]), t0 + 0.3: R(6, -4 * TW[i])})
     for i, b in enumerate(SAIL):
         t0 = 0.4 + (NSAIL - 1 - i) * 0.045
-        dp.scl(b, {0: 1.0, t0: (1, 1.08, 1), t0 + 0.25: (1.4, 0.0, 1.4)})
+        dp.scl(b, {0: 1.0, t0: (1, 1.08, 1), t0 + 0.25: (0.6, 0.0, 0.6)})
     sym(dp, "arm_{s}_1", rot={0: R(), 0.9: R(), 1.4: R(-20, 0, 25)})
     sym(dp, "leg_{s}_1", rot={0: R(), 0.9: R(), 1.4: R(25, 0, 20)})
     dp.pos("root", {0: R(), 0.9: R(), 1.6: R(0, -14, 0)})
@@ -1005,12 +1004,12 @@ def crown_model():
                            key=f"crownrune{k % len(glyphs.DRACONIC)}")
         c.box((px, 3.5, pz), (9, 7, chord), band_base, mats={"west": rune, "east": rune}, variant=k % 2)
         l1, h1 = 12, 34
-        _hexprism(c, (px + 17 * math.sin(math.radians(l1)), 17 * math.cos(math.radians(l1)), pz), 9, h1, ice_s, l1,
+        _hexprism(c, (px + 17 * math.sin(math.radians(l1)), 17 * math.cos(math.radians(l1)), pz), 11, h1, ice_s, l1,
                   k * 17, k)
         top = (px + h1 * math.sin(math.radians(l1)), h1 * math.cos(math.radians(l1)), pz)
         l2, h2 = 18, 26 + (k % 2) * 8
         _hexprism(b, (top[0] + h2 / 2 * math.sin(math.radians(l2)), top[1] + h2 / 2 * math.cos(math.radians(l2)), pz),
-                  6.5, h2, ice_t, l2, k * 23, k + 1)
+                  8, h2, ice_t, l2, k * 23, k + 1)
         tip = (top[0] + h2 * math.sin(math.radians(l2)), top[1] + h2 * math.cos(math.radians(l2)), pz)
         b.box((tip[0] + 3 * math.sin(math.radians(24)), tip[1] + 3, pz), (3.2, 9, 3.2), ice_t, rot=(0, 45, -24))
         for dz in (-11, 11):
@@ -1274,7 +1273,6 @@ def build(pack):
                visibility=[{"sailflow*": f"q.property('grimoire:state') == {STATE_IDS['power']}"}],
                sounds=snd, particles=prt, display="Abyssal Cryotitan", blend=0.25)
 
-    st = Model  # noqa: F841 (keeps flake8 quiet about unused import patterns)
     a = stream_model()
     pack.actor("ed_tide_stream", a, stream_anims(), {0: ["hidden"], 1: ["form"], 2: ["hold"], 3: ["fade"]}, always=["flow"],
                size_prop=True, lifetime=60, display="Tidal Stream", blend=0.1)

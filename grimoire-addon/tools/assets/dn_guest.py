@@ -50,7 +50,7 @@ G_FRAME = (-20.0, 50.0, -4.4)      # where its left hand grips the door frame
 
 # animation lengths (seconds) -- mirrored as tick constants in the spell
 DOOR_LEN = dict(manifest=1.2, handle=1.4, open=1.2, slam=0.6, vanish=1.0)
-GUEST_LEN = dict(emerge=2.6, reach=1.2, grab=0.5, pull=1.6, withdraw=1.1, miss=0.9)
+GUEST_LEN = dict(emerge=2.6, reach=1.2, grab=0.5, pull=1.6, withdraw=1.1, miss=0.6)
 
 DOOR_STATES = {0: ["hidden"], 1: ["manifest"], 2: ["closed"], 3: ["handle"], 4: ["open"], 5: ["held"],
                6: ["slam"], 7: ["vanish"]}
@@ -949,13 +949,13 @@ def guest_anims(m):
     # ---- miss: closes on nothing, tilts its head, opens again
     ms = Anim("miss", length=GUEST_LEN["miss"], loop="hold")
     keyed(ms, {0: reach_end,
-               0.3: with_arms(m, reach_body, {"r": (1.0, HAND_Y, GRAB_Z - 1), "l": (-1.0, HAND_Y, GRAB_Z - 1)},
+               0.2: with_arms(m, reach_body, {"r": (1.0, HAND_Y, GRAB_Z - 1), "l": (-1.0, HAND_Y, GRAB_Z - 1)},
                               fingers=hands(*CLOSED)),
-               0.62: with_arms(m, gpose({**REACH, "head": (6, 12, -22)}, root=(0, 0, GUEST_Z), m=m),
+               0.42: with_arms(m, gpose({**REACH, "head": (6, 12, -22)}, root=(0, 0, GUEST_Z), m=m),
                                {"r": (1.5, HAND_Y, GRAB_Z), "l": (-1.5, HAND_Y, GRAB_Z)}, fingers=hands(*CLOSED)),
-               0.9: with_arms(m, gpose({**REACH, "head": (8, 0, -12)}, root=(0, 0, GUEST_Z), m=m), goals,
+               0.6: with_arms(m, gpose({**REACH, "head": (8, 0, -12)}, root=(0, 0, GUEST_Z), m=m), goals,
                               fingers=hands(*CLOSED))})
-    ms.particle(0.45, "breath", "mouth")
+    ms.particle(0.3, "breath", "mouth")
     A.append(ms)
 
     # ---- pull: retracts while leaning back, knees bent, arms trembling with the strain
