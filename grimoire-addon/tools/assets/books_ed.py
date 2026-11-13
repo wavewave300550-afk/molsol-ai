@@ -70,7 +70,7 @@ EL = {  # glow colour, deep colour, bone tint
     "n": ("#9be35f", "#3f6a2a", "#e4ecd0"),
     "h": ("#ff8a2a", "#7a2a10", "#f2dcc2"),
     "w": ("#7fd6ff", "#1f4f9a", "#d8eaf4"),
-    "a": ("#e6f4ff", "#7f9fbf", "#eef2f8"),
+    "a": ("#b9dcff", "#7f9fbf", "#eef2f8"),
 }
 
 # ------------------------------------------------------------------ skull bitmaps (snout left)
@@ -144,6 +144,23 @@ SCENES = {
 }
 
 
+def _stroke_dist(ctx, scene):
+    pxx = ctx.U * ctx.w
+    pyy = ctx.V * ctx.h
+    dist = np.full((ctx.h, ctx.w), 99.0)
+    for line in scene.get("lines", []):
+        for (u0, v0), (u1, v1) in zip(line, line[1:]):
+            ax, ay, bx, by = u0 * ctx.w, v0 * ctx.h, u1 * ctx.w, v1 * ctx.h
+            dx, dy = bx - ax, by - ay
+            L2 = dx * dx + dy * dy + 1e-9
+            tt = np.clip(((pxx - ax) * dx + (pyy - ay) * dy) / L2, 0, 1)
+            dist = np.minimum(dist, np.hypot(pxx - (ax + tt * dx), pyy - (ay + tt * dy)))
+    for (cu, cv, r) in scene.get("circles", []):
+        rr = r * min(ctx.w, ctx.h)
+        dist = np.minimum(dist, np.abs(np.hypot(pxx - cu * ctx.w, pyy - cv * ctx.h) - rr))
+    return dist
+
+
 def _stroke_mask(ctx, scene, width=0.6):
     pxx = ctx.U * ctx.w
     pyy = ctx.V * ctx.h
@@ -174,6 +191,7 @@ def page_art(lines_of, key, glyph_rows=2):
         t[..., :3] = mix(ki, ks, np.clip(n * 0.55 + vig * 0.9, 0, 1)[..., None])
         nb = len(lines_of)
         on = np.zeros((ctx.h, ctx.w), dtype=bool)
+        ink = np.zeros((ctx.h, ctx.w))
         for bi, sc in enumerate(lines_of):
             v0, v1 = bi / nb, (bi + 1) / nb
             band = (ctx.V >= v0) & (ctx.V < v1)
@@ -184,7 +202,9 @@ def page_art(lines_of, key, glyph_rows=2):
             sub.w, sub.h = ctx.w, ctx.h
             sub.V = (ctx.V - v0) / (v1 - v0) * 1.15 - 0.05
             sub.U = (ctx.U - 0.08) / 0.84
-            on |= band & _stroke_mask(sub, SCENES[sc], 0.55)
+            d = _stroke_dist(sub, SCENES[sc])
+            ink = np.maximum(ink, np.where(band, np.clip(1.25 - d / 0.75, 0, 1), 0))
+            on |= band & (d < 0.6)
         # draconic text rows (tiny 1px dashes) under each drawing
         dash = (_hash(ix // 2, iy // 3, 77 + ctx.variant) > 0.45) & (iy % 3 == 1) & (ix % 2 == 0)
         rows = np.zeros_like(on)
@@ -194,8 +214,8 @@ def page_art(lines_of, key, glyph_rows=2):
                 yy = y1 - 2 - r * 3
                 rows |= (iy == yy) & (ix > ctx.w * 0.12) & (ix < ctx.w * 0.88)
         rows &= dash | (_hash(ix, iy, 5) > 0.6)
-        t[..., :3] = np.where(on[..., None], kk, t[..., :3])
-        t[..., :3] = np.where((rows & ~on)[..., None], mix(kk, ki, 0.45), t[..., :3])
+        t[..., :3] = mix(t[..., :3], kk, (ink * 0.92)[..., None])
+        t[..., :3] = np.where((rows & ~on)[..., None], mix(kk, ki, 0.5), t[..., :3])
         return grain(ctx, t, 0.03)
     return Mat(fn, f"edpage{key}", directional=True)
 
@@ -455,7 +475,8 @@ def build_book():
 
     # --- back board + its page stack
     body.cube((-HX - 0.2, -H / 2 - 0.3, 1.8), (W + 0.4, H + 0.6, 0.8), board)
-    body.cube((-HX + 0.2, -H / 2 + 0.2, 0.0), (W - 0.6, H - 0.4, 1.8), edge_side, mats={"north": art_l, "up": edge_ud, "down": edge_ud})
+    body.cube((-HX + 0.2, -H / 2 + 0.2, 0.0), (W - 0.6, H - 0.4, 1.8), edge_side, mats={"north": art_l, "up": edge_ud, "down": edge_ud},
+              density=5)
     for sx, sy in ((-1, 1), (-1, -1)):          # back corners (fore-edge side)
         body.box((sx * (HX - 0.6), sy * (H / 2 - 0.6), 2.45), (1.6, 1.6, 0.5), gold, variant=1)
     # spine board + vertebrae
@@ -486,7 +507,8 @@ def build_book():
     front = m.bone("front", body, pivot=(HX, 0, 0))
     front.cube((-HX - 0.2, -H / 2 - 0.3, -2.6), (W + 0.4, H + 0.6, 0.8), board, variant=2,
                mats={"south": tex.mottled("#7a5a2c", "#5a3f1c", scale=2.0)})
-    front.cube((-HX + 0.2, -H / 2 + 0.2, -1.8), (W - 0.6, H - 0.4, 1.8), edge_side, mats={"south": art_r, "up": edge_ud, "down": edge_ud})
+    front.cube((-HX + 0.2, -H / 2 + 0.2, -1.8), (W - 0.6, H - 0.4, 1.8), edge_side, mats={"south": art_r, "up": edge_ud, "down": edge_ud},
+               density=5)
     # draconic inscription bands, top and bottom
     band = tex.glyph_rows(glyphs.DRACONIC, GOLD_HI, glow=0.75, bg="#2a1c0c", bg_glow=0.0, fill=0.9, key="edband")
     front.plane("z", (0, H / 2 - 0.9, -2.66), W - 1.4, 1.3, band, density=7)
@@ -532,7 +554,7 @@ def build_book():
     leaves = []
     for k in range(3):
         lb = m.bone(f"leaf{k + 1}", body, pivot=(HX - 0.4, 0, -0.04 - 0.05 * k))
-        lb.plane("z", (-0.1, 0, -0.04 - 0.05 * k), W - 1.0, H - 0.8, art_leaf, variant=k, density=2)
+        lb.plane("z", (-0.1, 0, -0.04 - 0.05 * k), W - 1.0, H - 0.8, art_leaf, variant=k, density=4)
         leaves.append(lb.name)
 
     # --- four distinct dragon-claw clasps (hinged on the back board)
@@ -682,16 +704,16 @@ def build_book_anims(info):
 
     # open and rise while Use is held
     op = Anim("open", length=0.75, loop="hold")
-    op.rot(clasps["n"], {0: (0, 0, 0), 0.15: (0, 105, 0)})
-    op.rot(clasps["h"], {0: (0, 0, 0), 0.18: (0, 105, 0)})
-    op.rot(clasps["w"], {0: (0, 0, 0), 0.15: (100, 0, 0)})
-    op.rot(clasps["a"], {0: (0, 0, 0), 0.17: (-100, 0, 0)})
+    op.rot(clasps["n"], {0: (0, 0, 0), 0.15: (0, 75, 0), 0.3: (0, 64, 0)})
+    op.rot(clasps["h"], {0: (0, 0, 0), 0.18: (0, 78, 0), 0.33: (0, 66, 0)})
+    op.rot(clasps["w"], {0: (0, 0, 0), 0.15: (72, 0, 0), 0.3: (62, 0, 0)})
+    op.rot(clasps["a"], {0: (0, 0, 0), 0.17: (-72, 0, 0), 0.32: (-62, 0, 0)})
     op.rot("front", {0: (0, 0, 0), 0.15: (0, -10, 0), 0.5: (0, -172, 0), 0.62: (0, -166, 0), 0.75: (0, -170, 0)})
     op.rot("spine", {0: (0, 0, 0), 0.15: (0, 0, 0), 0.5: (0, -86, 0), 0.75: (0, -85, 0)})
     op.pos("spine", {0: (0, 0, 0), 0.15: (0, 0, 0), 0.5: (0, 0, 2.4), 0.75: (0, 0, 2.4)})
     op.pos("body", {0: (0, 0, 0), 0.5: (-HX, 2.8, 0), 0.75: (-HX, 2.5, 0)})
     op.rot("body", {0: (0, 0, 0), 0.5: (20, 0, 0), 0.75: (16, 0, 0)})
-    op.scl("halo", {0: 0.0, 0.3: 0.0, 0.6: 0.62, 0.75: 0.55})
+    op.scl("halo", {0: 0.0, 0.3: 0.0, 0.6: 1.08, 0.75: 1.0})
     op.pos("halo", {0: (0, 0, 0), 0.75: (-HX, 2.5, 0)})
     for lin in LIN:
         op.scl(f"glow_{lin}", {0: 1.0, 0.5: 1.6, 0.75: 1.35})
@@ -955,13 +977,14 @@ def vision_page(m, root, lin_list):
     page = m.bone("page", root, pivot=(0, -1.2, 0))
     for sx, nm in ((1, "pg_r"), (-1, "pg_l")):
         b = m.bone(nm, page, pivot=(0, -1.2, 0))
-        b.plane("y", (sx * 3.0, -1.15, 0), 6.0, 5.4, page_art([lin_list[0], lin_list[-1]], f"v{nm}{''.join(lin_list)}"), density=4)
-        b.cube((sx * 3.0 - 3.1, -1.65, -2.8), (6.2, 0.45, 5.6), C["bronze"], faces=("down",))
-        b.box((sx * 5.9, -1.5, 2.6), (0.6, 0.5, 0.6), C["gold"])
-        b.box((sx * 5.9, -1.5, -2.6), (0.6, 0.5, 0.6), C["gold"])
+        sc = lin_list[0] if sx > 0 else lin_list[-1]
+        b.plane("y", (sx * 2.6, -1.15, 0), 5.2, 4.4, page_art([sc], f"v{sc}", glyph_rows=1), density=7)
+        b.cube((sx * 2.6 - 2.7, -1.6, -2.3), (5.4, 0.4, 4.6), C["bronze"], faces=("down", "east", "west", "north", "south"))
+        b.box((sx * 5.1, -1.45, 2.1), (0.6, 0.5, 0.6), C["gold"])
+        b.box((sx * 5.1, -1.45, -2.1), (0.6, 0.5, 0.6), C["gold"])
     sp = m.bone("pg_spine", page, pivot=(0, -1.6, 0))
     for i in range(4):
-        sp.box((0, -1.75, -2.1 + i * 1.4), (0.8, 0.7, 1.1), C["bone"], variant=i % 3)
+        sp.box((0, -1.7, -1.8 + i * 1.2), (0.8, 0.7, 1.0), C["bone"], variant=i % 3)
     emb = m.bone("emb", root, pivot=(0, 5.2, 3.2))
     emb.plane("z", (0, 5.2, 3.3), 5.0, 5.0, tex.shaped(tex.m_disc(1.0), BASALT, "#120d0a", outline=GOLD, var=0, key="edvplq"), density=5)
     ring(emb, (0, 5.2, 3.2), 2.5, 10, (1.7, 0.4, 0.4), C["gold"], axis="z", cycle=2)
@@ -997,8 +1020,8 @@ def build_vision():
             vision_page(m, root, [lin])
             bm, _g = _bone_mats(lin)
             sk = m.bone("sk", root, pivot=(0, -1.0, 0))
-            s = {"n": 0.62, "h": 0.68, "w": 0.6, "a": 0.85}[lin]
-            face = (0, -25, 0) if lin == "a" else (0, 0, 0)
+            s = {"n": 0.72, "h": 0.8, "w": 0.7, "a": 0.95}[lin]
+            face = (-28, -38, 0) if lin == "a" else (0, 0, 0)
             ox = {"n": 0.6, "h": 0.4, "w": -0.4, "a": -0.2}[lin]
             info = SKEL[lin](m, f"{lin}_", sk, (ox, -1.0, 0), s, bm, face=face)
             if lin == "w":
@@ -1101,13 +1124,13 @@ def charge_codex(m, root, C):
         h.cube((min(0, sx * 12.2), -1.3, -8.4), (12.2, 0.9, 16.8), C["board"], variant=sx > 0)
         h.cube((min(0, sx * 11.6) + (0.2 if sx > 0 else -0.2) * 0, -0.4, -7.8), (11.6, 1.2, 15.6),
                tex.banded(tex.flat("#e6dbbd", jitter=0.03), "#b7a47a", every=2, width=1, horizontal=True),
-               mats={"up": art[sx]}, density=2.4)
+               mats={"up": art[sx]}, density=4)
         for i in range(5):     # scale rows on the underside of the cover
             h.plane("y", (sx * 6.1, -1.32, -6.6 + i * 3.3), 12.0, 3.6, scale_row(6, "cc"), variant=i % 2, faces=("down",), density=2)
         for cz in (-8.0, 8.0):
             h.box((sx * 11.6, -0.85, cz), (1.6, 1.3, 1.6), C["gold"], variant=cz > 0)
         lf = m.bone(f"cleaf_{nm[-1]}", h, pivot=(0, 0.85, 0))
-        lf.plane("y", (sx * 5.6, 0.86, 0), 11.0, 15.2, page_art(["a" if sx > 0 else "n"], f"cl{sx}"), density=1.5)
+        lf.plane("y", (sx * 5.6, 0.86, 0), 11.0, 15.2, page_art(["a" if sx > 0 else "n"], f"cl{sx}"), density=3)
     sp = m.bone("cspine", codex, pivot=(0, -1.4, 0))
     for i in range(6):
         z = -7.0 + i * 2.8
@@ -1154,8 +1177,8 @@ def build_k_neck(m, grow, C):
     """Sauropod neck: an S of mossy vertebrae rising from the page, small skull on top."""
     bm = tex.bone_mat(IVORY, IVORY_SH, glow=0.08)
     mossb = tex.mottled("#b9bf8a", "#5f7d3a", scale=2.0, edge_dark=0.15)
-    pts = [(0, 0.5, 1.0), (0, 3.5, 1.2), (0.2, 6.5, 0.8), (0.6, 9.5, -0.2), (1.0, 12.4, -1.2), (1.3, 15.2, -1.6),
-           (1.5, 17.8, -1.2), (1.5, 20.0, -0.2), (1.2, 21.6, 0.9)]
+    pts = [(0, 0.5, 2.2), (0.2, 4.0, 3.4), (0.6, 7.6, 3.4), (1.0, 11.0, 2.0), (1.2, 14.0, -0.2), (1.2, 16.6, -2.4),
+           (0.9, 19.0, -3.6), (0.5, 21.0, -3.6), (0.2, 22.4, -2.8)]
     leaf = tex.foliage("#3f7a35", "#8fc060", holes=0.22, flowers="#e8e0a0")
 
     def deco(b, i, p0, p1):
@@ -1170,8 +1193,8 @@ def build_k_neck(m, grow, C):
         if i in (1, 4, 6):
             b.plane("x", (mid[0] + th * 0.55, mid[1] + 0.4, mid[2]), 2.4, 2.0, leaf, variant=i % 3)
     neck = chain(m, "nk", grow, pts, lambda i: 2.6 - i * 0.17, bm, extra=deco)
-    sk, jaw = skull(m, "n", "nh_", neck[-1], (1.2, 21.0, 1.0), 2.2, face=(28, 0, 0), bone_mat=bm)
-    m.bones[sk].locator("head", (1.2, 23.0, -3.0))
+    sk, jaw = skull(m, "n", "nh_", neck[-1], (0.2, 21.6, -2.4), 2.6, face=(-12, -20, 0), bone_mat=bm)
+    m.bones[sk].locator("head", (0.2, 23.5, -8.0))
     base = m.bone("nbase", grow, pivot=(0, 0.5, 0))
     for i in range(6):
         a = i * 60 + 20
@@ -1190,7 +1213,7 @@ def build_k_carno(m, grow, C):
     """Carnotaur horns and jaws: a great horned skull bursting from the page amid ember vents."""
     bm = tex.bone_mat("#ecdcc0", "#9c845c", glow=0.06)
     neck = chain(m, "ck", grow, [(0, 0.3, 1.6), (0, 3.0, 1.4), (0, 5.4, 0.9)], lambda i: 2.4 - i * 0.3, bm)
-    sk, jaw = skull(m, "h", "ch_", neck[-1], (0, 4.6, 2.2), 4.4, face=(-8, 0, 0), bone_mat=bm, jaw_open=14)
+    sk, jaw = skull(m, "h", "ch_", neck[-1], (0, 4.6, 2.2), 4.2, face=(-8, 34, 0), bone_mat=bm, jaw_open=20)
     throat = m.bone("ch_throat", sk, pivot=(0, 7.5, -3))
     throat.box((0, 7.0, -4.5), (4.2, 1.6, 5.0), tex.glow_flat(EMBER, 1.0, core="#ffe6a0"))
     m.bones[sk].locator("maw", (0, 7.0, -12.0))
@@ -1214,7 +1237,7 @@ def build_k_spino(m, grow, C):
         x = -9.0 + i * 1.6
         h = 4 + 12 * math.sin(math.pi * (i + 0.5) / 9)
         b = m.bone(f"ss_sp{i + 1}", sail, pivot=(x, 0.5, 2))
-        seg(b, (x, 0.5, 2), (x + 0.6, 0.5 + h, 2.2), 0.8 - 0.02 * i, bm, variant=i % 3)
+        seg(b, (x, 0.5, 2), (x + 0.6, 0.5 + h, 2.2), 0.5, bm, variant=i % 3)
         spines.append(b.name)
     sail.box((-2.6, 1.0, 2.0), (16.0, 1.4, 1.8), bm)
     mem = m.bone("ss_mem", sail, pivot=(-2, 0.5, 2))
@@ -1222,7 +1245,7 @@ def build_k_spino(m, grow, C):
     def sail_mask(u, v):
         hh = np.clip(np.sin(np.pi * (u + 1) / 2), 0, 1)
         return (((v + 1) / 2) <= hh * 0.96).astype(float)
-    mem.plane("z", (-2.2, 8.4, 2.1), 15.4, 15.6, tex.shaped(sail_mask, "#7fd6ff", "#1f4f9a", glow=0.45, a=0.58,
+    mem.plane("z", (-2.2, 8.4, 2.1), 15.4, 15.6, tex.shaped(sail_mask, "#a8e6ff", "#1f5fb0", glow=0.5, a=0.78,
                                                            mode="blend", key="edcsail"), density=1.2)
     fin = tex.shaped(ellipse(1.0, 0.95), "#9fe0ff", "#2f6fd6", glow=0.55, key="edcfin")
 
@@ -1231,12 +1254,12 @@ def build_k_spino(m, grow, C):
         L = float(np.linalg.norm(np.array(c) - np.array(a)))
         d = np.array(c) - np.array(a)
         ang = math.degrees(math.atan2(-d[0], d[1]))
-        fw = 4.2 - i * 0.45
+        fw = 6.0 - i * 0.55
         b.cube((mid[0] - fw / 2, mid[1] - L * 0.55, mid[2]), (fw, L * 1.1, 0), fin, rot=(0, 0, ang), pivot=mid,
                variant=i % 2)
     pts = [(7.0, 0.8, 1.0), (9.2, 3.0, 0.6), (10.6, 6.0, 0.0), (11.2, 9.4, -0.6), (10.6, 12.8, -1.0), (9.0, 15.6, -1.0),
            (6.8, 17.4, -0.6)]
-    tail = chain(m, "st", grow, pts, lambda i: 1.6 - i * 0.18, bm, extra=tail_fin)
+    tail = chain(m, "st", grow, pts, lambda i: 2.2 - i * 0.24, bm, extra=tail_fin)
     m.bones[tail[-1]].locator("tip", (6.0, 18.0, 0))
     ice = m.bone("sice", grow, pivot=(0, 0.5, 0))
     cr = tex.crystal(ICE, "#6fb7e6", a=0.78, glow=0.35)

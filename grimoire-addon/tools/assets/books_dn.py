@@ -188,7 +188,7 @@ def pearl(base=IVORY, shade="#e2d4bf", gilt=None, crack=0.5, glow=0.0, sheen=0.3
             d = _dist_edge(ctx)
             t[..., :3] = np.where((d == 0)[..., None], rgb(gilt), t[..., :3])
         return tex.grain(ctx, t, 0.02)
-    return _P(key + base + shade + str(gilt) + str(crack) + str(glow), fn, directional=engrave is not None)
+    return _P(key + base + shade + str(gilt) + str(crack) + str(glow) + str(sheen), fn, directional=engrave is not None)
 
 
 def eng_cover(ctx):
@@ -354,7 +354,7 @@ def wall_mat(nm=False):
 def backwall_mat():
     """Back wall: wallpaper with a doorway onto an endless corridor of receding door frames whose far
     end glows - the room appears much deeper than the book is thick."""
-    cu, cv, hw, hh = 0.5625, 0.66, 0.15, 0.30
+    cu, cv, hw, hh = 0.612, 0.667, 0.135, 0.30
 
     def fn(ctx):
         U, V = ctx.U, ctx.V
@@ -671,10 +671,11 @@ def part_moon(k, b, c, P, size=3.4):
 def part_lantern(k, b, c, P):
     mt = mats(P)
     x, y, z = c
-    k.box(b, (x, y + 1.6, z), (0.25, 3.2, 0.25), mt["trim"])
-    k.box(b, (x, y - 0.5, z), (1.2, 1.5, 1.2), mt["glow"])
-    k.box(b, (x, y + 0.45, z), (1.6, 0.4, 1.6), mt["trim"], variant=1)
-    k.box(b, (x, y - 1.35, z), (0.8, 0.25, 0.8), mt["trim"], variant=2)
+    k.box(b, (x, y - 2.35, z), (0.25, 3.2, 0.25), mt["trim"])
+    k.box(b, (x, y, z), (1.2, 1.5, 1.2), mt["glow"])
+    k.box(b, (x, y + 0.95, z), (1.6, 0.4, 1.6), mt["trim"], variant=1)
+    k.box(b, (x, y + 1.3, z), (0.5, 0.5, 0.5), mt["trim"], variant=2, rot=(45, 0, 45))
+    k.box(b, (x, y - 0.85, z), (0.8, 0.25, 0.8), mt["trim"], variant=2)
 
 
 def part_frame(k, b, c, P, h=7.0):
@@ -752,13 +753,12 @@ def core_k0(k, parent):
     k.box(gate, (gx - 1.6, gy + 1.6, gz), (0.5, 3.4, 0.5), mt["trim"])
     k.box(gate, (gx + 1.6, gy + 1.6, gz), (0.5, 3.4, 0.5), mt["trim"], variant=1)
     k.box(gate, (gx, gy + 3.5, gz), (4.0, 0.6, 0.7), mt["trim"], variant=2)
-    k.plane(gate, "x", (gx, gy + 1.6, gz), 0.1, 0.1, mt["glow"])
     k.plane(gate, "z", (gx, gy + 1.5, gz), 2.8, 3.0, tex.shaped(tex.m_disc(1.0), "#fff3e0", "#ffd9b8", glow=0.9,
                                                                  a=1.0, key="gateglow"))
     for j in range(4):
         a = math.radians(-150 + (j * 2 + 1) * 36 + 18)
-        p = (7.4 * math.cos(a), -6 + (j * 2 + 1) * 1.2 + 2.5, 7.4 * math.sin(a))
-        lb = k.bone(f"lant{j + 1}", parent, pivot=(p[0], p[1] + 1.8, p[2]))
+        p = (7.0 * math.cos(a), -6 + (j * 2 + 1.5) * 1.2 + 3.6, 7.0 * math.sin(a))
+        lb = k.bone(f"lant{j + 1}", parent, pivot=(p[0], p[1] - 3.9, p[2]))
         pal = D if j % 2 == 0 else dict(D, glow="#ffc0d0", name="dreampink")
         part_lantern(k, lb, p, pal)
     # porcelain horse (faces +Z = direction of travel when it sits at angle 0 of the road)
@@ -846,7 +846,7 @@ def core_k2(k, parent):
     k.plane(doors, "x", (4.6, -0.2, 1.0), 1.6, 2.4, dmat, variant=2)
     k.plane(doors, "y", (2.5, -1.6, 0.6), 1.6, 2.4, dmat, variant=3)
     for sgn, nm in ((-1, "front_l"), (1, "front_r")):
-        fb = k.bone(nm, house, pivot=(sgn * 5.2, -2.0, -2.9), rot=(0, sgn * 118, 0))
+        fb = k.bone(nm, house, pivot=(sgn * 5.2, -2.0, -2.9), rot=(0, -sgn * 118, 0))
         k.box(fb, (sgn * 2.7, -2.0, -2.95), (5.0, 8.6, 0.3), md["wall"], mats={"north": md["win"]}, variant=sgn + 1)
 
 
@@ -861,7 +861,7 @@ def core_k3(k, parent):
     k.box(box, (0, -5.1, 0), (5.4, 0.4, 3.8), md["trim"])
     cyl = k.bone("cyl", box, pivot=(0, -2.8, 0))
     k.box(cyl, (0, -2.8, 0), (3.6, 0.8, 0.8), md["trim"], variant=1)
-    lid = k.bone("lid", box, pivot=(0, -2.4, 1.7), rot=(-70, 0, 0))
+    lid = k.bone("lid", box, pivot=(0, -2.4, 1.7), rot=(70, 0, 0))
     k.box(lid, (0, -2.25, 0), (5.0, 0.3, 3.4), por, variant=1, mats={"down": tex.glow_flat("#cfe2ff", 0.8, core="#ffffff")})
     crank = k.bone("crank", box, pivot=(2.6, -3.7, 0))
     k.box(crank, (2.8, -3.7, 0), (0.4, 0.3, 0.3), md["trim"])
@@ -933,9 +933,9 @@ def core_k5(k, parent):
     por = tex.porcelain("#fbf6ee", "#e6d8c6", crack=0.3)
     k.box(head, (2.9, -2.0, 0), (1.5, 1.4, 1.5), por, mats={"up": tex.stamped(por, ARCH_DOOR, SGOLD, glow=0.8,
                                                                                  key="sleepdoor")})
-    for i, z in enumerate((2.6, -2.6)):
-        cb = k.bone(f"curt{i + 1}", bed, pivot=(0, 3.6, z))
-        k.plane(cb, "z", (0, 0.2, z), 8.0, 6.8, tex.fabric(PINK if i == 0 else MAUVE, None, glow=0.1, fringe=True),
+    for i, (x, z, w) in enumerate(((0, 2.6, 8.0), (-3.0, -2.6, 2.2))):
+        cb = k.bone(f"curt{i + 1}", bed, pivot=(x, 3.6, z))
+        k.plane(cb, "z", (x, 0.2, z), w, 6.8, tex.fabric(PINK if i == 0 else MAUVE, None, glow=0.1, fringe=True),
                 variant=i)
     dream = k.bone("dream", parent, pivot=(0, 8.0, 0))
     part_moon(k, dream, (0, 8.0, 0), D, 3.4)
@@ -1195,9 +1195,9 @@ def book_model():
     dl = k.bone("door_leaf", rwall, pivot=(3.95, -1.8, -4.8))
     k.box(dl, (3.9, -1.8, -5.775), (0.15, 4.6, 1.95), md["door"])
 
-    for i, (sx, sy, sz, rz) in enumerate(((3.0, -4.6, -6.9, 0), (3.2, -2.8, -6.35, 0), (3.4, -0.9, -5.8, 0),
-                                          (3.6, 1.0, -5.25, 0), (3.6, 3.0, -5.0, 90), (3.3, 4.8, -5.4, 90),
-                                          (2.6, 6.7, -6.0, 180), (1.3, 7.3, -6.6, 180))):
+    for i, (sx, sy, sz, rz) in enumerate(((2.4, -4.6, -6.9, 0), (2.6, -2.8, -6.35, 0), (2.8, -0.9, -5.8, 0),
+                                          (3.0, 1.0, -5.25, 0), (3.0, 3.0, -5.0, 90), (2.7, 4.8, -5.4, 90),
+                                          (2.0, 6.7, -6.0, 180), (0.7, 7.3, -6.6, 180))):
         sb = k.bone(f"st{i + 1}", room, pivot=(sx, sy, sz))
         k.box(sb, (sx, sy, sz), (1.8, 0.45, 0.6), relief if i % 2 else gilt2, rot=(0, 0, rz) if rz else None,
               variant=i % 2)
@@ -1280,6 +1280,9 @@ def book_anims():
         opn.scl(f"pop{i + 1}", {0: 0.0, t0: 0.0, t0 + 0.12: 1.0, 0.6: 1.0})
         opn.rot(f"pop{i + 1}", {0: (0, 0, 0), t0: (0, 0, 0), t0 + 0.26: (-80, 0, 0), 0.6: (-72, 0, 0)})
     opn.scl("nm_veil", 0.0)
+    shut = Anim("shut", loop=True)     # pop-ups stay folded away while the book is closed
+    for i in range(4):
+        shut.scl(f"pop{i + 1}", 0.0)
     opn_loop = Anim("open_loop", loop=True)
     opn_loop.rot("leaf3", MR((0, LIFE(9, 1.3), 0)))
     opn_loop.rot("leaf2", MR((0, LIFE(3, 1.7, 0.3), 0)))
@@ -1287,7 +1290,7 @@ def book_anims():
     for i in range(4):
         opn_loop.rot(f"pop{i + 1}", (LIFE(4, 1.9, i * 0.2), 0, LIFE(2, 2.3, i * 0.3)))
     opn_loop.pos("float", (0, LIFE(0.8, 1.6), 0))
-    return [place, idle, flip, opn, opn_loop]
+    return [place, idle, flip, opn, opn_loop, shut]
 
 
 def build_attachable(pack, model, anims):
@@ -1302,8 +1305,9 @@ def build_attachable(pack, model, anims):
         "animation_controllers": {ctl: {
             "initial_state": "rest",
             "states": {
-                "rest": {"transitions": [{"use": use}, {"flip": "q.is_sneaking"}], "blend_transition": 0.25},
-                "flip": {"animations": ["flip"], "blend_transition": 0.15,
+                "rest": {"animations": ["shut"], "transitions": [{"use": use}, {"flip": "q.is_sneaking"}],
+                         "blend_transition": 0.25},
+                "flip": {"animations": ["flip", "shut"], "blend_transition": 0.15,
                          "transitions": [{"use": use}, {"rest": "!q.is_sneaking && q.all_animations_finished"}]},
                 "use": {"animations": ["open", "open_loop"], "blend_transition": 0.3,
                         "transitions": [{"rest": "q.main_hand_item_use_duration <= 0.0"}]},
@@ -1330,14 +1334,12 @@ def build_attachable(pack, model, anims):
     })
 
 
-def write_icon(model, idle):
+def write_icon(pack, model, idle):
     img = render(model, idle.pose(0.0), yaw=24, pitch=10, size=(32, 32), bg=(48, 32, 48, 0), ss=6,
                  hide=("nm_",))
     a = np.asarray(img).copy()
     a[..., 3] = np.where(a[..., 3] >= 110, 255, 0)
-    p = os.path.join(os.path.dirname(PREVIEW), "..", "resource_packs", "grimoire_rp", "textures", "items",
-                     f"grimoire_{ITEM_SUFFIX}.png")
-    p = os.path.abspath(p)
+    p = os.path.join(pack.rp, "textures", "items", f"grimoire_{ITEM_SUFFIX}.png")
     os.makedirs(os.path.dirname(p), exist_ok=True)
     Image.fromarray(a, "RGBA").save(p, optimize=True)
     return img
@@ -1349,7 +1351,6 @@ def vision_model(kind):
     root = m.bone("root")
     page = m.bone("page", root)
     paper = tex.porcelain("#f7ecd6", "#ead6b8", crack=0.0)
-    paper_txt = tex.alt(paper)
     ink = ink_door()
     side = leaf_mat(kind + 3)
     fl = m.bone("flap_l", page, pivot=(-3, 0, 0))
@@ -1359,7 +1360,7 @@ def vision_model(kind):
     ft = m.bone("flap_t", page, pivot=(0, 5, 0))
     ft.box((0, 6.5, 0), (12, 3, 0.2), paper, mats={"north": side, "south": side})
     lf = m.bone("leaf", page, pivot=(-3, 0, 0))
-    lf.box((0, 0, 0.05), (6, 10, 0.2), paper_txt, mats={"north": ink, "south": side})
+    lf.box((0, 0, 0.05), (6, 10, 0.2), paper, mats={"north": ink, "south": side})
     bd = m.bone("backdrop", page, pivot=(0, 0, 0.6))
     bd.plane("z", (0, 0, 0.6), 6, 10, backdrop(kind), faces=("north",))
     page.locator("door", (0, 0, -1.0))
@@ -1413,7 +1414,7 @@ def charge_model(kind):
     CORES[kind](K(m, 1.0, (0, 0, 0), pre=f"k{kind}_"), core)
     orbit = m.bone("orbit", rig)
     for i, ((part, pal, _h), (x, y, z, ang)) in enumerate(zip(FRAGS[kind], frag_centers(kind))):
-        fb = m.bone(f"frag{i + 1}", orbit, pivot=(x, y, z), rot=(0, 90 - ang, 0))
+        fb = m.bone(f"frag{i + 1}", orbit, pivot=(x, y, z), rot=(0, -(90 + ang), 0))
         kk = K(m, 0.95, (x, y, z))
         PARTS[part](kk, fb, (0, 0, 0), palette(pal))
     return m
@@ -1440,21 +1441,18 @@ def charge_anims():
     form.pos("core", {0: (0, -5, 0), 0.2: (0, -5, 0), 0.85: (0, 0.6, 0), 1.05: (0, 0, 0)})
     form.rot("core", {0: (0, 160, 0), 0.2: (0, 160, 0), 1.05: (0, 0, 0)})
     for sgn, nm in ((-1, "k2_front_l"), (1, "k2_front_r")):
-        form.rot(nm, {0: (0, -sgn * 118, 0), 0.8: (0, -sgn * 118, 0), 1.25: (0, sgn * 8, 0), 1.4: (0, 0, 0)})
+        form.rot(nm, {0: (0, sgn * 118, 0), 0.8: (0, sgn * 118, 0), 1.25: (0, -sgn * 8, 0), 1.4: (0, 0, 0)})
     form.rot("k1_leaf", {0: (0, -26, 0), 0.85: (0, -26, 0), 1.2: (0, 12, 0), 1.4: (0, 0, 0)})
     form.scl("k5_hands", {0: 0.0, 1.0: 0.0, 1.4: 1.0})
     form.scl("k4_astair", {0: 0.0, 0.9: 0.0, 1.35: 1.0})
     form.scl("k3_tring", {0: (1, 0, 1), 0.7: (1, 0, 1), 1.2: (1, 1.1, 1), 1.4: (1, 1, 1)})
     form.scl("k0_road", {0: (0, 1, 0), 0.4: (0, 1, 0), 1.0: (1.05, 1, 1.05), 1.15: (1, 1, 1)})
-    for kd in range(6):
-        for i, (x, y, z, _a) in enumerate(frag_centers(kd)):
-            if kd:
-                break
-            t0 = 0.3 + i * 0.13
-            form.pos(f"frag{i + 1}", {0: (-x * 0.92, -y - 4, -z * 0.92), t0: (-x * 0.92, -y - 4, -z * 0.92),
-                                      t0 + 0.55: (0, 0, 0)})
-            form.scl(f"frag{i + 1}", {0: 0.0, t0: 0.0, t0 + 0.4: 1.15, t0 + 0.55: 1.0})
-            form.rot(f"frag{i + 1}", {0: (0, 200, 0), t0: (0, 200, 0), t0 + 0.55: (0, 0, 0)})
+    for i, (x, y, z, _a) in enumerate(frag_centers(0)):
+        t0 = 0.3 + i * 0.13
+        form.pos(f"frag{i + 1}", {0: (-x * 0.92, -y - 4, -z * 0.92), t0: (-x * 0.92, -y - 4, -z * 0.92),
+                                  t0 + 0.55: (0, 0, 0)})
+        form.scl(f"frag{i + 1}", {0: 0.0, t0: 0.0, t0 + 0.4: 1.15, t0 + 0.55: 1.0})
+        form.rot(f"frag{i + 1}", {0: (0, 200, 0), t0: (0, 200, 0), t0 + 0.55: (0, 0, 0)})
 
     loop = Anim("loop", loop=True, length=2.0)
     loop.scl("plate", LIFE(0.03, 1.0, 0, 1.0))
@@ -1625,7 +1623,7 @@ def build(pack):
     book = book_model()
     banims = book_anims()
     build_attachable(pack, book, banims)
-    write_icon(book, banims[1])
+    write_icon(pack, book, banims[1])
 
     visions = [vision_model(i) for i in range(6)]
     vanims = vision_anims()
