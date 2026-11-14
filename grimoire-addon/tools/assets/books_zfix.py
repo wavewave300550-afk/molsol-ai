@@ -20,7 +20,13 @@
 2. MATERIAL.  The held book uses entity_alphatest, like every vanilla held item, with the plain
    texture Model.save() writes as <name>_held.png.
 3. BONE NAMES.  (below)
-4. BUILT-IN CIRCLE.  The selection / charge circle (tools/assets/_book_aura.py) is re-centred on the
+4. OPEN BY EXPRESSION.  On an iPhone (26.62) the Dream & Nightmare and Elemental Dragon books did not
+   open: their open animation was keyframed and driven through anim_time_update ("v.open * length"),
+   which the held item ignored, while the Divine Word book (rotations written as expressions of
+   v.open) opened.  Every anim_time_update animation of a held book is baked here into expressions
+   of v.open: each keyframed channel is sampled (catmull-rom like the keys), simplified, and written
+   as a piecewise-linear expression; the animation becomes a plain loop.
+5. BUILT-IN CIRCLE.  The selection / charge circle (tools/assets/_book_aura.py) is re-centred on the
    book AS POSED (kit.heldpose evaluates the attachable's own animations): centred on the closed book
    just behind its back cover at rest, gliding to sit under the open book while Use is held, sized
    from the posed book, and smaller in third person.
@@ -146,6 +152,110 @@ def _hand_frame(g, geo, bones):
     print(f"    {g}: hand frame  first person rot {fr} pos {fp}  third person rot {tr} pos {tp}")
 
 
+# ---- open by expression (see 4. above)
+BAKE_STEP = 0.02                    # sampling step in v.open
+BAKE_TOL = (0.6, 0.06, 0.012)       # simplification tolerance: rotation (deg), position (px), scale
+
+
+def _keys(val):
+    """[(time, [x, y, z], catmullrom)] of a keyframed channel."""
+    out = []
+    for k, v in val.items():
+        cat = isinstance(v, dict) and v.get("lerp_mode") == "catmullrom"
+        if isinstance(v, dict):
+            v = v.get("post", v.get("pre"))
+        v = v if isinstance(v, list) else [v, v, v]
+        out.append((float(k), [float(x) for x in v], cat))
+    return sorted(out, key=lambda e: e[0])
+
+
+def _sample(keys, t):
+    """Channel value at time t: linear between keys, catmull-rom where a key asks for it."""
+    ts = [k[0] for k in keys]
+    if t <= ts[0]:
+        return keys[0][1]
+    if t >= ts[-1]:
+        return keys[-1][1]
+    j = max(i for i in range(len(ts)) if ts[i] <= t)
+    p1, p2 = np.array(keys[j][1]), np.array(keys[j + 1][1])
+    f = (t - ts[j]) / (ts[j + 1] - ts[j])
+    if not (keys[j][2] or keys[j + 1][2]):
+        return list(p1 + (p2 - p1) * f)
+    p0 = np.array(keys[j - 1][1]) if j > 0 else p1
+    p3 = np.array(keys[j + 2][1]) if j + 2 < len(keys) else p2
+    v = 0.5 * (2 * p1 + (-p0 + p2) * f + (2 * p0 - 5 * p1 + 4 * p2 - p3) * f * f + (-p0 + 3 * p1 - 3 * p2 + p3) * f ** 3)
+    return list(v)
+
+
+def _simplify(us, vs, tol):
+    """Indices of a piecewise-linear subset of (us, vs) within tol (Douglas-Peucker)."""
+    keep = {0, len(us) - 1}
+    stack = [(0, len(us) - 1)]
+    while stack:
+        i, j = stack.pop()
+        if j <= i + 1:
+            continue
+        a, b = vs[i], vs[j]
+        err = [abs(vs[k] - (a + (b - a) * (us[k] - us[i]) / (us[j] - us[i]))) for k in range(i + 1, j)]
+        k = int(np.argmax(err)) + i + 1
+        if err[k - i - 1] > tol:
+            keep.add(k)
+            stack += [(i, k), (k, j)]
+    return sorted(keep)
+
+
+def _piecewise(us, vs, var="v.open"):
+    """Molang for the piecewise-linear curve through (us, vs) over var in 0..1."""
+    vs = [round(v, 3) + 0.0 for v in vs]
+    if max(vs) - min(vs) < 1e-6:
+        return vs[0]
+
+    def num(x):                                   # negative constants in brackets, like the DW book's
+        return f"({x})" if x < 0 else f"{x}"
+    expr = num(vs[-1])
+    for i in range(len(us) - 2, -1, -1):
+        u0, u1, a, b = round(us[i], 4), round(us[i + 1], 4), vs[i], vs[i + 1]
+        k = round((b - a) / (u1 - u0), 4)
+        seg = num(a) if abs(b - a) < 1e-6 else f"({num(a)} {'-' if k < 0 else '+'} {abs(k)} * ({var} - {u0}))"
+        expr = f"({var} < {u1} ? {seg} : {expr})"
+    return expr
+
+
+def _bake_open(g):
+    anim_p = os.path.join(RP, "animations", f"{g}.animation.json")
+    an = json.load(open(anim_p, encoding="utf-8"))
+    baked = []
+    for name, a in an["animations"].items():
+        atu = a.get("anim_time_update")
+        if not atu:
+            continue
+        length = float(a.get("animation_length", 0.0))
+        assert atu.replace(" ", "") == f"v.open*{length:g}".replace(" ", ""), (name, atu)
+        us = [min(1.0, i * BAKE_STEP) for i in range(int(round(1 / BAKE_STEP)) + 1)]
+        n_terms = 0
+        for bone, chs in a.get("bones", {}).items():
+            for ch, val in list(chs.items()):
+                if not isinstance(val, dict):
+                    continue                      # already a constant / expression: unchanged
+                keys = _keys(val)
+                tol = BAKE_TOL[{"rotation": 0, "position": 1, "scale": 2}[ch]]
+                samples = [_sample(keys, u * length) for u in us]
+                comps = []
+                for c in range(3):
+                    vs = [s_[c] for s_ in samples]
+                    idx = _simplify(us, vs, tol)
+                    comps.append(_piecewise([us[i] for i in idx], [vs[i] for i in idx]))
+                    n_terms += len(idx)
+                chs[ch] = comps
+        for k in ("anim_time_update", "animation_length"):
+            a.pop(k, None)
+        a["loop"] = True
+        baked.append(f"{name.split('.')[-1]} ({n_terms} points)")
+    if baked:
+        _dump(anim_p, an)
+        print(f"    {g}: baked to v.open expressions: {', '.join(baked)}")
+
+
 # ---- built-in circle (see _book_aura.py): diameter relative to the posed book's larger side
 AURA_CLOSED = 1.3                   # crouch flare behind the closed book
 AURA_OPEN = 1.4                     # under the open book while charging (reaches past the open pages)
@@ -226,6 +336,7 @@ def build(pack):
         _dump(geo_p, geo)
         ren = {b["name"]: f"{g}_{b['name']}" for b in bones if b["name"].lower() in PLAYER}
         if not ren:
+            _bake_open(g)
             _place_aura(g)
             continue
         for b in bones:
@@ -249,4 +360,5 @@ def build(pack):
                         c[key] = [{ren.get(k, k): v for k, v in e.items()} for e in c[key]]
             _dump(rc_p, rc)
         print(f"    {g}: renamed bones {ren}")
+        _bake_open(g)
         _place_aura(g)
