@@ -39,7 +39,37 @@ var CONFIG = {
     /** Maximum temporary blocks (barriers / lights) alive at once. */
     maxTempBlocks: 1400,
     /** Maximum script-spawned particles per tick. */
-    maxParticlesPerTick: 90
+    maxParticlesPerTick: 90,
+    /** Maximum natural ground blocks (and the plants above them) a spell may hold changed at once, world-wide. */
+    maxGroundBlocks: 3e3
+  },
+  /**
+   * Temporary living ground (src/lib/terraform.ts): block changes and chunk sections (each one a mesh the
+   * client rebuilds) per pulse, ticks between the pulses of one sweep; one pulse a tick world-wide.
+   */
+  ground: {
+    perPulse: 80,
+    maxSections: 4,
+    every: 4
+  },
+  /** Spell fog and time of day (src/lib/atmos.ts). */
+  atmosphere: {
+    /** Per-player spell fog. */
+    fog: true,
+    /** Players this close to the caster see the spell's fog too. */
+    fogRadius: 48,
+    /** "auto": a spell may move the world's time of day while every other player is within timeRadius; "off": never. */
+    time: "auto",
+    timeRadius: 128
+  },
+  /** Short cinematic camera shots for the caster (src/lib/cinema.ts). */
+  cinematic: {
+    enabled: true,
+    maxShots: 4,
+    maxSeconds: 4,
+    /** No shot below this fraction of health, or with an enemy within clearRadius blocks. */
+    minHealth: 0.4,
+    clearRadius: 5
   }
 };
 var RUNTIME = CONFIG;
@@ -48,7 +78,7 @@ var RUNTIME = CONFIG;
 var VERSION = "1.2.0";
 
 // src/main.ts
-import { CommandPermissionLevel, CustomCommandStatus, ItemStack as ItemStack2, Player as Player4, system as system4, world as world5 } from "@minecraft/server";
+import { CommandPermissionLevel, CustomCommandStatus, ItemStack as ItemStack2, Player as Player6, system as system6, world as world7 } from "@minecraft/server";
 
 // src/core/input.ts
 import { EquipmentSlot, system, world as world2 } from "@minecraft/server";
@@ -280,14 +310,16 @@ function allies(dim, center, radius, caster) {
     return [];
   }
 }
-var GHOST = ["minecraft:barrier", "minecraft:light_block_15"];
+var GHOST = ["minecraft:barrier", ...Array.from({ length: 16 }, (_, i) => `minecraft:light_block_${i}`), "minecraft:moss_carpet", "minecraft:pale_moss_carpet"];
+var SOFT = /^minecraft:(short_grass|tall_grass|fern|large_fern|dandelion|poppy|azure_bluet|oxeye_daisy|cornflower|[a-z]+_tulip|allium|lily_of_the_valley|blue_orchid|wildflowers|pink_petals|leaf_litter|firefly_bush|bush|deadbush|sunflower|lilac|rose_bush|peony|[a-z_]*carpet)$/;
+var notGround = (t) => GHOST.includes(t) || SOFT.test(t) || TREE.test(t);
 var TREE = /leaves|_log|_wood|_stem|hyphae|mushroom_block|mangrove_roots|azalea|bamboo|vine/;
 function groundBelow(dim, loc, maxDrop = 40) {
   try {
     let y = loc.y;
     for (let i = 0; i < 24; i++) {
       const b = dim.getBlock({ x: loc.x, y: y + 0.01, z: loc.z });
-      if (!b || b.isAir || b.isLiquid || GHOST.includes(b.typeId) || TREE.test(b.typeId)) break;
+      if (!b || b.isAir || b.isLiquid || notGround(b.typeId)) break;
       y = Math.floor(y) + 1;
     }
     const opts = { maxDistance: maxDrop + 2, includePassableBlocks: false, includeLiquidBlocks: true, excludeTypes: GHOST };
@@ -305,7 +337,7 @@ function terrainTop(dim, loc, maxClimb = 12) {
     let y = loc.y, inside = false;
     for (let i = 0; i < maxClimb; i++) {
       const b = dim.getBlock({ x: loc.x, y: y + 0.05, z: loc.z });
-      if (!b || b.isAir || b.isLiquid || GHOST.includes(b.typeId) || TREE.test(b.typeId)) break;
+      if (!b || b.isAir || b.isLiquid || notGround(b.typeId)) break;
       inside = true;
       y = Math.floor(y + 0.05) + 1;
     }
@@ -379,16 +411,16 @@ function focus(caster, aim, snap = 10) {
 var NS = "grimoire";
 var secs = (s) => Math.max(0, Math.round(s * 20));
 var warned = /* @__PURE__ */ new Set();
-function warnOnce(key, msg) {
-  if (warned.has(key)) return;
-  warned.add(key);
+function warnOnce(key2, msg) {
+  if (warned.has(key2)) return;
+  warned.add(key2);
   console.warn(`[grimoire] ${msg}`);
 }
-function settledY(dim, key, loc, size) {
-  let radius = GROUND_ACTORS[key];
+function settledY(dim, key2, loc, size) {
+  let radius = GROUND_ACTORS[key2];
   let tolerance = 24;
   if (radius === void 0) {
-    radius = GROUND_NEAR[key];
+    radius = GROUND_NEAR[key2];
     if (radius === void 0) return void 0;
     tolerance = GROUND_NEAR_TOLERANCE;
   }
@@ -396,7 +428,7 @@ function settledY(dim, key, loc, size) {
   if (Math.abs(g.y - loc.y) > tolerance) return void 0;
   return radius * size >= 2 ? plateau(dim, g, radius * size).y : g.y;
 }
-var isBound = (key) => GROUND_ACTORS[key] !== void 0 || GROUND_NEAR[key] !== void 0;
+var isBound = (key2) => GROUND_ACTORS[key2] !== void 0 || GROUND_NEAR[key2] !== void 0;
 var Actor = class {
   constructor(entity, typeId) {
     this.entity = entity;
@@ -563,8 +595,8 @@ var Scene = class {
     if (this.ended || Scenes.actorCount() >= CONFIG.limits.maxActors) return new Actor(void 0, id);
     let e;
     try {
-      const key = id.slice(NS.length + 1);
-      const gy = isBound(key) ? settledY(this.dim, key, loc, opts.size ?? 1) : FLOOR_ACTORS.has(key) ? terrainTop(this.dim, loc) : void 0;
+      const key2 = id.slice(NS.length + 1);
+      const gy = isBound(key2) ? settledY(this.dim, key2, loc, opts.size ?? 1) : FLOOR_ACTORS.has(key2) ? terrainTop(this.dim, loc) : void 0;
       if (gy !== void 0) loc = { x: loc.x, y: gy, z: loc.z };
     } catch {
     }
@@ -1292,7 +1324,7 @@ function prepStart(p, g, meta) {
   const spawn = (st2) => scene.spawn(id, place.loc, { yaw: place.yaw, kind: meta.index, state: st2 });
   let actor = spawn(state);
   sound(p.dimension, `book_${pre}_charge`, place.loc, cfg.soundVolume);
-  const finish2 = (st2, ticks) => {
+  const finish3 = (st2, ticks) => {
     if (done) return;
     done = true;
     actor.state(st2);
@@ -1324,11 +1356,11 @@ function prepStart(p, g, meta) {
       const at = actor.valid ? actor.loc : place.loc;
       burst(p.dimension, `book_${pre}_burst`, at, cfg.burstRadius, cfg.burstCount);
       sound(p.dimension, `book_${pre}_release`, at);
-      finish2(CHARGE_STATE.release, cfg.releaseTicks);
+      finish3(CHARGE_STATE.release, cfg.releaseTicks);
     },
     cancel() {
       if (done || scene.ended) return;
-      finish2(CHARGE_STATE.cancel, cfg.cancelTicks);
+      finish3(CHARGE_STATE.cancel, cfg.cancelTicks);
     }
   };
   scene.every(1, () => {
@@ -1587,10 +1619,10 @@ function restoreLedger() {
   if (pending) console.warn(`[grimoire] ${pending} temporary blocks are in unloaded chunks; they will be removed when loaded.`);
 }
 function retryOrphans(owned) {
-  for (const [key, e] of [...live]) {
-    if (owned(key)) continue;
+  for (const [key2, e] of [...live]) {
+    if (owned(key2)) continue;
     if (clear(e)) {
-      live.delete(key);
+      live.delete(key2);
       dirty = true;
     }
   }
@@ -1620,8 +1652,8 @@ var BlockSet = class {
   /** Place a temporary block if the cell is air and not occupied by a player. */
   place(loc, type = BARRIER) {
     const x = Math.floor(loc.x), y = Math.floor(loc.y), z = Math.floor(loc.z);
-    const key = k(this.scene.dimId, x, y, z);
-    if (this.mine.has(key) || live.has(key) || live.size >= CONFIG.limits.maxTempBlocks) return false;
+    const key2 = k(this.scene.dimId, x, y, z);
+    if (this.mine.has(key2) || live.has(key2) || live.size >= CONFIG.limits.maxTempBlocks) return false;
     const dim = this.scene.dim;
     try {
       const b = dim.getBlock({ x, y, z });
@@ -1633,8 +1665,8 @@ var BlockSet = class {
         }
       }
       b.setType(type);
-      live.set(key, { d: this.scene.dimId, x, y, z, t: type });
-      this.mine.add(key);
+      live.set(key2, { d: this.scene.dimId, x, y, z, t: type });
+      this.mine.add(key2);
       dirty = true;
       return true;
     } catch {
@@ -1642,14 +1674,14 @@ var BlockSet = class {
     }
   }
   remove(loc) {
-    const key = k(this.scene.dimId, Math.floor(loc.x), Math.floor(loc.y), Math.floor(loc.z));
-    this.removeKey(key);
+    const key2 = k(this.scene.dimId, Math.floor(loc.x), Math.floor(loc.y), Math.floor(loc.z));
+    this.removeKey(key2);
   }
-  removeKey(key) {
-    const e = live.get(key);
-    if (!e || !this.mine.has(key)) return;
-    if (clear(e)) live.delete(key);
-    this.mine.delete(key);
+  removeKey(key2) {
+    const e = live.get(key2);
+    if (!e || !this.mine.has(key2)) return;
+    if (clear(e)) live.delete(key2);
+    this.mine.delete(key2);
     dirty = true;
   }
   /** Vertical wall segment of barriers: column at (x, z) from y to y+h-1. */
@@ -1662,10 +1694,10 @@ var BlockSet = class {
     for (let i = 0; i < h; i++) this.remove({ x, y: y + i, z });
   }
   clearAll() {
-    for (const key of [...this.mine]) this.removeKey(key);
+    for (const key2 of [...this.mine]) this.removeKey(key2);
   }
-  owns(key) {
-    return this.mine.has(key);
+  owns(key2) {
+    return this.mine.has(key2);
   }
 };
 var sets = /* @__PURE__ */ new Set();
@@ -1675,9 +1707,913 @@ function blocksFor(scene) {
   scene.onEnd(() => sets.delete(s));
   return s;
 }
-function anySetOwns(key) {
-  for (const s of sets) if (s.owns(key)) return true;
+function anySetOwns(key2) {
+  for (const s of sets) if (s.owns(key2)) return true;
   return false;
+}
+
+// src/lib/terraform.ts
+import { BlockPermutation, system as system4, world as world5 } from "@minecraft/server";
+var REPLACEABLE = /* @__PURE__ */ new Set([
+  "minecraft:grass_block",
+  "minecraft:dirt",
+  "minecraft:coarse_dirt",
+  "minecraft:podzol",
+  "minecraft:mycelium",
+  "minecraft:dirt_with_roots",
+  "minecraft:mud",
+  "minecraft:sand",
+  "minecraft:red_sand",
+  "minecraft:gravel",
+  "minecraft:stone",
+  "minecraft:andesite",
+  "minecraft:diorite",
+  "minecraft:granite",
+  "minecraft:tuff",
+  "minecraft:moss_block"
+]);
+var NATURAL_PLANTS = /* @__PURE__ */ new Set([
+  "minecraft:short_grass",
+  "minecraft:fern",
+  "minecraft:dandelion",
+  "minecraft:poppy",
+  "minecraft:azure_bluet",
+  "minecraft:oxeye_daisy",
+  "minecraft:cornflower",
+  "minecraft:red_tulip",
+  "minecraft:orange_tulip",
+  "minecraft:white_tulip",
+  "minecraft:pink_tulip",
+  "minecraft:allium",
+  "minecraft:lily_of_the_valley",
+  "minecraft:blue_orchid",
+  "minecraft:wildflowers",
+  "minecraft:pink_petals",
+  "minecraft:leaf_litter",
+  "minecraft:moss_carpet",
+  "minecraft:deadbush",
+  "minecraft:bush"
+]);
+var NATURAL_OTHER = /* @__PURE__ */ new Set([
+  "minecraft:air",
+  "minecraft:snow_layer",
+  "minecraft:snow",
+  "minecraft:ice",
+  "minecraft:packed_ice",
+  "minecraft:blue_ice",
+  "minecraft:sandstone",
+  "minecraft:red_sandstone",
+  "minecraft:clay",
+  "minecraft:calcite",
+  "minecraft:dripstone_block",
+  "minecraft:pointed_dripstone",
+  "minecraft:coal_ore",
+  "minecraft:iron_ore",
+  "minecraft:copper_ore",
+  "minecraft:deepslate",
+  "minecraft:bedrock",
+  "minecraft:tall_grass",
+  "minecraft:large_fern",
+  "minecraft:sunflower",
+  "minecraft:lilac",
+  "minecraft:rose_bush",
+  "minecraft:peony",
+  "minecraft:sweet_berry_bush",
+  "minecraft:firefly_bush"
+]);
+var NATURAL_RE = /_leaves$|_log$|^minecraft:(water|flowing_water|lava|flowing_lava)$/;
+var LIQUID_RE = /water|lava/;
+var FALLING = /* @__PURE__ */ new Set(["minecraft:sand", "minecraft:red_sand", "minecraft:gravel"]);
+var TEMP_RE = /^minecraft:(barrier|light_block_\d+)$/;
+var KEY2 = "grim:gl";
+var CHUNK2 = 3e4;
+var MAX_CHUNKS = 8;
+var AIR = "minecraft:air";
+var DIMS = { "minecraft:overworld": "o", "minecraft:nether": "n", "minecraft:the_end": "e" };
+var DIM_IDS = { o: "minecraft:overworld", n: "minecraft:nether", e: "minecraft:the_end" };
+var live2 = /* @__PURE__ */ new Map();
+var palette = [];
+var palIndex = /* @__PURE__ */ new Map();
+var dirty2 = false;
+var pulseTick = -1;
+function takePulse() {
+  if (system4.currentTick === pulseTick) return false;
+  pulseTick = system4.currentTick;
+  return true;
+}
+var key = (d, x, y, z) => `${d}|${x}|${y}|${z}`;
+var keyOf = (e) => key(e.d, e.x, e.y, e.z);
+function pal(type, states2 = {}) {
+  const ks = Object.keys(states2).sort();
+  const s = `${type}|${ks.length ? JSON.stringify(Object.fromEntries(ks.map((k2) => [k2, states2[k2]]))) : ""}`;
+  let i = palIndex.get(s);
+  if (i === void 0) {
+    i = palette.length;
+    palette.push(s);
+    palIndex.set(s, i);
+  }
+  return i;
+}
+function unpal(i) {
+  const e = palette[i] ?? `${AIR}|`;
+  const bar = e.indexOf("|");
+  const js = e.slice(bar + 1);
+  return { t: e.slice(0, bar), s: js ? JSON.parse(js) : {} };
+}
+var typeOf = (i) => unpal(i).t;
+var isGround = (e) => REPLACEABLE.has(typeOf(e.o));
+function save() {
+  dirty2 = false;
+  const parts = [];
+  for (const e of live2.values()) parts.push(`${e.d},${e.x},${e.y},${e.z},${e.o},${e.p}`);
+  const data = parts.join(";");
+  if (!data) {
+    for (const id of world5.getDynamicPropertyIds()) if (id === KEY2 || id.startsWith(`${KEY2}.`)) world5.setDynamicProperty(id, void 0);
+    palette = [];
+    palIndex = /* @__PURE__ */ new Map();
+    return;
+  }
+  if (data.length > CHUNK2 * MAX_CHUNKS) throw new Error("ground ledger full");
+  world5.setDynamicProperty(KEY2, JSON.stringify({ v: 2, pal: palette }));
+  let i = 0;
+  for (let off = 0; off < data.length; off += CHUNK2, i++) world5.setDynamicProperty(`${KEY2}.${i}`, data.slice(off, off + CHUNK2));
+  for (; i < MAX_CHUNKS; i++) if (world5.getDynamicProperty(`${KEY2}.${i}`) !== void 0) world5.setDynamicProperty(`${KEY2}.${i}`, void 0);
+}
+function flushGround() {
+  if (dirty2) {
+    try {
+      save();
+    } catch (e) {
+      console.warn(`[grimoire] ground ledger: ${e}`);
+    }
+  }
+}
+function blockAt(e) {
+  try {
+    return world5.getDimension(DIM_IDS[e.d]).getBlock({ x: e.x, y: e.y, z: e.z });
+  } catch {
+    return void 0;
+  }
+}
+function setTo(b, i) {
+  const { t, s } = unpal(i);
+  if (Object.keys(s).length) b.setPermutation(BlockPermutation.resolve(t, s));
+  else b.setType(t);
+}
+function restoreEntries(list) {
+  const failed = /* @__PURE__ */ new Set();
+  const plants = list.filter((e) => !isGround(e)), grounds = list.filter(isGround);
+  for (const e of plants) {
+    const b = blockAt(e);
+    if (!b) {
+      failed.add(e);
+      continue;
+    }
+    try {
+      if (b.typeId === typeOf(e.p) && !b.isAir) b.setType(AIR);
+    } catch {
+      failed.add(e);
+    }
+  }
+  for (const e of grounds) {
+    const b = blockAt(e);
+    if (!b) {
+      failed.add(e);
+      continue;
+    }
+    try {
+      const cur = b.typeId;
+      if (cur === typeOf(e.p) || cur === AIR) setTo(b, e.o);
+    } catch {
+      failed.add(e);
+    }
+  }
+  for (const e of plants) {
+    if (failed.has(e) || typeOf(e.o) === AIR) continue;
+    const b = blockAt(e);
+    if (!b) {
+      failed.add(e);
+      continue;
+    }
+    try {
+      if (TEMP_RE.test(b.typeId)) {
+        failed.add(e);
+        continue;
+      }
+      const under = b.below();
+      if (b.isAir && under && REPLACEABLE.has(under.typeId)) setTo(b, e.o);
+    } catch {
+      failed.add(e);
+    }
+  }
+  return failed;
+}
+function load2() {
+  const meta = world5.getDynamicProperty(KEY2);
+  if (typeof meta !== "string") return [];
+  try {
+    const m = JSON.parse(meta);
+    palette = Array.isArray(m.pal) ? m.pal : [];
+  } catch {
+    palette = [];
+  }
+  palIndex = new Map(palette.map((s2, i) => [s2, i]));
+  let s = "";
+  for (let i = 0; i < MAX_CHUNKS; i++) {
+    const p = world5.getDynamicProperty(`${KEY2}.${i}`);
+    if (typeof p === "string") s += p;
+  }
+  const out = [];
+  for (const rec of s.split(";")) {
+    const f = rec.split(",");
+    if (f.length !== 6 || !DIM_IDS[f[0]]) continue;
+    const [x, y, z, o, p] = f.slice(1).map(Number);
+    if ([x, y, z, o, p].some((n) => !Number.isFinite(n))) continue;
+    out.push({ d: f[0], x, y, z, o, p });
+  }
+  return out;
+}
+function restoreGround() {
+  if (live2.size) {
+    retryGround();
+    return;
+  }
+  const entries = load2();
+  if (!entries.length) {
+    if (palette.length) dirty2 = true;
+    return;
+  }
+  const failed = restoreEntries(entries);
+  for (const e of failed) live2.set(keyOf(e), e);
+  dirty2 = true;
+  if (failed.size) console.log(`[grimoire] ${failed.size} ground blocks are in unloaded chunks; they will be restored when loaded.`);
+}
+function retryGround() {
+  const orphans = [...live2.values()].filter((e) => !e.owner);
+  if (!orphans.length) return;
+  const failed = restoreEntries(orphans);
+  for (const e of orphans) if (!failed.has(e)) live2.delete(keyOf(e));
+  if (failed.size !== orphans.length) dirty2 = true;
+}
+function claimed(dimId, loc) {
+  if (!live2.size) return false;
+  return live2.has(key(DIMS[dimId] ?? "o", Math.floor(loc.x), Math.floor(loc.y), Math.floor(loc.z)));
+}
+var guarded = false;
+function installGroundGuards() {
+  if (guarded) return;
+  guarded = true;
+  try {
+    world5.beforeEvents.playerBreakBlock.subscribe((ev) => {
+      if (claimed(ev.block.dimension.id, ev.block.location)) ev.cancel = true;
+    });
+  } catch {
+  }
+  try {
+    world5.beforeEvents.explosion.subscribe((ev) => {
+      if (!live2.size) return;
+      const blocks = ev.getImpactedBlocks();
+      const keep = blocks.filter((b) => !claimed(b.dimension.id, b.location));
+      if (keep.length !== blocks.length) ev.setImpactedBlocks(keep);
+    });
+  } catch {
+  }
+}
+var GroundSet = class {
+  constructor(scene) {
+    this.scene = scene;
+    this.d = DIMS[scene.dimId] ?? "o";
+    scene.onEnd(() => this.restoreNow());
+  }
+  planned = [];
+  d;
+  /** set once scan() has finished */
+  ready = false;
+  waiting = [];
+  /** Cells (ground + plants) this set holds right now. */
+  get size() {
+    let n = 0;
+    for (const e of live2.values()) if (e.owner === this) n++;
+    return n;
+  }
+  get plannedCount() {
+    return this.planned.length;
+  }
+  /** The planned cells (read only), e.g. to place effects on the new ground. */
+  get cells() {
+    return this.planned;
+  }
+  /**
+   * Find the natural surface around `center` (radius in blocks) and decide what each cell becomes
+   * (`choose` returns undefined to leave a cell).  Runs as a background job; `then` runs when done.
+   * The plan is trimmed to the world-wide budget, inner cells first.
+   */
+  scan(center, radius, choose, then) {
+    if (then) this.waiting.push(then);
+    const dim = this.scene.dim;
+    const cx = Math.floor(center.x), cz = Math.floor(center.z), cy = Math.floor(center.y);
+    const cols = [];
+    for (let dx = -radius; dx <= radius; dx++) {
+      for (let dz = -radius; dz <= radius; dz++) {
+        const d = Math.hypot(dx, dz);
+        if (d <= radius) cols.push([cx + dx, cz + dz, d]);
+      }
+    }
+    cols.sort((a, b) => a[2] - b[2]);
+    const self = this;
+    function* job() {
+      let n = 0, budget2 = CONFIG.limits.maxGroundBlocks - live2.size;
+      for (const [x, z, dist2] of cols) {
+        if (self.scene.ended) return;
+        const c = self.surface(dim, x, z, cy, cx + 0.5, cz + 0.5, dist2);
+        if (c) {
+          const ch = choose(c);
+          const cost = ch ? (ch.ground ? 1 : 0) + (ch.plant || ch.ground && c.above ? 1 : 0) : 0;
+          if (ch && cost && budget2 >= cost) {
+            self.planned.push({ cell: c, change: ch });
+            budget2 -= cost;
+          }
+        }
+        if (++n % 24 === 0) yield;
+      }
+      self.ready = true;
+      for (const f of self.waiting.splice(0)) {
+        try {
+          f();
+        } catch (e) {
+          console.warn(`[grimoire] ground: ${e}`);
+        }
+      }
+    }
+    try {
+      system4.runJob(job());
+    } catch {
+      this.ready = true;
+    }
+    return this;
+  }
+  /** Run `f` once the scan has finished (immediately if it already has). */
+  whenReady(f) {
+    if (this.ready) f();
+    else this.waiting.push(f);
+  }
+  surface(dim, x, z, cy, cx, cz, dist2) {
+    try {
+      let y = cy + 6, top;
+      for (; y >= cy - 6; y--) {
+        const b = dim.getBlock({ x, y, z });
+        if (!b) return void 0;
+        if (!b.isAir) {
+          top = b;
+          break;
+        }
+      }
+      if (!top) return void 0;
+      let ground = top, above;
+      if (NATURAL_PLANTS.has(top.typeId)) {
+        above = top.typeId;
+        y -= 1;
+        const g = dim.getBlock({ x, y, z });
+        if (!g) return void 0;
+        ground = g;
+      }
+      if (!REPLACEABLE.has(ground.typeId) || ground.isWaterlogged || ground.getComponent("minecraft:inventory")) return void 0;
+      if (FALLING.has(ground.typeId)) {
+        const under = dim.getBlock({ x, y: y - 1, z });
+        if (!under || under.isAir || under.isLiquid || NATURAL_PLANTS.has(under.typeId)) return void 0;
+      }
+      let wet = false;
+      for (const [ox, oz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        for (const oy of [0, 1]) {
+          const n = dim.getBlock({ x: x + ox, y: y + oy, z: z + oz });
+          if (!n) return void 0;
+          const t = n.typeId;
+          if (LIQUID_RE.test(t)) wet = true;
+          if (REPLACEABLE.has(t) || NATURAL_PLANTS.has(t) || NATURAL_OTHER.has(t) || NATURAL_RE.test(t)) continue;
+          if (claimed(dim.id, n.location)) continue;
+          return void 0;
+        }
+      }
+      return { x, y, z, ground: ground.typeId, above, dist: dist2, ang: Math.atan2(x + 0.5 - cx, z + 0.5 - cz) * 180 / Math.PI, wet };
+    } catch {
+      return void 0;
+    }
+  }
+  /** Apply every planned cell with r0 <= dist < r1, sweeping around the centre from `startAng` in paced pulses. */
+  applyBand(r0, r1, opts = {}) {
+    this.whenReady(() => {
+      const band = sweep(this.planned.filter((p) => p.cell.dist >= r0 && p.cell.dist < r1), opts.startAng ?? 0);
+      this.pace(band, opts.perPulse ?? CONFIG.ground.perPulse, opts.every ?? CONFIG.ground.every, (batch) => this.applyBatch(batch));
+    });
+  }
+  /** Put back every cell of this set with r0 <= dist < r1, sweeping round from `startAng` in paced pulses. */
+  restoreBand(r0, r1, opts = {}) {
+    const band = sweep(this.planned.filter((p) => p.cell.dist >= r0 && p.cell.dist < r1), opts.startAng ?? 0);
+    this.pace(band, opts.perPulse ?? CONFIG.ground.perPulse, opts.every ?? CONFIG.ground.every, (batch) => this.restoreBatch(batch));
+  }
+  /**
+   * Take this set's plants off the ground within `radius` of `center` (the ground stays changed), e.g.
+   * so a ring of temporary barriers can stand there; the natural plants that were there come back.
+   */
+  clearPlants(center, radius) {
+    const cells = [];
+    for (const { cell } of this.planned) {
+      if (Math.hypot(cell.x + 0.5 - center.x, cell.z + 0.5 - center.z) > radius) continue;
+      const e = live2.get(key(this.d, cell.x, cell.y + 1, cell.z));
+      if (e && e.owner === this && typeOf(e.p) !== AIR) cells.push(e);
+    }
+    if (!cells.length) return;
+    const failed = restoreEntries(cells);
+    for (const e of cells) if (!failed.has(e)) live2.delete(keyOf(e));
+    dirty2 = true;
+  }
+  /** Put back everything now (scene end, caster gone): one tick. */
+  restoreNow() {
+    this.restoreBatch(this.planned);
+  }
+  /**
+   * Split a sweep into pulses of at most `perPulse` block changes touching at most CONFIG.ground.maxSections
+   * chunk sections (each one the client has to rebuild), one pulse every `every` ticks.
+   */
+  pace(list, perPulse, every, fn) {
+    const batches = [];
+    const maxSec = CONFIG.ground.maxSections;
+    let batch = [], n = 0, secs2 = /* @__PURE__ */ new Set();
+    for (const p of list) {
+      const c = (p.change.ground ? 1 : 0) + (p.change.plant || p.cell.above ? 1 : 0);
+      const sx = p.cell.x >> 4, sz = p.cell.z >> 4;
+      const mine = [`${sx},${p.cell.y >> 4},${sz}`, `${sx},${p.cell.y + 1 >> 4},${sz}`];
+      const grown = /* @__PURE__ */ new Set([...secs2, ...mine]);
+      if (batch.length && (n + c > perPulse || grown.size > maxSec)) {
+        batches.push(batch);
+        batch = [];
+        n = 0;
+        secs2 = new Set(mine);
+      } else secs2 = grown;
+      batch.push(p);
+      n += c;
+    }
+    if (batch.length) batches.push(batch);
+    const go = (b) => {
+      if (this.scene.ended) return;
+      if (!takePulse()) {
+        this.scene.after(1, () => go(b));
+        return;
+      }
+      fn(b);
+    };
+    batches.forEach((b, i) => {
+      if (i === 0) go(b);
+      else this.scene.after(i * every, () => go(b));
+    });
+  }
+  applyBatch(batch) {
+    if (this.scene.ended) return;
+    const dim = this.scene.dim;
+    const todo = [];
+    let budget2 = CONFIG.limits.maxGroundBlocks - live2.size;
+    for (const { cell, change } of batch) {
+      if (budget2 < 2) break;
+      try {
+        const g = dim.getBlock({ x: cell.x, y: cell.y, z: cell.z });
+        const a = dim.getBlock({ x: cell.x, y: cell.y + 1, z: cell.z });
+        if (!g || !a) continue;
+        const gk = key(this.d, cell.x, cell.y, cell.z), ak = key(this.d, cell.x, cell.y + 1, cell.z);
+        if (live2.has(gk) || live2.has(ak)) continue;
+        const aType = a.typeId;
+        if (aType !== AIR && aType !== cell.above) continue;
+        if (change.ground && g.typeId !== cell.ground) continue;
+        const plant = change.plant && !cell.wet ? change.plant : void 0;
+        const upTo = plant ?? (aType !== AIR && change.ground ? AIR : void 0);
+        if (upTo !== void 0) {
+          const e = { d: this.d, x: cell.x, y: cell.y + 1, z: cell.z, o: pal(aType, a.permutation.getAllStates()), p: pal(upTo, plant ? change.plantStates : void 0), owner: this };
+          live2.set(ak, e);
+          budget2--;
+          todo.push({ e, b: a, to: e.p, plant: true });
+        }
+        if (change.ground) {
+          const e = { d: this.d, x: cell.x, y: cell.y, z: cell.z, o: pal(g.typeId, g.permutation.getAllStates()), p: pal(change.ground, change.states), owner: this };
+          live2.set(gk, e);
+          budget2--;
+          todo.push({ e, b: g, to: e.p, plant: false });
+        }
+      } catch {
+      }
+    }
+    if (!todo.length) return;
+    try {
+      save();
+    } catch (err) {
+      for (const t of todo) live2.delete(keyOf(t.e));
+      console.warn(`[grimoire] ground ledger: ${err}`);
+      return;
+    }
+    const order = [
+      ...todo.filter((t) => t.plant && typeOf(t.to) === AIR),
+      ...todo.filter((t) => !t.plant),
+      ...todo.filter((t) => t.plant && typeOf(t.to) !== AIR)
+    ];
+    for (const t of order) {
+      try {
+        setTo(t.b, t.to);
+      } catch {
+        live2.delete(keyOf(t.e));
+        dirty2 = true;
+      }
+    }
+  }
+  restoreBatch(batch) {
+    const cells = [];
+    for (const { cell } of batch) {
+      for (const y of [cell.y + 1, cell.y]) {
+        const e = live2.get(key(this.d, cell.x, y, cell.z));
+        if (e && e.owner === this) cells.push(e);
+      }
+    }
+    if (!cells.length) return;
+    const failed = restoreEntries(cells);
+    for (const e of cells) {
+      if (failed.has(e)) e.owner = void 0;
+      else live2.delete(keyOf(e));
+    }
+    dirty2 = true;
+  }
+};
+function sweep(list, start) {
+  const rel = (a) => (a - start + 720) % 360;
+  const groups = /* @__PURE__ */ new Map();
+  for (const p of list) {
+    const k2 = `${p.cell.x >> 4},${p.cell.z >> 4}`;
+    let g = groups.get(k2);
+    if (!g) {
+      g = [];
+      groups.set(k2, g);
+    }
+    g.push(p);
+  }
+  const mean = (g) => {
+    let sx = 0, sz = 0;
+    for (const p of g) {
+      const a = rel(p.cell.ang) * Math.PI / 180;
+      sx += Math.sin(a);
+      sz += Math.cos(a);
+    }
+    return (Math.atan2(sx, sz) * 180 / Math.PI + 360) % 360;
+  };
+  return [...groups.values()].map((g) => ({ g, a: mean(g) })).sort((x, y) => x.a - y.a).flatMap(({ g }) => g.sort((x, y) => rel(x.cell.ang) - rel(y.cell.ang)));
+}
+function groundFor(scene) {
+  return new GroundSet(scene);
+}
+
+// src/lib/atmos.ts
+import { world as world6 } from "@minecraft/server";
+var FOG_TAG = "grimoire_ed6";
+var FOG_FLAG = "grim:fog";
+var TOD_KEY = "grim:tod";
+var SceneFog = class {
+  constructor(scene) {
+    this.scene = scene;
+    scene.onEnd(() => this.clear());
+  }
+  players = /* @__PURE__ */ new Set();
+  current;
+  /** Switch everyone near the caster to fog `id` (a fogs/*.json identifier). */
+  step(id, radius = CONFIG.atmosphere.fogRadius) {
+    if (!CONFIG.atmosphere.fog || this.scene.ended) return;
+    this.current = id;
+    for (const p of this.near(radius)) this.apply(p, id);
+  }
+  /** Take the fog away from everyone it was given to. */
+  clear() {
+    this.current = void 0;
+    for (const p of this.players) clearFog(p);
+    this.players.clear();
+  }
+  apply(p, id) {
+    try {
+      p.fogSettings.remove(FOG_TAG);
+      p.fogSettings.push(id, FOG_TAG);
+      p.setDynamicProperty(FOG_FLAG, 1);
+      this.players.add(p);
+    } catch {
+    }
+  }
+  near(radius) {
+    const out = [];
+    const c = this.scene.caster;
+    if (!this.scene.casterOk) return out;
+    out.push(c);
+    try {
+      for (const p of this.scene.dim.getPlayers({ location: c.location, maxDistance: radius })) if (p.id !== c.id) out.push(p);
+    } catch {
+    }
+    return out;
+  }
+};
+function clearFog(p) {
+  try {
+    if (!p.isValid) return;
+    p.fogSettings.remove(FOG_TAG);
+    p.setDynamicProperty(FOG_FLAG, void 0);
+  } catch {
+  }
+}
+function fogFor(scene) {
+  return new SceneFog(scene);
+}
+var lease;
+var ease = (p) => p <= 0 ? 0 : p >= 1 ? 1 : p * p * (3 - 2 * p);
+var natural = (l) => l.abs0 + (l.cycle ? l.t : 0);
+function setAbs(l, v2) {
+  const a = Math.max(0, Math.round(v2));
+  world6.setAbsoluteTime(a);
+  l.lastSet = a;
+  l.lastAt = l.t;
+}
+function record(l) {
+  try {
+    world6.setDynamicProperty(TOD_KEY, l ? JSON.stringify({ a: l.abs0, c: l.cycle, e: l.t }) : void 0);
+  } catch {
+  }
+}
+function finish(restore) {
+  const l = lease;
+  lease = void 0;
+  if (l && restore) {
+    try {
+      setAbs(l, natural(l));
+    } catch {
+    }
+  }
+  record(void 0);
+}
+function shortest(a, b) {
+  return ((b - a) % 24e3 + 36e3) % 24e3 - 12e3;
+}
+function mayChangeTime(caster) {
+  if (CONFIG.atmosphere.time === "off") return false;
+  try {
+    if (caster.dimension.id !== "minecraft:overworld") return false;
+    for (const p of world6.getAllPlayers()) {
+      if (p.id === caster.id) continue;
+      if (p.dimension.id !== caster.dimension.id) return false;
+      const d = Math.hypot(p.location.x - caster.location.x, p.location.z - caster.location.z);
+      if (d > CONFIG.atmosphere.timeRadius || p.isSleeping) return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+function leaseTime(scene, target, inTicks) {
+  if (!mayChangeTime(scene.caster)) return false;
+  try {
+    if (!lease) {
+      const abs0 = world6.getAbsoluteTime();
+      const cycle = world6.gameRules.doDayLightCycle;
+      let delta = shortest(abs0 % 24e3, target);
+      if (abs0 + delta < 0) delta += 24e3;
+      lease = { holders: /* @__PURE__ */ new Set(), abs0, cycle, t: 0, phase: "in", from: abs0, to: abs0 + delta, k: 0, n: Math.max(1, inTicks), lastSet: abs0, lastAt: 0 };
+      record(lease);
+    } else if (lease.phase === "out") {
+      const cur = world6.getAbsoluteTime();
+      const delta = shortest(cur % 24e3, target);
+      lease.phase = "in";
+      lease.from = cur;
+      lease.to = Math.max(0, cur + delta);
+      lease.k = 0;
+      lease.n = Math.max(1, inTicks);
+    }
+    lease.holders.add(scene);
+  } catch {
+    return false;
+  }
+  const held = lease;
+  scene.onEnd(() => {
+    if (lease !== held || !held.holders.delete(scene)) return;
+    if (!held.holders.size) finish(true);
+  });
+  return true;
+}
+function releaseTime(scene, outTicks) {
+  const l = lease;
+  if (!l || !l.holders.delete(scene)) return;
+  if (l.holders.size) return;
+  try {
+    const cur = world6.getAbsoluteTime();
+    l.phase = "out";
+    l.from = cur;
+    l.k = 0;
+    l.n = Math.max(1, outTicks);
+    l.to = l.abs0 + (l.cycle ? l.t + l.n : 0);
+  } catch {
+    finish(true);
+  }
+}
+function timeLeased() {
+  return lease !== void 0;
+}
+function tickAtmos() {
+  const l = lease;
+  if (!l) return;
+  try {
+    const expect = l.lastSet + (l.cycle ? l.t - l.lastAt : 0);
+    if (Math.abs(world6.getAbsoluteTime() - expect) > 40) {
+      finish(false);
+      return;
+    }
+    l.t++;
+    if (l.phase === "hold") {
+      if (l.t - l.lastAt >= 10) setAbs(l, l.to);
+    } else {
+      l.k++;
+      setAbs(l, l.from + (l.to - l.from) * ease(l.k / l.n));
+      if (l.k >= l.n) {
+        if (l.phase === "in") {
+          l.phase = "hold";
+        } else {
+          finish(true);
+          return;
+        }
+      }
+    }
+    if (l.t % 20 === 0) record(l);
+  } catch {
+    finish(false);
+  }
+}
+function restoreTime() {
+  const s = world6.getDynamicProperty(TOD_KEY);
+  if (typeof s !== "string") return;
+  try {
+    const r = JSON.parse(s);
+    if (Number.isFinite(r.a) && Number.isFinite(r.e)) world6.setAbsoluteTime(Math.max(0, Math.round(r.a + (r.c ? r.e : 0))));
+  } catch {
+  }
+  world6.setDynamicProperty(TOD_KEY, void 0);
+}
+function recoverFog(p) {
+  try {
+    if (p.getDynamicProperty(FOG_FLAG) !== void 0 || p.fogSettings.getTags().includes(FOG_TAG)) clearFog(p);
+  } catch {
+  }
+}
+
+// src/lib/cinema.ts
+import { EasingType, InputPermissionCategory, system as system5 } from "@minecraft/server";
+var CAM_FLAG = "grim:cam";
+var LOCK = [
+  InputPermissionCategory.Camera,
+  InputPermissionCategory.LateralMovement,
+  InputPermissionCategory.Jump,
+  InputPermissionCategory.Sneak
+];
+var Cinema = class {
+  constructor(scene) {
+    this.scene = scene;
+    scene.onEnd(() => this.handBack());
+  }
+  shots = 0;
+  live;
+  /** True while a shot is playing. */
+  get playing() {
+    return this.live !== void 0;
+  }
+  get count() {
+    return this.shots;
+  }
+  /** Would a shot be safe and comfortable right now? */
+  canShoot() {
+    const p = this.scene.caster;
+    if (!CONFIG.cinematic.enabled || this.live || this.shots >= CONFIG.cinematic.maxShots || !this.scene.casterOk) return false;
+    try {
+      if (!p.isOnGround || p.isGliding || p.isSleeping) return false;
+      if (p.getComponent("minecraft:riding")) return false;
+      const h = p.getComponent("minecraft:health");
+      if (h && h.currentValue < h.effectiveMax * CONFIG.cinematic.minHealth) return false;
+      if (hostiles(p.dimension, p.location, CONFIG.cinematic.clearRadius, p).length) return false;
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  /**
+   * Play one shot of `duration` ticks along `path(t)` (t = 0..duration).  Returns false (and does
+   * nothing) when a shot cannot be played now; the spell then simply carries on in first person.
+   */
+  shot(duration, path, opts = {}) {
+    const max = Math.round(CONFIG.cinematic.maxSeconds * 20);
+    duration = Math.min(Math.round(duration), max);
+    if (duration < 20 || !this.canShoot()) return false;
+    const p = this.scene.caster;
+    const step = Math.max(4, Math.round(opts.step ?? 10));
+    const enter = Math.max(4, Math.round(opts.enter ?? 12)), exit = Math.max(4, Math.round(opts.exit ?? 10));
+    const locked = [];
+    try {
+      for (const c of LOCK) {
+        if (p.inputPermissions.isPermissionCategoryEnabled(c)) {
+          p.inputPermissions.setPermissionCategory(c, false);
+          locked.push(c);
+        }
+      }
+      p.setDynamicProperty(CAM_FLAG, JSON.stringify(locked));
+      const first = path(0);
+      p.camera.setCamera("minecraft:free", {
+        location: first.at,
+        facingLocation: first.look,
+        easeOptions: { easeTime: enter / 20, easeType: EasingType.InOutSine }
+      });
+    } catch {
+      this.restoreInputs(p, locked);
+      return false;
+    }
+    this.shots++;
+    const ward = addWard({ scene: this.scene, protects: (e) => e.id === p.id, factor: 0 });
+    const t0 = this.scene.tick + enter;
+    const watchdog = system5.runTimeout(() => this.handBack(), enter + duration + exit + 20);
+    this.live = { ward, locked, watchdog, until: t0 + duration };
+    for (let a = 0; a < duration; a += step) {
+      const b = Math.min(a + step, duration);
+      this.scene.at(t0 + a, () => {
+        if (!this.live) return;
+        const q = path(b);
+        try {
+          p.camera.setCamera("minecraft:free", {
+            location: q.at,
+            facingLocation: q.look,
+            easeOptions: { easeTime: (b - a) / 20, easeType: EasingType.Linear }
+          });
+        } catch {
+          this.handBack();
+        }
+      });
+    }
+    if (opts.cut) {
+      this.scene.at(t0 + duration, () => this.handBack());
+    } else {
+      this.scene.at(t0 + duration, () => {
+        if (!this.live) return;
+        try {
+          const head = p.getHeadLocation(), v2 = p.getViewDirection();
+          p.camera.setCamera("minecraft:free", {
+            location: head,
+            facingLocation: { x: head.x + v2.x * 8, y: head.y + v2.y * 8, z: head.z + v2.z * 8 },
+            easeOptions: { easeTime: exit / 20, easeType: EasingType.InOutSine }
+          });
+        } catch {
+          this.handBack();
+        }
+      });
+      this.scene.at(t0 + duration + exit, () => this.handBack());
+    }
+    return true;
+  }
+  /** Give the caster their own view back now (safe to call at any time, any number of times). */
+  handBack() {
+    const l = this.live;
+    if (!l) return;
+    this.live = void 0;
+    try {
+      system5.clearRun(l.watchdog);
+    } catch {
+    }
+    removeWard(l.ward);
+    const p = this.scene.caster;
+    try {
+      if (!p.isValid) return;
+      p.camera.clear();
+      this.restoreInputs(p, l.locked);
+    } catch {
+    }
+  }
+  restoreInputs(p, locked) {
+    try {
+      if (!p.isValid) return;
+      for (const c of locked) p.inputPermissions.setPermissionCategory(c, true);
+      p.setDynamicProperty(CAM_FLAG, void 0);
+    } catch {
+    }
+  }
+};
+function cinemaFor(scene) {
+  return new Cinema(scene);
+}
+function recoverCamera(p) {
+  try {
+    const s = p.getDynamicProperty(CAM_FLAG);
+    if (typeof s !== "string") return;
+    p.camera.clear();
+    let locked = LOCK;
+    try {
+      const a = JSON.parse(s);
+      if (Array.isArray(a)) locked = a;
+    } catch {
+    }
+    for (const c of locked) p.inputPermissions.setPermissionCategory(c, true);
+    p.setDynamicProperty(CAM_FLAG, void 0);
+  } catch {
+  }
 }
 
 // src/config/dw01.ts
@@ -2362,8 +3298,8 @@ var dw03_ophanim_default = defineSpell("dw03", ({ caster, scene, aim }) => {
   }
   let lastCentre = center;
   function routeFor(k2) {
-    const live2 = liveMarks();
-    let P6 = live2.map((m) => flat(m.e.location));
+    const live3 = liveMarks();
+    let P6 = live3.map((m) => flat(m.e.location));
     const c0 = P6.length ? mul(P6.reduce((s, p) => add(s, p), v(0, 0, 0)), 1 / P6.length) : flat(lastCentre);
     const c = v(c0.x, 0, c0.z);
     lastCentre = v(c.x, center.y, c.z);
@@ -2506,8 +3442,8 @@ var dw03_ophanim_default = defineSpell("dw03", ({ caster, scene, aim }) => {
   }
   const tVerdict = tPass0 + DW03.passes * passLen;
   scene.at(tVerdict, () => {
-    const live2 = liveMarks();
-    const c = live2.length ? mul(live2.reduce((s, m) => add(s, flat(m.e.location)), v(0, 0, 0)), 1 / live2.length) : flat(lastCentre);
+    const live3 = liveMarks();
+    const c = live3.length ? mul(live3.reduce((s, m) => add(s, flat(m.e.location)), v(0, 0, 0)), 1 / live3.length) : flat(lastCentre);
     const top = up(groundBelow(dim, v(c.x, center.y + 4, c.z), 24), DW03.hoverHeight - 2);
     const from = pos;
     oph.state(S3.verdict);
@@ -2662,11 +3598,11 @@ var dw04_sanctuary_default = defineSpell("dw04", ({ caster, scene, aim }) => {
     pieces.push(pc);
     return pc;
   };
-  const claimed = /* @__PURE__ */ new Set();
+  const claimed2 = /* @__PURE__ */ new Set();
   const claim = (pc, x, z) => {
-    const key = `${x},${z}`;
-    if (claimed.has(key)) return;
-    claimed.add(key);
+    const key2 = `${x},${z}`;
+    if (claimed2.has(key2)) return;
+    claimed2.add(key2);
     pc.cells.push({ x, z });
   };
   const opposite = [0, 4, 2, 6, 1, 5, 3, 7];
@@ -4260,9 +5196,9 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
   function mark(e, skin = 0) {
     let m = marks.get(e.id);
     if (!m || !m.a.valid) {
-      let live2 = 0;
-      for (const x of marks.values()) if (x.a.valid) live2++;
-      if (live2 >= DW06.maxMarks || !isAlive(e)) return;
+      let live3 = 0;
+      for (const x of marks.values()) if (x.a.valid) live3++;
+      if (live3 >= DW06.maxMarks || !isAlive(e)) return;
       const a = scene.spawn("dw_mark", up(e.location, 2.4), { state: MARK3.appear });
       scene.follow(a, e, 2.4);
       m = { e, a };
@@ -4342,7 +5278,7 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
     fx("dw6_script", add(bookAt, { x: (rnd(scene.tick) - 0.5) * 4, y: rnd(scene.tick + 0.5) * 2, z: (rnd(scene.tick + 0.9) - 0.5) * 4 }));
     if (scene.tick % 3 === 0) fx("dw6_trail", up(bookAt, 0.8));
   });
-  const claimed = /* @__PURE__ */ new Set();
+  const claimed2 = /* @__PURE__ */ new Set();
   const cover = [];
   addWard({
     scene,
@@ -4357,9 +5293,9 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
     const s = PLAN[i];
     let p = G(Ds + s.v, s.u);
     if (s.seek) {
-      const near = hostiles(dim, p, DW06.seekRadius, caster).filter((e) => !claimed.has(e.id) && distXZ(e.location, c0) >= DW06.seekMinDist && dist(e.location, center) <= DW06.domainRadius && edifices.every((ed) => distXZ(ed.at, e.location) >= 4.5));
+      const near = hostiles(dim, p, DW06.seekRadius, caster).filter((e) => !claimed2.has(e.id) && distXZ(e.location, c0) >= DW06.seekMinDist && dist(e.location, center) <= DW06.domainRadius && edifices.every((ed) => distXZ(ed.at, e.location) >= 4.5));
       if (near.length) {
-        claimed.add(near[0].id);
+        claimed2.add(near[0].id);
         p = ground(near[0].location);
       }
     }
@@ -6403,8 +7339,8 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
     const score = /* @__PURE__ */ new Map();
     const cand = [];
     for (const e of ALL) {
-      const key = ek(e);
-      if (keepOpen.has(key)) continue;
+      const key2 = ek(e);
+      if (keepOpen.has(key2)) continue;
       const nearPlayer = colsOf(e, false).some((k2) => {
         const [x, z] = k2.split(",").map(Number);
         return players.some((p) => Math.abs(p.location.x - (x + 0.5)) < DN03.playerClear + 0.5 && Math.abs(p.location.z - (z + 0.5)) < DN03.playerClear + 0.5);
@@ -6412,21 +7348,21 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
       if (nearPlayer) continue;
       const [a, b] = edgeCells(e);
       const n = edgeNormal(e);
-      let s = hash01(round + 1, key) * W2.jitter;
+      let s = hash01(round + 1, key2) * W2.jitter;
       if (inside(a) && inside(b) && seeds.length > 1 && region(a) !== region(b)) s += W2.separate;
       for (const [c, sign] of [[a, 1], [b, -1]]) {
         if (!inside(c) || !foeCells.has(ck(c))) continue;
         const out = mul(n, sign);
         if (out.x * toCaster.x + out.z * toCaster.z > 0.5) s += W2.blockApproach;
       }
-      if (corridor2.has(key)) s += W2.corridor;
+      if (corridor2.has(key2)) s += W2.corridor;
       if (!inside(a) || !inside(b)) {
         const out = inside(a) ? n : mul(n, -1);
         s += out.x * toCaster.x + out.z * toCaster.z > 0.7 ? W2.frontLine : W2.perimeter;
       }
       if (inside(a) && allyCells.has(ck(a)) || inside(b) && allyCells.has(ck(b))) s += W2.nearAlly;
-      if (key === ek(loopEdge)) s = 1e3;
-      score.set(key, s);
+      if (key2 === ek(loopEdge)) s = 1e3;
+      score.set(key2, s);
       cand.push({ e, s });
     }
     cand.sort((p, q) => q.s - p.s);
@@ -6436,9 +7372,9 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
   }
   function assignDoors(walls2, loopKey2) {
     const { allyCells } = survey();
-    for (const [key, w] of walls2) {
+    for (const [key2, w] of walls2) {
       const [a, b] = edgeCells(w.e);
-      w.door = key === loopKey2 || inside(a) && allyCells.has(ck(a)) || inside(b) && allyCells.has(ck(b));
+      w.door = key2 === loopKey2 || inside(a) && allyCells.has(ck(a)) || inside(b) && allyCells.has(ck(b));
     }
     for (let guard = 0; guard < 40; guard++) {
       const blocked = (e) => {
@@ -6692,8 +7628,8 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
     arriving = arriving.slice(0, nMoves);
     leaving = leaving.slice(0, nMoves);
     const moves = [];
-    for (const key of arriving) {
-      const e = pk(key), m = edgeMid(e);
+    for (const key2 of arriving) {
+      const e = pk(key2), m = edgeMid(e);
       let bi = 0, bd = 1e9;
       leaving.forEach((w, k2) => {
         let d = distXZ(w.pos, m);
@@ -7325,7 +8261,7 @@ function aimAt(c, from, seed) {
   }
   return { loc: c.spot(seed) };
 }
-function finish(c, a, state, ticks) {
+function finish2(c, a, state, ticks) {
   if (!a.valid) return;
   a.state(state);
   c.scene.after(ticks, () => {
@@ -7375,7 +8311,7 @@ function doorframe(c, i, until) {
       scene.at(start + passLen, () => door.state(DOOR2.fly));
     });
   }
-  scene.at(Math.min(until, t0 + 6 + DN05.doorPasses * (passLen + 10)), () => finish(c, door, DOOR2.depart, T5.doorDepart));
+  scene.at(Math.min(until, t0 + 6 + DN05.doorPasses * (passLen + 10)), () => finish2(c, door, DOOR2.depart, T5.doorDepart));
 }
 function windowEye(c, i, until) {
   const { scene, dim } = c;
@@ -7479,7 +8415,7 @@ function corridor(c, i) {
   scene.at(t0 + T5.corUnfold + T5.corSnap, () => cor.state(COR.clamp));
   scene.at(t0 + T5.corUnfold + DN05.corridorHold, () => {
     sound(dim, "dn_city_groan", end, 0.6, 1.4);
-    finish(c, cor, COR.fold, T5.corFold);
+    finish2(c, cor, COR.fold, T5.corFold);
   });
 }
 function stairfall(c, i) {
@@ -7513,7 +8449,7 @@ function stairfall(c, i) {
   const tRest = t0 + T5.sfFirst + SF_CHUNKS * T5.sfStep;
   scene.at(tRest, () => sf?.state(SF.rest));
   scene.at(tRest + 16, () => {
-    if (sf) finish(c, sf, SF.sink, T5.sfSink);
+    if (sf) finish2(c, sf, SF.sink, T5.sfSink);
   });
 }
 function fragment(c, i, until) {
@@ -7559,7 +8495,7 @@ function fragment(c, i, until) {
   }, scene.tick + T5.frArrive, until);
   scene.at(until, () => {
     sound(dim, "dn_city_bite", pos, 0.6, 0.7);
-    finish(c, fr, FR.crumble, T5.frCrumble);
+    finish2(c, fr, FR.crumble, T5.frCrumble);
   });
 }
 function balcony(c, seed) {
@@ -10508,7 +11444,7 @@ var ed04_aether_raptor_default = defineSpell("ed04", ({ caster, scene, aim }) =>
     cursor = leg.to;
     return leg;
   };
-  const splineLeg = (kind, pts, speed, idx = 0, pilot, ease) => addLeg(kind, pathLen(pts) / speed * 20, (p) => spline(pts, ease ? ease(p) : p), idx, pilot);
+  const splineLeg = (kind, pts, speed, idx = 0, pilot, ease2) => addLeg(kind, pathLen(pts) / speed * 20, (p) => spline(pts, ease2 ? ease2(p) : p), idx, pilot);
   const verts = [0, 1, 2, 3, 4].map((i) => {
     const p = polar(center, ED04.passRadius, baseAng + i * 72);
     return { x: p.x, y: gy(p) + ED04.passHeight, z: p.z };
@@ -11844,14 +12780,14 @@ var Mover = class {
   path(pts, speed, opts = {}) {
     const L3 = new ArcPath((u) => spline(pts, u), 48);
     const ticks = Math.max(2, Math.round(L3.length / speed * 20));
-    const ease = opts.ease ?? ((p) => p);
-    return this.add(ticks, (p) => L3.at(ease(p) * L3.length), { tag: opts.tag, yaw: opts.yaw });
+    const ease2 = opts.ease ?? ((p) => p);
+    return this.add(ticks, (p) => L3.at(ease2(p) * L3.length), { tag: opts.tag, yaw: opts.yaw });
   }
   /** Catmull-Rom through pts covered in exactly `ticks` ticks (arc-length paced, optional easing). */
   pathIn(pts, ticks, opts = {}) {
     const L3 = new ArcPath((u) => spline(pts, u), 48);
-    const ease = opts.ease ?? ((p) => p);
-    return this.add(ticks, (p) => L3.at(ease(p) * L3.length), { tag: opts.tag, yaw: opts.yaw });
+    const ease2 = opts.ease ?? ((p) => p);
+    return this.add(ticks, (p) => L3.at(ease2(p) * L3.length), { tag: opts.tag, yaw: opts.yaw });
   }
   /** End the segment active at tick t (and drop later ones) so new plans can start there. */
   truncate(t) {
@@ -11986,6 +12922,80 @@ function stadium(c, R2, F, L3, rho) {
   };
 }
 
+// src/spells/_ed06_world.ts
+var GROUND_R = 22;
+var BANDS = [[0, 7], [7, 12], [12, 17], [17, GROUND_R + 1]];
+var FOGS = ["grimoire:ed6_fog_1", "grimoire:ed6_fog_2", "grimoire:ed6_fog_3", "grimoire:ed6_fog_4"];
+var FOG_ASH = "grimoire:ed6_fog_ash";
+var SUNSET = 12e3;
+var DOMAIN_R = 4.6;
+function sectorOf(f, r, x, z) {
+  const d = Math.hypot(f, r);
+  if (d < DOMAIN_R) return "domain";
+  const a = Math.atan2(r, f) * 180 / Math.PI + (hash012(x >> 1, z >> 1) - 0.5) * 16;
+  if (d >= 10 + hash012(x, z + 7) * 2 && a >= 22 && a <= 78) return "volcanic";
+  if (d >= 10 + hash012(x + 3, z) * 2 && a <= -22 && a >= -80) return "shore";
+  if (Math.abs(a) < 100) return "meadow";
+  return "forest";
+}
+function vein(f, r) {
+  const a = Math.atan2(r, f) * 180 / Math.PI;
+  const d = Math.hypot(f, r);
+  if (d < 12) return false;
+  for (const a0 of [34, 52, 66]) {
+    const wob = Math.sin(d * 0.55 + a0) * 2.2;
+    if (Math.abs(a - (a0 + wob)) * (Math.PI / 180) * d < 0.62) return true;
+  }
+  return false;
+}
+function groundPlan(W2) {
+  return (c) => {
+    const rx = c.x + 0.5 - W2.c.x, rz = c.z + 0.5 - W2.c.z;
+    const f = rx * W2.F.x + rz * W2.F.z, r = rx * W2.R.x + rz * W2.R.z;
+    const h = (k2) => hash012(c.x * 3 + k2, c.z * 5 - k2);
+    const s = sectorOf(f, r, c.x, c.z);
+    switch (s) {
+      case "domain":
+        return { ground: "minecraft:moss_block" };
+      case "volcanic": {
+        if (vein(f, r)) return { ground: "minecraft:magma" };
+        return { ground: h(1) < 0.62 ? "minecraft:basalt" : h(2) < 0.7 ? "minecraft:blackstone" : "minecraft:smooth_basalt" };
+      }
+      case "shore": {
+        const moss = h(3) < 0.35;
+        return { ground: moss ? "minecraft:moss_block" : "minecraft:mud", plant: moss && h(4) < 0.5 ? "minecraft:fern" : void 0 };
+      }
+      case "meadow": {
+        const ground = h(5) < 0.72 ? "minecraft:moss_block" : "minecraft:podzol";
+        const p = h(6);
+        const plant = p < 0.22 ? "minecraft:short_grass" : p < 0.36 ? "minecraft:fern" : p < 0.43 ? "minecraft:wildflowers" : p < 0.47 ? "minecraft:pink_petals" : void 0;
+        return { ground, plant, plantStates: petals(plant, h(7)) };
+      }
+      default: {
+        const g = h(8);
+        const ground = g < 0.5 ? "minecraft:moss_block" : g < 0.82 ? "minecraft:podzol" : "minecraft:dirt_with_roots";
+        const p = h(9);
+        const onMoss = ground === "minecraft:moss_block";
+        const plant = p < 0.26 ? "minecraft:fern" : p < 0.4 ? "minecraft:short_grass" : p < 0.5 ? "minecraft:leaf_litter" : p < 0.55 && onMoss ? "minecraft:moss_carpet" : p < 0.585 && c.dist > 7 ? "minecraft:firefly_bush" : void 0;
+        return { ground, plant, plantStates: petals(plant, h(10)) };
+      }
+    }
+  };
+}
+function petals(plant, u) {
+  if (plant !== "minecraft:pink_petals" && plant !== "minecraft:wildflowers" && plant !== "minecraft:leaf_litter") return void 0;
+  const dirs = ["north", "east", "south", "west"];
+  return { growth: 3, "minecraft:cardinal_direction": dirs[Math.floor(u * 4) % 4] };
+}
+function shotReveal(W2, C0, u) {
+  const e = u * u * (3 - 2 * u);
+  const ang = -120 - 120 * e;
+  const rad = 6 + 5 * e, h = 2.6 + 9.4 * e;
+  const at = W2.polar(rad, ang, 0);
+  const look = W2.p(10 + 12 * e, 0, 0);
+  return { at: { x: at.x, y: C0.y + h, z: at.z }, look: { x: look.x, y: C0.y + 1.2 + 1.5 * e, z: look.z } };
+}
+
 // src/spells/ed06_world_before_names.ts
 var NATURE = { actor: "dragon_nature", scale: 2 };
 var N2 = { hidden: 0, arrive: 1, idle: 2, move: 3, turn_l: 4, turn_r: 5, attack_a: 6, attack_b: 7, power: 8, react: 9, rest: 10, depart: 11 };
@@ -12059,7 +13069,7 @@ var STREAM2 = { form: 1, hold: 2, fade: 3 };
 var CUR2 = { form: 1, flow: 2, freeze: 3, spiral: 4, ice: 5, rise: 6, shatter: 7 };
 var CUR_R2 = 4;
 var CUR_SWEEP2 = 160;
-var AIR = { actor: "dragon_air", scale: 1.5 };
+var AIR2 = { actor: "dragon_air", scale: 1.5 };
 var A3 = {
   hidden: 0,
   arrive: 1,
@@ -12161,6 +13171,14 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
   const faceCaster = (p) => yawOf(flat(sub(C0, p)));
   const foes = (p, r, max) => hostiles(dim, p, r, caster, max);
   const tb = blocksFor(scene);
+  const land = groundFor(scene).scan(C0, GROUND_R, groundPlan(W2));
+  const haze = fogFor(scene);
+  const cine = cinemaFor(scene);
+  const worldAng = (deg) => {
+    const d = W2.dir(deg);
+    return Math.atan2(d.x, d.z) * 180 / Math.PI;
+  };
+  scene.at(12, () => leaseTime(scene, SUNSET, 240));
   const burnT = (e, s) => {
     try {
       e.setOnFire(s, true);
@@ -12273,7 +13291,7 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
       scene.after(60, () => horizon?.state(HORIZON.hold));
       fog = scene.spawn("ed6_fog", up(at(16, 0), 0.05), { state: 1 });
       sound(dim, "ed6_world_fade", hc, 1, 0.8);
-    } else fog?.state(k2 + 1);
+    }
     if (k2 === 1) {
       ST.stones.forEach(([f, r], i) => scene.after(i * 5, () => {
         const p = at(f, r);
@@ -12334,6 +13352,8 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
       particle(dim, `ed6_flash_${LINEAGE[j]}`, EM[j].c);
     }
     atmosphere(k2);
+    land.applyBand(BANDS[k2][0], BANDS[k2][1], { startAng: worldAng([180, 50, -50, 0][k2]) });
+    haze.step(FOGS[k2]);
     const G = zoneNow();
     particle(dim, "ed6_geo_shock", up(G, 0.2));
     for (const f of foes(G, ED06.beatRadius)) {
@@ -12347,6 +13367,9 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     particle(dim, e % 3 ? "ed6_stream" : "ed6_codex_rune", add(c, add(mul(R2, Math.cos(a) * r), { x: 0, y: Math.sin(a) * r, z: 0 })));
     if (e % 2 === 0) particle(dim, "ed6_codex_glint", add(c, add(mul(R2, Math.cos(a + 3.1) * r * 0.8), { x: 0, y: Math.sin(a + 3.1) * r * 0.8, z: 0 })));
   }, 16, T22 + 20);
+  scene.at(T_ALL - 12, () => {
+    cine.shot(70, (t) => shotReveal(W2, C0, t / 70), { enter: 12, exit: 14 });
+  });
   scene.at(T_ALL, () => {
     const Kc = cxCore();
     sound(dim, "ed6_heart_all", Kc, 1.6);
@@ -12385,28 +13408,21 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     if (level === 0) return;
     const q = Math.min(4, level) / 4 * fading;
     const h = (k2) => hash012(t, k2);
-    if (h(1) < q) particle(dim, "ed6_spore", at(2.5 + h(2) * 7, (h(3) - 0.5) * 14, 0.4 + h(4) * 1.8));
-    if (h(5) < q) particle(dim, t % 3 ? "ed6_mote" : "ed6_pollen_drift", at(3 + h(6) * 7, (h(7) - 0.5) * 14, 0.8 + h(8) * 2.4));
-    if (t % 4 === 0 && h(9) < q) particle(dim, "ed6_mist", at(3 + h(10) * 6, (h(11) - 0.5) * 12, 0.15));
-    for (let j = 0; j < 8; j++) {
-      if (h(12 + j) < q) particle(
-        dim,
-        j % 3 === 2 ? "ed6_spore" : j % 2 ? "ed6_mote" : "ed6_pollen_drift",
-        at(9 + h(70 + j) * 23, (h(80 + j) - 0.5) * 46, 0.8 + h(90 + j) * 6)
-      );
+    if (h(1) < q * 0.6) particle(dim, "ed6_spore", at(2.5 + h(2) * 7, (h(3) - 0.5) * 14, 0.4 + h(4) * 1.8));
+    if (h(5) < q * 0.6) particle(dim, t % 3 ? "ed6_mote" : "ed6_pollen_drift", at(3 + h(6) * 7, (h(7) - 0.5) * 14, 0.8 + h(8) * 2.4));
+    for (let j = 0; j < 2; j++) {
+      if (h(12 + j) < q) particle(dim, j ? "ed6_mote" : "ed6_pollen_drift", at(9 + h(70 + j) * 23, (h(80 + j) - 0.5) * 46, 0.8 + h(90 + j) * 6));
     }
-    if (t % 2 === 1 && h(35) < q) particle(dim, "ed6_rune_rise", at(10 + h(36) * 30, (h(37) - 0.5) * 40, 0.3));
-    if (t % 2 === 0 && h(28) < q) particle(dim, "ed6_mist", at(9 + h(29) * 38, (h(30) - 0.5) * 52, 0.3));
-    if (h(31) < 0.8 * q) particle(dim, "ed6_mote", at(32 + h(32) * 22, (h(33) - 0.5) * 60, 2 + h(34) * 10));
-    for (let j = 0; j < 4; j++) {
-      const k2 = 40 + j * 10;
-      if (level >= 1) particle(dim, (t + j) % 2 ? "ed6_leaf_fall" : "ed_nature_pollen", inBox(ZONE_NAT, t * 2 + j, k2, 3 + h(k2 + 2) * 9));
-      if (level >= 2 && h(k2 + 3) < q) particle(dim, (t + j) % 3 ? "ed6_ember_mote" : "ed6_haze", inBox(ZONE_HEAT, t * 2 + j, k2 + 4, 0.4 + h(k2 + 5) * 4));
-      if (level >= 3 && h(k2 + 6) < q) particle(dim, (t + j) % 3 ? "ed6_droplet" : "ed6_snow", inBox(ZONE_TIDE, t * 2 + j, k2 + 7, 1.5 + h(k2 + 8) * 7));
+    if (t % 4 === 1 && h(35) < q) particle(dim, "ed6_rune_rise", at(10 + h(36) * 30, (h(37) - 0.5) * 40, 0.3));
+    if (t % 2 === 0) {
+      const k2 = 40 + t % 4 * 10;
+      if (level >= 1) particle(dim, t % 4 ? "ed6_leaf_fall" : "ed_nature_pollen", inBox(ZONE_NAT, t, k2, 3 + h(k2 + 2) * 9));
+      if (level >= 2 && h(k2 + 3) < q) particle(dim, t % 6 ? "ed6_ember_mote" : "ed6_haze", inBox(ZONE_HEAT, t, k2 + 4, 0.4 + h(k2 + 5) * 4));
+      if (level >= 3 && h(k2 + 6) < q) particle(dim, t % 6 ? "ed6_droplet" : "ed6_snow", inBox(ZONE_TIDE, t, k2 + 7, 1.5 + h(k2 + 8) * 7));
     }
-    if (level >= 4 && h(60) < q) particle(dim, t % 3 ? "ed6_wind" : "ed6_mote", sky(24 + h(61) * 26, (h(62) - 0.5) * 46, 10 + h(63) * 8));
-    for (let k2 = 0; k2 < 4; k2++) if (emblems[k2]?.valid && (t + k2) % 2 === 0) particle(dim, "ed6_rune_rise", up(EM[k2].at, 0.5));
-    if (t % 2 === 0) particle(dim, t % 6 === 0 ? "ed6_codex_glint" : "ed6_codex_rune", up(cxAt(), 1.2 + h(64) * 2.5));
+    if (level >= 4 && t % 2 === 1 && h(60) < q) particle(dim, t % 3 ? "ed6_wind" : "ed6_mote", sky(24 + h(61) * 26, (h(62) - 0.5) * 46, 10 + h(63) * 8));
+    for (let k2 = 0; k2 < 4; k2++) if (emblems[k2]?.valid && (t + k2) % 4 === 0) particle(dim, "ed6_rune_rise", up(EM[k2].at, 0.5));
+    if (t % 3 === 0) particle(dim, t % 6 === 0 ? "ed6_codex_glint" : "ed6_codex_rune", up(cxAt(), 1.2 + h(64) * 2.5));
   }, 0, T_END3 - 20);
   const nYaw0 = yawOf(R2);
   const nPos = (r) => W2.p(ST.natureLane, r);
@@ -13162,7 +14178,7 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     return best;
   };
   const airStart = sky(58, 12, 25);
-  const air = scene.spawn(AIR.actor, airStart, { yaw: yawOf(sub(sky(50, 8, 17), airStart)), state: A3.hidden });
+  const air = scene.spawn(AIR2.actor, airStart, { yaw: yawOf(sub(sky(50, 8, 17), airStart)), state: A3.hidden });
   const airMv = new Mover(air, airStart, air.yaw, T_AIR);
   airMv.maxTurn = 12;
   const airForce = [];
@@ -13381,7 +14397,7 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     particle(dim, "ed6_ring_v", cxCore());
     for (let k2 = 0; k2 < 4; k2++) stream(cxCore(), pts[k2][1], 10, ["ed6_stream", "ed6_codex_rune"], 4, 2);
   });
-  const DOMAIN_R = 4;
+  const DOMAIN_R2 = 4;
   const leyEnd = (k2, t) => {
     const a = [nature, heat, tide, air][k2];
     const arrived = t >= [T_NATURE + 10, T_HEAT + 4, T_TIDE + 4, T_AIR + 30][k2];
@@ -13396,7 +14412,7 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
       const end = leyEnd(k2, t);
       if (!end) continue;
       const concord = t >= T42 + 10;
-      const from = concord ? end : add(C0, mul(norm(flat(sub(end, C0))), DOMAIN_R));
+      const from = concord ? end : add(C0, mul(norm(flat(sub(end, C0))), DOMAIN_R2));
       const to = concord ? zone().G : end;
       const u = (t * 1.5 + k2 * 9) % 30 / 30;
       const p = lerp(from, to, concord ? u : u * u);
@@ -13523,6 +14539,7 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
       if (Math.abs(d - ED06.ringRadius) < 1.6) shove(e, sub(z.G, e.location), 0.9, 0.35);
     }
   });
+  scene.at(T42 + 30, () => land.clearPlants(zone().G, ED06.ringRadius + 1.5));
   scene.at(T42 + 36, () => {
     const z = zone();
     const seen = /* @__PURE__ */ new Set();
@@ -13533,9 +14550,9 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
       if (Math.abs(angleDelta(a, doorA)) < ED06.doorwayDeg || Math.abs(angleDelta(a, doorB)) < ED06.doorwayDeg) continue;
       const p = W2.polar(ED06.ringRadius, a, 0, z.G);
       const c = { x: Math.floor(p.x), y: Math.floor(gy(p)), z: Math.floor(p.z) };
-      const key = `${c.x},${c.z}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
+      const key2 = `${c.x},${c.z}`;
+      if (seen.has(key2)) continue;
+      seen.add(key2);
       if (tb.column(c.x, c.y, c.z, ED06.ringBarrierHeight) > 0) ringCells.push(c);
     }
   });
@@ -13870,6 +14887,8 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     sound(dim, "ed6_detonation", G, 3);
     shake(dim, G, 64, 1, 1.3);
     flash(dim, G, 80, [1, 0.86, 0.6], 0.04, 0.06, 0.75);
+    haze.step(FOG_ASH);
+    scene.after(70, () => haze.step(FOGS[3]));
     sound(dim, "ed_heat_roar", up(G, 3), 2, 0.8);
     particle(dim, "ed6_thermal_ring", up(G, 0.3));
     particle(dim, "ed6_wave", up(G, 0.4));
@@ -14031,7 +15050,7 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     });
     scene.at(tD + A_T.depart, () => scene.despawn(air));
     const PLf = PL;
-    remember(3, () => ({ p: PLf, yaw: yawOf(dirL) }), AIR.scale, tD + 4, Math.max(T52 + 82, tD + 30));
+    remember(3, () => ({ p: PLf, yaw: yawOf(dirL) }), AIR2.scale, tD + 4, Math.max(T52 + 82, tD + 30));
   });
   let massV;
   scene.at(T52, () => {
@@ -14123,6 +15142,10 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     particle(dim, "ed6_wave", up(ground(K3), 0.4));
   });
   scene.at(T_SEAL + 16, () => particle(dim, "ed6_light_wave", up(ground(K3), 0.3)));
+  [...BANDS].reverse().forEach(([r0, r1], i) => scene.at(T_SEAL + 4 + i * 8, () => land.restoreBand(r0, r1, { every: 2, startAng: worldAng(0) })));
+  scene.at(T_SEAL + 4, () => releaseTime(scene, 66));
+  [FOGS[2], FOGS[1], FOGS[0]].forEach((id, i) => scene.at(T_SEAL + 10 + i * 14, () => haze.step(id)));
+  scene.at(T_SEAL + 52, () => haze.clear());
   scene.at(T_SEAL + 4, () => {
     fading = 0.6;
     for (const b of bridges) scene.at(restoreAt(b.loc), () => {
@@ -14217,6 +15240,11 @@ function registerAllSpells() {
 
 // src/main.ts
 registerAllSpells();
+function recoverPlayer(p) {
+  if (!p.isValid) return;
+  recoverFog(p);
+  recoverCamera(p);
+}
 function giveBooks(p) {
   const inv = p.getComponent("minecraft:inventory")?.container;
   if (!inv) return;
@@ -14240,14 +15268,14 @@ function forceCast(p, id) {
   startCooldown(p, spell.id, spell.cooldown);
   return `cast ${id} (${META_BY_ID[id].name})`;
 }
-system4.beforeEvents.startup.subscribe((ev) => {
+system6.beforeEvents.startup.subscribe((ev) => {
   const reg = ev.customCommandRegistry;
   reg.registerCommand(
     { name: "grimoire:give", description: "Give yourself the three Grimoires", permissionLevel: CommandPermissionLevel.Any, cheatsRequired: true },
     (origin) => {
       const p = origin.sourceEntity;
-      if (!(p instanceof Player4)) return { status: CustomCommandStatus.Failure, message: "Players only" };
-      system4.run(() => giveBooks(p));
+      if (!(p instanceof Player6)) return { status: CustomCommandStatus.Failure, message: "Players only" };
+      system6.run(() => giveBooks(p));
       return { status: CustomCommandStatus.Success, message: "Three Grimoires added to your inventory" };
     }
   );
@@ -14255,24 +15283,25 @@ system4.beforeEvents.startup.subscribe((ev) => {
     { name: "grimoire:reset", description: "Clear all of your Grimoire spell cooldowns", permissionLevel: CommandPermissionLevel.Any, cheatsRequired: true },
     (origin) => {
       const p = origin.sourceEntity;
-      if (!(p instanceof Player4)) return { status: CustomCommandStatus.Failure, message: "Players only" };
-      system4.run(() => clearCooldowns(p));
+      if (!(p instanceof Player6)) return { status: CustomCommandStatus.Failure, message: "Players only" };
+      system6.run(() => clearCooldowns(p));
       return { status: CustomCommandStatus.Success, message: "Grimoire cooldowns cleared" };
     }
   );
   reg.registerCommand(
     { name: "grimoire:cleanup", description: "End every active Grimoire spell and remove its constructs", permissionLevel: CommandPermissionLevel.GameDirectors, cheatsRequired: true },
     () => {
-      system4.run(() => {
+      system6.run(() => {
         Scenes.endAll();
         Scenes.sweepOrphans();
+        restoreGround();
       });
       return { status: CustomCommandStatus.Success, message: "Grimoire spells ended" };
     }
   );
 });
-system4.afterEvents.scriptEventReceive.subscribe((ev) => {
-  const p = ev.sourceEntity instanceof Player4 ? ev.sourceEntity : void 0;
+system6.afterEvents.scriptEventReceive.subscribe((ev) => {
+  const p = ev.sourceEntity instanceof Player6 ? ev.sourceEntity : void 0;
   const arg = ev.message.trim().toLowerCase();
   switch (ev.id) {
     case "grimoire:give":
@@ -14290,6 +15319,13 @@ system4.afterEvents.scriptEventReceive.subscribe((ev) => {
     case "grimoire:cleanup":
       Scenes.endAll();
       Scenes.sweepOrphans();
+      restoreGround();
+      break;
+    case "grimoire:recover":
+      if (!Scenes.active.size) restoreLedger();
+      restoreGround();
+      if (!timeLeased()) restoreTime();
+      for (const q of world7.getAllPlayers()) recoverPlayer(q);
       break;
     case "grimoire:show": {
       if (!p) break;
@@ -14314,19 +15350,25 @@ system4.afterEvents.scriptEventReceive.subscribe((ev) => {
       break;
     }
     case "grimoire:config": {
-      const [key, val] = arg.split(/\s+/);
+      const [key2, val] = arg.split(/\s+/);
       const on = val === "on" || val === "true" || val === "1";
-      if (key === "heartbeat") RUNTIME.input.heartbeatFallback = on;
-      else if (key === "pvp") RUNTIME.targeting.pvp = on;
-      p?.sendMessage(`[grimoire] ${key} = ${on}`);
+      if (key2 === "heartbeat") RUNTIME.input.heartbeatFallback = on;
+      else if (key2 === "pvp") RUNTIME.targeting.pvp = on;
+      p?.sendMessage(`[grimoire] ${key2} = ${on}`);
       break;
     }
   }
 }, { namespaces: ["grimoire"] });
-world5.afterEvents.playerSpawn.subscribe((ev) => {
-  if (!ev.initialSpawn) return;
+world7.afterEvents.playerSpawn.subscribe((ev) => {
   const p = ev.player;
-  system4.runTimeout(() => {
+  system6.runTimeout(() => {
+    try {
+      recoverPlayer(p);
+    } catch {
+    }
+  }, 10);
+  if (!ev.initialSpawn) return;
+  system6.runTimeout(() => {
     try {
       if (!p.isValid) return;
       p.sendMessage(`\xA76Grimoire: Rebirth of the Arcane \xA7f${VERSION}`);
@@ -14339,17 +15381,26 @@ world5.afterEvents.playerSpawn.subscribe((ev) => {
     }
   }, 60);
 });
-world5.afterEvents.worldLoad.subscribe(() => {
+world7.afterEvents.worldLoad.subscribe(() => {
   installWards();
   installInput();
   installBooks();
+  installGroundGuards();
   restoreLedger();
+  restoreGround();
+  restoreTime();
   Scenes.sweepOrphans();
+  for (const p of world7.getAllPlayers()) recoverPlayer(p);
   let n = 0;
-  system4.runInterval(() => {
+  system6.runInterval(() => {
     tickInput();
     Scenes.tickAll();
+    tickAtmos();
     flushLedger();
-    if (++n % 100 === 0) retryOrphans(anySetOwns);
+    flushGround();
+    if (++n % 100 === 0) {
+      retryOrphans(anySetOwns);
+      retryGround();
+    }
   }, 1);
 });

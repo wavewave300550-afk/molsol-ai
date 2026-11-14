@@ -10,9 +10,19 @@ import { installWards } from "./lib/combat";
 import { Scenes } from "./lib/scene";
 import { groundBelow, takeAim } from "./lib/targeting";
 import { anySetOwns, flushLedger, restoreLedger, retryOrphans } from "./lib/tempblocks";
+import { flushGround, installGroundGuards, restoreGround, retryGround } from "./lib/terraform";
+import { recoverFog, restoreTime, tickAtmos, timeLeased } from "./lib/atmos";
+import { recoverCamera } from "./lib/cinema";
 import { registerAllSpells } from "./spells/index";
 
 registerAllSpells();
+
+/** Undo per-player effects a session that did not end cleanly left on a player (spell fog, camera, inputs). */
+function recoverPlayer(p: Player): void {
+  if (!p.isValid) return;
+  recoverFog(p);
+  recoverCamera(p);
+}
 
 function giveBooks(p: Player): void {
   const inv = p.getComponent("minecraft:inventory")?.container;
@@ -55,13 +65,14 @@ system.beforeEvents.startup.subscribe((ev) => {
   reg.registerCommand(
     { name: "grimoire:cleanup", description: "End every active Grimoire spell and remove its constructs", permissionLevel: CommandPermissionLevel.GameDirectors, cheatsRequired: true },
     () => {
-      system.run(() => { Scenes.endAll(); Scenes.sweepOrphans(); });
+      system.run(() => { Scenes.endAll(); Scenes.sweepOrphans(); restoreGround(); });
       return { status: CustomCommandStatus.Success, message: "Grimoire spells ended" };
     },
   );
 });
 
-// /scriptevent grimoire:give | grimoire:reset | grimoire:cast <id> | grimoire:cleanup | grimoire:config heartbeat on|off | pvp on|off
+// /scriptevent grimoire:give | grimoire:reset | grimoire:cast <id> | grimoire:cleanup | grimoire:recover
+//              | grimoire:config heartbeat on|off | pvp on|off
 system.afterEvents.scriptEventReceive.subscribe((ev) => {
   const p = ev.sourceEntity instanceof Player ? ev.sourceEntity : undefined;
   const arg = ev.message.trim().toLowerCase();
@@ -69,7 +80,14 @@ system.afterEvents.scriptEventReceive.subscribe((ev) => {
     case "grimoire:give": if (p) giveBooks(p); break;
     case "grimoire:reset": if (p) { clearCooldowns(p); p.sendMessage("Grimoire cooldowns cleared"); } break;
     case "grimoire:cast": if (p) p.sendMessage(`[grimoire] ${forceCast(p, arg)}`); break;
-    case "grimoire:cleanup": Scenes.endAll(); Scenes.sweepOrphans(); break;
+    case "grimoire:cleanup": Scenes.endAll(); Scenes.sweepOrphans(); restoreGround(); break;
+    case "grimoire:recover":
+      // what a world load does after a crash: put back ground, the clock and per-player effects left behind
+      if (!Scenes.active.size) restoreLedger();
+      restoreGround();
+      if (!timeLeased()) restoreTime();
+      for (const q of world.getAllPlayers()) recoverPlayer(q);
+      break;
     case "grimoire:show": {
       // /scriptevent grimoire:show <actor> [state] [kind] [skin] [size]  -- display one model for 20 s
       if (!p) break;
@@ -100,8 +118,10 @@ system.afterEvents.scriptEventReceive.subscribe((ev) => {
 // Say which version is running when a player joins: an update that did not take effect is the first
 // thing to rule out when something still looks wrong.
 world.afterEvents.playerSpawn.subscribe((ev) => {
-  if (!ev.initialSpawn) return;
   const p = ev.player;
+  // a crash or quit in the middle of a cinematic spell must never leave fog, a camera or locked inputs
+  system.runTimeout(() => { try { recoverPlayer(p); } catch { /* left */ } }, 10);
+  if (!ev.initialSpawn) return;
   system.runTimeout(() => {
     try {
       if (!p.isValid) return;
@@ -120,13 +140,19 @@ world.afterEvents.worldLoad.subscribe(() => {
   installWards();
   installInput();
   installBooks();
+  installGroundGuards();
   restoreLedger();
+  restoreGround();
+  restoreTime();
   Scenes.sweepOrphans();
+  for (const p of world.getAllPlayers()) recoverPlayer(p);
   let n = 0;
   system.runInterval(() => {
     tickInput();
     Scenes.tickAll();
+    tickAtmos();
     flushLedger();
-    if (++n % 100 === 0) retryOrphans(anySetOwns);
+    flushGround();
+    if (++n % 100 === 0) { retryOrphans(anySetOwns); retryGround(); }
   }, 1);
 });

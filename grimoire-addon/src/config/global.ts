@@ -44,6 +44,36 @@ export const CONFIG = {
     maxTempBlocks: 1400,
     /** Maximum script-spawned particles per tick. */
     maxParticlesPerTick: 90,
+    /** Maximum natural ground blocks (and the plants above them) a spell may hold changed at once, world-wide. */
+    maxGroundBlocks: 3000,
+  },
+  /**
+   * Temporary living ground (src/lib/terraform.ts): block changes and chunk sections (each one a mesh the
+   * client rebuilds) per pulse, ticks between the pulses of one sweep; one pulse a tick world-wide.
+   */
+  ground: {
+    perPulse: 80,
+    maxSections: 4,
+    every: 4,
+  },
+  /** Spell fog and time of day (src/lib/atmos.ts). */
+  atmosphere: {
+    /** Per-player spell fog. */
+    fog: true,
+    /** Players this close to the caster see the spell's fog too. */
+    fogRadius: 48,
+    /** "auto": a spell may move the world's time of day while every other player is within timeRadius; "off": never. */
+    time: "auto" as "auto" | "off",
+    timeRadius: 128,
+  },
+  /** Short cinematic camera shots for the caster (src/lib/cinema.ts). */
+  cinematic: {
+    enabled: true,
+    maxShots: 4,
+    maxSeconds: 4,
+    /** No shot below this fraction of health, or with an enemy within clearRadius blocks. */
+    minHealth: 0.4,
+    clearRadius: 5,
   },
 };
 

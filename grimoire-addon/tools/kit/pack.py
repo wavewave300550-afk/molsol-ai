@@ -286,6 +286,28 @@ class Pack:
         with open(os.path.join(out, f"{ident}.pkl"), "wb") as fh:
             cloudpickle.dump(d, fh)
 
+    # ------------------------------------------------------------------ fog
+    def fog(self, ident, *, start, end, color, weather=None):
+        """Write fogs/<name>.json: distance fog for the air (and rain / snow) around a player.
+
+        start / end are fixed distances in blocks (render_distance_type "fixed": the same on a phone
+        with a short render distance as on a PC); color is "#rrggbb".  Pushed per player by the
+        script (player.fogSettings.push(id, tag)); validate.py checks every id the bundle pushes.
+        """
+        if not (0 <= start < end):
+            raise ValueError(f"fog {ident}: start {start} must be below end {end}")
+        name = ident.split(":")[-1]
+        layer = lambda st, en, col: {"fog_start": st, "fog_end": en, "fog_color": col, "render_distance_type": "fixed"}
+        w = weather or (round(start * 0.7, 1), round(end * 0.75, 1), color)
+        _write(os.path.join(self.rp, "fogs", f"{name}.json"), {
+            "format_version": "1.16.100",
+            "minecraft:fog_settings": {
+                "description": {"identifier": ident},
+                "distance": {"air": layer(start, end, color), "weather": layer(*w)},
+            },
+        })
+        self.manifest[ident] = {"kind": "fog", "start": start, "end": end, "color": color}
+
     # ------------------------------------------------------------------ sounds / lang
     def sound(self, sid, files, category="neutral", volume=1.0, pitch=1.0, max_distance=64.0, min_distance=4.0):
         self.sound_defs[sid] = {

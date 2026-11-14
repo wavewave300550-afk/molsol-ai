@@ -23,11 +23,20 @@ Reference slice to imitate: `tools/assets/dw_seraph.py`, `tools/assets/dw_common
 * Exactly three book items; spells are never items. No mana / MP / stamina / HP cost / ammo /
   durability. Each spell has only its own cooldown (`src/core/registry.ts`, do not edit).
 * Controls are fixed (crouch = next spell, hold Use = prepare, release = cast). Spells never read input.
-* No custom cameras, no forced camera moves, no global game-rule changes, no player.json overrides,
-  no experimental toggles, no custom materials. Stable APIs only.
+* No custom camera presets, no player.json overrides, no experimental toggles, no custom materials,
+  no game-rule writes. Stable APIs only.
 * Nothing permanent: every entity, effect and block a spell creates goes through its `Scene`
-  and is gone when the scene ends. Never break or replace existing blocks; temporary blocks are
-  placed only into air via `blocksFor(scene)`.
+  and is gone when the scene ends. Temporary blocks go only into air via `blocksFor(scene)`.
+* World or player state changes only through three helpers, each of which guarantees the restore
+  (at scene end whatever ends it, on world load after a crash, on the next join), and only ED06
+  uses them (the player asked for it there):
+  * `src/lib/cinema.ts` - at most 4 camera shots of at most 4 s per cast, the caster only, warded
+    and with look / move / jump / crouch paused, always handed back;
+  * `src/lib/atmos.ts` - one tagged per-player fog entry (never `setStack`), and one shared lease on
+    the time of day that sweeps back to where the clock would have been;
+  * `src/lib/terraform.ts` - natural surface blocks only (never next to a build, never containers or
+    liquids), plants only into air, every change in a write-ahead ledger, paced pulses.
+  Never break or replace any other block. `tools/validate.py` enforces this per source file.
 * The central thing in every spell is an **original animated 3D model**, never a particle cloud,
   a vanilla mob, or a recolour of another model. Particles and sound support the model.
 * Gameplay must be real and must line up with the visuals (damage lands when the animation hits,
@@ -246,6 +255,23 @@ along their yaw) come closer than half a block. Keep it at zero bodies and only 
 **Screen effects** (`shake`, `flash` in `src/lib/fx.ts`): `camerashake` for impacts (0.1 rumble -
 1.0 detonation), a camera fade for the one climax of a spell. The mock records both on the player.
 
+### World-level effects (ED06 only)
+* **Living ground** (`groundFor(scene)`): `scan(center, radius, choose)` finds the natural surface
+  (a background job), `choose(cell)` returns `{ ground, plant, plantStates }` per cell (see
+  `src/spells/_ed06_world.ts`); `applyBand(r0, r1)` / `restoreBand(r0, r1)` sweep a ring round the
+  caster in pulses of at most 80 changes and 4 chunk sections, one pulse a tick world-wide;
+  `clearPlants(center, r)` makes room for barriers. The scene end restores whatever is left in
+  one tick. A plant is never left on a ground that cannot hold it (it would break and drop).
+* **Fog** (`fogFor(scene).step(id)`): fog files come from `pack.fog()` (`tools/assets/ed6_atmos.py`),
+  fixed distances in blocks so a phone looks like a PC.
+* **Time** (`leaseTime(scene, target, inTicks)` / `releaseTime(scene, outTicks)`): only in the
+  overworld with every other player within 128 blocks; lets go for good if anything else changes
+  the time.
+* **Shots** (`cinemaFor(scene).shot(ticks, path, opts)`): `path(t)` gives `{ at, look }`; skipped in
+  the air, gliding, riding, low on health or with an enemy within 5 blocks.
+* Tests: `node tests/run.mjs world_state`; `/scriptevent grimoire:recover` does what a world load
+  does after a crash.
+
 ### Run it in the real server (`tests/probe`)
 `tests/probe/README.md` describes a harness pack that makes a simulated player cast spells through
 the real input path on a Bedrock Dedicated Server and logs every spell entity;
@@ -256,6 +282,7 @@ the real input path on a Bedrock Dedicated Server and logs every spell entity;
 npx tsc --noEmit -p tsconfig.json                  # type check (must be clean for your files)
 node tests/run.mjs spells dn02                     # full-cast / no-target / superflat / caster-leaves tests
 node tests/run.mjs controls                        # input + cooldown rules
+node tests/run.mjs world_state                     # ED06 ground / fog / time / camera always come back
 ```
 The mock is strict: unknown entity / particle / sound ids, undefined properties, out-of-range
 states, NaN positions, leftover entities or blocks, and any `[grimoire]` warning fail the test.

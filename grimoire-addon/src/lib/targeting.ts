@@ -52,7 +52,11 @@ export function allies(dim: Dimension, center: Vector3, radius: number, caster: 
 }
 
 /** Temporary spell blocks: solid for players, but never "ground" for spell placement. */
-const GHOST = ["minecraft:barrier", "minecraft:light_block_15"];
+/** Spell blocks that are not ground: barriers, light blocks, and the carpets of a spell's living ground. */
+const GHOST = ["minecraft:barrier", ...Array.from({ length: 16 }, (_, i) => `minecraft:light_block_${i}`), "minecraft:moss_carpet", "minecraft:pale_moss_carpet"];
+/** Thin plants are not ground either (natural ones, and those a spell grows): nothing stands on a fern. */
+const SOFT = /^minecraft:(short_grass|tall_grass|fern|large_fern|dandelion|poppy|azure_bluet|oxeye_daisy|cornflower|[a-z]+_tulip|allium|lily_of_the_valley|blue_orchid|wildflowers|pink_petals|leaf_litter|firefly_bush|bush|deadbush|sunflower|lilac|rose_bush|peony|[a-z_]*carpet)$/;
+const notGround = (t: string) => GHOST.includes(t) || SOFT.test(t) || TREE.test(t);
 /** Trees are not ground either: a spell aimed into a canopy belongs on the forest floor, not on the leaves. */
 const TREE = /leaves|_log|_wood|_stem|hyphae|mushroom_block|mangrove_roots|azalea|bamboo|vine/;
 
@@ -65,7 +69,7 @@ export function groundBelow(dim: Dimension, loc: Vector3, maxDrop = 40): Vector3
     let y = loc.y;
     for (let i = 0; i < 24; i++) {
       const b = dim.getBlock({ x: loc.x, y: y + 0.01, z: loc.z });
-      if (!b || b.isAir || b.isLiquid || GHOST.includes(b.typeId) || TREE.test(b.typeId)) break;
+      if (!b || b.isAir || b.isLiquid || notGround(b.typeId)) break;
       y = Math.floor(y) + 1;
     }
     const opts = { maxDistance: maxDrop + 2, includePassableBlocks: false, includeLiquidBlocks: true, excludeTypes: GHOST };
@@ -88,7 +92,7 @@ export function terrainTop(dim: Dimension, loc: Vector3, maxClimb = 12): number 
     let y = loc.y, inside = false;
     for (let i = 0; i < maxClimb; i++) {
       const b = dim.getBlock({ x: loc.x, y: y + 0.05, z: loc.z });
-      if (!b || b.isAir || b.isLiquid || GHOST.includes(b.typeId) || TREE.test(b.typeId)) break;
+      if (!b || b.isAir || b.isLiquid || notGround(b.typeId)) break;
       inside = true;
       y = Math.floor(y + 0.05) + 1;
     }

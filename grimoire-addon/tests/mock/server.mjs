@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const readJson = (p, d) => { try { return JSON.parse(fs.readFileSync(p, "utf8")); } catch { return d; } };
 
-export const assets = { actors: {}, particles: new Set(), sounds: new Set(), items: new Set() };
+export const assets = { actors: {}, particles: new Set(), sounds: new Set(), items: new Set(), fogs: new Set(), blocks: new Set() };
 export function loadAssets() {
   assets.actors = {};
   const edir = path.join(ROOT, "behavior_packs/grimoire_bp/entities");
@@ -27,6 +27,17 @@ export function loadAssets() {
   }
   const sd = readJson(path.join(ROOT, "resource_packs/grimoire_rp/sounds/sound_definitions.json"), {});
   assets.sounds = new Set(Object.keys(sd.sound_definitions ?? {}));
+  assets.fogs = new Set();
+  const fdir = path.join(ROOT, "resource_packs/grimoire_rp/fogs");
+  if (fs.existsSync(fdir)) for (const f of fs.readdirSync(fdir)) {
+    const id = readJson(path.join(fdir, f), null)?.["minecraft:fog_settings"]?.description?.identifier;
+    if (id) assets.fogs.add(id);
+  }
+  assets.blocks = new Set();
+  try {
+    const src = fs.readFileSync(path.join(ROOT, "node_modules/@minecraft/vanilla-data/lib/mojang-block.d.ts"), "utf8");
+    for (const m of src.matchAll(/"(minecraft:[a-z0-9_]+)"/g)) assets.blocks.add(m[1]);
+  } catch { /* vanilla-data missing: block ids are not checked */ }
   assets.items = new Set();
   const idir = path.join(ROOT, "behavior_packs/grimoire_bp/items");
   if (fs.existsSync(idir)) for (const f of fs.readdirSync(idir)) {
@@ -36,7 +47,9 @@ export function loadAssets() {
 }
 
 export const problems = [];
-export const stats = { particles: 0, sounds: 0, spawned: {}, damage: 0, heals: 0, peakEntities: 0, effects: 0, knockbacks: 0 };
+export const stats = { particles: 0, sounds: 0, spawned: {}, damage: 0, heals: 0, peakEntities: 0, effects: 0, knockbacks: 0,
+  blockEdits: 0, maxEditsPerTick: 0, maxSubchunksPerTick: 0, maxGroundEditsPerTick: 0, maxGroundSubchunksPerTick: 0 };
+const tickEdits = { n: 0, sub: new Set(), g: 0, gsub: new Set() };
 const problem = (m) => { if (!problems.includes(m)) problems.push(m); };
 export const strict = { particles: true, sounds: true };
 
@@ -56,6 +69,25 @@ export const InputButton = { Jump: "Jump", Sneak: "Sneak" };
 export const ButtonState = { Pressed: "Pressed", Released: "Released" };
 export const GameMode = { Survival: "Survival", Creative: "Creative", Adventure: "Adventure", Spectator: "Spectator" };
 export const Direction = { Up: "Up", Down: "Down", North: "North", South: "South", East: "East", West: "West" };
+export const InputPermissionCategory = { Camera: 1, Movement: 2, LateralMovement: 4, Sneak: 5, Jump: 6, Mount: 7, Dismount: 8, MoveForward: 9, MoveBackward: 10, MoveLeft: 11, MoveRight: 12 };
+export const EasingType = new Proxy({}, { get: (_, k) => k });
+export const TimeOfDay = { Day: 1000, Noon: 6000, Sunset: 12000, Night: 13000, Midnight: 18000, Sunrise: 23000 };
+export const MemoryTier = { SuperLow: 0, Low: 1, Mid: 2, High: 3, SuperHigh: 4 };
+export const PlatformType = { Console: "Console", Desktop: "Desktop", Mobile: "Mobile" };
+/** Block permutation: a block type plus its states (resolve() checks the id against vanilla-data). */
+class Perm {
+  constructor(t, s) { this.type = { id: t }; this.s = { ...(s ?? {}) }; }
+  getAllStates() { return { ...this.s }; }
+  getState(n) { return this.s[n]; }
+  withState(n, v) { return new Perm(this.type.id, { ...this.s, [n]: v }); }
+  matches(t, s) { return t === this.type.id && Object.entries(s ?? {}).every(([k, v]) => this.s[k] === v); }
+}
+export const BlockPermutation = {
+  resolve(t, s) {
+    if (assets.blocks.size && !assets.blocks.has(t)) { problem(`BlockPermutation.resolve: unknown block ${t}`); throw new Error(`unknown block ${t}`); }
+    return new Perm(t, s);
+  },
+};
 export class MolangVariableMap { setColorRGBA() {} setColorRGB() {} setFloat() {} setVector3() {} setSpeedAndDirection() {} }
 export class ItemStack {
   constructor(typeId, amount = 1) { this.typeId = typeof typeId === "string" ? typeId : typeId.id; this.amount = amount; }
@@ -67,6 +99,37 @@ const GROUND = 64;
 let terrain = () => GROUND;
 export function setTerrain(fn) { terrain = fn ?? (() => GROUND); }
 export function heightAt(x, z) { return terrain(Math.floor(x), Math.floor(z)); }
+/** Natural column: surface block (grass by default) at the top, 3 dirt, then stone. */
+let surface = () => "minecraft:grass_block";
+export function setSurface(fn) { surface = fn ?? (() => "minecraft:grass_block"); }
+/** Natural plant on top of some columns (e.g. short grass in a meadow): it sits in the first air cell. */
+let cover = () => undefined;
+export function setCover(fn) { cover = fn ?? (() => undefined); }
+/** Columns whose chunk is not loaded (getBlock returns undefined there, as in the engine). */
+let unloaded = () => false;
+export function setUnloaded(fn) { unloaded = fn ?? (() => false); }
+export function natural(x, y, z) {
+  const h = terrain(x, z);
+  if (y === h) { const c = cover(x, z); if (c) return c; }
+  if (y >= h) return "minecraft:air";
+  if (y === h - 1) return surface(x, z);
+  if (y >= h - 4) return "minecraft:dirt";
+  return "minecraft:stone";
+}
+/** Ground types a terraforming spell may put on the natural surface layer (restored before the test ends). */
+export const TERRAFORM = new Set(["minecraft:moss_block", "minecraft:podzol", "minecraft:dirt_with_roots", "minecraft:mud",
+  "minecraft:coarse_dirt", "minecraft:gravel", "minecraft:basalt", "minecraft:smooth_basalt", "minecraft:blackstone",
+  "minecraft:magma", "minecraft:packed_mud"]);
+/** Plants that need dirt-like ground under them, and the ground that holds them (a plant on anything else breaks and drops). */
+export const PLANTS = new Set(["minecraft:short_grass", "minecraft:fern", "minecraft:wildflowers", "minecraft:pink_petals",
+  "minecraft:leaf_litter", "minecraft:firefly_bush", "minecraft:dandelion", "minecraft:poppy", "minecraft:bush"]);
+const SOIL = new Set(["minecraft:grass_block", "minecraft:dirt", "minecraft:coarse_dirt", "minecraft:podzol", "minecraft:mycelium",
+  "minecraft:dirt_with_roots", "minecraft:moss_block", "minecraft:mud", "minecraft:farmland"]);
+/** Blocks a ray passes through (plants, carpets, light blocks) - like includePassableBlocks: false in the engine. */
+// (a carpet is NOT passable: it has a thin collision box, so a ray stops on it unless the type is excluded)
+export const PASSABLE = new Set([...PLANTS, ...Array.from({ length: 16 }, (_, i) => `minecraft:light_block_${i}`)]);
+const LIQUID = new Set(["minecraft:water", "minecraft:flowing_water", "minecraft:lava", "minecraft:flowing_lava"]);
+const CONTAINER = new Set(["minecraft:chest", "minecraft:barrel", "minecraft:trapped_chest", "minecraft:hopper", "minecraft:furnace"]);
 
 export class Entity {
   constructor(dim, typeId, loc) {
@@ -185,7 +248,48 @@ export class Player extends Entity {
     this.inputInfo = { getButtonState: () => ButtonState.Released };
     this.playerPermissionLevel = 2;
     this.commands = []; this.fades = [];
-    this.camera = { fade(o) { self.fades.push(o ?? {}); }, clear() {}, setCamera() {} };
+    this.isSleeping = false; this.isGliding = false; this.isOnGround = true;
+    const live = () => { if (!self.isValid) throw new Error("InvalidEntityError: the player is gone"); };
+    this.fog = [];
+    this.fogSettings = {
+      push(id, tag) {
+        live();
+        if (!assets.fogs.has(id)) { problem(`fogSettings.push: unknown fog ${id}`); throw new Error("FogSettingsError: unknown fog"); }
+        if (self.fog.length >= 16) { problem("fogSettings: stack over 16"); throw new Error("FogSettingsError: full"); }
+        self.fog.push({ id, tag });
+        return self.fog.length - 1;
+      },
+      pop(tag) { live(); for (let i = self.fog.length - 1; i >= 0; i--) if (tag === undefined || self.fog[i].tag === tag) { self.fog.splice(i, 1); return true; } return false; },
+      remove(tag) { live(); const n = self.fog.length; self.fog = tag === undefined ? [] : self.fog.filter((f) => f.tag !== tag); return n !== self.fog.length; },
+      getStack() { live(); return self.fog.map((f) => f.id); },
+      getTags() { live(); return self.fog.map((f) => f.tag); },
+      setStack() { live(); problem("fogSettings.setStack wipes other packs' fogs"); },
+    };
+    this.cam = { active: false, sets: 0, clears: 0, anims: 0 };
+    const finite = (v) => v && ["x", "y", "z"].every((k) => Number.isFinite(v[k]));
+    this.camera = {
+      isValid: true,
+      fade(o) { live(); self.fades.push(o ?? {}); },
+      clear() { live(); self.cam.active = false; self.cam.clears++; },
+      setCamera(preset, o = {}) {
+        live();
+        if (preset !== "minecraft:free" && preset !== "minecraft:first_person") problem(`camera preset ${preset}`);
+        if ((o.location && !finite(o.location)) || (o.facingLocation && !finite(o.facingLocation))) problem("camera at a non-finite location");
+        if (o.easeOptions && !(o.easeOptions.easeTime > 0)) problem("camera ease time must be > 0");
+        self.cam.active = true; self.cam.sets++;
+      },
+      playAnimation(spline, o = {}) {
+        live();
+        if (!(o.totalTimeSeconds > 0) || !spline?.controlPoints?.length) problem("camera animation without points or time");
+        self.cam.active = true; self.cam.anims++;
+      },
+    };
+    this.inputPerm = new Map();
+    this.inputPermissions = {
+      setPermissionCategory(c, on) { live(); self.inputPerm.set(c, on); },
+      isPermissionCategoryEnabled(c) { live(); return self.inputPerm.get(c) ?? true; },
+    };
+    this.clientSystemInfo = { platformType: PlatformType.Desktop, memoryTier: MemoryTier.High, maxRenderDistance: 16 };
   }
   runCommand(c) {
     if (typeof c !== "string" || !c.length) throw new Error("runCommand: empty command");
@@ -228,37 +332,71 @@ class Block {
   get typeId() { return this.dimension.blockAt(this.x, this.y, this.z); }
   get isAir() { return this.typeId === "minecraft:air"; }
   get isValid() { return true; }
-  get isLiquid() { return false; }
-  get isSolid() { return !this.isAir; }
+  get isLiquid() { return LIQUID.has(this.typeId); }
+  get isWaterlogged() { return false; }
+  get isSolid() { return !this.isAir && !PASSABLE.has(this.typeId) && !LIQUID.has(this.typeId); }
+  get permutation() { return new Perm(this.typeId, this.dimension.bstates.get(`${this.x},${this.y},${this.z}`)); }
+  getComponent(id) { return CONTAINER.has(this.typeId) && /inventory/.test(id) ? { container: {} } : undefined; }
   setType(t) { this.dimension.setBlockType(this.location, t); }
+  setPermutation(p) { this.dimension.setBlockType(this.location, p.type.id, p.getAllStates()); }
   matches(n) { return this.typeId === n; }
   above(n = 1) { return new Block(this.dimension, this.x, this.y + n, this.z); }
   below(n = 1) { return new Block(this.dimension, this.x, this.y - n, this.z); }
 }
 
 export class Dimension {
-  constructor(id) { this.id = id; this.entities = new Set(); this.blocks = new Map(); this.heightRange = { min: -64, max: 320 }; }
+  constructor(id) { this.id = id; this.entities = new Set(); this.blocks = new Map(); this.bstates = new Map(); this.heightRange = { min: -64, max: 320 }; }
   blockAt(x, y, z) {
     const k = `${x},${y},${z}`;
     if (this.blocks.has(k)) return this.blocks.get(k);
-    return y < terrain(x, z) ? "minecraft:stone" : "minecraft:air";
+    return natural(x, y, z);
   }
   getBlock(loc) {
     if (![loc.x, loc.y, loc.z].every(Number.isFinite)) { problem("getBlock with non-finite location"); return undefined; }
+    if (unloaded(Math.floor(loc.x), Math.floor(loc.z))) return undefined;
     return new Block(this, Math.floor(loc.x), Math.floor(loc.y), Math.floor(loc.z));
   }
-  setBlockType(loc, t) {
-    const id = typeof t === "string" ? t : t.id;
-    const k = `${Math.floor(loc.x)},${Math.floor(loc.y)},${Math.floor(loc.z)}`;
-    if (Math.floor(loc.y) < terrain(Math.floor(loc.x), Math.floor(loc.z)) && id !== "minecraft:stone") problem(`world terrain modified at ${k} -> ${id}`);
-    if (id === "minecraft:air") this.blocks.delete(k); else this.blocks.set(k, id);
+  /** A plant on ground that cannot hold it breaks in the engine and drops an item: never allowed. */
+  checkSupport(x, y, z) {
+    const t = this.blockAt(x, y, z), under = this.blockAt(x, y - 1, z);
+    if (PLANTS.has(t) && !SOIL.has(under)) problem(`${t} at ${x},${y},${z} left on ${under} (it would break and drop an item)`);
+    if (t === "minecraft:moss_carpet" && (under === "minecraft:air" || PLANTS.has(under) || LIQUID.has(under))) problem(`moss carpet at ${x},${y},${z} on ${under}`);
   }
+  setBlockType(loc, t, states) {
+    const id = typeof t === "string" ? t : t.id;
+    const x = Math.floor(loc.x), y = Math.floor(loc.y), z = Math.floor(loc.z);
+    const k = `${x},${y},${z}`;
+    if (assets.blocks.size && !assets.blocks.has(id)) { problem(`setType: unknown block ${id}`); throw new Error(`unknown block ${id}`); }
+    // edit pacing (how many blocks and chunk sections a spell changes in one tick)
+    stats.blockEdits++; tickEdits.n++; tickEdits.sub.add(`${x >> 4},${y >> 4},${z >> 4}`);
+    stats.maxEditsPerTick = Math.max(stats.maxEditsPerTick, tickEdits.n);
+    stats.maxSubchunksPerTick = Math.max(stats.maxSubchunksPerTick, tickEdits.sub.size);
+    if (!/barrier|light_block/.test(id) && !/barrier|light_block/.test(this.blockAt(x, y, z))) {   // living ground, not a spell's barrier / light
+      tickEdits.g++; tickEdits.gsub.add(`${x >> 4},${y >> 4},${z >> 4}`);
+      stats.maxGroundEditsPerTick = Math.max(stats.maxGroundEditsPerTick, tickEdits.g);
+      stats.maxGroundSubchunksPerTick = Math.max(stats.maxGroundSubchunksPerTick, tickEdits.gsub.size);
+    }
+    const nat = natural(x, y, z);
+    if (id === nat && !(states && Object.keys(states).length)) {   // back to natural
+      this.blocks.delete(k); this.bstates.delete(k);
+      this.checkSupport(x, y, z); this.checkSupport(x, y + 1, z);
+      return;
+    }
+    const h = terrain(x, z);
+    if (y < h && !(y === h - 1 && TERRAFORM.has(id))) problem(`world terrain modified at ${k} -> ${id}`);
+    this.blocks.set(k, id);
+    if (states && Object.keys(states).length) this.bstates.set(k, { ...states }); else this.bstates.delete(k);
+    this.checkSupport(x, y, z);
+    this.checkSupport(x, y + 1, z);
+  }
+  /** Test fixture: put a block without the terrain rules (e.g. a player build to check that spells leave it alone). */
+  fixture(loc, id) { const k = `${Math.floor(loc.x)},${Math.floor(loc.y)},${Math.floor(loc.z)}`; this.blocks.set(k, id); }
   getBlockFromRay(loc, dir, o = {}) {
     const max = o.maxDistance ?? 64;
     for (let t = 0; t <= max; t += 0.25) {
       const p = { x: loc.x + dir.x * t, y: loc.y + dir.y * t, z: loc.z + dir.z * t };
       const b = this.getBlock(p);
-      if (b && !b.isAir && b.typeId !== "minecraft:light_block_15" && !(o.excludeTypes ?? []).includes(b.typeId)) {
+      if (b && !b.isAir && !PASSABLE.has(b.typeId) && !(o.excludeTypes ?? []).includes(b.typeId) && (o.includeLiquidBlocks || !b.isLiquid)) {
         return { block: b, face: "Up", faceLocation: { x: p.x - Math.floor(p.x), y: 1, z: p.z - Math.floor(p.z) } };
       }
     }
@@ -324,7 +462,7 @@ export const world = {
   afterEvents: mk(["itemStartUse", "itemReleaseUse", "itemStopUse", "itemCompleteUse", "itemUse", "entityDie", "entityHurt", "playerSpawn",
     "playerLeave", "playerDimensionChange", "worldLoad", "entitySpawn", "entityRemove", "playerButtonInput", "playerHotbarSelectedSlotChange",
     "projectileHitEntity", "projectileHitBlock", "entityHitEntity", "playerInventoryItemChange", "entityLoad", "entityHealthChanged", "itemStartUseOn"]),
-  beforeEvents: mk(["entityHurt", "playerLeave", "itemUse", "playerInteractWithBlock", "playerInteractWithEntity", "entityRemove", "playerBreakBlock"]),
+  beforeEvents: mk(["entityHurt", "playerLeave", "itemUse", "playerInteractWithBlock", "playerInteractWithEntity", "entityRemove", "playerBreakBlock", "explosion"]),
   getAllPlayers() { return Object.values(dims).flatMap((d) => d.getPlayers()); },
   getPlayers(o) { return Object.values(dims).flatMap((d) => d.getPlayers(o)); },
   getDimension(id) { const d = dims[String(id).replace("minecraft:", "")]; if (!d) throw new Error(`no dimension ${id}`); return d; },
@@ -333,10 +471,24 @@ export const world = {
     if (typeof v === "string" && v.length > 32767) { problem(`world dynamic property ${k} too long (${v.length})`); throw new Error("too long"); }
     if (v === undefined) worldDyn.delete(k); else worldDyn.set(k, v);
   },
-  getAbsoluteTime() { return system.currentTick; },
+  getDynamicPropertyIds() { return [...worldDyn.keys()]; },
+  getAbsoluteTime() { return absNow(); },
+  setAbsoluteTime(t) {
+    if (!Number.isFinite(t) || t < 0) { problem(`setAbsoluteTime(${t})`); throw new Error("bad time"); }
+    clock.abs = Math.round(t); clock.at = system.currentTick; clock.sets++;
+  },
+  getTimeOfDay() { return absNow() % 24000; },
+  setTimeOfDay(t) {
+    const v = typeof t === "number" ? t : TimeOfDay[t];
+    if (!Number.isFinite(v) || v < 0 || v > 24000) { problem(`setTimeOfDay(${t})`); throw new Error("bad time of day"); }
+    const a = absNow(); clock.abs = a - (a % 24000) + Math.round(v); clock.at = system.currentTick; clock.sets++;
+  },
   sendMessage() {},
-  gameRules: { pvp: true },
+  gameRules: { pvp: true, doDayLightCycle: true },
 };
+/** World clock: absolute time `abs` at tick `at`; it runs on while the daylight cycle is on. */
+export const clock = { abs: 6000, at: 0, sets: 0 };
+function absNow() { return world.gameRules.doDayLightCycle ? clock.abs + (system.currentTick - clock.at) : clock.abs; }
 export const worldDynamic = worldDyn;
 
 let timers = [];
@@ -356,6 +508,7 @@ export const system = {
 export function tick(n = 1) {
   for (let i = 0; i < n; i++) {
     system.currentTick++;
+    tickEdits.n = 0; tickEdits.sub.clear(); tickEdits.g = 0; tickEdits.gsub.clear();
     const due = timers.filter((t) => t.at <= system.currentTick);
     for (const t of due) {
       if (!timers.includes(t)) continue;
@@ -384,12 +537,33 @@ export function addProjectile(typeId, loc, dim = "overworld") {
   return e;
 }
 export function reset() {
-  for (const d of Object.values(dims)) { for (const e of d.entities) e.isValid = false; d.entities.clear(); d.blocks.clear(); }
+  for (const d of Object.values(dims)) { for (const e of d.entities) e.isValid = false; d.entities.clear(); }
   tick(2); // let scenes owned by the previous test's (now invalid) players end and clean up
-  for (const d of Object.values(dims)) { d.entities.clear(); d.blocks.clear(); }
+  for (const d of Object.values(dims)) { d.entities.clear(); d.blocks.clear(); d.bstates.clear(); }
+  surface = () => "minecraft:grass_block";
+  cover = () => undefined;
+  unloaded = () => false;
+  world.gameRules.doDayLightCycle = true;
+  clock.abs = 6000; clock.at = system.currentTick; clock.sets = 0;
   problems.length = 0;
   for (const k of Object.keys(stats)) stats[k] = typeof stats[k] === "number" ? 0 : {};
 }
+/** Blocks that differ from the natural world (spell leftovers, or fixtures a test placed). */
+export function changedBlocks(dim = "overworld") { return [...dims[dim].blocks.entries()]; }
+/** Save / bring back blocks, world dynamic properties and the clock (a world save and reload after a crash). */
+export function snapshotWorld() {
+  return {
+    dims: Object.fromEntries(Object.entries(dims).map(([n, d]) => [n, { b: new Map(d.blocks), s: new Map(d.bstates) }])),
+    dyn: new Map(worldDyn), clock: { ...clock }, now: absNow(),
+  };
+}
+export function restoreWorld(snap) {
+  for (const [n, d] of Object.entries(dims)) { d.blocks = new Map(snap.dims[n].b); d.bstates = new Map(snap.dims[n].s); }
+  worldDyn.clear();
+  for (const [k, v] of snap.dyn) worldDyn.set(k, v);
+  clock.abs = snap.now; clock.at = system.currentTick;
+}
+export function getDimension(n = "overworld") { return dims[n]; }
 export function constructs(dim = "overworld") { return [...dims[dim].entities].filter((e) => e.typeId.startsWith("grimoire:")); }
 export function tempBlocks(dim = "overworld") { return [...dims[dim].blocks.entries()]; }
 export const GROUND_Y = GROUND;

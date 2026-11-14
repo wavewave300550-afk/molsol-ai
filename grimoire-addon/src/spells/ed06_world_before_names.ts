@@ -6,11 +6,15 @@ import { burst, flash, line, particle, ring, shake, sound } from "../lib/fx";
 import { Actor } from "../lib/scene";
 import { focus, groundBelow, hostiles, isAlive } from "../lib/targeting";
 import { LIGHT, blocksFor } from "../lib/tempblocks";
+import { groundFor } from "../lib/terraform";
+import { fogFor, leaseTime, releaseTime } from "../lib/atmos";
+import { cinemaFor } from "../lib/cinema";
 import {
   V3, add, angleDelta, bezier, clamp, distToSegment, distXZ, dot, easeOut, flat, fromYaw, lerp, mul, norm, right, smooth, sub,
   up, yawOf,
 } from "../lib/vec";
 import { ArcPath, Frame, Mover, hash01, stadium } from "./_ed06_motion";
+import { BANDS, FOGS, FOG_ASH, GROUND_R, SUNSET, groundPlan, shotReveal } from "./_ed06_world";
 
 // ================================================================================================
 // Mirrors of the asset modules (keep in sync).
@@ -162,6 +166,14 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
   const faceCaster = (p: V3): number => yawOf(flat(sub(C0, p)));
   const foes = (p: V3, r: number, max?: number): Entity[] => hostiles(dim, p, r, caster, max);
   const tb = blocksFor(scene);
+  // the ancient world itself: the real ground turns into its habitats ring by ring (restored at the end, even
+  // after a crash), the caster's fog warms stage by stage, the sun sinks to golden hour, one reveal shot
+  const land = groundFor(scene).scan(C0, GROUND_R, groundPlan(W));
+  const haze = fogFor(scene);
+  const cine = cinemaFor(scene);
+  /** Terraform sweeps start at a world angle (0 = +z): the world angle of a frame angle. */
+  const worldAng = (deg: number): number => { const d = W.dir(deg); return (Math.atan2(d.x, d.z) * 180) / Math.PI; };
+  scene.at(12, () => leaseTime(scene, SUNSET, 240));
   const burnT = (e: Entity, s: number): void => { try { e.setOnFire(s, true); } catch { /* immune / gone */ } };
   const movers: Mover[] = [];
   scene.every(1, () => { for (const m of movers) m.step(scene.tick); }, 0, T_END);
@@ -272,9 +284,9 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
       const hc = at(18, 0);
       horizon = scene.spawn("ed6_horizon", hc, { yaw: yawOf(F), state: HORIZON.rise });
       scene.after(60, () => horizon?.state(HORIZON.hold));
-      fog = scene.spawn("ed6_fog", up(at(16, 0), 0.05), { state: 1 });
+      fog = scene.spawn("ed6_fog", up(at(16, 0), 0.05), { state: 1 });   // one low ground mist; the real fog does the haze
       sound(dim, "ed6_world_fade", hc, 1.0, 0.8);
-    } else fog?.state(k + 1);
+    }
     if (k === 1) {
       ST.stones.forEach(([f, r], i) => scene.after(i * 5, () => {
         const p = at(f, r);
@@ -336,6 +348,9 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
       particle(dim, `ed6_flash_${LINEAGE[j]}`, EM[j].c);
     }
     atmosphere(k);
+    // the ring of ground this heart wakes sweeps round from its own realm (behind, right, left, ahead)
+    land.applyBand(BANDS[k][0], BANDS[k][1], { startAng: worldAng([180, 50, -50, 0][k]) });
+    haze.step(FOGS[k]);
     const G = zoneNow();                               // the old world's pulse shakes the domain
     particle(dim, "ed6_geo_shock", up(G, 0.2));
     for (const f of foes(G, C.beatRadius)) {
@@ -349,6 +364,8 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     particle(dim, e % 3 ? "ed6_stream" : "ed6_codex_rune", add(c, add(mul(R, Math.cos(a) * r), { x: 0, y: Math.sin(a) * r, z: 0 })));
     if (e % 2 === 0) particle(dim, "ed6_codex_glint", add(c, add(mul(R, Math.cos(a + 3.1) * r * 0.8), { x: 0, y: Math.sin(a + 3.1) * r * 0.8, z: 0 })));
   }, 16, T2 + 20);
+  // shot 1: as the four hearts beat as one, the camera cranes up behind the caster over the awakened world
+  scene.at(T_ALL - 12, () => { cine.shot(70, (t) => shotReveal(W, C0, t / 70), { enter: 12, exit: 14 }); });
   // the domain is complete: all four hearts beat as one
   scene.at(T_ALL, () => {
     const Kc = cxCore();
@@ -387,34 +404,31 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
   const inBox = (b: { f: number; r: number; w: number; d: number }, i: number, s: number, h: number): V3 =>
     at(b.f + (hash01(i, s) * 2 - 1) * b.d, b.r + (hash01(i, s + 1) * 2 - 1) * b.w, h);
   let fading = 1;                                      // 1 until the world starts to return to normal
+  // A light ambient layer only: the real fog carries the haze now, and a phone shows a few large motes
+  // close by far better than thousands of specks (about 6 emitters a tick, down from ~30).
   scene.every(1, (t) => {
     if (level === 0) return;
     const q = (Math.min(4, level) / 4) * fading;      // 0..1 atmosphere density
     const h = (k: number): number => hash01(t, k);
-    // foreground (2-9 blocks): spores and golden motes drift past the caster; mist at their feet
-    if (h(1) < q) particle(dim, "ed6_spore", at(2.5 + h(2) * 7, (h(3) - 0.5) * 14, 0.4 + h(4) * 1.8));
-    if (h(5) < q) particle(dim, t % 3 ? "ed6_mote" : "ed6_pollen_drift", at(3 + h(6) * 7, (h(7) - 0.5) * 14, 0.8 + h(8) * 2.4));
-    if (t % 4 === 0 && h(9) < q) particle(dim, "ed6_mist", at(3 + h(10) * 6, (h(11) - 0.5) * 12, 0.15));
-    // the stage (9-32 blocks): motes, pollen, rolling low mist
-    for (let j = 0; j < 8; j++) {
-      if (h(12 + j) < q) particle(dim, j % 3 === 2 ? "ed6_spore" : j % 2 ? "ed6_mote" : "ed6_pollen_drift",
-        at(9 + h(70 + j) * 23, (h(80 + j) - 0.5) * 46, 0.8 + h(90 + j) * 6));
+    // foreground (2-9 blocks): spores and golden motes drift past the caster
+    if (h(1) < q * 0.6) particle(dim, "ed6_spore", at(2.5 + h(2) * 7, (h(3) - 0.5) * 14, 0.4 + h(4) * 1.8));
+    if (h(5) < q * 0.6) particle(dim, t % 3 ? "ed6_mote" : "ed6_pollen_drift", at(3 + h(6) * 7, (h(7) - 0.5) * 14, 0.8 + h(8) * 2.4));
+    // the stage (9-32 blocks): a few motes and pollen
+    for (let j = 0; j < 2; j++) {
+      if (h(12 + j) < q) particle(dim, j ? "ed6_mote" : "ed6_pollen_drift", at(9 + h(70 + j) * 23, (h(80 + j) - 0.5) * 46, 0.8 + h(90 + j) * 6));
     }
-    if (t % 2 === 1 && h(35) < q) particle(dim, "ed6_rune_rise", at(10 + h(36) * 30, (h(37) - 0.5) * 40, 0.3));
-    if (t % 2 === 0 && h(28) < q) particle(dim, "ed6_mist", at(9 + h(29) * 38, (h(30) - 0.5) * 52, 0.3));
-    // the far field (32-55 blocks)
-    if (h(31) < 0.8 * q) particle(dim, "ed6_mote", at(32 + h(32) * 22, (h(33) - 0.5) * 60, 2 + h(34) * 10));
-    // each region breathes its own element as its seal wakes
-    for (let j = 0; j < 4; j++) {
-      const k = 40 + j * 10;
-      if (level >= 1) particle(dim, (t + j) % 2 ? "ed6_leaf_fall" : "ed_nature_pollen", inBox(ZONE_NAT, t * 2 + j, k, 3 + h(k + 2) * 9));
-      if (level >= 2 && h(k + 3) < q) particle(dim, (t + j) % 3 ? "ed6_ember_mote" : "ed6_haze", inBox(ZONE_HEAT, t * 2 + j, k + 4, 0.4 + h(k + 5) * 4));
-      if (level >= 3 && h(k + 6) < q) particle(dim, (t + j) % 3 ? "ed6_droplet" : "ed6_snow", inBox(ZONE_TIDE, t * 2 + j, k + 7, 1.5 + h(k + 8) * 7));
+    if (t % 4 === 1 && h(35) < q) particle(dim, "ed6_rune_rise", at(10 + h(36) * 30, (h(37) - 0.5) * 40, 0.3));
+    // each region breathes its own element as its seal wakes (every other tick)
+    if (t % 2 === 0) {
+      const k = 40 + (t % 4) * 10;
+      if (level >= 1) particle(dim, t % 4 ? "ed6_leaf_fall" : "ed_nature_pollen", inBox(ZONE_NAT, t, k, 3 + h(k + 2) * 9));
+      if (level >= 2 && h(k + 3) < q) particle(dim, t % 6 ? "ed6_ember_mote" : "ed6_haze", inBox(ZONE_HEAT, t, k + 4, 0.4 + h(k + 5) * 4));
+      if (level >= 3 && h(k + 6) < q) particle(dim, t % 6 ? "ed6_droplet" : "ed6_snow", inBox(ZONE_TIDE, t, k + 7, 1.5 + h(k + 8) * 7));
     }
-    if (level >= 4 && h(60) < q) particle(dim, t % 3 ? "ed6_wind" : "ed6_mote", sky(24 + h(61) * 26, (h(62) - 0.5) * 46, 10 + h(63) * 8));
+    if (level >= 4 && t % 2 === 1 && h(60) < q) particle(dim, t % 3 ? "ed6_wind" : "ed6_mote", sky(24 + h(61) * 26, (h(62) - 0.5) * 46, 10 + h(63) * 8));
     // seals breathe runes; the Codex sheds glints and glyphs
-    for (let k = 0; k < 4; k++) if (emblems[k]?.valid && (t + k) % 2 === 0) particle(dim, "ed6_rune_rise", up(EM[k].at, 0.5));
-    if (t % 2 === 0) particle(dim, t % 6 === 0 ? "ed6_codex_glint" : "ed6_codex_rune", up(cxAt(), 1.2 + h(64) * 2.5));
+    for (let k = 0; k < 4; k++) if (emblems[k]?.valid && (t + k) % 4 === 0) particle(dim, "ed6_rune_rise", up(EM[k].at, 0.5));
+    if (t % 3 === 0) particle(dim, t % 6 === 0 ? "ed6_codex_glint" : "ed6_codex_rune", up(cxAt(), 1.2 + h(64) * 2.5));
   }, 0, T_END - 20);
 
   // ================================================================================== the Nature Dragon
@@ -1419,6 +1433,7 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
       if (Math.abs(d - C.ringRadius) < 1.6) shove(e, sub(z.G, e.location), 0.9, 0.35);
     }
   });
+  scene.at(T4 + 30, () => land.clearPlants(zone().G, C.ringRadius + 1.5));   // the shockwave flattens the growth there
   scene.at(T4 + 36, () => {
     const z = zone();
     const seen = new Set<string>();
@@ -1737,6 +1752,8 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     sound(dim, "ed6_detonation", G, 3.0);
     shake(dim, G, 64, 1.0, 1.3);                        // the climax: the strongest shake and the one flash of the spell
     flash(dim, G, 80, [1.0, 0.86, 0.6], 0.04, 0.06, 0.75);
+    haze.step(FOG_ASH);                                  // ash hangs in the air, then settles
+    scene.after(70, () => haze.step(FOGS[3]));
     sound(dim, "ed_heat_roar", up(G, 3), 2.0, 0.8);
     particle(dim, "ed6_thermal_ring", up(G, 0.3));
     particle(dim, "ed6_wave", up(G, 0.4));
@@ -1948,6 +1965,11 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     particle(dim, "ed6_wave", up(ground(K3), 0.4));
   });
   scene.at(T_SEAL + 16, () => particle(dim, "ed6_light_wave", up(ground(K3), 0.3)));
+  // the living ground recedes ring by ring, outer first; the fog thins stage by stage; the sun swings back
+  [...BANDS].reverse().forEach(([r0, r1], i) => scene.at(T_SEAL + 4 + i * 8, () => land.restoreBand(r0, r1, { every: 2, startAng: worldAng(0) })));
+  scene.at(T_SEAL + 4, () => releaseTime(scene, 66));
+  [FOGS[2], FOGS[1], FOGS[0]].forEach((id, i) => scene.at(T_SEAL + 10 + i * 14, () => haze.step(id)));
+  scene.at(T_SEAL + 52, () => haze.clear());
   scene.at(T_SEAL + 4, () => {
     fading = 0.6;
     for (const b of bridges) scene.at(restoreAt(b.loc), () => { b.state(BRIDGE.shatter); sound(dim, "ed_tide_shatter", b.loc, 1.0); burst(dim, "ed6_snow", up(b.loc, 2), 2, 3); });

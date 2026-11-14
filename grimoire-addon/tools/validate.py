@@ -56,6 +56,57 @@ def rel(p):
     return os.path.relpath(p, ROOT)
 
 
+# World and player state may only change through the three ED06 helpers, each of which guarantees the
+# restore (DEVELOPING.md section 1).  call pattern -> the only source files that may contain it.
+WORLD_STATE_ALLOW = [
+    ("camera.setCamera", r"\.setCamera\s*\(", {"src/lib/cinema.ts"}),
+    ("camera.clear", r"camera\.clear\s*\(", {"src/lib/cinema.ts"}),
+    ("camera.playAnimation", r"camera\.playAnimation\s*\(", {"src/lib/cinema.ts"}),
+    ("inputPermissions", r"\binputPermissions\b", {"src/lib/cinema.ts"}),
+    ("fogSettings", r"\bfogSettings\b", {"src/lib/atmos.ts"}),
+    ("setTimeOfDay / setAbsoluteTime", r"\bset(TimeOfDay|AbsoluteTime)\s*\(", {"src/lib/atmos.ts"}),
+    ("changing blocks (setType / setPermutation / fillBlocks)", r"\.(setType|setPermutation|setBlockType|setBlockPermutation|fillBlocks)\s*\(",
+     {"src/lib/tempblocks.ts", "src/lib/terraform.ts"}),
+]
+# libraries that only ED06 (and main.ts, for recovery) may import
+WORLD_STATE_LIBS = {"src/lib/cinema", "src/lib/atmos", "src/lib/terraform"}
+WORLD_STATE_IMPORTERS = re.compile(r"^src/(main\.ts|spells/_?ed06_[a-z_]*\.ts|lib/(cinema|atmos|terraform|tempblocks)\.ts)$")
+# recovery hooks main.ts must call (a crash or quit mid-cast must never leave anything behind)
+RECOVERY_HOOKS = ("restoreLedger(", "restoreGround(", "retryGround(", "flushGround(", "installGroundGuards(",
+                  "restoreTime(", "tickAtmos(", "recoverFog(", "recoverCamera(")
+
+
+def check_world_state_rules():
+    src_root = os.path.join(ROOT, "src")
+    for dirpath, _, files in os.walk(src_root):
+        for f in files:
+            if not f.endswith(".ts"):
+                continue
+            path = os.path.join(dirpath, f)
+            relp = os.path.relpath(path, ROOT).replace(os.sep, "/")
+            code = open(path, encoding="utf-8").read()
+            # comments say what is allowed; only code counts
+            code = re.sub(r"/\*.*?\*/", "", code, flags=re.S)
+            code = re.sub(r"//[^\n]*", "", code)
+            for label, pat, allowed in WORLD_STATE_ALLOW:
+                if re.search(pat, code) and relp not in allowed:
+                    err(f"{relp}: {label} is only allowed in {', '.join(sorted(allowed))}")
+            for spec in re.findall(r'from\s+"(\.[^"]+)"', code):
+                target = os.path.normpath(os.path.join(os.path.dirname(relp), spec)).replace(os.sep, "/")
+                if target in WORLD_STATE_LIBS and not WORLD_STATE_IMPORTERS.match(relp):
+                    err(f"{relp}: only ED06 may use {target}.ts")
+            for m in re.finditer(r"runCommand(?:Async)?\s*\(\s*`([^`]*)`|runCommand(?:Async)?\s*\(\s*\"([^\"]*)\"", code):
+                cmd = (m.group(1) or m.group(2) or "").strip()
+                if not cmd.startswith("camerashake add @s"):
+                    err(f"{relp}: runCommand is only allowed for camerashake, got {cmd[:40]!r}")
+            if re.search(r"gameRules\.\w+\s*=(?!=)", code):
+                err(f"{relp}: game rules must never be written")
+    main_ts = open(os.path.join(src_root, "main.ts"), encoding="utf-8").read()
+    for hook in RECOVERY_HOOKS:
+        if hook not in main_ts:
+            err(f"src/main.ts must call {hook.rstrip('(')} (crash / rejoin recovery)")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--stats", action="store_true")
@@ -386,6 +437,39 @@ def main():
         if i not in seen:
             warn(f"{i}: no attachable (the book would render as a flat icon in hand)")
 
+    # ---------------------------------------------------------------- fogs (no official schema: checked here)
+    fogs = {}
+    for p in sorted(glob.glob(os.path.join(RP, "fogs", "*.json"))):
+        j = load(p)
+        if not j:
+            continue
+        fs = j.get("minecraft:fog_settings")
+        if not isinstance(fs, dict):
+            err(f"{rel(p)}: no minecraft:fog_settings")
+            continue
+        fid = fs.get("description", {}).get("identifier", "")
+        if not re.fullmatch(r"grimoire:[a-z0-9_]+", fid):
+            err(f"{rel(p)}: fog identifier {fid!r} must be grimoire:<name>")
+        if fid in fogs:
+            err(f"{rel(p)}: fog {fid} defined twice")
+        fogs[fid] = p
+        dist = fs.get("distance", {})
+        if "air" not in dist:
+            err(f"{fid}: distance fog needs an 'air' layer")
+        for layer, v in dist.items():
+            if layer not in ("air", "weather", "water", "lava", "lava_resistance", "powder_snow"):
+                err(f"{fid}: unknown fog layer {layer}")
+                continue
+            st, en = v.get("fog_start"), v.get("fog_end")
+            if not all(isinstance(x, (int, float)) for x in (st, en)) or not (0 <= st < en):
+                err(f"{fid}.{layer}: fog_start {st} must be a number below fog_end {en}")
+            if v.get("render_distance_type") not in ("fixed", "render"):
+                err(f"{fid}.{layer}: render_distance_type must be fixed or render")
+            elif v["render_distance_type"] == "render" and en > 1:
+                err(f"{fid}.{layer}: a render-relative fog end is a fraction (0..1), got {en}")
+            if not re.fullmatch(r"#[0-9a-fA-F]{6}", str(v.get("fog_color", ""))):
+                err(f"{fid}.{layer}: fog_color must be #rrggbb")
+
     # ---------------------------------------------------------------- scripts
     bundle = os.path.join(BP, "scripts", "main.js")
     if os.path.exists(bundle):
@@ -393,13 +477,17 @@ def main():
         for mod in set(re.findall(r'from\s*"(@minecraft/[a-z-]+)"', src)):
             if mod != "@minecraft/server":
                 err(f"script imports {mod} which is not declared in the manifest")
-        for bad in ("setCamera", "camera.setCamera", "runCommand(\"camera", "@minecraft/server-gametest"):
-            if bad in src:
-                err(f"script contains forbidden usage: {bad}")
+        if "@minecraft/server-gametest" in src:
+            err("script contains forbidden usage: @minecraft/server-gametest")
         if "STUB" in src or "is not implemented yet" in src:
             err("script bundle still contains stub spells")
+        # every fog the script pushes is defined in the resource pack
+        for fid in sorted(set(re.findall(r'"(grimoire:[a-z0-9_]*fog[a-z0-9_]*)"', src))):
+            if fid not in fogs:
+                err(f"script pushes fog {fid} which no fogs/*.json defines")
     else:
         err("behavior pack scripts/main.js missing")
+    check_world_state_rules()
 
     # ---------------------------------------------------------------- stats
     if args.stats:
