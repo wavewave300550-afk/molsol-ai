@@ -26,7 +26,7 @@ from PIL import Image, ImageDraw
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from kit.geo import rot_matrix  # noqa: E402
-from kit.molang import Molang  # noqa: E402
+from kit.heldpose import cube_box, pose_bones  # noqa: E402
 import scene  # noqa: E402
 
 RP = os.path.join(HERE, "..", "resource_packs", "grimoire_rp")
@@ -62,127 +62,15 @@ def first_person_camera_basis():
 
 
 # ---------------------------------------------------------------- geometry + pose (Bedrock file -> bb space)
-def _bb_vec(v):
-    return np.array([-float(v[0]), float(v[1]), float(v[2])])
-
-
-def _bb_rot(v):
-    return (-float(v[0]), -float(v[1]), float(v[2]))
-
-
-def load_book(g, first_person, open_amount):
-    geo = json.load(open(os.path.join(RP, "models", "entity", f"{g}.geo.json")))["minecraft:geometry"][0]
-    anims = json.load(open(os.path.join(RP, "animations", f"{g}.animation.json")))["animations"]
-    att = json.load(open(os.path.join(RP, "attachables", f"{BOOKS[g]}.json")))["minecraft:attachable"]["description"]
-    ev = Molang({"c.is_first_person": 1.0 if first_person else 0.0, "context.is_first_person": 1.0 if first_person else 0.0,
-                  "v.open": open_amount, "variable.open": open_amount, "q.life_time": 0.0, "q.anim_time": 0.0,
-                  "q.main_hand_item_use_duration": 0.0})
-    pose = {}
-    ctl_path = os.path.join(RP, "animation_controllers", f"{g}.animation_controllers.json")
-    ctls = json.load(open(ctl_path))["animation_controllers"] if os.path.exists(ctl_path) else {}
-    use = Molang({**ev.env, "q.main_hand_item_use_duration": 100.0 if open_amount > 0 else 0.0, "q.is_sneaking": 0.0,
-                  "q.all_animations_finished": 1.0})
-
-    def key_value(v):
-        if isinstance(v, dict):
-            v = v.get("post", v.get("pre"))
-        if not isinstance(v, list):
-            v = [v, v, v]
-        return np.array([ev(c) for c in v], float)
-
-    def apply(a, at_end):
-        t_set = ev(a["anim_time_update"]) if "anim_time_update" in a else None
-        for bone, chs in a.get("bones", {}).items():
-            r, p, s = pose.get(bone, ((0, 0, 0), np.zeros(3), np.ones(3)))
-            for ch, val in chs.items():
-                if isinstance(val, dict):          # keyframes
-                    keys = sorted(val, key=float)
-                    if t_set is not None:          # time driven by Molang: interpolate at that time
-                        ts = [float(k) for k in keys]
-                        if t_set <= ts[0]:
-                            x = key_value(val[keys[0]])
-                        elif t_set >= ts[-1]:
-                            x = key_value(val[keys[-1]])
-                        else:
-                            j = max(i for i in range(len(ts)) if ts[i] <= t_set)
-                            f = (t_set - ts[j]) / (ts[j + 1] - ts[j])
-                            x = key_value(val[keys[j]]) * (1 - f) + key_value(val[keys[j + 1]]) * f
-                        x = list(x)
-                    else:                          # steady state = last key, else the first
-                        x = list(key_value(val[keys[-1] if at_end else keys[0]]))
-                else:
-                    x = list(key_value(val))
-                if ch == "rotation":
-                    rr = _bb_rot(x)
-                    r = tuple(r[i] + rr[i] for i in range(3))
-                elif ch == "position":
-                    p = p + _bb_vec(x)
-                elif ch == "scale":
-                    s = s * np.array(x)
-            pose[bone] = (r, p, s)
-
-    for entry in att["scripts"]["animate"]:
-        name, cond = (entry, None) if isinstance(entry, str) else next(iter(entry.items()))
-        if cond is not None and not ev(cond):
-            continue
-        full = att["animations"].get(name, "")
-        if full in ctls:                           # controller: follow its transitions to the steady state
-            c = ctls[full]
-            st = c.get("initial_state", "default")
-            for _ in range(3):
-                nxt = None
-                for t in c["states"][st].get("transitions", []):
-                    (to, q), = t.items()
-                    if use(q):
-                        nxt = to
-                        break
-                if nxt is None:
-                    break
-                st = nxt
-            for an in c["states"][st].get("animations", []) or []:
-                an = an if isinstance(an, str) else next(iter(an))
-                a = anims.get(att["animations"].get(an, ""))
-                if a:
-                    apply(a, True)
-            continue
-        a = anims.get(full)
-        if a:
-            apply(a, False)
-    bones = {b["name"]: b for b in geo["bones"]}
-    mats = {}
-
-    def mat(name):
-        if name in mats:
-            return mats[name]
-        b = bones[name]
-        piv = _bb_vec(b.get("pivot", [0, 0, 0]))
-        br = _bb_rot(b.get("rotation", [0, 0, 0]))
-        r, p, s = pose.get(name, ((0, 0, 0), np.zeros(3), np.ones(3)))
-        R = rot_matrix(*(br[i] + r[i] for i in range(3))) @ np.diag(s)
-        m = np.eye(4)
-        m[:3, :3] = R
-        m[:3, 3] = piv + p - R @ piv
-        if b.get("parent"):
-            m = mat(b["parent"]) @ m
-        mats[name] = m
-        return m
-
+def load_book(g, first_person, open_amount, extra=None):
+    bones, mat = pose_bones(RP, g, BOOKS[g], first_person, open_amount, extra)
     quads, cols = [], []
     pal = {"north": (0.85, 0.15, 0.15), "south": (0.2, 0.35, 0.95), "east": (0.15, 0.75, 0.25), "west": (0.95, 0.95, 0.9),
            "up": (0.55, 0.55, 0.55), "down": (0.4, 0.4, 0.4)}
     for name, b in bones.items():
         M = mat(name)
         for c in b.get("cubes", []):
-            o, sz, inf = np.array(c["origin"], float), np.array(c["size"], float), float(c.get("inflate", 0.0))
-            x0 = -(o[0] + sz[0]) - inf
-            lo = np.array([x0, o[1] - inf, o[2] - inf])
-            hi = lo + sz + 2 * inf
-            cm = np.eye(4)
-            if c.get("rotation"):
-                cp = _bb_vec(c.get("pivot", [0, 0, 0]))
-                R = rot_matrix(*_bb_rot(c["rotation"]))
-                cm[:3, :3] = R
-                cm[:3, 3] = cp - R @ cp
+            lo, hi, cm = cube_box(c)
             x0, y0, z0 = lo
             x1, y1, z1 = hi
             faces = {"north": [(x1, y1, z0), (x0, y1, z0), (x0, y0, z0), (x1, y0, z0)],
@@ -223,8 +111,8 @@ def player_quads():
     return np.array(quads), np.array(cols, dtype=np.float32)
 
 
-def render_view(g, first_person, open_amount, size=(640, 360)):
-    q, c = load_book(g, first_person, open_amount)
+def render_view(g, first_person, open_amount, size=(640, 360), extra=None):
+    q, c = load_book(g, first_person, open_amount, extra)
     flat = q.reshape(-1, 3)
     if first_person:
         w = w_first(flat).reshape(-1, 4, 3)
@@ -257,17 +145,31 @@ def render_view(g, first_person, open_amount, size=(640, 360)):
     return img
 
 
+AURA = "--aura" in sys.argv
+SEL = {"v.aura": 1.15, "v.sel": 0.5}        # the crouch flare at its peak
+
+
+def _tag(img, text):
+    ImageDraw.Draw(img).text((6, img.size[1] - 16), text, fill=(255, 230, 120))
+    return img
+
+
 def main():
     rows = []
     for g in BOOKS:
-        rows.append([render_view(g, True, 0.0), render_view(g, True, 1.0), render_view(g, False, 0.0), render_view(g, False, 1.0)])
+        if AURA:   # rest / crouch peak / charging, first person then third person
+            rows.append([_tag(render_view(g, True, 0.0), "rest"), _tag(render_view(g, True, 0.0, extra=SEL), "CROUCH peak"),
+                         _tag(render_view(g, True, 1.0), "HOLD (charging)"), _tag(render_view(g, False, 0.0, extra=SEL), "CROUCH peak"),
+                         _tag(render_view(g, False, 1.0), "HOLD (charging)")])
+        else:
+            rows.append([render_view(g, True, 0.0), render_view(g, True, 1.0), render_view(g, False, 0.0), render_view(g, False, 1.0)])
     W, H = rows[0][0].size
-    sheet = Image.new("RGB", (W * 4, H * len(rows)))
+    sheet = Image.new("RGB", (W * len(rows[0]), H * len(rows)))
     for j, row in enumerate(rows):
         for i, im in enumerate(row):
             sheet.paste(im, (i * W, j * H))
     os.makedirs(os.path.join(HERE, "_preview"), exist_ok=True)
-    out = os.path.join(HERE, "_preview", "held_books_side.jpg" if SIDE else "held_books.jpg")
+    out = os.path.join(HERE, "_preview", ("held_books_aura" if AURA else "held_books") + ("_side" if SIDE else "") + ".jpg")
     sheet.save(out, quality=88)
     print(out)
 

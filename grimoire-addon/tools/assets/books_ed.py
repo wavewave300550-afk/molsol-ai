@@ -35,6 +35,7 @@ from kit.render import render
 from kit.tex import _hash, fbm, grain, mix, rgb, tile
 
 from .a_fx_common import particles
+from ._book_aura import SEL_PRE_ANIMATION, add_aura, aura_anim, without_aura
 
 # Size of the selection vision / charge construct.  They float 1.3 m / 2.2 m from the eyes (src/config/books.ts),
 # where at full size they covered two-thirds of an iPhone screen instead of sitting on the held book.
@@ -811,8 +812,8 @@ def write_attachable(pack, m, anims):
             "textures": {"default": tex_path},
             "geometry": {"default": geo_id},
             "animations": amap,
-            "scripts": {"pre_animation": list(OPEN_PRE_ANIMATION),
-                        "animate": ["place", "idle", "open", {"open_loop": "v.open"}, "ctl"]},
+            "scripts": {"pre_animation": list(OPEN_PRE_ANIMATION) + SEL_PRE_ANIMATION,
+                        "animate": ["place", "idle", "open", {"open_loop": "v.open"}, "ctl", "aura"]},
             "sound_effects": {"flip": "grimoire.book_ed_flip"},
             "render_controllers": ["controller.render.grimoire.book_ed"],
         }}})
@@ -1680,8 +1681,11 @@ def build(pack):
 
     book, binfo = build_book()
     banims = build_book_anims(binfo)
+    add_aura(book, "hover", glyphs.DRACONIC, "#ffd27a", "#ff8a3c", star=4, density=2.5)   # selection / charge circle
+    banims.append(aura_anim())
     write_attachable(pack, book, banims)
-    write_icon(pack, book)
+    with without_aura(book):
+        write_icon(pack, book)
     print(f"    book_ed: {book.cube_count()} cubes, {len(book.order)} bones, tex {book.tex_size}")
 
     vmodels, vinfo = build_vision()

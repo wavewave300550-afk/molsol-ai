@@ -27,6 +27,7 @@ from kit.pack import PREVIEW, _write
 from kit.render import render, sheet
 
 from .a_fx_common import particles
+from ._book_aura import SEL_PRE_ANIMATION, add_aura, aura_anim, without_aura
 
 # Size of the selection vision / charge construct.  They float 1.3 m / 2.2 m from the eyes (src/config/books.ts),
 # where at full size they covered two-thirds of an iPhone screen instead of sitting on the held book.
@@ -1382,8 +1383,8 @@ def build_attachable(pack, model, anims):
             "textures": {"default": tpath},
             "geometry": {"default": geo},
             "animations": amap,
-            "scripts": {"pre_animation": list(OPEN_PRE_ANIMATION),
-                        "animate": ["place", "idle", "open", {"open_loop": "v.open"}, "pose"]},
+            "scripts": {"pre_animation": list(OPEN_PRE_ANIMATION) + SEL_PRE_ANIMATION,
+                        "animate": ["place", "idle", "open", {"open_loop": "v.open"}, "pose", "aura"]},
             "render_controllers": [rc],
         }},
     })
@@ -1697,8 +1698,11 @@ def build(pack):
     build_sounds(pack)
     book = book_model()
     banims = book_anims()
+    add_aura(book, "float", DREAM_SCRIPT, "#f2d6ff", "#ffc2e2", star=5, density=1.6)   # selection / charge circle
+    banims.append(aura_anim())
     build_attachable(pack, book, banims)
-    write_icon(pack, book, banims[1])
+    with without_aura(book):
+        write_icon(pack, book, banims[1])
 
     visions = [vision_model(i) for i in range(6)]
     vanims = vision_anims()

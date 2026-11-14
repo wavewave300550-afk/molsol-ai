@@ -14,6 +14,13 @@ export const BOOKS = {
   /** Asset prefix per Grimoire: actors book_<g>_vision / book_<g>_charge, sounds and particles book_<g>_*. */
   prefix: { divine_word: "dw", dream_nightmare: "dn", elemental_dragon: "ed" } as Record<GrimoireId, string>,
   vision: {
+    /**
+     * Spawn the selection vision entity in front of the eyes.  Off: on an iPhone a world entity never
+     * lined up with the first-person book (different cameras, and it trails when turning); the held
+     * book now flares its own built-in magic circle on crouch instead (tools/assets/_book_aura.py).
+     * The page-turn sound still plays.
+     */
+    entity: false,
     /** Life of the selection vision; its one-shot "show" animation lasts exactly 1.2 s. */
     ticks: 24,
     /**
@@ -28,6 +35,12 @@ export const BOOKS = {
     volume: 0.8,
   },
   charge: {
+    /**
+     * Spawn the charge construct entity ahead of the eyes (and its motes).  Off for the same reason as
+     * vision.entity: the held book itself opens and spins its built-in circle while Use is held.  The
+     * charge / release sounds and the release burst still play.
+     */
+    entity: false,
     /** Ticks of the one-shot "form" animation (1.5 s) before switching to the "loop" state. */
     formTicks: 30,
     /** The release flare (0.5 s) and the quiet cancel fold (0.4 s) before the construct is removed. */

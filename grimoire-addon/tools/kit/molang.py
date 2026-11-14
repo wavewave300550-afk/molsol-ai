@@ -127,7 +127,7 @@ class Molang:
                 "math.sin": lambda a: math.sin(math.radians(a)), "math.cos": lambda a: math.cos(math.radians(a)),
                 "math.clamp": lambda a, lo, hi: min(max(a, lo), hi), "math.lerp": lambda a, b, t: a + (b - a) * t,
                 "math.max": max, "math.min": min, "math.abs": abs, "math.sqrt": math.sqrt,
-                "math.floor": math.floor, "math.pow": math.pow,
+                "math.floor": math.floor, "math.mod": math.fmod, "math.pow": math.pow,
             }.get(name)
             return float(fn(*args)) if fn else 0.0
         if name in self.env:

@@ -19,7 +19,11 @@
    tools/held_preview.py draws the result.
 2. MATERIAL.  The held book uses entity_alphatest, like every vanilla held item, with the plain
    texture Model.save() writes as <name>_held.png.
-3. BONE NAMES.
+3. BONE NAMES.  (below)
+4. BUILT-IN CIRCLE.  The selection / charge circle (tools/assets/_book_aura.py) is re-centred on the
+   book AS POSED (kit.heldpose evaluates the attachable's own animations): centred on the closed book
+   just behind its back cover at rest, gliding to sit under the open book while Use is held, sized
+   from the posed book, and smaller in third person.
 
 An attachable's bones are matched BY NAME against the player's skeleton, so a book bone called
 "root" or "body" would be glued to that player bone instead of following the hand.  This step
@@ -32,6 +36,7 @@ import os
 import numpy as np
 
 from kit.geo import rot_matrix
+from kit.heldpose import corners, cube_box, pose_bones
 from kit.molang import Molang
 from kit.pack import RP
 
@@ -141,6 +146,75 @@ def _hand_frame(g, geo, bones):
     print(f"    {g}: hand frame  first person rot {fr} pos {fp}  third person rot {tr} pos {tp}")
 
 
+# ---- built-in circle (see _book_aura.py): diameter relative to the posed book's larger side
+AURA_CLOSED = 1.3                   # crouch flare behind the closed book
+AURA_OPEN = 1.4                     # under the open book while charging (reaches past the open pages)
+AURA_GAP = 0.6                      # units behind the back cover / under the open pages
+AURA_THIRD_PERSON = 0.6             # smaller when seen from outside (other players, F5 view)
+AURA_BONES = ("aura", "aura_ring", "aura_ring2")
+AURA_SKIP = {"book_dw": ("dr", "rb"), "book_ed": ("ribbon",)}     # drifting motes, hanging ribbons
+
+
+def _posed_box(g, parent, open_amount):
+    """Box of the visible book body, in the circle parent's bind space (Bedrock file coordinates).
+    Drifting motes and hanging ribbons (AURA_SKIP) are left out: they swing and float around the
+    book, the covers, spine and corner pieces decide."""
+    bones, mat = pose_bones(RP, g, ITEMS[g], True, open_amount, {"v.aura": 0.0, "v.sel": 1.0})
+    inv = np.linalg.inv(mat(parent))
+    pts = []
+    for name, b in bones.items():
+        if name in AURA_BONES or not b.get("cubes") or name.startswith(AURA_SKIP.get(g, ())):
+            continue
+        M = inv @ mat(name)
+        if abs(np.linalg.det(M[:3, :3])) < 1e-6:          # hidden at this moment (scaled to 0)
+            continue
+        for c in b["cubes"]:
+            lo, hi, cm = cube_box(c)
+            pts.append((corners(lo, hi) @ (M @ cm).T)[:, :3])
+    pts = np.concatenate(pts)
+    pts[:, 0] = -pts[:, 0]                                  # bb -> file
+    return pts.min(axis=0), pts.max(axis=0)
+
+
+def _place_aura(g):
+    geo_p = os.path.join(RP, "models", "entity", f"{g}.geo.json")
+    geo = json.load(open(geo_p, encoding="utf-8"))
+    bones = {b["name"]: b for b in geo["minecraft:geometry"][0]["bones"]}
+    if "aura" not in bones:
+        return
+    parent = bones["aura"]["parent"]
+    c_lo, c_hi = _posed_box(g, parent, 0.0)
+    o_lo, o_hi = _posed_box(g, parent, 1.0)
+    closed = np.array([(c_lo[0] + c_hi[0]) / 2, (c_lo[1] + c_hi[1]) / 2, c_hi[2] + AURA_GAP])
+    opened = np.array([(o_lo[0] + o_hi[0]) / 2, (o_lo[1] + o_hi[1]) / 2, o_hi[2] + AURA_GAP])
+    piv0 = np.array(bones["aura"]["pivot"], float)
+    built_d = float(bones["aura_ring"]["cubes"][0]["size"][0])
+    delta = closed - piv0
+    for name in AURA_BONES:                               # move the circle onto the closed book
+        b = bones[name]
+        b["pivot"] = [round(float(v), 4) for v in np.array(b["pivot"], float) + delta]
+        for c in b.get("cubes", []):
+            c["origin"] = [round(float(v), 4) for v in np.array(c["origin"], float) + delta]
+            if "pivot" in c:
+                c["pivot"] = [round(float(v), 4) for v in np.array(c["pivot"], float) + delta]
+    _dump(geo_p, geo)
+    k_c = AURA_CLOSED * max(c_hi[0] - c_lo[0], c_hi[1] - c_lo[1]) / built_d
+    k_o = AURA_OPEN * max(o_hi[0] - o_lo[0], o_hi[1] - o_lo[1]) / built_d
+    glide = opened - closed
+    anim_p = os.path.join(RP, "animations", f"{g}.animation.json")
+    an = json.load(open(anim_p, encoding="utf-8"))
+    att = json.load(open(os.path.join(RP, "attachables", f"{ITEMS[g]}.json"), encoding="utf-8"))
+    full = att["minecraft:attachable"]["description"]["animations"]["aura"]
+    bone = an["animations"][full]["bones"]["aura"]
+    bone["scale"] = (f"v.aura * ({k_c:.4f} + {k_o - k_c:.4f} * v.open)"
+                     f" * (c.is_first_person ? 1.0 : {AURA_THIRD_PERSON})")
+    bone["position"] = [f"v.open * {glide[i]:.4f}" for i in range(3)]
+    _dump(anim_p, an)
+    print(f"    {g}: circle on '{parent}'  closed book {np.round(c_hi - c_lo, 2).tolist()} centre "
+          f"{np.round(closed, 2).tolist()}  open book {np.round(o_hi - o_lo, 2).tolist()} glide "
+          f"{np.round(glide, 2).tolist()}  scale {k_c:.2f} -> {k_o:.2f}")
+
+
 def build(pack):
     for g in ("book_dw", "book_dn", "book_ed"):
         geo_p = os.path.join(RP, "models", "entity", f"{g}.geo.json")
@@ -152,6 +226,7 @@ def build(pack):
         _dump(geo_p, geo)
         ren = {b["name"]: f"{g}_{b['name']}" for b in bones if b["name"].lower() in PLAYER}
         if not ren:
+            _place_aura(g)
             continue
         for b in bones:
             b["name"] = ren.get(b["name"], b["name"])
@@ -174,3 +249,4 @@ def build(pack):
                         c[key] = [{ren.get(k, k): v for k, v in e.items()} for e in c[key]]
             _dump(rc_p, rc)
         print(f"    {g}: renamed bones {ren}")
+        _place_aura(g)

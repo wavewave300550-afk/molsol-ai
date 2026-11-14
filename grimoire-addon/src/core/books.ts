@@ -9,9 +9,11 @@ import { PrepHandle, setPresenter } from "./presentation";
 /**
  * Book presentation for the three Grimoires.
  *
- *   select  -> a short selection vision (book_<g>_vision, kind = spell index) above the book hand
- *   prep    -> the spell's charge construct (book_<g>_charge) floating ahead of the caster; it forms,
- *              loops while Use is held, flares on release or folds away on cancel
+ *   select  -> the select sound; the held book flares its built-in circle by itself (crouch, Molang)
+ *   prep    -> the charge sounds and the release burst; the held book opens and spins its circle
+ *   (BOOKS.vision.entity / BOOKS.charge.entity switch back on the old world-space selection vision,
+ *    book_<g>_vision, and charge construct, book_<g>_charge: they never lined up with the
+ *    first-person book on an iPhone)
  *   deny    -> a soft negative sound
  *
  * Every visual lives in its own private Scene ("book"), so the entities are removed when the scene
@@ -48,6 +50,11 @@ function select(p: Player, g: GrimoireDef, meta: SpellMeta): void {
   const pre = BOOKS.prefix[g.id];
   const cfg = BOOKS.vision;
   endIn(visions, p.id);
+  if (!cfg.entity) {
+    // the held book shows the selection itself (its built-in circle flares on crouch)
+    sound(p.dimension, `book_${pre}_select`, p.getHeadLocation(), cfg.volume);
+    return;
+  }
   const scene = Scenes.start("book", p);
   track(visions, p, scene);
   const f = frame(p, cfg.ahead, cfg.right, cfg.up);
@@ -67,6 +74,7 @@ function prepStart(p: Player, g: GrimoireDef, meta: SpellMeta): PrepHandle {
   const cfg = BOOKS.charge;
   const id = `book_${pre}_charge`;
   endIn(charges, p.id);
+  if (!cfg.entity) return prepSound(p, pre);
   const scene = Scenes.start("book", p);
   track(charges, p, scene);
 
@@ -125,6 +133,30 @@ function prepStart(p: Player, g: GrimoireDef, meta: SpellMeta): PrepHandle {
     if (!done && scene.tick - lastSeen > cfg.stallTicks) handle.cancel();
   }, 1);
   return handle;
+}
+
+/** Preparation without the world construct: the held book opens and spins its own circle; this adds
+ *  the charge swell (repeated while held) and, on release, the burst and release sound ahead of it. */
+function prepSound(p: Player, pre: string): PrepHandle {
+  const cfg = BOOKS.charge;
+  let done = false;
+  sound(p.dimension, `book_${pre}_charge`, p.getHeadLocation(), cfg.soundVolume);
+  return {
+    tick(held: number) {
+      if (done || !p.isValid) return;
+      if (held > 0 && held % cfg.soundEvery === 0) sound(p.dimension, `book_${pre}_charge`, p.getHeadLocation(), cfg.soundRepeatVolume);
+    },
+    release() {
+      if (done || !p.isValid) return;
+      done = true;
+      const at = frame(p, cfg.ahead, cfg.right, cfg.up, cfg.minDirY, cfg.maxDirY).loc;
+      burst(p.dimension, `book_${pre}_burst`, at, cfg.burstRadius, cfg.burstCount);
+      sound(p.dimension, `book_${pre}_release`, at);
+    },
+    cancel() {
+      done = true;
+    },
+  };
 }
 
 function deny(p: Player, g: GrimoireDef): void {

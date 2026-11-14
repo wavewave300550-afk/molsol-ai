@@ -25,6 +25,7 @@ from kit.pack import _write
 from kit.render import render
 
 from .a_fx_common import particles
+from ._book_aura import SEL_PRE_ANIMATION, add_aura, aura_anim, without_aura
 
 # Size of the selection vision / charge construct.  They float 1.3 m / 2.2 m from the eyes (src/config/books.ts),
 # where at full size they covered two-thirds of an iPhone screen instead of sitting on the held book.
@@ -629,9 +630,9 @@ def write_attachable(pack, m, anims):
                     # opens with the hold, closes smoothly afterwards
                     f"v.open_raw = math.max(v.target, math.clamp((v.open_raw ?? 0.0) - q.delta_time * {OPEN_RATE}, 0.0, 1.0));",
                     "v.open = v.open_raw * v.open_raw * (3.0 - 2.0 * v.open_raw);",
-                ],
+                ] + SEL_PRE_ANIMATION,
                 "animate": ["idle", "open", {"place_fp": "c.is_first_person"}, {"place_tp": "!c.is_first_person"},
-                            "ctl_turn"],
+                            "ctl_turn", "aura"],
             },
             "render_controllers": ["controller.render.grimoire.book_dw"],
         }}})
@@ -1025,6 +1026,8 @@ def build(pack):
     # ---- held book (attachable)
     bm = book_model(mt)
     ba = book_anims()
+    add_aura(bm, "hover", glyphs.FIRST_WORD, WGOLD, GOLD, star=6, density=3.0)   # selection / charge circle
+    ba.append(aura_anim())
     write_attachable(pack, bm, ba)
     by = {a.name: a for a in ba}
     print(f"    book_dw: {bm.cube_count()} cubes, {len(bm.order)} bones, tex {bm.tex_size}")
@@ -1043,7 +1046,8 @@ def build(pack):
           "bones", [len(c.order) for c in cms], "tex", [c.tex_size for c in cms])
 
     # ---- icons + item texture atlas (all three books) + pack icons
-    ic, big = icon(bm, ba)
+    with without_aura(bm):
+        ic, big = icon(bm, ba)
     ip = os.path.join(pack.rp, "textures", "items", f"grimoire_{ITEM}.png")
     os.makedirs(os.path.dirname(ip), exist_ok=True)
     ic.save(ip)
