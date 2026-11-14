@@ -1,5 +1,6 @@
 import { Dimension, MolangVariableMap, Vector3, system } from "@minecraft/server";
 import { CONFIG } from "../config/global";
+import { inWorld } from "./bounds";
 import { NS } from "./scene";
 
 let budgetTick = -1;
@@ -15,7 +16,7 @@ function take(n = 1): boolean {
 /** Spawn one particle effect ("name" -> grimoire:name).  Silently skipped when over budget. */
 export function particle(dim: Dimension, id: string, loc: Vector3, vars?: MolangVariableMap): void {
   if (!take()) return;
-  try { dim.spawnParticle(id.includes(":") ? id : `${NS}:${id}`, loc, vars); } catch { /* unloaded */ }
+  try { dim.spawnParticle(id.includes(":") ? id : `${NS}:${id}`, inWorld(dim, loc), vars); } catch { /* unloaded */ }
 }
 
 /** n particles evenly on a horizontal ring. */
@@ -46,7 +47,7 @@ export function burst(dim: Dimension, id: string, center: Vector3, radius: numbe
 
 /** Play a positional sound ("name" -> grimoire.name). */
 export function sound(dim: Dimension, id: string, loc: Vector3, volume = 1, pitch = 1): void {
-  try { dim.playSound(id.includes(".") ? id : `${NS}.${id}`, loc, { volume, pitch }); } catch { /* unloaded */ }
+  try { dim.playSound(id.includes(".") ? id : `${NS}.${id}`, inWorld(dim, loc), { volume, pitch }); } catch { /* unloaded */ }
 }
 
 /** Colour helper for particles that read variable.color. */

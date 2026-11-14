@@ -8,7 +8,7 @@ Installable file: [`dist/Grimoire_Rebirth_of_the_Arcane.mcaddon`](dist/Grimoire_
 
 ## เริ่มเล่นแบบย่อ (ภาษาไทย)
 
-วิธีที่ง่ายที่สุด: เปิดไฟล์ **`Grimoire_Test_World.mcworld`** (บน iPhone: เปิดจากแอป Files แล้วเลือกเปิดด้วย Minecraft) จะได้โลกใหม่ชื่อ "Grimoire Test" ที่ฝังแอดออนเวอร์ชันล่าสุดไว้แล้ว เข้าโลกแล้วหนังสือทั้งสามเล่มจะอยู่ในกระเป๋าทันที ไม่ต้องตั้งค่าหรือพิมพ์คำสั่ง
+วิธีที่ง่ายที่สุด: เปิดไฟล์ **`Grimoire_Test_World.mcworld`** (บน iPhone: เปิดจากแอป Files แล้วเลือกเปิดด้วย Minecraft) จะได้โลกใหม่ชื่อ "Grimoire Test 1.0.3" ที่ฝังแอดออนเวอร์ชันล่าสุดไว้แล้ว เข้าโลกแล้วหนังสือทั้งสามเล่มจะอยู่ในกระเป๋าทันที ไม่ต้องตั้งค่าหรือพิมพ์คำสั่ง โลกนี้สร้างด้วย Minecraft 26.62 และเปิดได้ตั้งแต่ 26.60 ขึ้นไป
 
 ถ้าจะใช้กับโลกของตัวเอง:
 
@@ -33,9 +33,9 @@ Installable file: [`dist/Grimoire_Rebirth_of_the_Arcane.mcaddon`](dist/Grimoire_
 | Platforms | Any Bedrock platform that can import add-ons (iOS/iPadOS, Android, Windows, consoles via Realms/world transfer) |
 
 Version research (checked 13 November 2026): the stable line is 26.6x. 26.60 shipped on
-27 October 2026 together with `@minecraft/server` 2.11.0; 26.62 is a hotfix from 6 November; a
-26.63 hotfix exists for some platforms (Windows, servers, PlayStation 5). All of them satisfy
-this add-on. Preview/beta builds (26.70) are not required. Older builds (26.50 and earlier) will
+27 October 2026 together with `@minecraft/server` 2.11.0; 26.62 is a hotfix from 6 November and
+is the current version on iPhone and Android; a 26.63 hotfix exists for some platforms (Windows,
+servers, PlayStation 5). All of them satisfy this add-on; it was run on 26.62 and 26.63 servers. Preview/beta builds (26.70) are not required. Older builds (26.50 and earlier) will
 refuse to load the script module because they do not provide API 2.11.0.
 
 ## Installing
@@ -191,22 +191,29 @@ More in `docs/gallery/` (the three books, the dollhouse, the city spire, the por
 ## Verification status
 
 **Server side: run in the game engine.** With the user's acceptance of the Minecraft EULA, the
-add-on was loaded into a real Bedrock Dedicated Server 1.26.63.1. A simulated player
-(`@minecraft/server-gametest`) cast all 18 spells through the real input path - crouch to select,
-hold Use, release - twice (with six husks as targets, and with no targets), on generated terrain:
+add-on was loaded into real Bedrock Dedicated Servers **1.26.62.1** (the version on iPhone and
+Android) and **1.26.63.1**. A simulated player (`@minecraft/server-gametest`) cast all 18 spells
+through the real input path - crouch to select, hold Use, release - with six husks as targets and
+again with no targets. On 1.26.62 this ran inside the shipped `Grimoire_Test_World.mcworld` itself
+(a superflat world, ground at y = -60); on 1.26.63 on generated hilly terrain.
 
-* the server loads both packs and the packaged test world without content errors;
+* both servers load the packs and the packaged test world without content errors;
 * holding the book raises `itemStartUse`, releasing raises `itemReleaseUse`: hold-to-cast works;
 * every spell ran to its end with **0 script errors and 0 add-on warnings**, and cleaned up.
 
+The superflat run found the one real bug of these runs: the Sanctuary (DW04) starts its eight
+pillars below the ground, which on a superflat world is below the bottom of the world, so the game
+refused to create them. Fixed in 1.0.3 for every spell entity, particle and sound.
+
 **Client side: not seen.** A dedicated server draws nothing. Models, textures, glow, particles,
-the book in the hand and sound have still not been looked at inside the game.
+the book in the hand and sound have still not been looked at inside the game. The held book was
+checked against the reference Blockbench uses for attachables (`tools/held_preview.py`).
 
 | Check | Result |
 | Check | Result |
 |---|---|
 | TypeScript type check against the official `@minecraft/server` 2.11.0 typings | clean |
-| Headless tests (`node tests/run.mjs`) | **76 passed, 0 failed** |
+| Headless tests (`node tests/run.mjs`) | **94 passed, 0 failed** |
 | Cross-reference validation (`tools/validate.py`) | 0 errors, 0 warnings |
 | Mojang's published JSON schemas (`tools/schema_check.py`) | 3 items, 140 entities, 267 particles: 0 violations |
 | Minecraft Creator Tools 0.21.0 `validate` on the two packs | 0 errors, 0 warnings (3 notes it classes as likely noise, 429 optional format-version recommendations) |
@@ -219,10 +226,11 @@ What the headless tests cover (a strict mock of the Script API, not the engine):
   crouched; crouch / item change / book change / death cancel without cooldown; an item-stop is
   never treated as a release; all 18 approved cooldown values; per-spell and per-player
   independence; duplicate books cannot bypass a cooldown; books are not consumed and cost no health.
-* **Every spell, 54 tests** (3 each): a full cast with enemies, a cast with no enemies, and the
-  caster leaving mid-spell. Each must run without script warnings, use only entity / particle /
-  sound ids that exist in the packs, keep entity properties in range, deal real damage (offensive
-  spells), and leave no entity and no temporary block behind.
+* **Every spell, 72 tests** (4 each): a full cast with enemies, a cast with no enemies, a cast on a
+  superflat world (ground 4 blocks above the bottom of the world), and the caster leaving
+  mid-spell. Each must run without script warnings, use only entity / particle / sound ids that
+  exist in the packs, keep entity properties in range, stay inside the world's height limits, deal
+  real damage (offensive spells), and leave no entity and no temporary block behind.
 
 Measured in those tests:
 
@@ -258,7 +266,15 @@ is gone, some spells make no sense").
 * **The update cannot be missed.** The version is in the pack name and in a chat line on joining,
   each player gets the three Grimoires once, and `Grimoire_Test_World.mcworld` ships a world with
   the packs embedded.
-* First run inside the real server engine (see Verification status); the probe is in `tests/probe`.
+* **The book in your hand.** Placed with the frame Blockbench uses to preview Bedrock held items
+  (`tools/held_preview.py` draws it). 1.0.2 had turned the book 90 degrees too far in third person,
+  so it lay flat under the hand, and floated it next to the crosshair in first person. Now: third
+  person, the book floats upright beside the right hand; first person, it sits at the lower right of
+  the screen with its cover toward you, and rises and opens toward you while Use is held.
+* **Superflat worlds.** Spell entities, particles and sounds are kept inside the world's height
+  limits. The Sanctuary's pillars were missing on superflat worlds (see Verification status).
+* **Tested in the real game server** on 1.26.62 and 1.26.63 (see Verification status); the probe
+  is in `tests/probe`. The test world is generated by 1.26.62 and opens on 1.26.60 and later.
 
 **1.0.2**
 
@@ -302,10 +318,11 @@ is gone, some spells make no sense").
   mapping), so one of them is wrong; the game was not available to settle it. If models appear
   mirrored or side textures swapped in game, the conversion lives in one place:
   `Model.to_geo` / `_cube_json` in `tools/kit/geo.py`.
-* **Held book placement** (first and third person) is computed, not seen: third person from the
-  hand frame that the vanilla shield, trident and spyglass share, first person from the frame of
-  the vanilla main-hand shield. The frame is in `tools/assets/books_zfix.py`; the offsets are in one
-  constants block at the top of each `tools/assets/books_*.py`.
+* **Held book placement** (first and third person) follows Blockbench's attachable reference and
+  has not been seen in the game. The frame is computed in `tools/assets/books_zfix.py`
+  (`FP_SCREEN`, `FP_DEPTH` set where the closed book sits in first person); the offsets are in one
+  constants block at the top of each `tools/assets/books_*.py`; `tools/held_preview.py` draws both
+  views.
 * **Forests.** Large models are drawn through trees, and a spell centred under a canopy stands
   under it.
 * **The held book cannot know which spell is selected** (an engine limit on held-item models). The

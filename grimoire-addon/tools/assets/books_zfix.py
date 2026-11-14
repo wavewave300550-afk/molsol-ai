@@ -2,17 +2,21 @@
 
 1. HAND FRAME.  The book modules place the book with a "place" bone whose numbers are written in the
    player model's own space (hand item bone at (6, 15, 1) in bb space, axes right / up / back).  A bone
-   bound with q.item_slot_to_bone_name() does NOT live in that space.  Measured from the vanilla
-   attachables (shield, trident, spyglass) and Mojang's wrench sample, the bound space is:
-     third person : point (0, 24, 0) is the hand; -Y is the holder's forward, -Z is up
-                    (the model space turned 90 degrees about X around the hand)
-     first person : the same hand point, but the axes follow the first-person arm; the vanilla
-                    main-hand shield (rotation 91, 65, -43) is drawn upright and facing the camera,
-                    so that rotation is the screen-aligned frame (X = screen left, Y = up, Z = toward
-                    the camera)
-   A "<book>_frame" bone is inserted between the bound root and "place" to convert between the two,
-   so the placement numbers in the book modules mean: offsets from the hand along the holder's
-   right / up / back in third person, and along screen right / up / toward-camera in first person.
+   bound with q.item_slot_to_bone_name() does not live in that space.  The frame used here is the one
+   Blockbench uses to preview Bedrock attachables (js/formats/bedrock/attachable_preview.js), which is
+   what creators check held items against:
+     third person : bound point (0, 24, 0) is the hand and the item follows the arm, no extra turn
+     first person : item root at (-20, 21, 0) turned ZYX(-95, 45, 115), seen by a camera at (0, 19, -40)
+                    looking at (0, 16, 0) with an 18 mm lens, 16:9
+   (1.0.2 used a 90-degree turn in third person and the vanilla shield's angles in first person; in
+   that reference the book lay flat under the hand and floated next to the crosshair.)
+   A "<book>_frame" bone between the bound root and "place" converts between the two:
+     third person : a pure shift, so the book modules' third-person numbers are offsets from the hand
+                    along the arm's right / up / back
+     first person : computed so that the closed book's centre lands at FP_SCREEN (screen position,
+                    -1..1 like the crosshair at 0, 0) at FP_DEPTH units in front of the camera, with
+                    the book modules' first-person axes = screen right / up / toward the camera
+   tools/held_preview.py draws the result.
 2. BONE NAMES.
 
 An attachable's bones are matched BY NAME against the player's skeleton, so a book bone called
@@ -20,8 +24,13 @@ An attachable's bones are matched BY NAME against the player's skeleton, so a bo
 renames any colliding bone in the generated geometry, animations and render controller.
 """
 import json
+import math
 import os
 
+import numpy as np
+
+from kit.geo import rot_matrix
+from kit.molang import Molang
 from kit.pack import RP
 
 PLAYER = {"root", "waist", "body", "head", "hat", "cape", "jacket", "helmet", "leftarm", "rightarm", "leftleg",
@@ -36,35 +45,92 @@ def _dump(path, obj):
 
 HAND = [-6.0, 15.0, 1.0]            # player rightItem pivot (geometry space: X is the holder's left)
 HAND_BOUND = [0.0, 24.0, 0.0]       # where that point sits in the bound bone's space
-FP_FRAME = (91.0, 65.0, -43.0)      # vanilla main-hand shield, first person
-TP_FRAME = (90.0, 0.0, 0.0)
 ITEMS = {"book_dw": "divine_word", "book_dn": "dream_nightmare", "book_ed": "elemental_dragon"}
+
+# ---- first-person placement of the CLOSED book (the open / charging motion is added by the book modules)
+FP_SCREEN = (0.36, -0.30)           # right of and below the crosshair, clear of it
+FP_DEPTH = 22.0                     # units in front of the reference camera (the hand is at about 24)
+
+# Blockbench attachable reference (bb space = the Bedrock file with X mirrored)
+_W_FIRST_POS = np.array([-20.0, 21.0, 0.0])
+_W_FIRST_ROT = rot_matrix(-95.0, 45.0, 115.0)
+_EYE, _TARGET = np.array([0.0, 19.0, -40.0]), np.array([0.0, 16.0, 0.0])
+_V_SLOPE = 0.5 * (35.0 / (16 / 9)) / 18.0
+_H_SLOPE = _V_SLOPE * 16 / 9
+
+
+def _euler(R):
+    """kit / Blockbench rotation (X, then Y, then Z) of a rotation matrix, degrees."""
+    b = -math.asin(max(-1.0, min(1.0, R[2, 0])))
+    a = math.atan2(R[2, 1], R[2, 2])
+    c = math.atan2(R[1, 0], R[0, 0])
+    return tuple(math.degrees(v) for v in (a, b, c))
+
+
+def _place_position(g, att, an, first_person):
+    """Closed-book position of the "place" bone (bb space) as the attachable's animations set it."""
+    ev = Molang({"c.is_first_person": 1.0 if first_person else 0.0, "v.open": 0.0})
+    pos = np.zeros(3)
+    for entry in att["scripts"]["animate"]:
+        name, cond = (entry, None) if isinstance(entry, str) else next(iter(entry.items()))
+        if cond is not None and not ev(cond):
+            continue
+        a = an["animations"].get(att["animations"].get(name, ""), {})
+        p = a.get("bones", {}).get("place", {}).get("position")
+        if p is not None:
+            v = [ev(x) for x in (p if isinstance(p, list) else [p, p, p])]
+            pos += np.array([-v[0], v[1], v[2]])
+    return pos
+
+
+def _frames(g, att, an):
+    """(first-person rotation, position), (third-person rotation, position) for the frame bone, Bedrock values."""
+    hand_bb = np.array([-HAND[0], HAND[1], HAND[2]])
+    bound_bb = np.array([-HAND_BOUND[0], HAND_BOUND[1], HAND_BOUND[2]])
+    # third person: shift the authored hand onto the bound hand
+    tp_rot, tp_pos = (0.0, 0.0, 0.0), bound_bb - hand_bb
+    # first person: screen-aligned axes, closed book centre at FP_SCREEN / FP_DEPTH
+    f = (_TARGET - _EYE) / np.linalg.norm(_TARGET - _EYE)
+    r = np.cross(f, [0.0, 1.0, 0.0])
+    r /= np.linalg.norm(r)
+    u = np.cross(r, f)
+    S = np.column_stack([r, u, -f])
+    centre = _EYE + FP_DEPTH * (f + FP_SCREEN[0] * _H_SLOPE * r + FP_SCREEN[1] * _V_SLOPE * u)
+    R = _W_FIRST_ROT.T @ S
+    P = _place_position(g, att, an, True)
+    t = _W_FIRST_ROT.T @ (centre - _W_FIRST_POS) - hand_bb - R @ (P - hand_bb)
+    fp_rot = _euler(R)
+
+    def bedrock(rot, pos):
+        return ([round(-rot[0], 3), round(-rot[1], 3), round(rot[2], 3)],
+                [round(-float(pos[0]), 3), round(float(pos[1]), 3), round(float(pos[2]), 3)])
+    return bedrock(fp_rot, t), bedrock(tp_rot, tp_pos)
 
 
 def _hand_frame(g, geo, bones):
     frame = f"{g}_frame"
-    if any(b["name"] == frame for b in bones):
-        return
-    bound = next(b for b in bones if "binding" in b)
-    i = bones.index(bound)
-    bones.insert(i + 1, {"name": frame, "parent": bound["name"], "pivot": list(HAND)})
-    for b in bones:
-        if b.get("parent") == bound["name"] and b["name"] != frame:
-            b["parent"] = frame
+    if not any(b["name"] == frame for b in bones):
+        bound = next(b for b in bones if "binding" in b)
+        i = bones.index(bound)
+        bones.insert(i + 1, {"name": frame, "parent": bound["name"], "pivot": list(HAND)})
+        for b in bones:
+            if b.get("parent") == bound["name"] and b["name"] != frame:
+                b["parent"] = frame
     anim_p = os.path.join(RP, "animations", f"{g}.animation.json")
     an = json.load(open(anim_p, encoding="utf-8"))
-    an["animations"][f"animation.grimoire.{g}.hand_frame"] = {"loop": True, "bones": {frame: {
-        "rotation": [f"c.is_first_person ? {FP_FRAME[i]} : {TP_FRAME[i]}" for i in range(3)],
-        "position": [HAND_BOUND[i] - HAND[i] for i in range(3)]}}}
-    _dump(anim_p, an)
     att_p = os.path.join(RP, "attachables", f"{ITEMS[g]}.json")
     att = json.load(open(att_p, encoding="utf-8"))
     d = att["minecraft:attachable"]["description"]
+    (fr, fp), (tr, tp) = _frames(g, d, an)
+    an["animations"][f"animation.grimoire.{g}.hand_frame"] = {"loop": True, "bones": {frame: {
+        "rotation": [f"c.is_first_person ? {fr[i]} : {tr[i]}" for i in range(3)],
+        "position": [f"c.is_first_person ? {fp[i]} : {tp[i]}" for i in range(3)]}}}
+    _dump(anim_p, an)
     d["animations"]["hand_frame"] = f"animation.grimoire.{g}.hand_frame"
     if "hand_frame" not in d["scripts"]["animate"]:
         d["scripts"]["animate"].insert(0, "hand_frame")
     _dump(att_p, att)
-    print(f"    {g}: hand frame bone added")
+    print(f"    {g}: hand frame  first person rot {fr} pos {fp}  third person rot {tr} pos {tp}")
 
 
 def build(pack):

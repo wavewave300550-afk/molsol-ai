@@ -113,6 +113,7 @@ export class Entity {
   teleport(loc, o = {}) {
     if (!this.isValid) throw new Error("invalid entity");
     for (const k of ["x", "y", "z"]) if (!Number.isFinite(loc[k])) { problem(`${this.typeId}: teleport to non-finite ${JSON.stringify(loc)}`); throw new Error("NaN teleport"); }
+    if (this.dimension.outside(loc)) { problem(`${this.typeId}: teleport outside the world to y=${loc.y.toFixed(2)}`); throw new Error("LocationOutOfWorldBoundariesError"); }
     this.location = { x: loc.x, y: loc.y, z: loc.z };
     if (o.rotation) this.rotation = { ...o.rotation };
   }
@@ -257,9 +258,11 @@ export class Dimension {
     return undefined;
   }
   getTopmostBlock(xz) { return new Block(this, Math.floor(xz.x), terrain(Math.floor(xz.x), Math.floor(xz.z)) - 1, Math.floor(xz.z)); }
+  outside(loc) { return loc.y < this.heightRange.min || loc.y >= this.heightRange.max; }
   spawnEntity(typeId, loc, o = {}) {
     const id = typeof typeId === "string" ? typeId : typeId.id;
     for (const k of ["x", "y", "z"]) if (!Number.isFinite(loc[k])) { problem(`spawn ${id} at non-finite location`); throw new Error("NaN spawn"); }
+    if (this.outside(loc)) { problem(`spawn ${id} outside the world at y=${loc.y.toFixed(2)}`); throw new Error("LocationOutOfWorldBoundariesError"); }
     if (id.startsWith("grimoire:") && !assets.actors[id]) { problem(`spawnEntity: unknown entity ${id}`); throw new Error(`unknown entity ${id}`); }
     const e = new Entity(this, id, loc);
     if (id.startsWith("grimoire:")) { e.families = ["grimoire_construct", "inanimate"]; e.invulnerable = true; }
@@ -290,6 +293,7 @@ export class Dimension {
   getPlayers(o = {}) { return this.getEntities({ ...o, type: "minecraft:player" }); }
   spawnParticle(id, loc) {
     for (const k of ["x", "y", "z"]) if (!Number.isFinite(loc[k])) { problem(`particle ${id} at non-finite location`); throw new Error("NaN particle"); }
+    if (this.outside(loc)) { problem(`particle ${id} outside the world at y=${loc.y.toFixed(2)}`); throw new Error("LocationOutOfWorldBoundariesError"); }
     if (strict.particles && id.startsWith("grimoire:") && !assets.particles.has(id)) problem(`spawnParticle: unknown particle ${id}`);
     stats.particles++;
   }

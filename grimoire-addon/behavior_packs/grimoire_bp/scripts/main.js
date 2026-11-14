@@ -146,6 +146,27 @@ var FLOOR_ACTORS = /* @__PURE__ */ new Set([
   "ed6_spirit"
 ]);
 
+// src/lib/bounds.ts
+var LIMITS = /* @__PURE__ */ new Map();
+function limits(dim) {
+  let b = LIMITS.get(dim.id);
+  if (!b) {
+    try {
+      const r = dim.heightRange;
+      b = { min: r.min, max: r.max };
+    } catch {
+      b = { min: -64, max: 320 };
+    }
+    LIMITS.set(dim.id, b);
+  }
+  return b;
+}
+function inWorld(dim, loc) {
+  const b = limits(dim);
+  if (loc.y >= b.min + 0.01 && loc.y <= b.max - 0.01) return loc;
+  return { x: loc.x, y: Math.min(Math.max(loc.y, b.min + 0.01), b.max - 0.01), z: loc.z };
+}
+
 // src/lib/vec.ts
 var v = (x, y, z) => ({ x, y, z });
 var add = (a, b) => ({ x: a.x + b.x, y: a.y + b.y, z: a.z + b.z });
@@ -469,7 +490,7 @@ var Actor = class {
     if (!this.valid) return this;
     if (yaw !== void 0) this.setYaw(yaw);
     try {
-      this.entity.teleport(this.settle(loc), { rotation: { x: 0, y: this.lastYaw } });
+      this.entity.teleport(inWorld(this.entity.dimension, this.settle(loc)), { rotation: { x: 0, y: this.lastYaw } });
     } catch {
     }
     return this;
@@ -547,6 +568,7 @@ var Scene = class {
       if (gy !== void 0) loc = { x: loc.x, y: gy, z: loc.z };
     } catch {
     }
+    loc = inWorld(this.dim, loc);
     try {
       e = this.dim.spawnEntity(id, loc, opts.yaw !== void 0 ? { initialRotation: opts.yaw } : void 0);
     } catch (err) {
@@ -1139,7 +1161,7 @@ function take(n = 1) {
 function particle(dim, id, loc, vars) {
   if (!take()) return;
   try {
-    dim.spawnParticle(id.includes(":") ? id : `${NS}:${id}`, loc, vars);
+    dim.spawnParticle(id.includes(":") ? id : `${NS}:${id}`, inWorld(dim, loc), vars);
   } catch {
   }
 }
@@ -1165,7 +1187,7 @@ function burst(dim, id, center, radius, n) {
 }
 function sound(dim, id, loc, volume = 1, pitch = 1) {
   try {
-    dim.playSound(id.includes(".") ? id : `${NS}.${id}`, loc, { volume, pitch });
+    dim.playSound(id.includes(".") ? id : `${NS}.${id}`, inWorld(dim, loc), { volume, pitch });
   } catch {
   }
 }

@@ -23,8 +23,37 @@ system.afterEvents.scriptEventReceive.subscribe((ev) => {
       pump();
     }
     if (ev.id === "probe:terrain") terrain();
+    if (ev.id === "probe:body" || ev.id === "probe:head" || ev.id === "probe:tgt") { const e = ev.sourceEntity; if (e) { ROT[e.id] = ROT[e.id] ?? {}; ROT[e.id][ev.id.slice(6)] = -180 + Number(ev.message) * 22.5 + 11.25; } }
+    if (ev.id === "probe:rot") rotTest();
   } catch (e) { out({ k: "err", e: String(e), s: e?.stack }); }
 });
+
+const ROT = {};
+/** Does a script-set rotation reach the body / head yaw the client draws with?  (server-side Molang buckets, 22.5 deg) */
+function rotTest() {
+  const dim = world.getDimension("overworld");
+  const gy = ground(dim, BASE.x, BASE.z) + 3;
+  const mk = (type, x, opt) => dim.spawnEntity(type, { x: BASE.x + x, y: gy, z: BASE.z }, opt);
+  const A = mk("probe:dummy_follow", 2, { initialRotation: 90 }), B = mk("probe:dummy_plain", 4, { initialRotation: 90 });
+  const C = mk("probe:dummy_follow", 6), D = mk("probe:dummy_plain", 8);
+  const E = mk("probe:dummy_follow", 10), F = mk("probe:dummy_plain", 12);
+  const all = { A_follow_init90: A, B_plain_init90: B, C_follow: C, D_plain: D, E_follow_moving: E, F_plain_moving: F };
+  const rep = (label) => { for (const [k, e] of Object.entries(all)) out({ k: "rot", label, who: k, set: r3(e.getRotation().y), body: ROT[e.id]?.body, head: ROT[e.id]?.head, tgt: ROT[e.id]?.tgt }); };
+  let t = 0;
+  const id = system.runInterval(() => {
+    t++;
+    if (t === 20) rep("after spawn");
+    if (t === 21) { C.teleport(C.location, { rotation: { x: 0, y: -135 } }); D.teleport(D.location, { rotation: { x: 0, y: -135 } }); A.setRotation({ x: 0, y: 0 }); B.setRotation({ x: 0, y: 0 }); }
+    if (t === 45) rep("C,D teleport-in-place to -135; A,B setRotation 0");
+    if (t === 46) { C.teleport(C.location, { rotation: { x: 0, y: 45 } }); D.teleport(D.location, { rotation: { x: 0, y: 45 } }); }
+    if (t === 70) rep("C,D teleport-in-place to 45");
+    // E,F: move every tick along +X (travel direction = yaw -90) while facing yaw 90 (backwards)
+    if (t >= 71 && t < 131) { for (const e of [E, F]) { const l = e.location; e.teleport({ x: l.x + 0.25, y: l.y, z: l.z }, { rotation: { x: 0, y: 90 } }); } }
+    if (t === 100 || t === 130) rep("E,F moving +X while facing 90, t=" + t);
+    if (t === 150) rep("E,F stopped");
+    if (t === 152) { for (const e of Object.values(all)) e.remove(); system.clearRun(id); out({ k: "rot_done" }); }
+  }, 1);
+}
 
 function pump() {
   if (busy || !queue.length) { if (!busy) out({ k: "idle" }); return; }

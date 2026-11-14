@@ -132,6 +132,11 @@ Three things the real engine taught us (see `tests/probe`):
   synced property `grimoire:yaw` and a wrapper bone `gface` that turns the model by
   `q.property('grimoire:yaw') - q.body_y_rotation`. Turn actors only through `Actor.move` /
   `Actor.face` / `spawn({ yaw })`, which keep the property in step; never call `setRotation`.
+* **The world has a floor and a ceiling.** Spawning, teleporting or playing a particle outside the
+  dimension's height range throws; on a superflat world the ground is 4 blocks above the bottom.
+  `Scene.spawn`, `Actor.move`, `particle` and `sound` clamp positions with `inWorld`
+  (`src/lib/bounds.ts`); go through them. The mock throws there too, and every spell has a
+  superflat test.
 * **Textures are 32-bit TGA** (`Model.save`), as for every vanilla texture drawn with an emissive
   material. Alpha is glow (255 = lit normally, 5 = full glow); alpha 0 is cut-out and must be black.
 
@@ -203,6 +208,12 @@ the caster).  The blue box is the caster, green boxes are enemies, rings are par
 spells on the hills terrain**: anything that should stand on the ground must follow it (add its
 actor to `src/config/ground.ts`).
 
+### The book in the hand (`tools/held_preview.py`)
+Draws the three held books in first and third person with the transforms Blockbench uses to preview
+Bedrock attachables (`js/formats/bedrock/attachable_preview.js`), faces coloured by the book's own
+axes (red front cover, blue back cover, green spine). `tools/assets/books_zfix.py` computes the
+hand frame from the same reference. Look at it after changing any held-book placement.
+
 ### Run it in the real server (`tests/probe`)
 `tests/probe/README.md` describes a harness pack that makes a simulated player cast spells through
 the real input path on a Bedrock Dedicated Server and logs every spell entity;
@@ -211,7 +222,7 @@ the real input path on a Bedrock Dedicated Server and logs every spell entity;
 ## 5. Tests
 ```
 npx tsc --noEmit -p tsconfig.json                  # type check (must be clean for your files)
-node tests/run.mjs spells dn02                     # full-cast / no-target / caster-leaves tests
+node tests/run.mjs spells dn02                     # full-cast / no-target / superflat / caster-leaves tests
 node tests/run.mjs controls                        # input + cooldown rules
 ```
 The mock is strict: unknown entity / particle / sound ids, undefined properties, out-of-range

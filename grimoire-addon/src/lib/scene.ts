@@ -1,6 +1,7 @@
 import { Dimension, Entity, Player, Vector3, world } from "@minecraft/server";
 import { CONFIG } from "../config/global";
 import { FLOOR_ACTORS, GROUND_ACTORS, GROUND_NEAR, GROUND_NEAR_TOLERANCE } from "../config/ground";
+import { inWorld } from "./bounds";
 import { groundBelow, plateau, terrainTop } from "./targeting";
 
 export const NS = "grimoire";
@@ -120,7 +121,7 @@ export class Actor {
     if (!this.valid) return this;
     if (yaw !== undefined) this.setYaw(yaw);
     try {
-      this.entity!.teleport(this.settle(loc), { rotation: { x: 0, y: this.lastYaw } });
+      this.entity!.teleport(inWorld(this.entity!.dimension, this.settle(loc)), { rotation: { x: 0, y: this.lastYaw } });
     } catch {
       /* unloaded chunk: ignore */
     }
@@ -203,6 +204,7 @@ export class Scene {
       const gy = isBound(key) ? settledY(this.dim, key, loc, opts.size ?? 1) : FLOOR_ACTORS.has(key) ? terrainTop(this.dim, loc) : undefined;
       if (gy !== undefined) loc = { x: loc.x, y: gy, z: loc.z };
     } catch { /* keep the requested height */ }
+    loc = inWorld(this.dim, loc);
     try {
       e = this.dim.spawnEntity(id, loc, opts.yaw !== undefined ? { initialRotation: opts.yaw } : undefined);
     } catch (err) {
