@@ -47,6 +47,20 @@ RISE = 9.0          # how far (book units) the book rises while Use is held
 OPEN_TILT = 16.0    # tilt back (deg) while open so the pages face the reader
 # =====================================================================================
 
+# v.open: 0 -> 1 while Use is held (fully open after ~8 ticks), back to 0 within ~1/3 s after release.
+# The same four lines drive the Divine Word book (books_dw.py), which opened correctly on an iPhone.
+OPEN_PRE_ANIMATION = [
+    "v.held = q.main_hand_item_use_duration > 0.0 ? math.max(q.main_hand_item_max_duration - q.main_hand_item_use_duration, 0.0) : 0.0;",
+    "v.target = q.main_hand_item_use_duration > 0.0 ? math.clamp(v.held / 8.0, 0.15, 1.0) : 0.0;",
+    "v.open = math.max(v.target, math.clamp((v.open ?? 0.0) - q.delta_time * 3.0, 0.0, 1.0));",
+    "v.open = v.open * v.open * (3.0 - 2.0 * v.open);",
+]
+# while open the book rises toward the charge construct and tilts its pages to the reader (as books_dw.py)
+FP_OPEN_POS = (0.0, 2.0, -1.0)      # this cover swings far left when open: keep the spread right of the crosshair
+FP_OPEN_ROT = (10.0, -8.0, 6.0)
+TP_OPEN_POS = (-2.5, 4.0, -2.5)
+TP_OPEN_ROT = (18.0, 0.0, 8.0)
+
 ITEM_ID = "grimoire:dream_nightmare"
 ITEM_SUFFIX = "dream_nightmare"
 GEO = "book_dn"
@@ -1257,9 +1271,12 @@ def book_anims():
     def fp_tp(fp, tp):
         return M(f"c.is_first_person ? {fp} : {tp}", lambda t: tp)
 
+    def fp_tp_open(fp, tp, ofp, otp):
+        return M(f"(c.is_first_person ? {fp} : {tp}) + v.open * (c.is_first_person ? {ofp} : {otp})", lambda t: tp)
+
     place = Anim("place", loop=True)
-    place.pos("place", tuple(fp_tp(FP_POS[i], TP_POS[i]) for i in range(3)))
-    place.rot("place", tuple(fp_tp(FP_ROT[i], TP_ROT[i]) for i in range(3)))
+    place.pos("place", tuple(fp_tp_open(FP_POS[i], TP_POS[i], FP_OPEN_POS[i], TP_OPEN_POS[i]) for i in range(3)))
+    place.rot("place", tuple(fp_tp_open(FP_ROT[i], TP_ROT[i], FP_OPEN_ROT[i], TP_OPEN_ROT[i]) for i in range(3)))
     place.scl("place", fp_tp(FP_SCALE, TP_SCALE))
 
     trem = LIFE(0.6, 0.13) * NM
@@ -1301,6 +1318,7 @@ def book_anims():
     flip.rot("float", MR({0: (0, 0, 0), 0.15: (0, 0, -6), 0.5: (0, 0, 3), 0.9: (0, 0, 0)}))
 
     opn = Anim("open", length=0.6, loop="hold")
+    opn.anim_time_update = "v.open * 0.6"     # always applied; its time follows v.open (0 = closed)
     opn.rot("cover", MR({0: (0, 0, 0), 0.35: (0, 156, 0), 0.5: (0, 148, 0), 0.6: (0, 150, 0)}))
     for i, (t0, ang) in enumerate(((0.06, 143), (0.12, 133), (0.18, 116))):
         opn.rot(f"leaf{i + 1}", MR({0: (0, 0, 0), t0: (0, 0, 0), t0 + 0.34: (0, ang + 4, 0), 0.6: (0, ang, 0)}))
@@ -1310,7 +1328,7 @@ def book_anims():
         t0 = 0.22 + 0.06 * i
         opn.scl(f"pop{i + 1}", {0: 0.0, t0: 0.0, t0 + 0.12: 1.0, 0.6: 1.0})
         opn.rot(f"pop{i + 1}", {0: (0, 0, 0), t0: (0, 0, 0), t0 + 0.26: (-60, 0, 0), 0.6: (-52, 0, 0)})
-    opn.scl("nm_veil", 0.0)
+    opn.scl("nm_veil", {0: 1.0, 0.25: 0.0})
     shut = Anim("shut", loop=True)     # pop-ups stay folded away while the book is closed
     for i in range(4):
         shut.scl(f"pop{i + 1}", 0.0)
@@ -1330,18 +1348,16 @@ def build_attachable(pack, model, anims):
         a.model = GEO
     _write(os.path.join(pack.rp, "animations", f"{GEO}.animation.json"), animations_file(anims))
     ctl = f"controller.animation.grimoire.{GEO}.pose"
-    use = "q.main_hand_item_use_duration > 0.0"
     _write(os.path.join(pack.rp, "animation_controllers", f"{GEO}.animation_controllers.json"), {
         "format_version": "1.10.0",
         "animation_controllers": {ctl: {
             "initial_state": "rest",
             "states": {
-                "rest": {"animations": ["shut"], "transitions": [{"use": use}, {"flip": "q.is_sneaking"}],
+                # opening is not a state any more: "open" always plays with its time set from v.open
+                "rest": {"animations": [], "transitions": [{"flip": "q.is_sneaking && v.open < 0.05"}],
                          "blend_transition": 0.25},
-                "flip": {"animations": ["flip", "shut"], "blend_transition": 0.15,
-                         "transitions": [{"use": use}, {"rest": "!q.is_sneaking && q.all_animations_finished"}]},
-                "use": {"animations": ["open", "open_loop"], "blend_transition": 0.3,
-                        "transitions": [{"rest": "q.main_hand_item_use_duration <= 0.0"}]},
+                "flip": {"animations": ["flip"], "blend_transition": 0.15,
+                         "transitions": [{"rest": "!q.is_sneaking && q.all_animations_finished"}]},
             }}},
     })
     rc = f"controller.render.grimoire.{GEO}"
@@ -1359,7 +1375,8 @@ def build_attachable(pack, model, anims):
             "textures": {"default": tpath},
             "geometry": {"default": geo},
             "animations": amap,
-            "scripts": {"animate": ["place", "idle", "pose"]},
+            "scripts": {"pre_animation": list(OPEN_PRE_ANIMATION),
+                        "animate": ["place", "idle", "open", {"open_loop": "v.open"}, "pose"]},
             "render_controllers": [rc],
         }},
     })

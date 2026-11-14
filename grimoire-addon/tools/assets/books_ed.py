@@ -57,6 +57,20 @@ THIRD = dict(pos=(9.5, 19.0, -5.5), rot=(18.0, 180.0, -8.0), turn=0.0, lift=(0.0
 FACE_YAW = 0.0
 # =====================================================================================
 
+# v.open: 0 -> 1 while Use is held (fully open after ~8 ticks), back to 0 within ~1/3 s after release.
+# The same four lines drive the Divine Word book (books_dw.py), which opened correctly on an iPhone.
+OPEN_PRE_ANIMATION = [
+    "v.held = q.main_hand_item_use_duration > 0.0 ? math.max(q.main_hand_item_max_duration - q.main_hand_item_use_duration, 0.0) : 0.0;",
+    "v.target = q.main_hand_item_use_duration > 0.0 ? math.clamp(v.held / 8.0, 0.15, 1.0) : 0.0;",
+    "v.open = math.max(v.target, math.clamp((v.open ?? 0.0) - q.delta_time * 3.0, 0.0, 1.0));",
+    "v.open = v.open * v.open * (3.0 - 2.0 * v.open);",
+]
+# while open the book rises toward the charge construct and tilts its pages to the reader (as books_dw.py)
+FP_OPEN_POS = (-1.5, 2.5, -1.0)
+FP_OPEN_ROT = (10.0, -8.0, 6.0)
+TP_OPEN_POS = (-2.5, 4.0, -2.5)
+TP_OPEN_ROT = (18.0, 0.0, 8.0)
+
 BRONZE, BRONZE_HI, BRONZE_LO = "#8a6a3a", "#d0a462", "#3c2a12"
 GOLD, GOLD_HI, GOLD_LO = "#b8913e", "#f2d58a", "#5e4418"
 IVORY, IVORY_SH = "#e9dfc6", "#b8a985"
@@ -664,9 +678,12 @@ def build_book_anims(info):
     def fp(a, b):
         return M(f"c.is_first_person ? {a} : {b}", lambda t: b)
 
+    def fp_open(a, b, oa, ob):
+        return M(f"(c.is_first_person ? {a} : {b}) + v.open * (c.is_first_person ? {oa} : {ob})", lambda t: b)
+
     place = Anim("place", loop=True)
-    place.pos("place", tuple(fp(FIRST["pos"][i], THIRD["pos"][i]) for i in range(3)))
-    place.rot("place", tuple(fp(FIRST["rot"][i], THIRD["rot"][i]) for i in range(3)))
+    place.pos("place", tuple(fp_open(FIRST["pos"][i], THIRD["pos"][i], FP_OPEN_POS[i], TP_OPEN_POS[i]) for i in range(3)))
+    place.rot("place", tuple(fp_open(FIRST["rot"][i], THIRD["rot"][i], FP_OPEN_ROT[i], TP_OPEN_ROT[i]) for i in range(3)))
     place.rot("face", (0, fp(FIRST["turn"], THIRD["turn"]), 0))
     place.pos("face", tuple(fp(FIRST["lift"][i] * FIRST["scale"], THIRD["lift"][i] * THIRD["scale"]) for i in range(3)))
     place.scl("hover", fp(FIRST["scale"], THIRD["scale"]))
@@ -721,6 +738,7 @@ def build_book_anims(info):
 
     # open and rise while Use is held
     op = Anim("open", length=0.75, loop="hold")
+    op.anim_time_update = "v.open * 0.75"     # always applied; its time follows v.open (0 = closed)
     op.rot(clasps["n"], {0: (0, 0, 0), 0.15: (0, 75, 0), 0.3: (0, 64, 0)})
     op.rot(clasps["h"], {0: (0, 0, 0), 0.18: (0, 78, 0), 0.33: (0, 66, 0)})
     op.rot(clasps["w"], {0: (0, 0, 0), 0.15: (72, 0, 0), 0.3: (62, 0, 0)})
@@ -750,19 +768,17 @@ def build_book_anims(info):
 
 
 def book_controller():
-    use = "q.main_hand_item_use_duration > 0.0"
+    # opening is not a state any more: "open" always plays with its time set from v.open (see OPEN_PRE_ANIMATION)
     return {"format_version": "1.10.0", "animation_controllers": {
         "controller.animation.grimoire.book_ed.main": {
             "initial_state": "idle",
             "states": {
-                "idle": {"animations": ["closed"], "transitions": [{"use": use}, {"turn": "q.is_sneaking"}],
+                "idle": {"animations": [], "transitions": [{"turn": "q.is_sneaking && v.open < 0.05"}],
                          "blend_transition": 0.3},
-                "turn": {"animations": ["closed", "turn"], "transitions": [{"use": use}, {"wait": "q.all_animations_finished"}],
+                "turn": {"animations": ["turn"], "transitions": [{"wait": "q.all_animations_finished"}],
                          "blend_transition": 0.12},
-                "wait": {"animations": ["closed"], "transitions": [{"use": use}, {"idle": "!q.is_sneaking"}],
+                "wait": {"animations": [], "transitions": [{"idle": "!q.is_sneaking"}],
                          "blend_transition": 0.1},
-                "use": {"animations": ["open", "open_loop"], "transitions": [{"idle": "!(" + use + ")"}],
-                        "blend_transition": 0.35},
             }}}}
 
 
@@ -788,7 +804,8 @@ def write_attachable(pack, m, anims):
             "textures": {"default": tex_path},
             "geometry": {"default": geo_id},
             "animations": amap,
-            "scripts": {"animate": ["place", "idle", "ctl"]},
+            "scripts": {"pre_animation": list(OPEN_PRE_ANIMATION),
+                        "animate": ["place", "idle", "open", {"open_loop": "v.open"}, "ctl"]},
             "sound_effects": {"flip": "grimoire.book_ed_flip"},
             "render_controllers": ["controller.render.grimoire.book_ed"],
         }}})

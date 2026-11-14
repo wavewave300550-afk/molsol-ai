@@ -16,10 +16,13 @@ export const BOOKS = {
   vision: {
     /** Life of the selection vision; its one-shot "show" animation lasts exactly 1.2 s. */
     ticks: 24,
-    /** Placement from the eyes: along the view, to the right, and vertical offset.  Sits above the book hand. */
+    /**
+     * Placement from the eyes: along the view, to the right, and vertical offset.  Just above the held
+     * book on screen (the first-person book is drawn over the world, so a vision behind it is hidden).
+     */
     ahead: 1.3,
-    right: 0.55,
-    up: -0.2,
+    right: 0.6,
+    up: 0.1,
     /** Volume of the page-turn + motif sound. */
     volume: 0.8,
   },
@@ -29,10 +32,13 @@ export const BOOKS = {
     /** The release flare (0.5 s) and the quiet cancel fold (0.4 s) before the construct is removed. */
     releaseTicks: 10,
     cancelTicks: 8,
-    /** Placement from the eyes: ahead along the view, to the right (keeps the crosshair clear), above eye line. */
+    /**
+     * Placement from the eyes: ahead along the view, to the right (keeps the crosshair clear), a little
+     * above eye line - so on screen it rises out of the held book, which lifts and opens toward it.
+     */
     ahead: 2.2,
     right: 0.8,
-    up: 0.4,
+    up: 0.2,
     /** The view direction's vertical part is clamped so the construct stays in front when looking up or down. */
     minDirY: -0.45,
     maxDirY: 0.55,

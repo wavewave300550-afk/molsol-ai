@@ -83,18 +83,35 @@ def load_book(g, first_person, open_amount):
     use = Molang({**ev.env, "q.main_hand_item_use_duration": 100.0 if open_amount > 0 else 0.0, "q.is_sneaking": 0.0,
                   "q.all_animations_finished": 1.0})
 
+    def key_value(v):
+        if isinstance(v, dict):
+            v = v.get("post", v.get("pre"))
+        if not isinstance(v, list):
+            v = [v, v, v]
+        return np.array([ev(c) for c in v], float)
+
     def apply(a, at_end):
+        t_set = ev(a["anim_time_update"]) if "anim_time_update" in a else None
         for bone, chs in a.get("bones", {}).items():
             r, p, s = pose.get(bone, ((0, 0, 0), np.zeros(3), np.ones(3)))
             for ch, val in chs.items():
-                if isinstance(val, dict):          # keyframes: steady state = last key, else the first
+                if isinstance(val, dict):          # keyframes
                     keys = sorted(val, key=float)
-                    val = val[keys[-1] if at_end else keys[0]]
-                    if isinstance(val, dict):
-                        val = val.get("post", val.get("pre"))
-                if not isinstance(val, list):
-                    val = [val, val, val]
-                x = [ev(c) for c in val]
+                    if t_set is not None:          # time driven by Molang: interpolate at that time
+                        ts = [float(k) for k in keys]
+                        if t_set <= ts[0]:
+                            x = key_value(val[keys[0]])
+                        elif t_set >= ts[-1]:
+                            x = key_value(val[keys[-1]])
+                        else:
+                            j = max(i for i in range(len(ts)) if ts[i] <= t_set)
+                            f = (t_set - ts[j]) / (ts[j + 1] - ts[j])
+                            x = key_value(val[keys[j]]) * (1 - f) + key_value(val[keys[j + 1]]) * f
+                        x = list(x)
+                    else:                          # steady state = last key, else the first
+                        x = list(key_value(val[keys[-1] if at_end else keys[0]]))
+                else:
+                    x = list(key_value(val))
                 if ch == "rotation":
                     rr = _bb_rot(x)
                     r = tuple(r[i] + rr[i] for i in range(3))
