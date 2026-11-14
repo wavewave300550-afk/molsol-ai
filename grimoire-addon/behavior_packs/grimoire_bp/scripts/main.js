@@ -29,6 +29,8 @@ var CONFIG = {
     pvp: false,
     /** How far the caster's aim ray reaches when picking a target point. */
     aimRange: 40,
+    /** A spell is never centred closer to its caster than this (blocks), e.g. when looking at your feet. */
+    minAimDistance: 7,
     /** Hard cap on targets a single query returns. */
     maxTargets: 24
   },
@@ -419,10 +421,16 @@ function allies(dim, center, radius, caster) {
 }
 function groundBelow(dim, loc, maxDrop = 40) {
   try {
+    let y = loc.y;
+    for (let i = 0; i < 24; i++) {
+      const b = dim.getBlock({ x: loc.x, y: y + 0.01, z: loc.z });
+      if (!b || b.isAir || b.isLiquid) break;
+      y = Math.floor(y) + 1;
+    }
     const hit = dim.getBlockFromRay(
-      { x: loc.x, y: loc.y + 1.5, z: loc.z },
+      { x: loc.x, y: y + 1.5, z: loc.z },
       { x: 0, y: -1, z: 0 },
-      { maxDistance: maxDrop, includePassableBlocks: false, includeLiquidBlocks: true }
+      { maxDistance: maxDrop + 2, includePassableBlocks: false, includeLiquidBlocks: true }
     );
     if (hit) return { x: loc.x, y: hit.block.location.y + 1, z: loc.z };
   } catch {
@@ -448,12 +456,27 @@ function takeAim(caster, range = CONFIG.targeting.aimRange) {
   if (!point) {
     try {
       const b = caster.getBlockFromViewDirection({ maxDistance: range, includePassableBlocks: false });
-      if (b) point = { x: b.block.location.x + b.faceLocation.x, y: b.block.location.y + b.faceLocation.y, z: b.block.location.z + b.faceLocation.z };
+      if (b) {
+        point = {
+          x: b.block.location.x + b.faceLocation.x - dir.x * 0.6,
+          y: b.block.location.y + b.faceLocation.y - dir.y * 0.6,
+          z: b.block.location.z + b.faceLocation.z - dir.z * 0.6
+        };
+      }
     } catch {
     }
   }
   if (!point) point = add(head, mul(dir, range * 0.55));
-  const forward = norm(flat(dir));
+  let forward = norm(flat(dir));
+  try {
+    forward = fromYaw(caster.getRotation().y);
+  } catch {
+  }
+  const feet = caster.location;
+  const minD = CONFIG.targeting.minAimDistance;
+  if (!entity && Math.hypot(point.x - feet.x, point.z - feet.z) < minD) {
+    point = { x: feet.x + forward.x * minD, y: feet.y + 1, z: feet.z + forward.z * minD };
+  }
   return { point, ground: groundBelow(dim, point), entity, dir, forward, yaw: yawOf(forward), from: { ...caster.location } };
 }
 function focus(caster, aim, snap = 10) {
@@ -11910,6 +11933,28 @@ system4.afterEvents.scriptEventReceive.subscribe((ev) => {
       Scenes.endAll();
       Scenes.sweepOrphans();
       break;
+    case "grimoire:show": {
+      if (!p) break;
+      const [id, st2, kd, sk, sz] = ev.message.trim().split(/\s+/);
+      if (!id) {
+        p.sendMessage("[grimoire] usage: /scriptevent grimoire:show <actor> [state] [kind] [skin] [size]");
+        break;
+      }
+      const sc = Scenes.start("show", p);
+      const a = takeAim(p);
+      const at = groundBelow(p.dimension, { x: p.location.x + a.forward.x * 8, y: p.location.y + 1, z: p.location.z + a.forward.z * 8 });
+      const actor = sc.spawn(id, at, {
+        yaw: a.yaw + 180,
+        state: st2 !== void 0 ? Number(st2) : 1,
+        kind: kd !== void 0 ? Number(kd) : void 0,
+        skin: sk !== void 0 ? Number(sk) : void 0,
+        size: sz !== void 0 ? Number(sz) : void 0
+      });
+      sc.endAt(400);
+      p.sendMessage(actor.valid ? `[grimoire] showing ${id} for 20 s` : `[grimoire] cannot spawn '${id}'`);
+      if (!actor.valid) sc.end();
+      break;
+    }
     case "grimoire:config": {
       const [key, val] = arg.split(/\s+/);
       const on = val === "on" || val === "true" || val === "1";

@@ -324,10 +324,17 @@ class Model:
                 rgba[..., :3] = np.round(t[..., :3] * 255)
                 if mode == "blend":
                     rgba[..., 3] = np.round(t[..., 3] * 255)
+                    rgba[rgba[..., 3] == 0] = 0
                 else:
                     a = np.clip(255 - np.round(t[..., 4] * 250), 5, 255)
                     a[t[..., 3] < 0.5] = 0
                     rgba[..., 3] = a
+                    # The emissive entity material keeps a texel unless its colour AND alpha are both
+                    # zero (it never alpha-tests at 0.5), so cut-out texels must be pure black.
+                    rgba[a == 0] = 0
+                    # ...and an opaque texel must never be pure black with glow, or it would vanish
+                    dark = (a > 0) & (rgba[..., :3].max(axis=2) == 0)
+                    rgba[dark, :3] = 1
                 if pad:
                     img[y - pad:y + h + pad, x - pad:x + w + pad] = np.pad(rgba, ((pad, pad), (pad, pad), (0, 0)),
                                                                            mode="edge")

@@ -4,7 +4,7 @@ import os
 
 from kit.pack import _write
 
-VERSION = [1, 0, 0]
+VERSION = [1, 0, 1]
 MIN_ENGINE = [1, 26, 60]
 SCRIPT_API = "2.11.0"
 UUID = dict(bp="dd6d51d0-2fbc-4e22-9c57-01ae607e0b30", bp_data="db9a21f4-f433-4c55-8e69-9c25396f729a",

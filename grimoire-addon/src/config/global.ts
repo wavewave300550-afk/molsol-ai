@@ -30,6 +30,8 @@ export const CONFIG = {
     pvp: false,
     /** How far the caster's aim ray reaches when picking a target point. */
     aimRange: 40,
+    /** A spell is never centred closer to its caster than this (blocks), e.g. when looking at your feet. */
+    minAimDistance: 7,
     /** Hard cap on targets a single query returns. */
     maxTargets: 24,
   },

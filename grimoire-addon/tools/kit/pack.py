@@ -4,6 +4,7 @@ from __future__ import annotations
 import contextlib
 import fcntl
 import json
+import math
 import os
 
 from .anim import NS, Anim, animations_file, state_controller
@@ -85,6 +86,16 @@ class Pack:
         skins = list(model.alts)
         if skins and len(models) > 1:
             raise ValueError(f"{ident}: texture skins and kinds cannot be combined")
+        # Visible bounds are in blocks and are NOT multiplied by the render scale.  Too small a box
+        # makes a big model vanish whenever its origin leaves the screen, so be generous.
+        _sc = float(scale) if not isinstance(scale, str) else 4.0
+        for m in models:
+            if m.name in self.models:
+                continue
+            lo, hi = m.bbox()
+            reach = max(abs(float(v)) for v in list(lo) + list(hi)) / 16.0 * _sc
+            side = 192 if size_prop else int(min(256, max(64, math.ceil(reach * 3 + 32))))
+            m.bounds = (side, side, (0, round(min(side / 4, max(2.0, float(hi[1]) / 32.0 * _sc)), 1), 0))
         geo_tex = [self.model(m) for m in models]
         for a in anims:
             a.model = ident
@@ -204,6 +215,9 @@ class Pack:
                     "minecraft:pushable": {"is_pushable": False, "is_pushable_by_piston": False},
                     "minecraft:fire_immune": {},
                     "minecraft:transient": {},
+                    # scripts turn these actors by setting their rotation; without this the body
+                    # (and so the whole model) lags behind and can face up to 75 degrees off
+                    "minecraft:body_rotation_always_follows_head": {},
                     "minecraft:timer": {"looping": False, "time": float(lifetime),
                                         "time_down_event": {"event": f"{NS}:expire", "target": "self"}},
                 },

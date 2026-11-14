@@ -6,7 +6,7 @@ import { clearCooldowns, startCooldown } from "./core/state";
 import { installBooks } from "./core/books";
 import { installWards } from "./lib/combat";
 import { Scenes } from "./lib/scene";
-import { takeAim } from "./lib/targeting";
+import { groundBelow, takeAim } from "./lib/targeting";
 import { anySetOwns, flushLedger, restoreLedger, retryOrphans } from "./lib/tempblocks";
 import { registerAllSpells } from "./spells/index";
 
@@ -68,6 +68,22 @@ system.afterEvents.scriptEventReceive.subscribe((ev) => {
     case "grimoire:reset": if (p) { clearCooldowns(p); p.sendMessage("Grimoire cooldowns cleared"); } break;
     case "grimoire:cast": if (p) p.sendMessage(`[grimoire] ${forceCast(p, arg)}`); break;
     case "grimoire:cleanup": Scenes.endAll(); Scenes.sweepOrphans(); break;
+    case "grimoire:show": {
+      // /scriptevent grimoire:show <actor> [state] [kind] [skin] [size]  -- display one model for 20 s
+      if (!p) break;
+      const [id, st, kd, sk, sz] = ev.message.trim().split(/\s+/);
+      if (!id) { p.sendMessage("[grimoire] usage: /scriptevent grimoire:show <actor> [state] [kind] [skin] [size]"); break; }
+      const sc = Scenes.start("show", p);
+      const a = takeAim(p);
+      const at = groundBelow(p.dimension, { x: p.location.x + a.forward.x * 8, y: p.location.y + 1, z: p.location.z + a.forward.z * 8 });
+      const actor = sc.spawn(id, at, { yaw: a.yaw + 180, state: st !== undefined ? Number(st) : 1,
+        kind: kd !== undefined ? Number(kd) : undefined, skin: sk !== undefined ? Number(sk) : undefined,
+        size: sz !== undefined ? Number(sz) : undefined });
+      sc.endAt(400);
+      p.sendMessage(actor.valid ? `[grimoire] showing ${id} for 20 s` : `[grimoire] cannot spawn '${id}'`);
+      if (!actor.valid) sc.end();
+      break;
+    }
     case "grimoire:config": {
       const [key, val] = arg.split(/\s+/);
       const on = val === "on" || val === "true" || val === "1";

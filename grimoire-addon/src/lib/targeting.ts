@@ -1,6 +1,6 @@
 import { Dimension, Entity, Player, Vector3 } from "@minecraft/server";
 import { CONFIG } from "../config/global";
-import { add, dist, mul, norm, yawOf, flat } from "./vec";
+import { add, dist, mul, norm, yawOf, flat, fromYaw } from "./vec";
 
 const NEVER = ["minecraft:item", "minecraft:xp_orb", "minecraft:arrow", "minecraft:armor_stand", "minecraft:painting",
   "minecraft:leash_knot", "minecraft:fishing_hook", "minecraft:lightning_bolt", "minecraft:npc"];
@@ -51,11 +51,20 @@ export function allies(dim: Dimension, center: Vector3, radius: number, caster: 
   }
 }
 
-/** Highest solid surface at or below loc (falls back to loc). */
+/**
+ * Standing surface for a point: if the point is inside terrain (aimed at a wall or a slope) it first
+ * climbs out, then drops to the first solid block below.  Falls back to the point itself.
+ */
 export function groundBelow(dim: Dimension, loc: Vector3, maxDrop = 40): Vector3 {
   try {
-    const hit = dim.getBlockFromRay({ x: loc.x, y: loc.y + 1.5, z: loc.z }, { x: 0, y: -1, z: 0 },
-      { maxDistance: maxDrop, includePassableBlocks: false, includeLiquidBlocks: true });
+    let y = loc.y;
+    for (let i = 0; i < 24; i++) {
+      const b = dim.getBlock({ x: loc.x, y: y + 0.01, z: loc.z });
+      if (!b || b.isAir || b.isLiquid) break;
+      y = Math.floor(y) + 1;
+    }
+    const hit = dim.getBlockFromRay({ x: loc.x, y: y + 1.5, z: loc.z }, { x: 0, y: -1, z: 0 },
+      { maxDistance: maxDrop + 2, includePassableBlocks: false, includeLiquidBlocks: true });
     if (hit) return { x: loc.x, y: hit.block.location.y + 1, z: loc.z };
   } catch { /* unloaded */ }
   return { x: loc.x, y: loc.y, z: loc.z };
@@ -91,11 +100,22 @@ export function takeAim(caster: Player, range: number = CONFIG.targeting.aimRang
   if (!point) {
     try {
       const b = caster.getBlockFromViewDirection({ maxDistance: range, includePassableBlocks: false });
-      if (b) point = { x: b.block.location.x + b.faceLocation.x, y: b.block.location.y + b.faceLocation.y, z: b.block.location.z + b.faceLocation.z };
+      if (b) {
+        // step back out of the surface that was hit, so the point is in open air in front of it
+        point = { x: b.block.location.x + b.faceLocation.x - dir.x * 0.6, y: b.block.location.y + b.faceLocation.y - dir.y * 0.6,
+          z: b.block.location.z + b.faceLocation.z - dir.z * 0.6 };
+      }
     } catch { /* ignore */ }
   }
   if (!point) point = add(head, mul(dir, range * 0.55));
-  const forward = norm(flat(dir));
+  // facing comes from the body yaw so it stays defined when looking straight up or down
+  let forward = norm(flat(dir));
+  try { forward = fromYaw(caster.getRotation().y); } catch { /* keep view-based */ }
+  const feet = caster.location;
+  const minD = CONFIG.targeting.minAimDistance;
+  if (!entity && Math.hypot(point.x - feet.x, point.z - feet.z) < minD) {
+    point = { x: feet.x + forward.x * minD, y: feet.y + 1, z: feet.z + forward.z * minD };
+  }
   return { point, ground: groundBelow(dim, point), entity, dir, forward, yaw: yawOf(forward), from: { ...caster.location } };
 }
 
