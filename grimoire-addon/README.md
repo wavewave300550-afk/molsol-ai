@@ -8,7 +8,7 @@ Installable file: [`dist/Grimoire_Rebirth_of_the_Arcane.mcaddon`](dist/Grimoire_
 
 ## เริ่มเล่นแบบย่อ (ภาษาไทย)
 
-วิธีที่ง่ายที่สุด: เปิดไฟล์ **`Grimoire_Test_World.mcworld`** (บน iPhone: เปิดจากแอป Files แล้วเลือกเปิดด้วย Minecraft) จะได้โลกใหม่ชื่อ "Grimoire Test 1.0.3" ที่ฝังแอดออนเวอร์ชันล่าสุดไว้แล้ว เข้าโลกแล้วหนังสือทั้งสามเล่มจะอยู่ในกระเป๋าทันที ไม่ต้องตั้งค่าหรือพิมพ์คำสั่ง โลกนี้สร้างด้วย Minecraft 26.62 และเปิดได้ตั้งแต่ 26.60 ขึ้นไป
+วิธีที่ง่ายที่สุด: เปิดไฟล์ **`Grimoire_Test_World.mcworld`** (บน iPhone: เปิดจากแอป Files แล้วเลือกเปิดด้วย Minecraft) จะได้โลกใหม่ชื่อ "Grimoire Test" ตามด้วยเลขเวอร์ชัน ที่ฝังแอดออนเวอร์ชันล่าสุดไว้แล้ว เข้าโลกแล้วหนังสือทั้งสามเล่มจะอยู่ในกระเป๋าทันที ไม่ต้องตั้งค่าหรือพิมพ์คำสั่ง โลกนี้สร้างด้วย Minecraft 26.62 และเปิดได้ตั้งแต่ 26.60 ขึ้นไป
 
 ถ้าจะใช้กับโลกของตัวเอง:
 
@@ -250,6 +250,16 @@ Measured in those tests:
 
 These updates answer reports from play-tests on iPhone ("things missing, wrong positions, the book
 is gone, some spells make no sense").
+
+**1.0.4**
+
+* **The book in your hand is drawn with the vanilla material.** Screenshots from an iPhone on 26.62
+  showed the spell entities (which use the glowing `entity_emissive_alpha` material) but no book in
+  the hand. Every vanilla held item - bow, crossbow, shield, trident - uses `entity_alphatest`; the
+  held books now do too, with a plain texture written for them (`<book>_held.png`). The held book
+  therefore no longer glows; the spell effects still do. Position checks with Blockbench's
+  reference and with the vanilla shield, trident and spyglass all put the book at the lower right,
+  so the material was the remaining difference.
 
 **1.0.3**
 

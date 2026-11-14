@@ -45,7 +45,7 @@ var CONFIG = {
 var RUNTIME = CONFIG;
 
 // src/config/version.ts
-var VERSION = "1.0.3";
+var VERSION = "1.0.4";
 
 // src/main.ts
 import { CommandPermissionLevel, CustomCommandStatus, ItemStack as ItemStack2, Player as Player4, system as system4, world as world5 } from "@minecraft/server";

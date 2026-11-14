@@ -137,6 +137,9 @@ Three things the real engine taught us (see `tests/probe`):
   `Scene.spawn`, `Actor.move`, `particle` and `sound` clamp positions with `inWorld`
   (`src/lib/bounds.ts`); go through them. The mock throws there too, and every spell has a
   superflat test.
+* **Held items use `entity_alphatest`** like every vanilla held item. With the glowing material the
+  held book did not show in first person on an iPhone (26.62). `Model.plain = True` makes
+  `Model.save` also write `<name>_held.png` (no glow channel) for it; `books_zfix` wires it up.
 * **Textures are 32-bit TGA** (`Model.save`), as for every vanilla texture drawn with an emissive
   material. Alpha is glow (255 = lit normally, 5 = full glow); alpha 0 is cut-out and must be black.
 

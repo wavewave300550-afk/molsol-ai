@@ -1070,6 +1070,7 @@ def frag_centers(kind):
 # ------------------------------------------------------------------------------- the held book
 def book_model():
     m = Model(GEO, density=2.0, bounds=(4, 4, (0, 1, 0)), dscale=0.68)   # held-item texture budget: 256x256
+    m.plain = True   # held item: also write a plain texture for the vanilla material (books_zfix)
     k = K(m, 1.0, (-2.75, 0, 0), mirror=True)   # reader space, centred on the whole book incl. spine tower
     cer = pearl(IVORY, "#e2d4bf", gilt=FGOLD, crack=0.5)
     cer_cover = pearl("#f6efe2", "#e6d6c0", gilt=FGOLD, crack=0.45, engrave=eng_cover, key="pcov")

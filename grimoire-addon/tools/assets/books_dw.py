@@ -367,6 +367,7 @@ HX = (5.2, 0.0, 0.0)        # hinge (spine axis)
 
 def book_model(mt):
     m = Model("book_dw", density=4.0, bounds=(3, 3, (0, 1, 0)))
+    m.plain = True   # held item: also write a plain texture for the vanilla material (books_zfix)
     root = m.bone("root")
     root.binding = "q.item_slot_to_bone_name(c.item_slot)"
     place = m.bone("place", root)

@@ -249,20 +249,28 @@ def main():
         for k, gid in geo_ids.items():
             if gid not in geos:
                 err(f"{owner}: geometry {gid} not found")
+        emissive = any("emissive" in m for m in d.get("materials", {}).values())
         for k, tp in d.get("textures", {}).items():
             fp = os.path.join(RP, tp + ".tga")
-            if not os.path.exists(fp):
-                err(f"{owner}: texture {tp}.tga not found")
-            elif os.path.exists(os.path.join(RP, tp + ".png")):
+            if os.path.exists(fp) and os.path.exists(os.path.join(RP, tp + ".png")):
                 err(f"{owner}: both {tp}.tga and a stale .png exist")
-            else:
+            elif os.path.exists(fp):
                 check_emissive_texture(owner, fp)
+            elif os.path.exists(os.path.join(RP, tp + ".png")):
+                if emissive and k == "default":
+                    err(f"{owner}: emissive material needs {tp}.tga, found .png")
+            else:
+                err(f"{owner}: texture {tp} not found (.tga or .png)")
         # texture size must match geometry description
         if "default" in geo_ids and geo_ids["default"] in geos and "default" in d.get("textures", {}):
             g = geos[geo_ids["default"]][0]["description"]
             fp = os.path.join(RP, d["textures"]["default"] + ".tga")
+            sz = None
             if os.path.exists(fp):
                 sz = tga_size(fp)
+            elif os.path.exists(fp[:-4] + ".png"):
+                sz = png_size(fp[:-4] + ".png")
+            if sz:
                 if sz and tuple(sz) != (g["texture_width"], g["texture_height"]):
                     err(f"{owner}: texture is {sz} but geometry expects {(g['texture_width'], g['texture_height'])}")
         for m in d.get("materials", {}).values():

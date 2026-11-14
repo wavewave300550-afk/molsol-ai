@@ -17,7 +17,9 @@
                     -1..1 like the crosshair at 0, 0) at FP_DEPTH units in front of the camera, with
                     the book modules' first-person axes = screen right / up / toward the camera
    tools/held_preview.py draws the result.
-2. BONE NAMES.
+2. MATERIAL.  The held book uses entity_alphatest, like every vanilla held item, with the plain
+   texture Model.save() writes as <name>_held.png.
+3. BONE NAMES.
 
 An attachable's bones are matched BY NAME against the player's skeleton, so a book bone called
 "root" or "body" would be glued to that player bone instead of following the hand.  This step
@@ -126,6 +128,12 @@ def _hand_frame(g, geo, bones):
         "rotation": [f"c.is_first_person ? {fr[i]} : {tr[i]}" for i in range(3)],
         "position": [f"c.is_first_person ? {fp[i]} : {tp[i]}" for i in range(3)]}}}
     _dump(anim_p, an)
+    # MATERIAL.  Every vanilla held item (bow, crossbow, shield, trident) uses entity_alphatest; the glowing
+    # entity_emissive_alpha drew the spell entities but left the held book invisible in first person on
+    # an iPhone (26.62).  The held book uses the vanilla material and the plain texture Model.save()
+    # writes for it; blend parts keep entity_alphablend.
+    d["materials"]["default"] = "entity_alphatest"
+    d["textures"]["default"] = d["textures"]["default"].removesuffix("_held") + "_held"
     d["animations"]["hand_frame"] = f"animation.grimoire.{g}.hand_frame"
     if "hand_frame" not in d["scripts"]["animate"]:
         d["scripts"]["animate"].insert(0, "hand_frame")

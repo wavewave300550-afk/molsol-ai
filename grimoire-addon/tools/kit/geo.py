@@ -314,6 +314,26 @@ class Model:
         if placed is None:
             raise ValueError(f"{self.name}: texture does not fit in 4096x4096")
         W, H, pos = placed
+        # plain variant (no glow channel) for the vanilla entity_alphatest material: opaque or cut out,
+        # glowing texels brightened a little instead; blend tiles keep their real transparency
+        plain = np.zeros((H, W, 4), dtype=np.uint8)
+        for key, (ts, mode) in items:
+            t = ts[0]
+            x, y = pos[key]
+            h, w = t.shape[:2]
+            rgba = np.zeros((h, w, 4), dtype=np.uint8)
+            rgb = t[..., :3] + (1.0 - t[..., :3]) * t[..., 4:5] * 0.3
+            rgba[..., :3] = np.round(np.clip(rgb, 0, 1) * 255)
+            if mode == "blend":
+                rgba[..., 3] = np.round(t[..., 3] * 255)
+            else:
+                rgba[..., 3] = np.where(t[..., 3] < 0.5, 0, 255)
+            rgba[rgba[..., 3] == 0] = 0
+            if pad:
+                plain[y - pad:y + h + pad, x - pad:x + w + pad] = np.pad(rgba, ((pad, pad), (pad, pad), (0, 0)), mode="edge")
+            else:
+                plain[y:y + h, x:x + w] = rgba
+        self.plain_atlas = Image.fromarray(plain, "RGBA")
         for ai, alt in enumerate((None,) + self.alts):
             img = np.zeros((H, W, 4), dtype=np.uint8)
             for key, (ts, mode) in items:
@@ -474,6 +494,9 @@ class Model:
             img.save(path, format="TGA", compression="tga_rle")
             if os.path.exists(path[:-4] + ".png"):
                 os.remove(path[:-4] + ".png")
+        if getattr(self, "plain", False):
+            # for held items (attachables): vanilla's held items all use entity_alphatest, see books_zfix
+            self.plain_atlas.save(tp[:-4] + "_held.png", optimize=True)
         return f"geometry.grimoire.{self.name}", f"textures/{sub}/{self.name}"
 
 
