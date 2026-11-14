@@ -3629,17 +3629,17 @@ var dn01_reverie_procession_default = defineSpell("dn01", ({ caster, scene, aim 
   ctrl.push(end);
   const N2 = 96;
   const P5 = [];
-  const S5 = [];
+  const S6 = [];
   for (let i = 0; i <= N2; i++) {
     P5.push(spline(ctrl, i / N2));
-    S5.push(i ? S5[i - 1] + dist(P5[i], P5[i - 1]) : 0);
+    S6.push(i ? S6[i - 1] + dist(P5[i], P5[i - 1]) : 0);
   }
-  const L3 = S5[N2];
+  const L3 = S6[N2];
   function road(s) {
     const x = clamp(s, 0, L3);
     let i = 1;
-    while (i < N2 && S5[i] < x) i++;
-    const f = (x - S5[i - 1]) / Math.max(1e-6, S5[i] - S5[i - 1]);
+    while (i < N2 && S6[i] < x) i++;
+    const f = (x - S6[i - 1]) / Math.max(1e-6, S6[i] - S6[i - 1]);
     return { p: lerp(P5[i - 1], P5[i], f), d: norm(sub(P5[i], P5[i - 1])) };
   }
   const pitch = (d) => Math.atan2(d.y, Math.hypot(d.x, d.z)) * 180 / Math.PI;
@@ -4574,15 +4574,15 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
       best.w.door = true;
     }
   }
-  const T6 = {
+  const T7 = {
     open: secs(L.land),
     opened: secs(L.land + L.open),
     unfold: secs(L.land + L.open) + 4,
     wallsOut: secs(L.land + L.open) + 8,
     active: secs(L.land + L.open) + 24
   };
-  T6.active = Math.max(T6.active, T6.wallsOut + Math.ceil(DN03.wallCount / 2) + 18);
-  const tFold = T6.active + DN03.activeTicks;
+  T7.active = Math.max(T7.active, T7.wallsOut + Math.ceil(DN03.wallCount / 2) + 18);
+  const tFold = T7.active + DN03.activeTicks;
   const tClose = tFold + 34;
   const tVanish = tClose + secs(L.close);
   const tEnd = tVanish + secs(L.vanish) + 4;
@@ -4595,20 +4595,20 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
     particle(dim, "fx_dust", up(gc, 0.3));
     burst(dim, "dn_house_dust", up(gc, 0.5), 3, 6);
   });
-  scene.at(T6.open, () => {
+  scene.at(T7.open, () => {
     house.state(HS.open);
     sound(dim, "dn_house_windup", gc, 1);
     sound(dim, "dn_house_open", gc, 1);
   });
-  scene.at(T6.open + 18, () => burst(dim, "dn_house_key", up(gc, 5), 3, 8));
-  scene.at(T6.opened, () => house.state(HS.opened));
-  scene.at(T6.unfold, () => {
+  scene.at(T7.open + 18, () => burst(dim, "dn_house_key", up(gc, 5), 3, 8));
+  scene.at(T7.opened, () => house.state(HS.opened));
+  scene.at(T7.unfold, () => {
     house.state(HS.unfold);
     sound(dim, "dn_house_unfold", gc, 1.2);
     burst(dim, "dn_house_scrap", up(gc, 5), 3, 6);
   });
-  scene.at(T6.unfold + secs(L.unfold), () => house.state(HS.spread));
-  scene.span(T6.unfold, T6.unfold + 24, (p) => {
+  scene.at(T7.unfold + secs(L.unfold), () => house.state(HS.spread));
+  scene.span(T7.unfold, T7.unfold + 24, (p) => {
     housePos = lerp(gc, hover, smooth(p));
     house.move(housePos);
   });
@@ -4618,7 +4618,7 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
   let loopStart = first.start;
   const walls = [];
   [...first.walls.values()].forEach((t, k2) => {
-    const at = T6.wallsOut + Math.floor(k2 / 2);
+    const at = T7.wallsOut + Math.floor(k2 / 2);
     scene.at(at, () => {
       const base = BASE_KINDS[k2 % BASE_KINDS.length];
       const yaw = frontYaw(t.e, caster.isValid ? caster.location : gc);
@@ -4672,7 +4672,7 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
   }
   const fcells0 = furnitureCells(0);
   FURN.forEach((id, k2) => {
-    const at = T6.wallsOut + 10 + k2 * 3;
+    const at = T7.wallsOut + 10 + k2 * 3;
     scene.at(at, () => {
       const f = { a: scene.spawn(id, housePos, { yaw: faceCaster, state: FS.appear }), id, pos: { ...housePos }, cell: fcells0[k2] };
       furn.push(f);
@@ -4833,8 +4833,8 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
     });
   }
   const shiftTicks = [];
-  for (let t = T6.active + DN03.shiftEvery; t < tFold - 10; t += DN03.shiftEvery) shiftTicks.push(t);
-  scene.at(T6.active, () => {
+  for (let t = T7.active + DN03.shiftEvery; t < tFold - 10; t += DN03.shiftEvery) shiftTicks.push(t);
+  scene.at(T7.active, () => {
     sound(dim, "dn_house_lullaby", hover, 1);
     ring(dim, "dn_house_note", up(hover, 2), 4, 6);
   });
@@ -4909,8 +4909,8 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
     }
     const clock = F("dn_house_clock");
     if (clock?.a.valid) for (const e of hostiles(dim, clock.pos, DN03.clockRadius, caster)) effect(e, "slowness", DN03.clockSlowTicks, 0);
-  }, T6.active, tFold);
-  for (let t = T6.active, k2 = 0; t < tFold; k2++) {
+  }, T7.active, tFold);
+  for (let t = T7.active, k2 = 0; t < tFold; k2++) {
     const tick = t;
     scene.at(tick, () => {
       const clock = F("dn_house_clock");
@@ -4939,11 +4939,11 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
       sound(dim, "dn_house_loop", g, 0.7, 1.15);
     }
     if (scene.tick % 10 === 0) particle(dim, "dn_house_chalk", up(g, 1.5));
-  }, T6.active, tFold);
+  }, T7.active, tFold);
   scene.every(DN03.retryEvery, () => {
     for (const k2 of [...pending]) if (refs.has(k2)) tryPlace(k2);
     else pending.delete(k2);
-  }, T6.wallsOut, tFold);
+  }, T7.wallsOut, tFold);
   scene.at(tFold, () => {
     for (const w of walls) {
       setCols(w, []);
@@ -6018,10 +6018,700 @@ var dn05_sleeping_city_default = defineSpell("dn05", ({ caster, scene, aim }) =>
   scene.endAt(tWink + T_MINI_WINK + 4);
 });
 
+// src/config/dn06.ts
+var DN06 = {
+  // ---- domain & staging (blocks)
+  /** Radius of the spell domain around the focus point: marks, zones and strikes stay inside it. */
+  radius: 20,
+  /** Maximum enemies carrying a sleeping-moon mark (marked enemies are the targets of every strike). */
+  maxMarks: 8,
+  /** How far beyond the focus point the bed floats, and its height (mattress top) above the ground. */
+  bedBack: 20,
+  bedHeight: 18,
+  /** Where the risen Dreamer hovers (beyond the focus) and its pelvis height above the ground. */
+  hoverBack: 12,
+  hoverHeight: 12.5,
+  /** Largest head/body turn (deg) the Dreamer makes toward the main enemy group for the finale. */
+  finaleTurn: 35,
+  // ---- Phase II: giant-body attacks
+  /** Dropped pillow: damage, blast radius and knockback. */
+  pillowDamage: 10,
+  pillowRadius: 3.5,
+  pillowKnock: 1.4,
+  /** Hand sweep: damage, reach of the hand around its path, sideways knockback. */
+  sweepDamage: 14,
+  sweepRadius: 3.2,
+  sweepKnock: 2.2,
+  /** Spilled stairs: damage per enemy, width of the cascade. */
+  stairsDamage: 9,
+  stairsRadius: 2.2,
+  // ---- Phase III: zones (all zones have this radius)
+  zoneRadius: 4.5,
+  /** Dream zones: heal per pulse (every zonePulse ticks), supportive effect duration, ward strength. */
+  zonePulse: 20,
+  dreamHeal: 2,
+  dreamEffectTicks: 50,
+  /** Fraction of damage that still reaches an ally standing in a dream zone, and the ward's total pool. */
+  wardFactor: 0.55,
+  wardPool: 40,
+  /** Nightmare zones: damage per pulse, slowness/weakness strength, and the stronger "bite" every 2 pulses. */
+  nightDamage: 3,
+  nightSlowAmp: 2,
+  biteDamage: 5,
+  /** Ticks an enemy is swallowed (held) by the predatory corridor; levitation of the upside-down room. */
+  corridorHold: 20,
+  roomLift: 12,
+  // ---- Phase IV: the Great Unreality
+  /** Wheel of doors: damage, hit radius, rolling speed (blocks/tick). */
+  wheelDamage: 16,
+  wheelRadius: 3.6,
+  wheelSpeed: 0.38,
+  /** Window shards released by the arcade forearms: count and damage. */
+  shards: 6,
+  shardDamage: 10,
+  /** Spiral-stair drill: impact damage/radius, damage per boring pulse, slowness ticks. */
+  drillDamage: 18,
+  drillRadius: 4,
+  drillTick: 4,
+  /** Bed pendulum: damage and hit radius around the bed while it sweeps low. */
+  pendulumDamage: 20,
+  pendulumRadius: 6,
+  pendulumLength: 14,
+  /** Expanding room-cubes fired from the chest: count, damage, hold ticks, capture radius. */
+  rooms: 3,
+  roomDamage: 14,
+  roomHold: 24,
+  roomRadius: 3,
+  /** Face-door finale: pull radius, pull speed (blocks/tick), beam damage every 10 ticks, final strike. */
+  beamRadius: 9,
+  beamPull: 0.2,
+  beamDamage: 3,
+  finalDamage: 32,
+  finalRadius: 7,
+  finalKnock: 2.6,
+  /** Ticks of warning before every telegraphed giant strike (pillow, stairs, shards...). */
+  warnShort: 20,
+  warnLong: 40
+};
+
 // src/spells/dn06_the_dreamer.ts
-var dn06_the_dreamer_default = defineSpell("dn06", (ctx) => {
-  ctx.caster.sendMessage("dn06 is not implemented yet");
-  ctx.scene.endAt(1);
+var DS2 = {
+  hidden: 0,
+  manifest: 1,
+  sit: 2,
+  awaken: 3,
+  rise: 4,
+  hover: 5,
+  sweep: 6,
+  cabinet: 7,
+  raise: 8,
+  conjure: 9,
+  conduct: 10,
+  fireArms: 11,
+  fireRooms: 12,
+  finale: 13,
+  slam: 14,
+  forget: 15
+};
+var BED = { arrive: 1, float: 2, occupied: 3, dip: 4, empty: 5, fold: 6, swing: 7, vanish: 8 };
+var CODEX = { open: 1, hold: 2, gather: 3, close: 4 };
+var ZONE = { bloom: 1, idle: 2, fold: 3, fade: 4, bite: 5 };
+var TG = { warn: 1, hold: 2, flash: 3, warnSlow: 4 };
+var LEN = {
+  manifest: 90,
+  sit: 60,
+  awaken: 30,
+  rise: 60,
+  sweep: 60,
+  cabinet: 40,
+  raise: 40,
+  fireArms: 32,
+  fireRooms: 32,
+  finale: 60,
+  slam: 20,
+  forget: 100
+};
+var LIE = { fwd: 1.67, up: 1 };
+var SWEEP_PATH = [
+  [11.88, -11.35, 11.29],
+  [8.8, -12.59, 12.67],
+  [2.43, -13.84, 14.05],
+  [-4.19, -13.67, 13.78],
+  [-7.61, -12.98, 12.95]
+];
+var SWEEP_HIT = [25, 40];
+var CHEST = { up: 7.8, fwd: 5.1 };
+var ARM = { right: 4.2, up: 5.9, fwd: 17.2 };
+var BEAM_LAND = 11.84;
+var BED_PILLOW = { right: 2.75, fwd: -6.5, up: 0.75 };
+var BOOK2 = { right: -0.94, up: 1.5, fwd: 0.81 };
+var SWING_T = 48;
+var SWING_A = 58;
+var STEP_LAND = (k2) => 8 + Math.round(k2 * 2.4);
+var dn06_the_dreamer_default = defineSpell("dn06", ({ caster, scene, aim }) => {
+  const dim = scene.dim;
+  const { center } = focus(caster, aim, 14);
+  const fwd = norm({ x: aim.forward.x, y: 0, z: aim.forward.z });
+  const g0 = center.y;
+  const lights = blocksFor(scene);
+  const faceYaw = yawOf(mul(fwd, -1));
+  const at = (base, yaw, r, u, f) => {
+    const fd = fromYaw(yaw), rt = right(fd);
+    return { x: base.x + rt.x * r + fd.x * f, y: base.y + u, z: base.z + rt.z * r + fd.z * f };
+  };
+  const ground = (p) => groundBelow(dim, { x: p.x, y: Math.max(p.y, g0 + 4), z: p.z }, 50);
+  const marks = /* @__PURE__ */ new Map();
+  function markNew(limit = DN06.maxMarks) {
+    for (const e of hostiles(dim, center, DN06.radius, caster)) {
+      if (marks.size >= limit) break;
+      if (marks.has(e.id)) continue;
+      const a = scene.spawn("dn_dreamer_mark", up(e.location, 2.5), { state: 1 });
+      scene.follow(a, e, 2.5);
+      scene.after(10, () => a.state(2));
+      marks.set(e.id, { e, a });
+      sound(dim, "dn_dreamer_mark", e.location, 0.6, 0.9 + marks.size * 0.06);
+      particle(dim, "dn_dreamer_moon", up(e.location, 2.5));
+      return;
+    }
+  }
+  function marked() {
+    const out = [];
+    for (const m of marks.values()) if (isAlive(m.e) && distXZ(m.e.location, center) < DN06.radius + 6) out.push(m.e);
+    if (out.length) return out;
+    return hostiles(dim, center, DN06.radius, caster);
+  }
+  function targets(n, spread = 7) {
+    const es = marked();
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      if (es.length) {
+        const e = es[i % es.length];
+        out.push({ loc: groundBelow(dim, e.location), e });
+      } else out.push({ loc: ground(polar(center, i === 0 ? 0 : spread, i * (360 / Math.max(1, n - 1)) + 20)) });
+    }
+    return out;
+  }
+  function groups(n) {
+    const es = marked();
+    const out = [];
+    for (const e of es) {
+      if (out.length >= n) break;
+      if (out.every((c) => distXZ(c, e.location) > DN06.zoneRadius * 1.5)) out.push(groundBelow(dim, e.location));
+    }
+    const base = out.length ? out[0] : center;
+    for (let i = out.length; i < n; i++) out.push(ground(polar(base, 7, i * 120 + yawOf(fwd))));
+    return out;
+  }
+  function centroid() {
+    const es = marked();
+    if (!es.length) return center;
+    let s = { x: 0, y: 0, z: 0 };
+    for (const e of es) s = add(s, e.location);
+    return groundBelow(dim, mul(s, 1 / es.length));
+  }
+  function warn(loc, size, slow, life) {
+    const t = scene.spawn("telegraph", up(loc, 0.05), { kind: 1, size, state: slow ? TG.warnSlow : TG.warn });
+    scene.after(life, () => t.state(TG.flash));
+    scene.after(life + 8, () => scene.despawn(t));
+    return t;
+  }
+  function hitOnce(set, loc, r, dmg, after) {
+    let n = 0;
+    for (const e of hostiles(dim, loc, r, caster)) {
+      if (set.has(e.id)) continue;
+      set.add(e.id);
+      if (damage(e, dmg, caster)) n++;
+      after?.(e);
+    }
+    return n;
+  }
+  const domain = scene.spawn("dn_dreamer_domain", up(center, 0.05), { size: DN06.radius / 2, state: 1 });
+  scene.at(32, () => domain.state(2));
+  lights.place(up(center, 2), LIGHT);
+  const codex = scene.spawn("dn_dreamer_codex", caster.location, { yaw: aim.yaw, state: CODEX.open });
+  scene.follow(codex, caster, 0);
+  scene.at(60, () => codex.state(CODEX.hold));
+  sound(dim, "dn_dreamer_book", caster.location, 0.9);
+  sound(dim, "dn_dreamer_musicbox", caster.location, 0.8);
+  const bedRest = up(add(center, mul(fwd, DN06.bedBack)), DN06.bedHeight);
+  const bedFrom = up(add(center, mul(fwd, DN06.bedBack + 18)), DN06.bedHeight + 14);
+  const bedMid = up(add(add(center, mul(fwd, DN06.bedBack + 6)), mul(right(fwd), 10)), DN06.bedHeight + 10);
+  let bedPos = { ...bedFrom };
+  const bed = scene.spawn("dn_dreamer_bed", bedFrom, { yaw: faceYaw, state: BED.arrive });
+  sound(dim, "dn_dreamer_bed", bedFrom, 1);
+  scene.span(0, 50, (p) => {
+    bedPos = bezier(bedFrom, bedMid, bedRest, smooth(p));
+    bed.move(bedPos, faceYaw);
+  });
+  scene.at(50, () => bed.state(BED.float));
+  scene.every(8, () => markNew(), 40, 140);
+  scene.every(6, (e) => {
+    particle(dim, "dn_dreamer_mote", up(polar(center, 6 + e % 4 * 3, e * 23), 2));
+    if (e % 12 === 0) particle(dim, "dn_dreamer_petal", up(bedPos, 3));
+  }, 0, 760);
+  scene.at(100, () => {
+    burst(dim, "dn_dreamer_star", up(bedPos, 4), 6, 6);
+    sound(dim, "dn_dreamer_breath", bedPos, 0.9);
+  });
+  scene.every(40, () => markNew(), 150, 760);
+  const T22 = 150;
+  const lieAt = () => at(bedPos, faceYaw, 0, LIE.up, LIE.fwd);
+  let dreamer = new Actor(void 0, "grimoire:dreamer");
+  let dPos = lieAt();
+  let dYaw = faceYaw;
+  scene.at(T22, () => {
+    dPos = lieAt();
+    dreamer = scene.spawn("dreamer", dPos, { yaw: faceYaw, state: DS2.manifest });
+    bed.state(BED.occupied);
+    sound(dim, "dn_dreamer_manifest", dPos, 1.2);
+    sound(dim, "dn_dreamer_breath", dPos, 1, 0.8);
+  });
+  scene.every(15, (e) => particle(dim, "dn_dreamer_porcelain", at(bedPos, faceYaw, 0, 1.5, 6 - e / 15 * 2.2)), T22, T22 + 90);
+  const T_SIT = T22 + LEN.manifest;
+  scene.at(T_SIT, () => {
+    dreamer.state(DS2.sit);
+    bed.state(BED.dip);
+    sound(dim, "dn_dreamer_groan", dPos, 1.3);
+    sound(dim, "dn_dreamer_inhale", dPos, 1.1);
+  });
+  scene.span(T_SIT, T_SIT + 20, (p) => dreamer.move(up(lieAt(), -1.25 * smooth(p)), faceYaw));
+  const pillowTarget = targets(1)[0];
+  let pLand = pillowTarget.loc;
+  scene.at(T_SIT + 10, () => {
+    pLand = targets(1)[0].loc;
+    const w = warn(pLand, DN06.pillowRadius, true, DN06.warnLong);
+    const from = at(bedPos, faceYaw, BED_PILLOW.right, BED_PILLOW.up - 1.2, BED_PILLOW.fwd);
+    const pil = scene.spawn("dn_dreamer_pillow", from, { yaw: faceYaw, state: 1 });
+    const top = up(lerp(from, pLand, 0.35), 4);
+    scene.span(scene.tick, scene.tick + DN06.warnLong, (p) => {
+      const tgt = pillowTarget.e && isAlive(pillowTarget.e) && p < 0.7 ? groundBelow(dim, pillowTarget.e.location) : pLand;
+      pLand = tgt;
+      w.move(up(tgt, 0.05));
+      pil.move(bezier(from, top, tgt, p * p));
+    });
+    scene.after(DN06.warnLong, () => {
+      pil.state(2);
+      sound(dim, "dn_dreamer_pillow", pLand, 1.2);
+      burst(dim, "dn_dreamer_feather", up(pLand, 1), 2.5, 8);
+      particle(dim, "dn_dreamer_dust", up(pLand, 0.3));
+      particle(dim, "dn_dreamer_ring", up(pLand, 0.2));
+      hitOnce(/* @__PURE__ */ new Set(), pLand, DN06.pillowRadius, DN06.pillowDamage, (e) => knockback(e, pLand, DN06.pillowKnock, 0.45));
+      scene.after(14, () => pil.state(3));
+      scene.after(32, () => scene.despawn(pil));
+    });
+  });
+  const T_AWAKE = T_SIT + LEN.sit;
+  scene.at(T_AWAKE, () => {
+    dreamer.state(DS2.awaken);
+    sound(dim, "dn_dreamer_door", dPos, 1.2);
+    sound(dim, "dn_dreamer_hum", dPos, 1.2);
+  });
+  scene.at(T_AWAKE + 22, () => burst(dim, "dn_dreamer_star", up(dPos, 4), 2, 8));
+  const T_RISE = T_AWAKE + LEN.awaken;
+  const hover = up(add(center, mul(fwd, DN06.hoverBack)), DN06.hoverHeight);
+  scene.at(T_RISE, () => {
+    dreamer.state(DS2.rise);
+    bed.state(BED.empty);
+    sound(dim, "dn_dreamer_groan", dPos, 1.5, 0.85);
+    sound(dim, "dn_dreamer_inhale", dPos, 1.3, 0.8);
+  });
+  scene.span(T_RISE + 12, T_RISE + LEN.rise, (p) => {
+    const a = up(lieAt(), -1.25);
+    dPos = bezier(a, up(lerp(a, hover, 0.5), 5), hover, smooth(p));
+    dreamer.move(dPos, faceYaw);
+    if (Math.round(p * 48) % 8 === 0) particle(dim, "dn_dreamer_porcelain", up(dPos, 6));
+  });
+  const T_HOV = T_RISE + LEN.rise;
+  scene.at(T_HOV, () => {
+    dPos = hover;
+    dreamer.move(hover, faceYaw).state(DS2.hover);
+  });
+  const T_SWEEP = T_HOV + 10;
+  const sweepPt = (i) => {
+    const s = SWEEP_PATH[i];
+    return at(hover, faceYaw, s[0], s[1], s[2]);
+  };
+  scene.at(T_SWEEP - DN06.warnLong + SWEEP_HIT[0] - 5, () => {
+    for (let i = 0; i < SWEEP_PATH.length; i++) warn(ground(sweepPt(i)), DN06.sweepRadius, true, DN06.warnLong + 5 + i * 3);
+  });
+  scene.at(T_SWEEP, () => dreamer.state(DS2.sweep));
+  scene.at(T_SWEEP + 18, () => sound(dim, "dn_dreamer_sweep", ground(sweepPt(2)), 1.5));
+  const swept = /* @__PURE__ */ new Set();
+  scene.span(T_SWEEP + SWEEP_HIT[0], T_SWEEP + SWEEP_HIT[1], (p) => {
+    const f = p * (SWEEP_PATH.length - 1);
+    const i = Math.min(Math.floor(f), SWEEP_PATH.length - 2);
+    const hand = ground(lerp(sweepPt(i), sweepPt(i + 1), f - i));
+    const along = norm(sub(sweepPt(i + 1), sweepPt(i)));
+    particle(dim, "dn_dreamer_dust", up(hand, 0.3));
+    hitOnce(swept, hand, DN06.sweepRadius, DN06.sweepDamage, (e) => shove(e, along, DN06.sweepKnock, 0.5));
+  });
+  scene.at(T_SWEEP + LEN.sweep, () => dreamer.state(DS2.hover));
+  const T_CAB = T_SWEEP + LEN.sweep + 4;
+  const stairFrom = ground(at(hover, faceYaw, 0, 0, 4));
+  let stairDir = fwd;
+  scene.at(T_CAB - 6, () => {
+    const t = targets(1)[0].loc;
+    stairDir = norm({ x: t.x - stairFrom.x, y: 0, z: t.z - stairFrom.z });
+    for (let k2 = 0; k2 < 10; k2 += 3) warn(ground(add(stairFrom, mul(stairDir, 0.6 + k2 * 1.25))), DN06.stairsRadius, false, 20 + k2 * 2);
+  });
+  scene.at(T_CAB, () => {
+    dreamer.state(DS2.cabinet);
+    sound(dim, "dn_dreamer_door", up(hover, 8), 1, 0.7);
+  });
+  scene.at(T_CAB + 10, () => {
+    line(dim, "dn_dreamer_trail", at(hover, faceYaw, 0, CHEST.up, CHEST.fwd), up(stairFrom, 4), 6);
+    const st2 = scene.spawn("dn_dreamer_stairs", stairFrom, { yaw: yawOf(stairDir), state: 1 });
+    sound(dim, "dn_dreamer_stairs", stairFrom, 1.2);
+    const hit = /* @__PURE__ */ new Set();
+    for (let k2 = 0; k2 < 10; k2++) {
+      scene.after(STEP_LAND(k2), () => {
+        const p = ground(add(stairFrom, mul(stairDir, 0.62 + k2 * 1.25)));
+        if (k2 % 2 === 0) particle(dim, "dn_dreamer_dust", up(p, 0.2));
+        hitOnce(hit, p, DN06.stairsRadius, DN06.stairsDamage, (e) => shove(e, stairDir, 0.8, 0.35));
+      });
+    }
+    scene.after(50, () => st2.state(2));
+    scene.after(72, () => scene.despawn(st2));
+  });
+  scene.at(T_CAB + LEN.cabinet + 8, () => dreamer.state(DS2.hover));
+  const T32 = T_CAB + LEN.cabinet + 16;
+  const dreamZones = [];
+  const nightZones = [];
+  let ward;
+  scene.at(T32, () => {
+    dreamer.state(DS2.raise).skin(1);
+    sound(dim, "dn_dreamer_raise", up(hover, 10), 1.4);
+  });
+  scene.at(T32 + 25, () => {
+    const fr = allies(dim, caster.location, 24, caster);
+    const spots = [];
+    if (fr.length > 1) for (const a of fr.slice(0, 3)) spots.push(groundBelow(dim, a.location));
+    const cl = groundBelow(dim, caster.location);
+    if (!spots.length) spots.push(cl);
+    const cy = yawOf(fwd);
+    while (spots.length < 3) spots.push(ground(polar(cl, 6, cy + 90 + (spots.length === 1 ? 10 : 160) + 90)));
+    const hand = at(hover, faceYaw, -2, 26, 6);
+    spots.forEach((loc, i) => {
+      const a = scene.spawn("dn_dreamer_dream", loc, { kind: i, yaw: faceYaw, state: ZONE.bloom });
+      dreamZones.push({ a, loc, kind: i });
+      line(dim, "dn_dreamer_trail", hand, up(loc, 3), 8);
+      ring(dim, "dn_dreamer_petal", up(loc, 1), DN06.zoneRadius, 6, i * 30);
+      lights.place(up(loc, 2), LIGHT);
+      scene.after(30, () => a.state(ZONE.idle));
+    });
+    sound(dim, "dn_dreamer_bloom", cl, 1);
+    ward = addWard({
+      scene,
+      factor: DN06.wardFactor,
+      pool: DN06.wardPool,
+      protects: (e) => e.typeId === "minecraft:player" && dreamZones.some((z) => distXZ(z.loc, e.location) <= DN06.zoneRadius),
+      onAbsorb: (_n, _a, v2) => particle(dim, "dn_dreamer_ring", up(v2.location, 0.2))
+    });
+  });
+  scene.at(T32 + 35, () => {
+    const hand = at(hover, faceYaw, 2, 26, 6);
+    groups(3).forEach((loc, i) => {
+      const a = scene.spawn("dn_dreamer_night", loc, { kind: i, yaw: yawOf(sub(hover, loc)), state: ZONE.bloom });
+      nightZones.push({ a, loc, kind: i });
+      line(dim, "dn_dreamer_ntrail", hand, up(loc, 3), 8);
+      particle(dim, "dn_dreamer_smoke", up(loc, 0.5));
+      scene.after(30, () => a.state(ZONE.idle));
+    });
+    sound(dim, "dn_dreamer_emerge", nightZones.length ? nightZones[0].loc : center, 1.2);
+  });
+  scene.at(T32 + LEN.raise, () => dreamer.state(DS2.conjure));
+  const ZONE_FROM = T32 + 70, ZONE_TO = T32 + 250;
+  scene.every(DN06.zonePulse, (e) => {
+    for (const z of dreamZones) {
+      particle(dim, "dn_dreamer_heal", up(z.loc, 0.5));
+      if (e / DN06.zonePulse % 2 === 0) particle(dim, "dn_dreamer_key", up(z.loc, 4));
+      for (const p of allies(dim, z.loc, DN06.zoneRadius, caster)) {
+        if (heal(p, DN06.dreamHeal) > 0) sound(dim, "dn_dreamer_heal", p.location, 0.5, 1 + z.kind * 0.1);
+        if (z.kind === 0) effect(p, "regeneration", DN06.dreamEffectTicks, 0);
+        else if (z.kind === 1) {
+          effect(p, "resistance", DN06.dreamEffectTicks, 0);
+          effect(p, "slow_falling", DN06.dreamEffectTicks, 0);
+        } else {
+          effect(p, "speed", DN06.dreamEffectTicks, 1);
+          effect(p, "jump_boost", DN06.dreamEffectTicks, 0);
+        }
+      }
+    }
+    if (e / DN06.zonePulse % 2 === 0 && dreamZones.length) sound(dim, "dn_dreamer_sweet", dreamZones[0].loc, 0.7);
+  }, ZONE_FROM, ZONE_TO);
+  scene.every(DN06.zonePulse, (e) => {
+    const big = e / DN06.zonePulse % 2 === 1;
+    for (const z of nightZones) {
+      particle(dim, big ? "dn_dreamer_eye" : "dn_dreamer_nring", up(z.loc, big ? 2 : 0.2));
+      if (big) {
+        z.a.state(ZONE.bite);
+        scene.after(14, () => z.a.state(ZONE.idle));
+        sound(dim, "dn_dreamer_bite", z.loc, 0.9);
+      }
+      for (const e2 of hostiles(dim, z.loc, DN06.zoneRadius, caster)) {
+        damage(e2, big ? DN06.biteDamage : DN06.nightDamage, caster);
+        effect(e2, "slowness", DN06.zonePulse + 10, DN06.nightSlowAmp);
+        effect(e2, "weakness", DN06.zonePulse * 2, 1);
+        if (!big) continue;
+        if (z.kind === 0) {
+          effect(e2, "levitation", DN06.roomLift, 1);
+          try {
+            const r = e2.getRotation();
+            e2.setRotation({ x: r.x, y: r.y + 180 });
+          } catch {
+          }
+        } else if (z.kind === 1) {
+          restrain(scene, e2, DN06.corridorHold, up(z.loc, 0.1));
+        } else {
+          knockback(e2, z.loc, 1.4, 0.4);
+        }
+      }
+    }
+    if (!big && nightZones.length) sound(dim, "dn_dreamer_sour", nightZones[0].loc, 0.7);
+  }, ZONE_FROM + DN06.zonePulse / 2, ZONE_TO);
+  const T42 = ZONE_TO + 10;
+  scene.at(T42, () => {
+    dreamer.state(DS2.conduct);
+    domain.skin(1);
+    for (const m of marks.values()) m.a.skin(1);
+    sound(dim, "dn_dreamer_unreality", up(hover, 8), 1.6);
+    if (ward) removeWard(ward);
+    for (const z of [...dreamZones, ...nightZones]) {
+      z.a.state(ZONE.fold);
+      const a = z.a;
+      scene.after(26, () => scene.despawn(a));
+    }
+    for (const z of dreamZones) lights.remove(up(z.loc, 2));
+    bed.state(BED.fold);
+  });
+  const pivot = up(center, DN06.pendulumLength + 6.5);
+  const swingAxis = right(fromYaw(faceYaw));
+  const swingPos = (deg) => {
+    const r = deg * Math.PI / 180;
+    return add(pivot, { x: swingAxis.x * DN06.pendulumLength * Math.sin(r), y: -DN06.pendulumLength * Math.cos(r), z: swingAxis.z * DN06.pendulumLength * Math.sin(r) });
+  };
+  scene.span(T42, T42 + 70, (p) => {
+    bedPos = lerp(bedRest, swingPos(SWING_A), smooth(p));
+    bed.move(bedPos, faceYaw);
+  });
+  const T_WHEEL = T42 + 20;
+  scene.at(T_WHEEL, () => {
+    const start = nightZones.length ? nightZones[nightZones.length - 1].loc : ground(polar(center, 9, yawOf(fwd)));
+    const pts = [start, ...targets(3).map((t) => t.loc)];
+    const last = pts[pts.length - 1];
+    pts.push(ground(add(last, mul(norm(sub(last, pts[pts.length - 2])), 6))));
+    let len2 = 0;
+    for (let i = 1; i < pts.length; i++) len2 += distXZ(pts[i - 1], pts[i]);
+    const dur = Math.round(clamp(len2 / DN06.wheelSpeed, 40, 90));
+    const w = scene.spawn("dn_dreamer_wheel", start, { yaw: yawOf(sub(pts[1], start)), state: 1 });
+    for (let i = 1; i < pts.length - 1; i++) warn(pts[i], DN06.wheelRadius, false, 20 + Math.round(dur * i / pts.length));
+    const hit = /* @__PURE__ */ new Set();
+    scene.after(20, () => {
+      w.state(2);
+      sound(dim, "dn_dreamer_wheel", start, 1.4);
+    });
+    let prev = start;
+    scene.span(scene.tick + 20, scene.tick + 20 + dur, (p) => {
+      const pos = ground(spline(pts, p));
+      const dir = sub(pos, prev);
+      w.move(pos, Math.abs(dir.x) + Math.abs(dir.z) > 1e-3 ? yawOf(dir) : void 0);
+      prev = pos;
+      if (Math.round(p * dur) % 6 === 0) particle(dim, "dn_dreamer_door", up(pos, 1.5));
+      hitOnce(hit, pos, DN06.wheelRadius, DN06.wheelDamage, (e) => shove(e, dir, 1.6, 0.6));
+    });
+    scene.after(20 + dur, () => {
+      w.state(3);
+      burst(dim, "dn_dreamer_door", up(prev, 3), 2.5, 6);
+    });
+    scene.after(40 + dur, () => scene.despawn(w));
+  });
+  const T_ARMS = T_WHEEL + 50;
+  scene.at(T_ARMS - 6, () => {
+    const ts = targets(DN06.shards, 5);
+    ts.forEach((t) => warn(t.loc, 1.6, false, 25));
+    scene.at(T_ARMS, () => dreamer.state(DS2.fireArms));
+    scene.at(T_ARMS + 13, () => {
+      sound(dim, "dn_dreamer_glass", up(hover, 6), 1.3);
+      ts.forEach((t, i) => {
+        const from = at(hover, faceYaw, i % 2 ? -ARM.right : ARM.right, ARM.up, ARM.fwd * 0.6);
+        const s = scene.spawn("dn_dreamer_shard", from, { yaw: yawOf(sub(t.loc, from)), state: 1 });
+        const mid = up(lerp(from, t.loc, 0.5), 3);
+        scene.span(scene.tick, scene.tick + 12, (p) => {
+          const tg = t.e && isAlive(t.e) ? groundBelow(dim, t.e.location) : t.loc;
+          s.move(bezier(from, mid, up(tg, 0.8), p));
+          if (p > 0.95) t.loc = tg;
+        });
+        scene.after(12, () => {
+          s.state(2);
+          particle(dim, "dn_dreamer_glint", up(t.loc, 1));
+          for (const e of hostiles(dim, t.loc, 1.8, caster)) damage(e, DN06.shardDamage, caster);
+          if (i === 0) sound(dim, "dn_dreamer_glass", t.loc, 1.2, 1.15);
+        });
+        scene.after(22, () => scene.despawn(s));
+      });
+    });
+    scene.at(T_ARMS + LEN.fireArms, () => dreamer.state(DS2.conduct));
+  });
+  const T_DRILL = T_ARMS + 40;
+  scene.at(T_DRILL, () => {
+    const tgt = groups(1)[0];
+    warn(tgt, DN06.drillRadius, true, DN06.warnLong);
+    const top = up(tgt, 16);
+    const d = scene.spawn("dn_dreamer_drill", top, { yaw: faceYaw, state: 1 });
+    line(dim, "dn_dreamer_trail", up(hover, 20), up(top, 10), 6);
+    scene.after(20, () => {
+      d.state(3);
+      sound(dim, "dn_dreamer_drill", tgt, 1.4);
+    });
+    scene.span(scene.tick + 20, scene.tick + DN06.warnLong, (p) => d.move(lerp(top, tgt, p * p)));
+    scene.after(DN06.warnLong, () => {
+      particle(dim, "dn_dreamer_shock", up(tgt, 0.2));
+      particle(dim, "dn_dreamer_dust", up(tgt, 0.3));
+      for (const e of hostiles(dim, tgt, DN06.drillRadius, caster)) {
+        damage(e, DN06.drillDamage, caster);
+        effect(e, "slowness", 40, 3);
+      }
+    });
+    scene.every(10, () => {
+      for (const e of hostiles(dim, tgt, DN06.drillRadius, caster)) {
+        damage(e, DN06.drillTick, caster);
+        drag(e, lerp(e.location, up(tgt, 0.1), 0.3));
+      }
+      particle(dim, "dn_dreamer_porcelain", up(tgt, 1));
+    }, scene.tick + DN06.warnLong + 10, scene.tick + DN06.warnLong + 31);
+    scene.span(scene.tick + DN06.warnLong, scene.tick + DN06.warnLong + 30, (p) => d.move(up(tgt, -2.5 * p)));
+    scene.after(DN06.warnLong + 30, () => d.state(4));
+    scene.after(DN06.warnLong + 46, () => scene.despawn(d));
+  });
+  const T_SWING = T_DRILL + 70;
+  scene.at(T_SWING - DN06.warnLong, () => {
+    for (const a of [-30, -10, 10, 30]) warn(ground(swingPos(a)), 3, true, DN06.warnLong + 10);
+  });
+  const swung = /* @__PURE__ */ new Set();
+  scene.at(T_SWING, () => {
+    bed.state(BED.swing);
+    sound(dim, "dn_dreamer_pendulum", pivot, 1.6);
+  });
+  scene.span(T_SWING, T_SWING + SWING_T, (p) => {
+    const th = SWING_A * Math.cos(Math.PI * p);
+    bedPos = swingPos(th);
+    bed.move(bedPos, faceYaw);
+    if (Math.abs(th) < 26) {
+      const g = ground(bedPos);
+      particle(dim, "dn_dreamer_petal", up(g, 1));
+      hitOnce(swung, g, DN06.pendulumRadius, DN06.pendulumDamage, (e) => shove(e, mul(swingAxis, -1), 2, 0.7));
+    }
+  });
+  const T_ROOMS = T_SWING + 14;
+  scene.at(T_ROOMS, () => {
+    dreamer.state(DS2.fireRooms);
+    sound(dim, "dn_dreamer_door", up(hover, 8), 1.2, 0.6);
+  });
+  scene.at(T_ROOMS + 12, () => {
+    const from = at(hover, faceYaw, 0, CHEST.up, CHEST.fwd);
+    targets(DN06.rooms, 6).forEach((t, i) => {
+      const r = scene.spawn("dn_dreamer_roomcube", from, { yaw: faceYaw + i * 40, state: 1 });
+      const top = up(lerp(from, t.loc, 0.5), 4);
+      scene.span(scene.tick, scene.tick + 16, (p) => {
+        if (t.e && isAlive(t.e) && p < 0.8) t.loc = groundBelow(dim, t.e.location);
+        r.move(bezier(from, top, t.loc, p));
+      });
+      scene.after(16, () => {
+        r.state(2);
+        sound(dim, "dn_dreamer_room", t.loc, 1.1);
+        for (const e of hostiles(dim, t.loc, DN06.roomRadius, caster)) restrain(scene, e, DN06.roomHold, { ...e.location });
+      });
+      scene.after(32, () => {
+        r.state(3);
+        particle(dim, "dn_dreamer_dust", up(t.loc, 0.3));
+        for (const e of hostiles(dim, t.loc, DN06.roomRadius + 0.5, caster)) damage(e, DN06.roomDamage, caster);
+      });
+      scene.after(42, () => r.state(4));
+      scene.after(58, () => scene.despawn(r));
+    });
+  });
+  scene.at(T_ROOMS + LEN.fireRooms, () => dreamer.state(DS2.conduct));
+  const T_FIN = T_ROOMS + LEN.fireRooms + 18;
+  let land = ground(at(hover, faceYaw, 0, 0, BEAM_LAND));
+  scene.span(T_FIN - 18, T_FIN, (p) => {
+    const want = yawOf(sub(centroid(), hover));
+    const turn = clamp(angleDelta(faceYaw, want), -DN06.finaleTurn, DN06.finaleTurn);
+    dYaw = faceYaw + turn * smooth(p);
+    dreamer.move(hover, dYaw);
+  });
+  scene.at(T_FIN, () => {
+    land = ground(at(hover, dYaw, 0, 0, BEAM_LAND));
+    dreamer.state(DS2.finale);
+    warn(land, DN06.beamRadius, true, LEN.finale + 5);
+  });
+  scene.at(T_FIN + 8, () => sound(dim, "dn_dreamer_beam", land, 1.7));
+  scene.every(4, (e) => {
+    particle(dim, "dn_dreamer_beam", up(land, 12));
+    if (e % 8 === 0) burst(dim, "dn_dreamer_moon", up(land, 2), DN06.beamRadius * 0.5, 3);
+    for (const x of hostiles(dim, land, DN06.beamRadius, caster)) {
+      const d = distXZ(x.location, land);
+      if (d > 1.2) {
+        const step = mul(norm({ x: land.x - x.location.x, y: 0, z: land.z - x.location.z }), Math.min(DN06.beamPull * 4, d - 1));
+        drag(x, add(x.location, step));
+      }
+      if (e % 12 === 0) damage(x, DN06.beamDamage, caster);
+    }
+  }, T_FIN + 22, T_FIN + LEN.finale);
+  const T_SLAM2 = T_FIN + LEN.finale;
+  scene.at(T_SLAM2, () => dreamer.state(DS2.slam));
+  scene.at(T_SLAM2 + 3, () => {
+    sound(dim, "dn_dreamer_final", land, 1.8);
+    particle(dim, "dn_dreamer_shock", up(land, 0.2));
+    particle(dim, "fx_flash", up(land, 2));
+    ring(dim, "dn_dreamer_porcelain", up(land, 1), 4, 6);
+    for (const e of hostiles(dim, land, DN06.finalRadius, caster)) {
+      damage(e, DN06.finalDamage, caster);
+      knockback(e, land, DN06.finalKnock, 0.6);
+    }
+  });
+  const T52 = T_SLAM2 + LEN.slam + 10;
+  const bookAt = () => at(caster.isValid ? caster.location : scene.origin, aim.yaw, BOOK2.right, BOOK2.up, BOOK2.fwd);
+  scene.at(T52, () => {
+    dreamer.state(DS2.forget).skin(0);
+    sound(dim, "dn_dreamer_break", up(hover, 8), 1.5);
+    bed.state(BED.vanish);
+    for (const m of marks.values()) {
+      m.a.state(3);
+      const a = m.a;
+      scene.after(8, () => scene.despawn(a));
+    }
+  });
+  scene.every(10, (e) => burst(dim, "dn_dreamer_porcelain", up(hover, 4 + e / 10), 5, 4), T52 + 6, T52 + 70);
+  const bedStart = { ...bedPos };
+  scene.span(T52, T52 + 50, (p) => bed.move(lerp(bedStart, up(bookAt(), 2), smooth(p)), faceYaw + p * 90));
+  scene.at(T52 + 52, () => scene.despawn(bed));
+  scene.at(T52 + 10, () => {
+    domain.state(3);
+    codex.state(CODEX.gather);
+  });
+  scene.at(T52 + 42, () => scene.despawn(domain));
+  scene.at(T52 + 20, () => sound(dim, "dn_dreamer_morning", caster.location, 1));
+  scene.at(T52 + 30, () => {
+    const from = at(hover, faceYaw, 0, CHEST.up, CHEST.fwd * 0.5);
+    const room = scene.spawn("dn_dreamer_bedroom", from, { yaw: faceYaw, size: 6, state: 1 });
+    scene.after(16, () => room.state(2));
+    const mid = up(lerp(from, bookAt(), 0.5), 6);
+    scene.span(scene.tick + 20, scene.tick + 70, (p) => {
+      room.move(bezier(from, mid, bookAt(), smooth(p))).size(6 + (0.35 - 6) * smooth(p));
+      if (Math.round(p * 50) % 10 === 0) particle(dim, "dn_dreamer_mote", room.loc);
+    });
+    scene.after(70, () => room.state(3));
+    scene.after(88, () => scene.despawn(room));
+  });
+  scene.at(T52 + LEN.forget, () => scene.despawn(dreamer));
+  const T_CLOSE = T52 + 104;
+  scene.at(T_CLOSE, () => {
+    codex.state(CODEX.close);
+    particle(dim, "dn_dreamer_star", bookAt());
+  });
+  scene.at(T_CLOSE + 23, () => sound(dim, "dn_dreamer_click", bookAt(), 0.8));
+  scene.endAt(T_CLOSE + 54);
+  void dist;
 });
 
 // src/config/ed01.ts
@@ -6395,10 +7085,375 @@ var ed01_genesis_colossus_default = defineSpell("ed01", ({ caster, scene, aim })
   void SCALE;
 });
 
+// src/config/ed02.ts
+var ED02 = {
+  // ---- staging (blocks)
+  /** The charge lane starts this far behind the caster... */
+  laneBack: 3,
+  /** ...and this far to the caster's right, so the 17-block dragon emerges beside them, not on them. */
+  laneSide: 5,
+  /** If the focus point is closer than this to the caster, the lane is aimed straight ahead instead. */
+  minFocus: 9,
+  /** The hips run this far past the focus point before skidding (the horns lead by ~8 blocks). */
+  overshoot: 5,
+  /** Clamp of the hips' charge distance (lane length incl. horns and skid ends up ~26-34 blocks). */
+  chargeMin: 16,
+  chargeMax: 24,
+  /** Heat-shimmer wall stands this far ahead of the dragon's spawn point. */
+  wallAhead: 1,
+  // ---- Stage I: Internal Ignition (heat shock when the dragon bellows)
+  igniteRadius: 6,
+  igniteDamage: 4,
+  igniteKnock: 0.7,
+  // ---- Stage II: The Carnotaur's Rampage
+  /** Sprint starts at this fraction of full speed and reaches full speed after accelTicks. */
+  startSpeed: 0.55,
+  accelTicks: 6,
+  /** Horn strike zone: centred hornReach blocks ahead of the hips, hornDepth deep, hornRadius to either side. */
+  hornReach: 7,
+  hornDepth: 2.2,
+  hornRadius: 2.6,
+  hornDamage: 9,
+  /** Horn toss throws enemies sideways out of the lane (horizontal / vertical strength). */
+  hornKnockH: 1.5,
+  hornKnockV: 0.6,
+  /** Body slam zone along the flanks (blocks behind / ahead of the hips, half width). */
+  bodyBack: 2.5,
+  bodyFront: 5,
+  bodyRadius: 2.5,
+  bodyDamage: 6,
+  bodyKnockH: 1.1,
+  bodyKnockV: 0.35,
+  /** Minimum ticks between a horn hit and a body hit on the same enemy. */
+  bodyDelay: 4,
+  /** Search radius around the dragon for melee checks. */
+  scanRadius: 10,
+  // ---- Stage III: The Furnace Opens
+  /** Point-blank thermal discharge around the dragon when the vents release. */
+  dischargeRadius: 6,
+  dischargeDamage: 8,
+  dischargeKnock: 1.4,
+  /** The superheated wave runs back along the charge lane at this speed (blocks/s). */
+  waveSpeed: 18,
+  /** Half width of the wave (blocks either side of the lane centre). */
+  waveHalfWidth: 3.6,
+  waveDamage: 11,
+  waveKnockH: 0.6,
+  waveKnockV: 0.25,
+  /** Wave starts this far in front of the hips (at the chest) and stops this far from the lane start. */
+  waveStartBack: 2.5,
+  waveStopShort: 3,
+  /** Burning and weakness left by the wave and the discharge. */
+  burnSeconds: 3,
+  weaknessTicks: 80,
+  /** Vitrified-ground decals every N blocks behind the wave; they cool and fade on these delays (ticks). */
+  glassEvery: 3.2,
+  glassCoolTicks: 24,
+  glassFadeTicks: 40,
+  /** Heavy breathing between cooling and dissolution (ticks). */
+  pantTicks: 16
+};
+
 // src/spells/ed02_thermal_tyrant.ts
-var ed02_thermal_tyrant_default = defineSpell("ed02", (ctx) => {
-  ctx.caster.sendMessage("ed02 is not implemented yet");
-  ctx.scene.endAt(1);
+var ACTOR4 = "dragon_heat";
+var S4 = {
+  hidden: 0,
+  arrive: 1,
+  idle: 2,
+  move: 3,
+  turn_l: 4,
+  turn_r: 5,
+  attack_a: 6,
+  attack_b: 7,
+  power: 8,
+  react: 9,
+  rest: 10,
+  depart: 11,
+  ignite: 12,
+  charge: 13,
+  skid: 14,
+  pant: 15,
+  cool: 16,
+  roar: 17,
+  walk: 18
+};
+var SKIN2 = { cool: 0, ignited: 1, whitehot: 2 };
+var RUN_SPEED = 10.02;
+var WALK_SPEED2 = 3.53;
+var TURN_RATE = 225;
+var T5 = {
+  arriveWalk: secs(1.2),
+  arrive: secs(1.6),
+  ignite: secs(1.6),
+  igniteRoar: secs(1.1),
+  skid: secs(0.7),
+  powerOpen: secs(1),
+  cool: secs(1.2),
+  depart: secs(2)
+};
+var WALL2 = { form: 1, hold: 2, part: 3, fade: 4 };
+var WAVE2 = { rise: 1, travel: 2, burst: 3 };
+var GLASS = { appear: 1, hold: 2, fade: 3 };
+var LANE = { appear: 1, armed: 2, surge: 3, fade: 4 };
+var ed02_thermal_tyrant_default = defineSpell("ed02", ({ caster, scene, aim }) => {
+  const dim = scene.dim;
+  let F = focus(caster, aim, 12).center;
+  let d0 = flat(sub(F, caster.location));
+  if (len(d0) < ED02.minFocus) {
+    F = groundBelow(dim, add(caster.location, mul(aim.forward, ED02.minFocus + 4)));
+    d0 = flat(sub(F, caster.location));
+  }
+  d0 = norm(len(d0) < 0.01 ? aim.forward : d0);
+  const W2 = groundBelow(dim, add(add(caster.location, mul(d0, -ED02.laneBack)), mul(right(d0), ED02.laneSide)));
+  const d = norm(flat(sub(F, W2)));
+  const rv = right(d);
+  const yaw = yawOf(d);
+  const back = mul(d, -1);
+  const chargeDist = clamp(dot(flat(sub(F, W2)), d) + ED02.overshoot, ED02.chargeMin, ED02.chargeMax);
+  const skidDist = RUN_SPEED / 20 * (T5.skid - 1) / 2;
+  const lanePoint = (s2, lat = 0) => groundBelow(dim, add(add(W2, mul(d, s2)), mul(rv, lat)));
+  const arriveDist = WALK_SPEED2 * T5.arriveWalk / 20;
+  const W0 = add(W2, mul(d, -arriveDist));
+  let s = -arriveDist;
+  let y = groundBelow(dim, W0).y;
+  let curYaw = yaw;
+  let facing = d;
+  let pos = { x: W0.x, y, z: W0.z };
+  const place = (yawNow = curYaw) => {
+    const p = add(W2, mul(d, s));
+    const g = groundBelow(dim, p).y;
+    y += clamp(g - y, -0.35, 0.35);
+    pos = { x: p.x, y, z: p.z };
+    curYaw = yawNow;
+    dragon.move(pos, curYaw);
+  };
+  const chest = () => up(add(pos, mul(facing, 2.2)), 4.6);
+  const wallAt = groundBelow(dim, add(W0, mul(d, ED02.wallAhead)));
+  const wall = scene.spawn("ed_heat_shimmer", wallAt, { yaw, state: WALL2.form });
+  const dragon = scene.spawn(ACTOR4, pos, { yaw, state: S4.arrive, skin: SKIN2.cool });
+  sound(dim, "ed_heat_shimmer", wallAt, 1.1);
+  scene.at(10, () => wall.state(WALL2.part));
+  scene.at(30, () => wall.state(WALL2.fade));
+  scene.at(44, () => scene.despawn(wall));
+  scene.every(4, (e) => {
+    particle(dim, "ed_heat_haze", up(add(wallAt, mul(rv, e % 3 * 2.5 - 2.5)), 1.5));
+    particle(dim, "ed_heat_ember", up(wallAt, 3));
+  }, 0, 32);
+  scene.span(0, T5.arriveWalk + 1, (p) => {
+    s = -arriveDist * (1 - p);
+    place();
+  });
+  const tI = T5.arrive;
+  let lane;
+  const laneLen = clamp(chargeDist + skidDist + 8.5 - 4, 4, 32);
+  scene.at(tI, () => {
+    dragon.state(S4.ignite);
+    sound(dim, "ed_heat_ignite", chest(), 1.2);
+  });
+  scene.at(tI + 4, () => {
+    lane = scene.spawn("ed_heat_lane", lanePoint(4), { yaw, state: LANE.appear });
+    lane.prop("len", laneLen);
+    sound(dim, "ed_heat_lane", lanePoint(10), 1);
+  });
+  scene.at(tI + 10, () => {
+    dragon.skin(SKIN2.ignited);
+    burst(dim, "ed_heat_ember", chest(), 2.2, 4);
+  });
+  scene.at(tI + 22, () => lane?.state(LANE.armed));
+  scene.at(tI + T5.igniteRoar, () => {
+    const c = chest();
+    particle(dim, "ed_heat_ring", up(pos, 0.3));
+    particle(dim, "fx_flash", c);
+    ring(dim, "ed_heat_vent", up(pos, 3.5), 2.8, 5);
+    for (const e of hostiles(dim, c, ED02.igniteRadius, caster)) {
+      if (damage(e, ED02.igniteDamage, caster)) knockback(e, pos, ED02.igniteKnock, 0.35);
+    }
+  });
+  const tC = tI + T5.ignite;
+  const hits = /* @__PURE__ */ new Map();
+  let phase = "wait";
+  let k2 = 0;
+  function strikes() {
+    for (const e of hostiles(dim, add(pos, mul(d, 3)), ED02.scanRadius, caster)) {
+      const dy = e.location.y - pos.y;
+      if (dy > 7 || dy < -3) continue;
+      const rel = flat(sub(e.location, pos));
+      const along = dot(rel, d);
+      const latS = dot(rel, rv);
+      const lat = Math.abs(latS);
+      let h = hits.get(e.id);
+      if (!h) {
+        h = { horn: -1, body: false };
+        hits.set(e.id, h);
+      }
+      const away = norm(add(mul(rv, latS >= 0 ? 1 : -1), mul(d, 0.45)));
+      if (h.horn < 0 && along > ED02.hornReach - ED02.hornDepth && along < ED02.hornReach + 1.5 && lat < ED02.hornRadius) {
+        h.horn = scene.tick;
+        if (damage(e, ED02.hornDamage, caster)) shove(e, away, ED02.hornKnockH, ED02.hornKnockV);
+        impact(e, 1);
+      } else if (!h.body && along > -ED02.bodyBack && along < ED02.bodyFront && lat < ED02.bodyRadius && (h.horn < 0 || scene.tick - h.horn >= ED02.bodyDelay)) {
+        h.body = true;
+        if (damage(e, ED02.bodyDamage, caster)) shove(e, away, ED02.bodyKnockH, ED02.bodyKnockV);
+        impact(e, 0.8);
+      }
+    }
+  }
+  function impact(e, pitch) {
+    const at = up(e.location, 1.1);
+    particle(dim, "ed_heat_spark", at);
+    particle(dim, "ed_heat_ember", at);
+    sound(dim, "ed_heat_hit", at, 1, pitch);
+  }
+  scene.at(tC, () => {
+    phase = "run";
+    dragon.state(S4.charge);
+    lane?.state(LANE.armed);
+  });
+  scene.every(1, () => {
+    if (phase === "run") {
+      const f = k2 < ED02.accelTicks ? ED02.startSpeed + (1 - ED02.startSpeed) * k2 / ED02.accelTicks : 1;
+      k2++;
+      s = Math.min(chargeDist, s + RUN_SPEED / 20 * f);
+      place();
+      strikes();
+      if (k2 % 3 === 0) particle(dim, "ed_heat_haze", up(add(pos, mul(d, -3)), 1.2));
+      if (k2 % 4 === 0) particle(dim, "ed_heat_ember", up(add(pos, mul(d, 1)), 5));
+      if (s >= chargeDist) {
+        phase = "skid";
+        k2 = 0;
+        dragon.state(S4.skid);
+        particle(dim, "ed_heat_skid", up(add(pos, mul(d, 1)), 0.3));
+      }
+    } else if (phase === "skid") {
+      k2++;
+      s += RUN_SPEED / 20 * Math.max(0, 1 - k2 / T5.skid);
+      place();
+      strikes();
+      if (k2 % 3 === 0) particle(dim, "ed_heat_skid", up(add(pos, mul(d, 1)), 0.3));
+      if (k2 >= T5.skid) {
+        phase = "done";
+        stage3(scene.tick + 1);
+      }
+    }
+  }, tC, tC + 200);
+  scene.endAt(tC + 320);
+  function burn(e) {
+    effect(e, "weakness", ED02.weaknessTicks, 0);
+    try {
+      e.setOnFire(ED02.burnSeconds, true);
+    } catch {
+    }
+  }
+  function stage3(t0) {
+    const turnDir = dot(flat(sub(caster.location, pos)), rv) > 0 ? -1 : 1;
+    const turnTicks = Math.round(180 / TURN_RATE * 20);
+    scene.at(t0, () => dragon.state(turnDir > 0 ? S4.turn_r : S4.turn_l));
+    scene.span(t0, t0 + turnTicks, (p) => dragon.move(pos, yaw + turnDir * 180 * p));
+    const tP = t0 + turnTicks;
+    scene.at(tP, () => {
+      curYaw = yaw + turnDir * 180;
+      facing = back;
+      dragon.state(S4.power);
+      lane?.state(LANE.surge).skin(1);
+      sound(dim, "ed_heat_lane", chest(), 1.2, 1.25);
+    });
+    scene.at(tP + 8, () => {
+      dragon.skin(SKIN2.whitehot);
+      particle(dim, "fx_flash", chest());
+    });
+    scene.every(3, () => particle(dim, "ed_heat_vent", up(pos, 4.2)), tP + 6, tP + T5.powerOpen);
+    const tR = tP + T5.powerOpen;
+    const sStart = s - ED02.waveStartBack;
+    const sEnd = Math.min(ED02.waveStopShort, sStart - 1);
+    const step = ED02.waveSpeed / 20;
+    const waveTicks = Math.ceil((sStart - sEnd) / step);
+    const waveYaw = yawOf(back);
+    let sf = sStart;
+    let wave;
+    let nextGlass = sStart - 1;
+    let glassN = 0;
+    const waved = /* @__PURE__ */ new Set();
+    function spawnGlass(at) {
+      glassN++;
+      const g = scene.spawn("ed_heat_glass", lanePoint(at, (glassN % 2 ? 1 : -1) * 0.9), { yaw: glassN * 67, state: GLASS.appear });
+      if (glassN % 3 === 1) sound(dim, "ed_heat_glass", g.loc, 0.8, 0.9 + glassN % 4 * 0.08);
+      scene.after(6, () => g.state(GLASS.hold));
+      scene.after(ED02.glassCoolTicks, () => g.skin(1));
+      scene.after(ED02.glassFadeTicks, () => g.state(GLASS.fade));
+      scene.after(ED02.glassFadeTicks + 17, () => scene.despawn(g));
+    }
+    scene.at(tR, () => {
+      const c = chest();
+      sound(dim, "ed_heat_wave", c, 1.5);
+      particle(dim, "ed_heat_ring", up(pos, 0.3));
+      particle(dim, "fx_flash", c);
+      burst(dim, "ed_heat_ember", c, 3, 6);
+      ring(dim, "ed_heat_steam", up(pos, 1), 3.5, 5);
+      for (const e of hostiles(dim, add(pos, mul(back, 2)), ED02.dischargeRadius, caster)) {
+        if (damage(e, ED02.dischargeDamage, caster)) {
+          knockback(e, pos, ED02.dischargeKnock, 0.5);
+          burn(e);
+        }
+      }
+      wave = scene.spawn("ed_heat_wave", lanePoint(sf), { yaw: waveYaw, state: WAVE2.rise });
+      scene.after(7, () => wave?.state(WAVE2.travel));
+    });
+    scene.every(1, (e) => {
+      sf = Math.max(sEnd, sf - step);
+      const fp = lanePoint(sf);
+      wave?.move(fp, waveYaw);
+      if (e % 2 === 0) particle(dim, "ed_heat_wavefront", up(fp, 1.2));
+      if (e % 3 === 1) particle(dim, "ed_heat_haze", up(add(fp, mul(d, 1.5)), 0.8));
+      while (sf <= nextGlass && nextGlass >= sEnd) {
+        spawnGlass(nextGlass);
+        nextGlass -= ED02.glassEvery;
+      }
+      for (const t of hostiles(dim, fp, ED02.waveHalfWidth + 2.5, caster)) {
+        if (waved.has(t.id) || !isAlive(t)) continue;
+        const rel = flat(sub(t.location, W2));
+        const along = dot(rel, d);
+        if (Math.abs(dot(rel, rv)) > ED02.waveHalfWidth || along < sf - 1 || along > sStart + 2.5) continue;
+        waved.add(t.id);
+        if (damage(t, ED02.waveDamage, caster)) {
+          shove(t, back, ED02.waveKnockH, ED02.waveKnockV);
+          burn(t);
+        }
+        particle(dim, "ed_heat_ember", up(t.location, 1));
+      }
+    }, tR + 1, tR + 1 + waveTicks);
+    scene.at(tR + 1 + waveTicks, () => {
+      wave?.state(WAVE2.burst);
+      particle(dim, "ed_heat_wavefront", up(lanePoint(sEnd), 1));
+      const w = wave;
+      scene.after(12, () => {
+        if (w) scene.despawn(w);
+      });
+    });
+    const tCool = tR + Math.max(10, waveTicks - 4);
+    scene.at(tCool, () => {
+      dragon.state(S4.cool).skin(SKIN2.ignited);
+      lane?.state(LANE.fade);
+      ring(dim, "ed_heat_steam", up(pos, 4), 2.5, 4);
+    });
+    scene.at(tCool + 10, () => {
+      if (lane) scene.despawn(lane);
+    });
+    scene.at(tCool + 12, () => dragon.skin(SKIN2.cool));
+    const tPant = tCool + T5.cool;
+    scene.at(tPant, () => dragon.state(S4.pant));
+    const tDep = tPant + ED02.pantTicks;
+    scene.at(tDep, () => {
+      dragon.state(S4.depart);
+      particle(dim, "ed_heat_steam", up(pos, 3));
+    });
+    scene.at(tDep + 14, () => burst(dim, "ed_heat_slag", up(pos, 2.5), 2.5, 4));
+    scene.at(tDep + 26, () => {
+      burst(dim, "ed_heat_slag", up(pos, 1), 2, 3);
+      particle(dim, "ed_heat_steam", up(pos, 1));
+    });
+    scene.at(tDep + T5.depart, () => scene.despawn(dragon));
+    scene.endAt(tDep + T5.depart + 2);
+  }
 });
 
 // src/config/ed03.ts
@@ -6485,7 +7540,7 @@ var D2 = {
   roar: 14,
   attack_c: 15
 };
-var T5 = {
+var T6 = {
   arrive: 20,
   land: 16,
   landHit: 5,
@@ -6510,18 +7565,18 @@ var CROWN_R = 4;
 var CUR_SWEEP = 160;
 var tMass = 4;
 var tArrive = 18;
-var tSwim = tArrive + T5.arrive;
+var tSwim = tArrive + T6.arrive;
 var tLand = 70;
-var tPower = tLand + T5.land;
+var tPower = tLand + T6.land;
 var tSweep = 114;
-var tFlare = tSweep + T5.sweep;
-var tFreeze = tFlare + T5.flareHit + 2;
+var tFlare = tSweep + T6.sweep;
+var tFreeze = tFlare + T6.flareHit + 2;
 var tSpiral = 174;
 var tRoar = 182;
 var tCrown = 188;
 var tRise = 190;
-var tStrike = tRoar + T5.roar - 2;
-var tHit = tStrike + T5.strikeHit;
+var tStrike = tRoar + T6.roar - 2;
+var tHit = tStrike + T6.strikeHit;
 var WAVE_GAP = 9;
 var ed03_abyssal_cryotitan_default = defineSpell("ed03", ({ caster, scene, aim }) => {
   const dim = scene.dim;
@@ -6621,7 +7676,7 @@ var ed03_abyssal_cryotitan_default = defineSpell("ed03", ({ caster, scene, aim }
     if (mass) scene.despawn(mass);
   });
   scene.at(tLand, () => dragon.state(D2.land).move(L3, yawLand));
-  scene.at(tLand + T5.landHit, () => {
+  scene.at(tLand + T6.landHit, () => {
     sound(dim, "ed_tide_splash", L3, 1.4, 0.85);
     particle(dim, "ed_tide_frost_ring", up(L3, 0.2));
     ring(dim, "ed_tide_splash", up(L3, 0.3), 3, 6);
@@ -6638,10 +7693,10 @@ var ed03_abyssal_cryotitan_default = defineSpell("ed03", ({ caster, scene, aim }
     const f = el / 5 % 4 / 3;
     particle(dim, "ed_tide_flake", up(sub(L3, mul(rt, -1.5 + 3.5 * f)), 7 + f));
   }, tPower + 6, tRoar);
-  scene.at(tPower + T5.power, () => dragon.state(D2.idle));
+  scene.at(tPower + T6.power, () => dragon.state(D2.idle));
   const currents = [];
   scene.at(tSweep, () => dragon.state(D2.attack_a));
-  T5.sweepHit.forEach((h, w) => scene.at(tSweep + h, () => throwCurrents(w * 2, w === 0 ? 55 : 28)));
+  T6.sweepHit.forEach((h, w) => scene.at(tSweep + h, () => throwCurrents(w * 2, w === 0 ? 55 : 28)));
   function throwCurrents(k0, alpha) {
     const tip = tailTip(alpha);
     let dir = norm(flat(sub(tip, G)));
@@ -6690,12 +7745,12 @@ var ed03_abyssal_cryotitan_default = defineSpell("ed03", ({ caster, scene, aim }
         break;
       }
     }
-  }, tSweep + T5.sweepHit[0], tFreeze + 4);
+  }, tSweep + T6.sweepHit[0], tFreeze + 4);
   scene.every(4, (el) => {
     for (const c of currents) if (scene.tick - c.born > 6) particle(dim, "ed_tide_spray", arcPoint(c, el * 37 % CUR_SWEEP, 0.6));
-  }, tSweep + T5.sweepHit[0] + 4, tFreeze);
+  }, tSweep + T6.sweepHit[0] + 4, tFreeze);
   scene.at(tFlare, () => dragon.state(D2.attack_c));
-  scene.at(tFlare + T5.flareHit, () => {
+  scene.at(tFlare + T6.flareHit, () => {
     sound(dim, "ed_tide_freeze", G, 1.4);
     burst(dim, "ed_tide_glint", sailPeak, 2, 6);
     const tip = tailTip(10);
@@ -6704,7 +7759,7 @@ var ed03_abyssal_cryotitan_default = defineSpell("ed03", ({ caster, scene, aim }
       line(dim, "ed_tide_frostline", tip, arcPoint(c, 0, 0.6), 4);
     }
   });
-  scene.at(tFlare + T5.flare, () => dragon.state(D2.idle));
+  scene.at(tFlare + T6.flare, () => dragon.state(D2.idle));
   const frozen = /* @__PURE__ */ new Map();
   const tShatter = tHit + 2 * WAVE_GAP + ED03.shardFlight;
   function freeze(e) {
@@ -6772,7 +7827,7 @@ var ed03_abyssal_cryotitan_default = defineSpell("ed03", ({ caster, scene, aim }
     for (const b of barriers) tb.removeColumn(b.x, b.y, b.z, ED03.barrierHeight);
   });
   scene.at(tRise + 16, () => currents.forEach((c) => scene.despawn(c.a)));
-  scene.at(tRoar + T5.roar, () => dragon.state(D2.idle));
+  scene.at(tRoar + T6.roar, () => dragon.state(D2.idle));
   let warn;
   scene.at(tHit - 20, () => {
     warn = scene.spawn("telegraph", G, { kind: 2, size: Rc + ED03.finalExtra, state: 1 });
@@ -6855,10 +7910,10 @@ var ed03_abyssal_cryotitan_default = defineSpell("ed03", ({ caster, scene, aim }
   });
   const tDepart = tFinal + 4;
   scene.at(tDepart, () => dragon.state(D2.depart));
-  scene.every(6, (el) => particle(dim, "ed_tide_mist", up(sub(L3, mul(rt, -2 + el * 0.2)), 2 + el * 0.08)), tDepart + 6, tDepart + T5.depart);
+  scene.every(6, (el) => particle(dim, "ed_tide_mist", up(sub(L3, mul(rt, -2 + el * 0.2)), 2 + el * 0.08)), tDepart + 6, tDepart + T6.depart);
   scene.at(tDepart + 20, () => ring(dim, "ed_tide_splash", up(L3, 0.3), 3.5, 6));
-  scene.at(tDepart + T5.depart, () => scene.despawn(dragon));
-  scene.endAt(tDepart + T5.depart + 4);
+  scene.at(tDepart + T6.depart, () => scene.despawn(dragon));
+  scene.endAt(tDepart + T6.depart + 4);
 });
 
 // src/config/ed04.ts
@@ -6942,8 +7997,8 @@ var ED04 = {
 };
 
 // src/spells/ed04_aether_raptor.ts
-var ACTOR4 = "dragon_air";
-var S4 = {
+var ACTOR5 = "dragon_air";
+var S5 = {
   hidden: 0,
   arrive: 1,
   idle: 2,
@@ -7027,7 +8082,7 @@ var ed04_aether_raptor_default = defineSpell("ed04", ({ caster, scene, aim }) =>
     const r = ED04.spiralR0 + (ED04.passRadius - ED04.spiralR0) * e;
     const q = polar(center, r, ang);
     return { x: q.x, y: v0.y + (ED04.descentHeight - ED04.passHeight) * Math.pow(1 - p, 1.3), z: q.z };
-  }, 0, S4.arrive);
+  }, 0, S5.arrive);
   const passLegs = [];
   for (let k2 = 0; k2 < 4; k2++) {
     passLegs.push(splineLeg("pass", passes[k2], ED04.passSpeed, k2));
@@ -7057,12 +8112,12 @@ var ed04_aether_raptor_default = defineSpell("ed04", ({ caster, scene, aim }) =>
   const flareEnd = up(add(center, mul(diveDir, ED04.diveRun + 4)), 2.6);
   const landAt = groundBelow(dim, up(add(center, mul(diveDir, ED04.diveRun + 6)), 6), 30);
   const climbLeg = splineLeg("climb", [lastP, up(lerp(lastP, hold, 0.5), 4), hold], ED04.climbSpeed);
-  const holdLeg = addLeg("hold", ED04.holdTicks, (p) => add(hold, { x: -diveDir.x * 1.2 * smooth(p), y: 0.8 * Math.sin(p * Math.PI), z: -diveDir.z * 1.2 * smooth(p) }), 0, S4.power);
+  const holdLeg = addLeg("hold", ED04.holdTicks, (p) => add(hold, { x: -diveDir.x * 1.2 * smooth(p), y: 0.8 * Math.sin(p * Math.PI), z: -diveDir.z * 1.2 * smooth(p) }), 0, S5.power);
   const holdEnd = holdLeg.at(1);
   const divePts = [holdEnd, lerp(holdEnd, lowA, 0.6), lowA, lowM, lowB];
-  const diveLeg = addLeg("dive", ED04.diveTicks, (p) => spline(divePts, Math.pow(p, 1.45)), 0, S4.stoop);
-  const flareLeg = addLeg("flare", ED04.flareTicks, (p) => lerp(lowB, flareEnd, easeOut(p)), 0, S4.flare);
-  const landLeg = addLeg("land", ED04.landTicks, (p) => lerp(flareEnd, landAt, smooth(p)), 0, S4.land);
+  const diveLeg = addLeg("dive", ED04.diveTicks, (p) => spline(divePts, Math.pow(p, 1.45)), 0, S5.stoop);
+  const flareLeg = addLeg("flare", ED04.flareTicks, (p) => lerp(lowB, flareEnd, easeOut(p)), 0, S5.flare);
+  const landLeg = addLeg("land", ED04.landTicks, (p) => lerp(flareEnd, landAt, smooth(p)), 0, S5.land);
   const tFlightEnd = landLeg.to;
   const tDepart = tFlightEnd + ED04.perchTicks;
   const diveYaw = yawOf(diveDir);
@@ -7089,10 +8144,10 @@ var ed04_aether_raptor_default = defineSpell("ed04", ({ caster, scene, aim }) =>
     scene.despawn(cloudA);
     scene.despawn(cloudB);
   });
-  const dragon = scene.spawn(ACTOR4, posAt(8), { yaw: yawOf(sub(posAt(9), posAt(8))), state: S4.arrive });
+  const dragon = scene.spawn(ACTOR5, posAt(8), { yaw: yawOf(sub(posAt(9), posAt(8))), state: S5.arrive });
   scene.at(9, () => burst(dim, "ed_air_feather", up(posAt(9), 1), 1.5, 3));
   scene.at(arriveLeg.from + 30, () => burst(dim, "ed_air_feather", up(posAt(scene.tick), 1), 2, 4));
-  let cur = S4.arrive, lockUntil = arriveLeg.to, dwellUntil = 0, yaw = dragon.yaw, dyawF = 0;
+  let cur = S5.arrive, lockUntil = arriveLeg.to, dwellUntil = 0, yaw = dragon.yaw, dyawF = 0;
   let legIdx = -1;
   const setState = (n, lock = 0) => {
     if (n !== cur) {
@@ -7131,10 +8186,10 @@ var ed04_aether_raptor_default = defineSpell("ed04", ({ caster, scene, aim }) =>
     if (leg.pilot !== void 0) {
       if (t >= lockUntil) setState(leg.pilot);
     } else if (t >= lockUntil && t >= dwellUntil) {
-      let want = S4.glide;
-      if (dyawF > ED04.bankRate) want = S4.turn_r;
-      else if (dyawF < -ED04.bankRate) want = S4.turn_l;
-      else if (d.y > 0.12) want = S4.move;
+      let want = S5.glide;
+      if (dyawF > ED04.bankRate) want = S5.turn_r;
+      else if (dyawF < -ED04.bankRate) want = S5.turn_l;
+      else if (d.y > 0.12) want = S5.move;
       setState(want);
     }
     if (leg.kind === "pass") passTick(leg, pos, d);
@@ -7143,14 +8198,14 @@ var ed04_aether_raptor_default = defineSpell("ed04", ({ caster, scene, aim }) =>
   function onLegStart(leg, pos) {
     if (leg.kind === "pass") {
       const talon = leg.idx % 2 === 1;
-      setState(S4.glide);
-      scene.after(1, () => setState(talon ? S4.attack_b : S4.attack_a, 14));
+      setState(S5.glide);
+      scene.after(1, () => setState(talon ? S5.attack_b : S5.attack_a, 14));
       sound(dim, "ed_air_ribbon", pos, 1.1, 0.9 + leg.idx * 0.07);
       sound(dim, talon ? "ed_air_chirr" : "ed_air_whistle", pos, 1, 1 + leg.idx * 0.05);
       anchor = { ...pos };
     } else if (leg.kind === "turn") {
       sound(dim, "ed_air_flap", pos, 1, 1.1);
-      if (leg.idx === 1) setState(S4.roll, 18);
+      if (leg.idx === 1) setState(S5.roll, 18);
       burst(dim, "ed_air_feather", up(pos, 1), 1.2, 2);
     } else if (leg.kind === "climb") {
       startCadenza();
@@ -7303,11 +8358,11 @@ var ed04_aether_raptor_default = defineSpell("ed04", ({ caster, scene, aim }) =>
   }
   scene.at(tFlightEnd, () => {
     dragon.move(landAt, diveYaw);
-    dragon.state(S4.idle);
+    dragon.state(S5.idle);
     sound(dim, "ed_air_chirr", landAt, 1);
   });
   scene.at(tDepart, () => {
-    dragon.state(S4.depart);
+    dragon.state(S5.depart);
     sound(dim, "ed_air_depart", up(landAt, 2), 1.3);
   });
   scene.at(tDepart + 10, () => {
