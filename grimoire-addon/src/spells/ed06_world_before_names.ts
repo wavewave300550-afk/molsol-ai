@@ -10,7 +10,7 @@ import {
   V3, add, angleDelta, bezier, clamp, distToSegment, distXZ, dot, easeOut, flat, fromYaw, lerp, mul, norm, right, smooth, sub,
   up, yawOf,
 } from "../lib/vec";
-import { ArcPath, Frame, Mover, hash01 } from "./_ed06_motion";
+import { ArcPath, Frame, Mover, hash01, stadium } from "./_ed06_motion";
 
 // ================================================================================================
 // Mirrors of the asset modules (keep in sync).
@@ -104,11 +104,13 @@ const T_END = T_SEAL + 78;
 const ST = {
   codexK1: [30, 0, 6.3], codexK2: [46, -20, 11], codexK3: [26, -1, 4.8],
   emblems: [[50, -6, 2.4], [30, 17, 1.4], [33, -12, 1.6], [36, 6, 1.5]] as [number, number, number][],
-  natureLane: 50, natureFrom: -6,
-  heatA: [30, 17], heatB: [21, 9.5],
+  natureLane: 56, natureFrom: -6,
+  heatA: [30, 18.5], heatB: [22, 12],
   stones: [[27.5, 10.8], [23.5, 15.7], [20.6, 13.6]] as [number, number][],
-  tideC: [33, -12], tideA: 10, tideB: 4.5, tideH: 1.6,
-  airC: [42, 0], airA: 14, airB: 4, airH: 11.5,
+  // racetrack lanes (straight L, ends of radius rho): the 25-block Tide Dragon never turns tighter than 11 blocks,
+  // the Air Dragon banks on 12 (checked by tools/motion_check.py)
+  tideC: [30, -20], tideL: 2, tideRho: 11, tideH: 1.6,
+  airC: [33, 0], airL: 12, airRho: 11, airH: 14,
   groves: [[20, -21, 0], [17, 21, 1], [31, -27, 2], [29, 25, 3], [53, -20, 0], [56, 15, 1], [12, -15, 3], [13, 15, 2]] as
     [number, number, number][],
 };
@@ -211,9 +213,10 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     // the ring's low (amphitheatre) side is its -X side: turn it so that side faces the caster
     const yawL = yawOf(L);
     const ringYaw = dot(sub(C0, G), right(L)) < 0 ? yawL : yawL + 180;
-    // the Water & Ice Dragon settles on the left, behind the ring, its head toward the zone
-    const TL = ground(add(add(G, mul(F, 12)), mul(R, -14)));
-    Z = { G, L, yawL, SF, TL, tideYaw: yawOf(sub(G, TL)), ringYaw };
+    // the Water & Ice Dragon settles ON its own lane (120 degrees into its near end, left of the zone), facing
+    // along the lane with its tail toward the zone - it only has to slow down there, never to turn
+    const TL = ground(loop.at(S_TL_LEN));
+    Z = { G, L, yawL, SF, TL, tideYaw: yawOf(flat(sub(loop.at(S_TL_LEN + 1), loop.at(S_TL_LEN - 1)))), ringYaw };
     return Z;
   }
 
@@ -420,7 +423,10 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
   let nR = ST.natureFrom;
   const N0 = ground(nPos(nR));
   const nature = scene.spawn(NATURE.actor, N0, { yaw: nYaw0, state: N.hidden, skin: N_SKIN.normal });
-  const natMv = new Mover(nature, N0, nYaw0, T_NATURE, gy);
+  const natMv = new Mover(nature, N0, nYaw0, T_NATURE, gy).govern({
+    gaits: [{ state: N.move, speed: N_WALK }], free: [N.arrive, N.depart],
+    turn: { left: N.turn_l, right: N.turn_r, above: 7 }, idle: N.idle,
+  });
   const footprints: V3[] = [];
   let nWalking = false;
   const DR_ = (N_WALK / 20);                           // blocks per tick of walking
@@ -619,7 +625,10 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
   const H0 = ground(sub(H1, mul(dAB, (H_WALK / 20) * H_T.arriveWalk)));
   const yawIn = yawOf(dAB);
   const heat = scene.spawn(HEAT.actor, H0, { yaw: yawIn, state: H.hidden, skin: H_SKIN.cool });
-  const heatMv = new Mover(heat, H0, yawIn, T_HEAT, gy);
+  const heatMv = new Mover(heat, H0, yawIn, T_HEAT, gy).govern({
+    gaits: [{ state: H.walk, speed: H_WALK }, { state: H.move, speed: H_RUN }, { state: H.charge, speed: H_RUN }],
+    free: [H.arrive, H.skid, H.depart], turn: { left: H.turn_l, right: H.turn_r, above: 40 }, idle: H.idle,
+  });
   let planYaw = yawIn;
   let hHits = new Set<string>();
   let hDir: V3 = dAB;
@@ -632,7 +641,7 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     const d = angleDelta(planYaw, yawTo);
     planYaw = yawTo;
     if (Math.abs(d) < 6) return;
-    const ticks = Math.max(4, Math.round((Math.abs(d) / H_TURN) * 20));
+    const ticks = Math.max(6, Math.round((Math.abs(d) / (H_TURN / 1.5)) * 20));
     const y0 = yawTo - d, t0 = heatMv.cursor;
     scene.at(t0, () => heat.state(d > 0 ? H.turn_r : H.turn_l));
     heatMv.hold(ticks, undefined, "turn");
@@ -858,15 +867,21 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
 
   // ================================================================================== the Water & Ice Dragon
   const TC = sky(ST.tideC[0], ST.tideC[1], ST.tideH);
+  const tideLane = stadium(TC, R, F, ST.tideL, ST.tideRho);
+  // arc length (blocks) of the landing point: past the far straight, 120 degrees into the near (right) end
+  const S_TL = ((ST.tideL + ST.tideRho * ((120 * Math.PI) / 180)) / (2 * ST.tideL + 2 * Math.PI * ST.tideRho));
   const loop = new ArcPath((u) => {
-    const a = u * 2 * Math.PI;
-    const p = add(TC, add(mul(R, ST.tideA * Math.sin(a)), mul(F, ST.tideB * Math.sin(2 * a))));
-    return { x: p.x, y: TC.y + 1.3 * Math.sin(a + 0.6), z: p.z };
+    const p = tideLane(u);
+    return { x: p.x, y: TC.y + 1.3 * Math.sin(u * 4 * Math.PI + 0.6), z: p.z };
   }, 160, true);
   const loopTan = (s: number): number => yawOf(sub(loop.at(s + 0.5), loop.at(s - 0.5)));
+  const S_TL_LEN = S_TL * loop.length;
   const M0 = loop.at(0);
   const tide = scene.spawn(TIDE.actor, M0, { yaw: loopTan(0), state: D.hidden, skin: 0 });
-  const tideMv = new Mover(tide, M0, loopTan(0), T_TIDE);
+  const tideMv = new Mover(tide, M0, loopTan(0), T_TIDE).govern({
+    gaits: [{ state: D.move, speed: 2.5 }, { state: D.swim, speed: D_SWIM }], free: [D.arrive, D.land, D.depart],
+    turn: { left: D.turn_l, right: D.turn_r, above: 30 }, idle: D.idle, swims: true,
+  });
   tideMv.maxTurn = 12;
   const tSwim = T_TIDE + D_T.arrive;
   tideMv.hold(D_T.arrive, loopTan(0));
@@ -991,14 +1006,67 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
 
   // ================================================================================== the Air Dragon
   const airC = sky(ST.airC[0], ST.airC[1], ST.airH);
-  /** The Air Dragon's sky lane: a figure-eight across the view, parameter in degrees. */
+  /** The Air Dragon's sky lane: a racetrack across the view (banks on a 12-block radius), parameter in degrees. */
+  const airLane = stadium(airC, R, F, ST.airL, ST.airRho);
   const ellipse = (deg: number, t: number): V3 => {
-    const a = (deg * Math.PI) / 180;
-    const p = add(airC, add(mul(R, ST.airA * Math.sin(a)), mul(F, ST.airB * Math.sin(2 * a))));
+    const p = airLane(deg / 360);
     return { x: p.x, y: airC.y + 0.8 * Math.sin(t * 0.06), z: p.z };
   };
   const ELLIPSE = new ArcPath((u) => ellipse(u * 360, 0), 120, true);
   const OMEGA = ((16 / 20) / ELLIPSE.length) * 360;    // deg of lane parameter per tick at ~16 blocks / s
+  const laneTan = (d: number): V3 => norm(flat(sub(ellipse(d + 1, 0), ellipse(d - 1, 0))));
+  /**
+   * Where to join the lane coming from `from` heading `dir`: aim at a point 12 blocks before the joining
+   * spot along the lane, so the flight from `from` to there and on into the lane is one gentle curve.
+   */
+  const laneJoin = (from: V3, dir: V3): number => {
+    let best = 0, bs = Infinity;
+    for (let d = 0; d < 360; d += 2) {
+      const q = ellipse(d, 0), t = laneTan(d), P1 = sub(q, mul(t, 12));
+      const to = flat(sub(P1, from)), L_ = Math.hypot(to.x, to.z);
+      if (L_ < 10 || L_ > 45) continue;
+      const sc = Math.abs(angleDelta(yawOf(dir), yawOf(to))) * 2 + Math.abs(angleDelta(yawOf(to), yawOf(t))) * 2 + Math.abs(L_ - 16) * 0.4;
+      if (sc < bs) { bs = sc; best = d; }
+    }
+    return best;
+  };
+  /** Fly from `from` (heading `dir`) onto the lane without a kink, then keep circling. */
+  const joinLane = (from: V3, dir: V3, speed: number): void => {
+    const e = laneJoin(from, dir);
+    const q = ellipse(e, airMv.cursor + 30), P1 = sub(q, mul(laneTan(e), 12));
+    airMv.path([from, ...steer(from, yawOf(flat(dir)), P1, 10), P1, q], speed);
+    airOrbit(e, 4000);
+  };
+  /**
+   * Turn toward `target` on a circle of radius `rad` (no tighter), then the caller flies straight: the arc points
+   * from `from` (heading yaw0) until the heading points at the target (empty when it already does).
+   */
+  const steer = (from: V3, yaw0: number, target: V3, rad: number, climb = 0): V3[] => {
+    let deg = angleDelta(yaw0, yawOf(flat(sub(target, from))));
+    if (Math.abs(deg) < 12) return [];
+    let pts = arcPts(from, yaw0, deg, rad, climb);
+    for (let k = 0; k < 2; k++) {                     // the arc moves the start: correct the angle from its end
+      const end = pts[pts.length - 1], yEnd = yaw0 + deg;
+      deg += angleDelta(yEnd, yawOf(flat(sub(target, end))));
+      pts = arcPts(from, yaw0, deg, rad, climb);
+    }
+    return pts;
+  };
+  /** Points along a climbing circular turn: start p heading yaw0, turn deg (+ = yaw increasing = right), radius rad. */
+  const arcPts = (p: V3, yaw0: number, deg: number, rad: number, climb: number): V3[] => {
+    const n = Math.max(3, Math.ceil(Math.abs(deg) / 10));
+    const dTh = deg / n, ds = (rad * Math.abs(dTh) * Math.PI) / 180;
+    const pts: V3[] = [];
+    let q = { ...p }, y = yaw0;
+    for (let i = 0; i < n; i++) {
+      y += dTh / 2;
+      q = add(q, mul(fromYaw(y), ds));
+      y += dTh / 2;
+      q = { x: q.x, y: q.y + climb / n, z: q.z };
+      pts.push(q);
+    }
+    return pts;
+  };
   const ellDegAt = (p: V3): number => {                // nearest point of the lane
     let best = 0, bd = Infinity;
     for (let d = 0; d < 360; d += 4) { const q = ellipse(d, 0); const dd = distXZ(q, p); if (dd < bd) { bd = dd; best = d; } }
@@ -1033,10 +1101,11 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
   }, T_AIR - 24, T_AIR + 66);
   scene.at(T_AIR + 66, () => clouds.forEach((c) => c.state(CLOUD.fade)));
   scene.at(T_AIR + 90, () => clouds.forEach((c) => scene.despawn(c)));
-  airMv.add(A_T.arrive, (p) => bezier3([airStart, sky(50, 7, 16), sky(43, 12, 12.5), sky(37, 11, 11)], smooth(p)));
+  const AR1 = sky(46, 5, 18), AR2 = sky(38.5, 1.5, 16.5);
+  airMv.add(A_T.arrive, (p) => bezier3([airStart, sky(55, 10, 23), sky(50, 7.5, 19.5), AR1], smooth(p)));
   force(T_AIR, A_T.arrive, A.arrive);
   const tRoll = airMv.cursor;
-  airMv.add(A_T.roll, (p) => lerp(sky(37, 11, 11), sky(33, 4, 10), smooth(p)));
+  airMv.add(A_T.roll, (p) => lerp(AR1, AR2, p));                // the barrel roll keeps its line
   force(tRoll, A_T.roll, A.roll);
   const tGlide = airMv.cursor;
   let tStoop = 0, tFlap = 0;
@@ -1045,16 +1114,20 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     const rel = sub(G, C0);
     const gf = dot(rel, F), gr = dot(rel, R);
     airMv.truncate(tGlide);
-    airMv.path([sky(33, 4, 10), sky(29, gr * 0.6 - 2, 9.5), sky(gf + 8, gr - 1, 8)], 16);
+    const s0 = sky(gf + 13, gr - 3, 15.5), s1 = sky(gf + 2.5, gr - 3.5, 3.4);
+    airMv.path([AR2, lerp(AR2, s0, 0.5), s0], 16);
     tStoop = airMv.cursor;
-    const s0 = sky(gf + 8, gr - 1, 8), s1 = sky(gf + 2.5, gr, 3.2);
-    airMv.add(A_T.stoop, (p) => lerp(s0, s1, p * p));
+    // speed rises 16 -> 40 blocks / s over the dive: distance = v0 p + (v1 - v0) p^2 / 2 (normalised)
+    airMv.add(A_T.stoop, (p) => lerp(s0, s1, (16 * p + 12 * p * p) / 28));
     force(tStoop, A_T.stoop, A.stoop);
     tFlap = airMv.cursor;
-    const e0 = ellDegAt(sky(gf + 22, gr + 9, 12)) + 8;
-    airMv.path([s1, sky(gf - 1, gr + 4, 5), sky(gf + 5, gr + 9, 7.5), sky(gf + 14, gr + 10, 10.5), ellipse(e0, airMv.cursor + 30)], 12);
+    // pull-up: a climbing half circle of radius 11 to the left of the enemies, then straight on, climbing
+    const yS = yawOf(flat(sub(s1, s0)));
+    const turn = arcPts(s1, yS, 180, 9.5, 11);
+    const w4 = turn[turn.length - 1], w5 = up(add(w4, mul(fromYaw(yS + 180), 8)), 1.5);
+    airMv.path([s1, ...turn, w5], 13);
     force(tFlap, airMv.cursor - tFlap, A.move);
-    airOrbit(e0, 4000);
+    joinLane(w5, fromYaw(yS + 180), 14);
     scene.at(tStoop, () => { sound(dim, "ed_air_dive", s0, 1.8); particle(dim, "ed_air_boom", s0); particle(dim, "ed6_ring_v", s0); });
     scene.at(tFlap, () => {
       const g = ground(s1);
@@ -1083,9 +1156,12 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     else if ((seg.tag === "circle" || seg.tag === "helix") && (t - seg.from) % 96 >= 70 && (t - seg.from) % 96 < 86) want = A.move;
     else {
       const vy = airMv.posAt(t + 1).y - airMv.posAt(t).y;
-      want = airMv.yawRate > A_BANK ? A.turn_r : airMv.yawRate < -A_BANK ? A.turn_l : vy > 0.1 ? A.move : A.glide;
+      const q0 = airMv.posAt(t), q1 = airMv.posAt(t + 1);
+      const sp = Math.hypot(q1.x - q0.x, q1.y - q0.y, q1.z - q0.z) * 20;
+      want = sp < 4.5 ? A.flutter : sp < 13 ? A.move
+        : airMv.yawRate > A_BANK ? A.turn_r : airMv.yawRate < -A_BANK ? A.turn_l : vy > 0.1 || sp < 15 ? A.move : A.glide;
     }
-    if (want !== airState && (f || t >= airDwell)) { air.state(want); airState = want; airDwell = t + 8; }
+    if (want !== airState && (f || t >= airDwell)) { air.state(want); airState = want; airDwell = t + 5; }
   }
   scene.every(1, () => airTick(scene.tick), T_AIR + 1, T_END);
 
@@ -1093,15 +1169,14 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
   const debris: { a: Actor; at: V3 }[] = [];
   const AH = sky(34, -2, 11);
   scene.at(T3 + 130, () => {
+    const y0 = yawOf(flat(sub(airMv.posAt(T3 + 131), airMv.posAt(T3 + 130))));
     const p0 = airBreak(T3 + 130);
-    airMv.path([p0, lerp(p0, AH, 0.5), AH], 14);
+    airMv.path([p0, ...steer(p0, y0, AH, 10), AH], 14);
     const tP = airMv.cursor;
     airMv.add(A_T.power + 10, (p) => add(AH, mul(F, -1.2 * smooth(p))), { yaw: yawOf(mul(F, -1)) });
     force(tP, A_T.power + 10, A.power);
     const back = airMv.last;
-    const e1 = ellDegAt(back) + 20;
-    airMv.path([back, up(lerp(back, ellipse(e1, 0), 0.5), 1.5), ellipse(e1, airMv.cursor + 24)], 14);
-    airOrbit(e1, 4000);
+    joinLane(back, mul(F, -1), 14);
     scene.at(tP, () => {
       air.skin(1);
       sound(dim, "ed_air_call", AH, 1.8);
@@ -1250,10 +1325,10 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     const from = heatMv.last;
     const mid = ground(lerp(from, z.SF, 0.5));
     const side = norm(flat(sub(z.SF, from)));
-    const pts = [from, add(mid, mul(right(side), 3)), z.SF];
+    const pts = [from, add(mid, mul(right(side), 1)), z.SF];
     const t0 = heatMv.cursor;
     planYaw = yawOf(side);
-    heatMv.path(pts, H_RUN * 0.7, { tag: "run" });
+    heatMv.path(pts, H_RUN, { tag: "run" });
     scene.at(t0, () => heat.state(H.move));
     const tStop = heatMv.cursor;
     heatMv.hold(H_T.skid, yawOf(sub(pts[2], pts[1])), "skidstop");
@@ -1264,8 +1339,8 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     const pa = ground(add(z.SF, mul(P, 3.5))), pb = ground(sub(z.SF, mul(P, 3.5)));
     for (const [a, b] of [[z.SF, pa], [pa, pb], [pb, z.SF]] as [V3, V3][]) {
       hTurn(yawOf(sub(b, a)));
-      const ts = heatMv.cursor, n = Math.max(6, Math.round((distXZ(a, b) / H_WALK) * 20));
-      heatMv.add(n, (p) => lerp(a, b, smooth(p)), { yaw: yawOf(sub(b, a)), tag: "pace" });
+      const ts = heatMv.cursor;
+      heatMv.walk(a, b, H_WALK, { tag: "pace" });
       scene.at(ts, () => { heat.state(H.walk); sound(dim, "ed_heat_snort", up(a, 3), 1.2); });
       if (heatMv.cursor > T4 + 190) break;
     }
@@ -1311,7 +1386,7 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
   }, T4 + 4, T4 + 300);
 
   // ---- 1. Geological shockwaves (Nature): it turns toward the zone, raises the ring, slams the earth
-  const yN = nYaw0, N_TURN_DEG = 30, nTurnT = Math.round((N_TURN_DEG / N_TURN) * 20);   // at its documented turn rate
+  const yN = nYaw0, N_TURN_DEG = 30, nTurnT = Math.round((N_TURN_DEG / (N_TURN / 1.5)) * 20);   // eased: peaks at its turn rate
   natMv.hold(nTurnT, undefined);
   natMv.segs[natMv.segs.length - 1].yaw = (t: number) => yN + N_TURN_DEG * smooth((t - T4) / nTurnT);
   nHold(T5 - natMv.cursor, yN + N_TURN_DEG);
@@ -1402,17 +1477,18 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
   scene.at(tSlam + N_T.attackA, () => nature.state(N.idle));
 
   // ---- the Tide Dragon leaves its figure-eight and lands beside the ring (behind it, to the left)
-  scene.at(T4 + 40, () => {
+  scene.at(T4 - 70, () => {
     const z = zone();
-    const cur = tideMv.posAt(T4 + 40), s = tideS(T4 + 40);
-    const app = up(local(z.TL, z.tideYaw, 0, -9), 3.5);
-    const tan = norm(sub(loop.at(s + 1), loop.at(s - 1)));
-    const lead = add(cur, mul(tan, 7));
-    const side = add(lerp(lead, app, 0.5), mul(norm(flat(sub(app, z.G))), 6));
-    tideMv.truncate(T4 + 40);
-    tideMv.path([cur, lead, up(side, 1.5), app, up(local(z.TL, z.tideYaw, 0, -2.5), 2.2), up(z.TL, 1.4)], D_SWIM * 0.8, { tag: "swim" });
+    // it lands on its next pass over its spot (at least 1 s of swimming first, at most one lap - before T4 + 40)
+    const sNow = tideS(T4 - 70), lap = loop.length;
+    let sLand = Math.floor(sNow / lap) * lap + S_TL_LEN;
+    while (sLand < sNow + 14) sLand += lap;
+    const tb = tSwim + Math.round((sLand - 6) / (D_SWIM / 20));   // 6 blocks before the spot it starts to settle
+    tideMv.truncate(tb);
+    const s0 = sLand - 6;
     const tLand = tideMv.cursor;
-    tideMv.add(D_T.land, (p) => lerp(up(z.TL, 1.4), z.TL, smooth(p)), { yaw: z.tideYaw });
+    // it glides the last 6 blocks along its lane, slowing down from swim speed and sinking to the ground (no turn)
+    tideMv.add(D_T.land, (p) => { const q = loop.at(s0 + 6 * easeOut(p)); return { x: q.x, y: lerp(q, z.TL, smooth(p)).y, z: q.z }; });
     tideMv.hold(T5 + 40 - tideMv.cursor, z.tideYaw);
     scene.at(tLand, () => { tide.state(D.land); sound(dim, "ed_tide_land", z.TL, 1.6); });
     scene.at(tLand + D_T.landHit, () => {
@@ -1433,7 +1509,7 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
   scene.at(tSweep, () => { tide.state(D.attack_a); sound(dim, "ed_tide_sweep", zone().TL, 1.6); });
   D_T.sweepHit.forEach((hh, w) => scene.at(tSweep + hh, () => {
     const z = zone();
-    const tail = up(local(z.TL, z.tideYaw, 0, 8), 2);
+    const tail = up(local(z.TL, z.tideYaw, 0, -9), 2);
     let dir = norm(flat(sub(tail, z.G)));
     if (w === 1) dir = mul(dir, -1);
     sound(dim, "ed_tide_flow", tail, 1.5, 0.95 + w * 0.08);
@@ -1500,16 +1576,26 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
 
   // ---- 3. Spiraling ice and wind (Air): all four feathered surfaces drive a spiral column
   let spiral: Actor | undefined;
-  const HELIX_R = 5;
-  scene.at(T4 + 168, () => {
+  scene.at(T4 + 120, () => {
     const z = zone();
     const HC = add(z.G, mul(F, 6));
-    const p0 = airBreak(T4 + 168);
-    const hs = up(W.polar(HELIX_R, 0, 0, HC), 7.5);
-    airMv.path([p0, up(lerp(p0, hs, 0.5), 2), hs], 16);
+    const hs = up(add(HC, mul(F, -3)), 9);
+    // leave the lane where it already heads toward the hover point (around T4 + 168), along a smooth curve
+    let tb = T4 + 168, best = Infinity;
+    for (let t = T4 + 124; t <= T4 + 200; t += 2) {
+      const p = airMv.posAt(t), q = airMv.posAt(t + 1);
+      const to = sub(hs, p), d = Math.hypot(to.x, to.z);
+      if (d < 12) continue;
+      const off = Math.abs(angleDelta(yawOf(flat(sub(q, p))), yawOf(to)));
+      const score = off + Math.abs(t - (T4 + 168)) * 0.25;
+      if (score < best) { best = score; tb = t; }
+    }
+    const y0 = yawOf(flat(sub(airMv.posAt(tb + 1), airMv.posAt(tb))));
+    const p0 = airBreak(tb);
+    airMv.path([p0, ...steer(p0, y0, hs, 10), hs], 16);
     const tPw = airMv.cursor;
-    airMv.add(A_T.power, (p) => add(hs, mul(R, -1.5 * smooth(p))), { yaw: yawOf(mul(R, -1)) });
-    force(tPw, A_T.power, A.power);
+    airMv.add(A_T.power + 66, (p) => add(hs, mul(R, -1.5 * smooth(p))), { yaw: yawOf(mul(R, -1)) });
+    force(tPw, A_T.power + 66, A.power);
     scene.at(tPw, () => {
       air.skin(1);
       sound(dim, "ed_air_call", hs, 2.0);
@@ -1517,16 +1603,9 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
       particle(dim, "ed6_flash_air", hs);
       burst(dim, "ed_air_feather", hs, 2, 4);
     });
-    const tHx = airMv.cursor;
-    const start = add(hs, mul(R, -1.5));
-    const ang0 = (Math.atan2(-1.5, HELIX_R) * 180) / Math.PI;
-    const hx = (p: number): V3 => up(W.polar(HELIX_R, ang0 - 540 * p, 0, HC), 7.5 - 3 * Math.sin(p * Math.PI) - 0.8 * p);
-    airMv.add(2, (p) => lerp(start, hx(0), p));
-    airMv.add(64, (p) => hx(p), { tag: "helix" });
+    const tHx = tPw + A_T.power;
     const back = airMv.last;
-    const e1 = ellDegAt(back) + 25;
-    airMv.path([back, up(lerp(back, ellipse(e1, 0), 0.5), 3), ellipse(e1, airMv.cursor + 30)], 14);
-    airOrbit(e1, 4000);
+    joinLane(back, mul(R, -1), 14);
     scene.at(tHx, () => sound(dim, "ed_air_vortex", z.G, 1.8));
   });
   scene.at(T4 + 206, () => {
@@ -1621,8 +1700,8 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     const E = { ...heatMv.last }, E2 = ground(add(add(z.G, mul(F, 9)), mul(R, 3)));
     const toE2 = yawOf(sub(E2, E));
     hTurn(toE2);
-    const tw = heatMv.cursor, nW = Math.max(8, Math.round((distXZ(E, E2) / H_WALK) * 20));
-    heatMv.add(nW, (p) => lerp(E, E2, smooth(p)), { yaw: toE2, tag: "walkback" });
+    const tw = heatMv.cursor;
+    heatMv.walk(E, E2, H_WALK, { tag: "walkback" });
     scene.at(tw, () => { heat.state(H.walk); sound(dim, "ed_heat_snort", up(E, 3), 1.4); });
     hTurn(yawOf(mul(R, -1)));
     scene.at(heatMv.cursor, () => heat.state(H.pant));
@@ -1728,12 +1807,25 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
   });
   scene.at(T5 + 40, () => codex.state(CODEX.absorb));
   // Air: a controlled landing on the right of the stage, wings folded, then it becomes inscription
-  const PL = at(26, 15);
-  scene.at(T5 + 2, () => {
-    const p0 = airBreak(T5 + 2);
-    const dirL = mul(R, -1);
-    const app = up(add(PL, mul(dirL, -7)), 3.5);
-    airMv.path([p0, up(lerp(p0, app, 0.5), 2), app], 14);
+  const PL = at(30, 22);
+  scene.at(T5 + 12, () => {
+    // back on its lane after the Concord, it peels off where the lane already heads for the landing spot and lands
+    // facing the way it came: one descending glide, no hairpin
+    let tb = T5 + 30, best = Infinity;
+    for (let t = T5 + 16; t <= T5 + 70; t += 2) {
+      const p = airMv.posAt(t), q = airMv.posAt(t + 1);
+      const to = flat(sub(PL, p)), d = Math.hypot(to.x, to.z);
+      if (d < 14 || d > 32) continue;
+      const sc = Math.abs(angleDelta(yawOf(flat(sub(q, p))), yawOf(to))) * 2 + Math.abs(d - 20) * 0.5 + Math.abs(t - (T5 + 30)) * 0.1;
+      if (sc < best) { best = sc; tb = t; }
+    }
+    const y0 = yawOf(flat(sub(airMv.posAt(tb + 1), airMv.posAt(tb))));
+    const p0 = airBreak(tb);
+    const arcIn = steer(p0, y0, PL, 10);
+    const from = arcIn.length ? arcIn[arcIn.length - 1] : p0;
+    const dirL = norm(flat(sub(PL, from)));
+    const app = up(add(PL, mul(dirL, -9)), 3.5);
+    airMv.path([p0, ...arcIn, app], 14);
     const tF = airMv.cursor;
     airMv.add(A_T.flare, (p) => lerp(app, up(add(PL, mul(dirL, -1.5)), 1.4), easeOut(p)), { yaw: yawOf(dirL) });
     force(tF, A_T.flare, A.flare);

@@ -2,6 +2,21 @@ import { Actor } from "../lib/scene";
 import { V3, angleDelta, clamp, lerp, spline, yawOf } from "../lib/vec";
 
 /**
+ * How a creature travels: the looping states that carry it and the speed (blocks / s) each loop was
+ * authored for (its feet stay planted only at that speed), the states whose own animation travels or
+ * must never be replaced (one-shots: arrivals, skids, attacks...), the in-place turn states, and idle.
+ */
+export interface Gaits {
+  gaits: { state: number; speed: number }[];
+  free: number[];
+  /** in-place turns: left / right (right = yaw increasing), shown above `above` deg / s */
+  turn?: { left: number; right: number; above: number };
+  idle: number;
+  /** a swimmer also travels when it only rises or sinks (its speed is measured in 3D) */
+  swims?: boolean;
+}
+
+/**
  * ED06 choreography helpers: a timeline of motion segments per dragon (script-moved actors),
  * arc-length paths so creatures travel at their species' documented speeds, a frame of reference
  * anchored on the caster (the stage), and a tiny deterministic hash for scattering ambient effects.
@@ -28,11 +43,87 @@ export class Mover {
   /** Optional cap on how fast the facing may change (deg / tick, 0 = none): sharp path corners become turns. */
   maxTurn = 0;
   private ySmooth: number | undefined;
+  /** Measured horizontal and 3D speed (blocks / s) and turn rate (deg / s, + = yaw increasing). */
+  speed = 0;
+  speed3 = 0;
+  turnRate = 0;
+  private prevP: V3 | undefined;
+  private gov: { g: Gaits; raw: (n: number) => Actor; want: number; shown: number; moving: boolean; since: number } | undefined;
+  private active = false;
 
   constructor(public actor: Actor, start: V3, yaw: number, t0: number, private ground?: (p: V3) => number) {
     this.cursor = t0;
     this.last = { ...start };
     this.lastYaw = yaw;
+  }
+
+  /**
+   * Locomotion governor.  From now on the creature's visible state follows what its body actually does,
+   * whatever the choreography asked for: a standing or acting state never slides over the ground (while
+   * travelling the creature shows the travelling loop closest to its real speed), a travelling loop is
+   * never shown standing still (idle, or the in-place turn while it pivots), and the asked-for state
+   * returns as soon as the motion allows.  `actor.state(n)` keeps working; it records the request.
+   */
+  govern(g: Gaits): this {
+    const actor = this.actor;
+    const raw = actor.state.bind(actor) as (n: number) => Actor;
+    this.gov = { g, raw, want: 0, shown: 0, moving: false, since: 0 };
+    actor.state = (n: number) => {
+      const v = this.gov!;
+      v.want = n;
+      if (!this.active || n === 0 || g.free.includes(n)) { v.shown = n; raw(n); }   // one-shots start on their tick
+      return actor;
+    };
+    return this;
+  }
+  private decide(t: number, p: V3): void {
+    const v = this.gov!;
+    const w = v.want;
+    if (w === 0 || v.g.free.includes(w)) {
+      if (v.shown !== w) { v.shown = w; v.raw(w); }
+      return;
+    }
+    const sp = v.g.swims ? this.speed3 : this.speed;
+    v.moving = v.moving ? sp > 0.45 : sp > 0.9;
+    const gait = (s: number) => v.g.gaits.find((x) => x.state === s);
+    const isTurn = (s: number) => !!v.g.turn && (s === v.g.turn.left || s === v.g.turn.right);
+    let show = w;
+    if (v.moving) {
+      if (!gait(w)) {
+        let best = v.g.gaits[0], bd = Infinity;
+        for (const x of v.g.gaits) {
+          const d = Math.abs(Math.log(Math.max(sp, 0.1) / x.speed));
+          if (d < bd) { bd = d; best = x; }
+        }
+        show = best.state;
+      }
+    } else if (v.g.turn && Math.abs(this.turnRate) > v.g.turn.above) {
+      show = this.turnRate > 0 ? v.g.turn.right : v.g.turn.left;
+    } else if (gait(w) || isTurn(w)) {
+      show = v.g.idle;
+    }
+    if (show !== v.shown && t - v.since >= 4) { v.shown = show; v.since = t; v.raw(show); }
+    void p;
+  }
+
+  /**
+   * Walk from a to b at `speed` (blocks / s) with short starts and stops (`ramp` seconds each) - a
+   * trapezoid of speed, so the gait's own speed holds for the whole stretch instead of an ease curve
+   * that is too slow at the ends and too fast in the middle.
+   */
+  walk(a: V3, b: V3, speed: number, opts: { ramp?: number; tag?: string; yaw?: Seg["yaw"] } = {}): Seg {
+    const D = Math.hypot(b.x - a.x, b.z - a.z);
+    const ramp = Math.min(opts.ramp ?? 0.25, (D / speed) / 2);
+    const cruise = Math.max(0, D / speed - ramp);             // seconds at full speed (each ramp covers half its time)
+    const T = cruise + 2 * ramp;
+    const ticks = Math.max(2, Math.round(T * 20));
+    const dist = (s: number): number => {                       // metres covered after s seconds
+      if (s < ramp) return (speed * s * s) / (2 * ramp);
+      if (s < ramp + cruise) return (speed * ramp) / 2 + speed * (s - ramp);
+      const r = T - s;
+      return D - (speed * r * r) / (2 * ramp);
+    };
+    return this.add(ticks, (p) => lerp(a, b, D > 1e-6 ? clamp(dist(p * T) / D, 0, 1) : 1), { tag: opts.tag, yaw: opts.yaw ?? yawOf({ x: b.x - a.x, y: 0, z: b.z - a.z }) });
   }
 
   add(ticks: number, at: (p: number, t: number) => V3, opts: { yaw?: Seg["yaw"]; tag?: string } = {}): Seg {
@@ -103,12 +194,21 @@ export class Mover {
       } else this.yawRate *= 0.7;
     }
     if (this.maxTurn > 0) want = this.lastYaw + clamp(angleDelta(this.lastYaw, want), -this.maxTurn, this.maxTurn);
+    const dYaw = angleDelta(this.lastYaw, want) * 20;
     this.lastYaw = want;
     if (this.ground) {
       const g = this.ground(p);
       this.ySmooth = this.ySmooth === undefined ? g : this.ySmooth + clamp(g - this.ySmooth, -0.35, 0.35);
       p = { x: p.x, y: this.ySmooth, z: p.z };
     }
+    const sp = this.prevP ? Math.hypot(p.x - this.prevP.x, p.z - this.prevP.z) * 20 : 0;
+    const sp3 = this.prevP ? Math.hypot(p.x - this.prevP.x, p.y - this.prevP.y, p.z - this.prevP.z) * 20 : 0;
+    this.speed = this.active ? this.speed * 0.35 + sp * 0.65 : 0;
+    this.speed3 = this.active ? this.speed3 * 0.35 + sp3 * 0.65 : 0;
+    this.turnRate = this.active ? this.turnRate * 0.35 + dYaw * 0.65 : 0;
+    this.prevP = p;
+    this.active = true;
+    if (this.gov) this.decide(t, p);
     this.actor.move(p, this.lastYaw);
     return p;
   }
@@ -162,4 +262,26 @@ export class Frame {
 export function hash01(a: number, b = 0): number {
   const x = Math.sin(a * 12.9898 + b * 78.233 + 0.5) * 43758.5453;
   return x - Math.floor(x);
+}
+
+/**
+ * A racetrack (stadium) lane: two straights of length L joined by half circles of radius rho, so the
+ * tightest turn anywhere on it is rho.  u in 0..1 is arc length (constant speed); lateral axis R, depth F
+ * around centre c (y = c.y).  Figure-eights built from sine curves were replaced by this: their lobe
+ * shoulders turn on a 2-4 block radius whatever their size, far too tight for a 13-25 block dragon.
+ */
+export function stadium(c: V3, R: V3, F: V3, L: number, rho: number): (u: number) => V3 {
+  const P = 2 * L + 2 * Math.PI * rho;
+  const at = (x: number, y: number): V3 => ({ x: c.x + R.x * x + F.x * y, y: c.y, z: c.z + R.z * x + F.z * y });
+  return (u: number): V3 => {
+    let s = (((u % 1) + 1) % 1) * P;
+    if (s < L) return at(-L / 2 + s, rho);                                  // far straight, toward +R
+    s -= L;
+    if (s < Math.PI * rho) { const a = s / rho; return at(L / 2 + rho * Math.sin(a), rho * Math.cos(a)); }   // right end
+    s -= Math.PI * rho;
+    if (s < L) return at(L / 2 - s, -rho);                                  // near straight, toward -R
+    s -= L;
+    const a = s / rho;
+    return at(-L / 2 - rho * Math.sin(a), -rho * Math.cos(a));              // left end
+  };
 }

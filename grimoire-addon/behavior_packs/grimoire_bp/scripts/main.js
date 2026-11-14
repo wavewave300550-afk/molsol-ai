@@ -11720,6 +11720,93 @@ var Mover = class {
   /** Optional cap on how fast the facing may change (deg / tick, 0 = none): sharp path corners become turns. */
   maxTurn = 0;
   ySmooth;
+  /** Measured horizontal and 3D speed (blocks / s) and turn rate (deg / s, + = yaw increasing). */
+  speed = 0;
+  speed3 = 0;
+  turnRate = 0;
+  prevP;
+  gov;
+  active = false;
+  /**
+   * Locomotion governor.  From now on the creature's visible state follows what its body actually does,
+   * whatever the choreography asked for: a standing or acting state never slides over the ground (while
+   * travelling the creature shows the travelling loop closest to its real speed), a travelling loop is
+   * never shown standing still (idle, or the in-place turn while it pivots), and the asked-for state
+   * returns as soon as the motion allows.  `actor.state(n)` keeps working; it records the request.
+   */
+  govern(g) {
+    const actor = this.actor;
+    const raw = actor.state.bind(actor);
+    this.gov = { g, raw, want: 0, shown: 0, moving: false, since: 0 };
+    actor.state = (n) => {
+      const v2 = this.gov;
+      v2.want = n;
+      if (!this.active || n === 0 || g.free.includes(n)) {
+        v2.shown = n;
+        raw(n);
+      }
+      return actor;
+    };
+    return this;
+  }
+  decide(t, p) {
+    const v2 = this.gov;
+    const w = v2.want;
+    if (w === 0 || v2.g.free.includes(w)) {
+      if (v2.shown !== w) {
+        v2.shown = w;
+        v2.raw(w);
+      }
+      return;
+    }
+    const sp = v2.g.swims ? this.speed3 : this.speed;
+    v2.moving = v2.moving ? sp > 0.45 : sp > 0.9;
+    const gait = (s) => v2.g.gaits.find((x) => x.state === s);
+    const isTurn = (s) => !!v2.g.turn && (s === v2.g.turn.left || s === v2.g.turn.right);
+    let show = w;
+    if (v2.moving) {
+      if (!gait(w)) {
+        let best = v2.g.gaits[0], bd = Infinity;
+        for (const x of v2.g.gaits) {
+          const d = Math.abs(Math.log(Math.max(sp, 0.1) / x.speed));
+          if (d < bd) {
+            bd = d;
+            best = x;
+          }
+        }
+        show = best.state;
+      }
+    } else if (v2.g.turn && Math.abs(this.turnRate) > v2.g.turn.above) {
+      show = this.turnRate > 0 ? v2.g.turn.right : v2.g.turn.left;
+    } else if (gait(w) || isTurn(w)) {
+      show = v2.g.idle;
+    }
+    if (show !== v2.shown && t - v2.since >= 4) {
+      v2.shown = show;
+      v2.since = t;
+      v2.raw(show);
+    }
+    void p;
+  }
+  /**
+   * Walk from a to b at `speed` (blocks / s) with short starts and stops (`ramp` seconds each) - a
+   * trapezoid of speed, so the gait's own speed holds for the whole stretch instead of an ease curve
+   * that is too slow at the ends and too fast in the middle.
+   */
+  walk(a, b, speed, opts = {}) {
+    const D4 = Math.hypot(b.x - a.x, b.z - a.z);
+    const ramp = Math.min(opts.ramp ?? 0.25, D4 / speed / 2);
+    const cruise = Math.max(0, D4 / speed - ramp);
+    const T9 = cruise + 2 * ramp;
+    const ticks = Math.max(2, Math.round(T9 * 20));
+    const dist2 = (s) => {
+      if (s < ramp) return speed * s * s / (2 * ramp);
+      if (s < ramp + cruise) return speed * ramp / 2 + speed * (s - ramp);
+      const r = T9 - s;
+      return D4 - speed * r * r / (2 * ramp);
+    };
+    return this.add(ticks, (p) => lerp(a, b, D4 > 1e-6 ? clamp(dist2(p * T9) / D4, 0, 1) : 1), { tag: opts.tag, yaw: opts.yaw ?? yawOf({ x: b.x - a.x, y: 0, z: b.z - a.z }) });
+  }
   add(ticks, at, opts = {}) {
     const from = this.cursor, to = this.cursor + Math.max(1, Math.round(ticks));
     const seg = { from, to, at: (t) => at(clamp((t - from) / (to - from), 0, 1), t), yaw: opts.yaw, tag: opts.tag };
@@ -11788,12 +11875,21 @@ var Mover = class {
       } else this.yawRate *= 0.7;
     }
     if (this.maxTurn > 0) want = this.lastYaw + clamp(angleDelta(this.lastYaw, want), -this.maxTurn, this.maxTurn);
+    const dYaw = angleDelta(this.lastYaw, want) * 20;
     this.lastYaw = want;
     if (this.ground) {
       const g = this.ground(p);
       this.ySmooth = this.ySmooth === void 0 ? g : this.ySmooth + clamp(g - this.ySmooth, -0.35, 0.35);
       p = { x: p.x, y: this.ySmooth, z: p.z };
     }
+    const sp = this.prevP ? Math.hypot(p.x - this.prevP.x, p.z - this.prevP.z) * 20 : 0;
+    const sp3 = this.prevP ? Math.hypot(p.x - this.prevP.x, p.y - this.prevP.y, p.z - this.prevP.z) * 20 : 0;
+    this.speed = this.active ? this.speed * 0.35 + sp * 0.65 : 0;
+    this.speed3 = this.active ? this.speed3 * 0.35 + sp3 * 0.65 : 0;
+    this.turnRate = this.active ? this.turnRate * 0.35 + dYaw * 0.65 : 0;
+    this.prevP = p;
+    this.active = true;
+    if (this.gov) this.decide(t, p);
     this.actor.move(p, this.lastYaw);
     return p;
   }
@@ -11850,6 +11946,24 @@ var Frame = class {
 function hash012(a, b = 0) {
   const x = Math.sin(a * 12.9898 + b * 78.233 + 0.5) * 43758.5453;
   return x - Math.floor(x);
+}
+function stadium(c, R2, F, L3, rho) {
+  const P6 = 2 * L3 + 2 * Math.PI * rho;
+  const at = (x, y) => ({ x: c.x + R2.x * x + F.x * y, y: c.y, z: c.z + R2.z * x + F.z * y });
+  return (u) => {
+    let s = (u % 1 + 1) % 1 * P6;
+    if (s < L3) return at(-L3 / 2 + s, rho);
+    s -= L3;
+    if (s < Math.PI * rho) {
+      const a2 = s / rho;
+      return at(L3 / 2 + rho * Math.sin(a2), rho * Math.cos(a2));
+    }
+    s -= Math.PI * rho;
+    if (s < L3) return at(L3 / 2 - s, -rho);
+    s -= L3;
+    const a = s / rho;
+    return at(-L3 / 2 - rho * Math.sin(a), -rho * Math.cos(a));
+  };
 }
 
 // src/spells/ed06_world_before_names.ts
@@ -11988,19 +12102,21 @@ var ST = {
   codexK2: [46, -20, 11],
   codexK3: [26, -1, 4.8],
   emblems: [[50, -6, 2.4], [30, 17, 1.4], [33, -12, 1.6], [36, 6, 1.5]],
-  natureLane: 50,
+  natureLane: 56,
   natureFrom: -6,
-  heatA: [30, 17],
-  heatB: [21, 9.5],
+  heatA: [30, 18.5],
+  heatB: [22, 12],
   stones: [[27.5, 10.8], [23.5, 15.7], [20.6, 13.6]],
-  tideC: [33, -12],
-  tideA: 10,
-  tideB: 4.5,
+  // racetrack lanes (straight L, ends of radius rho): the 25-block Tide Dragon never turns tighter than 11 blocks,
+  // the Air Dragon banks on 12 (checked by tools/motion_check.py)
+  tideC: [30, -20],
+  tideL: 2,
+  tideRho: 11,
   tideH: 1.6,
-  airC: [42, 0],
-  airA: 14,
-  airB: 4,
-  airH: 11.5,
+  airC: [33, 0],
+  airL: 12,
+  airRho: 11,
+  airH: 14,
   groves: [[20, -21, 0], [17, 21, 1], [31, -27, 2], [29, 25, 3], [53, -20, 0], [56, 15, 1], [12, -15, 3], [13, 15, 2]]
 };
 function local3(p, yaw, x, z) {
@@ -12081,8 +12197,8 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     const L3 = norm(flat(sub(G, SF2)));
     const yawL = yawOf(L3);
     const ringYaw = dot(sub(C0, G), right(L3)) < 0 ? yawL : yawL + 180;
-    const TL = ground(add(add(G, mul(F, 12)), mul(R2, -14)));
-    Z = { G, L: L3, yawL, SF: SF2, TL, tideYaw: yawOf(sub(G, TL)), ringYaw };
+    const TL = ground(loop.at(S_TL_LEN));
+    Z = { G, L: L3, yawL, SF: SF2, TL, tideYaw: yawOf(flat(sub(loop.at(S_TL_LEN + 1), loop.at(S_TL_LEN - 1)))), ringYaw };
     return Z;
   }
   const K1 = skyA(ST.codexK1), K2 = skyA(ST.codexK2), K3 = skyA(ST.codexK3);
@@ -12276,7 +12392,12 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
   let nR = ST.natureFrom;
   const N0 = ground(nPos(nR));
   const nature = scene.spawn(NATURE.actor, N0, { yaw: nYaw0, state: N2.hidden, skin: N_SKIN.normal });
-  const natMv = new Mover(nature, N0, nYaw0, T_NATURE, gy);
+  const natMv = new Mover(nature, N0, nYaw0, T_NATURE, gy).govern({
+    gaits: [{ state: N2.move, speed: N_WALK }],
+    free: [N2.arrive, N2.depart],
+    turn: { left: N2.turn_l, right: N2.turn_r, above: 7 },
+    idle: N2.idle
+  });
   const footprints = [];
   let nWalking = false;
   const DR_ = N_WALK / 20;
@@ -12501,7 +12622,12 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
   const H0 = ground(sub(H1, mul(dAB, H_WALK / 20 * H_T.arriveWalk)));
   const yawIn = yawOf(dAB);
   const heat = scene.spawn(HEAT.actor, H0, { yaw: yawIn, state: H.hidden, skin: H_SKIN.cool });
-  const heatMv = new Mover(heat, H0, yawIn, T_HEAT, gy);
+  const heatMv = new Mover(heat, H0, yawIn, T_HEAT, gy).govern({
+    gaits: [{ state: H.walk, speed: H_WALK }, { state: H.move, speed: H_RUN }, { state: H.charge, speed: H_RUN }],
+    free: [H.arrive, H.skid, H.depart],
+    turn: { left: H.turn_l, right: H.turn_r, above: 40 },
+    idle: H.idle
+  });
   let planYaw = yawIn;
   let hHits = /* @__PURE__ */ new Set();
   let hDir = dAB;
@@ -12513,7 +12639,7 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     const d = angleDelta(planYaw, yawTo);
     planYaw = yawTo;
     if (Math.abs(d) < 6) return;
-    const ticks = Math.max(4, Math.round(Math.abs(d) / H_TURN * 20));
+    const ticks = Math.max(6, Math.round(Math.abs(d) / (H_TURN / 1.5) * 20));
     const y0 = yawTo - d, t0 = heatMv.cursor;
     scene.at(t0, () => heat.state(d > 0 ? H.turn_r : H.turn_l));
     heatMv.hold(ticks, void 0, "turn");
@@ -12792,15 +12918,23 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     heatPlan();
   });
   const TC = sky(ST.tideC[0], ST.tideC[1], ST.tideH);
+  const tideLane = stadium(TC, R2, F, ST.tideL, ST.tideRho);
+  const S_TL = (ST.tideL + ST.tideRho * (120 * Math.PI / 180)) / (2 * ST.tideL + 2 * Math.PI * ST.tideRho);
   const loop = new ArcPath((u) => {
-    const a = u * 2 * Math.PI;
-    const p = add(TC, add(mul(R2, ST.tideA * Math.sin(a)), mul(F, ST.tideB * Math.sin(2 * a))));
-    return { x: p.x, y: TC.y + 1.3 * Math.sin(a + 0.6), z: p.z };
+    const p = tideLane(u);
+    return { x: p.x, y: TC.y + 1.3 * Math.sin(u * 4 * Math.PI + 0.6), z: p.z };
   }, 160, true);
   const loopTan = (s) => yawOf(sub(loop.at(s + 0.5), loop.at(s - 0.5)));
+  const S_TL_LEN = S_TL * loop.length;
   const M0 = loop.at(0);
   const tide = scene.spawn(TIDE.actor, M0, { yaw: loopTan(0), state: D3.hidden, skin: 0 });
-  const tideMv = new Mover(tide, M0, loopTan(0), T_TIDE);
+  const tideMv = new Mover(tide, M0, loopTan(0), T_TIDE).govern({
+    gaits: [{ state: D3.move, speed: 2.5 }, { state: D3.swim, speed: D_SWIM }],
+    free: [D3.arrive, D3.land, D3.depart],
+    turn: { left: D3.turn_l, right: D3.turn_r, above: 30 },
+    idle: D3.idle,
+    swims: true
+  });
   tideMv.maxTurn = 12;
   const tSwim2 = T_TIDE + D_T.arrive;
   tideMv.hold(D_T.arrive, loopTan(0));
@@ -12936,13 +13070,59 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     });
   });
   const airC = sky(ST.airC[0], ST.airC[1], ST.airH);
+  const airLane = stadium(airC, R2, F, ST.airL, ST.airRho);
   const ellipse = (deg, t) => {
-    const a = deg * Math.PI / 180;
-    const p = add(airC, add(mul(R2, ST.airA * Math.sin(a)), mul(F, ST.airB * Math.sin(2 * a))));
+    const p = airLane(deg / 360);
     return { x: p.x, y: airC.y + 0.8 * Math.sin(t * 0.06), z: p.z };
   };
   const ELLIPSE = new ArcPath((u) => ellipse(u * 360, 0), 120, true);
   const OMEGA = 16 / 20 / ELLIPSE.length * 360;
+  const laneTan = (d) => norm(flat(sub(ellipse(d + 1, 0), ellipse(d - 1, 0))));
+  const laneJoin = (from, dir) => {
+    let best = 0, bs = Infinity;
+    for (let d = 0; d < 360; d += 2) {
+      const q = ellipse(d, 0), t = laneTan(d), P1 = sub(q, mul(t, 12));
+      const to = flat(sub(P1, from)), L_ = Math.hypot(to.x, to.z);
+      if (L_ < 10 || L_ > 45) continue;
+      const sc = Math.abs(angleDelta(yawOf(dir), yawOf(to))) * 2 + Math.abs(angleDelta(yawOf(to), yawOf(t))) * 2 + Math.abs(L_ - 16) * 0.4;
+      if (sc < bs) {
+        bs = sc;
+        best = d;
+      }
+    }
+    return best;
+  };
+  const joinLane = (from, dir, speed) => {
+    const e = laneJoin(from, dir);
+    const q = ellipse(e, airMv.cursor + 30), P1 = sub(q, mul(laneTan(e), 12));
+    airMv.path([from, ...steer(from, yawOf(flat(dir)), P1, 10), P1, q], speed);
+    airOrbit(e, 4e3);
+  };
+  const steer = (from, yaw0, target, rad, climb = 0) => {
+    let deg = angleDelta(yaw0, yawOf(flat(sub(target, from))));
+    if (Math.abs(deg) < 12) return [];
+    let pts = arcPts(from, yaw0, deg, rad, climb);
+    for (let k2 = 0; k2 < 2; k2++) {
+      const end = pts[pts.length - 1], yEnd = yaw0 + deg;
+      deg += angleDelta(yEnd, yawOf(flat(sub(target, end))));
+      pts = arcPts(from, yaw0, deg, rad, climb);
+    }
+    return pts;
+  };
+  const arcPts = (p, yaw0, deg, rad, climb) => {
+    const n = Math.max(3, Math.ceil(Math.abs(deg) / 10));
+    const dTh = deg / n, ds = rad * Math.abs(dTh) * Math.PI / 180;
+    const pts = [];
+    let q = { ...p }, y = yaw0;
+    for (let i = 0; i < n; i++) {
+      y += dTh / 2;
+      q = add(q, mul(fromYaw(y), ds));
+      y += dTh / 2;
+      q = { x: q.x, y: q.y + climb / n, z: q.z };
+      pts.push(q);
+    }
+    return pts;
+  };
   const ellDegAt = (p) => {
     let best = 0, bd = Infinity;
     for (let d = 0; d < 360; d += 4) {
@@ -12991,10 +13171,11 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
   }, T_AIR - 24, T_AIR + 66);
   scene.at(T_AIR + 66, () => clouds.forEach((c) => c.state(CLOUD2.fade)));
   scene.at(T_AIR + 90, () => clouds.forEach((c) => scene.despawn(c)));
-  airMv.add(A_T.arrive, (p) => bezier3([airStart, sky(50, 7, 16), sky(43, 12, 12.5), sky(37, 11, 11)], smooth(p)));
+  const AR1 = sky(46, 5, 18), AR2 = sky(38.5, 1.5, 16.5);
+  airMv.add(A_T.arrive, (p) => bezier3([airStart, sky(55, 10, 23), sky(50, 7.5, 19.5), AR1], smooth(p)));
   force(T_AIR, A_T.arrive, A3.arrive);
   const tRoll = airMv.cursor;
-  airMv.add(A_T.roll, (p) => lerp(sky(37, 11, 11), sky(33, 4, 10), smooth(p)));
+  airMv.add(A_T.roll, (p) => lerp(AR1, AR2, p));
   force(tRoll, A_T.roll, A3.roll);
   const tGlide = airMv.cursor;
   let tStoop = 0, tFlap = 0;
@@ -13003,16 +13184,18 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     const rel = sub(G, C0);
     const gf = dot(rel, F), gr = dot(rel, R2);
     airMv.truncate(tGlide);
-    airMv.path([sky(33, 4, 10), sky(29, gr * 0.6 - 2, 9.5), sky(gf + 8, gr - 1, 8)], 16);
+    const s0 = sky(gf + 13, gr - 3, 15.5), s1 = sky(gf + 2.5, gr - 3.5, 3.4);
+    airMv.path([AR2, lerp(AR2, s0, 0.5), s0], 16);
     tStoop = airMv.cursor;
-    const s0 = sky(gf + 8, gr - 1, 8), s1 = sky(gf + 2.5, gr, 3.2);
-    airMv.add(A_T.stoop, (p) => lerp(s0, s1, p * p));
+    airMv.add(A_T.stoop, (p) => lerp(s0, s1, (16 * p + 12 * p * p) / 28));
     force(tStoop, A_T.stoop, A3.stoop);
     tFlap = airMv.cursor;
-    const e0 = ellDegAt(sky(gf + 22, gr + 9, 12)) + 8;
-    airMv.path([s1, sky(gf - 1, gr + 4, 5), sky(gf + 5, gr + 9, 7.5), sky(gf + 14, gr + 10, 10.5), ellipse(e0, airMv.cursor + 30)], 12);
+    const yS = yawOf(flat(sub(s1, s0)));
+    const turn = arcPts(s1, yS, 180, 9.5, 11);
+    const w4 = turn[turn.length - 1], w5 = up(add(w4, mul(fromYaw(yS + 180), 8)), 1.5);
+    airMv.path([s1, ...turn, w5], 13);
     force(tFlap, airMv.cursor - tFlap, A3.move);
-    airOrbit(e0, 4e3);
+    joinLane(w5, fromYaw(yS + 180), 14);
     scene.at(tStoop, () => {
       sound(dim, "ed_air_dive", s0, 1.8);
       particle(dim, "ed_air_boom", s0);
@@ -13052,27 +13235,28 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     else if ((seg.tag === "circle" || seg.tag === "helix") && (t - seg.from) % 96 >= 70 && (t - seg.from) % 96 < 86) want = A3.move;
     else {
       const vy = airMv.posAt(t + 1).y - airMv.posAt(t).y;
-      want = airMv.yawRate > A_BANK ? A3.turn_r : airMv.yawRate < -A_BANK ? A3.turn_l : vy > 0.1 ? A3.move : A3.glide;
+      const q0 = airMv.posAt(t), q1 = airMv.posAt(t + 1);
+      const sp = Math.hypot(q1.x - q0.x, q1.y - q0.y, q1.z - q0.z) * 20;
+      want = sp < 4.5 ? A3.flutter : sp < 13 ? A3.move : airMv.yawRate > A_BANK ? A3.turn_r : airMv.yawRate < -A_BANK ? A3.turn_l : vy > 0.1 || sp < 15 ? A3.move : A3.glide;
     }
     if (want !== airState && (f || t >= airDwell)) {
       air.state(want);
       airState = want;
-      airDwell = t + 8;
+      airDwell = t + 5;
     }
   }
   scene.every(1, () => airTick(scene.tick), T_AIR + 1, T_END3);
   const debris = [];
   const AH = sky(34, -2, 11);
   scene.at(T32 + 130, () => {
+    const y0 = yawOf(flat(sub(airMv.posAt(T32 + 131), airMv.posAt(T32 + 130))));
     const p0 = airBreak(T32 + 130);
-    airMv.path([p0, lerp(p0, AH, 0.5), AH], 14);
+    airMv.path([p0, ...steer(p0, y0, AH, 10), AH], 14);
     const tP = airMv.cursor;
     airMv.add(A_T.power + 10, (p) => add(AH, mul(F, -1.2 * smooth(p))), { yaw: yawOf(mul(F, -1)) });
     force(tP, A_T.power + 10, A3.power);
     const back = airMv.last;
-    const e1 = ellDegAt(back) + 20;
-    airMv.path([back, up(lerp(back, ellipse(e1, 0), 0.5), 1.5), ellipse(e1, airMv.cursor + 24)], 14);
-    airOrbit(e1, 4e3);
+    joinLane(back, mul(F, -1), 14);
     scene.at(tP, () => {
       air.skin(1);
       sound(dim, "ed_air_call", AH, 1.8);
@@ -13222,10 +13406,10 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     const from = heatMv.last;
     const mid = ground(lerp(from, z.SF, 0.5));
     const side = norm(flat(sub(z.SF, from)));
-    const pts = [from, add(mid, mul(right(side), 3)), z.SF];
+    const pts = [from, add(mid, mul(right(side), 1)), z.SF];
     const t0 = heatMv.cursor;
     planYaw = yawOf(side);
-    heatMv.path(pts, H_RUN * 0.7, { tag: "run" });
+    heatMv.path(pts, H_RUN, { tag: "run" });
     scene.at(t0, () => heat.state(H.move));
     const tStop = heatMv.cursor;
     heatMv.hold(H_T.skid, yawOf(sub(pts[2], pts[1])), "skidstop");
@@ -13238,8 +13422,8 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     const pa = ground(add(z.SF, mul(P6, 3.5))), pb = ground(sub(z.SF, mul(P6, 3.5)));
     for (const [a, b] of [[z.SF, pa], [pa, pb], [pb, z.SF]]) {
       hTurn(yawOf(sub(b, a)));
-      const ts = heatMv.cursor, n = Math.max(6, Math.round(distXZ(a, b) / H_WALK * 20));
-      heatMv.add(n, (p) => lerp(a, b, smooth(p)), { yaw: yawOf(sub(b, a)), tag: "pace" });
+      const ts = heatMv.cursor;
+      heatMv.walk(a, b, H_WALK, { tag: "pace" });
       scene.at(ts, () => {
         heat.state(H.walk);
         sound(dim, "ed_heat_snort", up(a, 3), 1.2);
@@ -13284,7 +13468,7 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
       particle(dim, j ? step : "ed6_stream", up(W2.polar(ED06.ringRadius + 0.8, a, 0, z.G), 0.5 + 0.5 * Math.sin(e * 0.2 + j)));
     }
   }, T42 + 4, T42 + 300);
-  const yN = nYaw0, N_TURN_DEG = 30, nTurnT = Math.round(N_TURN_DEG / N_TURN * 20);
+  const yN = nYaw0, N_TURN_DEG = 30, nTurnT = Math.round(N_TURN_DEG / (N_TURN / 1.5) * 20);
   natMv.hold(nTurnT, void 0);
   natMv.segs[natMv.segs.length - 1].yaw = (t) => yN + N_TURN_DEG * smooth((t - T42) / nTurnT);
   nHold(T52 - natMv.cursor, yN + N_TURN_DEG);
@@ -13380,17 +13564,19 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     }));
   });
   scene.at(tSlam + N_T.attackA, () => nature.state(N2.idle));
-  scene.at(T42 + 40, () => {
+  scene.at(T42 - 70, () => {
     const z = zone();
-    const cur = tideMv.posAt(T42 + 40), s = tideS(T42 + 40);
-    const app = up(local3(z.TL, z.tideYaw, 0, -9), 3.5);
-    const tan = norm(sub(loop.at(s + 1), loop.at(s - 1)));
-    const lead = add(cur, mul(tan, 7));
-    const side = add(lerp(lead, app, 0.5), mul(norm(flat(sub(app, z.G))), 6));
-    tideMv.truncate(T42 + 40);
-    tideMv.path([cur, lead, up(side, 1.5), app, up(local3(z.TL, z.tideYaw, 0, -2.5), 2.2), up(z.TL, 1.4)], D_SWIM * 0.8, { tag: "swim" });
+    const sNow = tideS(T42 - 70), lap = loop.length;
+    let sLand = Math.floor(sNow / lap) * lap + S_TL_LEN;
+    while (sLand < sNow + 14) sLand += lap;
+    const tb2 = tSwim2 + Math.round((sLand - 6) / (D_SWIM / 20));
+    tideMv.truncate(tb2);
+    const s0 = sLand - 6;
     const tLand2 = tideMv.cursor;
-    tideMv.add(D_T.land, (p) => lerp(up(z.TL, 1.4), z.TL, smooth(p)), { yaw: z.tideYaw });
+    tideMv.add(D_T.land, (p) => {
+      const q = loop.at(s0 + 6 * easeOut(p));
+      return { x: q.x, y: lerp(q, z.TL, smooth(p)).y, z: q.z };
+    });
     tideMv.hold(T52 + 40 - tideMv.cursor, z.tideYaw);
     scene.at(tLand2, () => {
       tide.state(D3.land);
@@ -13417,7 +13603,7 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
   });
   D_T.sweepHit.forEach((hh, w) => scene.at(tSweep2 + hh, () => {
     const z = zone();
-    const tail = up(local3(z.TL, z.tideYaw, 0, 8), 2);
+    const tail = up(local3(z.TL, z.tideYaw, 0, -9), 2);
     let dir = norm(flat(sub(tail, z.G)));
     if (w === 1) dir = mul(dir, -1);
     sound(dim, "ed_tide_flow", tail, 1.5, 0.95 + w * 0.08);
@@ -13492,16 +13678,28 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     currents.forEach((c) => c.a.state(CUR2.ice));
   });
   let spiral;
-  const HELIX_R = 5;
-  scene.at(T42 + 168, () => {
+  scene.at(T42 + 120, () => {
     const z = zone();
     const HC = add(z.G, mul(F, 6));
-    const p0 = airBreak(T42 + 168);
-    const hs = up(W2.polar(HELIX_R, 0, 0, HC), 7.5);
-    airMv.path([p0, up(lerp(p0, hs, 0.5), 2), hs], 16);
+    const hs = up(add(HC, mul(F, -3)), 9);
+    let tb2 = T42 + 168, best = Infinity;
+    for (let t = T42 + 124; t <= T42 + 200; t += 2) {
+      const p = airMv.posAt(t), q = airMv.posAt(t + 1);
+      const to = sub(hs, p), d = Math.hypot(to.x, to.z);
+      if (d < 12) continue;
+      const off = Math.abs(angleDelta(yawOf(flat(sub(q, p))), yawOf(to)));
+      const score = off + Math.abs(t - (T42 + 168)) * 0.25;
+      if (score < best) {
+        best = score;
+        tb2 = t;
+      }
+    }
+    const y0 = yawOf(flat(sub(airMv.posAt(tb2 + 1), airMv.posAt(tb2))));
+    const p0 = airBreak(tb2);
+    airMv.path([p0, ...steer(p0, y0, hs, 10), hs], 16);
     const tPw = airMv.cursor;
-    airMv.add(A_T.power, (p) => add(hs, mul(R2, -1.5 * smooth(p))), { yaw: yawOf(mul(R2, -1)) });
-    force(tPw, A_T.power, A3.power);
+    airMv.add(A_T.power + 66, (p) => add(hs, mul(R2, -1.5 * smooth(p))), { yaw: yawOf(mul(R2, -1)) });
+    force(tPw, A_T.power + 66, A3.power);
     scene.at(tPw, () => {
       air.skin(1);
       sound(dim, "ed_air_call", hs, 2);
@@ -13509,16 +13707,9 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
       particle(dim, "ed6_flash_air", hs);
       burst(dim, "ed_air_feather", hs, 2, 4);
     });
-    const tHx = airMv.cursor;
-    const start = add(hs, mul(R2, -1.5));
-    const ang0 = Math.atan2(-1.5, HELIX_R) * 180 / Math.PI;
-    const hx = (p) => up(W2.polar(HELIX_R, ang0 - 540 * p, 0, HC), 7.5 - 3 * Math.sin(p * Math.PI) - 0.8 * p);
-    airMv.add(2, (p) => lerp(start, hx(0), p));
-    airMv.add(64, (p) => hx(p), { tag: "helix" });
+    const tHx = tPw + A_T.power;
     const back = airMv.last;
-    const e1 = ellDegAt(back) + 25;
-    airMv.path([back, up(lerp(back, ellipse(e1, 0), 0.5), 3), ellipse(e1, airMv.cursor + 30)], 14);
-    airOrbit(e1, 4e3);
+    joinLane(back, mul(R2, -1), 14);
     scene.at(tHx, () => sound(dim, "ed_air_vortex", z.G, 1.8));
   });
   scene.at(T42 + 206, () => {
@@ -13620,8 +13811,8 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     const E = { ...heatMv.last }, E2 = ground(add(add(z.G, mul(F, 9)), mul(R2, 3)));
     const toE2 = yawOf(sub(E2, E));
     hTurn(toE2);
-    const tw = heatMv.cursor, nW = Math.max(8, Math.round(distXZ(E, E2) / H_WALK * 20));
-    heatMv.add(nW, (p) => lerp(E, E2, smooth(p)), { yaw: toE2, tag: "walkback" });
+    const tw = heatMv.cursor;
+    heatMv.walk(E, E2, H_WALK, { tag: "walkback" });
     scene.at(tw, () => {
       heat.state(H.walk);
       sound(dim, "ed_heat_snort", up(E, 3), 1.4);
@@ -13743,12 +13934,26 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     sound(dim, "ed6_codex_open", K3, 1.6);
   });
   scene.at(T52 + 40, () => codex.state(CODEX2.absorb));
-  const PL = at(26, 15);
-  scene.at(T52 + 2, () => {
-    const p0 = airBreak(T52 + 2);
-    const dirL = mul(R2, -1);
-    const app = up(add(PL, mul(dirL, -7)), 3.5);
-    airMv.path([p0, up(lerp(p0, app, 0.5), 2), app], 14);
+  const PL = at(30, 22);
+  scene.at(T52 + 12, () => {
+    let tb2 = T52 + 30, best = Infinity;
+    for (let t = T52 + 16; t <= T52 + 70; t += 2) {
+      const p = airMv.posAt(t), q = airMv.posAt(t + 1);
+      const to = flat(sub(PL, p)), d = Math.hypot(to.x, to.z);
+      if (d < 14 || d > 32) continue;
+      const sc = Math.abs(angleDelta(yawOf(flat(sub(q, p))), yawOf(to))) * 2 + Math.abs(d - 20) * 0.5 + Math.abs(t - (T52 + 30)) * 0.1;
+      if (sc < best) {
+        best = sc;
+        tb2 = t;
+      }
+    }
+    const y0 = yawOf(flat(sub(airMv.posAt(tb2 + 1), airMv.posAt(tb2))));
+    const p0 = airBreak(tb2);
+    const arcIn = steer(p0, y0, PL, 10);
+    const from = arcIn.length ? arcIn[arcIn.length - 1] : p0;
+    const dirL = norm(flat(sub(PL, from)));
+    const app = up(add(PL, mul(dirL, -9)), 3.5);
+    airMv.path([p0, ...arcIn, app], 14);
     const tF = airMv.cursor;
     airMv.add(A_T.flare, (p) => lerp(app, up(add(PL, mul(dirL, -1.5)), 1.4), easeOut(p)), { yaw: yawOf(dirL) });
     force(tF, A_T.flare, A3.flare);
