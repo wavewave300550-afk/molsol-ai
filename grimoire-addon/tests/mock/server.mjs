@@ -369,6 +369,8 @@ export function addProjectile(typeId, loc, dim = "overworld") {
   return e;
 }
 export function reset() {
+  for (const d of Object.values(dims)) { for (const e of d.entities) e.isValid = false; d.entities.clear(); d.blocks.clear(); }
+  tick(2); // let scenes owned by the previous test's (now invalid) players end and clean up
   for (const d of Object.values(dims)) { d.entities.clear(); d.blocks.clear(); }
   problems.length = 0;
   for (const k of Object.keys(stats)) stats[k] = typeof stats[k] === "number" ? 0 : {};

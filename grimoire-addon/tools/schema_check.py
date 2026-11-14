@@ -38,16 +38,18 @@ def main():
         sid = sch.get("$id") or "/" + os.path.relpath(p, base).replace(os.sep, "/")
         by_id[sid] = sch
         res = Resource(contents=sch, specification=DRAFT7)
-        for key in {sid, quote(sid, safe="/")}:
+        from urllib.parse import unquote as _u
+        for key in {sid, quote(_u(sid), safe="/"), _u(sid)}:
             resources.append((key, res))
     registry = Registry().with_resources(resources)
 
     def check(doc_id, instance, label):
-        sch = by_id.get(doc_id)
+        from urllib.parse import unquote
+        sch = by_id.get(doc_id) or by_id.get(unquote(doc_id)) or by_id.get(quote(unquote(doc_id), safe="/"))
         if sch is None:
             print(f"  (schema {doc_id} not found, skipped)")
             return 0
-        v = Draft7Validator({"$ref": quote(doc_id, safe="/")}, registry=registry)
+        v = Draft7Validator({"$ref": quote(unquote(doc_id), safe="/")}, registry=registry)
         n = 0
         for e in sorted(v.iter_errors(instance), key=lambda e: [str(x) for x in e.absolute_path]):
             path = "/".join(str(x) for x in e.absolute_path)
@@ -67,7 +69,11 @@ def main():
         j = json.load(open(p))
         for ver in ("1.21.90", "1.26.60"):   # the declared format and the newest strict one
             bad += check(f"/server/entity/{ver}/ActorDocument.json", j["minecraft:entity"], f"{os.path.basename(p)} @{ver}")
-    print(f"schema check: {len(items)} items, {len(ents)} entities, {bad} violations")
+    parts = sorted(glob.glob(os.path.join(ROOT, "resource_packs/grimoire_rp/particles/*.json")))
+    for p in parts:
+        j = json.load(open(p))
+        bad += check("/client/particles/1.21.10/Particle%20Effect%20Data.json", j["particle_effect"], os.path.basename(p))
+    print(f"schema check: {len(items)} items, {len(ents)} entities, {len(parts)} particles, {bad} violations")
     return 1 if bad else 0
 
 

@@ -89,8 +89,8 @@ export const ED05 = {
   flareDamage: 11,
 
   // Air (microraptor): three low sweeps; each downstroke sends a wind shockwave ring
-  flySpeed: 17,
-  passRadius: 13,
+  flySpeed: 19,
+  passRadius: 12,
   passHeight: 4.0,
   cruiseHeight: 8.0,
   ringDamage: 6,
@@ -100,16 +100,16 @@ export const ED05 = {
   ringReach: 11,
 
   // ---- Phase III: The Eternal Imprint
-  phase3At: 22.6,
+  phase3At: 23.6,
   /** Fan formation above the battlefield: radius from the centre, lower-edge height and fan angles. */
   fanRadius: 10,
   formationHeight: { nature: 15, heat: 13, tide: 13, air: 15 } as Record<string, number>,
   formationAngle: { heat: 54, nature: 18, air: -18, tide: -54 } as Record<string, number>,
   formationTime: 2.0,
   /** Each imprint lands at these times; the projection warns warnTime seconds before. */
-  projectAt: { nature: 25.0, heat: 26.6, tide: 28.2, air: 29.8 } as Record<string, number>,
+  projectAt: { nature: 26.0, heat: 27.6, tide: 29.2, air: 30.8 } as Record<string, number>,
   projectWarn: 1.2,
-  allAt: 31.6,
+  allAt: 32.6,
   /** Imprint size multiplier (1 = 15.6 x 11.7 blocks). */
   imprintSize: 1.0,
   /** Nature: root-and-stone eruption along the sauropod outline. */
@@ -135,8 +135,8 @@ export const ED05 = {
   finaleDamage: 22,
   finaleRadius: 9,
   finaleKnock: 1.8,
-  fractureAt: 33.8,
-  endAt: 36.2,
+  fractureAt: 34.8,
+  endAt: 37.2,
 
   /** Seconds between replays of the museum hush bed. */
   hushEvery: 4.5,

@@ -122,7 +122,7 @@ export default defineSpell("ed05", ({ caster, scene, aim }) => {
     const site = gnd(polar(center, C.riseRadius, slotAngle(sp, theta0)));
     const t0 = at(C.inscribeAt + i * C.riseStagger);
     scene.at(t0, () => {
-      const ins = scene.spawn(P.inscription.actors[sp], site, { state: P.inscription.states.descend, size: 1.0 });
+      const ins = scene.spawn(P.inscription.actors[sp], site, { state: P.inscription.states.descend, size: 2.2 });
       sound(dim, "ed5_inscribe", site, 0.9, 0.92 + i * 0.06);
       scene.every(5, () => particle(dim, "ed5_rune_fall", up(site, 7)), scene.tick, scene.tick + 30);
       scene.after(secs(P.inscription.descend) + 2, () => scene.despawn(ins));
@@ -442,7 +442,7 @@ export default defineSpell("ed05", ({ caster, scene, aim }) => {
       pts.push(polar(center, R, psi, C.cruiseHeight));
       pts.push(polar(center, 1.5, psi + 90, C.passHeight));
       pts.push(polar(center, R, psi + 180, C.cruiseHeight - 1));
-      if (k < 2) pts.push(polar(center, R * 1.4, psi + 150, C.cruiseHeight + 2));
+      if (k < 2) pts.push(polar(center, R * 1.25, psi + 150, C.cruiseHeight + 2));
     }
     const home = add(up(reliefAt(tb), 3), mul(out, 6));
     pts.push(home);

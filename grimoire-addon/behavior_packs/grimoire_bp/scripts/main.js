@@ -2055,13 +2055,13 @@ var dw03_ophanim_default = defineSpell("dw03", ({ caster, scene, aim }) => {
   let lastCentre = center;
   function routeFor(k2) {
     const live2 = liveMarks();
-    let P5 = live2.map((m) => flat(m.e.location));
-    const c0 = P5.length ? mul(P5.reduce((s, p) => add(s, p), v(0, 0, 0)), 1 / P5.length) : flat(lastCentre);
+    let P6 = live2.map((m) => flat(m.e.location));
+    const c0 = P6.length ? mul(P6.reduce((s, p) => add(s, p), v(0, 0, 0)), 1 / P6.length) : flat(lastCentre);
     const c = v(c0.x, 0, c0.z);
     lastCentre = v(c.x, center.y, c.z);
-    if (!P5.length) P5 = [0, 1, 2, 3, 4].map((i) => polar(c, DW03.noTargetRadius, aim.yaw + 90 + i * 72));
-    let far = P5[0];
-    for (const p of P5) if (distXZ(p, c) > distXZ(far, c)) far = p;
+    if (!P6.length) P6 = [0, 1, 2, 3, 4].map((i) => polar(c, DW03.noTargetRadius, aim.yaw + 90 + i * 72));
+    let far = P6[0];
+    for (const p of P6) if (distXZ(p, c) > distXZ(far, c)) far = p;
     const R2 = clamp(distXZ(far, c) + 1.5, DW03.routeMinRadius, DW03.routeMaxRadius);
     const u = distXZ(far, c) > 0.5 ? norm(flat(sub(far, c))) : fromYaw(aim.yaw);
     const a0 = Math.atan2(u.z, u.x) * 180 / Math.PI;
@@ -2070,14 +2070,14 @@ var dw03_ophanim_default = defineSpell("dw03", ({ caster, scene, aim }) => {
     const kind = k2 % 3;
     if (kind === 0) {
       name = "polygon";
-      if (P5.length >= 3) {
-        corners = [...P5].sort((p, q) => Math.atan2(p.z - c.z, p.x - c.x) - Math.atan2(q.z - c.z, q.x - c.x));
-      } else if (P5.length === 2) {
-        const mid = lerp(P5[0], P5[1], 0.5);
-        const side = right(sub(P5[1], P5[0]));
-        corners = [P5[0], add(mid, mul(side, R2 * 0.9)), P5[1], add(mid, mul(side, -R2 * 0.9))];
+      if (P6.length >= 3) {
+        corners = [...P6].sort((p, q) => Math.atan2(p.z - c.z, p.x - c.x) - Math.atan2(q.z - c.z, q.x - c.x));
+      } else if (P6.length === 2) {
+        const mid = lerp(P6[0], P6[1], 0.5);
+        const side = right(sub(P6[1], P6[0]));
+        corners = [P6[0], add(mid, mul(side, R2 * 0.9)), P6[1], add(mid, mul(side, -R2 * 0.9))];
       } else {
-        const q = sub(P5[0], mul(u, R2));
+        const q = sub(P6[0], mul(u, R2));
         corners = [0, 1, 2].map((i) => polar(q, R2, a0 + i * 120));
       }
       corners.push(corners[0]);
@@ -2682,10 +2682,940 @@ var dw04_sanctuary_default = defineSpell("dw04", ({ caster, scene, aim }) => {
   });
 });
 
+// src/config/dw05.ts
+var DW05 = {
+  // ---- stage layout (blocks, relative to the fight centre; "forward" points away from the caster)
+  /** Snap distance used to pick the fight centre around the aim point. */
+  focusSnap: 14,
+  /** Radius of the judged region: every search for enemies uses it. */
+  regionRadius: 18,
+  /** Seraph gate (lancet arch): forward distance and base height. */
+  seraphGate: { forward: 21, side: 0, up: 12 },
+  /** Cherub gate (tetrapylon): forward, sideways (negative = caster's left) and base height. */
+  cherubGate: { forward: 15, side: -17, up: 4 },
+  /** Ophanim gate (wheel portal): forward, sideways and centre height. */
+  ophanGate: { forward: 15, side: 17, up: 9 },
+  /** Phase II stations: the Seraph highest and centred, the Cherub in the middle on the left. */
+  seraphStation: { forward: 12, side: 0, up: 18 },
+  cherubStation: { forward: 7, side: -11, up: 8 },
+  /** Where the Ophanim hovers while it scans (centre height above the ground). */
+  ophanStation: { forward: 3, side: 6, up: 7 },
+  /** Phase III posts around the throne: Seraph above it, Cherub and Ophanim at its flanks. */
+  seraphPost: { forward: 16, side: 0, up: 27 },
+  cherubPost: { forward: 9, side: -12, up: 8 },
+  ophanPost: { forward: 9, side: 12, up: 7 },
+  /** The empty throne: forward distance and dais height. */
+  throne: { forward: 12, side: 0, up: 10 },
+  /** Giant sentences: radius (blocks) and height of the three concentric bands. */
+  sentences: [
+    { radius: 8, up: 1.2 },
+    { radius: 11, up: 5.5 },
+    { radius: 14, up: 10 }
+  ],
+  // ---- PHASE I: the sentence pronounced over the region (a temporary law of judgment)
+  /** Damage as the third sentence closes over every enemy in the region. */
+  domainDamage: 3,
+  /** Slowness the pronounced law lays on enemies (ticks, amplifier). */
+  domainSlowTicks: 300,
+  domainSlowAmp: 1,
+  // ---- OPHANIM: detection, marking, directional sweeping passes
+  /** Ticks for the scanning gaze to sweep a full circle. */
+  scanTicks: 36,
+  /** Maximum enemies the witnesses can mark. */
+  maxMarks: 8,
+  /** Searing damage as a mark is burned onto an enemy. */
+  markDamage: 2,
+  /** Number of straight sweeping passes and their timing. */
+  passes: 3,
+  lockTicks: 12,
+  passTicks: 32,
+  /** Half-length of a pass line through the marked (min / max). */
+  passHalfMin: 8,
+  passHalfMax: 13,
+  /** Centre height of the wheel during a pass (its rim grazes the ground). */
+  sweepAltitude: 5.6,
+  /** Rim contact: half chord length, lateral reach and height (blocks). */
+  rimChord: 4.2,
+  rimHalfWidth: 2,
+  rimHeight: 3.2,
+  /** Rim damage per pass to unmarked / marked enemies (one hit per enemy per pass). */
+  passDamage: 7,
+  passMarkedDamage: 11,
+  passKnock: 0.9,
+  passLift: 0.35,
+  // ---- CHERUBIM: four faces
+  /** Human face: damage of the testament glyph written on each enemy (also marks the unmarked). */
+  testamentDamage: 3,
+  /** Ox face: ward that protects the caster and allied players within wardRadius of the caster. */
+  wardRadius: 14,
+  /** Total damage the ward can absorb before it breaks. */
+  wardPool: 60,
+  /** Fraction of incoming damage the ward stops while it holds (1 = everything). */
+  wardStrength: 1,
+  /** Lion face: roar damage (once per enemy), multiplier vs. marked, reach and cone width. */
+  roarDamage: 12,
+  markBonus: 1.35,
+  roarHalfWidthNear: 2.5,
+  roarHalfWidthFar: 6,
+  roarKnock: 2,
+  roarLift: 0.5,
+  /** Blocks per tick the roar rings travel. */
+  roarSpeed: 1,
+  /** Eagle face: feather-blade damage, multiplier vs. marked, radius, height, telegraph and fall ticks. */
+  bladeDamage: 14,
+  bladeMarkBonus: 1.5,
+  bladeRadius: 2.2,
+  bladeHeight: 10,
+  bladeWarn: 20,
+  diveTicks: 5,
+  bladesPerWave: 4,
+  // ---- SERAPHIM: chants of judgment columns
+  /** Damage of the columns of the first, second and third chant. */
+  chantDamage: [9, 10, 12],
+  /** Blast radius of a column (blocks). */
+  columnRadius: 2.8,
+  /** Maximum columns per chant. */
+  maxColumns: 6,
+  /** Ticks of warning before a column lands. */
+  columnWarn: 16,
+  // ---- PHASE III: the verdict
+  /** Letters per verdict line (three lines are written before the throne). */
+  lettersPerLine: 5,
+  /** Height of the three verdict lines above the ground and their distance in front of the throne. */
+  lineHeights: [20, 15.5, 11],
+  lineForward: 4,
+  /** Spacing of letters within a line (blocks). */
+  letterSpacing: 3.8,
+  /** Damage of one descending verdict letter and its blast radius. */
+  verdictDamage: 22,
+  verdictRadius: 3.5,
+  /** Extra damage (once per enemy) for enemies that bear a sacred mark. */
+  verdictMarkBonus: 14,
+  /** An enemy can be struck by at most this many letters. */
+  maxLetterHits: 2,
+  verdictKnock: 1.4,
+  verdictLift: 0.6,
+  /** Telegraph radius of a designated hostile area (blocks); areas closer than this are merged. */
+  areaRadius: 3.5,
+  /** Ophanim's finishing gaze on every surviving marked enemy. */
+  gazeDamage: 8,
+  /** Seraph's finishing column over the densest area: damage and radius. */
+  finalColumnDamage: 10,
+  finalColumnRadius: 4,
+  /** Ticks a letter needs to fall from its line to the ground, and the stagger between letters. */
+  plungeTicks: 8,
+  plungeStagger: 2
+};
+
 // src/spells/dw05_heavenly_throne.ts
-var dw05_heavenly_throne_default = defineSpell("dw05", (ctx) => {
-  ctx.caster.sendMessage("dw05 is not implemented yet");
-  ctx.scene.endAt(1);
+var GATE = { hidden: 0, manifest: 1, closed: 2, open: 3, opened: 4, close: 5, fold: 6 };
+var SEN = { hidden: 0, unfold: 1, idle: 2, gather: 3 };
+var THR = { hidden: 0, assemble: 1, idle: 2, declare: 3, unmake: 4 };
+var LET = { hidden: 0, ignite: 1, hold: 2, plunge: 3, impact: 4 };
+var SER = { hidden: 0, arrive: 1, veiled: 2, unfurl: 3, open: 4, chant1: 5, chant2: 6, chant3: 7, verdict: 8, depart: 9 };
+var CHE = { hidden: 0, arrive: 1, idle: 2, human: 3, ox: 4, oxRetaliate: 5, lion: 6, eagle: 7, verdict: 8, depart: 9 };
+var OPH = { hidden: 0, arrive: 1, survey: 2, lock: 3, sweep: 4, verdict: 5, depart: 6 };
+var BLADE2 = { form: 1, aim: 2, dive: 3, shatter: 4 };
+var MARK2 = { appear: 1, hold: 2, burst: 3 };
+var LETTER_KINDS = 6;
+var T2 = {
+  manifest: 1.6,
+  open: { seraph: 1.5, cherub: 2.4, ophan: 1.6 },
+  close: 1,
+  fold: 1.4,
+  unfold: 1.6,
+  gather: 1.4,
+  assemble: 3,
+  declare: 1,
+  unmake: 2,
+  ignite: 0.5,
+  impact: 0.6,
+  // dw_seraph.py (DW01 lands its verdict 15 ticks after the gesture starts)
+  seraph: { arrive: 1.5, unfurl: 1.3, chantLead: [18, 19, 19], depart: 1.6, verdictHitTicks: 15 },
+  // dw_cherub.py
+  cherub: {
+    arrive: 1.6,
+    human: 1.6,
+    humanCast: 1.05,
+    oxLock: 0.75,
+    ox: 1,
+    lion: 1.8,
+    lionRoar: 0.95,
+    eagle: 2.8,
+    eagleThrust: [1.6, 2.5],
+    verdictHit: 0.8,
+    depart: 1.8,
+    bladeForm: 0.6,
+    bladeShatter: 0.5,
+    roarLife: 1
+  },
+  // dw_ophanim.py
+  ophan: { arrive: 2, lock: 0.6, verdict: 1.1, verdictHit: 0.55, depart: 1.8 }
+};
+var dw05_heavenly_throne_default = defineSpell("dw05", ({ caster, scene, aim }) => {
+  const dim = scene.dim;
+  const { center } = focus(caster, aim, DW05.focusSnap);
+  const tow = flat(sub(center, caster.location));
+  const fwd = Math.hypot(tow.x, tow.z) > 2 ? norm(tow) : aim.forward;
+  const side = right(fwd);
+  const at = (p) => add(add(up(center, p.up), mul(fwd, p.forward)), mul(side, p.side));
+  const view = sub(center, mul(fwd, 6));
+  const yawTo = (from, to) => yawOf(flat(sub(to, from)));
+  const lights = blocksFor(scene);
+  const marks = /* @__PURE__ */ new Map();
+  function region(max) {
+    return hostiles(dim, center, DW05.regionRadius, caster, max);
+  }
+  function liveMarks() {
+    return [...marks.values()].filter((m) => isAlive(m.e));
+  }
+  function cluster() {
+    let pts = liveMarks().map((m) => m.e.location);
+    if (!pts.length) pts = region(8).map((e) => e.location);
+    if (!pts.length) return center;
+    const c = mul(pts.reduce((s, p) => add(s, p), v(0, 0, 0)), 1 / pts.length);
+    return groundBelow(dim, v(c.x, center.y + 4, c.z), 24);
+  }
+  function markEnemy(e) {
+    if (!isAlive(e)) return void 0;
+    const old = marks.get(e.id);
+    if (old) return old;
+    if (marks.size >= DW05.maxMarks) return void 0;
+    const mark = scene.spawn("dw_mark", up(e.location, 2.4), { state: MARK2.appear, skin: 0 });
+    scene.follow(mark, e, 2.4);
+    scene.after(6, () => mark.state(MARK2.hold));
+    const m = { e, mark, n: 0 };
+    marks.set(e.id, m);
+    damage(e, DW05.markDamage, caster);
+    return m;
+  }
+  function testify(e) {
+    const m = marks.get(e.id);
+    if (m && m.mark.valid) {
+      m.n++;
+      m.mark.skin(Math.min(2, m.n));
+    }
+  }
+  function boost(e, base, bonus) {
+    return marks.has(e.id) ? base * bonus : base;
+  }
+  function flashOut(a, after = 8) {
+    if (!a || !a.valid) return;
+    a.state(3);
+    scene.after(after, () => scene.despawn(a));
+  }
+  const circle = scene.spawn("dw_circle", center, { size: 6, state: 1 });
+  scene.at(16, () => circle.state(2));
+  sound(dim, "dw5_manifest", up(center, 8), 1.6);
+  sound(dim, "dw_circle", center, 1);
+  lights.place(up(center, 2), LIGHT);
+  scene.at(8, () => burst(dim, "dw_glyph_rise", up(center, 0.5), 5, 8));
+  function makeGate(id, spot, mouthUp, t, open, snd, openLen) {
+    const pos = at(spot);
+    const yaw = yawTo(pos, view);
+    return { a: scene.spawn(id, pos, { yaw, state: GATE.hidden }), pos, mouth: up(pos, mouthUp), yaw, t, open, snd, openLen };
+  }
+  const gO = makeGate("dw5_gate_ophan", DW05.ophanGate, 0, 0, 50, "dw5_gate_ophan", T2.open.ophan);
+  const gC = makeGate("dw5_gate_cherub", DW05.cherubGate, 5.5, 8, 80, "dw5_gate_cherub", T2.open.cherub);
+  const gS = makeGate("dw5_gate_seraph", DW05.seraphGate, 9.5, 16, 110, "dw5_gate_seraph", T2.open.seraph);
+  for (const g of [gO, gC, gS]) {
+    scene.at(g.t, () => {
+      g.a.state(GATE.manifest);
+      line(dim, "dw5_fold", add(g.mouth, mul(right(fromYaw(g.yaw)), -5)), add(g.mouth, mul(right(fromYaw(g.yaw)), 5)), 4);
+      sound(dim, "dw_circle", g.mouth, 1.2, 0.8);
+    });
+    scene.at(g.t + secs(T2.manifest), () => g.a.state(GATE.closed));
+    scene.at(g.open, () => {
+      g.a.state(GATE.open);
+      sound(dim, g.snd, g.mouth, 2);
+      burst(dim, "dw5_gate_dust", g.mouth, 3, 4);
+    });
+    scene.at(g.open + secs(g.openLen), () => {
+      g.a.state(GATE.opened);
+      particle(dim, "fx_flash", g.mouth);
+      particle(dim, "dw5_gate_rays", g.mouth);
+    });
+  }
+  scene.every(12, (el) => {
+    for (const g of [gO, gC, gS]) if (scene.tick > g.open + 30 && scene.tick < 560) particle(dim, el % 24 ? "dw5_gate_rays" : "dw_mote", g.mouth);
+  }, 60, 640);
+  const sentences = DW05.sentences.map((b, k2) => scene.spawn("dw5_sentence", up(center, b.up), { kind: k2, size: b.radius / 8, state: SEN.hidden, yaw: yawOf(fwd) + k2 * 40 }));
+  sentences.forEach((s, k2) => {
+    const t0 = 24 + k2 * 16;
+    scene.at(t0, () => {
+      s.state(SEN.unfold);
+      sound(dim, "dw5_sentence", up(center, DW05.sentences[k2].up + 1), 1.4, 0.9 + k2 * 0.12);
+      ring(dim, "dw_glyph_rise", up(center, DW05.sentences[k2].up), DW05.sentences[k2].radius, 8, k2 * 15);
+    });
+    scene.at(t0 + secs(T2.unfold), () => s.state(SEN.idle));
+  });
+  scene.at(100, () => {
+    sound(dim, "dw5_domain", up(center, 3), 1.6);
+    particle(dim, "dw5_domain", up(center, 0.3));
+    particle(dim, "fx_shock", up(center, 0.4));
+    ring(dim, "dw_glyph_fall", up(center, 6), 7, 8);
+    for (const e of region()) {
+      damage(e, DW05.domainDamage, caster);
+      effect(e, "slowness", DW05.domainSlowTicks, DW05.domainSlowAmp);
+      particle(dim, "dw_halo", up(e.location, 1.2));
+    }
+  });
+  for (const t of [120, 220, 320]) scene.at(t, () => sound(dim, "dw5_bed", up(center, 8), 1.2));
+  const tO = 130;
+  const oStart = add(gO.pos, mul(fwd, 1.5));
+  const oStation = at(DW05.ophanStation);
+  let oPos = oStart;
+  let oYaw = gO.yaw;
+  const oph = scene.spawn("ophanim", oStart, { yaw: oYaw, state: OPH.hidden, skin: 0 });
+  scene.at(tO, () => {
+    oph.state(OPH.arrive);
+    sound(dim, "dw_ophan_arrive", oStart, 1.5);
+    particle(dim, "fx_flash", gO.mouth);
+  });
+  scene.span(tO, tO + secs(T2.ophan.arrive), (p) => {
+    oPos = bezier(oStart, up(lerp(oStart, oStation, 0.5), 2), oStation, smooth(p));
+    oph.move(oPos, oYaw);
+  });
+  const tSurvey = tO + secs(T2.ophan.arrive);
+  const tScan = tSurvey + 2;
+  const scan0 = yawOf(fwd) + 90;
+  scene.at(tSurvey, () => {
+    oph.state(OPH.survey);
+    sound(dim, "dw_ophan_hum", oPos, 0.9, 0.6);
+    particle(dim, "dw_ophan_ping", up(center, 0.2));
+  });
+  let prevAng = scan0;
+  scene.every(1, (e) => {
+    const ang = scan0 + 360 * (e + 1) / DW05.scanTicks;
+    const dir = v(Math.cos(ang * Math.PI / 180), 0, Math.sin(ang * Math.PI / 180));
+    const tip = add(center, mul(dir, DW05.regionRadius));
+    line(dim, "dw_ophan_scan", up(add(center, mul(dir, 2)), 0.25), up(tip, 0.25), 6);
+    if (e % 3 === 0) line(dim, "dw_ophan_scan", up(oPos, -1), up(tip, 0.4), 4);
+    if (e % 6 === 0) {
+      sound(dim, "dw_ophan_scan", center, 0.9, 0.9 + e / DW05.scanTicks * 0.3);
+      particle(dim, "dw_ophan_ping", up(center, 0.25));
+    }
+    for (const h of region()) {
+      const a = Math.atan2(h.location.z - center.z, h.location.x - center.x) * 180 / Math.PI;
+      const d = ((a - prevAng) % 360 + 360) % 360;
+      if (d <= ang - prevAng && !marks.has(h.id) && markEnemy(h)) {
+        sound(dim, "dw_ophan_mark", h.location, 0.9, 1 + marks.size * 0.04);
+        particle(dim, "dw_ophan_eye", up(h.location, 3.4));
+        line(dim, "dw_ophan_scan", up(oPos, -1), up(h.location, 1.2), 6);
+      }
+    }
+    prevAng = ang;
+  }, tScan, tScan + DW05.scanTicks);
+  scene.at(tScan + DW05.scanTicks, () => {
+    for (const h of region()) if (!marks.has(h.id) && markEnemy(h)) particle(dim, "dw_ophan_eye", up(h.location, 3.4));
+  });
+  const tPass0 = tScan + DW05.scanTicks + 4;
+  const passLen = DW05.lockTicks + DW05.passTicks;
+  for (let k2 = 0; k2 < DW05.passes; k2++) {
+    const tLock = tPass0 + k2 * passLen;
+    const tRun = tLock + DW05.lockTicks;
+    let a = oPos, b = oPos, dir = fwd;
+    let tele = [];
+    const hit = /* @__PURE__ */ new Set();
+    scene.at(tLock, () => {
+      const c = cluster();
+      const base = flat(sub(c, oPos));
+      dir = fromYaw((Math.hypot(base.x, base.z) > 1 ? yawOf(base) : yawOf(fwd)) + k2 * 60);
+      let spread = 0;
+      for (const m of liveMarks()) spread = Math.max(spread, distXZ(m.e.location, c));
+      const half = clamp(spread + 4, DW05.passHalfMin, DW05.passHalfMax);
+      const ga = groundBelow(dim, up(sub(c, mul(dir, half)), 4), 24), gb = groundBelow(dim, up(add(c, mul(dir, half)), 4), 24);
+      a = up(ga, DW05.sweepAltitude);
+      b = up(gb, DW05.sweepAltitude);
+      oph.state(OPH.lock).skin(1);
+      sound(dim, "dw_ophan_lock", oPos, 1.2, 1 + k2 * 0.06);
+      tele = [ga, lerp(ga, gb, 0.5), gb].map((p) => scene.spawn("telegraph", p, { kind: 0, size: DW05.rimHalfWidth + 0.6, state: 1 }));
+      const from = oPos, ctrl = up(lerp(oPos, a, 0.5), 4), yawGoal = yawOf(dir);
+      scene.span(tLock, tRun, (p) => {
+        oPos = bezier(from, ctrl, a, p);
+        oYaw += angleDelta(oYaw, yawGoal) * 0.3;
+        oph.move(oPos, oYaw);
+        if (Math.round(p * 12) % 2 === 0) line(dim, "dw_ophan_route", up(a, 0.3 - DW05.sweepAltitude), up(b, 0.3 - DW05.sweepAltitude), 8);
+      });
+    });
+    scene.at(tRun, () => {
+      oph.state(OPH.sweep);
+      sound(dim, "dw_ophan_sweep", oPos, 1.3, 0.95 + k2 * 0.08);
+    });
+    scene.every(1, (e) => {
+      oPos = lerp(a, b, (e + 1) / DW05.passTicks);
+      oYaw = yawOf(dir);
+      oph.move(oPos, oYaw);
+      const ground = up(oPos, -DW05.sweepAltitude);
+      const ca = add(ground, mul(dir, DW05.rimChord)), cb = add(ground, mul(dir, -DW05.rimChord));
+      for (const t of tele) if (t.valid && distXZ(t.loc, oPos) < DW05.rimChord * 0.6) flashOut(t);
+      particle(dim, "dw_ophan_rim", up(ca, 0.8));
+      if (e % 2 === 0) particle(dim, "dw_ophan_sparks", up(ground, 0.3));
+      if (e % 10 === 0) sound(dim, "dw_ophan_hum", oPos, 1, 0.85 + k2 * 0.15);
+      for (const h of hostiles(dim, oPos, DW05.rimChord + DW05.sweepAltitude + 2, caster)) {
+        if (hit.has(h.id)) continue;
+        const l = h.location;
+        if (l.y < ground.y - 1.5 || l.y > ground.y + DW05.rimHeight) continue;
+        if (distToSegment(v(l.x, 0, l.z), v(ca.x, 0, ca.z), v(cb.x, 0, cb.z)) > DW05.rimHalfWidth) continue;
+        const m = marks.get(h.id);
+        if (!damage(h, m ? DW05.passMarkedDamage : DW05.passDamage, caster)) continue;
+        hit.add(h.id);
+        const sd = right(dir);
+        const sign = (l.x - oPos.x) * sd.x + (l.z - oPos.z) * sd.z >= 0 ? 1 : -1;
+        shove(h, mul(sd, sign), DW05.passKnock, DW05.passLift);
+        particle(dim, "dw_ophan_impact", up(l, 1));
+        sound(dim, "dw_ophan_bell", l, 1, m ? 1 + k2 * 0.08 : 0.85);
+        if (m) testify(h);
+      }
+    }, tRun, tRun + DW05.passTicks);
+    scene.at(tRun + DW05.passTicks, () => {
+      for (const t of tele) flashOut(t);
+    });
+  }
+  const tOphDone = tPass0 + DW05.passes * passLen;
+  scene.at(tOphDone, () => {
+    oph.state(OPH.survey);
+  });
+  const tC = 160;
+  const cStart = up(add(gC.pos, mul(fwd, 1.5)), 1);
+  const cStation = at(DW05.cherubStation);
+  let cPos = cStart;
+  let cYaw = gC.yaw;
+  const cherub = scene.spawn("cherub", cStart, { yaw: cYaw, state: CHE.hidden });
+  scene.at(tC, () => {
+    cherub.state(CHE.arrive);
+    sound(dim, "dw_cherub_arrive", gC.mouth, 1.5);
+    particle(dim, "fx_flash", gC.mouth);
+  });
+  scene.span(tC, tC + 36, (p) => {
+    cPos = bezier(cStart, up(lerp(cStart, cStation, 0.5), 2), cStation, smooth(p));
+    cherub.move(cPos, cYaw);
+  });
+  function cherubFace(goal, from, ticks = 10) {
+    scene.span(from, from + ticks, () => {
+      cYaw += angleDelta(cYaw, goal) * 0.35;
+      cherub.move(cPos, cYaw);
+    });
+  }
+  const turn = () => sound(dim, "dw_cherub_turn", up(cPos, 10), 1.1);
+  const tHuman = tC + secs(T2.cherub.arrive) - 2;
+  let testimony = [];
+  scene.at(tHuman, () => {
+    cherub.state(CHE.human);
+    cherubFace(yawTo(cPos, cluster()), scene.tick);
+    sound(dim, "dw_cherub_human", up(cPos, 10), 1.4);
+    testimony = region(DW05.maxMarks);
+  });
+  scene.every(3, (el) => {
+    const hand = up(cPos, 12.5);
+    particle(dim, "dw_cherub_glyph", hand);
+    const p = Math.min(1, el / 14);
+    for (const e of testimony) if (isAlive(e)) particle(dim, "dw_cherub_glyph", lerp(hand, up(e.location, 1.6), p));
+  }, tHuman + 7, tHuman + secs(T2.cherub.humanCast));
+  scene.at(tHuman + secs(T2.cherub.humanCast), () => {
+    testimony.forEach((e, i) => {
+      if (!isAlive(e)) return;
+      const fresh = !marks.has(e.id);
+      if (fresh) markEnemy(e);
+      else testify(e);
+      damage(e, DW05.testamentDamage, caster);
+      particle(dim, "dw_halo", up(e.location, 1.2));
+      sound(dim, "dw_cherub_glyph", e.location, 0.8, 1 + i * 0.05);
+    });
+    if (!testimony.length) for (let k2 = 0; k2 < 3; k2++) particle(dim, "dw_halo", up(polar(center, 3.5, k2 * 120), 1));
+    line(dim, "dw_cherub_glyph", up(cPos, 12.5), up(center, 2), 6);
+  });
+  const tOx = tHuman + secs(T2.cherub.human) - 2;
+  const tWard = tOx + secs(T2.cherub.oxLock);
+  const tVerdict = 500;
+  scene.at(tOx, () => {
+    cherub.state(CHE.ox);
+    turn();
+    cherubFace(yawTo(cPos, caster.location), scene.tick);
+    sound(dim, "dw_cherub_ox", up(cPos, 9), 1.4);
+  });
+  scene.at(tWard, () => {
+    sound(dim, "dw_cherub_shield", caster.location, 1.2);
+    burst(dim, "dw_cherub_feather", up(cPos, 6), 3, 6);
+    line(dim, "dw_cherub_shield", up(cPos, 6), up(caster.location, 1), 6);
+    const ward = addWard({
+      scene,
+      factor: 1 - DW05.wardStrength,
+      pool: DW05.wardPool,
+      protects: (e) => e.id === caster.id || e.typeId === "minecraft:player" && !CONFIG.targeting.pvp && distXZ(e.location, caster.location) <= DW05.wardRadius,
+      onAbsorb: (_amount, _attacker, victim) => {
+        if (victim.isValid) particle(dim, "dw_cherub_absorb", up(victim.location, 1));
+        sound(dim, "dw_cherub_absorb", victim.isValid ? victim.location : caster.location, 0.9);
+      },
+      onBreak: () => {
+        sound(dim, "dw_cherub_retaliate", caster.location, 0.6, 1.3);
+        particle(dim, "dw_cherub_shatter", up(caster.location, 1));
+      }
+    });
+    scene.at(tVerdict + 40, () => removeWard(ward));
+  });
+  scene.every(10, () => {
+    if (!caster.isValid) return;
+    particle(dim, "dw_cherub_shield", up(caster.location, 1));
+    for (const p of dissolveProjectiles(scene, caster.location, 5)) particle(dim, "dw_cherub_absorb", p);
+  }, tWard, tVerdict + 40);
+  const tLion = tOx + secs(T2.cherub.ox) + 22;
+  const tRoar2 = tLion + secs(T2.cherub.lionRoar);
+  let roarFrom = cPos, roarTo = center;
+  const cone = [];
+  scene.at(tLion, () => {
+    cherub.state(CHE.lion);
+    turn();
+    roarTo = cluster();
+    cherubFace(yawTo(cPos, roarTo), scene.tick);
+    const g0 = groundBelow(dim, up(cPos, -4), 24);
+    for (const f of [0.45, 0.85]) cone.push(scene.spawn("telegraph", lerp(g0, roarTo, f), { kind: 0, size: 2.5 + f * 3, state: 1 }));
+  });
+  scene.at(tRoar2 - 4, () => sound(dim, "dw_cherub_lion", up(cPos, 9.5), 1.8));
+  const roared = /* @__PURE__ */ new Set();
+  scene.at(tRoar2, () => {
+    roarFrom = add(up(cPos, 9.5), mul(fromYaw(cYaw), 1.8));
+    particle(dim, "dw_cherub_breath", roarFrom);
+    particle(dim, "dw_cherub_roar", roarFrom);
+    cone.forEach((t) => flashOut(t));
+  });
+  for (let k2 = 0; k2 < 3; k2++) {
+    const t0 = tRoar2 + k2 * 4;
+    let ringA;
+    let travel = 20;
+    scene.at(t0, () => {
+      const end = up(add(roarTo, mul(norm(flat(sub(roarTo, roarFrom))), 4)), 1.5);
+      travel = Math.max(8, Math.round(dist(roarFrom, end) / DW05.roarSpeed));
+      const yaw = yawTo(roarFrom, end);
+      ringA = scene.spawn("dw_cherub_roar", roarFrom, { yaw, state: 1 });
+      sound(dim, "dw_cherub_ring", roarFrom, 1, 0.9 + k2 * 0.1);
+      const from = roarFrom;
+      const ground0 = flat(from);
+      const dirXZ = norm(flat(sub(end, from)));
+      const reach = distXZ(from, end);
+      scene.span(t0, t0 + travel, (p, el) => {
+        const pos = lerp(from, end, p);
+        ringA?.move(pos, yaw);
+        if (el % 3 === 0) particle(dim, "dw_cherub_roar", pos);
+        if (k2 > 0) return;
+        const front = reach * p;
+        for (const e of region()) {
+          if (roared.has(e.id)) continue;
+          const rel = sub(flat(e.location), ground0);
+          const along = dot(rel, dirXZ);
+          if (along > front + 0.5 || along < front - 3) continue;
+          const lat = Math.hypot(rel.x - dirXZ.x * along, rel.z - dirXZ.z * along);
+          if (lat > DW05.roarHalfWidthNear + (DW05.roarHalfWidthFar - DW05.roarHalfWidthNear) * clamp(along / Math.max(reach, 1), 0, 1)) continue;
+          roared.add(e.id);
+          damage(e, boost(e, DW05.roarDamage, DW05.markBonus), caster);
+          shove(e, dirXZ, DW05.roarKnock, DW05.roarLift);
+          particle(dim, "dw_spark", up(e.location, 1));
+          testify(e);
+        }
+      });
+      scene.at(t0 + travel, () => {
+        if (ringA) {
+          ring(dim, "dw_glyph_rise", ringA.loc, 2.5, 6);
+          scene.despawn(ringA);
+        }
+      });
+    });
+  }
+  const tEagle = tRoar2 + 15;
+  const dives = T2.cherub.eagleThrust.map((s) => tEagle + secs(s));
+  scene.at(tEagle, () => {
+    cherub.state(CHE.eagle).skin(1);
+    turn();
+    cherubFace(yawTo(cPos, cluster()), scene.tick);
+    burst(dim, "dw_cherub_feather", up(cPos, 9), 4, 6);
+  });
+  scene.at(tEagle + 10, () => sound(dim, "dw_cherub_eagle", up(cPos, 11), 1.6));
+  function bladeTargets(wave) {
+    const out = [];
+    const used = /* @__PURE__ */ new Set();
+    for (const m of liveMarks()) {
+      if (out.length >= DW05.bladesPerWave) break;
+      out.push({ e: m.e, at: groundBelow(dim, m.e.location) });
+      used.add(m.e.id);
+    }
+    for (const e of region()) {
+      if (out.length >= DW05.bladesPerWave) break;
+      if (!used.has(e.id)) out.push({ e, at: groundBelow(dim, e.location) });
+    }
+    if (!out.length) {
+      const c = cluster();
+      [0, 1, 2].forEach((k2) => out.push({ at: polar(c, 3 + wave * 2, k2 * 120 + wave * 60) }));
+    }
+    return out;
+  }
+  function blade(target, diveAt, idx) {
+    let p0 = target.at;
+    const bYaw = cYaw + idx * 47;
+    const b = scene.spawn("dw_cherub_blade", up(p0, DW05.bladeHeight), { yaw: bYaw, state: BLADE2.form });
+    const sigil = scene.spawn("telegraph", p0, { kind: 0, size: DW05.bladeRadius, state: 1 });
+    sound(dim, "dw_cherub_blade", up(p0, DW05.bladeHeight), 0.9, 0.95 + idx * 0.04);
+    line(dim, "dw_cherub_glyph", up(cPos, 11), up(p0, DW05.bladeHeight), 5);
+    scene.after(secs(T2.cherub.bladeForm), () => b.state(BLADE2.aim));
+    scene.every(1, () => {
+      if (target.e && isAlive(target.e)) {
+        p0 = groundBelow(dim, target.e.location);
+        sigil.move(p0);
+      }
+      b.move(up(p0, DW05.bladeHeight), bYaw);
+    }, scene.tick + 1, diveAt);
+    scene.at(diveAt, () => {
+      b.state(BLADE2.dive);
+      sound(dim, "dw_cherub_dive", up(p0, DW05.bladeHeight * 0.5), 1);
+    });
+    scene.span(diveAt, diveAt + DW05.diveTicks, (p) => {
+      const pos = up(p0, DW05.bladeHeight * (1 - easeIn(p)));
+      b.move(pos, bYaw);
+      particle(dim, "dw_cherub_trail", up(pos, 1.5));
+    });
+    scene.at(diveAt + DW05.diveTicks, () => {
+      b.move(p0, bYaw).state(BLADE2.shatter);
+      sigil.state(3);
+      sound(dim, "dw_cherub_impact", p0, 1.1);
+      particle(dim, "dw_cherub_shatter", up(p0, 0.6));
+      particle(dim, "dw_ring", up(p0, 0.2));
+      for (const e of hostiles(dim, p0, DW05.bladeRadius, caster)) {
+        if (!damage(e, boost(e, DW05.bladeDamage, DW05.bladeMarkBonus), caster)) continue;
+        knockback(e, p0, 0.6, 0.3);
+        testify(e);
+      }
+      scene.after(secs(T2.cherub.bladeShatter) + 2, () => {
+        scene.despawn(b);
+        scene.despawn(sigil);
+      });
+    });
+  }
+  dives.forEach((diveAt, wave) => {
+    scene.at(diveAt - DW05.bladeWarn, () => bladeTargets(wave).forEach((t, i) => blade(t, diveAt, i + wave * 3)));
+  });
+  scene.at(tEagle + secs(T2.cherub.eagle), () => cherub.state(CHE.idle));
+  const tS = 190;
+  const sStart = up(add(gS.pos, mul(fwd, 1.5)), 1.5);
+  const sStation = at(DW05.seraphStation);
+  let sPos = sStart;
+  const sYaw = yawTo(sStation, view);
+  const seraph = scene.spawn("seraph", sStart, { yaw: sYaw, state: SER.hidden });
+  scene.at(tS, () => {
+    seraph.state(SER.arrive);
+    sound(dim, "dw_seraph_arrive", gS.mouth, 1.5);
+    particle(dim, "fx_flash", gS.mouth);
+  });
+  scene.span(tS, tS + secs(T2.seraph.arrive), (p) => {
+    sPos = bezier(sStart, up(lerp(sStart, sStation, 0.5), 3), sStation, smooth(p));
+    seraph.move(sPos, sYaw);
+  });
+  scene.at(tS + secs(T2.seraph.arrive), () => seraph.state(SER.veiled));
+  const tUnfurl = tS + secs(T2.seraph.arrive) + 6;
+  scene.at(tUnfurl, () => {
+    seraph.state(SER.unfurl);
+    sound(dim, "dw_unfurl", sPos, 1.2);
+    burst(dim, "dw_feather", up(sPos, 7), 6, 8);
+  });
+  scene.at(tUnfurl + secs(T2.seraph.unfurl), () => seraph.state(SER.open));
+  const chantAt = [262, 296, 330];
+  const chanted = [/* @__PURE__ */ new Set(), /* @__PURE__ */ new Set(), /* @__PURE__ */ new Set()];
+  chantAt.forEach((t0, i) => {
+    scene.at(t0, () => {
+      seraph.state(SER.chant1 + i).skin(1);
+      sound(dim, `dw_chant${i + 1}`, sPos, 1.5);
+      ring(dim, "dw_glyph_rise", up(sPos, 7), 5, 8, i * 20);
+    });
+    scene.at(t0 + T2.seraph.chantLead[i] - DW05.columnWarn + 8, () => judge(i));
+  });
+  function judge(i) {
+    const spots = [];
+    for (const m of liveMarks()) if (spots.length < DW05.maxColumns) spots.push({ e: m.e, loc: groundBelow(dim, m.e.location) });
+    for (const e of region()) {
+      if (spots.length >= DW05.maxColumns) break;
+      if (!marks.has(e.id)) spots.push({ e, loc: groundBelow(dim, e.location) });
+    }
+    if (!spots.length) {
+      const c = cluster();
+      [0, 1, 2].forEach((k2) => spots.push({ loc: polar(c, 4, k2 * 120 + 30 + i * 40) }));
+    }
+    for (const s of spots) {
+      const r = DW05.columnRadius * (1 + i * 0.1);
+      const warn = scene.spawn("telegraph", s.loc, { kind: 0, size: r, state: 1 });
+      let p0 = s.loc;
+      line(dim, "dw_glyph_fall", up(sPos, 6), up(p0, 8), 4);
+      scene.every(1, () => {
+        if (s.e && isAlive(s.e)) {
+          p0 = groundBelow(dim, s.e.location);
+          warn.move(p0);
+        }
+      }, scene.tick, scene.tick + DW05.columnWarn - 4);
+      scene.after(DW05.columnWarn - 6, () => {
+        const col = scene.spawn("dw_column", p0, { kind: i === 1 ? 1 : 0, size: r / 1.3 * 1.15, state: 1 });
+        sound(dim, "dw_column", p0, 1.1, 0.95 + i * 0.08);
+        scene.after(10, () => col.state(2));
+        scene.after(22, () => col.state(3));
+        scene.after(36, () => scene.despawn(col));
+      });
+      scene.after(DW05.columnWarn, () => {
+        flashOut(warn);
+        particle(dim, "dw_ring", up(p0, 0.2));
+        particle(dim, "dw_pillar_burst", up(p0, 0.3));
+        particle(dim, "dw_spark", up(p0, 1));
+        for (const e of hostiles(dim, p0, r, caster)) {
+          if (chanted[i].has(e.id)) continue;
+          if (!damage(e, DW05.chantDamage[i], caster)) continue;
+          chanted[i].add(e.id);
+          if (!marks.has(e.id)) markEnemy(e);
+          else testify(e);
+        }
+      });
+    }
+  }
+  scene.at(chantAt[2] + 32, () => seraph.state(SER.open));
+  const tIII = 370;
+  const thP = at(DW05.throne);
+  const seat = up(thP, 5.6);
+  const throne = scene.spawn("dw5_throne", thP, { yaw: yawTo(thP, view), state: THR.hidden });
+  const sPost = at(DW05.seraphPost), cPost = at(DW05.cherubPost), oPost = at(DW05.ophanPost);
+  scene.at(tIII, () => {
+    oph.state(OPH.survey);
+    cherub.state(CHE.idle);
+    const s0 = sPos, c0 = cPos, o0 = oPos;
+    scene.span(tIII, tIII + 30, (p) => {
+      const q2 = smooth(p);
+      sPos = bezier(s0, up(lerp(s0, sPost, 0.5), 3), sPost, q2);
+      seraph.move(sPos, yawTo(sPost, view));
+      cPos = lerp(c0, cPost, q2);
+      cYaw += angleDelta(cYaw, yawTo(cPost, view)) * 0.2;
+      cherub.move(cPos, cYaw);
+      oPos = bezier(o0, up(lerp(o0, oPost, 0.5), 3), oPost, q2);
+      oYaw += angleDelta(oYaw, yawTo(oPost, view)) * 0.2;
+      oph.move(oPos, oYaw);
+    });
+  });
+  sentences.forEach((s, k2) => {
+    scene.at(tIII + k2 * 6, () => {
+      s.state(SEN.gather);
+      sound(dim, "dw5_fold", up(center, DW05.sentences[k2].up), 1, 0.9 + k2 * 0.1);
+    });
+    scene.at(tIII + k2 * 6 + secs(T2.gather) + 2, () => scene.despawn(s));
+  });
+  const tThrone = tIII + 10;
+  scene.at(tThrone, () => {
+    throne.state(THR.assemble);
+    sound(dim, "dw5_throne_form", seat, 2);
+    seraph.skin(1);
+    cherub.skin(1);
+    oph.skin(1);
+    lights.place(up(thP, 7), LIGHT);
+  });
+  scene.every(2, (el) => {
+    const src = [up(sPos, 7), up(cPos, 10), oPos];
+    const ph = el / 2 % 8 / 8;
+    for (const s of src) {
+      particle(dim, "dw5_stream", lerp(s, seat, ph));
+      particle(dim, "dw5_stream", lerp(s, seat, (ph + 0.5) % 1));
+    }
+  }, tThrone, tThrone + 50);
+  scene.at(tThrone + secs(T2.assemble), () => {
+    throne.state(THR.idle);
+    particle(dim, "dw5_seat_glow", seat);
+    burst(dim, "dw_glyph_rise", up(thP, 8), 5, 8);
+  });
+  const tSpeak = tThrone + secs(T2.assemble) + 4;
+  scene.at(tSpeak, () => {
+    throne.state(THR.declare);
+    particle(dim, "dw5_seat_glow", seat);
+  });
+  const letters = [];
+  const lineBase = add(center, mul(fwd, DW05.throne.forward - DW05.lineForward));
+  const lYaw = yawTo(lineBase, view);
+  DW05.lineHeights.forEach((h, l) => {
+    letters.push([]);
+    const t0 = tSpeak + 4 + l * 12;
+    scene.at(t0, () => sound(dim, "dw5_speak", up(lineBase, h), 1.8, 1 + l * 0.12));
+    for (let j = 0; j < DW05.lettersPerLine; j++) {
+      const off = (j - (DW05.lettersPerLine - 1) / 2) * DW05.letterSpacing;
+      const p = up(add(lineBase, mul(side, off)), h);
+      scene.at(t0 + j * 2, () => {
+        const a = scene.spawn("dw5_letter", p, { yaw: lYaw, kind: (l * 5 + j * 2) % LETTER_KINDS, state: LET.ignite });
+        letters[l][j] = a;
+        particle(dim, "fx_flash", up(p, 2));
+        if (j % 2 === 0) sound(dim, "dw5_ignite", p, 1, 0.9 + j * 0.06);
+        scene.after(secs(T2.ignite), () => a.state(LET.hold));
+      });
+    }
+  });
+  const areas = [];
+  scene.at(tSpeak + 8, () => {
+    const pick = [...liveMarks().map((m) => m.e), ...region().filter((e) => !marks.has(e.id))];
+    for (const e of pick) {
+      if (areas.length >= DW05.lineHeights.length * DW05.lettersPerLine) break;
+      const g = groundBelow(dim, e.location);
+      if (areas.some((a) => distXZ(a.at, g) < DW05.areaRadius)) continue;
+      areas.push({ at: g, e, letters: 0, landed: 0 });
+    }
+    if (!areas.length) {
+      const c = cluster();
+      areas.push({ at: c, letters: 0, landed: 0 });
+      for (let k2 = 0; k2 < 4; k2++) areas.push({ at: groundBelow(dim, up(polar(c, 6, k2 * 90 + 45), 3), 12), letters: 0, landed: 0 });
+    }
+    for (const a of areas) a.sigil = scene.spawn("telegraph", a.at, { kind: 0, size: DW05.areaRadius, state: 4 });
+    scene.after(40, () => areas.forEach((a) => a.sigil?.state(2)));
+  });
+  scene.every(1, () => {
+    for (const a of areas) if (a.e && isAlive(a.e)) {
+      a.at = groundBelow(dim, a.e.location);
+      a.sigil?.move(a.at);
+    }
+  }, tSpeak + 9, tVerdict - DW05.plungeTicks);
+  scene.at(tVerdict - secs(T2.cherub.verdictHit), () => {
+    cherub.state(CHE.verdict);
+    sound(dim, "dw_cherub_turn", up(cPos, 10), 1.2);
+  });
+  scene.at(tVerdict - T2.seraph.verdictHitTicks, () => seraph.state(SER.verdict));
+  scene.at(tVerdict - secs(T2.ophan.verdictHit), () => {
+    oph.state(OPH.verdict);
+    sound(dim, "dw_ophan_verdict", oPos, 1.4);
+  });
+  scene.at(tVerdict - 3, () => sound(dim, "dw5_verdict", up(center, 6), 2.2));
+  const struck = /* @__PURE__ */ new Map();
+  const bonused = /* @__PURE__ */ new Set();
+  let q = 0;
+  for (let l = 0; l < DW05.lineHeights.length; l++) {
+    for (let j = 0; j < DW05.lettersPerLine; j++, q++) {
+      const idx = q;
+      const tPl = tVerdict - DW05.plungeTicks + idx * DW05.plungeStagger;
+      let from = center, target, a;
+      scene.at(tPl, () => {
+        a = letters[l]?.[j];
+        if (!a || !a.valid || !areas.length) return;
+        target = areas[idx % areas.length];
+        target.letters++;
+        from = a.loc;
+        a.state(LET.plunge);
+        sound(dim, "dw5_letter_fall", from, 1.3, 0.92 + idx % 5 * 0.05);
+      });
+      scene.span(tPl, tPl + DW05.plungeTicks, (p) => {
+        if (!a || !target) return;
+        const pos = lerp(from, target.at, easeIn(p));
+        a.move(pos);
+        particle(dim, "dw5_edict_trail", up(pos, 3));
+      });
+      scene.at(tPl + DW05.plungeTicks, () => {
+        if (!a || !target) return;
+        const ar = target, letter = a;
+        letter.move(ar.at).state(LET.impact);
+        scene.after(secs(T2.impact) + 2, () => scene.despawn(letter));
+        particle(dim, "dw5_edict_impact", up(ar.at, 0.2));
+        particle(dim, "dw5_edict_letters", up(ar.at, 1));
+        particle(dim, "dw_pillar_burst", up(ar.at, 0.3));
+        particle(dim, "fx_flash", up(ar.at, 1.5));
+        for (const e of hostiles(dim, ar.at, DW05.verdictRadius, caster)) {
+          const n = struck.get(e.id) ?? 0;
+          if (n >= DW05.maxLetterHits) continue;
+          let dmg = DW05.verdictDamage;
+          if (marks.has(e.id) && !bonused.has(e.id)) {
+            dmg += DW05.verdictMarkBonus;
+            bonused.add(e.id);
+          }
+          if (!damage(e, dmg, caster)) continue;
+          struck.set(e.id, n + 1);
+          knockback(e, ar.at, DW05.verdictKnock, DW05.verdictLift);
+        }
+        ar.landed++;
+        if (ar.landed >= ar.letters) flashOut(ar.sigil);
+      });
+    }
+  }
+  scene.at(tVerdict, () => {
+    const fc = areas.length ? areas[0].at : center;
+    const col = scene.spawn("dw_column", fc, { kind: 2, size: 2.6, state: 1 });
+    scene.after(10, () => col.state(2));
+    scene.after(26, () => col.state(3));
+    scene.after(40, () => scene.despawn(col));
+    ring(dim, "dw_glyph_fall", up(fc, 7), 3, 8);
+    for (const e of hostiles(dim, fc, DW05.finalColumnRadius, caster)) damage(e, DW05.finalColumnDamage, caster);
+    particle(dim, "fx_flash", oPos);
+    burst(dim, "dw_ophan_impact", oPos, 3, 4);
+    for (const m of liveMarks()) {
+      line(dim, "dw_ophan_scan", oPos, up(m.e.location, 1.2), 8);
+      damage(m.e, DW05.gazeDamage, caster);
+      particle(dim, "dw_ophan_eye", up(m.e.location, 3.4));
+    }
+    const cg = groundBelow(dim, cPos, 24);
+    particle(dim, "dw_cherub_quake", up(cg, 0.2));
+    particle(dim, "dw_cherub_roar", up(cPos, 9.5));
+    ring(dim, "dw_cherub_feather", up(cPos, 6), 4, 6);
+    particle(dim, "fx_shock", up(center, 0.4));
+  });
+  const tAfter = tVerdict + q * DW05.plungeStagger + 4;
+  scene.at(tAfter, () => {
+    for (const m of marks.values()) if (m.mark.valid) {
+      const mk = m.mark;
+      mk.state(MARK2.burst);
+      scene.after(8, () => scene.despawn(mk));
+    }
+    for (const a of areas) flashOut(a.sigil);
+  });
+  scene.at(tVerdict + secs(T2.ophan.verdict), () => oph.state(OPH.survey));
+  const tW = Math.max(540, tAfter + 4);
+  scene.at(tW, () => sound(dim, "dw5_withdraw", up(center, 12), 1.8));
+  function withdraw(actor, getPos, setPos, g, start, departState, departLen, yawOfMove) {
+    const into = up(add(g.pos, mul(fwd, 1.5)), g === gO ? 0 : 1.5);
+    scene.at(start, () => {
+      actor.skin(0);
+      const p0 = getPos();
+      scene.span(start, start + 20, (p) => {
+        const pos = bezier(p0, up(lerp(p0, into, 0.5), 2), into, smooth(p));
+        setPos(pos);
+        actor.move(pos, yawOfMove());
+      });
+    });
+    const tDep = start + 16;
+    scene.at(tDep, () => {
+      actor.state(departState);
+      particle(dim, "fx_flash", g.mouth);
+      burst(dim, "dw_glyph_rise", g.mouth, 2.5, 6);
+    });
+    scene.at(tDep + secs(departLen) + 2, () => scene.despawn(actor));
+    const tClose = tDep + secs(departLen) - 4;
+    scene.at(tClose, () => {
+      g.a.state(GATE.close);
+      sound(dim, "dw5_gate_close", g.mouth, 1.6);
+    });
+    scene.at(tClose + secs(T2.close), () => {
+      g.a.state(GATE.fold);
+      sound(dim, "dw5_fold", g.mouth, 1.4);
+      particle(dim, "dw5_fold", g.mouth);
+    });
+    scene.at(tClose + secs(T2.close) + secs(T2.fold) + 2, () => {
+      burst(dim, "dw_glyph_rise", up(g.mouth, 3), 3, 6);
+      scene.despawn(g.a);
+    });
+    return tClose + secs(T2.close) + secs(T2.fold) + 2;
+  }
+  withdraw(seraph, () => sPos, (p) => {
+    sPos = p;
+  }, gS, tW, SER.depart, T2.seraph.depart, () => yawTo(sPos, view));
+  withdraw(cherub, () => cPos, (p) => {
+    cPos = p;
+  }, gC, tW + 16, CHE.depart, T2.cherub.depart, () => cYaw);
+  const tLastGate = withdraw(oph, () => oPos, (p) => {
+    oPos = p;
+  }, gO, tW + 32, OPH.depart, T2.ophan.depart, () => oYaw);
+  const tUnmake = tLastGate - 20;
+  scene.at(tUnmake, () => {
+    throne.state(THR.unmake);
+    sound(dim, "dw5_unmake", seat, 1.8);
+    burst(dim, "dw_glyph_rise", up(thP, 6), 6, 10);
+  });
+  scene.at(tUnmake + 20, () => ring(dim, "dw5_stream", up(thP, 12), 5, 10));
+  scene.at(tUnmake + secs(T2.unmake) + 2, () => {
+    scene.despawn(throne);
+    circle.state(3);
+  });
+  scene.at(tUnmake + secs(T2.unmake) + 16, () => scene.despawn(circle));
+  scene.endAt(tUnmake + secs(T2.unmake) + 22);
 });
 
 // src/config/dw06.ts
@@ -2774,7 +3704,7 @@ var ED_SCALE = 2 / 16;
 var COLUMN = 0;
 var ARCH = 1;
 var BRIDGE = 2;
-var GATE = 3;
+var GATE2 = 3;
 var PLATFORM = 4;
 var CELESTIAL = 5;
 var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, aim }) => {
@@ -2786,7 +3716,7 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
   if (distXZ(center, c0) < 3) fwd = norm(flat(aim.forward));
   const rt = right(fwd);
   const tb = blocksFor(scene);
-  const P5 = (a, b, h = 0) => up(add(add(center, mul(rt, a)), mul(fwd, b)), h);
+  const P6 = (a, b, h = 0) => up(add(add(center, mul(rt, a)), mul(fwd, b)), h);
   const ground = (p) => groundBelow(dim, up(p, 3), 12);
   const faceCaster = (p) => yawOf(sub(caster.isValid ? caster.location : c0, p));
   const domain = () => hostiles(dim, center, DW06.domainRadius, caster);
@@ -2810,8 +3740,8 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
   sound(dim, "dw6_book", bookAt, 0.9);
   const boundary = scene.spawn("dw6_boundary", up(center, 0.05), { state: BOUND.inscribe });
   scene.at(40, () => boundary.state(BOUND.hold));
-  scene.every(20, () => particle(dim, "dw6_motes", P5(0, 0, 6)), 0, 140);
-  scene.at(18, () => particle(dim, "dw6_bell", P5(0, 0, 10)));
+  scene.every(20, () => particle(dim, "dw6_motes", P6(0, 0, 6)), 0, 140);
+  scene.at(18, () => particle(dim, "dw6_bell", P6(0, 0, 10)));
   tb.place(up(bookAt, 1), LIGHT);
   scene.at(14, () => {
     for (const e of domain()) mark(e);
@@ -2823,7 +3753,7 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
   });
   scene.every(5, () => burst(dim, "dw6_letters", up(bookAt, 1.2), 1.4, 2), 72, 104);
   scene.at(110, () => book.state(BOOK.layered));
-  const pageO = P5(0, 5, 9);
+  const pageO = P6(0, 5, 9);
   const pd = norm(flat(sub(c0, pageO)));
   const pageYaw = yawOf(pd);
   const pr = right(pd);
@@ -2844,7 +3774,7 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
     { kind: ARCH, a: 0, b: -5 },
     { kind: PLATFORM, a: -4.5, b: -99 },
     { kind: BRIDGE, a: 0, b: 4.5 },
-    { kind: GATE, a: 0, b: 13 },
+    { kind: GATE2, a: 0, b: 13 },
     { kind: COLUMN, a: -11, b: 9 },
     { kind: CELESTIAL, a: 6, b: 9 },
     { kind: PLATFORM, a: 4.5, b: -99 },
@@ -2860,7 +3790,7 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
   });
   function landingSpot(i) {
     const s = plan[i];
-    let p = s.b === -99 ? up(add(add(c0, mul(rt, s.a)), mul(fwd, 2.5)), 0) : P5(s.a, s.b);
+    let p = s.b === -99 ? up(add(add(c0, mul(rt, s.a)), mul(fwd, 2.5)), 0) : P6(s.a, s.b);
     if (s.kind === COLUMN || s.kind === CELESTIAL) {
       const near = hostiles(dim, p, DW06.seekRadius, caster).filter((e) => !claimed.has(e.id) && dist(e.location, center) <= DW06.domainRadius);
       if (near.length) {
@@ -2872,7 +3802,7 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
   }
   function cellsFor(kind, at) {
     const r = right(norm(flat(sub(c0, at))));
-    const offs = kind === COLUMN ? [0] : kind === ARCH ? [-22 * ED_SCALE, 22 * ED_SCALE] : kind === GATE ? [-3.9, -2.9, 2.9, 3.9] : [];
+    const offs = kind === COLUMN ? [0] : kind === ARCH ? [-22 * ED_SCALE, 22 * ED_SCALE] : kind === GATE2 ? [-3.9, -2.9, 2.9, 3.9] : [];
     return offs.map((o) => add(at, mul(r, o)));
   }
   function raiseBarriers(ed) {
@@ -2906,7 +3836,7 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
     const t0 = tWrite0 + i * tWriteStep;
     const s = plan[i];
     const slotA = -36 + i % 5 * 19, slotY = i < 5 ? 63 : 25;
-    let land = P5(0, 0);
+    let land = P6(0, 0);
     let warn;
     let glyph;
     scene.at(t0, () => {
@@ -3020,21 +3950,21 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
     // I Containment: a ring of written walls closes around the densest hostile region and draws it in
     () => {
       const es = domain();
-      const H = ground(centroid(es, P5(0, 5)));
-      declare(0, H);
+      const H2 = ground(centroid(es, P6(0, 5)));
+      declare(0, H2);
       const R2 = DW06.containRadius;
-      const players = allies(dim, H, R2 + 1.5, caster);
-      const door = yawOf(sub(c0, H));
+      const players = allies(dim, H2, R2 + 1.5, caster);
+      const door = yawOf(sub(c0, H2));
       for (let i = 0; i < 8; i++) {
         const ang = i * 45 + 22.5;
         const rad = ang * Math.PI / 180;
-        const p = ground({ x: H.x + Math.cos(rad) * R2, y: H.y, z: H.z + Math.sin(rad) * R2 });
-        walls.push(scene.spawn("dw6_wall", p, { yaw: yawOf(sub(H, p)), kind: 0, size: 1.2, state: WALL.rise }));
+        const p = ground({ x: H2.x + Math.cos(rad) * R2, y: H2.y, z: H2.z + Math.sin(rad) * R2 });
+        walls.push(scene.spawn("dw6_wall", p, { yaw: yawOf(sub(H2, p)), kind: 0, size: 1.2, state: WALL.rise }));
       }
       scene.after(20, () => walls.forEach((w) => w.state(WALL.hold)));
       for (const d of [2, 8]) {
         scene.after(d, () => {
-          for (const e of hostiles(dim, H, DW06.containPull, caster)) if (distXZ(e.location, H) > R2 - 1.5) shove(e, sub(H, e.location), DW06.containPullStrength, 0.25);
+          for (const e of hostiles(dim, H2, DW06.containPull, caster)) if (distXZ(e.location, H2) > R2 - 1.5) shove(e, sub(H2, e.location), DW06.containPullStrength, 0.25);
         });
       }
       scene.after(16, () => {
@@ -3042,7 +3972,7 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
           const a = s * 360 / 64;
           if (players.length && Math.abs(((a - (door + 90)) % 360 + 540) % 360 - 180) < 22) continue;
           const rad = a * Math.PI / 180;
-          const p = ground({ x: H.x + Math.cos(rad) * R2, y: H.y, z: H.z + Math.sin(rad) * R2 });
+          const p = ground({ x: H2.x + Math.cos(rad) * R2, y: H2.y, z: H2.z + Math.sin(rad) * R2 });
           tb.column(Math.floor(p.x), Math.floor(p.y), Math.floor(p.z), 3);
         }
       });
@@ -3050,14 +3980,14 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
     // II Station: written structures slide between the allies and the enemy
     () => {
       const E = centroid(domain(), center);
-      const A3 = caster.isValid ? caster.location : c0;
-      const toE = norm(flat(sub(E, A3)));
+      const A4 = caster.isValid ? caster.location : c0;
+      const toE = norm(flat(sub(E, A4)));
       const side = right(toE);
-      const d = Math.min(DW06.stationDistance, Math.max(3, distXZ(E, A3) / 2));
+      const d = Math.min(DW06.stationDistance, Math.max(3, distXZ(E, A4) / 2));
       const movers = edifices.filter((e) => e.kind === COLUMN || e.kind === ARCH).slice(0, DW06.stationCount);
-      declare(1, add(A3, mul(toE, d)));
+      declare(1, add(A4, mul(toE, d)));
       movers.forEach((ed, j) => {
-        const dest = ground(add(add(A3, mul(toE, d)), mul(side, (j - (movers.length - 1) / 2) * 4.5)));
+        const dest = ground(add(add(A4, mul(toE, d)), mul(side, (j - (movers.length - 1) / 2) * 4.5)));
         const from = ed.at;
         dropBarriers(ed);
         ed.a.state(ED.strike);
@@ -3077,10 +4007,10 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
     },
     // III Direction: three lines of text fire across the field as moving walls
     () => {
-      declare(2, P5(0, 4));
+      declare(2, P6(0, 4));
       const lanes = [-2, 4, 10];
       lanes.forEach((b, j) => {
-        const from = ground(P5(-17, b)), to = ground(P5(17, b));
+        const from = ground(P6(-17, b)), to = ground(P6(17, b));
         line(dim, "dw6_ink", up(from, 0.5), up(to, 0.5), 8);
         const w = scene.spawn("dw6_wall", from, { yaw: yawOf(rt), kind: 1, size: 1.4, state: WALL.rise });
         walls.push(w);
@@ -3142,7 +4072,7 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
           ed.a.state(ED.strike);
           scene.after(16, () => ed.a.state(ED.hold));
           const at = ed.at;
-          if (ed.kind === COLUMN || ed.kind === GATE) particle(dim, "dw_pillar_burst", up(at, 0.3));
+          if (ed.kind === COLUMN || ed.kind === GATE2) particle(dim, "dw_pillar_burst", up(at, 0.3));
           else if (ed.kind === ARCH) ring(dim, "dw_glyph_fall", up(at, 6), 2.5, 5);
           else particle(dim, "dw6_rays", up(at, 0.3));
           particle(dim, "dw6_quake", up(at, 0.2));
@@ -3184,7 +4114,7 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
   const tRise2 = tLaw0 + 7 * tLawStep + 26;
   scene.at(tRise2, () => {
     tablets.forEach((t) => t.state(TAB.shed));
-    sound(dim, "dw6_rise", P5(0, 10, 10), 1.4);
+    sound(dim, "dw6_rise", P6(0, 10, 10), 1.4);
   });
   scene.span(tRise2, tRise2 + 40, (p) => tablets.forEach((t, k2) => t.move(up(stations[k2], 10 * p * p * (3 - 2 * p)))));
   scene.every(4, (e) => {
@@ -3206,13 +4136,13 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
   }
   const L1 = { form: tRise2 + 10, desc: tRise2 + 50 };
   let l1 = new Actor(void 0, "");
-  const l1Hi = P5(0, 16, 15), l1Lo = up(ground(P5(0, 16)), 1.6);
+  const l1Hi = P6(0, 16, 15), l1Lo = up(ground(P6(0, 16)), 1.6);
   scene.at(L1.form, () => {
     l1 = spawnLine(0, l1Hi);
   });
   const sweepWarn = [];
   scene.at(L1.desc - 20, () => {
-    for (const b of [12, 4, -4]) sweepWarn.push(scene.spawn("telegraph", ground(P5(0, b)), { kind: 0, size: 3, state: 1 }));
+    for (const b of [12, 4, -4]) sweepWarn.push(scene.spawn("telegraph", ground(P6(0, b)), { kind: 0, size: 3, state: 1 }));
   });
   scene.at(L1.desc, () => descend(l1, l1Hi, l1Lo, L1.desc, L1.desc + 16));
   scene.at(L1.desc + 16, () => {
@@ -3223,7 +4153,7 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
   {
     const hit = /* @__PURE__ */ new Set();
     scene.span(L1.desc + 16, L1.desc + 52, (p) => {
-      const at = up(ground(P5(0, 16 - 23 * p)), 1.6);
+      const at = up(ground(P6(0, 16 - 23 * p)), 1.6);
       l1.move(at);
       if (scene.tick % 3 === 0) line(dim, "dw6_seam", add(at, mul(rt, -DW06.sweepHalfLength)), add(at, mul(rt, DW06.sweepHalfLength)), 5);
       for (const e of hostiles(dim, at, DW06.sweepHalfLength + 1, caster)) {
@@ -3246,7 +4176,7 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
   scene.at(L1.desc + 74, () => scene.despawn(l1));
   const L22 = { form: tRise2 + 20, desc: L1.desc + 50 };
   let l2 = new Actor(void 0, "");
-  const l2Hi = P5(0, 2, 19), l2Lo = up(center, 1.2);
+  const l2Hi = P6(0, 2, 19), l2Lo = up(center, 1.2);
   let ringWarn;
   scene.at(L22.form, () => {
     l2 = spawnLine(1, l2Hi, 0.6);
@@ -3287,7 +4217,7 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
   scene.at(L22.desc + 68, () => scene.despawn(l2));
   const L3 = { form: tRise2 + 30, desc: L22.desc + 50 };
   let l3 = new Actor(void 0, "");
-  const l3Hi = P5(0, 3, 21), l3Lo = P5(0, 3, 9);
+  const l3Hi = P6(0, 3, 21), l3Lo = P6(0, 3, 9);
   scene.at(L3.form, () => {
     l3 = spawnLine(2, l3Hi);
   });
@@ -3340,7 +4270,7 @@ var dw06_word_before_creation_default = defineSpell("dw06", ({ caster, scene, ai
   scene.at(L3.desc + 86, () => scene.despawn(l3));
   const L4 = { form: tRise2 + 40, desc: L3.desc + 62 };
   let l4 = new Actor(void 0, "");
-  const l4Hi = P5(0, 0, 23), l4Lo = up(center, 1.4);
+  const l4Hi = P6(0, 0, 23), l4Lo = up(center, 1.4);
   let spiralWarn;
   scene.at(L4.form, () => {
     l4 = spawnLine(3, l4Hi, 1.8);
@@ -3587,8 +4517,8 @@ var BIRD = { hidden: 0, arrive: 1, glide: 2, swoopA: 3, swoopB: 4, depart: 5 };
 var DOLL = { hidden: 0, arrive: 1, float: 2, pulseA: 3, pulseB: 4, depart: 5 };
 var ROAD = { hidden: 0, unroll: 1, hold: 2, rollup: 3 };
 var MOON = { hidden: 0, rise: 1, sleep: 2, set: 3 };
-var MARK2 = { hidden: 0, appear: 1, hold: 2, flare: 3, vanish: 4 };
-var T2 = {
+var MARK3 = { hidden: 0, appear: 1, hold: 2, flare: 3, vanish: 4 };
+var T3 = {
   roadAnim: 16,
   moonRise: 28,
   moonSet: 28,
@@ -3627,20 +4557,20 @@ var dn01_reverie_procession_default = defineSpell("dn01", ({ caster, scene, aim 
     ctrl.push(add(up(p, DN01.apex * Math.pow(Math.sin(Math.PI * f), 0.8)), mul(side, DN01.curve * Math.sin(2 * Math.PI * f))));
   }
   ctrl.push(end);
-  const N2 = 96;
-  const P5 = [];
+  const N3 = 96;
+  const P6 = [];
   const S6 = [];
-  for (let i = 0; i <= N2; i++) {
-    P5.push(spline(ctrl, i / N2));
-    S6.push(i ? S6[i - 1] + dist(P5[i], P5[i - 1]) : 0);
+  for (let i = 0; i <= N3; i++) {
+    P6.push(spline(ctrl, i / N3));
+    S6.push(i ? S6[i - 1] + dist(P6[i], P6[i - 1]) : 0);
   }
-  const L3 = S6[N2];
+  const L3 = S6[N3];
   function road(s) {
     const x = clamp(s, 0, L3);
     let i = 1;
-    while (i < N2 && S6[i] < x) i++;
+    while (i < N3 && S6[i] < x) i++;
     const f = (x - S6[i - 1]) / Math.max(1e-6, S6[i] - S6[i - 1]);
-    return { p: lerp(P5[i - 1], P5[i], f), d: norm(sub(P5[i], P5[i - 1])) };
+    return { p: lerp(P6[i - 1], P6[i], f), d: norm(sub(P6[i], P6[i - 1])) };
   }
   const pitch = (d) => Math.atan2(d.y, Math.hypot(d.x, d.z)) * 180 / Math.PI;
   const tilts = /* @__PURE__ */ new Map();
@@ -3655,12 +4585,12 @@ var dn01_reverie_procession_default = defineSpell("dn01", ({ caster, scene, aim 
   const travel = Math.max(20, Math.ceil(L3 / DN01.paradeSpeed * 20));
   const arrive = DN01.spawnAt.map((t) => t + DN01.gateHold + travel + 1);
   const horseRun = Math.max(10, Math.round(DN01.horseLength / DN01.horseSpeed * 20));
-  const birdDone = arrive[2] + DN01.birdSwoops * T2.birdSwoop + 1;
+  const birdDone = arrive[2] + DN01.birdSwoops * T3.birdSwoop + 1;
   const dollLast = arrive[3] + 1 + DN01.dollDrift + DN01.dollPulses[DN01.dollPulses.length - 1] + 10;
-  const stagDone = arrive[1] + DN01.stagBounds * T2.stagLeap + 2;
+  const stagDone = arrive[1] + DN01.stagBounds * T3.stagLeap + 2;
   const horseDone = arrive[0] + horseRun + 2;
   const tRoll = Math.max(birdDone, dollLast, stagDone, horseDone) + 4;
-  const tEnd = tRoll + (n - 1) * DN01.unrollStep + T2.roadAnim + 8;
+  const tEnd = tRoll + (n - 1) * DN01.unrollStep + T3.roadAnim + 8;
   const segs = [];
   const lights = blocksFor(scene);
   sound(dim, "dn_parade_open", start, 1.2);
@@ -3673,20 +4603,20 @@ var dn01_reverie_procession_default = defineSpell("dn01", ({ caster, scene, aim 
       segs[i] = a;
       particle(dim, "dn_parade_confetti", up(p, 1.2));
       if (i % DN01.lightEvery === 1) lights.place(up(p, 1.5), LIGHT);
-      scene.after(T2.roadAnim, () => a.state(ROAD.hold));
+      scene.after(T3.roadAnim, () => a.state(ROAD.hold));
     });
   }
   let apexI = 0;
-  for (let i = 0; i <= N2; i++) if (P5[i].y > P5[apexI].y) apexI = i;
-  const moonAt = add(up(P5[apexI], DN01.moonAbove), mul(side, -1.5));
+  for (let i = 0; i <= N3; i++) if (P6[i].y > P6[apexI].y) apexI = i;
+  const moonAt = add(up(P6[apexI], DN01.moonAbove), mul(side, -1.5));
   let moon;
   scene.at(4, () => {
     moon = scene.spawn("dn_parade_moon", moonAt, { yaw: yawOf(sub(base, moonAt)), state: MOON.rise });
     sound(dim, "dn_parade_moon", moonAt, 1);
     burst(dim, "dn_parade_trail", moonAt, 3, 8);
   });
-  scene.at(4 + T2.moonRise, () => moon?.state(MOON.sleep));
-  scene.at(8, () => sound(dim, "dn_parade_theme", P5[apexI], 1.1));
+  scene.at(4 + T3.moonRise, () => moon?.state(MOON.sleep));
+  scene.at(8, () => sound(dim, "dn_parade_theme", P6[apexI], 1.1));
   scene.every(10, () => particle(dim, "dn_parade_note", up(moonAt, -3)), 30, tRoll);
   const hits = /* @__PURE__ */ new Map();
   function strike(e, who, amount) {
@@ -3709,14 +4639,14 @@ var dn01_reverie_procession_default = defineSpell("dn01", ({ caster, scene, aim 
     if (!first || !isAlive(e)) return;
     const count = h.by.size;
     if (!h.mark || !h.mark.valid) {
-      const mk = scene.spawn("dn_parade_mark", up(at, DN01.markHeight), { state: MARK2.appear, skin: count - 1 });
+      const mk = scene.spawn("dn_parade_mark", up(at, DN01.markHeight), { state: MARK3.appear, skin: count - 1 });
       h.mark = mk;
       scene.follow(mk, e, DN01.markHeight);
-      scene.after(T2.markAppear, () => mk.state(MARK2.hold));
+      scene.after(T3.markAppear, () => mk.state(MARK3.hold));
     } else {
       const mk = h.mark;
-      mk.skin(count - 1).state(MARK2.flare);
-      scene.after(T2.markFlare, () => mk.state(MARK2.hold));
+      mk.skin(count - 1).state(MARK3.flare);
+      scene.after(T3.markFlare, () => mk.state(MARK3.hold));
     }
     if (count === ORDER.length && !h.full) {
       h.full = true;
@@ -3803,13 +4733,13 @@ var dn01_reverie_procession_default = defineSpell("dn01", ({ caster, scene, aim 
       sound(dim, "dn_parade_depart", h.loc, 0.9, 1.1);
       burst(dim, "dn_parade_shard", up(h.loc, 2), 1, 4);
     });
-    scene.at(t0 + horseRun + 2 + T2.horseDepart, () => scene.despawn(h));
+    scene.at(t0 + horseRun + 2 + T3.horseDepart, () => scene.despawn(h));
   }
   function stagBounds(st2) {
     const t0 = scene.tick;
     const struck = /* @__PURE__ */ new Set();
     for (let k2 = 0; k2 < DN01.stagBounds; k2++) {
-      const tk = t0 + k2 * T2.stagLeap;
+      const tk = t0 + k2 * T3.stagLeap;
       scene.at(tk, () => {
         if (!st2.valid) return;
         const from = st2.loc;
@@ -3826,20 +4756,20 @@ var dn01_reverie_procession_default = defineSpell("dn01", ({ caster, scene, aim 
             land = groundBelow(dim, target.location);
             warn.move(land);
           }
-        }, tk + 1, tk + T2.stagLaunch);
+        }, tk + 1, tk + T3.stagLaunch);
         let a0 = from;
         let hop = DN01.stagHop;
-        scene.at(tk + T2.stagLaunch, () => {
+        scene.at(tk + T3.stagLaunch, () => {
           a0 = st2.loc;
           hop = DN01.stagHop + DN01.stagHopPerBlock * distXZ(a0, land);
           sound(dim, "dn_parade_step", a0, 0.8, 1.1);
         });
-        scene.span(tk + T2.stagLaunch, tk + T2.stagLand + 1, (p, e) => {
+        scene.span(tk + T3.stagLaunch, tk + T3.stagLand + 1, (p, e) => {
           const q = lerp(a0, land, p);
           st2.move(up(q, hop * 4 * p * (1 - p)), yawOf(flat(sub(land, a0))));
           if (e % 3 === 1) particle(dim, "dn_parade_mistpuff", up(q, hop * 4 * p * (1 - p) + 1.5));
         });
-        scene.at(tk + T2.stagLand, () => {
+        scene.at(tk + T3.stagLand, () => {
           particle(dim, "dn_parade_groundmoon", up(land, 0.15));
           particle(dim, "dn_parade_mistpuff", up(land, 0.3));
           burst(dim, "dn_parade_shard", up(land, 0.8), 1, 3);
@@ -3854,19 +4784,19 @@ var dn01_reverie_procession_default = defineSpell("dn01", ({ caster, scene, aim 
         });
       });
     }
-    const tDep = t0 + DN01.stagBounds * T2.stagLeap + 2;
+    const tDep = t0 + DN01.stagBounds * T3.stagLeap + 2;
     scene.at(tDep, () => {
       st2.state(STAG.depart);
       sound(dim, "dn_parade_depart", st2.loc, 0.9, 0.95);
       burst(dim, "dn_parade_mistpuff", up(st2.loc, 2), 1.2, 4);
     });
-    scene.at(tDep + T2.stagDepart, () => scene.despawn(st2));
+    scene.at(tDep + T3.stagDepart, () => scene.despawn(st2));
   }
   function birdSwoops(b) {
     const t0 = scene.tick;
     const everHit = /* @__PURE__ */ new Set();
     for (let k2 = 0; k2 < DN01.birdSwoops; k2++) {
-      const tk = t0 + k2 * T2.birdSwoop;
+      const tk = t0 + k2 * T3.birdSwoop;
       scene.at(tk, () => {
         if (!b.valid) return;
         const p0 = b.loc;
@@ -3890,14 +4820,14 @@ var dn01_reverie_procession_default = defineSpell("dn01", ({ caster, scene, aim 
         sound(dim, "dn_parade_swoop", p0, 1);
         const hit = /* @__PURE__ */ new Set();
         let prev = p0;
-        scene.span(tk + 1, tk + T2.birdSwoop + 1, (p, e) => {
+        scene.span(tk + 1, tk + T3.birdSwoop + 1, (p, e) => {
           const pos = spline(path, p);
           const d = sub(pos, prev);
           prev = pos;
           b.move(pos, yawOf(d.x * d.x + d.z * d.z > 1e-6 ? d : away));
           setTilt(b, pitch(d) * 0.6);
           if (e % 4 === 0) particle(dim, "dn_parade_trail", pos);
-          if (e < T2.birdLowFrom - 2 || e > T2.birdLowTo + 2) return;
+          if (e < T3.birdLowFrom - 2 || e > T3.birdLowTo + 2) return;
           for (const f of hostiles(dim, pos, DN01.birdHitRadius + 2, caster)) {
             if (hit.has(f.id) || dist(up(f.location, 0.9), pos) > DN01.birdHitRadius + 0.6) continue;
             hit.add(f.id);
@@ -3908,13 +4838,13 @@ var dn01_reverie_procession_default = defineSpell("dn01", ({ caster, scene, aim 
         });
       });
     }
-    const tDep = t0 + DN01.birdSwoops * T2.birdSwoop + 1;
+    const tDep = t0 + DN01.birdSwoops * T3.birdSwoop + 1;
     scene.at(tDep, () => {
       b.state(BIRD.depart);
       setTilt(b, 0);
       sound(dim, "dn_parade_depart", b.loc, 0.9, 1.25);
     });
-    scene.at(tDep + T2.birdDepart, () => scene.despawn(b));
+    scene.at(tDep + T3.birdDepart, () => scene.despawn(b));
   }
   function dollDance(dl) {
     const t0 = scene.tick;
@@ -3945,7 +4875,7 @@ var dn01_reverie_procession_default = defineSpell("dn01", ({ caster, scene, aim 
         dl.state(k2 % 2 ? DOLL.pulseB : DOLL.pulseA);
         sound(dim, "dn_parade_pulse", hover, 1, pitches[k2 % pitches.length]);
       });
-      scene.at(tp + off + T2.dollPulsePeak, () => {
+      scene.at(tp + off + T3.dollPulsePeak, () => {
         particle(dim, "dn_parade_pulse", up(spot, 0.2));
         ring(dim, "dn_parade_glint", up(spot, 0.8), DN01.dollRadius * 0.8, 6, k2 * 30);
         for (const e of hostiles(dim, spot, DN01.dollRadius, caster)) {
@@ -3962,19 +4892,19 @@ var dn01_reverie_procession_default = defineSpell("dn01", ({ caster, scene, aim 
       burst(dim, "dn_parade_trail", hover, 1.2, 6);
     });
     scene.at(last + 8, () => scene.despawn(warn));
-    scene.at(last + T2.dollDepart, () => scene.despawn(dl));
+    scene.at(last + T3.dollDepart, () => scene.despawn(dl));
   }
   scene.at(tRoll, () => {
-    sound(dim, "dn_parade_rollup", P5[apexI], 1.1);
+    sound(dim, "dn_parade_rollup", P6[apexI], 1.1);
     for (const h of hits.values()) {
       const mk = h.mark;
       if (mk && mk.valid) {
-        mk.state(MARK2.vanish);
-        scene.after(T2.markVanish, () => scene.despawn(mk));
+        mk.state(MARK3.vanish);
+        scene.after(T3.markVanish, () => scene.despawn(mk));
       }
     }
     moon?.state(MOON.set);
-    scene.after(T2.moonSet, () => {
+    scene.after(T3.moonSet, () => {
       if (moon) scene.despawn(moon);
     });
   });
@@ -3985,7 +4915,7 @@ var dn01_reverie_procession_default = defineSpell("dn01", ({ caster, scene, aim 
       if (!a) return;
       a.state(ROAD.rollup);
       particle(dim, "dn_parade_confetti", up(a.loc, 1));
-      scene.after(T2.roadAnim, () => scene.despawn(a));
+      scene.after(T3.roadAnim, () => scene.despawn(a));
     });
   }
   scene.endAt(tEnd);
@@ -4304,7 +5234,7 @@ function hash01(a, s) {
 }
 var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) => {
   const dim = scene.dim;
-  const N2 = DN03.gridCells, CS = DN03.cellSize, HALF = N2 * CS / 2, GAP = CS / 2, H = DN03.wallBlocks;
+  const N3 = DN03.gridCells, CS = DN03.cellSize, HALF = N3 * CS / 2, GAP = CS / 2, H2 = DN03.wallBlocks;
   const tb = blocksFor(scene);
   const { center } = focus(caster, aim, 12);
   let away = norm(flat(sub(center, caster.location)));
@@ -4315,9 +5245,9 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
   const gy = gc.y;
   const X0 = Math.floor(gc.x) - HALF, Z0 = Math.floor(gc.z) - HALF;
   const mid = (gx, gz) => ({ x: X0 + gx * CS + GAP + 0.5, y: gy, z: Z0 + gz * CS + GAP + 0.5 });
-  const gridMid = mid(N2 / 2 - 0.5, N2 / 2 - 0.5);
+  const gridMid = mid(N3 / 2 - 0.5, N3 / 2 - 0.5);
   const hover = up(gridMid, DN03.hoverHeight);
-  const inside = (c) => c[0] >= 0 && c[0] < N2 && c[1] >= 0 && c[1] < N2;
+  const inside = (c) => c[0] >= 0 && c[0] < N3 && c[1] >= 0 && c[1] < N3;
   const cellCenter = (c) => ({ x: X0 + c[0] * CS + GAP + 0.5, y: gy, z: Z0 + c[1] * CS + GAP + 0.5 });
   const cellOf = (p) => [Math.floor((p.x - X0) / CS), Math.floor((p.z - Z0) / CS)];
   const ck = (c) => `${c[0]},${c[1]}`;
@@ -4338,8 +5268,8 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
   };
   const between = (a, b) => a[0] === b[0] ? { o: 0, i: a[0], j: Math.max(a[1], b[1]) } : { o: 1, i: Math.max(a[0], b[0]), j: a[1] };
   const ALL = [];
-  for (let i = 0; i < N2; i++) for (let j = 0; j <= N2; j++) ALL.push({ o: 0, i, j });
-  for (let i = 0; i <= N2; i++) for (let j = 0; j < N2; j++) ALL.push({ o: 1, i, j });
+  for (let i = 0; i < N3; i++) for (let j = 0; j <= N3; j++) ALL.push({ o: 0, i, j });
+  for (let i = 0; i <= N3; i++) for (let j = 0; j < N3; j++) ALL.push({ o: 1, i, j });
   const yawsOf = (e) => e.o === 0 ? [0, 180] : [-90, 90];
   const frontYaw = (e, toward) => {
     const m = edgeMid(e);
@@ -4352,11 +5282,11 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
   const alongZ = Math.abs(away.z) >= Math.abs(away.x);
   const farPos = alongZ ? away.z > 0 : away.x > 0;
   const cellAt = (lat, dep) => {
-    const d = farPos ? N2 - 1 - dep : dep;
+    const d = farPos ? N3 - 1 - dep : dep;
     return alongZ ? [lat, d] : [d, lat];
   };
   const farEdge = (lat, dep) => {
-    const g = farPos ? N2 - dep : dep;
+    const g = farPos ? N3 - dep : dep;
     return alongZ ? { o: 0, i: lat, j: g } : { o: 1, i: g, j: lat };
   };
   const sideEdges = (lat, dep) => {
@@ -4399,7 +5329,7 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
       return;
     }
     const [x, z] = k2.split(",").map(Number);
-    tb.column(x, y, z, H);
+    tb.column(x, y, z, H2);
     placed.add(k2);
     pending.delete(k2);
   }
@@ -4418,7 +5348,7 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
     pending.delete(k2);
     if (placed.delete(k2)) {
       const [x, z] = k2.split(",").map(Number);
-      tb.removeColumn(x, baseY(k2) ?? gy, z, H);
+      tb.removeColumn(x, baseY(k2) ?? gy, z, H2);
     }
   }
   function setCols(w, cols) {
@@ -4489,7 +5419,7 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
       });
       return r;
     };
-    const lat = clamp(Math.floor(N2 / 2) - 1 + round % 2, 0, N2 - 1);
+    const lat = clamp(Math.floor(N3 / 2) - 1 + round % 2, 0, N3 - 1);
     const loopEdge = farEdge(lat, 0);
     const start = cellAt(lat, DN03.routeLen - 1);
     const corridor2 = /* @__PURE__ */ new Set(), keepOpen = /* @__PURE__ */ new Set();
@@ -4543,8 +5473,8 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
       };
       const seen = /* @__PURE__ */ new Set();
       const queue = [];
-      for (let k2 = 0; k2 < N2; k2++) {
-        const per = [[[k2, 0], { o: 0, i: k2, j: 0 }], [[k2, N2 - 1], { o: 0, i: k2, j: N2 }], [[0, k2], { o: 1, i: 0, j: k2 }], [[N2 - 1, k2], { o: 1, i: N2, j: k2 }]];
+      for (let k2 = 0; k2 < N3; k2++) {
+        const per = [[[k2, 0], { o: 0, i: k2, j: 0 }], [[k2, N3 - 1], { o: 0, i: k2, j: N3 }], [[0, k2], { o: 1, i: 0, j: k2 }], [[N3 - 1, k2], { o: 1, i: N3, j: k2 }]];
         for (const [c, e] of per) if (!blocked(e) && !seen.has(ck(c))) {
           seen.add(ck(c));
           queue.push(c);
@@ -4559,7 +5489,7 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
           queue.push(n);
         }
       }
-      if (seen.size >= N2 * N2) return;
+      if (seen.size >= N3 * N3) return;
       let best = null;
       for (const w of walls2.values()) {
         if (w.door) continue;
@@ -4574,15 +5504,15 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
       best.w.door = true;
     }
   }
-  const T7 = {
+  const T9 = {
     open: secs(L.land),
     opened: secs(L.land + L.open),
     unfold: secs(L.land + L.open) + 4,
     wallsOut: secs(L.land + L.open) + 8,
     active: secs(L.land + L.open) + 24
   };
-  T7.active = Math.max(T7.active, T7.wallsOut + Math.ceil(DN03.wallCount / 2) + 18);
-  const tFold = T7.active + DN03.activeTicks;
+  T9.active = Math.max(T9.active, T9.wallsOut + Math.ceil(DN03.wallCount / 2) + 18);
+  const tFold = T9.active + DN03.activeTicks;
   const tClose = tFold + 34;
   const tVanish = tClose + secs(L.close);
   const tEnd = tVanish + secs(L.vanish) + 4;
@@ -4595,20 +5525,20 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
     particle(dim, "fx_dust", up(gc, 0.3));
     burst(dim, "dn_house_dust", up(gc, 0.5), 3, 6);
   });
-  scene.at(T7.open, () => {
+  scene.at(T9.open, () => {
     house.state(HS.open);
     sound(dim, "dn_house_windup", gc, 1);
     sound(dim, "dn_house_open", gc, 1);
   });
-  scene.at(T7.open + 18, () => burst(dim, "dn_house_key", up(gc, 5), 3, 8));
-  scene.at(T7.opened, () => house.state(HS.opened));
-  scene.at(T7.unfold, () => {
+  scene.at(T9.open + 18, () => burst(dim, "dn_house_key", up(gc, 5), 3, 8));
+  scene.at(T9.opened, () => house.state(HS.opened));
+  scene.at(T9.unfold, () => {
     house.state(HS.unfold);
     sound(dim, "dn_house_unfold", gc, 1.2);
     burst(dim, "dn_house_scrap", up(gc, 5), 3, 6);
   });
-  scene.at(T7.unfold + secs(L.unfold), () => house.state(HS.spread));
-  scene.span(T7.unfold, T7.unfold + 24, (p) => {
+  scene.at(T9.unfold + secs(L.unfold), () => house.state(HS.spread));
+  scene.span(T9.unfold, T9.unfold + 24, (p) => {
     housePos = lerp(gc, hover, smooth(p));
     house.move(housePos);
   });
@@ -4618,7 +5548,7 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
   let loopStart = first.start;
   const walls = [];
   [...first.walls.values()].forEach((t, k2) => {
-    const at = T7.wallsOut + Math.floor(k2 / 2);
+    const at = T9.wallsOut + Math.floor(k2 / 2);
     scene.at(at, () => {
       const base = BASE_KINDS[k2 % BASE_KINDS.length];
       const yaw = frontYaw(t.e, caster.isValid ? caster.location : gc);
@@ -4653,9 +5583,9 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
     const pick = (c) => c && inside(c) && !used.has(ck(c)) ? (used.add(ck(c)), c) : null;
     const busy = [...foeCells.entries()].sort((a, b) => b[1] - a[1]).map(([k2]) => k2.split(",").map(Number));
     const pattern = [];
-    for (let k2 = 0; k2 < N2 * N2; k2++) {
-      const h = Math.floor(hash01(round * 31 + k2, "furn") * N2 * N2);
-      pattern.push([h % N2, Math.floor(h / N2)]);
+    for (let k2 = 0; k2 < N3 * N3; k2++) {
+      const h = Math.floor(hash01(round * 31 + k2, "furn") * N3 * N3);
+      pattern.push([h % N3, Math.floor(h / N3)]);
     }
     const next = () => {
       for (const c of pattern) {
@@ -4672,7 +5602,7 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
   }
   const fcells0 = furnitureCells(0);
   FURN.forEach((id, k2) => {
-    const at = T7.wallsOut + 10 + k2 * 3;
+    const at = T9.wallsOut + 10 + k2 * 3;
     scene.at(at, () => {
       const f = { a: scene.spawn(id, housePos, { yaw: faceCaster, state: FS.appear }), id, pos: { ...housePos }, cell: fcells0[k2] };
       furn.push(f);
@@ -4833,8 +5763,8 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
     });
   }
   const shiftTicks = [];
-  for (let t = T7.active + DN03.shiftEvery; t < tFold - 10; t += DN03.shiftEvery) shiftTicks.push(t);
-  scene.at(T7.active, () => {
+  for (let t = T9.active + DN03.shiftEvery; t < tFold - 10; t += DN03.shiftEvery) shiftTicks.push(t);
+  scene.at(T9.active, () => {
     sound(dim, "dn_house_lullaby", hover, 1);
     ring(dim, "dn_house_note", up(hover, 2), 4, 6);
   });
@@ -4909,8 +5839,8 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
     }
     const clock = F("dn_house_clock");
     if (clock?.a.valid) for (const e of hostiles(dim, clock.pos, DN03.clockRadius, caster)) effect(e, "slowness", DN03.clockSlowTicks, 0);
-  }, T7.active, tFold);
-  for (let t = T7.active, k2 = 0; t < tFold; k2++) {
+  }, T9.active, tFold);
+  for (let t = T9.active, k2 = 0; t < tFold; k2++) {
     const tick = t;
     scene.at(tick, () => {
       const clock = F("dn_house_clock");
@@ -4939,11 +5869,11 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
       sound(dim, "dn_house_loop", g, 0.7, 1.15);
     }
     if (scene.tick % 10 === 0) particle(dim, "dn_house_chalk", up(g, 1.5));
-  }, T7.active, tFold);
+  }, T9.active, tFold);
   scene.every(DN03.retryEvery, () => {
     for (const k2 of [...pending]) if (refs.has(k2)) tryPlace(k2);
     else pending.delete(k2);
-  }, T7.wallsOut, tFold);
+  }, T9.wallsOut, tFold);
   scene.at(tFold, () => {
     for (const w of walls) {
       setCols(w, []);
@@ -5062,7 +5992,7 @@ var DN04 = {
 };
 
 // src/spells/dn04_lullaby_and_scream.ts
-var T3 = { hidden: 0, unfurl: 1, lullaby: 2, dissonance: 3, dual: 4, scream: 5, unravel: 6 };
+var T4 = { hidden: 0, unfurl: 1, lullaby: 2, dissonance: 3, dual: 4, scream: 5, unravel: 6 };
 var R = { hidden: 0, travel: 1, wrap: 2, orbit: 3, recoil: 4, unwind: 5 };
 var W = { hidden: 0, scream: 1, faint: 2, fade: 3 };
 var L2 = { unfurl: 30, dissonance: 32, scream: 18, unravel: 36, wrap: 16, recoil: 12, unwind: 20, fade: 7 };
@@ -5071,16 +6001,16 @@ var dn04_lullaby_and_scream_default = defineSpell("dn04", ({ caster, scene, aim 
   let facing = norm(flat(aim.forward));
   const hoverTarget = () => up(add(caster.location, mul(facing, DN04.hoverForward)), DN04.hoverHeight);
   const bookAt = () => up(add(caster.location, mul(facing, 0.6)), 1.1);
-  const P5 = DN04.phraseTicks;
+  const P6 = DN04.phraseTicks;
   const tLull = L2.unfurl;
-  const phrases = Math.max(DN04.lullabyPhrases + DN04.dissonancePhrases + 1, Math.floor((secs(DN04.activeSeconds) - tLull) / P5));
-  const tDis = tLull + DN04.lullabyPhrases * P5;
-  const tDual = tDis + DN04.dissonancePhrases * P5;
-  const tUnravel = tLull + phrases * P5;
+  const phrases = Math.max(DN04.lullabyPhrases + DN04.dissonancePhrases + 1, Math.floor((secs(DN04.activeSeconds) - tLull) / P6));
+  const tDis = tLull + DN04.lullabyPhrases * P6;
+  const tDual = tDis + DN04.dissonancePhrases * P6;
+  const tUnravel = tLull + phrases * P6;
   const tEnd = tUnravel + L2.unravel + 4;
   const book0 = bookAt();
   let hover = book0;
-  const tap = scene.spawn("dn_lull_tapestry", book0, { yaw: yawOf(mul(facing, -1)), state: T3.unfurl, skin: 0 });
+  const tap = scene.spawn("dn_lull_tapestry", book0, { yaw: yawOf(mul(facing, -1)), state: T4.unfurl, skin: 0 });
   sound(dim, "dn_lull_open", book0, 1);
   burst(dim, "dn_lull_mote", up(book0, 0.4), 0.6, 4);
   scene.at(14, () => burst(dim, "dn_lull_note", up(hover, 2.2), 1.5, 3));
@@ -5104,34 +6034,34 @@ var dn04_lullaby_and_scream_default = defineSpell("dn04", ({ caster, scene, aim 
     updateDizzy(t);
   }, 0, tEnd);
   for (let k2 = 0; k2 < phrases; k2++) {
-    const t0 = tLull + k2 * P5;
+    const t0 = tLull + k2 * P6;
     const kind = k2 < DN04.lullabyPhrases ? "lull" : k2 < DN04.lullabyPhrases + DN04.dissonancePhrases ? "dis" : "dual";
     scene.at(t0, () => sound(dim, `dn_lull_${kind}${k2 % 2 + 1}`, hover, 1));
     if (kind === "dual") {
       scene.at(t0, () => {
-        tap.state(T3.scream);
+        tap.state(T4.scream);
         sound(dim, "dn_lull_scream", hover, 1.2);
         burst(dim, "dn_lull_thread", up(hover, 2.2), 1.2, 3);
       });
       scene.at(t0 + DN04.screamLead, () => launchWave(false));
-      scene.at(t0 + L2.scream, () => tap.state(T3.dual));
+      scene.at(t0 + L2.scream, () => tap.state(T4.dual));
     }
   }
-  scene.at(tLull, () => tap.state(T3.lullaby));
+  scene.at(tLull, () => tap.state(T4.lullaby));
   scene.every(10, () => particle(dim, "dn_lull_note", up(hover, 2.4)), tLull, tDual);
   let tele;
   scene.at(tDis, () => {
-    tap.state(T3.dissonance);
+    tap.state(T4.dissonance);
     sound(dim, "dn_lull_tear", hover, 1.1);
     tele = scene.spawn("telegraph", groundBelow(dim, hover), { kind: 1, size: DN04.waveRadius, state: 4 });
   });
   scene.at(tDis + 6, () => tap.skin(1));
-  scene.at(tDis + P5 / 2, () => {
+  scene.at(tDis + P6 / 2, () => {
     sound(dim, "dn_lull_faint", hover, 0.9);
     launchWave(true);
   });
   scene.at(tDis + L2.dissonance, () => {
-    tap.state(T3.dual);
+    tap.state(T4.dual);
     tele?.state(2);
   });
   scene.every(8, () => particle(dim, "dn_lull_thread", up(hover, 1)), tDis, tUnravel);
@@ -5276,7 +6206,7 @@ var dn04_lullaby_and_scream_default = defineSpell("dn04", ({ caster, scene, aim 
     }
   }
   scene.at(tUnravel, () => {
-    tap.state(T3.unravel);
+    tap.state(T4.unravel);
     sound(dim, "dn_lull_unravel", hover, 1);
     particle(dim, "dn_lull_unravel", up(hover, 2.2));
     if (tele?.valid) {
@@ -5382,7 +6312,7 @@ var WIN = { hidden: 0, arrive: 1, hover: 2, blink: 3, stare: 4, shatter: 5 };
 var COR = { hidden: 0, unfold: 1, snap: 2, clamp: 3, fold: 4 };
 var SF = { hidden: 0, slam: 1, rest: 2, sink: 3 };
 var FR = { hidden: 0, arrive: 1, idle: 2, hop: 3, bite: 4, crumble: 5 };
-var T4 = {
+var T5 = {
   stairDown: secs(1.6),
   stairUp: secs(1.2),
   balDrop: secs(0.8),
@@ -5437,7 +6367,7 @@ function doorframe(c, i, until) {
   sound(dim, "dn_city_door", home, 1, 0.8);
   burst(dim, "dn_city_door", up(home, 2), 2, 6);
   let pos = home;
-  let t0 = scene.tick + T4.doorArrive;
+  let t0 = scene.tick + T5.doorArrive;
   scene.at(t0, () => door.state(DOOR2.fly));
   const passLen = 36;
   for (let p = 0; p < DN05.doorPasses; p++) {
@@ -5455,7 +6385,7 @@ function doorframe(c, i, until) {
         door.move(pos, yaw);
       });
       const hitAt = start + Math.round(passLen / 2);
-      scene.at(hitAt - T4.doorSlam, () => {
+      scene.at(hitAt - T5.doorSlam, () => {
         door.state(DOOR2.swoop);
         sound(dim, "dn_city_door", T0, 1.2);
       });
@@ -5471,7 +6401,7 @@ function doorframe(c, i, until) {
       scene.at(start + passLen, () => door.state(DOOR2.fly));
     });
   }
-  scene.at(Math.min(until, t0 + 6 + DN05.doorPasses * (passLen + 10)), () => finish(c, door, DOOR2.depart, T4.doorDepart));
+  scene.at(Math.min(until, t0 + 6 + DN05.doorPasses * (passLen + 10)), () => finish(c, door, DOOR2.depart, T5.doorDepart));
 }
 function windowEye(c, i, until) {
   const { scene, dim } = c;
@@ -5479,7 +6409,7 @@ function windowEye(c, i, until) {
   const win = scene.spawn("dn_city_window", pos, { state: WIN.arrive });
   c.hunters.add(win);
   sound(dim, "dn_city_groan", pos, 0.7, 1.3);
-  let t = scene.tick + T4.winArrive;
+  let t = scene.tick + T5.winArrive;
   scene.at(t, () => win.state(WIN.hover));
   const glide = (to, from, ticks, look) => {
     const a = pos;
@@ -5490,7 +6420,7 @@ function windowEye(c, i, until) {
   };
   for (let k2 = 0; k2 < DN05.windowStares; k2++) {
     const t1 = t;
-    const cycle = 16 + T4.winBlink + T4.winStare;
+    const cycle = 16 + T5.winBlink + T5.winStare;
     if (t1 + cycle > until - 40) break;
     scene.at(t1, () => {
       const tgt = aimAt(c, pos, i * 2 + k2);
@@ -5503,11 +6433,11 @@ function windowEye(c, i, until) {
         win.state(WIN.blink);
         line(dim, "dn_city_eye", pos, up(look(), 1), 4);
       });
-      scene.at(t1 + 16 + T4.winBlink, () => {
+      scene.at(t1 + 16 + T5.winBlink, () => {
         win.state(WIN.stare);
         sound(dim, "dn_city_stare", pos, 1);
       });
-      scene.at(t1 + 16 + T4.winBlink + T4.winFire, () => {
+      scene.at(t1 + 16 + T5.winBlink + T5.winFire, () => {
         if (tgt.e && isAlive(tgt.e)) goal = tgt.e.location;
         const from = pos, dir = norm(sub(up(goal, 1), from));
         const end = add(from, mul(dir, dist(from, goal) + 3));
@@ -5540,7 +6470,7 @@ function windowEye(c, i, until) {
       for (const e of c.foes(below)) if (dist(e.location, below) <= DN05.glassRadius) damage(e, DN05.glassDamage, c.caster);
     });
     scene.at(tEnd + 28, () => scene.despawn(warn));
-    scene.at(tEnd + 16 + T4.winShatter, () => {
+    scene.at(tEnd + 16 + T5.winShatter, () => {
       scene.despawn(win);
       c.hunters.delete(win);
     });
@@ -5558,7 +6488,7 @@ function corridor(c, i) {
   c.hunters.add(cor);
   sound(dim, "dn_city_corridor", lerp(origin, end, 0.5), 1.2);
   const t0 = scene.tick;
-  scene.at(t0 + T4.corUnfold, () => {
+  scene.at(t0 + T5.corUnfold, () => {
     cor.state(COR.snap);
     warn.state(3);
     particle(dim, "dn_city_dust_n", end);
@@ -5571,11 +6501,11 @@ function corridor(c, i) {
       if (inEnd) restrain(scene, e, DN05.corridorHold, end);
     }
   });
-  scene.at(t0 + T4.corUnfold + 8, () => scene.despawn(warn));
-  scene.at(t0 + T4.corUnfold + T4.corSnap, () => cor.state(COR.clamp));
-  scene.at(t0 + T4.corUnfold + DN05.corridorHold, () => {
+  scene.at(t0 + T5.corUnfold + 8, () => scene.despawn(warn));
+  scene.at(t0 + T5.corUnfold + T5.corSnap, () => cor.state(COR.clamp));
+  scene.at(t0 + T5.corUnfold + DN05.corridorHold, () => {
     sound(dim, "dn_city_groan", end, 0.6, 1.4);
-    finish(c, cor, COR.fold, T4.corFold);
+    finish(c, cor, COR.fold, T5.corFold);
   });
 }
 function stairfall(c, i) {
@@ -5593,7 +6523,7 @@ function stairfall(c, i) {
     sound(dim, "dn_city_groan", up(start, 6), 0.8, 1.1);
   });
   centers.forEach((p, k2) => {
-    scene.at(t0 + T4.sfFirst + k2 * T4.sfStep, () => {
+    scene.at(t0 + T5.sfFirst + k2 * T5.sfStep, () => {
       warns[k2].state(3);
       sound(dim, "dn_city_stairfall", p, 1, 1 - k2 * 0.04);
       particle(dim, "dn_city_dust_n", p);
@@ -5604,12 +6534,12 @@ function stairfall(c, i) {
         knockback(e, p, 0.6, 0.45);
       }
     });
-    scene.at(t0 + T4.sfFirst + k2 * T4.sfStep + 8, () => scene.despawn(warns[k2]));
+    scene.at(t0 + T5.sfFirst + k2 * T5.sfStep + 8, () => scene.despawn(warns[k2]));
   });
-  const tRest = t0 + T4.sfFirst + SF_CHUNKS * T4.sfStep;
+  const tRest = t0 + T5.sfFirst + SF_CHUNKS * T5.sfStep;
   scene.at(tRest, () => sf?.state(SF.rest));
   scene.at(tRest + 16, () => {
-    if (sf) finish(c, sf, SF.sink, T4.sfSink);
+    if (sf) finish(c, sf, SF.sink, T5.sfSink);
   });
 }
 function fragment(c, i, until) {
@@ -5632,7 +6562,7 @@ function fragment(c, i, until) {
     yaw = yawOf(d);
     if (target && dist(target.location, pos) <= DN05.biteRange + 0.6) {
       fr.state(FR.bite).face(yaw);
-      scene.after(T4.frBiteHit, () => {
+      scene.after(T5.frBiteHit, () => {
         sound(dim, "dn_city_bite", pos, 1);
         particle(dim, "dn_city_shard", up(pos, 1.2));
         if (isAlive(target) && dist(target.location, pos) <= DN05.biteRange + 1) damage(target, DN05.biteDamage, c.caster);
@@ -5651,11 +6581,11 @@ function fragment(c, i, until) {
         particle(dim, "dn_city_dust_n", to);
       });
     }
-    scene.after(T4.frHop, () => fr.state(FR.idle));
-  }, scene.tick + T4.frArrive, until);
+    scene.after(T5.frHop, () => fr.state(FR.idle));
+  }, scene.tick + T5.frArrive, until);
   scene.at(until, () => {
     sound(dim, "dn_city_bite", pos, 0.6, 0.7);
-    finish(c, fr, FR.crumble, T4.frCrumble);
+    finish(c, fr, FR.crumble, T5.frCrumble);
   });
 }
 function balcony(c, seed) {
@@ -5692,7 +6622,7 @@ function balcony(c, seed) {
     }
   });
   scene.at(t0 + DN05.balconyWarn + 8, () => scene.despawn(warn));
-  scene.at(t0 + DN05.balconyWarn + T4.balHit, () => scene.despawn(bal));
+  scene.at(t0 + DN05.balconyWarn + T5.balHit, () => scene.despawn(bal));
 }
 function rollingStreet(c, seed) {
   const { scene, dim } = c;
@@ -5710,13 +6640,13 @@ function rollingStreet(c, seed) {
   });
   const rollTicks = Math.round(DN05.streetLength / DN05.streetSpeed);
   const hit = /* @__PURE__ */ new Set();
-  scene.at(t0 + 8 + T4.stAppear, () => {
+  scene.at(t0 + 8 + T5.stAppear, () => {
     st2?.state(STREET.roll);
     warn.state(3);
     sound(dim, "dn_city_street", a, 1.1);
   });
-  scene.at(t0 + 8 + T4.stAppear + 8, () => scene.despawn(warn));
-  scene.span(t0 + 8 + T4.stAppear, t0 + 8 + T4.stAppear + rollTicks, (q) => {
+  scene.at(t0 + 8 + T5.stAppear + 8, () => scene.despawn(warn));
+  scene.span(t0 + 8 + T5.stAppear, t0 + 8 + T5.stAppear + rollTicks, (q) => {
     const p = lerp(a, b, q);
     st2?.move(p, yaw);
     for (const e of c.foes(p)) {
@@ -5727,12 +6657,12 @@ function rollingStreet(c, seed) {
       particle(dim, "dn_city_dust", e.location);
     }
   });
-  scene.at(t0 + 8 + T4.stAppear + rollTicks, () => {
+  scene.at(t0 + 8 + T5.stAppear + rollTicks, () => {
     if (!st2) return;
     st2.state(STREET.crumble);
     particle(dim, "dn_city_dust", b);
     const s = st2;
-    scene.after(T4.stCrumble, () => scene.despawn(s));
+    scene.after(T5.stCrumble, () => scene.despawn(s));
   });
 }
 
@@ -5762,10 +6692,10 @@ function waveFrac(sec) {
 var dn05_sleeping_city_default = defineSpell("dn05", ({ caster, scene, aim }) => {
   const dim = scene.dim;
   const { center } = focus(caster, aim, DN05.focusSnap);
-  const H = DN05.cityHeight;
-  const spirePos = up(center, H);
+  const H2 = DN05.cityHeight;
+  const spirePos = up(center, H2);
   const qAngles = [45, 135, 225, 315];
-  const qPos = qAngles.map((a, k2) => polar(center, DN05.quarterDistance, a, H + DN05.quarterLift[k2]));
+  const qPos = qAngles.map((a, k2) => polar(center, DN05.quarterDistance, a, H2 + DN05.quarterLift[k2]));
   const anchors = [spirePos, ...qPos];
   const tb = blocksFor(scene);
   const hunters = /* @__PURE__ */ new Set();
@@ -5849,14 +6779,14 @@ var dn05_sleeping_city_default = defineSpell("dn05", ({ caster, scene, aim }) =>
     sheltered.slice(0, DN05.maxStairs).forEach((ally, k2) => {
       let away = norm(flat(sub(ally.location, center)));
       if (dist(flat(ally.location), flat(center)) < 2) away = norm(flat(mul(aim.forward, -1)));
-      const size = (H - 2) / 12;
+      const size = (H2 - 2) / 12;
       const unit = 2 * size / 16;
       const foot = groundBelow(dim, add(ally.location, mul(away, -PAVILION_UNITS * unit)));
       const pav = add(foot, mul(away, PAVILION_UNITS * unit));
       scene.after(k2 * 6, () => {
         const st2 = scene.spawn("dn_city_stair", foot, { state: STAIR.descend, size, yaw: yawOf(away) });
         sound(dim, "dn_city_stair", up(foot, 6), 1.1, 1 + k2 * 0.06);
-        scene.after(T4.stairDown, () => {
+        scene.after(T5.stairDown, () => {
           st2.state(STAIR.stand);
           particle(dim, "dn_city_dust", foot);
           ring(dim, "dn_city_ward", up(pav, 0.5), 1.5, 4, k2 * 30);
@@ -5891,7 +6821,7 @@ var dn05_sleeping_city_default = defineSpell("dn05", ({ caster, scene, aim }) =>
             tb.removeColumn(Math.floor(col.x), Math.floor(foot.y), Math.floor(col.z), 4);
           }
         });
-        scene.at(P3 - 26 + T4.stairUp, () => scene.despawn(st2));
+        scene.at(P3 - 26 + T5.stairUp, () => scene.despawn(st2));
       });
     });
   });
@@ -6254,20 +7184,20 @@ var dn06_the_dreamer_default = defineSpell("dn06", ({ caster, scene, aim }) => {
     sound(dim, "dn_dreamer_breath", bedPos, 0.9);
   });
   scene.every(40, () => markNew(), 150, 760);
-  const T22 = 150;
+  const T23 = 150;
   const lieAt = () => at(bedPos, faceYaw, 0, LIE.up, LIE.fwd);
   let dreamer = new Actor(void 0, "grimoire:dreamer");
   let dPos = lieAt();
   let dYaw = faceYaw;
-  scene.at(T22, () => {
+  scene.at(T23, () => {
     dPos = lieAt();
     dreamer = scene.spawn("dreamer", dPos, { yaw: faceYaw, state: DS2.manifest });
     bed.state(BED.occupied);
     sound(dim, "dn_dreamer_manifest", dPos, 1.2);
     sound(dim, "dn_dreamer_breath", dPos, 1, 0.8);
   });
-  scene.every(15, (e) => particle(dim, "dn_dreamer_porcelain", at(bedPos, faceYaw, 0, 1.5, 6 - e / 15 * 2.2)), T22, T22 + 90);
-  const T_SIT = T22 + LEN.manifest;
+  scene.every(15, (e) => particle(dim, "dn_dreamer_porcelain", at(bedPos, faceYaw, 0, 1.5, 6 - e / 15 * 2.2)), T23, T23 + 90);
+  const T_SIT = T23 + LEN.manifest;
   scene.at(T_SIT, () => {
     dreamer.state(DS2.sit);
     bed.state(BED.dip);
@@ -6374,15 +7304,15 @@ var dn06_the_dreamer_default = defineSpell("dn06", ({ caster, scene, aim }) => {
     scene.after(72, () => scene.despawn(st2));
   });
   scene.at(T_CAB + LEN.cabinet + 8, () => dreamer.state(DS2.hover));
-  const T32 = T_CAB + LEN.cabinet + 16;
+  const T33 = T_CAB + LEN.cabinet + 16;
   const dreamZones = [];
   const nightZones = [];
   let ward;
-  scene.at(T32, () => {
+  scene.at(T33, () => {
     dreamer.state(DS2.raise).skin(1);
     sound(dim, "dn_dreamer_raise", up(hover, 10), 1.4);
   });
-  scene.at(T32 + 25, () => {
+  scene.at(T33 + 25, () => {
     const fr = allies(dim, caster.location, 24, caster);
     const spots = [];
     if (fr.length > 1) for (const a of fr.slice(0, 3)) spots.push(groundBelow(dim, a.location));
@@ -6408,7 +7338,7 @@ var dn06_the_dreamer_default = defineSpell("dn06", ({ caster, scene, aim }) => {
       onAbsorb: (_n, _a, v2) => particle(dim, "dn_dreamer_ring", up(v2.location, 0.2))
     });
   });
-  scene.at(T32 + 35, () => {
+  scene.at(T33 + 35, () => {
     const hand = at(hover, faceYaw, 2, 26, 6);
     groups(3).forEach((loc, i) => {
       const a = scene.spawn("dn_dreamer_night", loc, { kind: i, yaw: yawOf(sub(hover, loc)), state: ZONE.bloom });
@@ -6419,8 +7349,8 @@ var dn06_the_dreamer_default = defineSpell("dn06", ({ caster, scene, aim }) => {
     });
     sound(dim, "dn_dreamer_emerge", nightZones.length ? nightZones[0].loc : center, 1.2);
   });
-  scene.at(T32 + LEN.raise, () => dreamer.state(DS2.conjure));
-  const ZONE_FROM = T32 + 70, ZONE_TO = T32 + 250;
+  scene.at(T33 + LEN.raise, () => dreamer.state(DS2.conjure));
+  const ZONE_FROM = T33 + 70, ZONE_TO = T33 + 250;
   scene.every(DN06.zonePulse, (e) => {
     for (const z of dreamZones) {
       particle(dim, "dn_dreamer_heal", up(z.loc, 0.5));
@@ -6469,8 +7399,8 @@ var dn06_the_dreamer_default = defineSpell("dn06", ({ caster, scene, aim }) => {
     }
     if (!big && nightZones.length) sound(dim, "dn_dreamer_sour", nightZones[0].loc, 0.7);
   }, ZONE_FROM + DN06.zonePulse / 2, ZONE_TO);
-  const T42 = ZONE_TO + 10;
-  scene.at(T42, () => {
+  const T43 = ZONE_TO + 10;
+  scene.at(T43, () => {
     dreamer.state(DS2.conduct);
     domain.skin(1);
     for (const m of marks.values()) m.a.skin(1);
@@ -6490,11 +7420,11 @@ var dn06_the_dreamer_default = defineSpell("dn06", ({ caster, scene, aim }) => {
     const r = deg * Math.PI / 180;
     return add(pivot, { x: swingAxis.x * DN06.pendulumLength * Math.sin(r), y: -DN06.pendulumLength * Math.cos(r), z: swingAxis.z * DN06.pendulumLength * Math.sin(r) });
   };
-  scene.span(T42, T42 + 70, (p) => {
+  scene.span(T43, T43 + 70, (p) => {
     bedPos = lerp(bedRest, swingPos(SWING_A), smooth(p));
     bed.move(bedPos, faceYaw);
   });
-  const T_WHEEL = T42 + 20;
+  const T_WHEEL = T43 + 20;
   scene.at(T_WHEEL, () => {
     const start = nightZones.length ? nightZones[nightZones.length - 1].loc : ground(polar(center, 9, yawOf(fwd)));
     const pts = [start, ...targets(3).map((t) => t.loc)];
@@ -6669,9 +7599,9 @@ var dn06_the_dreamer_default = defineSpell("dn06", ({ caster, scene, aim }) => {
       knockback(e, land, DN06.finalKnock, 0.6);
     }
   });
-  const T52 = T_SLAM2 + LEN.slam + 10;
+  const T53 = T_SLAM2 + LEN.slam + 10;
   const bookAt = () => at(caster.isValid ? caster.location : scene.origin, aim.yaw, BOOK2.right, BOOK2.up, BOOK2.fwd);
-  scene.at(T52, () => {
+  scene.at(T53, () => {
     dreamer.state(DS2.forget).skin(0);
     sound(dim, "dn_dreamer_break", up(hover, 8), 1.5);
     bed.state(BED.vanish);
@@ -6681,17 +7611,17 @@ var dn06_the_dreamer_default = defineSpell("dn06", ({ caster, scene, aim }) => {
       scene.after(8, () => scene.despawn(a));
     }
   });
-  scene.every(10, (e) => burst(dim, "dn_dreamer_porcelain", up(hover, 4 + e / 10), 5, 4), T52 + 6, T52 + 70);
+  scene.every(10, (e) => burst(dim, "dn_dreamer_porcelain", up(hover, 4 + e / 10), 5, 4), T53 + 6, T53 + 70);
   const bedStart = { ...bedPos };
-  scene.span(T52, T52 + 50, (p) => bed.move(lerp(bedStart, up(bookAt(), 2), smooth(p)), faceYaw + p * 90));
-  scene.at(T52 + 52, () => scene.despawn(bed));
-  scene.at(T52 + 10, () => {
+  scene.span(T53, T53 + 50, (p) => bed.move(lerp(bedStart, up(bookAt(), 2), smooth(p)), faceYaw + p * 90));
+  scene.at(T53 + 52, () => scene.despawn(bed));
+  scene.at(T53 + 10, () => {
     domain.state(3);
     codex.state(CODEX.gather);
   });
-  scene.at(T52 + 42, () => scene.despawn(domain));
-  scene.at(T52 + 20, () => sound(dim, "dn_dreamer_morning", caster.location, 1));
-  scene.at(T52 + 30, () => {
+  scene.at(T53 + 42, () => scene.despawn(domain));
+  scene.at(T53 + 20, () => sound(dim, "dn_dreamer_morning", caster.location, 1));
+  scene.at(T53 + 30, () => {
     const from = at(hover, faceYaw, 0, CHEST.up, CHEST.fwd * 0.5);
     const room = scene.spawn("dn_dreamer_bedroom", from, { yaw: faceYaw, size: 6, state: 1 });
     scene.after(16, () => room.state(2));
@@ -6703,8 +7633,8 @@ var dn06_the_dreamer_default = defineSpell("dn06", ({ caster, scene, aim }) => {
     scene.after(70, () => room.state(3));
     scene.after(88, () => scene.despawn(room));
   });
-  scene.at(T52 + LEN.forget, () => scene.despawn(dreamer));
-  const T_CLOSE = T52 + 104;
+  scene.at(T53 + LEN.forget, () => scene.despawn(dreamer));
+  const T_CLOSE = T53 + 104;
   scene.at(T_CLOSE, () => {
     codex.state(CODEX.close);
     particle(dim, "dn_dreamer_star", bookAt());
@@ -7181,7 +8111,7 @@ var SKIN2 = { cool: 0, ignited: 1, whitehot: 2 };
 var RUN_SPEED = 10.02;
 var WALK_SPEED2 = 3.53;
 var TURN_RATE = 225;
-var T5 = {
+var T6 = {
   arriveWalk: secs(1.2),
   arrive: secs(1.6),
   ignite: secs(1.6),
@@ -7210,9 +8140,9 @@ var ed02_thermal_tyrant_default = defineSpell("ed02", ({ caster, scene, aim }) =
   const yaw = yawOf(d);
   const back = mul(d, -1);
   const chargeDist = clamp(dot(flat(sub(F, W2)), d) + ED02.overshoot, ED02.chargeMin, ED02.chargeMax);
-  const skidDist = RUN_SPEED / 20 * (T5.skid - 1) / 2;
+  const skidDist = RUN_SPEED / 20 * (T6.skid - 1) / 2;
   const lanePoint = (s2, lat = 0) => groundBelow(dim, add(add(W2, mul(d, s2)), mul(rv, lat)));
-  const arriveDist = WALK_SPEED2 * T5.arriveWalk / 20;
+  const arriveDist = WALK_SPEED2 * T6.arriveWalk / 20;
   const W0 = add(W2, mul(d, -arriveDist));
   let s = -arriveDist;
   let y = groundBelow(dim, W0).y;
@@ -7239,11 +8169,11 @@ var ed02_thermal_tyrant_default = defineSpell("ed02", ({ caster, scene, aim }) =
     particle(dim, "ed_heat_haze", up(add(wallAt, mul(rv, e % 3 * 2.5 - 2.5)), 1.5));
     particle(dim, "ed_heat_ember", up(wallAt, 3));
   }, 0, 32);
-  scene.span(0, T5.arriveWalk + 1, (p) => {
+  scene.span(0, T6.arriveWalk + 1, (p) => {
     s = -arriveDist * (1 - p);
     place();
   });
-  const tI = T5.arrive;
+  const tI = T6.arrive;
   let lane;
   const laneLen = clamp(chargeDist + skidDist + 8.5 - 4, 4, 32);
   scene.at(tI, () => {
@@ -7260,7 +8190,7 @@ var ed02_thermal_tyrant_default = defineSpell("ed02", ({ caster, scene, aim }) =
     burst(dim, "ed_heat_ember", chest(), 2.2, 4);
   });
   scene.at(tI + 22, () => lane?.state(LANE.armed));
-  scene.at(tI + T5.igniteRoar, () => {
+  scene.at(tI + T6.igniteRoar, () => {
     const c = chest();
     particle(dim, "ed_heat_ring", up(pos, 0.3));
     particle(dim, "fx_flash", c);
@@ -7269,7 +8199,7 @@ var ed02_thermal_tyrant_default = defineSpell("ed02", ({ caster, scene, aim }) =
       if (damage(e, ED02.igniteDamage, caster)) knockback(e, pos, ED02.igniteKnock, 0.35);
     }
   });
-  const tC = tI + T5.ignite;
+  const tC = tI + T6.ignite;
   const hits = /* @__PURE__ */ new Map();
   let phase = "wait";
   let k2 = 0;
@@ -7326,11 +8256,11 @@ var ed02_thermal_tyrant_default = defineSpell("ed02", ({ caster, scene, aim }) =
       }
     } else if (phase === "skid") {
       k2++;
-      s += RUN_SPEED / 20 * Math.max(0, 1 - k2 / T5.skid);
+      s += RUN_SPEED / 20 * Math.max(0, 1 - k2 / T6.skid);
       place();
       strikes();
       if (k2 % 3 === 0) particle(dim, "ed_heat_skid", up(add(pos, mul(d, 1)), 0.3));
-      if (k2 >= T5.skid) {
+      if (k2 >= T6.skid) {
         phase = "done";
         stage3(scene.tick + 1);
       }
@@ -7361,8 +8291,8 @@ var ed02_thermal_tyrant_default = defineSpell("ed02", ({ caster, scene, aim }) =
       dragon.skin(SKIN2.whitehot);
       particle(dim, "fx_flash", chest());
     });
-    scene.every(3, () => particle(dim, "ed_heat_vent", up(pos, 4.2)), tP + 6, tP + T5.powerOpen);
-    const tR = tP + T5.powerOpen;
+    scene.every(3, () => particle(dim, "ed_heat_vent", up(pos, 4.2)), tP + 6, tP + T6.powerOpen);
+    const tR = tP + T6.powerOpen;
     const sStart = s - ED02.waveStartBack;
     const sEnd = Math.min(ED02.waveStopShort, sStart - 1);
     const step = ED02.waveSpeed / 20;
@@ -7439,7 +8369,7 @@ var ed02_thermal_tyrant_default = defineSpell("ed02", ({ caster, scene, aim }) =
       if (lane) scene.despawn(lane);
     });
     scene.at(tCool + 12, () => dragon.skin(SKIN2.cool));
-    const tPant = tCool + T5.cool;
+    const tPant = tCool + T6.cool;
     scene.at(tPant, () => dragon.state(S4.pant));
     const tDep = tPant + ED02.pantTicks;
     scene.at(tDep, () => {
@@ -7451,8 +8381,8 @@ var ed02_thermal_tyrant_default = defineSpell("ed02", ({ caster, scene, aim }) =
       burst(dim, "ed_heat_slag", up(pos, 1), 2, 3);
       particle(dim, "ed_heat_steam", up(pos, 1));
     });
-    scene.at(tDep + T5.depart, () => scene.despawn(dragon));
-    scene.endAt(tDep + T5.depart + 2);
+    scene.at(tDep + T6.depart, () => scene.despawn(dragon));
+    scene.endAt(tDep + T6.depart + 2);
   }
 });
 
@@ -7540,7 +8470,7 @@ var D2 = {
   roar: 14,
   attack_c: 15
 };
-var T6 = {
+var T7 = {
   arrive: 20,
   land: 16,
   landHit: 5,
@@ -7565,18 +8495,18 @@ var CROWN_R = 4;
 var CUR_SWEEP = 160;
 var tMass = 4;
 var tArrive = 18;
-var tSwim = tArrive + T6.arrive;
+var tSwim = tArrive + T7.arrive;
 var tLand = 70;
-var tPower = tLand + T6.land;
+var tPower = tLand + T7.land;
 var tSweep = 114;
-var tFlare = tSweep + T6.sweep;
-var tFreeze = tFlare + T6.flareHit + 2;
+var tFlare = tSweep + T7.sweep;
+var tFreeze = tFlare + T7.flareHit + 2;
 var tSpiral = 174;
 var tRoar = 182;
 var tCrown = 188;
 var tRise = 190;
-var tStrike = tRoar + T6.roar - 2;
-var tHit = tStrike + T6.strikeHit;
+var tStrike = tRoar + T7.roar - 2;
+var tHit = tStrike + T7.strikeHit;
 var WAVE_GAP = 9;
 var ed03_abyssal_cryotitan_default = defineSpell("ed03", ({ caster, scene, aim }) => {
   const dim = scene.dim;
@@ -7676,7 +8606,7 @@ var ed03_abyssal_cryotitan_default = defineSpell("ed03", ({ caster, scene, aim }
     if (mass) scene.despawn(mass);
   });
   scene.at(tLand, () => dragon.state(D2.land).move(L3, yawLand));
-  scene.at(tLand + T6.landHit, () => {
+  scene.at(tLand + T7.landHit, () => {
     sound(dim, "ed_tide_splash", L3, 1.4, 0.85);
     particle(dim, "ed_tide_frost_ring", up(L3, 0.2));
     ring(dim, "ed_tide_splash", up(L3, 0.3), 3, 6);
@@ -7693,10 +8623,10 @@ var ed03_abyssal_cryotitan_default = defineSpell("ed03", ({ caster, scene, aim }
     const f = el / 5 % 4 / 3;
     particle(dim, "ed_tide_flake", up(sub(L3, mul(rt, -1.5 + 3.5 * f)), 7 + f));
   }, tPower + 6, tRoar);
-  scene.at(tPower + T6.power, () => dragon.state(D2.idle));
+  scene.at(tPower + T7.power, () => dragon.state(D2.idle));
   const currents = [];
   scene.at(tSweep, () => dragon.state(D2.attack_a));
-  T6.sweepHit.forEach((h, w) => scene.at(tSweep + h, () => throwCurrents(w * 2, w === 0 ? 55 : 28)));
+  T7.sweepHit.forEach((h, w) => scene.at(tSweep + h, () => throwCurrents(w * 2, w === 0 ? 55 : 28)));
   function throwCurrents(k0, alpha) {
     const tip = tailTip(alpha);
     let dir = norm(flat(sub(tip, G)));
@@ -7745,12 +8675,12 @@ var ed03_abyssal_cryotitan_default = defineSpell("ed03", ({ caster, scene, aim }
         break;
       }
     }
-  }, tSweep + T6.sweepHit[0], tFreeze + 4);
+  }, tSweep + T7.sweepHit[0], tFreeze + 4);
   scene.every(4, (el) => {
     for (const c of currents) if (scene.tick - c.born > 6) particle(dim, "ed_tide_spray", arcPoint(c, el * 37 % CUR_SWEEP, 0.6));
-  }, tSweep + T6.sweepHit[0] + 4, tFreeze);
+  }, tSweep + T7.sweepHit[0] + 4, tFreeze);
   scene.at(tFlare, () => dragon.state(D2.attack_c));
-  scene.at(tFlare + T6.flareHit, () => {
+  scene.at(tFlare + T7.flareHit, () => {
     sound(dim, "ed_tide_freeze", G, 1.4);
     burst(dim, "ed_tide_glint", sailPeak, 2, 6);
     const tip = tailTip(10);
@@ -7759,7 +8689,7 @@ var ed03_abyssal_cryotitan_default = defineSpell("ed03", ({ caster, scene, aim }
       line(dim, "ed_tide_frostline", tip, arcPoint(c, 0, 0.6), 4);
     }
   });
-  scene.at(tFlare + T6.flare, () => dragon.state(D2.idle));
+  scene.at(tFlare + T7.flare, () => dragon.state(D2.idle));
   const frozen = /* @__PURE__ */ new Map();
   const tShatter = tHit + 2 * WAVE_GAP + ED03.shardFlight;
   function freeze(e) {
@@ -7827,7 +8757,7 @@ var ed03_abyssal_cryotitan_default = defineSpell("ed03", ({ caster, scene, aim }
     for (const b of barriers) tb.removeColumn(b.x, b.y, b.z, ED03.barrierHeight);
   });
   scene.at(tRise + 16, () => currents.forEach((c) => scene.despawn(c.a)));
-  scene.at(tRoar + T6.roar, () => dragon.state(D2.idle));
+  scene.at(tRoar + T7.roar, () => dragon.state(D2.idle));
   let warn;
   scene.at(tHit - 20, () => {
     warn = scene.spawn("telegraph", G, { kind: 2, size: Rc + ED03.finalExtra, state: 1 });
@@ -7910,10 +8840,10 @@ var ed03_abyssal_cryotitan_default = defineSpell("ed03", ({ caster, scene, aim }
   });
   const tDepart = tFinal + 4;
   scene.at(tDepart, () => dragon.state(D2.depart));
-  scene.every(6, (el) => particle(dim, "ed_tide_mist", up(sub(L3, mul(rt, -2 + el * 0.2)), 2 + el * 0.08)), tDepart + 6, tDepart + T6.depart);
+  scene.every(6, (el) => particle(dim, "ed_tide_mist", up(sub(L3, mul(rt, -2 + el * 0.2)), 2 + el * 0.08)), tDepart + 6, tDepart + T7.depart);
   scene.at(tDepart + 20, () => ring(dim, "ed_tide_splash", up(L3, 0.3), 3.5, 6));
-  scene.at(tDepart + T6.depart, () => scene.despawn(dragon));
-  scene.endAt(tDepart + T6.depart + 4);
+  scene.at(tDepart + T7.depart, () => scene.despawn(dragon));
+  scene.endAt(tDepart + T7.depart + 4);
 });
 
 // src/config/ed04.ts
@@ -8087,17 +9017,17 @@ var ed04_aether_raptor_default = defineSpell("ed04", ({ caster, scene, aim }) =>
   for (let k2 = 0; k2 < 4; k2++) {
     passLegs.push(splineLeg("pass", passes[k2], ED04.passSpeed, k2));
     if (k2 < 3) {
-      const P5 = passes[k2][3];
-      const dIn = norm(flat(sub(P5, spline(passes[k2], 0.94))));
-      const dOut = norm(flat(sub(spline(passes[k2 + 1], 0.06), P5)));
+      const P6 = passes[k2][3];
+      const dIn = norm(flat(sub(P6, spline(passes[k2], 0.94))));
+      const dOut = norm(flat(sub(spline(passes[k2 + 1], 0.06), P6)));
       const outward = norm(sub(dIn, dOut));
       const hs = ED04.hairpinSize;
       splineLeg("turn", [
-        P5,
-        up(add(P5, mul(dIn, hs * 1.4)), ED04.hairpinLift * 0.7),
-        up(add(P5, mul(outward, hs * 2.2)), ED04.hairpinLift),
-        up(sub(P5, mul(dOut, hs * 1.4)), ED04.hairpinLift * 0.6),
-        P5
+        P6,
+        up(add(P6, mul(dIn, hs * 1.4)), ED04.hairpinLift * 0.7),
+        up(add(P6, mul(outward, hs * 2.2)), ED04.hairpinLift),
+        up(sub(P6, mul(dOut, hs * 1.4)), ED04.hairpinLift * 0.6),
+        P6
       ], ED04.turnSpeed, k2);
     }
   }
@@ -8376,17 +9306,2528 @@ var ed04_aether_raptor_default = defineSpell("ed04", ({ caster, scene, aim }) =>
   scene.endAt(tDepart + DEPART_TICKS + 4);
 });
 
+// src/config/ed05.ts
+var ED05 = {
+  /** How far from the aim point the monument snaps onto the nearest enemy. */
+  focusSnap: 14,
+  /** Radius around the monument in which the spell looks for enemies. */
+  areaRadius: 22,
+  // ---- Phase I: The Buried Testament
+  /** Distance of the four rise sites from the centre (they sit on the diagonals of the caster's view). */
+  riseRadius: 11,
+  /** First inscription column, and the stagger between the four sites. */
+  inscribeAt: 0.2,
+  riseStagger: 0.25,
+  /** Tablets break out of the ground this long after their inscription began to fall. */
+  riseDelay: 1.8,
+  /** Rising slab: shove + damage around its site when it breaks the surface. */
+  riseDamage: 5,
+  riseRadiusHit: 4,
+  riseKnock: 1.3,
+  /** Tablets lift and orbit into the memorial from this time, over gatherTime seconds. */
+  gatherAt: 5,
+  gatherTime: 3,
+  /** Height of the tablets' lower edge above the ground in the memorial (blocks). */
+  memorialHeight: 9.5,
+  /** Total turn of the monument while it assembles and turns (degrees) and when it halts. */
+  memorialTurn: 225,
+  haltAt: 8.8,
+  /** The memorial locks: grinding shock under the monument. */
+  lockDamage: 7,
+  lockRadius: 10,
+  lockSlowTicks: 50,
+  lockSlowAmp: 1,
+  // ---- Phase II: The Fossils That Remember
+  /** Emergence of each skeleton (nature, heat, tide, air); its tablet awakens awakenLead earlier. */
+  emergeAt: { nature: 9, heat: 9.8, tide: 10.6, air: 11.4 },
+  awakenLead: 0.7,
+  /** Where the skeletons land, measured from the monument centre (blocks, outward from their tablet). */
+  landDistance: { nature: 12.5, heat: 11.5, tide: 10.5 },
+  // Nature (titanosaur): forelimb slam with radiating stone spikes, then a low neck sweep
+  slamDamage: 14,
+  slamRadius: 4.2,
+  slamKnock: 1.4,
+  /** Spikes rise along this many shock lines from the slam point, spikesPerLine each, spaced (blocks). */
+  slamLines: 3,
+  spikesPerLine: 3,
+  spikeSpacing: 2.6,
+  spikeFirst: 3,
+  spikeDamage: 7,
+  spikeRadius: 1.9,
+  spikeLift: 0.7,
+  /** Neck sweep: frontal sector (half angle, degrees) between minReach and maxReach blocks of the body. */
+  sweepDamage: 12,
+  sweepHalfAngle: 75,
+  sweepMinReach: 5,
+  sweepMaxReach: 19,
+  sweepKnock: 1.6,
+  // Heat (carnotaur): two telegraphed charges that leave burning trackways
+  /** Ticks the lane is shown before each charge. */
+  laneWarn: 1,
+  /** Half length of each lane through the centre region (blocks). */
+  laneReach: 11,
+  /** Second lane passes this far beside the centre. */
+  laneOffset: 3,
+  chargeDamage: 11,
+  chargeRadius: 2.3,
+  chargeKnock: 1.5,
+  /** Burning trail: damage every burnEvery ticks to enemies within burnRadius of the scorched track. */
+  burnDamage: 2.5,
+  burnEvery: 10,
+  burnRadius: 1.6,
+  burnSeconds: 3,
+  burnFireSeconds: 3,
+  // Tide (spinosaur): tail lash and sail flare throwing fans of ice crystals
+  tideWalk: 1.2,
+  fanDamage: 10,
+  /** Crystal fans: size multiplier (1 = 2.9 block reach), sector half angle, slowness. */
+  fanSize: 2.6,
+  fanHalfAngle: 55,
+  fanSlowTicks: 60,
+  fanSlowAmp: 2,
+  flareDamage: 11,
+  // Air (microraptor): three low sweeps; each downstroke sends a wind shockwave ring
+  flySpeed: 19,
+  passRadius: 12,
+  passHeight: 4,
+  cruiseHeight: 8,
+  ringDamage: 6,
+  ringRadius: 3.8,
+  ringKnock: 1.5,
+  /** Rings only fire when the raptor is within this horizontal distance of the centre. */
+  ringReach: 11,
+  // ---- Phase III: The Eternal Imprint
+  phase3At: 23.6,
+  /** Fan formation above the battlefield: radius from the centre, lower-edge height and fan angles. */
+  fanRadius: 10,
+  formationHeight: { nature: 15, heat: 13, tide: 13, air: 15 },
+  formationAngle: { heat: 54, nature: 18, air: -18, tide: -54 },
+  formationTime: 2,
+  /** Each imprint lands at these times; the projection warns warnTime seconds before. */
+  projectAt: { nature: 26, heat: 27.6, tide: 29.2, air: 30.8 },
+  projectWarn: 1.2,
+  allAt: 32.6,
+  /** Imprint size multiplier (1 = 15.6 x 11.7 blocks). */
+  imprintSize: 1,
+  /** Nature: root-and-stone eruption along the sauropod outline. */
+  p3SpikeDamage: 12,
+  p3SpikeRadius: 2.2,
+  /** Heat: horned heat-brand burns for brandSeconds. */
+  brandDamage: 4,
+  brandEvery: 8,
+  brandRadius: 2.2,
+  brandSeconds: 2,
+  brandFireSeconds: 4,
+  /** Tide: sail-shaped ice fan. */
+  p3FanDamage: 15,
+  p3FanSize: 4.2,
+  p3FanSlowTicks: 80,
+  p3FanSlowAmp: 3,
+  /** Air: four-winged gale. */
+  galeDamage: 12,
+  galeRadius: 4.5,
+  galeKnock: 2,
+  galeLevitate: 16,
+  /** All four together. */
+  finaleDamage: 22,
+  finaleRadius: 9,
+  finaleKnock: 1.8,
+  fractureAt: 34.8,
+  endAt: 37.2,
+  /** Seconds between replays of the museum hush bed. */
+  hushEvery: 4.5
+};
+
+// src/spells/_ed05_assets.ts
+var ED5_SKEL = { "nature": { "actor": "ed5_skel_nature", "scale": 2, "states": { "hidden": 0, "emerge": 1, "idle": 2, "move": 3, "attack_a": 4, "attack_b": 5, "return": 6, "turn_l": 7, "turn_r": 8, "power": 9 }, "emerge": 2.6, "ret": 2.2, "yawOff": 180, "living": { "walkSpeed": 1.5, "turnRate": 20, "attackA": 3.2, "hitA": 2.2, "attackB": 2.4, "hitB": 1.35, "power": 2.6 } }, "heat": { "actor": "ed5_skel_heat", "scale": 1.85, "states": { "hidden": 0, "emerge": 1, "idle": 2, "walk": 3, "charge": 4, "skid": 5, "attack_a": 6, "attack_b": 7, "roar": 8, "return": 9, "turn_l": 10, "turn_r": 11, "move": 12 }, "emerge": 2.4, "ret": 2, "yawOff": 180, "living": { "runSpeed": 10.021, "walkSpeed": 3.533, "turnRate": 225, "turn": 0.8, "skid": 0.7, "roar": 1.4, "attackA": 1.2, "hitA": 0.55, "attackB": 1.3, "hitB": 0.6 } }, "tide": { "actor": "ed5_skel_tide", "scale": 2, "states": { "hidden": 0, "emerge": 1, "idle": 2, "move": 3, "attack_a": 4, "attack_b": 5, "attack_c": 6, "roar": 7, "return": 8, "turn_l": 9, "turn_r": 10 }, "emerge": 2.4, "ret": 2, "yawOff": 180, "living": { "walkSpeed": 2.5, "attackA": 1.5, "hitsA": [0.5, 1.05], "attackB": 1.7, "hitB": 0.9, "attackC": 1.1, "hitC": 0.45, "roar": 1.4, "turn": 1 } }, "air": { "actor": "ed5_skel_air", "scale": 1.5, "states": { "hidden": 0, "emerge": 1, "idle": 2, "move": 3, "glide": 4, "flutter": 5, "stoop": 6, "attack_a": 7, "attack_b": 8, "roll": 9, "flare": 10, "return": 11, "turn_l": 12, "turn_r": 13 }, "emerge": 2, "ret": 1.8, "yawOff": 0, "living": { "flyDy": -22, "flap": 0.8, "attackA": 0.7, "hitA": 0.3, "roll": 1, "flare": 0.5 } } };
+var ED5_TABLET = { "actors": { "nature": "ed5_tablet_nature", "heat": "ed5_tablet_heat", "tide": "ed5_tablet_tide", "air": "ed5_tablet_air" }, "states": { "hidden": 0, "rise": 1, "stand": 2, "memorial": 3, "awaken": 4, "empty": 5, "receive": 6, "formation": 7, "aim": 8, "project": 9, "project_all": 10, "fracture": 11 }, "len": { "rise": 2.2, "memorial": 0.6, "awaken": 1.2, "empty": 0.6, "receive": 0.9, "formation": 2, "fracture": 1.8 }, "tilt": 60, "relief": [0, 4.5, -0.7], "width": 12, "height": 9, "front": 0.625, "back": 0.75 };
+var ED5_IMPRINT = { "actors": { "nature": "ed5_imprint_nature", "heat": "ed5_imprint_heat", "tide": "ed5_imprint_tide", "air": "ed5_imprint_air" }, "scale": 1.3, "states": { "hidden": 0, "warn": 1, "brand": 2, "pulse": 3, "fade": 4 }, "outline": { "nature": { "rim": [[6.3, -2.23], [-6.3, 3.53], [-2.15, -4.27], [1.5, 3.86], [-2.23, 0.69], [-5.48, -1.75], [3.21, 0.28], [0.45, -0.45], [-4.59, 1.58], [-0.12, 1.99], [-4.1, -3.45], [-4.27, 4.02], [5.16, -0.45], [-0.45, 4.51], [-3.78, -0.61], [-2.72, 2.56]], "fill": [[4.1, 0.12], [-5.48, 3.45], [-2.64, -3.78], [0.45, 4.02], [-0.28, -0.2], [-5.4, -0.69], [-2.88, 0.37], [-0.93, 1.99], [1.99, 0.69], [-4.43, 1.67], [-4.75, -2.56], [0.93, 2.15], [-4.27, 0.2], [-1.5, 0.28], [0.37, 0.93], [-3.78, -3.37], [3.05, 0.61], [-4.59, 3.94]] }, "heat": { "rim": [[5.48, -1.58], [-5.4, 1.42], [-4.43, -4.43], [0.28, 0.69], [-2.32, 4.51], [-3.05, -1.18], [3.13, 0.04], [-2.48, 1.67], [-5.48, -1.02], [-1.1, -0.77], [-4.02, 2.8], [-2.97, -3.21], [-4.75, -2.64], [-0.77, 1.99], [-4.27, 0.2], [-1.75, 3.13]], "fill": [[3.86, -0.53], [-5.24, -1.02], [-1.75, 3.37], [-0.61, -0.45], [-3.45, -3.62], [-3.13, 0.85], [1.83, 0.2], [-3.37, -1.5], [-5, 1.02], [-2.23, -0.45], [-4.59, -2.4], [-2.64, 2.23], [-4.1, -0.2], [-1.91, 0.77], [0.2, 0.45], [2.88, -0.04], [-3.62, -2.64], [-3.13, -0.12]] }, "tide": { "rim": [[6.13, -3.7], [-6.13, 4.27], [-4.92, -4.51], [0.69, 1.26], [-5, -0.04], [-1.58, -2.23], [-1.83, 4.27], [2.8, -1.91], [-2.32, 1.18], [5.32, -1.02], [-4.02, 2.97], [-4.02, -2.23], [2.8, 0.37], [-0.04, -0.77], [4.27, -3.21], [-3.21, -3.94]], "fill": [[5.32, -3.53], [-4.51, 2.48], [-3.62, -3.62], [1.1, 0.85], [-2.23, -0.37], [-5.24, -0.2], [3.45, -0.37], [-1.34, 1.91], [-0.28, -0.93], [-3.62, -1.67], [-3.45, 1.02], [-1.75, -2.07], [4.75, -2.07], [-0.45, 0.61], [-5, 1.18], [-3.86, -0.28], [2.48, 0.37], [-1.75, 0.77]] }, "air": { "rim": [[-4.67, -4.1], [4.59, 1.67], [-1.42, 3.7], [1.18, -2.97], [-3.05, -0.2], [1.1, 0.69], [-1.75, -3.62], [-0.61, -1.18], [3.29, -0.45], [-0.69, 1.75], [0.61, 3.37], [-3.45, -2.48], [2.97, -2.32], [2.72, 1.5], [-1.99, -1.91], [-3.13, -4.18]], "fill": [[-4.43, -3.94], [4.27, 1.58], [-1.1, 3.7], [0.69, -2.4], [-2.72, -0.45], [0.85, 0.93], [-1.91, -3.05], [2.88, -0.53], [-1.1, -1.26], [2.4, -2.72], [1.18, -0.77], [2.64, 1.1], [-3.45, -2.72], [0.37, 3.37], [-0.61, -2.72], [-3.05, -3.94], [3.86, 0.37], [0.12, -1.34]] } } };
+var ED5_PROPS = { "memorial": { "actor": "ed5_memorial", "scale": 2, "states": { "hidden": 0, "assemble": 1, "hold": 2, "dissolve": 3 }, "assemble": 3, "dissolve": 1.6, "half": 6.75 }, "inscription": { "actors": { "nature": "ed5_inscription_nature", "heat": "ed5_inscription_heat", "tide": "ed5_inscription_tide", "air": "ed5_inscription_air" }, "states": { "hidden": 0, "descend": 1 }, "descend": 2.2 }, "spike": { "actor": "ed5_spike", "states": { "hidden": 0, "rise": 1, "hold": 2, "sink": 3 }, "rise": 0.6, "sink": 0.7 }, "trail": { "actor": "ed5_trail", "states": { "hidden": 0, "warn": 1, "burn": 2, "fade": 3 }, "segment": 2, "fade": 0.8 }, "icefan": { "actor": "ed5_icefan", "states": { "hidden": 0, "burst": 1, "hold": 2, "shatter": 3 }, "burst": 0.7, "shatter": 0.5, "reach": 2.875, "halfAngle": 50 }, "gust": { "actor": "ed5_gust", "states": { "hidden": 0, "burst": 1 }, "burst": 0.8 } };
+
+// src/spells/_ed05_kit.ts
+var SPECIES = ["nature", "heat", "tide", "air"];
+var SLOT = { nature: 0, heat: 1, air: 2, tide: 3 };
+function local2(o, yaw, bx, by, bz) {
+  const f = fromYaw(yaw), r = right(f);
+  return { x: o.x + r.x * bx - f.x * bz, y: o.y + by, z: o.z + r.z * bx - f.z * bz };
+}
+function yawLerp(a, b, t) {
+  return a + angleDelta(a, b) * clamp(t, 0, 1);
+}
+function polarOf(d) {
+  return Math.atan2(d.z, d.x) * 180 / Math.PI;
+}
+function inSector(p, o, dirYaw, half, rMin, rMax) {
+  const d = sub(p, o);
+  const h = Math.hypot(d.x, d.z);
+  if (h < rMin || h > rMax) return false;
+  return Math.abs(angleDelta(dirYaw, yawOf(d))) <= half;
+}
+var Path = class {
+  pts = [];
+  cum = [0];
+  length;
+  constructor(ctrl, samples = 240) {
+    for (let i = 0; i <= samples; i++) this.pts.push(spline(ctrl, i / samples));
+    for (let i = 1; i < this.pts.length; i++) this.cum.push(this.cum[i - 1] + dist(this.pts[i - 1], this.pts[i]));
+    this.length = this.cum[this.cum.length - 1];
+  }
+  at(s) {
+    const t = clamp(s, 0, this.length);
+    let lo = 0, hi = this.cum.length - 1;
+    while (hi - lo > 1) {
+      const mid = lo + hi >> 1;
+      if (this.cum[mid] <= t) lo = mid;
+      else hi = mid;
+    }
+    const seg = this.cum[hi] - this.cum[lo] || 1;
+    return lerp(this.pts[lo], this.pts[hi], (t - this.cum[lo]) / seg);
+  }
+  dir(s) {
+    const a = this.at(s - 0.4), b = this.at(s + 0.4);
+    return sub(b, a);
+  }
+};
+var midUp = (a, b, h) => add(lerp(a, b, 0.5), { x: 0, y: h, z: 0 });
+
 // src/spells/ed05_buried_kingdoms.ts
-var ed05_buried_kingdoms_default = defineSpell("ed05", (ctx) => {
-  ctx.caster.sendMessage("ed05 is not implemented yet");
-  ctx.scene.endAt(1);
+var T8 = ED5_TABLET.states;
+var P5 = ED5_PROPS;
+var SK = ED5_SKEL;
+var IMP = ED5_IMPRINT.states;
+var ed05_buried_kingdoms_default = defineSpell("ed05", ({ caster, scene, aim }) => {
+  const dim = scene.dim;
+  const { center } = focus(caster, aim, ED05.focusSnap);
+  const fwd = norm(flat(aim.forward));
+  const phiF = polarOf(fwd);
+  const at = (s) => secs(s);
+  const gnd = (p) => groundBelow(dim, { x: p.x, y: center.y + 6, z: p.z }, 24);
+  const dirOf = (deg) => ({ x: Math.cos(deg * Math.PI / 180), y: 0, z: Math.sin(deg * Math.PI / 180) });
+  const tabs = {};
+  const rel = ED5_TABLET.relief;
+  const reliefAt = (tb) => local2(tb.pos, tb.yaw, rel[0], rel[1], rel[2]);
+  const faceAt = (tb) => up(tb.pos, ED5_TABLET.height / 2);
+  const rSlot = P5.memorial.half;
+  const theta0 = phiF - ED05.memorialTurn;
+  const slotAngle = (sp, th) => th + 90 * SLOT[sp];
+  let ti = 0;
+  function hit(c, radius, dmg, o = {}) {
+    let n = 0;
+    for (const e of hostiles(dim, c, radius, caster)) {
+      if (o.test && !o.test(e)) continue;
+      if (o.once) {
+        if (o.once.has(e.id)) continue;
+        o.once.add(e.id);
+      }
+      if (damage(e, dmg, caster)) n++;
+      if (o.kb) knockback(e, o.from ?? c, o.kb, o.kv ?? 0.3);
+      if (o.slow) effect(e, "slowness", o.slow[0], o.slow[1]);
+      if (o.lev) effect(e, "levitation", o.lev, 0);
+      if (o.fire) {
+        try {
+          if (e.isValid) e.setOnFire(o.fire, true);
+        } catch {
+        }
+      }
+    }
+    return n;
+  }
+  function warnAt(p, radius, ticks, slow = false) {
+    const t = scene.spawn("telegraph", gnd(p), { kind: 2, size: radius, state: slow ? 4 : 1 });
+    scene.after(ticks, () => t.state(3));
+    scene.after(ticks + 8, () => scene.despawn(t));
+  }
+  function spikeAt(p, dmg, radius, lift, once, holdS = 1.5, size = 1) {
+    const g = gnd(p);
+    const s = scene.spawn(P5.spike.actor, g, { yaw: ti++ * 67 % 360, size, state: P5.spike.states.rise });
+    sound(dim, "ed5_spike", g, 0.75, 0.88 + ti % 5 * 0.06);
+    particle(dim, "ed5_rock", up(g, 0.4));
+    if (ti % 2) particle(dim, "ed5_moss", up(g, 1.2));
+    scene.after(4, () => hit(g, radius, dmg, { once, from: g, kb: 0.25, kv: lift }));
+    scene.after(secs(holdS), () => s.state(P5.spike.states.sink));
+    scene.after(secs(holdS + P5.spike.sink) + 1, () => scene.despawn(s));
+  }
+  function iceFan(o, yaw, size, dmg, slow, once, holdS = 1.3) {
+    const g = gnd(o);
+    const f = scene.spawn(P5.icefan.actor, g, { yaw, size, state: P5.icefan.states.burst });
+    sound(dim, "ed5_ice", g, 1, 1.15 - size * 0.04);
+    particle(dim, "ed5_ring_tide", up(g, 0.2));
+    burst(dim, "ed5_shard", up(g, 1), 1.2, 3);
+    const reach = P5.icefan.reach * size + 0.8;
+    scene.after(3, () => {
+      for (const p of [0.35, 0.7, 1]) particle(dim, "ed5_frost", up(local2(g, yaw, 0, 0, -reach * p), 1));
+      hit(g, reach + 1, dmg, {
+        once,
+        slow,
+        kb: 0.9,
+        kv: 0.35,
+        from: g,
+        test: (e) => inSector(e.location, g, yaw, ED05.fanHalfAngle, 0, reach)
+      });
+    });
+    scene.after(secs(holdS), () => f.state(P5.icefan.states.shatter));
+    scene.after(secs(holdS + P5.icefan.shatter) + 1, () => scene.despawn(f));
+  }
+  function gust(p, size, dmg, radius, kb, once, lev = 0) {
+    const g = gnd(p);
+    const a = scene.spawn(P5.gust.actor, g, { yaw: ti++ * 53 % 360, size, state: P5.gust.states.burst });
+    sound(dim, "ed5_gust", g, 0.9, 0.95 + ti % 4 * 0.05);
+    particle(dim, "ed5_ring_air", up(g, 0.3));
+    particle(dim, "ed5_wind", up(g, 1));
+    hit(g, radius, dmg, { once, from: g, kb, kv: 0.45, lev });
+    scene.after(secs(P5.gust.burst) + 1, () => scene.despawn(a));
+  }
+  sound(dim, "ed5_open", caster.location, 1);
+  burst(dim, "ed5_rune", up(caster.location, 1.4), 1.2, 6);
+  scene.every(secs(ED05.hushEvery), () => sound(dim, "ed5_hush", up(center, 3), 1), 0, at(ED05.endAt - 2));
+  scene.every(10, () => particle(dim, "ed5_glow_mote", up(center, 5)), at(2), at(ED05.fractureAt));
+  blocksFor(scene).place(up(center, 1), LIGHT);
+  SPECIES.forEach((sp, i) => {
+    const site = gnd(polar(center, ED05.riseRadius, slotAngle(sp, theta0)));
+    const t0 = at(ED05.inscribeAt + i * ED05.riseStagger);
+    scene.at(t0, () => {
+      const ins = scene.spawn(P5.inscription.actors[sp], site, { state: P5.inscription.states.descend, size: 2.2 });
+      sound(dim, "ed5_inscribe", site, 0.9, 0.92 + i * 0.06);
+      scene.every(5, () => particle(dim, "ed5_rune_fall", up(site, 7)), scene.tick, scene.tick + 30);
+      scene.after(secs(P5.inscription.descend) + 2, () => scene.despawn(ins));
+    });
+    scene.at(t0 + at(ED05.riseDelay), () => {
+      const yaw = yawOf(sub(site, center));
+      const a = scene.spawn(ED5_TABLET.actors[sp], site, { yaw, state: T8.rise, skin: 0 });
+      tabs[sp] = { sp, a, pos: site, yaw, baseY: site.y };
+      sound(dim, "ed5_rise", site, 1.1, 0.95 + i * 0.04);
+      particle(dim, "ed5_crack", up(site, 0.3));
+      particle(dim, "ed5_dust", up(site, 0.5));
+      scene.after(secs(1.5), () => {
+        particle(dim, `ed5_ring_${sp}`, up(site, 0.2));
+        burst(dim, "ed5_rock", up(site, 0.6), 2.5, 3);
+        particle(dim, "ed5_dust", up(site, 1));
+        hit(site, ED05.riseRadiusHit, ED05.riseDamage, { kb: ED05.riseKnock, kv: 0.45 });
+      });
+      scene.after(secs(ED5_TABLET.len.rise), () => a.state(T8.stand));
+    });
+  });
+  const tG0 = at(ED05.gatherAt), tG1 = at(ED05.gatherAt + ED05.gatherTime), tHalt = at(ED05.haltAt);
+  const theta = (tk) => theta0 + ED05.memorialTurn * smooth((tk - tG0) / (tHalt - tG0));
+  let memorial;
+  scene.at(tG0, () => {
+    memorial = scene.spawn(P5.memorial.actor, up(center, ED05.memorialHeight), { yaw: yawOf(dirOf(theta0)), state: P5.memorial.states.assemble });
+    sound(dim, "ed5_grind", up(center, 4), 1.2);
+    for (const sp of SPECIES) tabs[sp]?.a.state(T8.memorial);
+  });
+  scene.every(1, (e) => {
+    const tk = tG0 + e;
+    const th = theta(tk);
+    const lin = clamp((tk - tG0) / (tG1 - tG0), 0, 1);
+    for (const sp of SPECIES) {
+      const tb = tabs[sp];
+      if (!tb) continue;
+      const a = slotAngle(sp, th);
+      const rad = ED05.riseRadius + (rSlot - ED05.riseRadius) * smooth(lin);
+      const y = tb.baseY + (center.y + ED05.memorialHeight - tb.baseY) * easeOut(lin);
+      tb.pos = { ...polar(center, rad, a), y };
+      tb.yaw = yawOf(dirOf(a));
+      tb.a.move(tb.pos, tb.yaw);
+      if (e % 6 === 0 && lin < 1) particle(dim, "ed5_dust", up(tb.pos, 0.2));
+    }
+    memorial?.move(up(center, ED05.memorialHeight), yawOf(dirOf(th)));
+  }, tG0, tHalt + 1);
+  scene.at(tG1, () => {
+    memorial?.state(P5.memorial.states.hold);
+    sound(dim, "ed5_lock", up(center, 2), 1.4);
+    for (const sp of SPECIES) particle(dim, `ed5_ring_${sp}`, up(center, 0.2 + SLOT[sp] * 0.1));
+    ring(dim, "ed5_crack", up(center, 0.3), ED05.lockRadius * 0.6, 8);
+    hit(center, ED05.lockRadius, ED05.lockDamage, { kb: 0.8, kv: 0.3, slow: [ED05.lockSlowTicks, ED05.lockSlowAmp] });
+  });
+  function outward(sp) {
+    return dirOf(slotAngle(sp, theta0 + ED05.memorialTurn));
+  }
+  function emerge(sp, land, done) {
+    const tb = tabs[sp];
+    if (!tb) return;
+    const s = SK[sp];
+    const rc = reliefAt(tb);
+    const yaw = tb.yaw + s.yawOff;
+    tb.a.state(T8.empty);
+    const sk = scene.spawn(s.actor, rc, { yaw, state: s.states.emerge });
+    sound(dim, "ed5_peel", rc, 1.2);
+    burst(dim, `ed5_burst_${sp}`, rc, 1.5, 4);
+    particle(dim, "ed5_bonedust", rc);
+    const out = outward(sp);
+    const t0 = scene.tick;
+    if (land) {
+      const drift = add(rc, out);
+      scene.span(t0, t0 + secs(2.15), (p) => {
+        const tt = p * 2.15;
+        const pos = tt < 0.7 ? lerp(rc, drift, smooth(tt / 0.7)) : bezier(drift, midUp(drift, land, 3), land, smooth((tt - 0.7) / 1.45));
+        sk.move(pos, yaw);
+      });
+      scene.at(t0 + secs(2.1), () => {
+        particle(dim, "ed5_bonedust", up(land, 0.3));
+        particle(dim, `ed5_ring_${sp}`, up(land, 0.2));
+      });
+    } else {
+      const exit = up(add(rc, mul(out, 5)), 1.5);
+      scene.span(t0, t0 + secs(s.emerge), (p) => {
+        const tt = p * s.emerge;
+        sk.move(tt < 0.5 ? rc : bezier(rc, add(rc, mul(out, 3.5)), exit, smooth((tt - 0.5) / (s.emerge - 0.5))), yaw);
+      });
+    }
+    scene.at(t0 + secs(s.emerge), () => done(sk));
+  }
+  function returnHome(sp, sk) {
+    const tb = tabs[sp];
+    if (!tb) return;
+    const s = SK[sp];
+    const rc = reliefAt(tb);
+    const from = sk.loc;
+    const yaw0 = sk.yaw, yaw1 = tb.yaw + s.yawOff;
+    const airy = sp === "air";
+    sk.state(s.states.return);
+    const ctl = midUp(from, rc, airy ? 2 : 6);
+    const t0 = scene.tick, n = secs(s.ret);
+    const a0 = airy ? 0.1 : 0.45, a1 = airy ? 1.3 : 1.55;
+    scene.span(t0, t0 + n, (p) => {
+      const tt = p * s.ret;
+      sk.move(bezier(from, ctl, rc, smooth((tt - a0) / (a1 - a0))), yawLerp(yaw0, yaw1, smooth(tt / (airy ? 0.9 : 0.6))));
+    });
+    scene.at(t0 + n, () => {
+      tb.a.state(T8.receive);
+      sound(dim, "ed5_settle", rc, 1.1);
+      burst(dim, `ed5_burst_${sp}`, rc, 1.2, 4);
+    });
+    scene.at(t0 + n + 1, () => scene.despawn(sk));
+  }
+  function awaken(sp) {
+    const tb = tabs[sp];
+    if (!tb) return;
+    tb.a.skin(1).state(T8.awaken);
+    sound(dim, "ed5_awaken", faceAt(tb), 1.2, 0.9 + SLOT[sp] * 0.07);
+    burst(dim, `ed5_mote_${sp}`, faceAt(tb), 3, 3);
+  }
+  for (const sp of SPECIES) {
+    const tE = at(ED05.emergeAt[sp]);
+    scene.at(tE - at(ED05.awakenLead), () => awaken(sp));
+    scene.at(tE, () => {
+      const tb = tabs[sp];
+      if (!tb) return;
+      if (sp === "air") {
+        emerge(sp, void 0, (sk) => actAir(sk));
+        return;
+      }
+      const land = gnd(add(center, mul(outward(sp), ED05.landDistance[sp])));
+      const yaw = tb.yaw + SK[sp].yawOff;
+      emerge(sp, land, (sk) => {
+        if (sp === "nature") actNature(sk, land, yaw);
+        else if (sp === "heat") actHeat(sk, land, yaw);
+        else actTide(sk, land, yaw);
+      });
+    });
+  }
+  function actNature(sk, L3, yaw) {
+    const s = SK.nature, lv = s.living;
+    const slamPt = local2(L3, yaw, 3, 0, -5);
+    sk.state(s.states.attack_a);
+    warnAt(slamPt, ED05.slamRadius, secs(lv.hitA), true);
+    scene.after(secs(lv.hitA), () => {
+      sound(dim, "ed5_slam", slamPt, 1.5);
+      particle(dim, "ed5_ring_nature", up(slamPt, 0.2));
+      particle(dim, "fx_shock", up(slamPt, 0.3));
+      burst(dim, "ed5_rock", up(slamPt, 0.8), 2, 4);
+      particle(dim, "ed5_dust", up(slamPt, 0.6));
+      hit(slamPt, ED05.slamRadius, ED05.slamDamage, { kb: ED05.slamKnock, kv: 0.5 });
+      const foes = hostiles(dim, slamPt, 13, caster, ED05.slamLines);
+      const dirs = foes.map((e) => yawOf(sub(e.location, slamPt)));
+      const spread = [0, -38, 38, -70, 70];
+      for (let k2 = 0; dirs.length < ED05.slamLines; k2++) dirs.push(yaw + spread[k2 % spread.length]);
+      const once = /* @__PURE__ */ new Set();
+      dirs.forEach((dy, li) => {
+        const d = fromYaw(dy);
+        for (let j = 0; j < ED05.spikesPerLine; j++) {
+          const p = add(slamPt, mul(d, ED05.spikeFirst + j * ED05.spikeSpacing));
+          scene.after(2 + j * 3 + li, () => {
+            particle(dim, "ed5_line", up(gnd(p), 0.25));
+            spikeAt(p, ED05.spikeDamage, ED05.spikeRadius, ED05.spikeLift, once);
+          });
+        }
+      });
+    });
+    const tB = secs(lv.attackA) + 2;
+    const sweepC = local2(L3, yaw, 0, 0, -12);
+    scene.after(tB, () => {
+      sk.state(s.states.attack_b);
+      warnAt(sweepC, 7, secs(lv.hitB));
+    });
+    scene.after(tB + secs(lv.hitB), () => {
+      sound(dim, "ed5_slam", sweepC, 1, 1.25);
+      const left = mul(right(fromYaw(yaw)), -1);
+      const once = /* @__PURE__ */ new Set();
+      hit(L3, ED05.sweepMaxReach + 1, ED05.sweepDamage, {
+        once,
+        kb: ED05.sweepKnock,
+        kv: 0.4,
+        from: add(sweepC, mul(left, -6)),
+        test: (e) => inSector(e.location, L3, yaw, ED05.sweepHalfAngle, ED05.sweepMinReach, ED05.sweepMaxReach)
+      });
+      [60, 25, -10, -45].forEach((a, k2) => scene.after(k2 * 2, () => {
+        const p = add(L3, mul(fromYaw(yaw + a), 12));
+        particle(dim, "ed5_line", up(gnd(p), 0.25));
+        spikeAt(p, ED05.spikeDamage, ED05.spikeRadius, ED05.spikeLift, once, 1.2, 0.8);
+      }));
+    });
+    scene.after(tB + secs(lv.attackB) + 2, () => returnHome("nature", sk));
+  }
+  function actHeat(sk, L3, yaw0) {
+    const s = SK.heat, lv = s.living;
+    sk.state(s.states.roar);
+    const len1 = Math.min(24, 2 * ED05.laneReach);
+    const trail1 = scene.spawn(P5.trail.actor, L3, { yaw: yaw0, state: P5.trail.states.warn });
+    trail1.prop("len", len1);
+    sound(dim, "ed5_burn", L3, 0.6, 0.8);
+    scene.after(secs(lv.roar), () => charge(sk, L3, yaw0, len1, trail1, (end) => {
+      skidTurn(sk, end, yaw0, (pos, yaw1) => {
+        const trail2 = scene.spawn(P5.trail.actor, pos, { yaw: yaw1, state: P5.trail.states.warn });
+        const target = add(center, mul(right(fromYaw(yaw0)), ED05.laneOffset));
+        const len2 = Math.min(24, dist(flat(pos), flat(target)) + ED05.laneReach);
+        trail2.prop("len", len2);
+        scene.after(secs(lv.turn) + 2, () => charge(sk, pos, yaw1, len2, trail2, (end2) => {
+          skidTurn(sk, end2, yaw1, () => returnHome("heat", sk), false);
+        }));
+      }, true);
+    }));
+  }
+  function charge(sk, from, yaw, length, trail, done) {
+    const s = SK.heat;
+    const n = Math.max(4, secs(length / s.living.runSpeed));
+    const dir = fromYaw(yaw);
+    const end = add(from, mul(dir, length));
+    sk.state(s.states.charge);
+    trail.state(P5.trail.states.burn);
+    sound(dim, "ed5_burn", from, 1);
+    const once = /* @__PURE__ */ new Set();
+    let reached = from;
+    const t0 = scene.tick;
+    scene.span(t0, t0 + n, (p, e) => {
+      const pos = lerp(from, end, p);
+      reached = pos;
+      sk.move(pos, yaw);
+      hit(pos, ED05.chargeRadius, ED05.chargeDamage, { once, from: sub(pos, mul(dir, 2)), kb: ED05.chargeKnock, kv: 0.45 });
+      if (e % 2 === 0) particle(dim, "ed5_haze", up(pos, 0.6));
+      if (e % 3 === 0) particle(dim, "ed5_ember", up(pos, 2.5));
+    });
+    scene.every(ED05.burnEvery, () => {
+      const mid = lerp(from, reached, 0.5);
+      for (const e of hostiles(dim, mid, dist(from, reached) / 2 + ED05.burnRadius + 1, caster)) {
+        if (distToSegment(e.location, from, reached) > ED05.burnRadius) continue;
+        damage(e, ED05.burnDamage, caster);
+        try {
+          if (e.isValid) e.setOnFire(ED05.burnFireSeconds, true);
+        } catch {
+        }
+      }
+      for (const f of [0.2, 0.5, 0.8]) particle(dim, "ed5_haze", up(lerp(from, reached, f), 0.4));
+    }, t0 + 2, t0 + n + secs(ED05.burnSeconds));
+    scene.at(t0 + n, () => done(end));
+    scene.at(t0 + n + secs(ED05.burnSeconds), () => trail.state(P5.trail.states.fade));
+    scene.at(t0 + n + secs(ED05.burnSeconds + P5.trail.fade) + 1, () => scene.despawn(trail));
+  }
+  function skidTurn(sk, from, yaw, next, turn) {
+    const s = SK.heat, lv = s.living;
+    const to = add(from, mul(fromYaw(yaw), 2));
+    sk.state(s.states.skid);
+    sound(dim, "ed5_skid", from, 1);
+    burst(dim, "ed5_bonedust", up(from, 0.3), 1.2, 3);
+    const t0 = scene.tick, n = secs(lv.skid);
+    scene.span(t0, t0 + n, (p) => sk.move(lerp(from, to, easeOut(p)), yaw));
+    if (!turn) {
+      scene.at(t0 + n, () => next(to, yaw));
+      return;
+    }
+    scene.at(t0 + n, () => {
+      const target = add(center, mul(right(fromYaw(yaw)), ED05.laneOffset));
+      const yaw1 = yawOf(sub(target, to));
+      const dy = angleDelta(yaw, yaw1);
+      sk.state(dy >= 0 ? s.states.turn_r : s.states.turn_l);
+      const n2 = secs(lv.turn);
+      scene.span(scene.tick, scene.tick + n2, (p) => sk.move(to, yawLerp(yaw, yaw1, p)));
+      next(to, yaw1);
+    });
+  }
+  function actTide(sk, L3, yaw) {
+    const s = SK.tide, lv = s.living;
+    const walkTo = add(L3, mul(fromYaw(yaw), lv.walkSpeed * ED05.tideWalk));
+    sk.state(s.states.move);
+    const t0 = scene.tick, nW = secs(ED05.tideWalk);
+    scene.span(t0, t0 + nW, (p) => sk.move(lerp(L3, walkTo, p), yaw));
+    const yaw1 = yaw + 90;
+    const tTurn = t0 + nW;
+    scene.at(tTurn, () => {
+      sk.state(s.states.turn_r);
+      scene.span(scene.tick, scene.tick + secs(lv.turn), (p) => sk.move(walkTo, yawLerp(yaw, yaw1, smooth(p))));
+      for (const sx of [2.5, -2.5]) warnAt(fanTarget(walkTo, yaw1, sx), 3.5, secs(lv.turn) + secs(lv.hitsA[0]));
+    });
+    const tA = tTurn + secs(lv.turn) + 1;
+    scene.at(tA, () => sk.state(s.states.attack_a));
+    lv.hitsA.forEach((h, k2) => scene.at(tA + secs(h), () => {
+      const o = local2(walkTo, yaw1, k2 === 0 ? 2.5 : -2.5, 0, 7.5);
+      iceFan(o, yawOf(sub(fanTarget(walkTo, yaw1, k2 === 0 ? 2.5 : -2.5), o)), ED05.fanSize, ED05.fanDamage, [ED05.fanSlowTicks, ED05.fanSlowAmp]);
+    }));
+    const tC = tA + secs(lv.attackA) + 2;
+    scene.at(tC, () => sk.state(s.states.attack_c));
+    scene.at(tC + secs(lv.hitC), () => {
+      const once = /* @__PURE__ */ new Set();
+      for (const side of [90, -90]) iceFan(
+        local2(walkTo, yaw1, side > 0 ? -1.5 : 1.5, 0, 0),
+        yaw1 + side,
+        ED05.fanSize,
+        ED05.flareDamage,
+        [ED05.fanSlowTicks, ED05.fanSlowAmp],
+        once
+      );
+      burst(dim, "ed5_frost", up(walkTo, 5), 2.5, 5);
+    });
+    const tB = tC + secs(lv.attackC) + 2;
+    scene.at(tB, () => sk.state(s.states.attack_b));
+    scene.at(tB + secs(lv.hitB), () => {
+      const tip = local2(walkTo, yaw1, 0, 0, 10);
+      iceFan(tip, yaw1 + 180, ED05.fanSize * 0.8, ED05.fanDamage, [ED05.fanSlowTicks, ED05.fanSlowAmp]);
+      particle(dim, "ed5_ring_tide", up(gnd(tip), 0.2));
+    });
+    scene.at(tB + secs(lv.attackB) + 2, () => returnHome("tide", sk));
+  }
+  function fanTarget(pos, yaw, sx) {
+    const toC = sub(center, pos);
+    return distXZ(pos, center) > 2 ? add(center, mul(right(fromYaw(yaw)), sx * 0.4)) : add(local2(pos, yaw, sx, 0, 6), toC);
+  }
+  function actAir(sk) {
+    const s = SK.air;
+    const tb = tabs.air;
+    if (!tb) return;
+    const out = outward("air");
+    const start = sk.loc;
+    const psi0 = polarOf(out) + 55;
+    const R2 = ED05.passRadius, cy = center.y;
+    const pts = [start];
+    for (let k2 = 0; k2 < 3; k2++) {
+      const psi = psi0 + 120 * k2;
+      pts.push(polar(center, R2, psi, ED05.cruiseHeight));
+      pts.push(polar(center, 1.5, psi + 90, ED05.passHeight));
+      pts.push(polar(center, R2, psi + 180, ED05.cruiseHeight - 1));
+      if (k2 < 2) pts.push(polar(center, R2 * 1.25, psi + 150, ED05.cruiseHeight + 2));
+    }
+    const home = add(up(reliefAt(tb), 3), mul(out, 6));
+    pts.push(home);
+    const path = new Path(pts.map((p) => ({ ...p, y: Math.max(p.y, cy + 2) })));
+    const n = secs(path.length / ED05.flySpeed);
+    let state = s.states.move, want = state, wantN = 0, lastYaw = sk.yaw, ringCd = 6;
+    sk.state(state);
+    const t0 = scene.tick;
+    scene.span(t0, t0 + n, (p, e) => {
+      const sPos = p * path.length;
+      const pos = path.at(sPos);
+      const yaw = yawOf(path.dir(sPos));
+      const dy = angleDelta(lastYaw, yaw);
+      lastYaw = yaw;
+      const near = distXZ(pos, center) < ED05.ringReach;
+      const w = near ? s.states.move : Math.abs(dy) > 2 ? dy > 0 ? s.states.turn_r : s.states.turn_l : s.states.glide;
+      if (w === want) wantN++;
+      else {
+        want = w;
+        wantN = 0;
+      }
+      if (want !== state && wantN >= 3) {
+        state = want;
+        sk.state(state);
+      }
+      sk.move(pos, yaw);
+      if (e % 4 === 0) particle(dim, "ed5_feather", pos);
+      if (state === s.states.move && near) {
+        if (--ringCd <= 0) {
+          ringCd = secs(s.living.flap);
+          gust(pos, 1, ED05.ringDamage, ED05.ringRadius, ED05.ringKnock);
+        }
+      } else ringCd = 6;
+    });
+    scene.at(t0 + n, () => returnHome("air", sk));
+  }
+  const formation = {};
+  scene.at(at(ED05.phase3At), () => {
+    if (memorial) {
+      memorial.state(P5.memorial.states.dissolve);
+      const m = memorial;
+      scene.after(secs(P5.memorial.dissolve) + 1, () => scene.despawn(m));
+    }
+    sound(dim, "ed5_blaze", up(center, ED05.memorialHeight + 4), 1.4);
+    for (const sp of SPECIES) {
+      const tb = tabs[sp];
+      if (!tb) continue;
+      const fpos = polar(center, ED05.fanRadius, phiF + ED05.formationAngle[sp], ED05.formationHeight[sp]);
+      const fyaw = yawOf(sub(center, fpos));
+      formation[sp] = { pos: fpos, yaw: fyaw };
+      tb.a.skin(2).state(T8.formation);
+      const from = tb.pos, y0 = tb.yaw, ctl = midUp(from, fpos, 6);
+      const t0 = scene.tick, n = secs(ED05.formationTime);
+      scene.span(t0, t0 + n, (p) => {
+        tb.pos = bezier(from, ctl, fpos, smooth(p));
+        tb.yaw = yawLerp(y0, fyaw, smooth(p));
+        tb.a.move(tb.pos, tb.yaw);
+      });
+      scene.at(t0 + n, () => tb.a.state(T8.aim));
+      burst(dim, `ed5_mote_${sp}`, faceAt(tb), 3, 3);
+    }
+  });
+  function imprintEffect(sp, imp, yaw, size, once) {
+    const o = ED5_IMPRINT.outline[sp];
+    const toW = (q) => local2(imp, yaw, q[0] * size, 0, q[1] * size);
+    if (sp === "nature") {
+      o.rim.forEach((q, k2) => scene.after(k2, () => spikeAt(toW(q), ED05.p3SpikeDamage, ED05.p3SpikeRadius, 0.8, once, 1.3, 1.1)));
+    } else if (sp === "heat") {
+      const pts = [...o.rim, ...o.fill].map(toW);
+      scene.every(ED05.brandEvery, (e) => {
+        const seen = /* @__PURE__ */ new Set();
+        for (const e2 of hostiles(dim, imp, 12, caster)) {
+          if (seen.has(e2.id) || !pts.some((p) => distXZ(p, e2.location) < ED05.brandRadius)) continue;
+          seen.add(e2.id);
+          damage(e2, ED05.brandDamage, caster);
+          try {
+            if (e2.isValid) e2.setOnFire(ED05.brandFireSeconds, true);
+          } catch {
+          }
+        }
+        particle(dim, "ed5_ember", up(pts[e * 3 % pts.length], 0.4));
+        particle(dim, "ed5_haze", up(pts[(e * 7 + 5) % pts.length], 0.3));
+      }, scene.tick, scene.tick + secs(ED05.brandSeconds));
+      sound(dim, "ed5_burn", imp, 1.2, 0.8);
+    } else if (sp === "tide") {
+      iceFan(
+        local2(imp, yaw, 0, 0, P5.icefan.reach * ED05.p3FanSize * 0.45),
+        yaw,
+        ED05.p3FanSize,
+        ED05.p3FanDamage,
+        [ED05.p3FanSlowTicks, ED05.p3FanSlowAmp],
+        once,
+        1.4
+      );
+      for (const q of o.fill.slice(0, 6)) particle(dim, "ed5_frost", up(toW(q), 0.8));
+    } else {
+      for (const q of o.rim.slice(0, 4)) gust(toW(q), 1.3, ED05.galeDamage, ED05.galeRadius, ED05.galeKnock, once, ED05.galeLevitate);
+      gust(imp, 1.6, ED05.galeDamage, ED05.galeRadius, ED05.galeKnock, once, ED05.galeLevitate);
+    }
+  }
+  function projectFrom(sp, tHit2, imp, yaw, all) {
+    const tW = tHit2 - at(ED05.projectWarn);
+    let im;
+    scene.at(tW, () => {
+      const tb = tabs[sp];
+      if (!tb) return;
+      tb.a.state(all ? T8.project_all : T8.project);
+      im = scene.spawn(ED5_IMPRINT.actors[sp], imp, { yaw, size: ED05.imprintSize, state: IMP.warn });
+      if (!all) sound(dim, "ed5_project", up(imp, 2), 1.3, 0.92 + SLOT[sp] * 0.05);
+      scene.every(3, () => line(dim, `ed5_ray_${sp}`, faceAt(tb), up(imp, 0.4), all ? 5 : 8), scene.tick, tHit2 + 4);
+    });
+    scene.at(tHit2, () => {
+      im?.state(IMP.brand);
+      particle(dim, `ed5_ring_${sp}`, up(imp, 0.3));
+      if (!all) imprintEffect(sp, imp, yaw, ED05.imprintSize, /* @__PURE__ */ new Set());
+    });
+    scene.at(tHit2 + 10, () => im?.state(IMP.pulse));
+    const hold = sp === "heat" ? ED05.brandSeconds : 1.4;
+    scene.at(tHit2 + secs(hold), () => {
+      im?.state(IMP.fade);
+      tabs[sp]?.a.state(T8.aim);
+    });
+    scene.at(tHit2 + secs(hold + 0.6) + 1, () => {
+      if (im) scene.despawn(im);
+    });
+  }
+  for (const sp of SPECIES) {
+    scene.at(at(ED05.projectAt[sp]) - at(ED05.projectWarn) - 1, () => {
+      const f = formation[sp];
+      const imp = gnd(f ? add(center, mul(norm(flat(sub(f.pos, center))), 1.5)) : center);
+      projectFrom(sp, at(ED05.projectAt[sp]), imp, f ? f.yaw : 0, false);
+    });
+  }
+  const tAll = at(ED05.allAt);
+  scene.at(tAll - at(ED05.projectWarn) - 1, () => {
+    const g = gnd(center);
+    SPECIES.forEach((sp, k2) => projectFrom(sp, tAll, g, (formation[sp]?.yaw ?? 0) + k2 * 12, true));
+  });
+  scene.at(tAll - secs(0.8), () => sound(dim, "ed5_finale", up(center, 2), 1.6));
+  scene.at(tAll, () => {
+    const g = gnd(center);
+    const once = /* @__PURE__ */ new Set();
+    hit(g, ED05.finaleRadius, ED05.finaleDamage, { once, kb: ED05.finaleKnock, kv: 0.6, slow: [ED05.p3FanSlowTicks, ED05.p3FanSlowAmp], fire: 2 });
+    const o = ED5_IMPRINT.outline.nature;
+    o.rim.slice(0, 8).forEach((q, k2) => scene.after(k2, () => spikeAt(local2(g, phiF, q[0], 0, q[1]), 0, 1, 0.5, once, 1.2, 1.2)));
+    iceFan(g, yawOf(fwd), ED05.p3FanSize * 0.8, 0, [ED05.p3FanSlowTicks, ED05.p3FanSlowAmp], once, 1.2);
+    for (let k2 = 0; k2 < 4; k2++) scene.after(3 + k2 * 2, () => gust(polar(g, 4.5, phiF + 45 + k2 * 90), 1.4, 0, 4, ED05.finaleKnock, once));
+    burst(dim, "ed5_frag", up(g, 3), 3, 6);
+    particle(dim, "fx_flash", up(g, 2));
+  });
+  const tF = at(ED05.fractureAt);
+  scene.at(tF, () => {
+    sound(dim, "ed5_fracture", up(center, 10), 1.6);
+    for (const sp of SPECIES) {
+      const tb = tabs[sp];
+      if (!tb) continue;
+      tb.a.state(T8.fracture);
+      burst(dim, "ed5_frag_big", faceAt(tb), 2.5, 4);
+      burst(dim, `ed5_burst_${sp}`, faceAt(tb), 2, 4);
+    }
+  });
+  scene.at(tF + 8, () => sound(dim, "ed5_rain", up(center, 6), 1));
+  scene.every(4, (e) => {
+    const a = e * 2.39996, r = 2 + e * 7 % 10;
+    particle(dim, "ed5_frag", { x: center.x + Math.cos(a) * r, y: center.y + 12, z: center.z + Math.sin(a) * r });
+  }, tF + 4, tF + secs(2.4));
+  scene.at(tF + secs(ED5_TABLET.len.fracture) + 2, () => {
+    for (const sp of SPECIES) {
+      const tb = tabs[sp];
+      if (tb) scene.despawn(tb.a);
+    }
+  });
+  scene.endAt(at(ED05.endAt));
 });
 
+// src/config/ed06.ts
+var ED06 = {
+  // ---- domain
+  /** How far from the aim point the spell snaps onto the nearest enemy. */
+  snap: 12,
+  /** The domain centre is kept at least this far from the caster (the dragons need room). */
+  minDistance: 12,
+  /** Height of the Great Codex above the caster and how far toward the domain it floats. */
+  codexHeight: 7.5,
+  codexAhead: 1.5,
+  // ---- Phase I: The Four Ancient Heartbeats
+  /** Radius of each dragon emblem (blocks). */
+  emblemRadius: 4.5,
+  /** Each heartbeat jolts enemies standing on its emblem: damage, slowness ticks / amplifier, outward push. */
+  beatDamage: 2,
+  beatSlowTicks: 40,
+  beatSlowAmp: 1,
+  beatKnock: 0.6,
+  // ---- Phase II: The Sovereigns Awaken
+  /** Nature Dragon: forefeet landing (damage, radius) and every footfall shockwave. */
+  natureLandDamage: 8,
+  natureLandRadius: 5,
+  stepDamage: 3,
+  stepRadius: 3.4,
+  stepKnockH: 0.7,
+  stepKnockV: 0.35,
+  /** Heat Dragon charge: horn strike and body slam damage, lateral reach, shove. */
+  hornDamage: 7,
+  bodyDamage: 4,
+  chargeHalfWidth: 2.4,
+  chargeKnockH: 1.3,
+  chargeKnockV: 0.45,
+  /** Seconds enemies struck by the Heat Dragon keep burning. */
+  burnSeconds: 3,
+  /** Air Dragon's pull-up gust after its stoop: damage, radius, knockback. */
+  gustDamage: 4,
+  gustRadius: 6,
+  gustKnock: 1,
+  // ---- Phase III: The Primordial Dominion
+  /** Roots from the Nature Dragon's footprints: how many enemies, how long they hold, damage at the bind. */
+  maxRoots: 4,
+  rootRadius: 16,
+  rootHoldTicks: 70,
+  rootDamage: 4,
+  /** A root-bound pillar rises beside each bound enemy (damage when it erupts, barrier height). */
+  pillarDamage: 4,
+  pillarBarrierHeight: 3,
+  /** Neck lash: damage and radius of the low sweep in front of the Nature Dragon. */
+  lashDamage: 8,
+  lashRadius: 6,
+  /** Heat Dragon chord charges between the standing stones: horn / body damage use the Phase II values. */
+  chordRadius: 7,
+  /** Ground vitrified behind each charge: a glass patch every N blocks, burning enemies on it. */
+  glassEvery: 3.5,
+  glassLifeTicks: 140,
+  glassBurnDamage: 1,
+  glassBurnRadius: 1.8,
+  /** Standing stones within this distance of a charge turn to glowing glass and flash heat around them. */
+  vitrifyReach: 4.2,
+  vitrifyDamage: 4,
+  vitrifyRadius: 3,
+  /** Water & Ice Dragon: currents under its swim path shove enemies (once-per-pass damage). */
+  currentReach: 3.5,
+  currentShove: 0.55,
+  currentDamage: 3,
+  /** Crystalline bridges: enemies under a forming bridge are frost-bitten and slowed. */
+  bridgeDamage: 4,
+  bridgeWidth: 2.6,
+  bridgeSlowTicks: 60,
+  bridgeSlowAmp: 2,
+  /** Air Dragon: aerial formations; their updraft lifts enemies below them, falling debris on release. */
+  updraftRadius: 4,
+  updraftDamage: 3,
+  updraftLift: 0.9,
+  updraftEvery: 30,
+  debrisDamage: 6,
+  debrisRadius: 5,
+  // ---- Phase IV: The Fourfold Concord
+  /** The designated hostile zone: search radius around the centre, and how far it may sit from the centre. */
+  zoneSearch: 16,
+  zoneMaxOffset: 6,
+  /** Radius of the Nature Dragon's enclosing pillar ring (barrier columns except two doorways). */
+  ringRadius: 6,
+  ringBarrierHeight: 4,
+  /** Half-width of each doorway (degrees) on the Heat Dragon's lane. */
+  doorwayDeg: 20,
+  /** 1. Geological shockwaves: forelimb slam, the travelling quake, then three pulses from the pillars. */
+  slamDamage: 10,
+  slamRadius: 6,
+  quakeDamage: 4,
+  quakeRadius: 2.6,
+  shockPulseDamage: [6, 6, 8],
+  shockSlowTicks: 60,
+  /** 2. Moving water and freezing: current damage, shove, then each crystallising ice layer. */
+  concordCurrentDamage: 3,
+  concordCurrentShove: 0.6,
+  iceLayerDamage: 4,
+  /** 3. Spiral of ice and wind: damage every N ticks while enemies are carried round, final lift. */
+  spiralDamage: 2,
+  spiralEvery: 8,
+  spiralShove: 0.55,
+  spiralLift: 0.22,
+  spiralFinalLift: 0.95,
+  /** 4. The Heat Dragon's final charge: run-up distance, horn hit, thermal detonation at the zone. */
+  finalRunUp: 16,
+  finalHornDamage: 10,
+  detonationDamage: 22,
+  detonationExtra: 2,
+  detonationKnockH: 2.6,
+  detonationKnockV: 0.9,
+  detonationBurnSeconds: 5
+};
+
+// src/spells/_ed06_motion.ts
+var Mover = class {
+  constructor(actor, start, yaw, t0, ground) {
+    this.actor = actor;
+    this.ground = ground;
+    this.cursor = t0;
+    this.last = { ...start };
+    this.lastYaw = yaw;
+  }
+  segs = [];
+  cursor;
+  last;
+  lastYaw;
+  /** Signed, smoothed yaw rate (deg / tick) -- used by flyers to pick banking states. */
+  yawRate = 0;
+  ySmooth;
+  add(ticks, at, opts = {}) {
+    const from = this.cursor, to = this.cursor + Math.max(1, Math.round(ticks));
+    const seg = { from, to, at: (t) => at(clamp((t - from) / (to - from), 0, 1), t), yaw: opts.yaw, tag: opts.tag };
+    this.segs.push(seg);
+    this.cursor = to;
+    this.last = seg.at(to);
+    return seg;
+  }
+  /** Stay where the last segment ended. */
+  hold(ticks, yaw, tag) {
+    const p = { ...this.last };
+    return this.add(ticks, () => p, { yaw: yaw ?? this.lastYawAt(this.cursor), tag });
+  }
+  /** Catmull-Rom through pts (pts[0] should be the current position) at `speed` blocks / s. */
+  path(pts, speed, opts = {}) {
+    const L3 = new ArcPath((u) => spline(pts, u), 48);
+    const ticks = Math.max(2, Math.round(L3.length / speed * 20));
+    const ease = opts.ease ?? ((p) => p);
+    return this.add(ticks, (p) => L3.at(ease(p) * L3.length), { tag: opts.tag, yaw: opts.yaw });
+  }
+  /** End the segment active at tick t (and drop later ones) so new plans can start there. */
+  truncate(t) {
+    this.segs = this.segs.filter((s2) => s2.from < t);
+    const s = this.segs[this.segs.length - 1];
+    if (s && s.to > t) s.to = t;
+    this.cursor = t;
+    this.last = this.posAt(t);
+    this.lastYaw = this.lastYawAt(t);
+  }
+  segAt(t) {
+    for (const s of this.segs) if (t >= s.from && t < s.to) return s;
+    return void 0;
+  }
+  posAt(t) {
+    const s = this.segAt(t);
+    if (s) return s.at(t);
+    let best;
+    for (const x of this.segs) if (x.to <= t && (!best || x.to > best.to)) best = x;
+    return best ? best.at(best.to) : this.last;
+  }
+  lastYawAt(t) {
+    const s = this.segAt(t - 1) ?? this.segAt(t);
+    if (s && s.yaw !== void 0) return typeof s.yaw === "number" ? s.yaw : s.yaw(t);
+    return this.lastYaw;
+  }
+  /** Advance the actor to tick t (call every tick). */
+  step(t) {
+    const s = this.segAt(t);
+    let p = s ? s.at(t) : this.posAt(t);
+    if (s && s.yaw !== void 0) {
+      this.yawRate *= 0.7;
+      this.lastYaw = typeof s.yaw === "number" ? s.yaw : s.yaw(t);
+    } else {
+      const n = s ? s.at(Math.min(t + 1, s.to)) : p;
+      const dx = n.x - p.x, dz = n.z - p.z;
+      if (Math.hypot(dx, dz) > 0.02) {
+        const y = yawOf({ x: dx, y: 0, z: dz });
+        this.yawRate = this.yawRate * 0.6 + angleDelta(this.lastYaw, y) * 0.4;
+        this.lastYaw = y;
+      } else this.yawRate *= 0.7;
+    }
+    if (this.ground) {
+      const g = this.ground(p);
+      this.ySmooth = this.ySmooth === void 0 ? g : this.ySmooth + clamp(g - this.ySmooth, -0.35, 0.35);
+      p = { x: p.x, y: this.ySmooth, z: p.z };
+    }
+    this.actor.move(p, this.lastYaw);
+    return p;
+  }
+};
+var ArcPath = class {
+  constructor(f, n = 64, loop = false) {
+    this.loop = loop;
+    let L3 = 0;
+    for (let i = 0; i <= n; i++) {
+      const p = f(i / n);
+      if (i) L3 += Math.hypot(p.x - this.pts[i - 1].x, p.y - this.pts[i - 1].y, p.z - this.pts[i - 1].z);
+      this.pts.push(p);
+      this.cum.push(L3);
+    }
+    this.length = Math.max(L3, 1e-3);
+  }
+  length;
+  pts = [];
+  cum = [];
+  at(s) {
+    let d = this.loop ? (s % this.length + this.length) % this.length : clamp(s, 0, this.length);
+    let lo = 0, hi = this.cum.length - 1;
+    while (hi - lo > 1) {
+      const mid = lo + hi >> 1;
+      if (this.cum[mid] <= d) lo = mid;
+      else hi = mid;
+    }
+    const seg = this.cum[hi] - this.cum[lo];
+    d = seg > 1e-6 ? (d - this.cum[lo]) / seg : 0;
+    return lerp(this.pts[lo], this.pts[hi], d);
+  }
+};
+var Frame = class {
+  constructor(c, F, R2) {
+    this.c = c;
+    this.F = F;
+    this.R = R2;
+  }
+  p(f, r, h = 0) {
+    return { x: this.c.x + this.F.x * f + this.R.x * r, y: this.c.y + h, z: this.c.z + this.F.z * f + this.R.z * r };
+  }
+  polar(radius, deg, h = 0, from) {
+    const a = deg * Math.PI / 180;
+    const f = Math.cos(a) * radius, r = Math.sin(a) * radius;
+    const o = from ?? this.c;
+    return { x: o.x + this.F.x * f + this.R.x * r, y: o.y + h, z: o.z + this.F.z * f + this.R.z * r };
+  }
+  /** Horizontal unit direction for a frame angle. */
+  dir(deg) {
+    const a = deg * Math.PI / 180;
+    return { x: this.F.x * Math.cos(a) + this.R.x * Math.sin(a), y: 0, z: this.F.z * Math.cos(a) + this.R.z * Math.sin(a) };
+  }
+};
+
 // src/spells/ed06_world_before_names.ts
-var ed06_world_before_names_default = defineSpell("ed06", (ctx) => {
-  ctx.caster.sendMessage("ed06 is not implemented yet");
-  ctx.scene.endAt(1);
+var NATURE = { actor: "dragon_nature", scale: 2 };
+var N2 = { hidden: 0, arrive: 1, idle: 2, move: 3, turn_l: 4, turn_r: 5, attack_a: 6, attack_b: 7, power: 8, react: 9, rest: 10, depart: 11 };
+var N_WALK = 1.5;
+var N_CYCLE = 64;
+var N_TURN = 20;
+var N_STEPS = [{ t: 0, x: -3, z: -1.9 }, { t: 16, x: -3, z: 5.5 }, { t: 32, x: 3, z: -1.9 }, { t: 48, x: 3, z: 5.5 }];
+var N_T = { arriveLand: 50, power: 52, attackA: 64, attackAHit: 44, attackB: 48, attackBHit: 27, depart: 56 };
+var N_SKIN = { normal: 0, bloom: 1 };
+var N_SLAM = { x: 3, z: 4.5 };
+var STRATA2 = { rise: 1, hold: 2, part: 3, erupt: 4, crumble: 5 };
+var PILLAR2 = { rise: 1, hold: 2, erupt: 3, crumble: 4 };
+var ROOT2 = { grow: 1, hold: 2, erupt: 3, wither: 4 };
+var ROOT_LEN2 = 6;
+var ROOT_BIND2 = 21;
+var HEAT = { actor: "dragon_heat", scale: 1.85 };
+var H = {
+  hidden: 0,
+  arrive: 1,
+  idle: 2,
+  move: 3,
+  turn_l: 4,
+  turn_r: 5,
+  attack_a: 6,
+  attack_b: 7,
+  power: 8,
+  react: 9,
+  rest: 10,
+  depart: 11,
+  ignite: 12,
+  charge: 13,
+  skid: 14,
+  pant: 15,
+  cool: 16,
+  roar: 17,
+  walk: 18
+};
+var H_RUN = 10.02;
+var H_TURN = 225;
+var H_T = { arriveWalk: 24, ignite: 32, igniteRoar: 22, skid: 14, roar: 28, cool: 24, depart: 40 };
+var H_SKIN = { cool: 0, ignited: 1, whitehot: 2 };
+var H_HORN = 7.9;
+var WALL3 = { form: 1, part: 3, fade: 4 };
+var GLASS2 = { appear: 1, hold: 2, fade: 3 };
+var LANE2 = { appear: 1, armed: 2, surge: 3, fade: 4 };
+var TIDE = { actor: "dragon_tide", scale: 2 };
+var D3 = {
+  hidden: 0,
+  arrive: 1,
+  idle: 2,
+  move: 3,
+  turn_l: 4,
+  turn_r: 5,
+  attack_a: 6,
+  attack_b: 7,
+  power: 8,
+  react: 9,
+  rest: 10,
+  depart: 11,
+  swim: 12,
+  land: 13,
+  roar: 14,
+  attack_c: 15
+};
+var D_SWIM = 14;
+var D_T = { arrive: 20, land: 16, landHit: 5, sweep: 30, sweepHit: [10, 21], flare: 22, flareHit: 9, depart: 32 };
+var MASS2 = { gather: 1, hold: 2, burst: 3, disperse: 4 };
+var STREAM2 = { form: 1, hold: 2, fade: 3 };
+var CUR2 = { form: 1, flow: 2, freeze: 3, spiral: 4, ice: 5, rise: 6, shatter: 7 };
+var CUR_R2 = 4;
+var CUR_SWEEP2 = 160;
+var AIR = { actor: "dragon_air", scale: 1.5 };
+var A3 = {
+  hidden: 0,
+  arrive: 1,
+  idle: 2,
+  move: 3,
+  glide: 4,
+  turn_l: 5,
+  turn_r: 6,
+  roll: 7,
+  stoop: 8,
+  flare: 9,
+  land: 10,
+  attack_a: 11,
+  attack_b: 12,
+  power: 13,
+  react: 14,
+  rest: 15,
+  depart: 16,
+  flutter: 17
+};
+var A_T = { arrive: 48, roll: 20, stoop: 9, land: 20, power: 18, flare: 10, depart: 32 };
+var A_BANK = 1.4;
+var CLOUD2 = { form: 1, part: 2, fade: 3 };
+var CODEX2 = { rise: 1, hover: 2, beat: 3, absorb: 4, vanish: 5 };
+var EMBLEM = { appear: 1, beat: 2, glow: 3, fade: 4 };
+var SPIRIT = { form: 1, hold: 2, stream: 3 };
+var FOG_CLEAR = 5;
+var HORIZON = { rise: 1, hold: 2, sink: 3 };
+var FLORA = { sprout: 1, sway: 2, wither: 3 };
+var STONE = { rise: 1, hold: 2, sink: 3, flare: 4 };
+var STONE_SKIN = { stone: 0, glass: 1, obsidian: 2 };
+var BRIDGE2 = { form: 1, hold: 2, shatter: 3 };
+var BRIDGE_LEN = 12;
+var DEBRIS = { lift: 1, orbit: 2, scatter: 3 };
+var RING = { rise: 1, hold: 2, quake: 3, burst: 4 };
+var RING_SKIN = { frost: 1, glass: 2 };
+var RING_R = 6;
+var SHELL = { grow: 1, hold: 2, shatter: 3 };
+var SHELL_LAYERS = [{ t: 13, r: 2.2 }, { t: 28, r: 3.6 }, { t: 44, r: 5 }];
+var SPIRAL = { form: 1, spin: 2, burst: 3 };
+var BLAST = { blast: 1, hold: 2, fade: 3 };
+var LINEAGE = ["nature", "heat", "tide", "air"];
+var BEATS = [48, 80, 112, 144];
+var T22 = 168;
+var T32 = 450;
+var T42 = 740;
+var T52 = 1070;
+var T_NATURE = T22 + 8;
+var T_HEAT = 232;
+var T_TIDE = 306;
+var T_AIR = 352;
+function local3(p, yaw, x, z) {
+  const f = fromYaw(yaw);
+  return add(add(p, mul(f, z)), mul(right(f), x));
+}
+var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim }) => {
+  const dim = scene.dim;
+  let center = focus(caster, aim, ED06.snap).center;
+  let F = flat(sub(center, caster.location));
+  F = norm(len(F) < 0.5 ? aim.forward : F);
+  if (distXZ(center, caster.location) < ED06.minDistance) {
+    center = groundBelow(dim, up(add(caster.location, mul(F, ED06.minDistance)), 6), 24);
+  }
+  const fr = new Frame(center, F, right(F));
+  const gy = (p) => groundBelow(dim, { x: p.x, y: Math.max(p.y, center.y) + 8, z: p.z }, 30).y;
+  const ground = (p) => ({ x: p.x, y: gy(p), z: p.z });
+  const yawDeg = (deg) => yawOf(fr.dir(deg));
+  const foes = (at, r, max) => hostiles(dim, at, r, caster, max);
+  const tb = blocksFor(scene);
+  const burnT = (e, s) => {
+    try {
+      e.setOnFire(s, true);
+    } catch {
+    }
+  };
+  const movers = [];
+  scene.every(1, () => {
+    for (const m of movers) m.step(scene.tick);
+  }, 0, T52 + 260);
+  const RN = 18;
+  const CH = fr.p(-3, 6.5);
+  const CT = fr.p(-2, -9);
+  const AIR_R = 13, AIR_H = 22;
+  const K = up(add(caster.location, mul(F, ED06.codexAhead)), ED06.codexHeight);
+  const codex = scene.spawn("ed6_codex", K, { yaw: yawOf(F), state: CODEX2.rise, skin: 0 });
+  sound(dim, "ed6_codex_rise", K, 1.4);
+  scene.every(5, () => particle(dim, "ed6_codex_rune", K), 0, 40);
+  scene.at(38, () => codex.state(CODEX2.hover));
+  scene.at(24, () => {
+    codex.prop("sep", 1);
+    sound(dim, "ed6_codex_unbind", K, 1.3);
+    burst(dim, "ed6_codex_glint", K, 2.5, 5);
+  });
+  const codexBeat = () => {
+    codex.state(CODEX2.beat);
+    scene.after(12, () => codex.state(CODEX2.hover));
+  };
+  const EM = [ground(fr.polar(RN - 3, -22)), ground(fr.polar(9, 90, 0, CH)), ground(CT), ground(fr.polar(7, 180))];
+  const emblems = [];
+  let level = 0;
+  let fog, horizon;
+  const flora = [];
+  const stones = [];
+  const GROVES = [
+    [145, 22, 0],
+    [165, 21, 1],
+    [183, 24, 2],
+    [215, 19, 0],
+    [245, 18, 3],
+    [290, 22, 1],
+    [230, 24, 2],
+    [135, 24, 3]
+  ];
+  function sprout(at, kind, yaw) {
+    const a = scene.spawn("ed6_flora", at, { kind, yaw, state: FLORA.sprout });
+    scene.after(40, () => a.state(FLORA.sway));
+    flora.push(a);
+    particle(dim, "ed6_pollen_drift", up(at, 2));
+    return a;
+  }
+  function atmosphere(k2) {
+    if (k2 === 0) {
+      horizon = scene.spawn("ed6_horizon", center, { yaw: yawOf(F), state: HORIZON.rise });
+      scene.after(60, () => horizon?.state(HORIZON.hold));
+      fog = scene.spawn("ed6_fog", up(center, 0.05), { state: 1 });
+    } else fog?.state(k2 + 1);
+    if (k2 === 1) {
+      [45, 135, 225, 315].forEach((a, i) => scene.after(i * 4, () => {
+        const at = ground(fr.polar(4.5, a, 0, CH));
+        stones.push({ a: scene.spawn("ed6_stone", at, { yaw: a * 7 + 20, state: STONE.rise, skin: STONE_SKIN.stone }), at, hotUntil: 0 });
+        sound(dim, "ed6_stone_rise", at, 0.9, 0.9 + i * 0.05);
+        particle(dim, "fx_dust", up(at, 0.5));
+        scene.after(26, () => stones[stones.length - 1]?.a.state(STONE.hold));
+      }));
+    }
+    for (let j = 0; j < 2; j++) {
+      const [ang, r, kind] = GROVES[k2 * 2 + j];
+      scene.after(j * 7, () => {
+        const at = ground(fr.polar(r, ang));
+        sprout(at, kind, ang * 3 + j * 50);
+        sound(dim, "ed6_sprout", at, 0.9, 0.95 + 0.1 * j);
+      });
+    }
+  }
+  BEATS.forEach((t, k2) => scene.at(t, () => heartbeat(k2)));
+  function heartbeat(k2) {
+    const at = EM[k2], n = LINEAGE[k2];
+    level = k2 + 1;
+    sound(dim, `ed6_heart_${n}`, K, 1.2);
+    sound(dim, `ed6_heart_${n}`, at, 1.6);
+    codexBeat();
+    codex.skin(k2 + 1);
+    const e = scene.spawn("ed6_emblem", up(at, 0.04), { kind: k2, size: ED06.emblemRadius / 2, yaw: yawOf(F), state: EMBLEM.appear });
+    emblems[k2] = e;
+    scene.after(20, () => e.state(EMBLEM.glow));
+    for (let j = 0; j < k2; j++) {
+      const o = emblems[j];
+      if (!o?.valid) continue;
+      o.state(EMBLEM.beat);
+      scene.after(16, () => o.state(EMBLEM.glow));
+      particle(dim, `ed6_beat_${LINEAGE[j]}`, up(EM[j], 0.2));
+    }
+    particle(dim, `ed6_beat_${n}`, up(at, 0.2));
+    ring(dim, `ed6_rise_${n}`, up(at, 0.3), ED06.emblemRadius * 0.7, 4, k2 * 30);
+    line(dim, "ed6_codex_rune", K, up(at, 2), 4);
+    atmosphere(k2);
+    for (const f of foes(at, ED06.emblemRadius + 0.5)) {
+      damage(f, ED06.beatDamage, caster);
+      effect(f, "slowness", ED06.beatSlowTicks, ED06.beatSlowAmp);
+      knockback(f, at, ED06.beatKnock, 0.3);
+    }
+  }
+  function fadeEmblem(k2) {
+    const e = emblems[k2];
+    if (!e?.valid) return;
+    e.state(EMBLEM.fade);
+    particle(dim, `ed6_beat_${LINEAGE[k2]}`, up(EM[k2], 0.2));
+    scene.after(22, () => scene.despawn(e));
+  }
+  scene.every(100, () => sound(dim, "ed6_ambience", up(center, 3), 0.35 + 0.17 * level), BEATS[0], T52 + 100);
+  scene.every(6, (el) => {
+    const i = el / 6;
+    if (level === 0) return;
+    particle(dim, "ed6_spore", ground(fr.polar(3 + i * 7 % 17, i * 67, 0)));
+    if (i % 2 === 0 && level >= 2) particle(dim, "ed6_ember_mote", up(fr.polar(16 + i % 5, -40 + i * 23 % 80), 3));
+    if (i % 3 === 0 && level >= 3) particle(dim, "ed6_mist", ground(fr.polar(6 + i * 11 % 14, i * 41)));
+    if (i % 4 === 1 && level >= 4) particle(dim, "ed6_pollen_drift", up(fr.polar(8 + i % 9, i * 53), 2));
+  }, 40, T52 + 120);
+  const DTH = N_WALK / 20 / RN * (180 / Math.PI);
+  const nPos = (th2) => fr.polar(RN, th2);
+  const nYaw = (th2) => yawDeg(th2 + 90);
+  let th = -28;
+  const N0 = ground(nPos(th));
+  const nature = scene.spawn(NATURE.actor, N0, { yaw: nYaw(th), state: N2.hidden, skin: N_SKIN.normal });
+  const natMv = new Mover(nature, N0, nYaw(th), T_NATURE, gy);
+  const footprints = [];
+  const nWalk = (cycles) => {
+    const th0 = th, from = natMv.cursor, ticks = cycles * N_CYCLE;
+    natMv.add(ticks, (p) => nPos(th0 + DTH * p * ticks), { yaw: (t) => nYaw(th0 + DTH * clamp(t - from, 0, ticks)), tag: "walk" });
+    scene.at(from, () => nature.state(N2.move));
+    for (let c = 0; c < cycles; c++) {
+      for (const s of N_STEPS) {
+        const tt = from + c * N_CYCLE + s.t;
+        const thAt = th0 + DTH * (c * N_CYCLE + s.t);
+        scene.at(tt, () => footfall(ground(local3(nPos(thAt), nYaw(thAt), s.x, s.z)), c === 0 && s.t === 0 ? from : -1));
+      }
+    }
+    th = th0 + DTH * ticks;
+    scene.at(from + ticks, () => nature.state(N2.idle));
+  };
+  function footfall(at, cycleStart) {
+    footprints.push(at);
+    if (footprints.length > 12) footprints.shift();
+    const q = scene.spawn("ed_nature_quake", up(at, 0.02), { size: 1.4, state: 1, yaw: scene.tick * 47 % 360 });
+    scene.after(27, () => scene.despawn(q));
+    particle(dim, "ed_nature_shock", up(at, 0.15));
+    particle(dim, "ed_nature_dust", up(at, 0.4));
+    sound(dim, "ed_nature_step", at, 1.1);
+    for (const e of foes(at, ED06.stepRadius)) {
+      damage(e, ED06.stepDamage, caster);
+      knockback(e, at, ED06.stepKnockH, ED06.stepKnockV);
+    }
+    void cycleStart;
+  }
+  const nHold = (ticks, yaw) => {
+    natMv.hold(ticks, yaw ?? nYaw(th));
+  };
+  const strataI = [];
+  scene.at(T22, () => {
+    sound(dim, "ed_nature_rumble", N0, 1.6);
+    [[0, 9, 1.8], [5, 3, 1.6], [-5, 3, 1.6], [0, -7, 1.5]].forEach(([x, z, size], k2) => scene.after(k2 * 3, () => {
+      const at = ground(local3(N0, nYaw(-28), x, z));
+      strataI.push(scene.spawn("ed_nature_strata", at, { yaw: k2 * 83, size, state: STRATA2.rise }));
+      burst(dim, "ed_nature_dust", up(at, 1), 2.5, 3);
+      if (k2 % 2 === 0) sound(dim, "ed_nature_strata", at, 1.2, 0.9 + k2 * 0.05);
+    }));
+  });
+  scene.at(T22 + 18, () => strataI.forEach((s) => s.state(STRATA2.hold)));
+  scene.at(T_NATURE, () => {
+    nature.state(N2.arrive);
+    movers.push(natMv);
+    sound(dim, "ed_nature_call", up(N0, 10), 1.6);
+  });
+  scene.at(T_NATURE + 18, () => {
+    strataI.forEach((s) => s.state(STRATA2.part));
+    fadeEmblem(0);
+  });
+  scene.at(T_NATURE + N_T.arriveLand, () => {
+    for (const x of [-3, 3]) {
+      const at = ground(local3(N0, nYaw(-28), x, 5.5));
+      footprints.push(at);
+      const q = scene.spawn("ed_nature_quake", up(at, 0.02), { size: 1.8, state: 1 });
+      scene.after(27, () => scene.despawn(q));
+      particle(dim, "ed_nature_shock_big", up(at, 0.2));
+      sound(dim, "ed_nature_quake", at, 1.3);
+    }
+    for (const e of foes(local3(N0, nYaw(-28), 0, 5), ED06.natureLandRadius)) {
+      damage(e, ED06.natureLandDamage, caster);
+      knockback(e, N0, ED06.stepKnockH * 1.5, ED06.stepKnockV);
+    }
+  });
+  scene.at(T_NATURE + 70, () => strataI.forEach((s) => s.state(STRATA2.crumble)));
+  scene.at(T_NATURE + 92, () => strataI.forEach((s) => scene.despawn(s)));
+  const tPow = T_NATURE + 64;
+  scene.at(tPow, () => {
+    nature.state(N2.power);
+    sound(dim, "ed_nature_grow", up(N0, 11), 1.4);
+  });
+  scene.at(tPow + 20, () => nature.skin(N_SKIN.bloom));
+  scene.every(8, () => {
+    burst(dim, "ed_nature_leaf", up(N0, 11), 4, 2);
+    particle(dim, "ed_nature_pollen", up(N0, 13));
+  }, tPow + 10, tPow + 50);
+  nHold(tPow + N_T.power - T_NATURE);
+  nWalk(1);
+  nHold(T32 - natMv.cursor);
+  const natStructs = [];
+  const T3w = natMv.cursor, th3 = th;
+  nWalk(2);
+  [0, 1].forEach((c) => scene.at(T3w + c * N_CYCLE + 8, () => {
+    const thA = th3 + DTH * (c * N_CYCLE + 8);
+    const p = nPos(thA), y = nYaw(thA);
+    const out = ground(local3(p, y, -6.5, 1));
+    const s = scene.spawn("ed_nature_strata", out, { yaw: c * 97 + 40, size: 1.3, state: STRATA2.rise });
+    natStructs.push(s);
+    scene.after(18, () => s.state(STRATA2.hold));
+    sound(dim, "ed_nature_strata", out, 1, 0.95);
+    const inn = ground(local3(p, y, 6, -1));
+    sprout(inn, c, c * 140 + 30);
+    sound(dim, "ed6_sprout", inn, 1);
+    burst(dim, "ed_nature_leaf", up(inn, 2), 2, 3);
+  }));
+  const thLash = th;
+  const tLash = natMv.cursor + 8;
+  nHold(8);
+  nHold(N_T.attackB);
+  scene.at(tLash, () => {
+    nature.state(N2.attack_b);
+    sound(dim, "ed_nature_lash", up(natMv.posAt(tLash), 12), 1.3);
+  });
+  scene.at(tLash + N_T.attackBHit, () => {
+    const p = natMv.posAt(scene.tick), y = nYaw(thLash);
+    const hit = ground(local3(p, y, 3, 12));
+    particle(dim, "ed_nature_shock", up(hit, 0.2));
+    burst(dim, "ed_nature_dust", up(hit, 1), 3, 4);
+    for (const e of foes(hit, ED06.lashRadius)) {
+      damage(e, ED06.lashDamage, caster);
+      knockback(e, p, 1.6, 0.5);
+    }
+  });
+  scene.at(tLash + N_T.attackB, () => nature.state(N2.idle));
+  nHold(6);
+  nWalk(1);
+  nHold(T42 - natMv.cursor);
+  const binds = [];
+  scene.at(T32 + 22, () => {
+    const from = footprints.length ? footprints : [N0];
+    const near = (p) => from.reduce((b, f) => distXZ(f, p) < distXZ(b, p) ? f : b, from[0]);
+    const found = foes(center, ED06.rootRadius, ED06.maxRoots);
+    const goals = found.length ? found.map((e) => ({ e, at: { ...e.location } })) : [0, 1, 2].map((k2) => ({ at: ground(fr.polar(5, -30 + k2 * 30)) }));
+    goals.forEach((g, k2) => scene.after(k2 * 3, () => {
+      const target = g.e && isAlive(g.e) ? { ...g.e.location } : g.at;
+      const fp = near(target);
+      const size = clamp(Math.max(0.5, distXZ(fp, target)) / ROOT_LEN2, 0.45, 2.8);
+      const yaw = yawOf(sub(target, fp));
+      const tip = ground(add(fp, mul(fromYaw(yaw), ROOT_LEN2 * size)));
+      const root = scene.spawn("ed_nature_root", up(fp, 0.05), { yaw, size, state: ROOT2.grow });
+      const b = { e: g.e, root, tip };
+      binds.push(b);
+      sound(dim, "ed_nature_root", fp, 1);
+      line(dim, "ed_nature_dust", fp, tip, 3);
+      scene.after(ROOT_BIND2 - 3, () => {
+        particle(dim, "ed_nature_spore", up(tip, 1));
+        sound(dim, "ed_nature_bind", tip, 1);
+        if (b.e && isAlive(b.e)) {
+          damage(b.e, ED06.rootDamage, caster);
+          restrain(scene, b.e, ED06.rootHoldTicks, { x: tip.x, y: Math.max(tip.y, b.e.location.y - 0.5), z: tip.z });
+        }
+      });
+      scene.after(26, () => root.state(ROOT2.hold));
+      scene.after(30, () => {
+        const side = norm(flat(sub(fp, tip)));
+        const at = ground(add(tip, mul(side, 2.4)));
+        const pil = scene.spawn("ed_nature_pillar", at, { yaw: yawOf(sub(tip, at)), size: 0.9, state: PILLAR2.rise });
+        b.pillar = pil;
+        sound(dim, "ed_nature_pillar", at, 1);
+        particle(dim, "ed_nature_rise", at);
+        particle(dim, "ed_nature_rock", up(at, 1));
+        for (const e of foes(at, 1.8)) {
+          damage(e, ED06.pillarDamage, caster);
+          shove(e, sub(tip, at), 0.7, 0.4);
+        }
+        scene.after(8, () => {
+          b.cells = [at];
+          tb.column(Math.floor(at.x), Math.floor(at.y), Math.floor(at.z), ED06.pillarBarrierHeight);
+        });
+        scene.after(16, () => pil.state(PILLAR2.hold));
+      });
+      scene.after(ROOT_BIND2 + ED06.rootHoldTicks, () => {
+        root.state(ROOT2.wither);
+        scene.after(22, () => scene.despawn(root));
+      });
+    }));
+  });
+  scene.at(T42 - 24, () => {
+    for (const b of binds) {
+      if (b.cells) for (const c of b.cells) tb.removeColumn(Math.floor(c.x), Math.floor(c.y), Math.floor(c.z), ED06.pillarBarrierHeight);
+      if (b.pillar) {
+        b.pillar.state(PILLAR2.crumble);
+        const p = b.pillar;
+        scene.after(20, () => scene.despawn(p));
+      }
+    }
+  });
+  const ep = (deg, r = ED06.chordRadius) => ground(fr.polar(r, deg, 0, CH));
+  const wallAt = EM[1];
+  const H0 = ground(fr.polar(ED06.chordRadius + 3 + 6.5, 90, 0, CH));
+  const H1 = ground(fr.polar(ED06.chordRadius + 3 + 2.3, 90, 0, CH));
+  const yawIn = yawDeg(270);
+  const heat = scene.spawn(HEAT.actor, H0, { yaw: yawIn, state: H.hidden, skin: H_SKIN.cool });
+  const heatMv = new Mover(heat, H0, yawIn, T_HEAT, gy);
+  let planYaw = yawIn;
+  let hHits = /* @__PURE__ */ new Set();
+  let hDir = fr.dir(270);
+  let hFinal = false, detonated = false;
+  let hStart = H0;
+  const glasses = [];
+  let glassNext = 0;
+  function hTurn(yawTo) {
+    const d = angleDelta(planYaw, yawTo);
+    planYaw = yawTo;
+    if (Math.abs(d) < 6) return;
+    const ticks = Math.max(4, Math.round(Math.abs(d) / H_TURN * 20));
+    const y0 = yawTo - d, t0 = heatMv.cursor;
+    scene.at(t0, () => heat.state(d > 0 ? H.turn_r : H.turn_l));
+    heatMv.hold(ticks, void 0, "turn");
+    heatMv.segs[heatMv.segs.length - 1].yaw = (t) => y0 + d * clamp((t - t0) / ticks, 0, 1);
+  }
+  function hCharge(to, opts = {}) {
+    const from = { ...heatMv.last };
+    const dir = norm(flat(sub(to, from)));
+    hTurn(yawOf(dir));
+    const D_ = distXZ(from, to);
+    const skidD = H_RUN / 20 * (H_T.skid - 1) / 2;
+    const runD = Math.max(0.5, D_ - skidD);
+    const prof = [0];
+    for (let s = 0, k2 = 0; s < runD; k2++) {
+      s = Math.min(runD, s + H_RUN / 20 * (k2 < 6 ? 0.45 + 0.55 * k2 / 6 : 1));
+      prof.push(s);
+    }
+    const n = prof.length - 1;
+    const t0 = heatMv.cursor;
+    const yaw = yawOf(dir);
+    const runEnd = add(from, mul(dir, runD));
+    heatMv.add(n, (p) => {
+      const f = p * n, i = Math.min(n - 1, Math.floor(f));
+      return add(from, mul(dir, prof[i] + (prof[i + 1] - prof[i]) * (f - i)));
+    }, { yaw, tag: opts.run ? "run" : "charge" });
+    heatMv.add(H_T.skid, (p) => add(runEnd, mul(dir, skidD * (1 - (1 - p) * (1 - p)))), { yaw, tag: opts.run ? "skidrun" : "skid" });
+    const tEnd = heatMv.cursor;
+    let lane;
+    if (opts.lane) {
+      scene.at(Math.max(scene.tick, t0 - 16), () => {
+        lane = scene.spawn("ed_heat_lane", ground(add(from, mul(dir, 3.5))), { yaw, state: LANE2.appear });
+        lane.prop("len", clamp(D_ + 2, 4, 40));
+        sound(dim, "ed_heat_lane", from, 0.9);
+      });
+      scene.at(t0, () => lane?.state(opts.final ? LANE2.surge : LANE2.armed));
+      scene.at(tEnd, () => {
+        lane?.state(LANE2.fade);
+        const l = lane;
+        scene.after(10, () => {
+          if (l) scene.despawn(l);
+        });
+      });
+    }
+    scene.at(t0, () => {
+      heat.state(opts.run ? H.move : H.charge);
+      hHits = /* @__PURE__ */ new Set();
+      hDir = dir;
+      hFinal = !!opts.final;
+      hStart = from;
+      glassNext = 0;
+      if (!opts.run) sound(dim, "ed_heat_roar", up(from, 4), 1.2, 1.05);
+    });
+    scene.at(t0 + n, () => {
+      heat.state(H.skid);
+      sound(dim, "ed_heat_skid", runEnd, 1);
+      particle(dim, "ed_heat_skid", up(runEnd, 0.3));
+    });
+    return tEnd;
+  }
+  function heatTick(t) {
+    const seg = heatMv.segAt(t);
+    if (!seg || !seg.tag || seg.tag === "turn") return;
+    const pos = heatMv.posAt(t);
+    const moving = seg.tag === "charge" || seg.tag === "skid";
+    if (t % 3 === 0) particle(dim, "ed_heat_haze", up(add(pos, mul(hDir, -3)), 1.2));
+    if (t % 4 === 0) particle(dim, "ed_heat_ember", up(add(pos, mul(hDir, 1.5)), 4.5));
+    for (const s of stones) {
+      if (hFinal && !s.gone && distXZ(s.at, pos) < 3.4) {
+        s.gone = true;
+        s.a.skin(STONE_SKIN.glass).state(STONE.sink);
+        sound(dim, "ed6_vitrify", s.at, 1.4, 0.8);
+        burst(dim, "ed6_glass_shard", up(s.at, 2), 1.5, 3);
+        particle(dim, "ed6_thermal", up(s.at, 1.5));
+        for (const e of foes(s.at, ED06.vitrifyRadius)) {
+          damage(e, ED06.vitrifyDamage, caster);
+          burnT(e, ED06.burnSeconds);
+        }
+      }
+      if (s.gone || t < s.hotUntil || distXZ(s.at, pos) > ED06.vitrifyReach) continue;
+      s.hotUntil = t + 130;
+      s.a.skin(STONE_SKIN.glass).state(STONE.flare);
+      scene.after(10, () => s.a.state(STONE.hold));
+      scene.after(120, () => s.a.skin(STONE_SKIN.obsidian));
+      sound(dim, "ed6_vitrify", s.at, 1.1);
+      particle(dim, "ed6_sizzle", up(s.at, 2));
+      particle(dim, "ed6_glass_shard", up(s.at, 2.5));
+      for (const e of foes(s.at, ED06.vitrifyRadius)) {
+        damage(e, ED06.vitrifyDamage, caster);
+        burnT(e, ED06.burnSeconds);
+      }
+    }
+    if (!moving) return;
+    const along = dot(sub(pos, hStart), hDir);
+    if (seg.tag === "charge" && along >= glassNext) {
+      glassNext = along + ED06.glassEvery;
+      const g = scene.spawn(
+        "ed_heat_glass",
+        ground(add(pos, mul(right(hDir), glasses.length % 2 ? 0.8 : -0.8))),
+        { yaw: glasses.length * 67, state: GLASS2.appear }
+      );
+      const rec = { a: g, at: g.loc, born: t };
+      glasses.push(rec);
+      if (glasses.length % 3 === 1) sound(dim, "ed_heat_glass", rec.at, 0.8);
+      scene.after(6, () => g.state(GLASS2.hold));
+      scene.after(80, () => g.skin(1));
+      scene.after(ED06.glassLifeTicks, () => g.state(GLASS2.fade));
+      scene.after(ED06.glassLifeTicks + 17, () => {
+        scene.despawn(g);
+        glasses.splice(glasses.indexOf(rec), 1);
+      });
+    }
+    const rv = right(hDir);
+    for (const e of foes(add(pos, mul(hDir, 3)), 10)) {
+      if (hHits.has(e.id)) continue;
+      const dy = e.location.y - pos.y;
+      if (dy > 7 || dy < -3) continue;
+      const rel = flat(sub(e.location, pos));
+      const a = dot(rel, hDir), lat = Math.abs(dot(rel, rv));
+      const away = norm(add(mul(rv, dot(rel, rv) >= 0 ? 1 : -1), mul(hDir, 0.45)));
+      if (a > 2 && a < H_HORN + 1.5 && lat < ED06.chargeHalfWidth) {
+        hHits.add(e.id);
+        if (damage(e, hFinal ? ED06.finalHornDamage : ED06.hornDamage, caster)) shove(e, away, ED06.chargeKnockH, ED06.chargeKnockV);
+        burnT(e, ED06.burnSeconds);
+        particle(dim, "ed_heat_spark", up(e.location, 1.1));
+        sound(dim, "ed_heat_hit", e.location, 1);
+      } else if (a > -3 && a <= 2 && lat < ED06.chargeHalfWidth + 0.6) {
+        hHits.add(e.id);
+        if (damage(e, ED06.bodyDamage, caster)) shove(e, away, ED06.chargeKnockH * 0.8, ED06.chargeKnockV);
+        burnT(e, ED06.burnSeconds);
+        particle(dim, "ed_heat_ember", up(e.location, 1));
+      }
+    }
+    if (hFinal && !detonated && Z && dot(sub(pos, Z.G), Z.L) >= -0.5) detonate();
+  }
+  scene.every(1, () => heatTick(scene.tick), T_HEAT, T52);
+  scene.every(20, () => {
+    for (const g of glasses) {
+      if (scene.tick - g.born > 80) continue;
+      for (const e of foes(g.at, ED06.glassBurnRadius)) {
+        damage(e, ED06.glassBurnDamage, caster);
+        burnT(e, 1);
+      }
+    }
+  }, T_HEAT, T52);
+  let wall;
+  scene.at(T_HEAT - 2, () => {
+    wall = scene.spawn("ed_heat_shimmer", wallAt, { yaw: yawIn, state: WALL3.form });
+    sound(dim, "ed_heat_shimmer", wallAt, 1.2);
+  });
+  scene.every(4, (e) => {
+    particle(dim, "ed_heat_haze", up(add(wallAt, mul(fr.F, e % 3 * 2.5 - 2.5)), 1.5));
+    particle(dim, "ed_heat_ember", up(wallAt, 3));
+  }, T_HEAT, T_HEAT + 70);
+  scene.at(T_HEAT, () => {
+    heat.state(H.arrive);
+    movers.push(heatMv);
+  });
+  heatMv.add(H_T.arriveWalk, (p) => lerp(H0, H1, p), { yaw: yawIn, tag: "walk" });
+  heatMv.hold(H_T.ignite + 6 - (H_T.arriveWalk - 24), yawIn);
+  const tIgn = T_HEAT + H_T.arriveWalk + 6;
+  scene.at(tIgn, () => {
+    heat.state(H.ignite);
+    sound(dim, "ed_heat_ignite", up(H1, 4), 1.3);
+  });
+  scene.at(tIgn + 10, () => {
+    heat.skin(H_SKIN.ignited);
+    burst(dim, "ed_heat_ember", up(H1, 4), 2.2, 4);
+  });
+  scene.at(tIgn + H_T.igniteRoar, () => {
+    particle(dim, "ed_heat_ring", up(H1, 0.3));
+    ring(dim, "ed_heat_vent", up(H1, 3.5), 2.8, 5);
+    for (const e of foes(H1, 5)) {
+      damage(e, ED06.bodyDamage, caster);
+      knockback(e, H1, 0.8, 0.35);
+    }
+  });
+  const tArrEnd = hCharge(ep(270), { lane: true });
+  const tArrRun = tIgn + H_T.ignite;
+  scene.at(tArrRun - 2, () => {
+    wall?.state(WALL3.part);
+    fadeEmblem(1);
+  });
+  scene.at(tArrRun + 12, () => {
+    heat.skin(H_SKIN.whitehot);
+    particle(dim, "fx_flash", up(heatMv.posAt(scene.tick), 4));
+  });
+  scene.at(tArrRun + 18, () => wall?.state(WALL3.fade));
+  scene.at(tArrRun + 34, () => {
+    if (wall) scene.despawn(wall);
+  });
+  scene.at(tArrEnd, () => {
+    heat.state(H.pant).skin(H_SKIN.ignited);
+  });
+  heatMv.hold(T32 - heatMv.cursor);
+  let lastEnd = 270;
+  function heatPlan() {
+    if (heatMv.cursor + 80 > T42 - 30) {
+      heatToFinal();
+      return;
+    }
+    let next;
+    if (lastEnd === 270) {
+      const pts = [heatMv.last, ep(240, ED06.chordRadius + 1.8), ep(205, ED06.chordRadius + 1.5), ep(180)];
+      const t0 = heatMv.cursor;
+      heatMv.path(pts, H_RUN * 0.8, { tag: "run" });
+      scene.at(t0, () => heat.state(H.move));
+      lastEnd = 180;
+      planYaw = yawOf(sub(ep(180), ep(205, ED06.chordRadius + 1.5)));
+    }
+    next = lastEnd === 180 ? 0 : 180;
+    const end = hCharge(ep(next), { lane: true });
+    lastEnd = next;
+    scene.at(end, () => heat.state(H.pant));
+    heatMv.hold(6);
+    scene.at(heatMv.cursor, heatPlan);
+  }
+  scene.at(T32, heatPlan);
+  const tideY = gy(CT);
+  const loop = new ArcPath((u) => {
+    const a = u * 2 * Math.PI;
+    const p = add(CT, add(mul(fr.F, 9 * Math.sin(a)), mul(fr.R, 4.5 * Math.sin(2 * a))));
+    return { x: p.x, y: tideY + 8 + 1.2 * Math.sin(a + 0.6), z: p.z };
+  }, 160, true);
+  const loopTan = (s) => yawOf(sub(loop.at(s + 0.5), loop.at(s - 0.5)));
+  const M0 = loop.at(0);
+  const tide = scene.spawn(TIDE.actor, M0, { yaw: loopTan(0), state: D3.hidden, skin: 0 });
+  const tideMv = new Mover(tide, M0, loopTan(0), T_TIDE);
+  const tSwim2 = T_TIDE + D_T.arrive;
+  tideMv.hold(D_T.arrive, loopTan(0));
+  const swimSeg = tideMv.add(T42 - tSwim2, (p, t) => loop.at(D_SWIM / 20 * (t - tSwim2)), { tag: "swim" });
+  const tideS = (t) => D_SWIM / 20 * Math.max(0, t - tSwim2);
+  void swimSeg;
+  let mass;
+  const streamsIn = [];
+  scene.at(T_TIDE - 18, () => {
+    mass = scene.spawn("ed_tide_mass", M0, { state: MASS2.gather, size: 1.2 });
+    sound(dim, "ed_tide_mass", M0, 1.3);
+    sound(dim, "ed_tide_currents", M0, 1.1);
+    for (let k2 = 0; k2 < 4; k2++) {
+      const ang = k2 * 90 + 20;
+      const p0 = up(fr.polar(10, ang, 0, M0), -4 + k2 % 2 * 3);
+      streamsIn.push({ a: scene.spawn("ed_tide_stream", p0, { state: STREAM2.form, size: 1.3, yaw: yawOf(sub(M0, p0)) }), ang, prev: p0 });
+    }
+  });
+  scene.at(T_TIDE - 10, () => streamsIn.forEach((s) => s.a.state(STREAM2.hold)));
+  scene.span(T_TIDE - 17, T_TIDE + 4, (p) => {
+    const e = smooth(p);
+    for (const s of streamsIn) {
+      const pos = up(fr.polar(10 * (1 - e) + 0.4, s.ang + 200 * e, 0, M0), -3 * (1 - e));
+      s.a.move(pos, yawOf(flat(sub(pos, s.prev))));
+      s.prev = pos;
+    }
+  });
+  scene.at(T_TIDE + 2, () => {
+    streamsIn.forEach((s) => s.a.state(STREAM2.fade));
+    burst(dim, "ed_tide_bubble", M0, 3, 5);
+  });
+  scene.at(T_TIDE + 8, () => streamsIn.forEach((s) => scene.despawn(s.a)));
+  scene.at(T_TIDE + 2, () => mass?.state(MASS2.hold));
+  scene.at(T_TIDE, () => {
+    tide.state(D3.arrive);
+    movers.push(tideMv);
+    sound(dim, "ed_tide_emerge", M0, 1.3);
+    fadeEmblem(2);
+  });
+  scene.at(tSwim2, () => {
+    tide.state(D3.swim);
+    burst(dim, "ed_tide_splash", M0, 3, 5);
+  });
+  for (let k2 = 1; k2 <= 10; k2++) scene.at(tSwim2 + k2 * 7, () => tide.prop("frost", k2 / 10));
+  scene.at(tSwim2 + 30, () => {
+    tide.skin(1);
+    sound(dim, "ed_tide_freeze", tideMv.posAt(scene.tick), 1, 1.2);
+  });
+  scene.every(5, () => particle(dim, "ed_tide_flake", up(tideMv.posAt(scene.tick), 6)), tSwim2 + 10, T42);
+  scene.every(9, () => particle(dim, "ed_tide_bubble", M0), T_TIDE, T42);
+  const wake = [];
+  scene.at(tSwim2 + 20, () => {
+    for (const lag of [17, 22]) wake.push(scene.spawn("ed_tide_stream", loop.at(-lag), { state: STREAM2.form, size: 1.2 }));
+  });
+  scene.at(tSwim2 + 28, () => wake.forEach((w) => w.state(STREAM2.hold)));
+  scene.every(1, () => {
+    const s = tideS(scene.tick);
+    [17, 22].forEach((lag, i) => wake[i]?.move(loop.at(s - lag), loopTan(s - lag)));
+  }, tSwim2 + 20, T42);
+  scene.at(T42, () => {
+    wake.forEach((w) => w.state(STREAM2.fade));
+    mass?.state(MASS2.disperse);
+  });
+  scene.at(T42 + 10, () => wake.forEach((w) => scene.despawn(w)));
+  scene.at(T42 + 22, () => {
+    if (mass) scene.despawn(mass);
+  });
+  const tideHit = /* @__PURE__ */ new Map();
+  scene.every(4, () => {
+    const t = scene.tick, s = tideS(t);
+    const p = ground(loop.at(s)), back = ground(loop.at(s - 10));
+    const dir = norm(flat(sub(p, back)));
+    if (t % 8 === 0) particle(dim, "ed_tide_spray", up(back, 0.5));
+    for (const e of foes(lerp(p, back, 0.5), 8)) {
+      if (distToSegment(e.location, p, back) > ED06.currentReach) continue;
+      shove(e, dir, ED06.currentShove, 0.1);
+      const last = tideHit.get(e.id) ?? -999;
+      if (t - last > 50) {
+        tideHit.set(e.id, t);
+        damage(e, ED06.currentDamage, caster);
+        particle(dim, "ed_tide_spray", e.location);
+      }
+    }
+  }, tSwim2 + 10, T42);
+  const lobes = [];
+  scene.at(T32 - 10, () => {
+    for (const u of [0.25, 0.75]) {
+      const at = loop.at(loop.length * u);
+      lobes.push(scene.spawn("ed_tide_mass", at, { state: MASS2.gather, size: 0.75 }));
+      sound(dim, "ed_tide_mass", at, 0.9, 1.2);
+    }
+  });
+  scene.at(T32 + 10, () => lobes.forEach((l) => l.state(MASS2.hold)));
+  scene.at(T42 - 6, () => lobes.forEach((l) => l.state(MASS2.disperse)));
+  scene.at(T42 + 14, () => lobes.forEach((l) => scene.despawn(l)));
+  const bridges = [];
+  [T32 + 30, T32 + 120, T32 + 205].forEach((t) => scene.at(t, () => {
+    const s = tideS(t);
+    const a = ground(loop.at(s - 13)), b = ground(loop.at(s));
+    const L_ = distXZ(a, b);
+    if (L_ < 5) return;
+    const br = scene.spawn("ed6_bridge", up(a, 0.1), { yaw: yawOf(sub(b, a)), size: L_ / BRIDGE_LEN, state: BRIDGE2.form });
+    bridges.push(br);
+    sound(dim, "ed6_bridge", lerp(a, b, 0.5), 1.2);
+    scene.after(26, () => br.state(BRIDGE2.hold));
+    scene.after(12, () => {
+      line(dim, "ed_tide_flake", up(a, 2), up(b, 2), 4);
+      for (const e of foes(lerp(a, b, 0.5), L_ / 2 + ED06.bridgeWidth)) {
+        if (distToSegment(e.location, a, b) > ED06.bridgeWidth) continue;
+        damage(e, ED06.bridgeDamage, caster);
+        effect(e, "slowness", ED06.bridgeSlowTicks, ED06.bridgeSlowAmp);
+        particle(dim, "ed_tide_splinter", up(e.location, 1));
+      }
+    });
+  }));
+  const AP = (f, r, h) => fr.p(f, r, h);
+  const airStart = AP(-12, -8, 34);
+  const air = scene.spawn(AIR.actor, airStart, { yaw: yawOf(sub(AP(-8, 2, 30), airStart)), state: A3.hidden });
+  const airMv = new Mover(air, airStart, air.yaw, T_AIR);
+  const airForce = [];
+  const force = (from, ticks, s) => {
+    airForce.push({ from, to: from + ticks, s });
+  };
+  let airState = A3.hidden, airDwell = 0;
+  const circlePt = (deg, t) => fr.polar(AIR_R, deg, AIR_H + 0.9 * Math.sin(t * 0.07));
+  const OMEGA = 16 / 20 / AIR_R * (180 / Math.PI);
+  function airCircle(deg0, ticks) {
+    const from = airMv.cursor;
+    airMv.add(ticks, (p, t) => circlePt(deg0 + OMEGA * (t - from), t), { tag: "circle" });
+  }
+  const circleDegAt = (p) => {
+    const r = sub(p, center);
+    return Math.atan2(dot(r, fr.R), dot(r, fr.F)) * 180 / Math.PI;
+  };
+  function airBreak(t) {
+    airMv.truncate(t);
+    return airMv.last;
+  }
+  const cloudAt = AP(-6, 1, 30);
+  let clouds = [];
+  scene.at(T_AIR - 22, () => {
+    clouds = [
+      scene.spawn("ed_air_cloud", cloudAt, { yaw: yawOf(F) + 90, size: 1.4, state: CLOUD2.form }),
+      scene.spawn("ed_air_cloud", AP(-14, -6, 33), { yaw: yawOf(F), size: 0.9, state: CLOUD2.form })
+    ];
+    sound(dim, "ed_air_cloud", cloudAt, 1.4);
+    burst(dim, "ed_air_cloud", cloudAt, 5, 5);
+  });
+  scene.at(T_AIR - 4, () => clouds.forEach((c) => c.state(CLOUD2.part)));
+  scene.at(T_AIR + 60, () => clouds.forEach((c) => c.state(CLOUD2.fade)));
+  scene.at(T_AIR + 84, () => clouds.forEach((c) => scene.despawn(c)));
+  airMv.add(A_T.arrive, (p) => bezierPath([airStart, AP(-8, 2, 30), AP(-4, 9, 26), AP(3, 10, 23)], p));
+  force(T_AIR, A_T.arrive, A3.arrive);
+  const tRoll = airMv.cursor;
+  airMv.add(A_T.roll, (p) => lerp(AP(3, 10, 23), AP(12, 8, 22), p));
+  force(tRoll, A_T.roll, A3.roll);
+  airMv.path([AP(12, 8, 22), AP(14, 3, 22), AP(10, -1, 22), AP(6, -2, 22)], 16);
+  const tStoop = airMv.cursor;
+  airMv.add(A_T.stoop, (p) => lerp(AP(6, -2, 22), AP(-2, 5, 12.5), p * p));
+  force(tStoop, A_T.stoop, A3.stoop);
+  const tFlap = airMv.cursor;
+  airMv.path([AP(-2, 5, 12.5), AP(-6, 8, 16), AP(-10, 6, 21)], 12);
+  force(tFlap, airMv.cursor - tFlap, A3.move);
+  const e0 = circleDegAt(AP(-10, 6, 21));
+  airMv.path([AP(-10, 6, 21), circlePt(e0 + 6, airMv.cursor + 6)], 14);
+  airCircle(e0 + 6 + OMEGA * 0, 4e3);
+  scene.at(T_AIR, () => {
+    air.state(A3.arrive);
+    airState = A3.arrive;
+    movers.push(airMv);
+    sound(dim, "ed_air_call", cloudAt, 1.6);
+  });
+  scene.at(T_AIR + 30, () => {
+    fadeEmblem(3);
+    burst(dim, "ed_air_feather", up(airMv.posAt(scene.tick), 1), 2, 4);
+  });
+  scene.at(tRoll, () => {
+    sound(dim, "ed_air_flap", airMv.posAt(tRoll), 1.2);
+    burst(dim, "ed_air_feather", up(airMv.posAt(tRoll), 1), 1.5, 3);
+  });
+  scene.at(tStoop, () => {
+    sound(dim, "ed_air_dive", airMv.posAt(tStoop), 1.5);
+    particle(dim, "ed_air_boom", up(airMv.posAt(tStoop), 1));
+  });
+  scene.at(tFlap, () => {
+    const at = airMv.posAt(tFlap), g = ground(at);
+    sound(dim, "ed_air_flare", at, 1.3);
+    particle(dim, "ed_air_shock", up(g, 0.3));
+    burst(dim, "ed_air_gust", up(g, 0.8), 2.5, 4);
+    for (const e of foes(g, ED06.gustRadius)) {
+      damage(e, ED06.gustDamage, caster);
+      knockback(e, g, ED06.gustKnock, 0.45);
+    }
+  });
+  function airTick(t) {
+    const seg = airMv.segAt(t);
+    const f = airForce.find((x) => t >= x.from && t < x.to);
+    let want;
+    if (f) want = f.s;
+    else if (seg?.tag === "perch" || !seg) want = A3.idle;
+    else if ((seg.tag === "circle" || seg.tag === "helix") && (t - seg.from) % 96 >= 70 && (t - seg.from) % 96 < 86) want = A3.move;
+    else {
+      const vy = airMv.posAt(t + 1).y - airMv.posAt(t).y;
+      want = airMv.yawRate > A_BANK ? A3.turn_r : airMv.yawRate < -A_BANK ? A3.turn_l : vy > 0.1 ? A3.move : A3.glide;
+    }
+    if (want !== airState && (f || t >= airDwell)) {
+      air.state(want);
+      airState = want;
+      airDwell = t + 8;
+    }
+    if (t % 3 === 0 && seg && seg.tag !== "perch") particle(dim, "ed_air_trail", airMv.posAt(t));
+  }
+  scene.every(1, () => airTick(scene.tick), T_AIR + 1, T52 + 200);
+  const debris = [];
+  scene.at(T32 + 20, () => {
+    force(scene.tick, A_T.power, A3.power);
+    air.skin(1);
+    sound(dim, "ed_air_call", airMv.posAt(scene.tick), 1.5);
+    ring(dim, "ed_air_spark", up(airMv.posAt(scene.tick), 1), 4, 6);
+  });
+  scene.at(T32 + 30, () => {
+    [[8, 150], [5, 80], [7, 40]].forEach(([r, a], k2) => scene.after(k2 * 6, () => {
+      const g = ground(fr.polar(r, a));
+      const d = scene.spawn("ed6_debris", up(g, 6), { yaw: k2 * 120, size: 1, state: DEBRIS.lift });
+      debris.push({ a: d, at: g });
+      scene.after(32, () => d.state(DEBRIS.orbit));
+      sound(dim, "ed6_debris_lift", g, 1.2, 0.95 + k2 * 0.05);
+      burst(dim, "ed_nature_rock", up(g, 0.5), 2, 3);
+      particle(dim, "ed6_updraft", up(g, 0.2));
+      line(dim, "ed_air_streak", airMv.posAt(scene.tick), up(g, 9), 5);
+    }));
+  });
+  scene.every(ED06.updraftEvery, () => {
+    for (const d of debris) {
+      particle(dim, "ed6_updraft", up(d.at, 0.3));
+      particle(dim, "ed_air_gust", up(d.at, 1));
+      for (const e of foes(d.at, ED06.updraftRadius)) {
+        damage(e, ED06.updraftDamage, caster);
+        knockback(e, d.at, 0.15, ED06.updraftLift);
+      }
+    }
+  }, T32 + 70, T42 - 30);
+  scene.at(T42 - 26, () => {
+    for (const d of debris) {
+      d.a.state(DEBRIS.scatter);
+      sound(dim, "ed6_debris_fall", d.at, 1.2);
+      scene.after(10, () => {
+        particle(dim, "ed6_debris_fall", up(d.at, 8));
+        particle(dim, "ed_nature_dust", up(d.at, 0.5));
+        for (const e of foes(d.at, ED06.debrisRadius)) {
+          damage(e, ED06.debrisDamage, caster);
+          knockback(e, d.at, 0.6, 0.3);
+        }
+      });
+      scene.after(22, () => scene.despawn(d.a));
+    }
+  });
+  scene.at(T32 + 60, () => air.skin(0));
+  let Z;
+  function zone() {
+    if (Z) return Z;
+    const found = foes(center, ED06.zoneSearch);
+    let G = center;
+    if (found.length) {
+      const seed = found[0];
+      const grp = found.filter((e) => distXZ(e.location, seed.location) <= 6);
+      G = mul(grp.reduce((s, e) => add(s, e.location), { x: 0, y: 0, z: 0 }), 1 / grp.length);
+      const off = flat(sub(G, center));
+      if (len(off) > ED06.zoneMaxOffset) G = add(center, mul(norm(off), ED06.zoneMaxOffset));
+    }
+    G = ground(G);
+    const L3 = fr.dir(300);
+    Z = { G, L: L3, yawL: yawOf(L3), SF: ground(add(G, mul(L3, -ED06.finalRunUp))), TL: ground(fr.polar(13, 240, 0, G)), tideYaw: yawDeg(330) };
+    return Z;
+  }
+  function heatToFinal() {
+    const z = zone();
+    const from = heatMv.last;
+    const a0 = Math.atan2(dot(sub(from, CH), fr.R), dot(sub(from, CH), fr.F)) * 180 / Math.PI;
+    const a1 = Math.atan2(dot(sub(z.SF, CH), fr.R), dot(sub(z.SF, CH), fr.F)) * 180 / Math.PI;
+    const da = angleDelta(a0, a1);
+    const pts = [from, ep(a0 + da * 0.33, ED06.chordRadius + 1.6), ep(a0 + da * 0.7, ED06.chordRadius + 1.6), z.SF];
+    const t0 = heatMv.cursor;
+    heatMv.path(pts, H_RUN * 0.8, { tag: "run" });
+    scene.at(t0, () => heat.state(H.move));
+    const tStop = heatMv.cursor;
+    heatMv.hold(H_T.skid, void 0, "skidstop");
+    scene.at(tStop, () => {
+      heat.state(H.skid);
+      particle(dim, "ed_heat_skid", up(z.SF, 0.3));
+    });
+    planYaw = yawOf(sub(pts[3], pts[2]));
+    hTurn(z.yawL);
+    const tWait = heatMv.cursor;
+    scene.at(tWait, () => heat.state(H.pant));
+    heatMv.hold(Math.max(1, T42 + 256 - heatMv.cursor), z.yawL);
+  }
+  let tele;
+  let ringA;
+  const ringCells = [];
+  scene.at(T42, () => {
+    const z = zone();
+    tele = scene.spawn("telegraph", up(z.G, 0.05), { kind: 2, size: RING_R + 1, state: 4 });
+    sound(dim, "ed6_concord", z.G, 1.6);
+    sound(dim, "ed6_heart_all", K, 1.2);
+    codexBeat();
+    particle(dim, "ed6_concord", up(z.G, 3));
+    line(dim, "ed6_codex_rune", K, up(z.G, 3), 5);
+  });
+  scene.at(T42 + 40, () => tele?.state(2));
+  const yN = nYaw(th);
+  natMv.hold(20, void 0);
+  natMv.segs[natMv.segs.length - 1].yaw = (t) => yN + N_TURN * clamp((t - T42) / 20, 0, 1);
+  nHold(T52 - natMv.cursor, yN + N_TURN);
+  scene.at(T42, () => nature.state(N2.turn_r));
+  scene.at(T42 + 20, () => nature.state(N2.idle));
+  scene.at(T42 + 10, () => {
+    const z = zone();
+    ringA = scene.spawn("ed6_ring", z.G, { yaw: z.yawL, size: ED06.ringRadius / RING_R, state: RING.rise });
+    sound(dim, "ed6_ring_rise", z.G, 1.6);
+    sound(dim, "ed_nature_bellow", up(natMv.posAt(scene.tick), 12), 1.5);
+    ring(dim, "ed_nature_rise", z.G, ED06.ringRadius, 8);
+    for (const e of foes(z.G, ED06.ringRadius + 1.5)) {
+      const d = distXZ(e.location, z.G);
+      if (Math.abs(d - ED06.ringRadius) < 1.6) shove(e, sub(z.G, e.location), 0.9, 0.35);
+    }
+  });
+  scene.at(T42 + 34, () => {
+    const z = zone();
+    const doorA = 300, doorB = 120;
+    const seen = /* @__PURE__ */ new Set();
+    const n = Math.ceil(2 * Math.PI * ED06.ringRadius);
+    for (let i = 0; i < n; i++) {
+      const a = i * 360 / n;
+      if (Math.abs(angleDelta(a, doorA)) < ED06.doorwayDeg || Math.abs(angleDelta(a, doorB)) < ED06.doorwayDeg) continue;
+      const p = fr.polar(ED06.ringRadius, a, 0, z.G);
+      const c = { x: Math.floor(p.x), y: Math.floor(gy(p)), z: Math.floor(p.z) };
+      const key = `${c.x},${c.z}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      if (tb.column(c.x, c.y, c.z, ED06.ringBarrierHeight) > 0) ringCells.push(c);
+    }
+  });
+  scene.at(T42 + 42, () => ringA?.state(RING.hold));
+  const tSlam = T42 + 30;
+  scene.at(tSlam, () => {
+    nature.state(N2.attack_a);
+    sound(dim, "ed_nature_rumble", natMv.posAt(tSlam), 1.4, 1.1);
+  });
+  scene.at(tSlam + N_T.attackAHit, () => {
+    const z = zone();
+    const p = ground(natMv.posAt(scene.tick)), y = yN + N_TURN;
+    const SL = ground(local3(p, y, N_SLAM.x, N_SLAM.z));
+    const q = scene.spawn("ed_nature_quake", up(SL, 0.03), { size: 3.2, state: 1 });
+    scene.after(27, () => scene.despawn(q));
+    sound(dim, "ed_nature_slam", SL, 2);
+    particle(dim, "ed_nature_shock_big", up(SL, 0.2));
+    particle(dim, "fx_flash", up(SL, 1));
+    for (const e of foes(SL, ED06.slamRadius)) {
+      damage(e, ED06.slamDamage, caster);
+      knockback(e, SL, 1.2, 0.5);
+    }
+    const D_ = distXZ(SL, z.G);
+    const steps = Math.max(2, Math.floor((D_ - ED06.ringRadius) / 3));
+    const hit = /* @__PURE__ */ new Set();
+    for (let i = 1; i <= steps; i++) {
+      scene.after(i * 3, () => {
+        const at = ground(lerp(SL, z.G, i * 3 / D_));
+        const qq = scene.spawn("ed_nature_quake", up(at, 0.02), { size: 1.3, state: 1, yaw: i * 61 });
+        scene.after(27, () => scene.despawn(qq));
+        particle(dim, "ed6_geo_shock", up(at, 0.2));
+        particle(dim, "ed_nature_rock", up(at, 0.4));
+        if (i % 2) sound(dim, "ed_nature_quake", at, 1, 0.9 + i * 0.05);
+        for (const e of foes(at, ED06.quakeRadius)) {
+          if (hit.has(e.id)) continue;
+          hit.add(e.id);
+          damage(e, ED06.quakeDamage, caster);
+          knockback(e, at, 0.4, 0.45);
+        }
+      });
+    }
+    ED06.shockPulseDamage.forEach((dmg, k2) => scene.after(steps * 3 + 3 + k2 * 11, () => {
+      ringA?.state(RING.quake);
+      scene.after(10, () => ringA?.state(RING.hold));
+      sound(dim, "ed6_geo_shock", z.G, 1.6, 0.9 + k2 * 0.1);
+      particle(dim, "ed6_geo_shock", up(z.G, 0.25));
+      particle(dim, "ed_nature_shock_big", up(z.G, 0.3));
+      ring(dim, "ed_nature_rock", up(z.G, 0.5), ED06.ringRadius * 0.8, 6, k2 * 20);
+      for (const e of foes(z.G, ED06.ringRadius + 0.5)) {
+        damage(e, dmg, caster);
+        effect(e, "slowness", ED06.shockSlowTicks, 1);
+        knockback(e, e.location, 0, 0.45);
+      }
+    }));
+  });
+  scene.at(tSlam + N_T.attackA, () => nature.state(N2.idle));
+  scene.at(T42, () => {
+    const z = zone();
+    const cur = tideMv.posAt(T42), s = tideS(T42);
+    const h = fr.dir(330);
+    const app = up(add(z.TL, mul(h, -9)), 4.5);
+    tideMv.truncate(T42);
+    tideMv.path([cur, add(cur, mul(norm(sub(loop.at(s + 1), loop.at(s - 1))), 4)), app, up(z.TL, 1.6)], D_SWIM, { tag: "swim" });
+    const tLand2 = tideMv.cursor;
+    tideMv.hold(T52 + 30 - tideMv.cursor, z.tideYaw);
+    const ls = tideMv.segs[tideMv.segs.length - 1];
+    ls.at = () => z.TL;
+    scene.at(tLand2, () => {
+      tide.state(D3.land);
+      sound(dim, "ed_tide_land", z.TL, 1.3);
+    });
+    scene.at(tLand2 + D_T.landHit, () => {
+      ring(dim, "ed_tide_splash", up(z.TL, 0.3), 3, 6);
+      particle(dim, "ed_tide_frost_ring", up(z.TL, 0.2));
+      for (const e of foes(z.TL, 4)) {
+        damage(e, ED06.currentDamage, caster);
+        knockback(e, z.TL, 0.8, 0.3);
+      }
+    });
+    scene.at(tLand2 + D_T.land, () => tide.state(D3.idle));
+  });
+  const currents = [];
+  const frozen = /* @__PURE__ */ new Map();
+  let shell;
+  const tSweep2 = T42 + 112;
+  scene.at(tSweep2, () => {
+    tide.state(D3.attack_a);
+    sound(dim, "ed_tide_sweep", zone().TL, 1.3);
+  });
+  D_T.sweepHit.forEach((hh, w) => scene.at(tSweep2 + hh, () => {
+    const z = zone();
+    const tail = add(z.TL, mul(fr.dir(330), -10));
+    let dir = norm(flat(sub(tail, z.G)));
+    if (w === 1) dir = mul(dir, -1);
+    sound(dim, "ed_tide_flow", tail, 1.2, 0.95 + w * 0.08);
+    for (let k2 = 0; k2 < 2; k2++) {
+      const R_ = ED06.ringRadius * (k2 === 0 ? 0.78 : 0.5);
+      const side = k2 === 0 ? right(dir) : mul(right(dir), -1);
+      const a = scene.spawn("ed_tide_current", z.G, { kind: k2, size: R_ / CUR_R2, state: CUR2.form, yaw: yawOf(dir) });
+      currents.push({ a, R: R_, dir, side, born: scene.tick, touched: /* @__PURE__ */ new Set() });
+      line(dim, "ed_tide_spray", up(tail, 1), up(add(z.G, mul(dir, R_)), 1), 5);
+      scene.after(16, () => a.state(CUR2.flow));
+    }
+  }));
+  scene.every(4, () => {
+    const z = zone();
+    for (const e of foes(z.G, ED06.ringRadius + 1)) {
+      if (frozen.has(e.id)) continue;
+      for (const c of currents) {
+        const v2 = flat(sub(e.location, z.G));
+        const r = Math.hypot(v2.x, v2.z);
+        const deg = Math.atan2(dot(v2, c.side), dot(v2, c.dir)) * 180 / Math.PI;
+        if (Math.abs(r - c.R) > 1.4 || deg < -12 || deg > Math.min(CUR_SWEEP2, (scene.tick - c.born) * 17)) continue;
+        const a = deg * Math.PI / 180;
+        const tangent = add(mul(c.dir, -Math.sin(a)), mul(c.side, Math.cos(a)));
+        shove(e, add(tangent, mul(norm(flat(sub(z.G, e.location))), (r - c.R) * 0.25)), ED06.concordCurrentShove, 0.06);
+        if (!c.touched.has(e.id)) {
+          c.touched.add(e.id);
+          damage(e, ED06.concordCurrentDamage, caster);
+          particle(dim, "ed_tide_spray", e.location);
+        }
+        break;
+      }
+    }
+  }, tSweep2 + 10, T42 + 165);
+  const tFlare2 = T42 + 148;
+  scene.at(tFlare2, () => tide.state(D3.attack_c));
+  scene.at(tFlare2 + D_T.flareHit, () => {
+    const z = zone();
+    const sail = up(z.TL, 8);
+    sound(dim, "ed_tide_freeze", z.G, 1.5);
+    tide.prop("frost", 1);
+    burst(dim, "ed_tide_glint", sail, 2, 5);
+    for (const c of currents) {
+      line(dim, "ed_tide_frostline", sail, up(add(z.G, mul(c.dir, c.R)), 1), 6);
+      c.a.state(CUR2.freeze);
+    }
+    shell = scene.spawn("ed6_iceshell", up(z.G, 0.04), { size: ED06.ringRadius / RING_R, state: SHELL.grow, yaw: z.yawL });
+    sound(dim, "ed6_ice_layers", z.G, 1.5);
+    ringA?.skin(RING_SKIN.frost);
+    SHELL_LAYERS.forEach((ly, i) => scene.after(ly.t, () => {
+      particle(dim, "ed6_frost_layer", up(z.G, 0.3 + i * 0.4));
+      ring(dim, "ed_tide_flake", up(z.G, 1.5 + i), ly.r * (ED06.ringRadius / RING_R), 6, i * 25);
+      for (const e of foes(z.G, ly.r * (ED06.ringRadius / RING_R) + 0.8)) {
+        if (frozen.has(e.id)) continue;
+        damage(e, ED06.iceLayerDamage, caster);
+        if (!isAlive(e)) continue;
+        frozen.set(e.id, restrain(scene, e, Math.max(10, T42 + 222 - scene.tick), { ...e.location }));
+        particle(dim, "ed_tide_splinter", up(e.location, 0.8));
+      }
+    }));
+  });
+  scene.at(tFlare2 + D_T.flare, () => tide.state(D3.idle));
+  scene.at(T42 + 190, () => {
+    shell?.state(SHELL.hold);
+    currents.forEach((c) => c.a.state(CUR2.ice));
+  });
+  let spiral;
+  const HELIX_R = 6.5;
+  scene.at(T42 + 168, () => {
+    const z = zone();
+    const p0 = airBreak(T42 + 168);
+    const hs = up(fr.polar(HELIX_R, 180, 0, z.G), 18);
+    airMv.path([p0, lerp(p0, hs, 0.5), hs], 16);
+    const tPow2 = airMv.cursor;
+    airMv.add(A_T.power, (p) => add(hs, mul(fr.dir(90), 1.5 * p)), { yaw: yawDeg(90) });
+    force(tPow2, A_T.power, A3.power);
+    scene.at(tPow2, () => {
+      air.skin(1);
+      sound(dim, "ed_air_call", hs, 1.6);
+      ring(dim, "ed_air_spark", hs, 3, 6);
+      burst(dim, "ed_air_feather", hs, 2, 4);
+    });
+    const tHx = airMv.cursor;
+    const start = add(hs, mul(fr.dir(90), 1.5));
+    const ang0 = 180 + Math.atan2(1.5, HELIX_R) * 180 / Math.PI;
+    const hx = (p) => up(fr.polar(HELIX_R, ang0 + 540 * p, 0, z.G), 18 - 4 * Math.sin(p * Math.PI) - 1.5 * p);
+    airMv.add(2, (p) => lerp(start, hx(0), p));
+    airMv.add(64, (p) => hx(p), { tag: "helix" });
+    const back = airMv.last;
+    const e1 = circleDegAt(back) + 25;
+    airMv.path([back, up(lerp(back, circlePt(e1, 0), 0.5), 3), circlePt(e1, airMv.cursor + 30)], 14);
+    airCircle(e1, 4e3);
+    scene.at(tHx, () => sound(dim, "ed_air_vortex", z.G, 1.4));
+  });
+  scene.at(T42 + 214, () => {
+    const z = zone();
+    spiral = scene.spawn("ed6_spiral", up(z.G, 0.05), { size: ED06.ringRadius / RING_R, state: SPIRAL.form });
+    sound(dim, "ed6_spiral", z.G, 1.6);
+    scene.after(20, () => spiral?.state(SPIRAL.spin));
+  });
+  scene.at(T42 + 222, () => {
+    const z = zone();
+    shell?.state(SHELL.shatter);
+    currents.forEach((c) => c.a.state(CUR2.shatter));
+    for (const rel of frozen.values()) rel();
+    frozen.clear();
+    sound(dim, "ed_tide_fracture", z.G, 1.4);
+    burst(dim, "ed_tide_splinter", up(z.G, 2), 3, 6);
+    burst(dim, "ed6_spiral_debris", up(z.G, 3), 2.5, 4);
+  });
+  scene.at(T42 + 236, () => {
+    if (shell) scene.despawn(shell);
+    currents.forEach((c) => scene.despawn(c.a));
+    currents.length = 0;
+  });
+  const spun = /* @__PURE__ */ new Map();
+  scene.every(ED06.spiralEvery, (el) => {
+    const z = zone();
+    particle(dim, "ed6_spiral_debris", up(z.G, 2 + el / ED06.spiralEvery % 4 * 3));
+    particle(dim, "ed_air_streak", up(fr.polar(ED06.ringRadius * 0.7, el * 23, 0, z.G), 4));
+    for (const e of foes(z.G, ED06.ringRadius + 0.5)) {
+      const n = spun.get(e.id) ?? 0;
+      if (n >= 8) continue;
+      spun.set(e.id, n + 1);
+      damage(e, ED06.spiralDamage, caster);
+      const v2 = flat(sub(e.location, z.G));
+      const tan = norm({ x: -v2.z, y: 0, z: v2.x });
+      shove(e, add(tan, mul(norm(mul(v2, -1)), 0.3)), ED06.spiralShove, ED06.spiralLift);
+    }
+  }, T42 + 224, T42 + 282);
+  scene.at(T42 + 282, () => {
+    const z = zone();
+    for (const e of foes(z.G, ED06.ringRadius + 0.5)) knockback(e, e.location, 0, ED06.spiralFinalLift);
+    particle(dim, "ed6_updraft", up(z.G, 0.3));
+  });
+  scene.at(T42 + 300, () => air.skin(0));
+  scene.at(T42 + 190, () => {
+    const z = zone();
+    if (distXZ(heatMv.posAt(T42 + 190), z.SF) > 3) return;
+    const lane = scene.spawn("ed_heat_lane", ground(add(z.SF, mul(z.L, 3.5))), { yaw: z.yawL, state: LANE2.appear });
+    lane.prop("len", clamp(ED06.finalRunUp + 3, 4, 40));
+    sound(dim, "ed_heat_lane", z.SF, 1.2, 0.85);
+    scene.after(16, () => lane.state(LANE2.armed));
+    scene.at(T42 + 250, () => {
+      lane.state(LANE2.surge).skin(1);
+      for (const s of stones) {
+        if (s.gone || distToSegment(s.at, z.SF, z.G) > 4) continue;
+        s.a.skin(STONE_SKIN.glass).state(STONE.flare);
+        s.hotUntil = T42 + 400;
+        particle(dim, "ed6_sizzle", up(s.at, 2));
+      }
+    });
+    scene.at(T42 + 320, () => lane.state(LANE2.fade));
+    scene.at(T42 + 332, () => scene.despawn(lane));
+  });
+  scene.at(T42 + 226, () => {
+    heat.state(H.roar);
+    sound(dim, "ed6_final_charge", up(zone().SF, 4), 1.6);
+  });
+  scene.at(T42 + 236, () => {
+    heat.skin(H_SKIN.whitehot);
+    particle(dim, "fx_flash", up(zone().SF, 4));
+    ring(dim, "ed_heat_vent", up(zone().SF, 3.5), 3, 6);
+  });
+  scene.at(T42 + 256, () => {
+    const z = zone();
+    heatMv.truncate(T42 + 256);
+    heatMv.last = { ...heatMv.posAt(T42 + 255) };
+    planYaw = z.yawL;
+    const end = hCharge(add(z.G, mul(z.L, 1 + H_RUN / 20 * (H_T.skid - 1) / 2)), { final: true });
+    scene.at(end, () => heat.state(H.pant));
+    heatMv.hold(T52 + 90 - heatMv.cursor, z.yawL);
+  });
+  function detonate() {
+    detonated = true;
+    const z = zone();
+    const G = z.G;
+    spiral?.state(SPIRAL.burst);
+    tele?.state(3);
+    ringA?.skin(RING_SKIN.glass);
+    for (const c of ringCells) tb.removeColumn(c.x, c.y, c.z, ED06.ringBarrierHeight);
+    ringCells.length = 0;
+    const bl = scene.spawn("ed6_blast", up(G, 0.05), { size: (ED06.ringRadius + ED06.detonationExtra) / 6, state: BLAST.blast });
+    sound(dim, "ed6_detonation", G, 2);
+    particle(dim, "ed6_thermal_ring", up(G, 0.3));
+    particle(dim, "fx_flash", up(G, 2));
+    burst(dim, "ed6_thermal", up(G, 2), 3, 6);
+    burst(dim, "ed6_glass_shard", up(G, 2), 4, 4);
+    for (const e of foes(G, ED06.ringRadius + ED06.detonationExtra)) {
+      damage(e, ED06.detonationDamage, caster);
+      knockback(e, G, ED06.detonationKnockH, ED06.detonationKnockV);
+      burnT(e, ED06.detonationBurnSeconds);
+    }
+    scene.after(4, () => {
+      ringA?.state(RING.burst);
+      sound(dim, "ed_nature_erupt", G, 1.6, 0.8);
+    });
+    scene.after(26, () => bl.state(BLAST.hold).skin(1));
+    scene.after(50, () => bl.state(BLAST.fade));
+    scene.after(72, () => {
+      scene.despawn(bl);
+      if (ringA) scene.despawn(ringA);
+      if (spiral) scene.despawn(spiral);
+      if (tele) scene.despawn(tele);
+    });
+  }
+  scene.at(T42 + 330, () => {
+    if (!detonated && Z) detonate();
+  });
+  const spirits = [];
+  function remember(k2, at, yaw, size, tForm, tStream) {
+    scene.at(tForm, () => {
+      const s = scene.spawn("ed6_spirit", at, { kind: k2, yaw, size, state: SPIRIT.form });
+      spirits[k2] = s;
+      sound(dim, "ed6_inscribe", up(at, 4), 1.3, 0.9 + k2 * 0.06);
+      burst(dim, "ed6_bone_dust", up(at, 3), 3, 5);
+      scene.after(24, () => s.state(SPIRIT.hold));
+    });
+    scene.at(tStream, () => {
+      const s = spirits[k2];
+      if (!s?.valid) return;
+      s.state(SPIRIT.stream);
+      sound(dim, "ed6_stream", up(at, 3), 1.2);
+      const ctl = up(lerp(at, K, 0.5), 10);
+      scene.span(scene.tick + 1, scene.tick + 28, (p) => {
+        s.move(bezier(up(at, 0), ctl, K, smooth(p)), yaw + 200 * p);
+        if (Math.round(p * 27) % 4 === 0) particle(dim, "ed6_inscribe", s.loc);
+      });
+      scene.after(28, () => {
+        codex.state(CODEX2.absorb);
+        sound(dim, "ed6_absorb", K, 1.2, 0.9 + k2 * 0.08);
+        burst(dim, "ed6_codex_glint", K, 2, 4);
+        particle(dim, "ed6_codex_rune", K);
+        scene.despawn(s);
+      });
+    });
+  }
+  scene.at(T52, () => {
+    sound(dim, "ed6_hush", center, 1.4);
+    codex.prop("open", 1).state(CODEX2.absorb);
+    sound(dim, "ed6_codex_open", K, 1.2);
+  });
+  scene.at(T52, () => {
+    nature.state(N2.rest);
+    sound(dim, "ed_nature_moan", up(natMv.posAt(T52), 10), 1.3);
+  });
+  scene.at(T52 + 60, () => nature.state(N2.depart));
+  scene.at(T52 + 60 + N_T.depart, () => scene.despawn(nature));
+  remember(0, ground(natMv.posAt(T52)), yN + N_TURN, NATURE.scale, T52 + 64, T52 + 124);
+  scene.at(T52, () => {
+    heat.state(H.cool).skin(H_SKIN.ignited);
+    sound(dim, "ed_heat_cool", up(heatMv.last, 3), 1.3);
+    ring(dim, "ed_heat_steam", up(heatMv.last, 3), 2.5, 5);
+  });
+  scene.at(T52 + 12, () => heat.skin(H_SKIN.cool));
+  scene.every(6, () => particle(dim, "ed6_sizzle", up(heatMv.last, 3)), T52, T52 + 60);
+  scene.at(T52 + H_T.cool, () => heat.state(H.pant));
+  scene.at(T52 + 56, () => heat.state(H.rest));
+  scene.at(T52 + 78, () => {
+    heat.state(H.depart);
+    sound(dim, "ed_heat_depart", up(heatMv.posAt(scene.tick), 3), 1.2);
+  });
+  scene.at(T52 + 78 + H_T.depart, () => scene.despawn(heat));
+  scene.at(T52 + 80, () => remember(1, heatMv.posAt(scene.tick), heatMv.lastYaw, HEAT.scale, scene.tick, T52 + 134));
+  let massV;
+  scene.at(T52, () => {
+    tide.prop("frost", 0).skin(0);
+    sound(dim, "ed_tide_sail", up(tideMv.last, 6), 1);
+  });
+  scene.at(T52 + 6, () => {
+    const z = zone();
+    massV = scene.spawn("ed_tide_mass", up(z.TL, 9), { state: MASS2.gather, size: 1 });
+    sound(dim, "ed_tide_mass", up(z.TL, 9), 1.2);
+  });
+  scene.at(T52 + 26, () => massV?.state(MASS2.hold));
+  scene.at(T52 + 30, () => {
+    const z = zone();
+    tideMv.truncate(T52 + 30);
+    tideMv.path([z.TL, up(add(z.TL, mul(fr.dir(330), 3)), 3), up(z.TL, 9)], D_SWIM * 0.8, { tag: "swim" });
+    tideMv.hold(200, z.tideYaw);
+    tide.state(D3.swim);
+  });
+  scene.at(T52 + 50, () => {
+    tide.state(D3.depart);
+    sound(dim, "ed_tide_depart", up(zone().TL, 9), 1.2);
+  });
+  scene.at(T52 + 50 + D_T.depart, () => scene.despawn(tide));
+  scene.at(T52 + 54, () => remember(2, up(zone().TL, 9), zone().tideYaw, TIDE.scale, scene.tick, T52 + 116));
+  scene.at(T52 + 84, () => massV?.state(MASS2.disperse));
+  scene.at(T52 + 104, () => {
+    if (massV) scene.despawn(massV);
+  });
+  const PL = ground(fr.polar(9, 150));
+  scene.at(T52 + 4, () => {
+    const p0 = airBreak(T52 + 4);
+    const dirL = fr.dir(60);
+    const app = up(add(PL, mul(dirL, -6)), 3.5);
+    airMv.path([p0, up(lerp(p0, app, 0.5), 2), app], 14);
+    const tF = airMv.cursor;
+    airMv.add(A_T.flare, (p) => lerp(app, up(add(PL, mul(dirL, -1.5)), 1.4), p), { yaw: yawOf(dirL) });
+    force(tF, A_T.flare, A3.flare);
+    const tL = airMv.cursor;
+    airMv.add(A_T.land, (p) => lerp(up(add(PL, mul(dirL, -1.5)), 1.4), PL, smooth(p)), { yaw: yawOf(dirL) });
+    force(tL, A_T.land, A3.land);
+    airMv.add(300, () => PL, { yaw: yawOf(dirL), tag: "perch" });
+    scene.at(tF, () => sound(dim, "ed_air_flare", app, 1.3));
+    scene.at(tL + A_T.land - 2, () => {
+      particle(dim, "fx_dust", PL);
+      sound(dim, "ed_air_land", PL, 1);
+    });
+    scene.at(tL + A_T.land + 14, () => {
+      force(scene.tick, 400, A3.depart);
+      sound(dim, "ed_air_depart", up(PL, 2), 1.3);
+    });
+    scene.at(tL + A_T.land + 14 + A_T.depart, () => scene.despawn(air));
+    scene.at(tL + A_T.land + 18, () => remember(3, PL, yawOf(dirL), AIR.scale, scene.tick, scene.tick + 46));
+  });
+  scene.at(T52 + 36, () => {
+    bridges.forEach((b, i) => scene.after(i * 4, () => {
+      b.state(BRIDGE2.shatter);
+      sound(dim, "ed_tide_shatter", b.loc, 0.8);
+    }));
+    natStructs.forEach((s) => s.state(STRATA2.crumble));
+  });
+  scene.at(T52 + 56, () => {
+    bridges.forEach((b) => scene.despawn(b));
+    natStructs.forEach((s) => scene.despawn(s));
+  });
+  scene.at(T52 + 16, () => stones.forEach((s, i) => scene.after(i * 5, () => {
+    if (s.gone) return;
+    s.a.state(STONE.sink);
+    particle(dim, "fx_dust", up(s.at, 0.5));
+  })));
+  scene.at(T52 + 56, () => stones.forEach((s) => scene.despawn(s.a)));
+  scene.at(T52 + 70, () => flora.forEach((f, i) => scene.after(i * 4, () => {
+    f.state(FLORA.wither);
+    particle(dim, "ed6_pollen_drift", up(f.loc, 2));
+  })));
+  scene.at(T52 + 130, () => flora.forEach((f) => scene.despawn(f)));
+  scene.at(T52 + 110, () => {
+    horizon?.state(HORIZON.sink);
+    sound(dim, "ed6_world_fade", center, 1.4);
+  });
+  scene.at(T52 + 120, () => fog?.state(FOG_CLEAR));
+  scene.at(T52 + 160, () => {
+    if (horizon) scene.despawn(horizon);
+    if (fog) scene.despawn(fog);
+    level = 0;
+  });
+  scene.at(T52 + 172, () => {
+    codex.prop("sep", 0).prop("open", 0).state(CODEX2.hover);
+    sound(dim, "ed6_codex_close", K, 1.4);
+    burst(dim, "ed6_codex_glint", K, 2.5, 6);
+  });
+  scene.at(T52 + 206, () => {
+    codex.state(CODEX2.vanish);
+    burst(dim, "ed6_codex_rune", K, 2, 5);
+  });
+  scene.at(T52 + 238, () => scene.despawn(codex));
+  scene.endAt(T52 + 242);
 });
+function bezierPath(pts, p) {
+  const n = pts.length - 1;
+  const f = clamp(p, 0, 1) * n, i = Math.min(n - 1, Math.floor(f)), u = f - i;
+  const a = pts[Math.max(0, i - 1)], b = pts[i], c = pts[i + 1], d = pts[Math.min(n, i + 2)];
+  const k2 = (x0, x1, x2, x3) => 0.5 * (2 * x1 + (-x0 + x2) * u + (2 * x0 - 5 * x1 + 4 * x2 - x3) * u * u + (-x0 + 3 * x1 - 3 * x2 + x3) * u * u * u);
+  return { x: k2(a.x, b.x, c.x, d.x), y: k2(a.y, b.y, c.y, d.y), z: k2(a.z, b.z, c.z, d.z) };
+}
 
 // src/spells/index.ts
 function registerAllSpells() {

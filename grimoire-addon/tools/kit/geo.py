@@ -189,10 +189,11 @@ def _trs(pivot, rot, pos=(0, 0, 0), scale=(1, 1, 1)):
 
 
 class Model:
-    def __init__(self, name, density=1.0, pad=1, bounds=None, alts=()):
+    def __init__(self, name, density=1.0, pad=1, bounds=None, alts=(), dscale=1.0):
         """alts: names of alternate texture skins.  Every tile is painted once per skin with
         ctx.alt set (None for the default), all skins share one UV layout."""
         self.name = name
+        self.dscale = dscale   # multiplies every texture density (model, cube and material level)
         self.alts = tuple(alts)
         self.atlases = {}
         self.density = density
@@ -245,7 +246,7 @@ class Model:
             for ci, c in enumerate(self.bones[bn].cubes):
                 for f in c.paint_faces():
                     mat = c.mats.get(f) or c.mat
-                    dens = c.density or mat.density or self.density
+                    dens = (c.density or mat.density or self.density) * self.dscale
                     fw, fh = c.face_dims(f)
                     w = max(1, int(round((fw + 2 * c.inflate) * dens)))
                     h = max(1, int(round((fh + 2 * c.inflate) * dens)))

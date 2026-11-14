@@ -31,7 +31,7 @@ def _locked():
 def _write(path, obj):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as fh:
-        json.dump(obj, fh, indent=1, ensure_ascii=False)
+        json.dump(obj, fh, separators=(",", ":"), ensure_ascii=False)
         fh.write("\n")
 
 
@@ -138,7 +138,7 @@ class Pack:
         if animate:
             scripts["animate"] = animate
         if offscreen:
-            scripts["should_update_bones_and_effects_offscreen"] = True
+            scripts["should_update_bones_and_effects_offscreen"] = "1.0"   # Molang, as vanilla writes it
         if amap:
             desc["animations"] = amap
         if scripts:

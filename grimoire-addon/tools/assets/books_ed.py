@@ -469,7 +469,7 @@ HX = W / 2                      # spine / hinge at +X
 
 
 def build_book():
-    m = Model("book_ed", density=3.0, bounds=(3, 3, (0, 1.6, 0)))
+    m = Model("book_ed", density=3.0, bounds=(3, 3, (0, 1.6, 0)), dscale=0.68)   # held-item texture budget: 256x256
     C = mats_common()
     gold, bone, board = C["gold"], C["bone"], C["board"]
     edge_side = tex.banded(tex.flat("#e6dbbd", jitter=0.03), "#b7a47a", every=2, width=1, horizontal=False)

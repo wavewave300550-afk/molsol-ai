@@ -156,6 +156,97 @@ python3 tools/package.py      # dist/*.mcaddon, *.mcpack
 
 `DEVELOPING.md` describes the asset toolkit and the gameplay framework.
 
+## Gallery
+
+Renders from the project's own previewer (`tools/kit/render.py`), not in-game screenshots:
+
+| | |
+|---|---|
+| ![Seraphim](docs/gallery/dw01_seraphim.jpg) | ![Cherubim](docs/gallery/dw02_cherubim.jpg) |
+| ![Ophanim](docs/gallery/dw03_ophanim.jpg) | ![Sanctuary](docs/gallery/dw04_sanctuary.jpg) |
+| ![The Guest](docs/gallery/dn02_guest_and_door.jpg) | ![The Dreamer](docs/gallery/dn06_dreamer.jpg) |
+| ![Nature Dragon](docs/gallery/ed_nature_dragon.jpg) | ![Heat Dragon](docs/gallery/ed_heat_dragon.jpg) |
+| ![Water & Ice Dragon](docs/gallery/ed_tide_dragon.jpg) | ![Air Dragon](docs/gallery/ed_air_dragon.jpg) |
+
+More in `docs/gallery/` (the three books, the dollhouse, the city spire, the porcelain horse).
+
+## Verification status
+
+**Nothing in this add-on has been run inside Minecraft.** No game client was available in the build
+environment, and running a Bedrock Dedicated Server requires accepting the Minecraft EULA, which
+was not done on the user's behalf. Everything below is verification outside the game.
+
+| Check | Result |
+|---|---|
+| TypeScript type check against the official `@minecraft/server` 2.11.0 typings | clean |
+| Headless tests (`node tests/run.mjs`) | **76 passed, 0 failed** |
+| Cross-reference validation (`tools/validate.py`) | 0 errors, 0 warnings |
+| Mojang's published JSON schemas (`tools/schema_check.py`) | 3 items, 140 entities, 267 particles: 0 violations |
+| Minecraft Creator Tools 0.21.0 `validate` on the two packs | 0 errors, 0 warnings (3 notes it classes as likely noise, 429 optional format-version recommendations) |
+
+What the headless tests cover (a strict mock of the Script API, not the engine):
+
+* **Controls and cooldowns, 22 tests**: exactly three items; one crouch press = one step; holding
+  crouch does not repeat; 06 wraps to 01; per-book selection; no cast on press, no auto-cast while
+  holding, exactly one cast on release even with duplicate or reordered callbacks; no casting while
+  crouched; crouch / item change / book change / death cancel without cooldown; an item-stop is
+  never treated as a release; all 18 approved cooldown values; per-spell and per-player
+  independence; duplicate books cannot bypass a cooldown; books are not consumed and cost no health.
+* **Every spell, 54 tests** (3 each): a full cast with enemies, a cast with no enemies, and the
+  caster leaving mid-spell. Each must run without script warnings, use only entity / particle /
+  sound ids that exist in the packs, keep entity properties in range, deal real damage (offensive
+  spells), and leave no entity and no temporary block behind.
+
+Measured in those tests:
+
+| Spell | Runtime | Peak entities | | Spell | Runtime | Peak entities |
+|---|---|---|---|---|---|---|
+| DW01 | 10.5 s | 27 | | DN04 | 13.5 s | 4 |
+| DW02 | 14.9 s | 28 | | DN05 | 35.3 s | 25 |
+| DW03 | 14.5 s | 14 | | DN06 | 63.6 s | 24 |
+| DW04 | 21.3 s | 33 | | ED01 | 15.3 s | 24 |
+| DW05 | 35.3 s | 47 | | ED02 | 12.3 s | 8 |
+| DW06 | 65.7 s | 58 | | ED03 | 14.6 s | 20 |
+| DN01 | 9.5 s | 19 | | ED04 | 14.1 s | 24 |
+| DN02 | 11.8 s | 4 | | ED05 | 36.7 s | 23 |
+| DN03 | 20.0 s | 24 | | ED06 | 65.4 s | 51 |
+
+## Known limitations and things to check in game
+
+* **In-game behaviour is unverified** (see above). In particular, none of these have been seen on
+  a device: touch-screen hold and release on iPhone, model orientation and texture mapping, glow
+  (emissive) rendering, particle appearance, sound levels and mix, frame rate, and how far away the
+  largest models stay visible.
+* **Hold-to-cast** depends on `minecraft:use_modifiers` making the book a hold-to-use item. Mojang's
+  1.26.30 notes state that this component itself starts item use, and the vanilla spear relies on
+  it, but it was not tested on a device. If a platform never raises the hold event, turn on the
+  fallback with `/scriptevent grimoire:config heartbeat on`: it infers hold and release from
+  repeated use events. That works with keyboard, mouse and controller; on touch it would behave
+  like tap-to-cast, so it is off by default.
+* **Model conventions.** Coordinates, rotations and face mapping follow the conversion Blockbench
+  uses for Bedrock, cross-checked against vanilla animation values. Creator Tools' own preview
+  renderer disagrees with it in places (it ignores bind-pose bone rotation and swaps east/west face
+  mapping), so one of them is wrong; the game was not available to settle it. If models appear
+  mirrored or side textures swapped in game, the conversion lives in one place:
+  `Model.to_geo` / `_cube_json` in `tools/kit/geo.py`.
+* **Held book placement** (first and third person) was set by estimate from the player model's
+  hand position. The offsets are in one constants block at the top of each
+  `tools/assets/books_*.py`.
+* **The held book cannot know which spell is selected** (an engine limit on held-item models). The
+  selected spell is shown by the action bar, a short vision above the book, and the charging
+  construct. For the same reason the Dream book shows its nightmare state as a recurring "bad
+  dream" on the held model rather than per selected spell.
+* **Enemy targeting interference** (DN04) is limited to weakness, a stagger and a forced turn; the
+  stable API cannot clear a mob's attack target.
+* **Mob AI is not simulated in the tests**, so damage wards and projectile dissolution are exercised
+  by type checking and targeted mock runs, not by real attacks.
+* **Some spells run longer than their nominal length**: DN03 is 20 s in total (12 s active plus
+  unfolding and folding), DW04 is 21 s (12 s active after about 6 s of construction), ED04 14 s.
+* **Temporary barrier blocks** are invisible, but a Creative player holding a barrier item will see
+  their markers while a spell is active.
+* **Sounds were synthesized and never auditioned.** Levels are set by calculation.
+* Game versions older than 26.60 are not supported.
+
 ## Licence and originality
 
 Every model, texture, animation, particle, glyph and sound in this add-on is generated by the

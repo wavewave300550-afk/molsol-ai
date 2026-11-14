@@ -324,14 +324,16 @@ def flora_anims():
     for j in range(NF):
         t0 = 0.7 + (j % 6) * 0.1
         sprout.rot(f"f{j + 1}", {0: (75, 0, 0), t0: (70, 0, 0), t0 + 0.6: (-6, 0, 0), min(2.0, t0 + 0.9): (0, 0, 0)})
-        sprout.rot(f"g{j + 1}", {0: (110, 0, 0), t0 + 0.2: (100, 0, 0), min(2.0, t0 + 0.9): (0, 0, 0)})
+        if j < NF - 2:   # only ten second-half frond bones exist in any kind
+            sprout.rot(f"g{j + 1}", {0: (110, 0, 0), t0 + 0.2: (100, 0, 0), min(2.0, t0 + 0.9): (0, 0, 0)})
     for j in range(3):
         sprout.scl(f"x{j + 1}", {0: 0.0, 1.0 + j * 0.15: 0.0, 1.6 + j * 0.1: 1.0})
     A.append(sprout)
     sway = Anim("sway", loop=True)
     for j in range(NF):
         sway.rot(f"f{j + 1}", (LIFE(3.5, 2.6 + (j % 4) * 0.37, j * 0.11), 0, LIFE(2.5, 3.3, j * 0.17)))
-        sway.rot(f"g{j + 1}", (LIFE(5, 2.2, j * 0.13 + 0.2), 0, 0))
+        if j < NF - 2:
+            sway.rot(f"g{j + 1}", (LIFE(5, 2.2, j * 0.13 + 0.2), 0, 0))
     for i in range(3):
         sway.rot(f"stem{i + 1}", (LIFE(0.8, 4.1, i * 0.1), 0, LIFE(1.0, 5.3, i * 0.13)))
     for j in range(3):
@@ -340,7 +342,8 @@ def flora_anims():
     wither = Anim("wither", length=1.4, loop="hold")
     for j in range(NF):
         wither.rot(f"f{j + 1}", {0: (0, 0, 0), 0.6: (60, 0, 0)})
-        wither.rot(f"g{j + 1}", {0: (0, 0, 0), 0.6: (90, 0, 0)})
+        if j < NF - 2:
+            wither.rot(f"g{j + 1}", {0: (0, 0, 0), 0.6: (90, 0, 0)})
     wither.scl("root", {0: 1.0, 0.5: 0.95, 1.4: 0.0})
     wither.pos("root", {0: (0, 0, 0), 0.5: (0, 0, 0), 1.4: (0, -14, 0)})
     A.append(wither)
