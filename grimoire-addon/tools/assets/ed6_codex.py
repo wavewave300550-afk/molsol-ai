@@ -6,7 +6,7 @@ ed6_codex   (scale 1.3: book ~2.6 x 3.5 blocks, orbits ~6 blocks across; a turni
     A spell construct of the Codex of the Four Primordial Dragons: antique-bronze cover scales
     (12 front, 12 back), an articulated vertebral spine of 8 ivory vertebrae, aged-gold corners,
     a glowing draconic seal on the back cover with four lineage gems, and riffling pages with
-    anatomical drawings.  Origin = 1 block under the book's lower edge.
+    anatomical drawings.  The book centre sits 24 model units (1.95 blocks) above the origin.
     Float properties (eased on the client, so changing them never snaps):
         grimoire:sep  0 = scales and vertebrae bound to the book, 1 = separated, orbiting
                       (cover scales on two horizontal rings, vertebrae on a vertical halo)
@@ -160,17 +160,18 @@ def _ornament(k, u, v, r, a):
     return vane, rach
 
 
-def emblem_mat(k, part="all"):
-    """part: 'all' | 'outer' (glyph ring + ornament band) | 'inner' (skull medallion)."""
+def emblem_mat(k, part="all", zoom=1.0):
+    """part: 'all' | 'outer' (glyph ring + ornament band) | 'inner' (skull medallion).  zoom < 1 maps the plane
+    onto the middle of the emblem (the inner medallion on a smaller plane keeps its texture small)."""
     b, m, d = (rgb(c) for c in LINEAGE[k])
     gl = rgb(GOLD)
 
     def fn(ctx):
-        u, v = ctx.U * 2 - 1, 1 - ctx.V * 2
+        u, v = (ctx.U * 2 - 1) * zoom, (1 - ctx.V * 2) * zoom
         r = np.hypot(u, v)
         a = np.arctan2(v, u) % (2 * math.pi)
         t = T(ctx, m, 1.0, 0.0)
-        pxl = 2.0 / ctx.w
+        pxl = 2.0 / ctx.w * zoom
         lines = (np.abs(r - 0.985) < pxl * 1.2) | (np.abs(r - 0.955) < pxl * 0.8) | (np.abs(r - 0.79) < pxl) | \
                 (np.abs(r - 0.535) < pxl * 1.3) | (np.abs(r - 0.505) < pxl * 0.7)
         # glyph band 0.81 .. 0.94
@@ -213,7 +214,7 @@ def emblem_mat(k, part="all"):
         glow = np.where(orn & ~orn_hi, 0.85, glow)
         t[..., 4] = glow
         return t
-    return Mat(fn, f"ed6emblem{k}{part}", directional=True)
+    return Mat(fn, f"ed6emblem{k}{part}{zoom}", directional=True)
 
 
 def halo_mat(k, a0=0.5, key="halo"):
@@ -264,7 +265,7 @@ def emblem_model(k):
     ringb = m.bone("ring", stand, pivot=(0, EM_C, 0))
     ringb.plane("z", (0, EM_C, 0), 64, 64, emblem_mat(k, "outer"))
     med = m.bone("medal", stand, pivot=(0, EM_C, -0.4))
-    med.plane("z", (0, EM_C, -0.4), 64, 64, emblem_mat(k, "inner"))
+    med.plane("z", (0, EM_C, -0.4), 36, 36, emblem_mat(k, "inner", zoom=36 / 64))
     holo = m.bone("holo", stand, pivot=(0, EM_C, -2.5))
     holo.plane("z", (0, EM_C, -2.5), 46, 46 * asp, skull_mat(k, mode="blend", a=0.6, glow=1.0, key="holo"), density=2.0)
     claws = m.bone("claws", root)
@@ -333,7 +334,7 @@ def domain_mat():
 
 
 def domain_model():
-    m = Model("ed6_emblem_4", density=4.0, bounds=(14, 2, (0, 0, 0)))
+    m = Model("ed6_emblem_4", density=3.6, bounds=(14, 2, (0, 0, 0)))
     root = m.bone("root")
     sig = m.bone("sigil", root)
     sig.plane("y", (0, 0.3, 0), 64, 64, domain_mat(), faces=("up",))

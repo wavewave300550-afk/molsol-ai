@@ -40,7 +40,7 @@ const ED_H = [11.0, 11.4, 7.0, 13.9, 6.0, 11.0];
 // ~18 degrees above the horizon: the temple stays below ~12 degrees, page / tablets / lines between 0 and 17)
 const STAGE_MIN = 14, STAGE_MAX = 20;   // the domain centre is kept this far ahead of the caster
 const PAGE_BACK = 26, PAGE_LIFT = 0.6;  // the giant page hangs beyond the domain, its lower edge this high
-const BOOK_HOVER = 1.5, BOOK_START = 0.9, BOOK_LECTERN = 1.0, BOOK_FINAL = 1.0;
+const BOOK_HOVER = 1.2, BOOK_START = 0.8, BOOK_LECTERN = 1.0, BOOK_FINAL = 1.0;
 const TAB_LIFT = 3.4, TAB_RISE = 15, TAB_BACK = 6;   // Phase IV: the tablets rise out of the view into the sky
 const FX_CAP = 88;
 
@@ -210,7 +210,7 @@ export default defineSpell("dw06", ({ caster, scene, aim }) => {
   };
 
   // the great codex
-  const b1 = G(Ds - 2.5, 0, BOOK_HOVER);
+  const b1 = G(Ds - 1, 0, BOOK_HOVER);
   const b2 = SKY(Lp - 3.2, 0, 0.9);
   const bF = G(Ds + 0.5, 0, 1.6);
   let bookAt = b1;
@@ -308,7 +308,7 @@ export default defineSpell("dw06", ({ caster, scene, aim }) => {
   const book = scene.spawn("dw6_book", b1, { yaw: faceOrigin(b1), state: BOOK.arrive, size: BOOK_START });
   snd("dw6_silence", c0, 1.0);
   scene.at(4, () => snd("dw6_book", b1, 1.1));
-  tb.place(G(Ds - 2.5, 0, 0.5), LIGHT);
+  tb.place(G(Ds - 1, 0, 0.5), LIGHT);
   const boundary = scene.spawn("dw6_boundary", up(center, 0.05), { yaw: faceOrigin(center), state: BOUND.inscribe });
   scene.at(40, () => { boundary.state(BOUND.hold); boundaryOn = true; });
   // the inscription is written from the far point of the ring around both sides toward the caster

@@ -5,7 +5,7 @@ dw6_edifice   : the six marble structures the letters become (kinds 0-5):
                 0 column, 1 arch, 2 floating bridge, 3 monumental gate, 4 elevated platform,
                 5 celestial geometric formation (armillary of text)
 dw6_wall      : written walls of Law I (kind 0 marble) and the text waves of Law III (kind 1)
-dw6_dome      : the refuge of Law V, a dome of written rings
+dw6_dome      : the refuge of Law V, a ground ward around the caster (seal + fence of standing letters)
 dw6_boundary  : the boundary inscription ring that marks the domain
 """
 import math
@@ -420,32 +420,26 @@ def dome():
                faces=("up",), density=0.75)
     fence = m.bone("fence", root, pivot=(0, 0, 0))
     ring(fence, (0, 1.2, 0), R, 30, (2 * math.pi * R / 30 * 1.02, 1.6, 1.4), GOLD_HOT, axis="y")
-    for k in range(20):                                   # standing letters, knee high
-        a = k * 18
-        fence.box((0, 8.5, -R), (5.2, 7.3, 0), tex.bitmap_cut(FW[(k * 5 + 2) % len(FW)], WGOLD, glow=1.0, color2="#ffffff"),
-                  rot=(0, a, 0), pivot=(0, 8.5, 0), faces=("north", "south"))
-    inner = m.bone("inner", root, pivot=(0, 0, 0))       # a second, counter-turning band of script just inside
-    band = tex.glyph_rows(FW, "#fff3c4", glow=1.0, color2="#ffffff", fill=0.9, key="dw6domeband")
-    ring(inner, (0, 0.9, 0), R - 9, 24, (2 * math.pi * (R - 9) / 24 * 1.02, 0.8, 5.0), band, axis="y", cycle=3, tilt=90)
+    for k in range(24):                                   # small standing letters, ankle to knee high
+        a = k * 15
+        fence.box((0, 5.6, -R), (3.6, 5.0, 0), tex.bitmap_cut(FW[(k * 5 + 2) % len(FW)], WGOLD, glow=0.9, color2="#ffffff"),
+                  rot=(0, a, 0), pivot=(0, 5.6, 0), faces=("north", "south"))
     return m
 
 
 def dome_anims():
     always = Anim("drift", loop=True)
     always.rot("fence", (0, spin(5), 0))
-    always.rot("inner", (0, spin(-9), 0))
     always.rot("seal", (0, spin(-10), 0))
     hidden = Anim("hidden", loop=True)
     hidden.scl("root", 0.0)
     form = Anim("form", length=1.2, loop="hold")
     form.scl("seal", {0: 0.0, 0.4: 1.1, 0.55: 1.0})
     form.scl("fence", {0: (0.0, 0.0, 0.0), 0.2: (1.0, 0.0, 1.0), 0.6: (1.0, 1.25, 1.0), 0.8: 1.0})
-    form.scl("inner", {0: 0.0, 0.5: 0.0, 0.9: 1.06, 1.2: 1.0})
     hold = Anim("hold", loop=True)
-    hold.scl("inner", (1, LIFE(0.2, 1.6, base=1.0), 1))
+    hold.scl("fence", (1, LIFE(0.12, 1.6, base=1.0), 1))
     fade = Anim("fade", length=1.0, loop="hold")
     fade.scl("fence", {0: 1.0, 0.25: (1.0, 1.2, 1.0), 0.8: (1.0, 0.0, 1.0)})
-    fade.scl("inner", {0: 1.0, 0.3: 1.05, 0.7: 0.0})
     fade.scl("seal", {0: 1.0, 0.4: 1.05, 1.0: 0.0})
     return [always, hidden, form, hold, fade]
 

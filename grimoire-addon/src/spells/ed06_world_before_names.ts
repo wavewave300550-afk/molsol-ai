@@ -883,7 +883,7 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     sound(dim, "ed_tide_currents", M0, 1.3);
     for (let k = 0; k < 4; k++) {
       const ang = k * 90 + 20;
-      const p0 = up(W.polar(9, ang, 0, M0), -3 + (k % 2) * 2.5);
+      const p0 = up(W.polar(9, ang, 0, M0), -0.8 + (k % 2) * 2.5);
       streamsIn.push({ a: scene.spawn("ed_tide_stream", p0, { state: STREAM.form, size: 1.3, yaw: yawOf(sub(M0, p0)) }), ang, prev: p0 });
     }
   });
@@ -891,7 +891,7 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
   scene.span(T_TIDE - 19, T_TIDE + 4, (p) => {
     const e = smooth(p);
     for (const s of streamsIn) {
-      const pos = up(W.polar(9 * (1 - e) + 0.4, s.ang + 200 * e, 0, M0), -3 * (1 - e));
+      const pos = up(W.polar(9 * (1 - e) + 0.4, s.ang + 200 * e, 0, M0), (-0.8 + (streamsIn.indexOf(s) % 2) * 2.5) * (1 - e));
       s.a.move(pos, yawOf(flat(sub(pos, s.prev))));
       s.prev = pos;
       particle(dim, "ed6_trail_tide", pos);
