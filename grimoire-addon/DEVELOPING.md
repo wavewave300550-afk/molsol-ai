@@ -227,6 +227,25 @@ book as posed by the attachable's own animations (`tools/kit/heldpose.py`, the s
 preview uses). Icons are rendered with the circle hidden (`without_aura`). The old world-space
 vision and construct can be switched back on with `BOOKS.vision.entity` / `BOOKS.charge.entity`.
 
+### Creature motion (`tools/motion_check.py`, `src/spells/_ed06_motion.ts`)
+A dragon's walk, run, swim or flap loop keeps its feet planted at ONE speed (written in its asset
+module). Moving it at another speed makes it skate; moving it while it plays a standing pose makes
+a statue slide; whipping a 20-block body round a 3-block circle looks like a toy on a string.
+`python3 tools/motion_check.py <spell> [--real tag]` reads a recorded cast and lists every tick that
+breaks a dragon's contract (STILL, GAIT, TURN, RADIUS) and every moment two dragon bodies (capsules
+along their yaw) come closer than half a block. Keep it at zero bodies and only brief hard banks.
+* `Mover.govern(gaits)`: the visible state follows the real motion (the requested state returns
+  when the motion allows) - use it for every script-moved creature.
+* `Mover.walk(a, b, speed)`: even-speed walks with short ramps (an ease curve skates at both ends).
+* `stadium()` for circling lanes (constant turn radius); sine figure-eights turn on a 2-4 block
+  radius at their lobe shoulders whatever their size. `arcPts` / `steer` build turns as true circles.
+* Choose arrival and landing spots the creature can reach along its lane, and land facing the way
+  it comes in; when a spot depends on the enemies, check the other creatures' bodies (real
+  enemies move: run the real-server probe and check its trace too).
+
+**Screen effects** (`shake`, `flash` in `src/lib/fx.ts`): `camerashake` for impacts (0.1 rumble -
+1.0 detonation), a camera fade for the one climax of a spell. The mock records both on the player.
+
 ### Run it in the real server (`tests/probe`)
 `tests/probe/README.md` describes a harness pack that makes a simulated player cast spells through
 the real input path on a Bedrock Dedicated Server and logs every spell entity;

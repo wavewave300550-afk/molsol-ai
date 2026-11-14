@@ -56,3 +56,36 @@ export function tint(r: number, g: number, b: number, a = 1): MolangVariableMap 
   m.setColorRGBA("variable.color", { red: r, green: g, blue: b, alpha: a });
   return m;
 }
+
+/**
+ * Screen shake (Bedrock /camerashake, positional) for the players within `radius` of `at`, weaker with
+ * distance: an impact the caster can feel.  intensity ~0.1 = rumble, ~0.5 = slam, ~1 = detonation.
+ */
+export function shake(dim: Dimension, at: Vector3, radius: number, intensity: number, seconds: number): void {
+  try {
+    for (const p of dim.getPlayers({ location: at, maxDistance: radius })) {
+      const d = Math.hypot(p.location.x - at.x, p.location.y - at.y, p.location.z - at.z);
+      const k = Math.max(0, Math.min(1, 1 - d / radius));
+      const i = Math.round(intensity * (0.4 + 0.6 * k) * 100) / 100;
+      if (i < 0.02) continue;
+      p.runCommand(`camerashake add @s ${i} ${Math.round(seconds * 100) / 100} positional`);
+    }
+  } catch {
+    /* no players / command refused: the effect is optional */
+  }
+}
+
+/**
+ * A brief full-screen flash (camera fade to `rgb` 0..1 and back) for the players within `radius` of
+ * `at`.  Keep it for the one climax of a spell: in 0.05 s, hold 0.05 s, out 0.6 s reads as a flash.
+ */
+export function flash(dim: Dimension, at: Vector3, radius: number, rgb: [number, number, number],
+  fadeIn = 0.05, hold = 0.05, fadeOut = 0.6): void {
+  try {
+    for (const p of dim.getPlayers({ location: at, maxDistance: radius })) {
+      p.camera.fade({ fadeColor: { red: rgb[0], green: rgb[1], blue: rgb[2] }, fadeTime: { fadeInTime: fadeIn, holdTime: hold, fadeOutTime: fadeOut } });
+    }
+  } catch {
+    /* camera control unavailable: the effect is optional */
+  }
+}

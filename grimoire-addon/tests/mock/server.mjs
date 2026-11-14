@@ -184,6 +184,13 @@ export class Player extends Entity {
     this.onScreenDisplay = { setActionBar(t) { self.actionBar = typeof t === "string" ? t : JSON.stringify(t); }, setTitle() {}, updateSubtitle() {} };
     this.inputInfo = { getButtonState: () => ButtonState.Released };
     this.playerPermissionLevel = 2;
+    this.commands = []; this.fades = [];
+    this.camera = { fade(o) { self.fades.push(o ?? {}); }, clear() {}, setCamera() {} };
+  }
+  runCommand(c) {
+    if (typeof c !== "string" || !c.length) throw new Error("runCommand: empty command");
+    this.commands.push(c);
+    return { successCount: 1 };
   }
   getComponent(id) {
     const self = this;

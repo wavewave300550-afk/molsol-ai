@@ -68,6 +68,13 @@ export default function ({ mock, test, eq, ok, arg }) {
       if (info.off) ok(dealt > 0, `${id} dealt no damage to enemies`);
       ok(p.health === 20, `${id} hurt its own caster`);
       ok(r.ticks < 3500, `${id} never ended`);
+      // screen effects are well formed (ED06 shakes its impacts and flashes its climax and its seal)
+      for (const c of p.commands) ok(/^camerashake add @s \d+(\.\d+)? \d+(\.\d+)? positional$/.test(c), `${id} bad command: ${c}`);
+      for (const f of p.fades) ok(["red", "green", "blue"].every((k) => f.fadeColor[k] >= 0 && f.fadeColor[k] <= 1), `${id} bad fade colour`);
+      if (id === "ed06") {
+        ok(p.commands.length >= 6, `ed06 shook the screen only ${p.commands.length} times`);
+        ok(p.fades.length >= 2, `ed06 flashed ${p.fades.length} times`);
+      }
       console.log(`         ${id}: ${r.ticks} ticks, peak ${r.peak} entities, ${Math.round(dealt)} dmg, ${stats.particles} particles, ${stats.sounds} sounds`);
     });
     test(`${id}: cast with no enemies - runs clean and cleans up`, () => {

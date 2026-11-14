@@ -45,7 +45,7 @@ var CONFIG = {
 var RUNTIME = CONFIG;
 
 // src/config/version.ts
-var VERSION = "1.1.1";
+var VERSION = "1.2.0";
 
 // src/main.ts
 import { CommandPermissionLevel, CustomCommandStatus, ItemStack as ItemStack2, Player as Player4, system as system4, world as world5 } from "@minecraft/server";
@@ -1209,6 +1209,26 @@ function burst(dim, id, center, radius, n) {
 function sound(dim, id, loc, volume = 1, pitch = 1) {
   try {
     dim.playSound(id.includes(".") ? id : `${NS}.${id}`, inWorld(dim, loc), { volume, pitch });
+  } catch {
+  }
+}
+function shake(dim, at, radius, intensity, seconds) {
+  try {
+    for (const p of dim.getPlayers({ location: at, maxDistance: radius })) {
+      const d = Math.hypot(p.location.x - at.x, p.location.y - at.y, p.location.z - at.z);
+      const k2 = Math.max(0, Math.min(1, 1 - d / radius));
+      const i = Math.round(intensity * (0.4 + 0.6 * k2) * 100) / 100;
+      if (i < 0.02) continue;
+      p.runCommand(`camerashake add @s ${i} ${Math.round(seconds * 100) / 100} positional`);
+    }
+  } catch {
+  }
+}
+function flash(dim, at, radius, rgb, fadeIn = 0.05, hold = 0.05, fadeOut = 0.6) {
+  try {
+    for (const p of dim.getPlayers({ location: at, maxDistance: radius })) {
+      p.camera.fade({ fadeColor: { red: rgb[0], green: rgb[1], blue: rgb[2] }, fadeTime: { fadeInTime: fadeIn, holdTime: hold, fadeOutTime: fadeOut } });
+    }
   } catch {
   }
 }
@@ -12289,6 +12309,7 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     const Kc = cxCore();
     sound(dim, `ed6_heart_${n}`, Kc, 1.2);
     sound(dim, `ed6_heart_${n}`, e.c, 1.8);
+    shake(dim, Kc, 40, 0.12 + 0.05 * k2, 0.3);
     codexBeat();
     domainBeat();
     codex.skin(k2 + 1);
@@ -12422,6 +12443,7 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     });
   };
   function footfall(p) {
+    shake(dim, p, 70, 0.08, 0.25);
     footprints.push(p);
     if (footprints.length > 12) footprints.shift();
     const q = scene.spawn("ed_nature_quake", up(p, 0.02), { size: 1.6, state: 1, yaw: scene.tick * 47 % 360 });
@@ -12463,6 +12485,7 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
   scene.at(T_NATURE + 18, () => {
     strataI.forEach((s) => s.state(STRATA2.part));
     sound(dim, "ed_nature_erupt", N0, 1.6);
+    shake(dim, N0, 80, 0.22, 1);
   });
   scene.every(1, (e) => {
     const p = local3(N0, nYaw0, (hash012(e, 40) - 0.5) * 10, (hash012(e, 41) - 0.5) * 24);
@@ -12690,7 +12713,10 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
       hFinal = !!opts.final;
       hStart = from;
       glassNext = 0;
-      if (!opts.run) sound(dim, "ed_heat_roar", up(from, 4), 1.6, 1.05);
+      if (!opts.run) {
+        sound(dim, "ed_heat_roar", up(from, 4), 1.6, 1.05);
+        shake(dim, from, 50, 0.12, 0.45);
+      }
     });
     scene.at(t0 + n, () => {
       heat.state(H.skid);
@@ -13184,7 +13210,14 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     const rel = sub(G, C0);
     const gf = dot(rel, F), gr = dot(rel, R2);
     airMv.truncate(tGlide);
-    const s0 = sky(gf + 13, gr - 3, 15.5), s1 = sky(gf + 2.5, gr - 3.5, 3.4);
+    let s0 = sky(gf + 13, gr - 3, 15.5), s1 = sky(gf + 2.5, gr - 3.5, 3.4);
+    const hp = heatMv.posAt(tGlide + 40);
+    const away = flat(sub(s1, hp)), dh = Math.hypot(away.x, away.z);
+    if (dh < 16) {
+      const push = mul(dh > 0.1 ? norm(away) : mul(R2, -1), 16 - dh);
+      s1 = add(s1, push);
+      s0 = add(s0, push);
+    }
     airMv.path([AR2, lerp(AR2, s0, 0.5), s0], 16);
     tStoop = airMv.cursor;
     airMv.add(A_T.stoop, (p) => lerp(s0, s1, (16 * p + 12 * p * p) / 28));
@@ -13204,6 +13237,7 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     scene.at(tFlap, () => {
       const g = ground(s1);
       sound(dim, "ed_air_flare", s1, 1.6);
+      shake(dim, g, 40, 0.3, 0.45);
       particle(dim, "ed_air_shock", up(g, 0.3));
       particle(dim, "ed6_flash_air", up(g, 2));
       burst(dim, "ed_air_gust", up(g, 0.8), 3, 6);
@@ -13518,6 +13552,7 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     const q = scene.spawn("ed_nature_quake", up(SL, 0.03), { size: 3.4, state: 1 });
     scene.after(27, () => scene.despawn(q));
     sound(dim, "ed_nature_slam", SL, 2.4);
+    shake(dim, SL, 80, 0.55, 0.8);
     particle(dim, "ed_nature_shock_big", up(SL, 0.2));
     particle(dim, "ed6_wave", up(SL, 0.3));
     particle(dim, "ed6_flash_nature", up(SL, 2));
@@ -13583,6 +13618,7 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
       sound(dim, "ed_tide_land", z.TL, 1.6);
     });
     scene.at(tLand2 + D_T.landHit, () => {
+      shake(dim, z.TL, 45, 0.18, 0.4);
       ring(dim, "ed_tide_splash", up(z.TL, 0.3), 3, 6);
       particle(dim, "ed_tide_frost_ring", up(z.TL, 0.2));
       particle(dim, "ed6_flash_tide", up(z.TL, 3));
@@ -13832,6 +13868,8 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     ringCells.length = 0;
     const bl = scene.spawn("ed6_blast", up(G, 0.05), { size: (ED06.ringRadius + ED06.detonationExtra) / 6, state: BLAST.blast });
     sound(dim, "ed6_detonation", G, 3);
+    shake(dim, G, 64, 1, 1.3);
+    flash(dim, G, 80, [1, 0.86, 0.6], 0.04, 0.06, 0.75);
     sound(dim, "ed_heat_roar", up(G, 3), 2, 0.8);
     particle(dim, "ed6_thermal_ring", up(G, 0.3));
     particle(dim, "ed6_wave", up(G, 0.4));
@@ -13858,6 +13896,15 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     scene.after(6, () => {
       particle(dim, "ed6_thermal_ring", up(G, 0.5));
       burst(dim, "ed6_thermal", up(G, 3), 4, 6);
+    });
+    for (let i = 0; i < 6; i++) scene.after(8 + i * 4, () => {
+      ring(dim, "ed6_column", up(G, 0.5), 1.5 + i * 0.5, 4, i * 30);
+      particle(dim, "ed6_column", up(G, 0.5));
+    });
+    scene.after(16, () => {
+      particle(dim, "ed6_light_wave", up(G, 0.5));
+      shake(dim, G, 64, 0.35, 0.6);
+      sound(dim, "ed6_swell", G, 1.6, 0.7);
     });
     for (let i = 0; i < 6; i++) scene.after(8 + i * 5, () => burst(dim, "ed6_smoke", up(G, 2 + i), 3 + i * 0.6, 3));
     scene.after(26, () => bl.state(BLAST.hold).skin(1));
@@ -13934,14 +13981,20 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     sound(dim, "ed6_codex_open", K3, 1.6);
   });
   scene.at(T52 + 40, () => codex.state(CODEX2.absorb));
-  const PL = at(30, 22);
+  let PL = at(30, 22);
   scene.at(T52 + 12, () => {
+    PL = ground(add(add(zone().G, mul(F, 14)), mul(R2, 22)));
     let tb2 = T52 + 30, best = Infinity;
+    const hRest = heatMv.posAt(T52 + 110);
     for (let t = T52 + 16; t <= T52 + 70; t += 2) {
       const p = airMv.posAt(t), q = airMv.posAt(t + 1);
       const to = flat(sub(PL, p)), d = Math.hypot(to.x, to.z);
       if (d < 14 || d > 32) continue;
-      const sc = Math.abs(angleDelta(yawOf(flat(sub(q, p))), yawOf(to))) * 2 + Math.abs(d - 20) * 0.5 + Math.abs(t - (T52 + 30)) * 0.1;
+      const clear2 = Math.min(
+        distToSegment(hRest, { ...p, y: hRest.y }, { ...PL, y: hRest.y }),
+        distToSegment(zone().TL, { ...p, y: zone().TL.y }, { ...PL, y: zone().TL.y })
+      );
+      const sc = Math.abs(angleDelta(yawOf(flat(sub(q, p))), yawOf(to))) * 2 + Math.abs(d - 20) * 0.5 + Math.abs(t - (T52 + 30)) * 0.1 + (clear2 < 16 ? (16 - clear2) * 30 : 0) + Math.abs(angleDelta(yawOf(to), yawOf(mul(F, -1)))) * 0.8;
       if (sc < best) {
         best = sc;
         tb2 = t;
@@ -13952,7 +14005,7 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     const arcIn = steer(p0, y0, PL, 10);
     const from = arcIn.length ? arcIn[arcIn.length - 1] : p0;
     const dirL = norm(flat(sub(PL, from)));
-    const app = up(add(PL, mul(dirL, -9)), 3.5);
+    const app = up(add(PL, mul(dirL, -7)), 5);
     airMv.path([p0, ...arcIn, app], 14);
     const tF = airMv.cursor;
     airMv.add(A_T.flare, (p) => lerp(app, up(add(PL, mul(dirL, -1.5)), 1.4), easeOut(p)), { yaw: yawOf(dirL) });
@@ -13977,7 +14030,8 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
       burst(dim, "ed_air_feather_burst", up(PL, 1.5), 2, 3);
     });
     scene.at(tD + A_T.depart, () => scene.despawn(air));
-    remember(3, () => ({ p: PL, yaw: yawOf(dirL) }), AIR.scale, tD + 4, Math.max(T52 + 82, tD + 30));
+    const PLf = PL;
+    remember(3, () => ({ p: PLf, yaw: yawOf(dirL) }), AIR.scale, tD + 4, Math.max(T52 + 82, tD + 30));
   });
   let massV;
   scene.at(T52, () => {
@@ -14050,6 +14104,8 @@ var ed06_world_before_names_default = defineSpell("ed06", ({ caster, scene, aim 
     codex.skin(4);
     const Kc = up(K3, CODEX_CORE);
     sound(dim, "ed6_seal", Kc, 2.4);
+    flash(dim, Kc, 80, [1, 0.95, 0.78], 0.1, 0.02, 1);
+    shake(dim, Kc, 40, 0.22, 0.6);
     sound(dim, "ed6_codex_close", Kc, 1.8);
     particle(dim, "fx_flash", Kc);
     particle(dim, "ed6_ring_v", Kc);

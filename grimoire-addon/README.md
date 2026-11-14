@@ -200,6 +200,8 @@ again with no targets. On 1.26.62 this ran inside the shipped `Grimoire_Test_Wor
 * both servers load the packs and the packaged test world without content errors;
 * holding the book raises `itemStartUse`, releasing raises `itemReleaseUse`: hold-to-cast works;
 * every spell ran to its end with **0 script errors and 0 add-on warnings**, and cleaned up.
+* **1.2.0**: ED06 and ED01-ED04 again on 1.26.62.1, 0 errors and 0 add-on warnings, and the
+  recorded dragon motion passes `tools/motion_check.py` (no bodies touching, no sliding poses).
 * **1.1.0** was run the same way on 1.26.62.1 inside its own test world: all 18 spells with
   targets and the three upgraded Extra Ultimates again without targets, 21 casts with 0 errors and
   0 add-on warnings; at most 41 (DW06), 32 (DN06) and 45 (ED06) spell entities alive at once.
@@ -255,6 +257,26 @@ Measured in those tests:
 
 These updates answer reports from play-tests on iPhone ("things missing, wrong positions, the book
 is gone, some spells make no sense").
+
+**1.2.0**
+
+* **The four dragons of The World Before Names (ED06) move like the animals they are.** A play-test
+  said they looked and moved "extremely unnatural". Measured against each dragon's own locomotion
+  rules (new `tools/motion_check.py`), the old choreography broke them 895 times per cast: resting
+  or panting poses sliding over the ground, runs and dives at the wrong speed, turns in place at up
+  to 340 degrees a second, a 25-block swimmer and a 16-block-wingspan flyer whipping round 2-4 block
+  circles, and bodies passing through each other. Now a creature's pose always follows what its
+  body is doing, every gait runs at the speed its legs were animated for, the swimmer and the flyer
+  circle wide racetracks, the Air Dragon dives at real stooping speed and climbs out in a wide arc,
+  and no two dragons touch - checked in the headless tests and on the real 26.62 server.
+* **Impacts you can feel:** the heartbeats, the titan's footsteps, the slam, the charges, the
+  landing and above all the final detonation shake the screen; the detonation and the Codex's
+  seal flash it, followed by a pillar of light and an aftershock.
+
+**1.1.1**
+
+* The Dream & Nightmare and Elemental Dragon books open again when Use is held (their open motion
+  is now written the way the Divine Word book's is, which the iPhone draws).
 
 **1.1.0**
 

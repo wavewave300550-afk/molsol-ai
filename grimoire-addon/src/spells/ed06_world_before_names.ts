@@ -2,7 +2,7 @@ import { Entity } from "@minecraft/server";
 import { ED06 as C } from "../config/ed06";
 import { defineSpell } from "../core/registry";
 import { damage, effect, knockback, restrain, shove } from "../lib/combat";
-import { burst, line, particle, ring, sound } from "../lib/fx";
+import { burst, flash, line, particle, ring, shake, sound } from "../lib/fx";
 import { Actor } from "../lib/scene";
 import { focus, groundBelow, hostiles, isAlive } from "../lib/targeting";
 import { LIGHT, blocksFor } from "../lib/tempblocks";
@@ -310,6 +310,7 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     const Kc = cxCore();
     sound(dim, `ed6_heart_${n}`, Kc, 1.2);
     sound(dim, `ed6_heart_${n}`, e.c, 1.8);
+    shake(dim, Kc, 40, 0.12 + 0.05 * k, 0.3);           // each heartbeat is felt, the fourth the strongest
     codexBeat();
     domainBeat();
     codex.skin(k + 1);                                 // a lineage gem lights on the back cover
@@ -445,6 +446,7 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     scene.at(from + ticks, () => { nature.state(N.idle); nWalking = false; });
   };
   function footfall(p: V3): void {
+    shake(dim, p, 70, 0.08, 0.25);                     // the titan's steps rumble faintly under the caster
     footprints.push(p);
     if (footprints.length > 12) footprints.shift();
     const q = scene.spawn("ed_nature_quake", up(p, 0.02), { size: 1.6, state: 1, yaw: (scene.tick * 47) % 360 });
@@ -483,7 +485,11 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     particle(dim, "ed6_flash_nature", up(N0, 3));
   });
   scene.at(T_NATURE + 14, () => fadeEmblem(0));
-  scene.at(T_NATURE + 18, () => { strataI.forEach((s) => s.state(STRATA.part)); sound(dim, "ed_nature_erupt", N0, 1.6); });
+  scene.at(T_NATURE + 18, () => {
+    strataI.forEach((s) => s.state(STRATA.part));
+    sound(dim, "ed_nature_erupt", N0, 1.6);
+    shake(dim, N0, 80, 0.22, 1.0);
+  });
   scene.every(1, (e) => {                              // earth pours off the rising body
     const p = local(N0, nYaw0, (hash01(e, 40) - 0.5) * 10, (hash01(e, 41) - 0.5) * 24);
     particle(dim, "ed6_trail_nature", up(ground(p), 1 + hash01(e, 42) * 5));
@@ -684,7 +690,7 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
       hFinal = !!opts.final;
       hStart = from;
       glassNext = 0;
-      if (!opts.run) sound(dim, "ed_heat_roar", up(from, 4), 1.6, 1.05);
+      if (!opts.run) { sound(dim, "ed_heat_roar", up(from, 4), 1.6, 1.05); shake(dim, from, 50, 0.12, 0.45); }
     });
     scene.at(t0 + n, () => {
       heat.state(H.skid);
@@ -1114,7 +1120,15 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     const rel = sub(G, C0);
     const gf = dot(rel, F), gr = dot(rel, R);
     airMv.truncate(tGlide);
-    const s0 = sky(gf + 13, gr - 3, 15.5), s1 = sky(gf + 2.5, gr - 3.5, 3.4);
+    let s0 = sky(gf + 13, gr - 3, 15.5), s1 = sky(gf + 2.5, gr - 3.5, 3.4);
+    // never dive into the Heat Dragon: where it will stand when the dive ends, keep 14 blocks (its body + the wings)
+    const hp = heatMv.posAt(tGlide + 40);
+    const away = flat(sub(s1, hp)), dh = Math.hypot(away.x, away.z);
+    if (dh < 16) {
+      const push = mul(dh > 0.1 ? norm(away) : mul(R, -1), 16 - dh);
+      s1 = add(s1, push);
+      s0 = add(s0, push);
+    }
     airMv.path([AR2, lerp(AR2, s0, 0.5), s0], 16);
     tStoop = airMv.cursor;
     // speed rises 16 -> 40 blocks / s over the dive: distance = v0 p + (v1 - v0) p^2 / 2 (normalised)
@@ -1132,6 +1146,7 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     scene.at(tFlap, () => {
       const g = ground(s1);
       sound(dim, "ed_air_flare", s1, 1.6);
+      shake(dim, g, 40, 0.3, 0.45);
       particle(dim, "ed_air_shock", up(g, 0.3));
       particle(dim, "ed6_flash_air", up(g, 2));
       burst(dim, "ed_air_gust", up(g, 0.8), 3, 6);
@@ -1430,6 +1445,7 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     const q = scene.spawn("ed_nature_quake", up(SL, 0.03), { size: 3.4, state: 1 });
     scene.after(27, () => scene.despawn(q));
     sound(dim, "ed_nature_slam", SL, 2.4);
+    shake(dim, SL, 80, 0.55, 0.8);
     particle(dim, "ed_nature_shock_big", up(SL, 0.2));
     particle(dim, "ed6_wave", up(SL, 0.3));
     particle(dim, "ed6_flash_nature", up(SL, 2));
@@ -1492,6 +1508,7 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     tideMv.hold(T5 + 40 - tideMv.cursor, z.tideYaw);
     scene.at(tLand, () => { tide.state(D.land); sound(dim, "ed_tide_land", z.TL, 1.6); });
     scene.at(tLand + D_T.landHit, () => {
+      shake(dim, z.TL, 45, 0.18, 0.4);
       ring(dim, "ed_tide_splash", up(z.TL, 0.3), 3, 6);
       particle(dim, "ed_tide_frost_ring", up(z.TL, 0.2));
       particle(dim, "ed6_flash_tide", up(z.TL, 3));
@@ -1718,6 +1735,8 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     ringCells.length = 0;
     const bl = scene.spawn("ed6_blast", up(G, 0.05), { size: (C.ringRadius + C.detonationExtra) / 6, state: BLAST.blast });
     sound(dim, "ed6_detonation", G, 3.0);
+    shake(dim, G, 64, 1.0, 1.3);                        // the climax: the strongest shake and the one flash of the spell
+    flash(dim, G, 80, [1.0, 0.86, 0.6], 0.04, 0.06, 0.75);
     sound(dim, "ed_heat_roar", up(G, 3), 2.0, 0.8);
     particle(dim, "ed6_thermal_ring", up(G, 0.3));
     particle(dim, "ed6_wave", up(G, 0.4));
@@ -1738,6 +1757,9 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     }
     scene.after(4, () => { ringA?.state(RING.burst); sound(dim, "ed_nature_erupt", G, 2.0, 0.8); burst(dim, "ed6_trail_nature", up(G, 2), 6, 6); });
     scene.after(6, () => { particle(dim, "ed6_thermal_ring", up(G, 0.5)); burst(dim, "ed6_thermal", up(G, 3), 4, 6); });
+    // aftershock: a pillar of light climbs out of the crater, then a second, wider wave rolls out
+    for (let i = 0; i < 6; i++) scene.after(8 + i * 4, () => { ring(dim, "ed6_column", up(G, 0.5), 1.5 + i * 0.5, 4, i * 30); particle(dim, "ed6_column", up(G, 0.5)); });
+    scene.after(16, () => { particle(dim, "ed6_light_wave", up(G, 0.5)); shake(dim, G, 64, 0.35, 0.6); sound(dim, "ed6_swell", G, 1.6, 0.7); });
     for (let i = 0; i < 6; i++) scene.after(8 + i * 5, () => burst(dim, "ed6_smoke", up(G, 2 + i), 3 + i * 0.6, 3));
     scene.after(26, () => bl.state(BLAST.hold).skin(1));
     scene.after(50, () => bl.state(BLAST.fade));
@@ -1807,16 +1829,23 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
   });
   scene.at(T5 + 40, () => codex.state(CODEX.absorb));
   // Air: a controlled landing on the right of the stage, wings folded, then it becomes inscription
-  const PL = at(30, 22);
+  // it lands well to the right of where the Heat Dragon rests after the Concord (that spot follows the enemies,
+  // so this one does too), coming in from behind so its flared wings open sideways, away from the Heat Dragon
+  let PL = at(30, 22);
   scene.at(T5 + 12, () => {
+    PL = ground(add(add(zone().G, mul(F, 14)), mul(R, 22)));
     // back on its lane after the Concord, it peels off where the lane already heads for the landing spot and lands
     // facing the way it came: one descending glide, no hairpin
     let tb = T5 + 30, best = Infinity;
+    const hRest = heatMv.posAt(T5 + 110);               // where the Heat Dragon rests: the glide down must pass clear of it
     for (let t = T5 + 16; t <= T5 + 70; t += 2) {
       const p = airMv.posAt(t), q = airMv.posAt(t + 1);
       const to = flat(sub(PL, p)), d = Math.hypot(to.x, to.z);
       if (d < 14 || d > 32) continue;
-      const sc = Math.abs(angleDelta(yawOf(flat(sub(q, p))), yawOf(to))) * 2 + Math.abs(d - 20) * 0.5 + Math.abs(t - (T5 + 30)) * 0.1;
+      const clear = Math.min(distToSegment(hRest, { ...p, y: hRest.y }, { ...PL, y: hRest.y }),
+        distToSegment(zone().TL, { ...p, y: zone().TL.y }, { ...PL, y: zone().TL.y }));    // and of the Water & Ice Dragon
+      const sc = Math.abs(angleDelta(yawOf(flat(sub(q, p))), yawOf(to))) * 2 + Math.abs(d - 20) * 0.5 + Math.abs(t - (T5 + 30)) * 0.1
+        + (clear < 16 ? (16 - clear) * 30 : 0) + Math.abs(angleDelta(yawOf(to), yawOf(mul(F, -1)))) * 0.8;
       if (sc < best) { best = sc; tb = t; }
     }
     const y0 = yawOf(flat(sub(airMv.posAt(tb + 1), airMv.posAt(tb))));
@@ -1824,7 +1853,7 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     const arcIn = steer(p0, y0, PL, 10);
     const from = arcIn.length ? arcIn[arcIn.length - 1] : p0;
     const dirL = norm(flat(sub(PL, from)));
-    const app = up(add(PL, mul(dirL, -9)), 3.5);
+    const app = up(add(PL, mul(dirL, -7)), 5);
     airMv.path([p0, ...arcIn, app], 14);
     const tF = airMv.cursor;
     airMv.add(A_T.flare, (p) => lerp(app, up(add(PL, mul(dirL, -1.5)), 1.4), easeOut(p)), { yaw: yawOf(dirL) });
@@ -1839,7 +1868,8 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     const tD = Math.max(tL + A_T.land + 20, T5 + 56);
     scene.at(tD, () => { force(scene.tick, 400, A.depart); sound(dim, "ed_air_depart", up(PL, 2), 1.6); burst(dim, "ed_air_feather_burst", up(PL, 1.5), 2, 3); });
     scene.at(tD + A_T.depart, () => scene.despawn(air));
-    remember(3, () => ({ p: PL, yaw: yawOf(dirL) }), AIR.scale, tD + 4, Math.max(T5 + 82, tD + 30));
+    const PLf = PL;
+    remember(3, () => ({ p: PLf, yaw: yawOf(dirL) }), AIR.scale, tD + 4, Math.max(T5 + 82, tD + 30));
   });
   // Water & Ice: retracts its crystal sail, rises into suspended water and dissolves into it
   let massV: Actor | undefined;
@@ -1898,6 +1928,8 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     codex.skin(4);
     const Kc = up(K3, CODEX_CORE);
     sound(dim, "ed6_seal", Kc, 2.4);
+    flash(dim, Kc, 80, [1.0, 0.95, 0.78], 0.1, 0.02, 1.0);   // the world remembers: a soft golden fade
+    shake(dim, Kc, 40, 0.22, 0.6);
     sound(dim, "ed6_codex_close", Kc, 1.8);
     particle(dim, "fx_flash", Kc);
     particle(dim, "ed6_ring_v", Kc);
