@@ -75,7 +75,7 @@ var CONFIG = {
 var RUNTIME = CONFIG;
 
 // src/config/version.ts
-var VERSION = "1.2.0";
+var VERSION = "1.2.5";
 
 // src/main.ts
 import { CommandPermissionLevel, CustomCommandStatus, ItemStack as ItemStack2, Player as Player6, system as system7, world as world8 } from "@minecraft/server";

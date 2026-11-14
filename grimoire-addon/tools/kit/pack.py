@@ -292,9 +292,26 @@ class Pack:
         or pushed.  It is saved with its chunk, which is what src/lib/ledger.ts relies on (family
         grimoire_ledger, NOT grimoire_construct: the construct sweep on world load must leave it alone)."""
         full = f"{NS}:{ident}"
+        # drawn as nothing: a geometry with one bone and no cubes, a transparent 16x16 texture
+        geo = f"geometry.{NS}.{ident}"
+        _write(os.path.join(self.rp, "models", "entity", f"{ident}.geo.json"), {
+            "format_version": "1.16.0",
+            "minecraft:geometry": [{"description": {"identifier": geo, "texture_width": 16, "texture_height": 16,
+                                                    "visible_bounds_width": 1, "visible_bounds_height": 1,
+                                                    "visible_bounds_offset": [0, 0.5, 0]},
+                                    "bones": [{"name": "root", "pivot": [0, 0, 0]}]}]})
+        tex = f"textures/entity/{NS}/{ident}"
+        os.makedirs(os.path.join(self.rp, os.path.dirname(tex)), exist_ok=True)
+        from PIL import Image
+        Image.new("RGBA", (16, 16), (0, 0, 0, 0)).save(os.path.join(self.rp, tex + ".png"))
+        rc = f"controller.render.{NS}.{ident}"
+        _write(os.path.join(self.rp, "render_controllers", f"{ident}.render_controllers.json"),
+               {"format_version": "1.8.0", "render_controllers": {rc: {
+                   "geometry": "Geometry.default", "materials": [{"*": "Material.default"}], "textures": ["Texture.default"]}}})
         _write(os.path.join(self.rp, "entity", f"{ident}.entity.json"),
                {"format_version": "1.10.0", "minecraft:client_entity": {"description": {
-                   "identifier": full, "materials": {}, "textures": {}, "geometry": {}, "render_controllers": []}}})
+                   "identifier": full, "materials": {"default": "entity_alphatest"}, "textures": {"default": tex},
+                   "geometry": {"default": geo}, "render_controllers": [rc]}}})
         _write(os.path.join(self.bp, "entities", f"{ident}.json"), {
             "format_version": ENTITY_FORMAT,
             "minecraft:entity": {

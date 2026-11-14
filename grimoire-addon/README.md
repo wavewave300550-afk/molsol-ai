@@ -200,6 +200,11 @@ again with no targets. On 1.26.62 this ran inside the shipped `Grimoire_Test_Wor
 * both servers load the packs and the packaged test world without content errors;
 * holding the book raises `itemStartUse`, releasing raises `itemReleaseUse`: hold-to-cast works;
 * every spell ran to its end with **0 script errors and 0 add-on warnings**, and cleaned up.
+* **1.2.5** (test build): ED06 on 1.26.62.1 with and without targets: about 2,050 real blocks of
+  living ground mid-cast, 0 left afterwards (every block of a 49 x 49 x 15 domain compared, type and
+  states), fog and camera handed back, the clock within 1 tick of where it would have been. The
+  server was also killed hard in the middle of a cast and started again: the domain's block hash
+  matched the untouched world.
 * **1.2.0**: ED06 and ED01-ED04 again on 1.26.62.1, 0 errors and 0 add-on warnings, and the
   recorded dragon motion passes `tools/motion_check.py` (no bodies touching, no sliding poses).
 * **1.1.0** was run the same way on 1.26.62.1 inside its own test world: all 18 spells with
@@ -257,6 +262,28 @@ Measured in those tests:
 
 These updates answer reports from play-tests on iPhone ("things missing, wrong positions, the book
 is gone, some spells make no sense").
+
+**1.2.5 (test build: the first step of the new ED06)**
+
+A play-test said of ED06: "don't like it at all - bring the whole ecosystem, spectacular". This
+test build adds the world-level layer of the new spell; the animals, plants, land and new dragons
+follow in 1.3.0 and 1.4.0.
+
+* **The ancient world reaches the real ground.** On each of the four heartbeats a ring of the
+  natural ground around the caster (22 blocks) turns into the old world: moss, ferns and leaf
+  litter in a primeval forest behind and to the sides, a meadow of moss, ferns and flowers ahead,
+  black basalt cracked by glowing magma ahead to the right, a mud shore ahead to the left. Builds,
+  containers and water are never touched, and nothing can be broken or blown up while the spell
+  holds it. At the end it recedes ring by ring and every block is exactly as it was, even after
+  a crash or quit mid-spell (the record of each changed chunk is saved together with its blocks).
+* **Sky and air:** the caster's view warms through four stages of golden haze (ash after the
+  detonation) and the sun sweeps to the horizon and is held there; afterwards the clock goes back
+  to where it would have been. The time is only changed when every other player is nearby.
+* **A camera shot:** as the four hearts beat as one, the view cranes up behind the caster over the
+  awakened world for about four seconds, then comes back. The caster cannot be hurt during it; it
+  is skipped with an enemy right next to the caster.
+* About a fifth of the old floating particle haze is left; the real fog carries it now.
+* The temporary barriers and lights of every spell are now crash-safe the same way.
 
 **1.2.0**
 

@@ -278,8 +278,10 @@ def main():
                 err(f"{i}: a ledger marker must be persistent and not transient")
             if "grimoire_construct" in fam:
                 err(f"{i}: a ledger marker must not be a construct (the construct sweep would delete it)")
-            if rp_ents.get(i, {}).get("render_controllers"):
-                err(f"{i}: a ledger marker is never drawn")
+            for gid in rp_ents.get(i, {}).get("geometry", {}).values():
+                g = geos.get(gid)
+                if g and any(b.get("cubes") for b in g[0].get("bones", [])):
+                    err(f"{i}: a ledger marker is never drawn (its geometry must have no cubes)")
         elif "minecraft:transient" not in comps:
             warn(f"{i}: not transient (could persist after a crash)")
     for i in rp_ents:
