@@ -436,8 +436,12 @@ class Model:
             bw = math.ceil(ext * 2 * 1.6 + 2)
             bh = math.ceil((hi[1] - min(lo[1], 0)) / 16.0 * 1.4 + 2)
             bo = (0, round((hi[1] + min(lo[1], 0)) / 32.0, 2), 0)
+        # Bone "binding" (attaching a held item's root to the hand) exists from geometry format 1.16.0;
+        # every vanilla geometry that uses it (trident, shield, spear, spyglass, crossbow) is 1.16.0.
+        # Written as 1.12.0 the binding is not applied and the held book hangs at the player's origin.
+        has_binding = any(b.binding for b in self.bones.values())
         return {
-            "format_version": "1.12.0",
+            "format_version": "1.16.0" if has_binding else "1.12.0",
             "minecraft:geometry": [{
                 "description": {
                     "identifier": f"geometry.grimoire.{self.name}",
