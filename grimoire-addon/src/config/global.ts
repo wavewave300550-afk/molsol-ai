@@ -4,6 +4,8 @@
  * Cooldowns are NOT here on purpose: they are the approved registry in core/registry.ts.
  */
 export const CONFIG = {
+  /** Give every player the three Grimoires the first time they join a world with the add-on. */
+  starterKit: true,
   input: {
     /** Minimum ticks Use must be held before a release counts as a cast (20 ticks = 1 s). */
     minHoldTicks: 6,

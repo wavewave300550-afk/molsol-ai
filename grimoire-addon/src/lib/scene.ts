@@ -102,10 +102,23 @@ export class Actor {
   kind(n: number): this { return this.prop("kind", n); }
   size(n: number): this { this.sz = n; return this.prop("size", n); }
   skin(n: number): this { return this.prop("skin", n); }
+  /**
+   * The facing the model is drawn with.  The entity rotation alone is not enough (the game steers a
+   * mob's body yaw by its own rules), so the wanted yaw is also sent as the synced property
+   * grimoire:yaw, which the client uses to turn the model (see kit/pack.py, "Facing").
+   */
+  private sentYaw = 0;
+  private setYaw(yaw: number): void {
+    this.lastYaw = yaw;
+    let y = ((yaw + 180) % 360 + 360) % 360 - 180;
+    if (y === -180) y = 180;
+    y = Math.round(y * 100) / 100;
+    if (y !== this.sentYaw) { this.sentYaw = y; this.prop("yaw", y); }
+  }
   /** Teleport (and optionally face a yaw).  Called every tick this gives smooth motion. */
   move(loc: Vector3, yaw?: number): this {
     if (!this.valid) return this;
-    if (yaw !== undefined) this.lastYaw = yaw;
+    if (yaw !== undefined) this.setYaw(yaw);
     try {
       this.entity!.teleport(this.settle(loc), { rotation: { x: 0, y: this.lastYaw } });
     } catch {
@@ -115,8 +128,8 @@ export class Actor {
   }
   face(yaw: number): this {
     if (!this.valid) return this;
-    this.lastYaw = yaw;
-    // teleport-in-place: unlike setRotation this always turns the rendered body, not only the head
+    this.setYaw(yaw);
+    // teleport-in-place: unlike setRotation this also sets the body yaw on the server
     try {
       this.entity!.teleport(this.entity!.location, { rotation: { x: 0, y: yaw } });
     } catch { /* ignore */ }

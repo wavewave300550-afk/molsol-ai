@@ -226,21 +226,43 @@ def main():
         if i not in bp_ents:
             err(f"{i}: client entity has no behaviour entity")
 
+    def tga_size(fp):
+        with open(fp, "rb") as fh:
+            h = fh.read(18)
+        return (h[12] | h[13] << 8, h[14] | h[15] << 8)
+
+    def check_emissive_texture(owner, fp):
+        """32-bit TGA; texels that are cut out (alpha 0) must be pure black or the emissive material draws them."""
+        import numpy as np
+        from PIL import Image
+        with open(fp, "rb") as fh:
+            h = fh.read(18)
+        if h[2] not in (2, 10) or h[16] != 32:
+            err(f"{owner}: {os.path.basename(fp)} is not a 32-bit true-colour TGA")
+            return
+        a = np.asarray(Image.open(fp).convert("RGBA"))
+        if (a[a[..., 3] == 0][:, :3].max(initial=0)) > 0:
+            err(f"{owner}: {os.path.basename(fp)} has coloured texels under alpha 0")
+
     def check_visual(owner, d, bones_of):
         geo_ids = d.get("geometry", {})
         for k, gid in geo_ids.items():
             if gid not in geos:
                 err(f"{owner}: geometry {gid} not found")
         for k, tp in d.get("textures", {}).items():
-            fp = os.path.join(RP, tp + ".png")
+            fp = os.path.join(RP, tp + ".tga")
             if not os.path.exists(fp):
-                err(f"{owner}: texture {tp}.png not found")
+                err(f"{owner}: texture {tp}.tga not found")
+            elif os.path.exists(os.path.join(RP, tp + ".png")):
+                err(f"{owner}: both {tp}.tga and a stale .png exist")
+            else:
+                check_emissive_texture(owner, fp)
         # texture size must match geometry description
         if "default" in geo_ids and geo_ids["default"] in geos and "default" in d.get("textures", {}):
             g = geos[geo_ids["default"]][0]["description"]
-            fp = os.path.join(RP, d["textures"]["default"] + ".png")
+            fp = os.path.join(RP, d["textures"]["default"] + ".tga")
             if os.path.exists(fp):
-                sz = png_size(fp)
+                sz = tga_size(fp)
                 if sz and tuple(sz) != (g["texture_width"], g["texture_height"]):
                     err(f"{owner}: texture is {sz} but geometry expects {(g['texture_width'], g['texture_height'])}")
         for m in d.get("materials", {}).values():

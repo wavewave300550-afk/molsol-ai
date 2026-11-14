@@ -53,6 +53,8 @@ export function allies(dim: Dimension, center: Vector3, radius: number, caster: 
 
 /** Temporary spell blocks: solid for players, but never "ground" for spell placement. */
 const GHOST = ["minecraft:barrier", "minecraft:light_block_15"];
+/** Trees are not ground either: a spell aimed into a canopy belongs on the forest floor, not on the leaves. */
+const TREE = /leaves|_log|_wood|_stem|hyphae|mushroom_block|mangrove_roots|azalea|bamboo|vine/;
 
 /**
  * Standing surface for a point: if the point is inside terrain (aimed at a wall or a slope) it first
@@ -63,11 +65,15 @@ export function groundBelow(dim: Dimension, loc: Vector3, maxDrop = 40): Vector3
     let y = loc.y;
     for (let i = 0; i < 24; i++) {
       const b = dim.getBlock({ x: loc.x, y: y + 0.01, z: loc.z });
-      if (!b || b.isAir || b.isLiquid || GHOST.includes(b.typeId)) break;
+      if (!b || b.isAir || b.isLiquid || GHOST.includes(b.typeId) || TREE.test(b.typeId)) break;
       y = Math.floor(y) + 1;
     }
-    const hit = dim.getBlockFromRay({ x: loc.x, y: y + 1.5, z: loc.z }, { x: 0, y: -1, z: 0 },
-      { maxDistance: maxDrop + 2, includePassableBlocks: false, includeLiquidBlocks: true, excludeTypes: GHOST });
+    const opts = { maxDistance: maxDrop + 2, includePassableBlocks: false, includeLiquidBlocks: true, excludeTypes: GHOST };
+    let hit = dim.getBlockFromRay({ x: loc.x, y: y + 1.5, z: loc.z }, { x: 0, y: -1, z: 0 }, opts);
+    // landed on a tree: keep looking under it
+    for (let i = 0; i < 14 && hit && TREE.test(hit.block.typeId); i++) {
+      hit = dim.getBlockFromRay({ x: loc.x, y: hit.block.location.y - 0.01, z: loc.z }, { x: 0, y: -1, z: 0 }, opts);
+    }
     if (hit) return { x: loc.x, y: hit.block.location.y + 1, z: loc.z };
   } catch { /* unloaded */ }
   return { x: loc.x, y: loc.y, z: loc.z };
@@ -82,7 +88,7 @@ export function terrainTop(dim: Dimension, loc: Vector3, maxClimb = 12): number 
     let y = loc.y, inside = false;
     for (let i = 0; i < maxClimb; i++) {
       const b = dim.getBlock({ x: loc.x, y: y + 0.05, z: loc.z });
-      if (!b || b.isAir || b.isLiquid || GHOST.includes(b.typeId) || /leaves|log|wood|stem|mushroom_block/.test(b.typeId)) break;
+      if (!b || b.isAir || b.isLiquid || GHOST.includes(b.typeId) || TREE.test(b.typeId)) break;
       inside = true;
       y = Math.floor(y + 0.05) + 1;
     }

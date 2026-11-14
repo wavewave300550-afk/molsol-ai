@@ -8,12 +8,19 @@ Installable file: [`dist/Grimoire_Rebirth_of_the_Arcane.mcaddon`](dist/Grimoire_
 
 ## เริ่มเล่นแบบย่อ (ภาษาไทย)
 
-1. เปิดไฟล์ `Grimoire_Rebirth_of_the_Arcane.mcaddon` บนเครื่องที่มี Minecraft Bedrock 26.60 ขึ้นไป (บน iPhone: เปิดจากแอป Files แล้วเลือกเปิดด้วย Minecraft)
-2. สร้างหรือแก้ไขโลก แล้วเปิดใช้ Behavior Pack "Grimoire: Rebirth of the Arcane" (Resource Pack จะตามมาเอง) ไม่ต้องเปิด Experiments
-3. หยิบหนังสือจาก Creative Inventory หมวด Equipment หรือพิมพ์ `/grimoire:give`
-4. ถือหนังสือในมือหลัก แล้ว **ย่อตัวหนึ่งครั้ง** เพื่อเลื่อนไปเวทถัดไป (01 ถึง 06 แล้ววนกลับ 01)
-5. ยืนขึ้น **กดปุ่ม Use ค้างไว้** เพื่อเตรียมเวท แล้ว **ปล่อย** เพื่อร่าย
-6. แต่ละเวทมีคูลดาวน์ของตัวเองเท่านั้น ไม่มีมานา ไม่เสียเลือด หนังสือไม่สึกหรอ
+วิธีที่ง่ายที่สุด: เปิดไฟล์ **`Grimoire_Test_World.mcworld`** (บน iPhone: เปิดจากแอป Files แล้วเลือกเปิดด้วย Minecraft) จะได้โลกใหม่ชื่อ "Grimoire Test" ที่ฝังแอดออนเวอร์ชันล่าสุดไว้แล้ว เข้าโลกแล้วหนังสือทั้งสามเล่มจะอยู่ในกระเป๋าทันที ไม่ต้องตั้งค่าหรือพิมพ์คำสั่ง
+
+ถ้าจะใช้กับโลกของตัวเอง:
+
+1. ลบแพ็กเวอร์ชันเก่าก่อน (Settings → Storage) แล้วเปิดไฟล์ `Grimoire_Rebirth_of_the_Arcane.mcaddon`
+2. แก้ไขโลก เปิดใช้ Behavior Pack "Grimoire: Rebirth of the Arcane" (ชื่อแพ็กมีเลขเวอร์ชันต่อท้าย) ไม่ต้องเปิด Experiments
+3. ตอนเข้าโลกจะมีข้อความในแชตบอกเลขเวอร์ชันที่กำลังใช้ และได้รับหนังสือทั้งสามเล่มอัตโนมัติ
+
+วิธีเล่น:
+
+1. ถือหนังสือในมือหลัก แล้ว **ย่อตัวหนึ่งครั้ง** เพื่อเลื่อนไปเวทถัดไป (01 ถึง 06 แล้ววนกลับ 01)
+2. ยืนขึ้น **กดปุ่ม Use ค้างไว้** เพื่อเตรียมเวท แล้ว **ปล่อย** เพื่อร่าย
+3. แต่ละเวทมีคูลดาวน์ของตัวเองเท่านั้น ไม่มีมานา ไม่เสียเลือด หนังสือไม่สึกหรอ
 
 ## Requirements and compatibility
 
@@ -33,11 +40,21 @@ refuse to load the script module because they do not provide API 2.11.0.
 
 ## Installing
 
-1. Copy `dist/Grimoire_Rebirth_of_the_Arcane.mcaddon` to the device and open it; Minecraft imports
-   both packs. (iPhone/iPad: open it from the Files app and choose Minecraft.)
-2. Create or edit a world, open **Behavior Packs**, activate **Grimoire: Rebirth of the Arcane**.
-   The resource pack is a declared dependency and is applied with it.
-3. No experiments are needed. Enable **cheats** only if you want the test commands below.
+**Quickest: the test world.** Open `dist/Grimoire_Test_World.mcworld` (iPhone/iPad: from the Files
+app, choose Minecraft). It is a flat creative world with cheats on and both packs embedded, so it
+always runs the version it was built with and needs no pack management.
+
+**In your own world:**
+
+1. If an older version is installed, delete it first (Settings > Storage). A world keeps using the
+   pack version it was created with while that version is still on the device.
+2. Open `dist/Grimoire_Rebirth_of_the_Arcane.mcaddon`; Minecraft imports both packs.
+3. Edit the world, open **Behavior Packs**, activate **Grimoire: Rebirth of the Arcane** (the pack
+   name ends with its version). The resource pack is a declared dependency and is applied with it.
+4. No experiments are needed. Enable **cheats** only if you want the test commands below.
+
+When you join, a chat line states the running version, and each player receives the three
+Grimoires once (`starterKit` in `src/config/global.ts`).
 
 The two packs are also available separately as `.mcpack` files in `dist/`.
 
@@ -173,10 +190,19 @@ More in `docs/gallery/` (the three books, the dollhouse, the city spire, the por
 
 ## Verification status
 
-**Nothing in this add-on has been run inside Minecraft.** No game client was available in the build
-environment, and running a Bedrock Dedicated Server requires accepting the Minecraft EULA, which
-was not done on the user's behalf. Everything below is verification outside the game.
+**Server side: run in the game engine.** With the user's acceptance of the Minecraft EULA, the
+add-on was loaded into a real Bedrock Dedicated Server 1.26.63.1. A simulated player
+(`@minecraft/server-gametest`) cast all 18 spells through the real input path - crouch to select,
+hold Use, release - twice (with six husks as targets, and with no targets), on generated terrain:
 
+* the server loads both packs and the packaged test world without content errors;
+* holding the book raises `itemStartUse`, releasing raises `itemReleaseUse`: hold-to-cast works;
+* every spell ran to its end with **0 script errors and 0 add-on warnings**, and cleaned up.
+
+**Client side: not seen.** A dedicated server draws nothing. Models, textures, glow, particles,
+the book in the hand and sound have still not been looked at inside the game.
+
+| Check | Result |
 | Check | Result |
 |---|---|
 | TypeScript type check against the official `@minecraft/server` 2.11.0 typings | clean |
@@ -214,9 +240,25 @@ Measured in those tests:
 
 ## Changes since 1.0.0
 
-Both updates answer a report from a first play-test on iPhone ("things missing, wrong positions").
-They were made from analysis and from the scene previews described in DEVELOPING.md, not from a
-second look inside the game.
+These updates answer reports from play-tests on iPhone ("things missing, wrong positions, the book
+is gone, some spells make no sense").
+
+**1.0.3**
+
+* **Textures are TGA.** The spell models use the emissive entity material, whose alpha channel is
+  glow. Every vanilla texture drawn that way is a `.tga`, and Mojang's material reference says the
+  material needs one; these were `.png`. All 270 model textures are now 32-bit TGA.
+* **Facing.** Measured on the real server: the body yaw a model is drawn with trails a turn in place
+  by up to 75 degrees, and still by 50 with the `body_rotation_always_follows_head` component
+  that 1.0.1 added (removed again). The facing a spell asks for is now also sent as the synced
+  property `grimoire:yaw`, and every model is turned to it on the client whatever its body yaw is.
+* **The Guest Behind the Door** no longer mimes a grab at empty air. It reaches only for an enemy
+  that is really within reach when it leans out; with nobody there it waits a moment, takes
+  whoever comes close, and otherwise goes back inside and the door shuts quietly.
+* **The update cannot be missed.** The version is in the pack name and in a chat line on joining,
+  each player gets the three Grimoires once, and `Grimoire_Test_World.mcworld` ships a world with
+  the packs embedded.
+* First run inside the real server engine (see Verification status); the probe is in `tests/probe`.
 
 **1.0.2**
 
@@ -229,8 +271,7 @@ second look inside the game.
   the air. Ground-bound spell entities now follow the terrain under their own position, wide flat
   pieces are raised to the highest ground under their footprint, and flying or charging creatures
   are lifted out of terrain instead of passing through it.
-* **Facing.** Every turn of a spell entity now goes through a teleport, which always turns the
-  rendered body.
+* **Facing.** Every turn of a spell entity now goes through a teleport (superseded in 1.0.3).
 * Temporary barrier and light blocks no longer count as ground when spells look for the surface.
 * A spell aimed at the ground close by is centred at least 9 blocks away (was 7), so the largest
   summons do not appear on top of the caster.
@@ -245,25 +286,28 @@ second look inside the game.
 
 ## Known limitations and things to check in game
 
-* **In-game behaviour is unverified** (see above). In particular, none of these have been seen on
-  a device: touch-screen hold and release on iPhone, model orientation and texture mapping, glow
-  (emissive) rendering, particle appearance, sound levels and mix, frame rate, and how far away the
-  largest models stay visible.
-* **Hold-to-cast** depends on `minecraft:use_modifiers` making the book a hold-to-use item. Mojang's
-  1.26.30 notes state that this component itself starts item use, and the vanilla spear relies on
-  it, but it was not tested on a device. If a platform never raises the hold event, turn on the
-  fallback with `/scriptevent grimoire:config heartbeat on`: it infers hold and release from
-  repeated use events. That works with keyboard, mouse and controller; on touch it would behave
-  like tap-to-cast, so it is off by default.
+* **What the player sees is unverified** (see Verification status). None of these have been seen
+  on a device: model orientation and texture mapping, glow (emissive) rendering, particle
+  appearance, the book in the hand, sound levels and mix, frame rate, and how far away the largest
+  models stay visible.
+* **Hold-to-cast** depends on `minecraft:use_modifiers` making the book a hold-to-use item. On the
+  real server a simulated player's hold raises `itemStartUse` and its release `itemReleaseUse`, so
+  the item and the script side work; a touch screen itself was not tested. If a platform never
+  raises the hold event, turn on the fallback with `/scriptevent grimoire:config heartbeat on`: it
+  infers hold and release from repeated use events. That works with keyboard, mouse and
+  controller; on touch it would behave like tap-to-cast, so it is off by default.
 * **Model conventions.** Coordinates, rotations and face mapping follow the conversion Blockbench
   uses for Bedrock, cross-checked against vanilla animation values. Creator Tools' own preview
   renderer disagrees with it in places (it ignores bind-pose bone rotation and swaps east/west face
   mapping), so one of them is wrong; the game was not available to settle it. If models appear
   mirrored or side textures swapped in game, the conversion lives in one place:
   `Model.to_geo` / `_cube_json` in `tools/kit/geo.py`.
-* **Held book placement** (first and third person) was set by estimate from the player model's
-  hand position. The offsets are in one constants block at the top of each
-  `tools/assets/books_*.py`.
+* **Held book placement** (first and third person) is computed, not seen: third person from the
+  hand frame that the vanilla shield, trident and spyglass share, first person from the frame of
+  the vanilla main-hand shield. The frame is in `tools/assets/books_zfix.py`; the offsets are in one
+  constants block at the top of each `tools/assets/books_*.py`.
+* **Forests.** Large models are drawn through trees, and a spell centred under a canopy stands
+  under it.
 * **The held book cannot know which spell is selected** (an engine limit on held-item models). The
   selected spell is shown by the action bar, a short vision above the book, and the charging
   construct. For the same reason the Dream book shows its nightmare state as a recurring "bad

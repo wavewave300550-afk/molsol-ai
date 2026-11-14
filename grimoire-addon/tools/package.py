@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-"""Package the two packs into an importable .mcaddon (plus individual .mcpack files)."""
+"""Package the two packs into an importable .mcaddon (plus individual .mcpack files) and a
+ready-to-play .mcworld that has both packs embedded."""
 from __future__ import annotations
 
+import json
 import os
+import struct
 import zipfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -10,6 +13,7 @@ DIST = os.path.join(ROOT, "dist")
 PACKS = [("behavior_packs/grimoire_bp", "Grimoire_Rebirth_of_the_Arcane_BP"),
          ("resource_packs/grimoire_rp", "Grimoire_Rebirth_of_the_Arcane_RP")]
 SKIP = (".DS_Store", "Thumbs.db")
+MIN_GAME = (1, 26, 60)
 
 
 def files(src):
@@ -19,6 +23,57 @@ def files(src):
                 continue
             p = os.path.join(r, f)
             yield p, os.path.relpath(p, src).replace(os.sep, "/")
+
+
+def _patch_level(data, name):
+    """Rename the template world, allow cheats, and mark it as saved by the oldest supported game
+    build so that a client on any 1.26.6x version opens it (level.dat is little-endian NBT behind an
+    8-byte header: format version, payload length)."""
+    body = bytearray(data[8:])
+
+    def at(key):
+        i = body.find(bytes([len(key), 0]) + key)
+        if i < 1:
+            raise SystemExit(f"level.dat: tag {key!r} not found")
+        return i + 2 + len(key)
+
+    i = at(b"LevelName")
+    old_len = struct.unpack_from("<H", body, i)[0]
+    nb = name.encode("utf-8")
+    body[i:i + 2 + old_len] = struct.pack("<H", len(nb)) + nb
+    for key in (b"lastOpenedWithVersion", b"MinimumCompatibleClientVersion"):
+        i = at(key)                                  # list: element type (1), count (4), 5 ints
+        struct.pack_into("<5i", body, i + 5, MIN_GAME[0], MIN_GAME[1], MIN_GAME[2], 0, 0)
+    i = at(b"InventoryVersion")
+    n = struct.unpack_from("<H", body, i)[0]
+    v = ".".join(str(x) for x in MIN_GAME).encode()
+    body[i:i + 2 + n] = struct.pack("<H", len(v)) + v
+    for key in (b"commandsEnabled", b"cheatsEnabled"):
+        body[at(key)] = 1
+    return data[:4] + struct.pack("<i", len(body)) + bytes(body)
+
+
+def world(version):
+    """A ready-to-play flat creative world with both packs embedded (generated once by a real
+    Bedrock Dedicated Server, kept in tools/world_template)."""
+    tpl = os.path.join(ROOT, "tools", "world_template")
+    vtext = ".".join(str(v) for v in version)
+    name = f"Grimoire Test {vtext}"
+    out = os.path.join(DIST, "Grimoire_Test_World.mcworld")
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+        level = _patch_level(open(os.path.join(tpl, "level.dat"), "rb").read(), name)
+        z.writestr("level.dat", level)
+        z.writestr("level.dat_old", level)
+        z.writestr("levelname.txt", name)
+        for f in sorted(os.listdir(os.path.join(tpl, "db"))):
+            z.write(os.path.join(tpl, "db", f), f"db/{f}")
+        for (src, pname), kind in zip(PACKS, ("behavior_packs", "resource_packs")):
+            full = os.path.join(ROOT, src)
+            man = json.load(open(os.path.join(full, "manifest.json"), encoding="utf-8"))
+            z.writestr(f"world_{kind}.json", json.dumps([{"pack_id": man["header"]["uuid"], "version": man["header"]["version"]}]))
+            for p, r in files(full):
+                z.write(p, f"{kind}/{pname}/{r}")
+    print(f"  {os.path.basename(out):48s} {os.path.getsize(out) / 1e6:6.2f} MB")
 
 
 def main():
@@ -34,6 +89,8 @@ def main():
                     za.write(p, f"{name}/{r}")
             print(f"  {os.path.basename(single):48s} {os.path.getsize(single) / 1e6:6.2f} MB")
     print(f"  {os.path.basename(addon):48s} {os.path.getsize(addon) / 1e6:6.2f} MB")
+    man = json.load(open(os.path.join(ROOT, PACKS[0][0], "manifest.json"), encoding="utf-8"))
+    world(man["header"]["version"])
 
 
 if __name__ == "__main__":

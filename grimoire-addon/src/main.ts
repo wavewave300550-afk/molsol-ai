@@ -1,3 +1,5 @@
+import { CONFIG } from "./config/global";
+import { VERSION } from "./config/version";
 import { CommandPermissionLevel, CustomCommandStatus, ItemStack, Player, system, world } from "@minecraft/server";
 import { RUNTIME } from "./config/global";
 import { installInput, tickInput } from "./core/input";
@@ -94,6 +96,25 @@ system.afterEvents.scriptEventReceive.subscribe((ev) => {
     }
   }
 }, { namespaces: ["grimoire"] });
+
+// Say which version is running when a player joins: an update that did not take effect is the first
+// thing to rule out when something still looks wrong.
+world.afterEvents.playerSpawn.subscribe((ev) => {
+  if (!ev.initialSpawn) return;
+  const p = ev.player;
+  system.runTimeout(() => {
+    try {
+      if (!p.isValid) return;
+      p.sendMessage(`§6Grimoire: Rebirth of the Arcane §f${VERSION}`);
+      // starter kit: the three Grimoires once per player, so nobody has to type a command to begin
+      if (CONFIG.starterKit && p.getDynamicProperty("grim:kit") !== 1) {
+        p.setDynamicProperty("grim:kit", 1);
+        giveBooks(p);
+        p.sendMessage("§7The three Grimoires are in your inventory.  Crouch: next spell.  Hold Use, release: cast.");
+      }
+    } catch { /* left */ }
+  }, 60);
+});
 
 world.afterEvents.worldLoad.subscribe(() => {
   installWards();

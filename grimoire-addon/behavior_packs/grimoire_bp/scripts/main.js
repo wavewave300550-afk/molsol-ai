@@ -1,8 +1,7 @@
-// src/main.ts
-import { CommandPermissionLevel, CustomCommandStatus, ItemStack as ItemStack2, Player as Player4, system as system4, world as world5 } from "@minecraft/server";
-
 // src/config/global.ts
 var CONFIG = {
+  /** Give every player the three Grimoires the first time they join a world with the add-on. */
+  starterKit: true,
   input: {
     /** Minimum ticks Use must be held before a release counts as a cast (20 ticks = 1 s). */
     minHoldTicks: 6,
@@ -44,6 +43,12 @@ var CONFIG = {
   }
 };
 var RUNTIME = CONFIG;
+
+// src/config/version.ts
+var VERSION = "1.0.3";
+
+// src/main.ts
+import { CommandPermissionLevel, CustomCommandStatus, ItemStack as ItemStack2, Player as Player4, system as system4, world as world5 } from "@minecraft/server";
 
 // src/core/input.ts
 import { EquipmentSlot, system, world as world2 } from "@minecraft/server";
@@ -255,19 +260,20 @@ function allies(dim, center, radius, caster) {
   }
 }
 var GHOST = ["minecraft:barrier", "minecraft:light_block_15"];
+var TREE = /leaves|_log|_wood|_stem|hyphae|mushroom_block|mangrove_roots|azalea|bamboo|vine/;
 function groundBelow(dim, loc, maxDrop = 40) {
   try {
     let y = loc.y;
     for (let i = 0; i < 24; i++) {
       const b = dim.getBlock({ x: loc.x, y: y + 0.01, z: loc.z });
-      if (!b || b.isAir || b.isLiquid || GHOST.includes(b.typeId)) break;
+      if (!b || b.isAir || b.isLiquid || GHOST.includes(b.typeId) || TREE.test(b.typeId)) break;
       y = Math.floor(y) + 1;
     }
-    const hit = dim.getBlockFromRay(
-      { x: loc.x, y: y + 1.5, z: loc.z },
-      { x: 0, y: -1, z: 0 },
-      { maxDistance: maxDrop + 2, includePassableBlocks: false, includeLiquidBlocks: true, excludeTypes: GHOST }
-    );
+    const opts = { maxDistance: maxDrop + 2, includePassableBlocks: false, includeLiquidBlocks: true, excludeTypes: GHOST };
+    let hit = dim.getBlockFromRay({ x: loc.x, y: y + 1.5, z: loc.z }, { x: 0, y: -1, z: 0 }, opts);
+    for (let i = 0; i < 14 && hit && TREE.test(hit.block.typeId); i++) {
+      hit = dim.getBlockFromRay({ x: loc.x, y: hit.block.location.y - 0.01, z: loc.z }, { x: 0, y: -1, z: 0 }, opts);
+    }
     if (hit) return { x: loc.x, y: hit.block.location.y + 1, z: loc.z };
   } catch {
   }
@@ -278,7 +284,7 @@ function terrainTop(dim, loc, maxClimb = 12) {
     let y = loc.y, inside = false;
     for (let i = 0; i < maxClimb; i++) {
       const b = dim.getBlock({ x: loc.x, y: y + 0.05, z: loc.z });
-      if (!b || b.isAir || b.isLiquid || GHOST.includes(b.typeId) || /leaves|log|wood|stem|mushroom_block/.test(b.typeId)) break;
+      if (!b || b.isAir || b.isLiquid || GHOST.includes(b.typeId) || TREE.test(b.typeId)) break;
       inside = true;
       y = Math.floor(y + 0.05) + 1;
     }
@@ -442,10 +448,26 @@ var Actor = class {
   skin(n) {
     return this.prop("skin", n);
   }
+  /**
+   * The facing the model is drawn with.  The entity rotation alone is not enough (the game steers a
+   * mob's body yaw by its own rules), so the wanted yaw is also sent as the synced property
+   * grimoire:yaw, which the client uses to turn the model (see kit/pack.py, "Facing").
+   */
+  sentYaw = 0;
+  setYaw(yaw) {
+    this.lastYaw = yaw;
+    let y = ((yaw + 180) % 360 + 360) % 360 - 180;
+    if (y === -180) y = 180;
+    y = Math.round(y * 100) / 100;
+    if (y !== this.sentYaw) {
+      this.sentYaw = y;
+      this.prop("yaw", y);
+    }
+  }
   /** Teleport (and optionally face a yaw).  Called every tick this gives smooth motion. */
   move(loc, yaw) {
     if (!this.valid) return this;
-    if (yaw !== void 0) this.lastYaw = yaw;
+    if (yaw !== void 0) this.setYaw(yaw);
     try {
       this.entity.teleport(this.settle(loc), { rotation: { x: 0, y: this.lastYaw } });
     } catch {
@@ -454,7 +476,7 @@ var Actor = class {
   }
   face(yaw) {
     if (!this.valid) return this;
-    this.lastYaw = yaw;
+    this.setYaw(yaw);
     try {
       this.entity.teleport(this.entity.location, { rotation: { x: 0, y: yaw } });
     } catch {
@@ -5131,6 +5153,13 @@ var DN02 = {
   pullStop: 1.125,
   /** If the victim has wandered farther than this from the grip point when the hands close, the Guest grasps air. */
   grabRange: 2.4,
+  /**
+   * The Guest only reaches for someone who is really there: an enemy within this distance of the grip
+   * point when it has leaned out of the doorway.  It is pulled into the closing hands.
+   */
+  reachRadius: 5.5,
+  /** With nobody in reach the Guest waits this long at the threshold for someone to come close, then goes back inside. */
+  waitSeconds: 2.5,
   /** Slowness amplifier while the door creaks open (the dread beat) and while the arms reach. */
   dreadSlowAmp: 1,
   reachSlowAmp: 3,
@@ -5156,19 +5185,10 @@ var T_OPEN = T_HANDLE + A2.handle;
 var T_EMERGE = T_OPEN + 6;
 var T_HELD = T_OPEN + A2.open;
 var T_REACH = T_EMERGE + A2.emerge;
-var T_GRAB = T_REACH + A2.reach;
-var T_GRIP = T_GRAB + 2;
-var T_PULL = T_GRAB + A2.grab;
-var T_WITHDRAW = T_PULL + A2.pull;
-var T_SLAM = T_WITHDRAW + 5;
-var T_IMPACT = T_SLAM + A2.slamShut;
-var T_GUEST_GONE = T_IMPACT + 8;
-var T_VANISH = T_IMPACT + 24;
-var T_END = T_VANISH + A2.vanish + 4;
 var dn02_nightmare_intrusion_default = defineSpell("dn02", ({ caster, scene, aim }) => {
   const dim = scene.dim;
   const { center, target } = focus(caster, aim, DN02.snapRadius);
-  const victim = target && isAlive(target) ? target : void 0;
+  let victim = target && isAlive(target) ? target : void 0;
   const spot = victim ? groundBelow(dim, victim.location) : center;
   let dir = flat(sub(spot, caster.location));
   dir = len(dir) < 0.5 ? aim.forward : norm(dir);
@@ -5192,7 +5212,7 @@ var dn02_nightmare_intrusion_default = defineSpell("dn02", ({ caster, scene, aim
   scene.at(T_HANDLE, () => {
     d.state(DOOR.handle);
     sound(dim, "dn_guest_handle", keyhole, 1);
-    if (victim) effect(victim, "slowness", T_REACH - T_HANDLE, DN02.dreadSlowAmp);
+    if (victim && isAlive(victim)) effect(victim, "slowness", T_REACH - T_HANDLE, DN02.dreadSlowAmp);
   });
   scene.at(T_HANDLE + 4, () => particle(dim, "dn_guest_mote", keyhole));
   scene.at(T_HANDLE + 22, () => particle(dim, "dn_guest_cracklight", L3(-14, 32, -2)));
@@ -5203,7 +5223,10 @@ var dn02_nightmare_intrusion_default = defineSpell("dn02", ({ caster, scene, aim
     particle(dim, "dn_guest_dust", L3(0, 2, -6));
   });
   scene.at(T_OPEN + 8, () => sound(dim, "dn_guest_drone", L3(0, 30, 6), 1));
-  scene.every(7, () => particle(dim, "dn_guest_lamp", L3(0, 36, -3)), T_OPEN + 10, T_SLAM);
+  let lamps = true;
+  scene.every(7, () => {
+    if (lamps && d.valid) particle(dim, "dn_guest_lamp", L3(0, 36, -3));
+  }, T_OPEN + 10, T_REACH + 200);
   scene.at(T_HELD, () => d.state(DOOR.held));
   let guest;
   scene.at(T_EMERGE, () => {
@@ -5218,93 +5241,165 @@ var dn02_nightmare_intrusion_default = defineSpell("dn02", ({ caster, scene, aim
     sound(dim, "dn_guest_voice", L3(-20, 70, -14), 1);
     particle(dim, "dn_guest_breath", L3(-24, 70, -22));
   });
-  scene.at(T_REACH, () => {
+  const inReach = (e) => distXZ(e.location, gripAt) <= DN02.reachRadius && Math.abs(e.location.y - door.y) <= 5;
+  const pick = () => {
+    if (victim && isAlive(victim) && inReach(victim)) return victim;
+    return hostiles(dim, gripAt, DN02.reachRadius, caster).find(inReach);
+  };
+  let decided = false;
+  const deadline = T_REACH + secs(DN02.waitSeconds);
+  scene.every(4, () => {
+    if (decided) return;
+    const v2 = pick();
+    if (v2) {
+      decided = true;
+      victim = v2;
+      take2(scene.tick, v2);
+    } else if (scene.tick >= deadline) {
+      decided = true;
+      goBack(scene.tick);
+    }
+  }, T_REACH, deadline + 5);
+  scene.every(22, () => {
+    if (!decided) {
+      sound(dim, "dn_guest_clicks", L3(-20, 50, -4), 0.8, 0.9);
+      particle(dim, "dn_guest_breath", L3(-24, 70, -22));
+    }
+  }, T_REACH + 10, deadline);
+  function goBack(t0) {
+    guest?.state(GUEST.withdraw);
+    sound(dim, "dn_guest_clicks", L3(0, 40, -6), 0.9, 1.35);
+    warn.state(3);
+    scene.at(t0 + 8, () => scene.despawn(warn));
+    scene.at(t0 + A2.withdraw, () => {
+      if (guest) scene.despawn(guest);
+    });
+    scene.at(t0 + A2.withdraw + 2, () => {
+      lamps = false;
+      d.state(DOOR.slam);
+      sound(dim, "dn_guest_slam", L3(0, 40, -2), 0.7, 1.2);
+    });
+    scene.at(t0 + A2.withdraw + 2 + A2.slamShut, () => {
+      lights.remove(L3(0, 40, -12));
+      particle(dim, "dn_guest_dust", L3(0, 2, -4));
+    });
+    vanishAt(t0 + A2.withdraw + 2 + A2.slamShut + 14);
+  }
+  function take2(t0, v2) {
+    const tGrab = t0 + A2.reach, tGrip = tGrab + 2, tPull = tGrab + A2.grab, tWithdraw = tPull + A2.pull;
+    const tSlam = tWithdraw + 5, tImpact = tSlam + A2.slamShut;
+    let caught = false;
+    let release2;
     guest?.state(GUEST.reach);
     sound(dim, "dn_guest_voice", L3(0, 74, -30), 1.1, 0.9);
-    if (victim && isAlive(victim)) effect(victim, "slowness", A2.reach + 4, DN02.reachSlowAmp);
-  });
-  scene.at(T_REACH + 10, () => sound(dim, "dn_guest_clicks", L3(0, 50, -30), 1, 1.2));
-  let caught = false;
-  let release2;
-  scene.at(T_GRAB, () => {
-    caught = !!victim && isAlive(victim) && distXZ(victim.location, gripAt) <= DN02.grabRange;
-    guest?.state(caught ? GUEST.grab : GUEST.miss);
-    if (!caught) {
-      sound(dim, "dn_guest_voice", L3(0, 60, -40), 0.9, 1.15);
-      scene.after(4, () => particle(dim, "dn_guest_breath", L3(0, 24, -56)));
-    }
-  });
-  scene.at(T_GRIP, () => {
-    if (!caught || !victim || !isAlive(victim)) {
-      caught = false;
-      return;
-    }
-    const v2 = victim;
-    const anchor = { x: gripAt.x, y: v2.location.y, z: gripAt.z };
-    const end = { x: dragEnd.x, y: v2.location.y, z: dragEnd.z };
-    release2 = restrain(scene, v2, T_IMPACT - T_GRIP, anchor);
-    scene.every(1, () => {
-      if (!isAlive(v2)) return;
-      const t = scene.tick;
-      const p = t < T_PULL ? 0 : smooth((t - T_PULL) / (A2.pull - 1));
-      drag(v2, lerp(anchor, end, p));
-      if (t >= T_PULL && t < T_WITHDRAW && (t - T_PULL) % 3 === 0) particle(dim, "dn_guest_drag", v2.location);
-    }, T_GRIP, T_IMPACT);
-    sound(dim, "dn_guest_grab", v2.location, 1.1);
-    particle(dim, "dn_guest_grip", up(v2.location, 1));
-    particle(dim, "dn_guest_squeeze", up(v2.location, 1));
-    scene.every(DN02.squeezeEvery, () => {
-      if (!isAlive(v2)) return;
-      damage(v2, DN02.squeezeDamage, caster);
-      particle(dim, "dn_guest_squeeze", up(v2.location, 1.1));
-    }, T_GRIP + 4, T_IMPACT);
-  });
-  scene.at(T_PULL, () => {
-    guest?.state(GUEST.pull);
-    sound(dim, "dn_guest_drag", caught && victim ? victim.location : gripAt, 1);
-  });
-  scene.at(T_WITHDRAW, () => {
-    guest?.state(GUEST.withdraw);
-    sound(dim, "dn_guest_clicks", L3(0, 40, -6), 1, 1.35);
-  });
-  scene.at(T_SLAM, () => {
-    d.state(DOOR.slam);
-    sound(dim, "dn_guest_slam", L3(0, 40, -2), 1.8);
-  });
-  scene.at(T_IMPACT, () => {
-    release2?.();
-    d.skin(1);
-    lights.remove(L3(0, 40, -12));
+    effect(v2, "slowness", A2.reach + 4, DN02.reachSlowAmp);
+    scene.at(t0 + 10, () => sound(dim, "dn_guest_clicks", L3(0, 50, -30), 1, 1.2));
+    scene.at(tGrab, () => {
+      caught = isAlive(v2) && distXZ(v2.location, gripAt) <= DN02.reachRadius + 1.5;
+      guest?.state(caught ? GUEST.grab : GUEST.withdraw);
+      if (!caught) {
+        decided = true;
+        goBackAfterMiss(tGrab);
+      }
+    });
+    scene.at(tGrip, () => {
+      if (!caught || !isAlive(v2)) {
+        caught = false;
+        return;
+      }
+      const from = { ...v2.location };
+      const anchor = { x: gripAt.x, y: v2.location.y, z: gripAt.z };
+      const end = { x: dragEnd.x, y: v2.location.y, z: dragEnd.z };
+      release2 = restrain(scene, v2, tImpact - tGrip, anchor);
+      scene.every(1, () => {
+        if (!isAlive(v2)) return;
+        const t = scene.tick;
+        if (t < tPull) {
+          drag(v2, lerp(from, anchor, smooth((t - tGrip) / 6)));
+          return;
+        }
+        drag(v2, lerp(anchor, end, smooth((t - tPull) / (A2.pull - 1))));
+        if (t < tWithdraw && (t - tPull) % 3 === 0) particle(dim, "dn_guest_drag", v2.location);
+      }, tGrip, tImpact);
+      sound(dim, "dn_guest_grab", v2.location, 1.1);
+      particle(dim, "dn_guest_grip", up(v2.location, 1));
+      particle(dim, "dn_guest_squeeze", up(v2.location, 1));
+      scene.every(DN02.squeezeEvery, () => {
+        if (!isAlive(v2)) return;
+        damage(v2, DN02.squeezeDamage, caster);
+        particle(dim, "dn_guest_squeeze", up(v2.location, 1.1));
+      }, tGrip + 4, tImpact);
+    });
+    scene.at(tPull, () => {
+      if (!caught) return;
+      guest?.state(GUEST.pull);
+      sound(dim, "dn_guest_drag", isAlive(v2) ? v2.location : gripAt, 1);
+    });
+    scene.at(tWithdraw, () => {
+      if (!caught) return;
+      guest?.state(GUEST.withdraw);
+      sound(dim, "dn_guest_clicks", L3(0, 40, -6), 1, 1.35);
+    });
+    scene.at(tSlam, () => {
+      if (!caught) return;
+      lamps = false;
+      d.state(DOOR.slam);
+      sound(dim, "dn_guest_slam", L3(0, 40, -2), 1.8);
+    });
+    scene.at(tImpact, () => {
+      if (!caught) return;
+      release2?.();
+      d.skin(1);
+      lights.remove(L3(0, 40, -12));
+      warn.state(3);
+      scene.after(8, () => scene.despawn(warn));
+      particle(dim, "dn_guest_shock", up(dragEnd, 0.15));
+      particle(dim, "dn_guest_shock_v", L3(0, 36, -6));
+      particle(dim, "fx_flash", L3(0, 40, -4));
+      particle(dim, "dn_guest_doors", L3(0, 40, -6));
+      particle(dim, "dn_guest_splinter", L3(0, 44, -3));
+      particle(dim, "dn_guest_splinter", L3(-10, 20, -3));
+      particle(dim, "dn_guest_cracklight", L3(0, 40, -2));
+      ring(dim, "fx_dust", up(door, 0.2), 1.6, 6);
+      burst(dim, "dn_guest_scrap", L3(0, 60, -4), 2, 5);
+      for (const e of hostiles(dim, dragEnd, DN02.slamRadius, caster)) {
+        damage(e, DN02.slamDamage + (e.id === v2.id ? DN02.finisherBonus : 0), caster);
+        knockback(e, door, DN02.slamKnock, DN02.slamLift);
+      }
+      scene.after(8, () => {
+        if (guest) scene.despawn(guest);
+      });
+      scene.after(6, () => particle(dim, "dn_guest_dust", L3(0, 2, -4)));
+      scene.after(12, () => particle(dim, "dn_guest_cracklight", L3(0, 40, -2)));
+      vanishAt(tImpact + 24);
+    });
+  }
+  function goBackAfterMiss(t0) {
+    sound(dim, "dn_guest_voice", L3(0, 60, -40), 0.9, 1.15);
     warn.state(3);
-    scene.after(8, () => scene.despawn(warn));
-    particle(dim, "dn_guest_shock", up(dragEnd, 0.15));
-    particle(dim, "dn_guest_shock_v", L3(0, 36, -6));
-    particle(dim, "fx_flash", L3(0, 40, -4));
-    particle(dim, "dn_guest_doors", L3(0, 40, -6));
-    particle(dim, "dn_guest_splinter", L3(0, 44, -3));
-    particle(dim, "dn_guest_splinter", L3(-10, 20, -3));
-    particle(dim, "dn_guest_cracklight", L3(0, 40, -2));
-    ring(dim, "fx_dust", up(door, 0.2), 1.6, 6);
-    burst(dim, "dn_guest_scrap", L3(0, 60, -4), 2, 5);
-    for (const e of hostiles(dim, dragEnd, DN02.slamRadius, caster)) {
-      const held = caught && victim !== void 0 && e.id === victim.id;
-      damage(e, DN02.slamDamage + (held ? DN02.finisherBonus : 0), caster);
-      knockback(e, door, DN02.slamKnock, DN02.slamLift);
-    }
-  });
-  scene.at(T_GUEST_GONE, () => {
-    if (guest) scene.despawn(guest);
-  });
-  scene.at(T_IMPACT + 6, () => particle(dim, "dn_guest_dust", L3(0, 2, -4)));
-  scene.at(T_IMPACT + 12, () => particle(dim, "dn_guest_cracklight", L3(0, 40, -2)));
-  scene.at(T_VANISH, () => {
-    d.state(DOOR.vanish);
-    sound(dim, "dn_guest_hush", keyhole, 1);
-  });
-  scene.at(T_VANISH + 8, () => particle(dim, "dn_guest_keyhole", keyhole));
-  scene.at(T_VANISH + 17, () => particle(dim, "fx_flash", keyhole));
-  scene.at(T_VANISH + A2.vanish, () => scene.despawn(d));
-  scene.endAt(T_END);
+    scene.at(t0 + 8, () => scene.despawn(warn));
+    scene.at(t0 + A2.withdraw, () => {
+      if (guest) scene.despawn(guest);
+    });
+    scene.at(t0 + A2.withdraw + 2, () => {
+      lamps = false;
+      d.state(DOOR.slam);
+      sound(dim, "dn_guest_slam", L3(0, 40, -2), 0.7, 1.2);
+    });
+    scene.at(t0 + A2.withdraw + 2 + A2.slamShut, () => lights.remove(L3(0, 40, -12)));
+    vanishAt(t0 + A2.withdraw + 2 + A2.slamShut + 14);
+  }
+  function vanishAt(t) {
+    scene.at(t, () => {
+      d.state(DOOR.vanish);
+      sound(dim, "dn_guest_hush", keyhole, 1);
+    });
+    scene.at(t + 8, () => particle(dim, "dn_guest_keyhole", keyhole));
+    scene.at(t + 17, () => particle(dim, "fx_flash", keyhole));
+    scene.at(t + A2.vanish, () => scene.despawn(d));
+    scene.endAt(t + A2.vanish + 4);
+  }
+  scene.endAt(deadline + 400);
 });
 
 // src/config/dn03.ts
@@ -7784,9 +7879,9 @@ var dn06_the_dreamer_default = defineSpell("dn06", ({ caster, scene, aim }) => {
       if (e % 12 === 0) damage(x, DN06.beamDamage, caster);
     }
   }, T_FIN + 22, T_FIN + LEN.finale);
-  const T_SLAM2 = T_FIN + LEN.finale;
-  scene.at(T_SLAM2, () => dreamer.state(DS2.slam));
-  scene.at(T_SLAM2 + 3, () => {
+  const T_SLAM = T_FIN + LEN.finale;
+  scene.at(T_SLAM, () => dreamer.state(DS2.slam));
+  scene.at(T_SLAM + 3, () => {
     sound(dim, "dn_dreamer_final", land, 1.8);
     particle(dim, "dn_dreamer_shock", up(land, 0.2));
     particle(dim, "fx_flash", up(land, 2));
@@ -7796,7 +7891,7 @@ var dn06_the_dreamer_default = defineSpell("dn06", ({ caster, scene, aim }) => {
       knockback(e, land, DN06.finalKnock, 0.6);
     }
   });
-  const T53 = T_SLAM2 + LEN.slam + 10;
+  const T53 = T_SLAM + LEN.slam + 10;
   const bookAt = () => at(caster.isValid ? caster.location : scene.origin, aim.yaw, BOOK2.right, BOOK2.up, BOOK2.fwd);
   scene.at(T53, () => {
     dreamer.state(DS2.forget).skin(0);
@@ -7933,7 +8028,7 @@ var T_PILLARS = T_POWER + 28;
 var T_ATTACK = T_POWER + 48;
 var T_HIT = T_ATTACK + ATTACK_A_HIT;
 var T_DEPART = T_HIT + 22;
-var T_END2 = T_DEPART + DEPART_LEN + 4;
+var T_END = T_DEPART + DEPART_LEN + 4;
 function local(p, yaw, x, z) {
   const f = fromYaw(yaw);
   return add(add(p, mul(f, z)), mul(right(f), x));
@@ -8208,7 +8303,7 @@ var ed01_genesis_colossus_default = defineSpell("ed01", ({ caster, scene, aim })
     burst(dim, "ed_nature_leaf", up(pEnd, 1), 6, 4);
     if (dragon) scene.despawn(dragon);
   });
-  scene.endAt(T_END2);
+  scene.endAt(T_END);
   void SCALE;
 });
 
@@ -12139,6 +12234,22 @@ system4.afterEvents.scriptEventReceive.subscribe((ev) => {
     }
   }
 }, { namespaces: ["grimoire"] });
+world5.afterEvents.playerSpawn.subscribe((ev) => {
+  if (!ev.initialSpawn) return;
+  const p = ev.player;
+  system4.runTimeout(() => {
+    try {
+      if (!p.isValid) return;
+      p.sendMessage(`\xA76Grimoire: Rebirth of the Arcane \xA7f${VERSION}`);
+      if (CONFIG.starterKit && p.getDynamicProperty("grim:kit") !== 1) {
+        p.setDynamicProperty("grim:kit", 1);
+        giveBooks(p);
+        p.sendMessage("\xA77The three Grimoires are in your inventory.  Crouch: next spell.  Hold Use, release: cast.");
+      }
+    } catch {
+    }
+  }, 60);
+});
 world5.afterEvents.worldLoad.subscribe(() => {
   installWards();
   installInput();

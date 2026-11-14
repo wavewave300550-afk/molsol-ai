@@ -387,11 +387,17 @@ class Model:
     def to_geo(self):
         self.finalize()
         bones = []
+        # optional wrapper bone at the entity origin above every root bone (see Pack.actor: facing)
+        wrap = getattr(self, "wrap_root", None)
+        if wrap:
+            bones.append({"name": wrap, "pivot": [0, 0, 0]})
         for n in self.order:
             b = self.bones[n]
             jb = {"name": n}
             if b.parent:
                 jb["parent"] = b.parent
+            elif wrap:
+                jb["parent"] = wrap
             jb["pivot"] = _r3((-b.pivot[0], b.pivot[1], b.pivot[2]))
             if any(b.rot):
                 jb["rotation"] = _r3((-b.rot[0], -b.rot[1], b.rot[2]))
@@ -456,14 +462,18 @@ class Model:
         """Write geometry + texture into a resource pack. Returns (geo id, texture path)."""
         geo = self.to_geo()
         gp = os.path.join(rp_dir, "models", "entity", f"{self.name}.geo.json")
-        tp = os.path.join(rp_dir, "textures", sub, f"{self.name}.png")
+        tp = os.path.join(rp_dir, "textures", sub, f"{self.name}.tga")
         os.makedirs(os.path.dirname(gp), exist_ok=True)
         os.makedirs(os.path.dirname(tp), exist_ok=True)
         with open(gp, "w") as fh:
             json.dump(geo, fh, separators=(",", ":"))
-        self.atlas.save(tp, optimize=True)
-        for alt in self.alts:
-            self.atlases[alt].save(tp[:-4] + f"__{alt}.png", optimize=True)
+        # TGA, like every vanilla texture drawn with an emissive material (spider, enderman, phantom...):
+        # the alpha channel of these textures is glow, not opacity, and Mojang's material reference
+        # states that the emissive entity materials need a .tga file.
+        for path, img in [(tp, self.atlas)] + [(tp[:-4] + f"__{alt}.tga", self.atlases[alt]) for alt in self.alts]:
+            img.save(path, format="TGA", compression="tga_rle")
+            if os.path.exists(path[:-4] + ".png"):
+                os.remove(path[:-4] + ".png")
         return f"geometry.grimoire.{self.name}", f"textures/{sub}/{self.name}"
 
 

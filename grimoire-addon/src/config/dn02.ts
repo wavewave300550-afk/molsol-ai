@@ -11,6 +11,13 @@ export const DN02 = {
   pullStop: 1.125,
   /** If the victim has wandered farther than this from the grip point when the hands close, the Guest grasps air. */
   grabRange: 2.4,
+  /**
+   * The Guest only reaches for someone who is really there: an enemy within this distance of the grip
+   * point when it has leaned out of the doorway.  It is pulled into the closing hands.
+   */
+  reachRadius: 5.5,
+  /** With nobody in reach the Guest waits this long at the threshold for someone to come close, then goes back inside. */
+  waitSeconds: 2.5,
   /** Slowness amplifier while the door creaks open (the dread beat) and while the arms reach. */
   dreadSlowAmp: 1,
   reachSlowAmp: 3,

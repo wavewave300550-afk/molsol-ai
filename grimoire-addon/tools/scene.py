@@ -363,7 +363,7 @@ def draw_frame(tr, tick, view="chase", size=(880, 500), fov=62, labels=False, ca
     cx, cy, cz = cas[1:4]
     fr.box((cx - 0.3, cy, cz - 0.3), (cx + 0.3, cy + 1.8, cz + 0.3), (0.2, 0.45, 1.0), glow=0.6)
     mrow = min(tr["mobs"], key=lambda r: abs(r[0] - tick))
-    for mx, my, mz, alive in mrow[1:]:
+    for mx, my, mz, alive in [m for m in mrow[1:] if isinstance(m, list)]:
         if alive:
             fr.box((mx - 0.3, my, mz - 0.3), (mx + 0.3, my + 1.9, mz + 0.3), (0.25, 0.75, 0.25), glow=0.5)
     if show_blocks:
@@ -472,6 +472,7 @@ def main():
     ap.add_argument("--n", type=int, default=6)
     ap.add_argument("--report", action="store_true")
     ap.add_argument("--hills", action="store_true")
+    ap.add_argument("--real", default=None, nargs="?", const="", help="trace recorded on a real server (tools/real_trace.py)")
     ap.add_argument("--labels", action="store_true")
     ap.add_argument("--cam", default="")
     ap.add_argument("--fov", type=float, default=62)
@@ -479,9 +480,12 @@ def main():
     ap.add_argument("--cols", type=int, default=2)
     ap.add_argument("--out", default=os.path.join(HERE, "_preview", "scene"))
     args = ap.parse_args()
-    tr = json.load(open(os.path.join(TRACE, f"{args.spell}{'_hills' if args.hills else ''}.json")))
-    if args.hills:
-        tr["id"] += " hills"
+    suffix = "_hills" if args.hills else ""
+    if args.real is not None:
+        suffix = "_real" + (("_" + args.real) if args.real else "")
+    tr = json.load(open(os.path.join(TRACE, f"{args.spell}{suffix}.json")))
+    if suffix:
+        tr["id"] += " " + suffix[1:]
     report(tr)
     if args.report:
         return
@@ -499,7 +503,7 @@ def main():
     for i, c in enumerate(cells):
         sheet.paste(c, ((i % cols) * size[0], (i // cols) * size[1]))
     os.makedirs(args.out, exist_ok=True)
-    name = f"{args.spell}{'_hills' if args.hills else ''}_{'-'.join(views)}{'_' + args.times.replace(',', '_') if args.times else ''}.jpg"
+    name = f"{args.spell}{suffix}_{'-'.join(views)}{'_' + args.times.replace(',', '_') if args.times else ''}.jpg"
     path = os.path.join(args.out, name)
     sheet.save(path, quality=88)
     print(path)

@@ -51,6 +51,9 @@ def _merge(path, updates, key=None):
     return data
 
 
+FACE_BONE = "gface"
+
+
 class Pack:
     def __init__(self):
         self.bp, self.rp = BP, RP
@@ -96,11 +99,20 @@ class Pack:
             reach = max(abs(float(v)) for v in list(lo) + list(hi)) / 16.0 * _sc
             side = 192 if size_prop else int(min(256, max(64, math.ceil(reach * 3 + 32))))
             m.bounds = (side, side, (0, round(min(side / 4, max(2.0, float(hi[1]) / 32.0 * _sc)), 1), 0))
+        for m in models:
+            m.wrap_root = FACE_BONE
         geo_tex = [self.model(m) for m in models]
         for a in anims:
             a.model = ident
         amap = {a.name: a.full for a in anims}
-        animate = []
+        # Facing.  A mob's model is drawn turned by its BODY yaw, which the game steers by its own rules:
+        # measured on a real server it trails a turn in place by up to 75 degrees (50 with
+        # minecraft:body_rotation_always_follows_head), and on a client it can also drift toward the
+        # direction of travel.  So the facing a script asks for is also sent as the synced property
+        # grimoire:yaw, and a wrapper bone above every root bone turns the model by (wanted yaw - body
+        # yaw).  Cancelling q.body_y_rotation this way is what the vanilla sleeping-player animation does.
+        amap["gface"] = f"animation.{NS}.{ident}.gface"
+        animate = ["gface"]
         controllers = {}
         if states:
             cid, cj = state_controller(ident, states, blend=blend)
@@ -183,14 +195,17 @@ class Pack:
                {"format_version": "1.8.0", "render_controllers": {f"controller.render.{NS}.{ident}": rc}})
 
         # --- animations
-        if anims:
-            _write(os.path.join(self.rp, "animations", f"{ident}.animation.json"), animations_file(anims))
+        af = animations_file(anims)
+        af["animations"][amap["gface"]] = {"loop": True, "bones": {FACE_BONE: {
+            "rotation": [0, f"q.property('{NS}:yaw') - q.body_y_rotation", 0]}}}
+        _write(os.path.join(self.rp, "animations", f"{ident}.animation.json"), af)
         if controllers:
             _write(os.path.join(self.rp, "animation_controllers", f"{ident}.animation_controllers.json"),
                    {"format_version": "1.10.0", "animation_controllers": controllers})
 
         # --- behavior pack entity
-        properties = {f"{NS}:state": {"type": "int", "range": [0, 31], "default": 0, "client_sync": True}}
+        properties = {f"{NS}:state": {"type": "int", "range": [0, 31], "default": 0, "client_sync": True},
+                      f"{NS}:yaw": {"type": "float", "range": [-180.0, 180.0], "default": 0.0, "client_sync": True}}
         if len(models) > 1:
             properties[f"{NS}:kind"] = {"type": "int", "range": [0, max(1, len(models) - 1)], "default": 0,
                                         "client_sync": True}
@@ -215,9 +230,6 @@ class Pack:
                     "minecraft:pushable": {"is_pushable": False, "is_pushable_by_piston": False},
                     "minecraft:fire_immune": {},
                     "minecraft:transient": {},
-                    # scripts turn these actors by setting their rotation; without this the body
-                    # (and so the whole model) lags behind and can face up to 75 degrees off
-                    "minecraft:body_rotation_always_follows_head": {},
                     "minecraft:timer": {"looping": False, "time": float(lifetime),
                                         "time_down_event": {"event": f"{NS}:expire", "target": "self"}},
                 },

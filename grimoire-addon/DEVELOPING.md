@@ -123,6 +123,18 @@ controller that mirrors the int property `grimoire:state`. **State 0 must be a h
 state animations use `loop="hold"`. Document your state numbers in a `STATES` dict and mirror it
 as a const in the spell file. `lifetime` must exceed the longest spell that uses the actor.
 
+Three things the real engine taught us (see `tests/probe`):
+
+* **Properties arrive one tick late.** A property set in the tick an entity spawns is still at its
+  default in that tick; that is why state 0 must be hidden.
+* **Facing is not the entity rotation.** A model is drawn turned by the mob's body yaw, which the
+  game steers itself (it trails a turn in place by up to 75 degrees). Every actor therefore has the
+  synced property `grimoire:yaw` and a wrapper bone `gface` that turns the model by
+  `q.property('grimoire:yaw') - q.body_y_rotation`. Turn actors only through `Actor.move` /
+  `Actor.face` / `spawn({ yaw })`, which keep the property in step; never call `setRotation`.
+* **Textures are 32-bit TGA** (`Model.save`), as for every vanilla texture drawn with an emissive
+  material. Alpha is glow (255 = lit normally, 5 = full glow); alpha 0 is cut-out and must be black.
+
 ### Particles (`kit.particles`, via `particles(pack)` from `assets.a_fx_common`)
 `fx.effect("dn_petals", "petal", count=8, life=(1, 2), size=(0.2, 0.05), shape=("sphere", 1.5),
 speed=(0.3, 1), accel=(0, -1, 0), drag=1, colors=["#rrggbbaa", ...], blend="add"|"blend"|"alpha",
@@ -190,6 +202,11 @@ Views: `chase`, `wide`, `pov`, `top`, `side`, `front`, or `--cam r,u,f,r,u,f` (e
 the caster).  The blue box is the caster, green boxes are enemies, rings are particles.  **Check new
 spells on the hills terrain**: anything that should stand on the ground must follow it (add its
 actor to `src/config/ground.ts`).
+
+### Run it in the real server (`tests/probe`)
+`tests/probe/README.md` describes a harness pack that makes a simulated player cast spells through
+the real input path on a Bedrock Dedicated Server and logs every spell entity;
+`tools/real_trace.py` turns the server log into traces for `tools/scene.py --real`.
 
 ## 5. Tests
 ```
