@@ -622,8 +622,8 @@ def write_attachable(pack, m, anims):
                     "math.max(q.main_hand_item_max_duration - q.main_hand_item_use_duration, 0.0) : 0.0;",
                     f"v.target = q.main_hand_item_use_duration > 0.0 ? math.clamp(v.held / {OPEN_TICKS}, 0.15, 1.0) : 0.0;",
                     # opens with the hold, closes smoothly afterwards
-                    f"v.open = math.max(v.target, math.clamp((v.open ?? 0.0) - q.delta_time * {OPEN_RATE}, 0.0, 1.0));",
-                    "v.open = v.open * v.open * (3.0 - 2.0 * v.open);",
+                    f"v.open_raw = math.max(v.target, math.clamp((v.open_raw ?? 0.0) - q.delta_time * {OPEN_RATE}, 0.0, 1.0));",
+                    "v.open = v.open_raw * v.open_raw * (3.0 - 2.0 * v.open_raw);",
                 ],
                 "animate": ["idle", "open", {"place_fp": "c.is_first_person"}, {"place_tp": "!c.is_first_person"},
                             "ctl_turn"],

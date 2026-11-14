@@ -58,12 +58,14 @@ FACE_YAW = 0.0
 # =====================================================================================
 
 # v.open: 0 -> 1 while Use is held (fully open after ~8 ticks), back to 0 within ~1/3 s after release.
+# The eased value must NOT be fed back into the state: at 60+ fps that feedback held v.open near 1
+# forever after the first cast (the book stayed open and its loop kept spinning on an iPhone).
 # The same four lines drive the Divine Word book (books_dw.py), which opened correctly on an iPhone.
 OPEN_PRE_ANIMATION = [
     "v.held = q.main_hand_item_use_duration > 0.0 ? math.max(q.main_hand_item_max_duration - q.main_hand_item_use_duration, 0.0) : 0.0;",
     "v.target = q.main_hand_item_use_duration > 0.0 ? math.clamp(v.held / 8.0, 0.15, 1.0) : 0.0;",
-    "v.open = math.max(v.target, math.clamp((v.open ?? 0.0) - q.delta_time * 3.0, 0.0, 1.0));",
-    "v.open = v.open * v.open * (3.0 - 2.0 * v.open);",
+    "v.open_raw = math.max(v.target, math.clamp((v.open_raw ?? 0.0) - q.delta_time * 3.0, 0.0, 1.0));",
+    "v.open = v.open_raw * v.open_raw * (3.0 - 2.0 * v.open_raw);",
 ]
 # while open the book rises toward the charge construct and tilts its pages to the reader (as books_dw.py)
 FP_OPEN_POS = (-1.5, 2.5, -1.0)
