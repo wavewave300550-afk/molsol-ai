@@ -216,6 +216,16 @@ Draws the three held books in first and third person with the transforms Blockbe
 Bedrock attachables (`js/formats/bedrock/attachable_preview.js`), faces coloured by the book's own
 axes (red front cover, blue back cover, green spine). `tools/assets/books_zfix.py` computes the
 hand frame from the same reference. Look at it after changing any held-book placement.
+`--aura` draws each book at rest, at the peak of the crouch flare and while charging.
+
+**Effects that must sit on the held book belong in the attachable.** A world entity placed "in
+front of the eyes" never lines up with the first-person item: the item is drawn by its own camera
+and field of view, and the entity trails when the player turns. The selection / charge circle is
+therefore built into each book model (`tools/assets/_book_aura.py`, driven by Molang from
+`q.is_sneaking`, the hold value `v.open` and `q.delta_time`), and `books_zfix` places it on the
+book as posed by the attachable's own animations (`tools/kit/heldpose.py`, the same pose code the
+preview uses). Icons are rendered with the circle hidden (`without_aura`). The old world-space
+vision and construct can be switched back on with `BOOKS.vision.entity` / `BOOKS.charge.entity`.
 
 ### Run it in the real server (`tests/probe`)
 `tests/probe/README.md` describes a harness pack that makes a simulated player cast spells through

@@ -200,14 +200,19 @@ again with no targets. On 1.26.62 this ran inside the shipped `Grimoire_Test_Wor
 * both servers load the packs and the packaged test world without content errors;
 * holding the book raises `itemStartUse`, releasing raises `itemReleaseUse`: hold-to-cast works;
 * every spell ran to its end with **0 script errors and 0 add-on warnings**, and cleaned up.
+* **1.1.0** was run the same way on 1.26.62.1 inside its own test world: all 18 spells with
+  targets and the three upgraded Extra Ultimates again without targets, 21 casts with 0 errors and
+  0 add-on warnings; at most 41 (DW06), 32 (DN06) and 45 (ED06) spell entities alive at once.
 
 The superflat run found the one real bug of these runs: the Sanctuary (DW04) starts its eight
 pillars below the ground, which on a superflat world is below the bottom of the world, so the game
 refused to create them. Fixed in 1.0.3 for every spell entity, particle and sound.
 
-**Client side: not seen.** A dedicated server draws nothing. Models, textures, glow, particles,
-the book in the hand and sound have still not been looked at inside the game. The held book was
-checked against the reference Blockbench uses for attachables (`tools/held_preview.py`).
+**Client side: only through the player's screenshots.** A dedicated server draws nothing.
+Screenshots from an iPhone (26.62) show the three held books at the lower right in first person
+since 1.0.5; the built-in selection circle of 1.0.9 / 1.1.0 has not been seen in the game yet. The
+held book and its circle were checked against the reference Blockbench uses for attachables
+(`tools/held_preview.py`).
 
 | Check | Result |
 | Check | Result |
@@ -215,7 +220,7 @@ checked against the reference Blockbench uses for attachables (`tools/held_previ
 | TypeScript type check against the official `@minecraft/server` 2.11.0 typings | clean |
 | Headless tests (`node tests/run.mjs`) | **94 passed, 0 failed** |
 | Cross-reference validation (`tools/validate.py`) | 0 errors, 0 warnings |
-| Mojang's published JSON schemas (`tools/schema_check.py`) | 3 items, 140 entities, 267 particles: 0 violations |
+| Mojang's published JSON schemas (`tools/schema_check.py`) | 3 items, 142 entities, 332 particles: 0 violations |
 | Minecraft Creator Tools 0.21.0 `validate` on the two packs | 0 errors, 0 warnings (3 notes it classes as likely noise, 429 optional format-version recommendations) |
 
 What the headless tests cover (a strict mock of the Script API, not the engine):
@@ -238,18 +243,40 @@ Measured in those tests:
 |---|---|---|---|---|---|---|
 | DW01 | 10.5 s | 27 | | DN04 | 13.5 s | 4 |
 | DW02 | 14.9 s | 28 | | DN05 | 35.3 s | 25 |
-| DW03 | 14.5 s | 14 | | DN06 | 63.6 s | 24 |
+| DW03 | 14.5 s | 14 | | DN06 | 55.0 s | 33 |
 | DW04 | 21.3 s | 33 | | ED01 | 15.3 s | 24 |
 | DW05 | 35.3 s | 47 | | ED02 | 12.3 s | 8 |
-| DW06 | 65.7 s | 58 | | ED03 | 14.6 s | 20 |
+| DW06 | 52.0 s | 48 | | ED03 | 14.6 s | 20 |
 | DN01 | 9.5 s | 19 | | ED04 | 14.1 s | 24 |
 | DN02 | 11.8 s | 4 | | ED05 | 36.7 s | 23 |
-| DN03 | 20.0 s | 24 | | ED06 | 65.4 s | 51 |
+| DN03 | 20.0 s | 24 | | ED06 | 59.2 s | 45 |
 
 ## Changes since 1.0.0
 
 These updates answer reports from play-tests on iPhone ("things missing, wrong positions, the book
 is gone, some spells make no sense").
+
+**1.1.0**
+
+* **The three Extra Ultimates (spell 06) are rebuilt** after "too few effects, not beautiful, the
+  animation is strange": each now plays its five phases 10-25 m in front of the caster with nothing
+  tall within 6 m, richer layered effects (about 40-90 particles per tick), eased motion with
+  nothing popping in or out, and a real climax followed by a staggered dissolve. Lengths 52 s
+  (DW06), 55 s (DN06) and 59 s (ED06) instead of 64-66 s; names, cooldowns (360 s), controls and
+  the five story beats are unchanged.
+* **The selection / charge effect is part of the held book.** The vision and construct that used
+  to float in front of the eyes never lined up with the book in the hand on an iPhone: the
+  first-person item and the world are drawn by different cameras, and a world entity trails when
+  the player turns. Each book now carries its own magic circle: crouch (next spell) makes it
+  spread out behind the book, whirl and shrink away; holding Use opens it under the open book and
+  spins it faster. The select / charge / release sounds and the release burst remain.
+* **Spell models turn smoothly** on the client (the turn is eased in the model instead of
+  snapping), for every spell entity.
+
+Test builds before this release (1.0.5-1.0.9) fixed the book in the hand: the geometry is written
+in format 1.16.0 so its bone binding is honoured (it was invisible in first person before), all
+three books open from the hold value and close again after the cast instead of staying open and
+spinning.
 
 **1.0.4**
 
