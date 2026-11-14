@@ -179,7 +179,8 @@ class Frame:
              ((x0, y1, z0), (x1, y1, z0), (x1, y1, z1), (x0, y1, z1)), ((x0, y0, z1), (x1, y0, z1), (x1, y0, z0), (x0, y0, z0))]
         self.add_quads(np.array(f, dtype=float), flat=color, glow_flat=glow)
 
-    def render(self, sky=(0.42, 0.55, 0.78), plane=True):
+    def render(self, sky=(0.42, 0.55, 0.78), plane=True, ground=None):
+        ground = GROUND if ground is None else ground
         cam = self.cam
         W, H = cam.W, cam.H
         img = np.empty((H, W, 3), dtype=np.float32)
@@ -190,7 +191,7 @@ class Frame:
         d = (cam.fwd[None, None, :] + ((ii - W / 2 + 0.5) / cam.f)[..., None] * cam.right[None, None, :]
              - ((jj - H / 2 + 0.5) / cam.f)[..., None] * cam.up[None, None, :])
         with np.errstate(divide="ignore", invalid="ignore"):
-            t = (GROUND - cam.eye[1]) / d[..., 1]
+            t = (ground - cam.eye[1]) / d[..., 1]
         hit = (t > 0) & (t < 400) & np.isfinite(t) & plane
         gx = cam.eye[0] + d[..., 0] * t
         gz = cam.eye[2] + d[..., 2] * t
@@ -267,10 +268,15 @@ def terrain_quads(tr):
     return _terr[key]
 
 
+def base_ground(tr):
+    """Ground height of a recording without a height map: where the caster stood."""
+    return tr["caster"][0][2] if tr.get("caster") else GROUND
+
+
 def ground_at(tr, x, z):
     T = tr.get("terrain")
     if not T:
-        return GROUND
+        return base_ground(tr)
     xi, zi = int(math.floor(x)) - T["x0"], int(math.floor(z)) - T["z0"]
     if 0 <= xi < T["n"] and 0 <= zi < T["n"]:
         return T["h"][zi * T["n"] + xi]
@@ -390,7 +396,7 @@ def draw_frame(tr, tick, view="chase", size=(880, 500), fov=62, labels=False, ca
     if tr.get("terrain"):
         tq, tc = terrain_quads(tr)
         fr.add_quads(tq, flat=tc)
-    img, zb = fr.render(plane=not tr.get("terrain"))
+    img, zb = fr.render(plane=not tr.get("terrain"), ground=base_ground(tr))
     dr = ImageDraw.Draw(img)
     # particles spawned during the last half second
     for t, pid, px, py, pz in tr["particles"]:
@@ -427,6 +433,7 @@ def report(tr):
         sp = [(a["spawn"] - rel) / 20 for a in lst]
         alive = [((a["end"] if a["end"] >= 0 else tr["ticks"]) - a["spawn"]) / 20 for a in lst]
         ys = [r[2] - ground_at(tr, r[1], r[3]) + GROUND for a in lst for r in a["f"]]
+        near = [math.hypot(r[1] - cas[1], r[3] - cas[3]) for a in lst for r in a["f"] if r[5] != 0]
         ds = [math.hypot(r[1] - cas[1], r[3] - cas[3]) for a in lst for r in a["f"]]
         states = []
         for a in lst[:1]:
@@ -452,6 +459,20 @@ def report(tr):
             flag += f"  (below ground min y={min(ys) - GROUND:+.1f})"
         if max(ds) > 56:
             flag += f"  (far {max(ds):.0f}m)"
+        # view blockers: a visible model whose body reaches within 3 blocks of the caster's eye line
+        if d and near:
+            m0 = d["models"][0]
+            q = m0["quads"].reshape(-1, 3)
+            sc = d["scale"] if not isinstance(d["scale"], str) else 1.0
+            try:
+                sc = float(sc)
+            except Exception:
+                sc = 1.0
+            sz = max(r[7] for a in lst for r in a["f"]) if d["size_prop"] else 1.0
+            rad = float(np.abs(q[:, [0, 2]]).max()) / 16 * sc * sz
+            tall = float(q[:, 1].max()) / 16 * sc * sz
+            if tall > 1.5 and min(near) - rad < 3.0:
+                flag += f"  !! NEAR CASTER (closest {min(near):.1f} m, model radius {rad:.1f} m, height {tall:.1f} m)"
         if hid > 0.3 * len(lst):
             flag += f"  (hidden {hid / len(lst):.1f}s avg)"
         print(f"  {typ:26s} x{len(lst):<3d} spawn {min(sp):6.1f}..{max(sp):6.1f}s  alive {min(alive):5.1f}..{max(alive):5.1f}s"

@@ -156,8 +156,12 @@ class Pack:
             scripts["scale"] = sc
         if init:
             scripts["initialize"] = list(init)
-        if pre_anim:
-            scripts["pre_animation"] = list(pre_anim)
+        face_smooth = [
+            f"v.gy = q.property('{NS}:yaw');",
+            f"v.gd = v.gy - (v.gf ?? v.gy); v.gd = v.gd - 360.0 * math.round(v.gd / 360.0);",
+            f"v.gf = q.property('{NS}:state') == 0 ? v.gy : (v.gf ?? v.gy) + v.gd * math.min(1.0, q.delta_time * 14.0);",
+        ]
+        scripts["pre_animation"] = face_smooth + list(pre_anim or [])
         if animate:
             scripts["animate"] = animate
         if offscreen:
@@ -196,8 +200,10 @@ class Pack:
 
         # --- animations
         af = animations_file(anims)
+        # v.gf follows grimoire:yaw smoothly on the client (the property only changes 20 times a second);
+        # while hidden (state 0, e.g. the tick after spawning) it snaps so a model never appears mid-turn
         af["animations"][amap["gface"]] = {"loop": True, "bones": {FACE_BONE: {
-            "rotation": [0, f"q.property('{NS}:yaw') - q.body_y_rotation", 0]}}}
+            "rotation": [0, "v.gf - q.body_y_rotation", 0]}}}
         _write(os.path.join(self.rp, "animations", f"{ident}.animation.json"), af)
         if controllers:
             _write(os.path.join(self.rp, "animation_controllers", f"{ident}.animation_controllers.json"),
