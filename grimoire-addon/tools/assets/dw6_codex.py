@@ -154,8 +154,8 @@ def book_anims():
 
 # ------------------------------------------------------------------------------------------- page
 PAGE_STATES = {0: ["hidden"], 1: ["manifest"], 2: ["idle"], 3: ["split"], 4: ["reform"], 5: ["fold"], 6: ["slip"]}
-PAGE_TILT = 9             # degrees the page leans back: it hangs ~40 m away, its face toward the caster's eye
-PAGE_SCALE = 3.0          # 120 x 88 model units -> 22.5 x 16.5 blocks (fits the upper view at ~40 m)
+PAGE_TILT = 7             # degrees the page leans back: it hangs ~40 m away, its face toward the caster's eye
+PAGE_SCALE = 2.4          # 120 x 88 model units -> 18 x 13 blocks: at ~40 m it fills the upper view (0..17 degrees)
 PW, PH = 120, 88
 COLS = [-60, -30, 0, 30]
 ROWS = [0, 22, 44, 66]

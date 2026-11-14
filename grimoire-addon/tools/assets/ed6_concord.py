@@ -5,7 +5,7 @@ ed6_bridge    crystalline arch bridge laid along -Z: 12 blocks long, 4.5 blocks 
               3 shatter (0.8 s)
 ed6_debris    aerial debris formation carried by the Air Dragon's wind: a horizontal ring of rock,
               a tilted ring of leaf clumps, a counter-tilted ring of ice and a central helix
-              (radius ~4 blocks at size 1, centred ~7 blocks above its origin).
+              (radius ~4 blocks at size 1, centred ~5 blocks above its origin).
               STATES 0 hidden / 1 lift (1.6 s, lifted off the ground) / 2 orbit / 3 scatter (1.0 s)
 ed6_ring      the Nature Dragon's enclosing ring: 8 basalt-strata pillar clusters on radius 6 blocks (size 1),
               ten slots with the two slots on the actor's front / back axis left open as doorways (-Z and
@@ -124,9 +124,9 @@ def bridge_anims():
 
 # ============================================================================== debris formation
 def debris_model():
-    m = Model("ed6_debris", density=1.0, bounds=(14, 14, (0, 7, 0)))
+    m = Model("ed6_debris", density=1.0, bounds=(14, 14, (0, 5, 0)))
     root = m.bone("root")
-    cy = 112.0
+    cy = 78.0
     rock = tex.stone("#7a7064", "#4a443c", "#9a9082", scale=2, cracks=0.3)
     mossr = tex.mottled("#6a6458", "#5a7a34", scale=1.4, thresh=0.5)
     leaf = tex.foliage("#3f7a35", "#8ac05a", holes=0.2)
@@ -183,7 +183,7 @@ def debris_anims():
     A.append(sp)
     lift = Anim("lift", length=1.6, loop="hold")
     for i, b in enumerate(("ra", "rb", "rc", "helix")):
-        lift.pos(b, {0: (0, -110, 0), 0.15 * i: (0, -110, 0), 1.1 + 0.1 * i: (0, 6, 0), 1.6: (0, 0, 0)})
+        lift.pos(b, {0: (0, -76, 0), 0.15 * i: (0, -76, 0), 1.1 + 0.1 * i: (0, 6, 0), 1.6: (0, 0, 0)})
         lift.scl(b, {0: 0.4, 0.15 * i: 0.4, 1.2 + 0.1 * i: 1.05, 1.6: 1.0})
     lift.scl("swirl", {0: 0.0, 0.8: 0.0, 1.4: 1.1, 1.6: 1.0})
     A.append(lift)
@@ -192,7 +192,7 @@ def debris_anims():
     sc = Anim("scatter", length=1.0, loop="hold")
     for i, b in enumerate(("ra", "rb", "rc", "helix")):
         sc.scl(b, {0: 1.0, 0.2: 1.4 + 0.2 * i, 1.0: 2.2})
-        sc.pos(b, {0: (0, 0, 0), 0.2: (0, 6, 0), 1.0: (0, -120, 0)})
+        sc.pos(b, {0: (0, 0, 0), 0.2: (0, 6, 0), 1.0: (0, -86, 0)})
     sc.scl("swirl", {0: 1.0, 0.3: 0.0})
     sc.scl("root", {0: 1.0, 0.75: 1.0, 1.0: 0.0})
     A.append(sc)

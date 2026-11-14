@@ -1,6 +1,6 @@
 """ED06 -- the Great Codex construct, the four dragon emblems and the luminous skeletal imagery.
 
-ed6_codex   (scale 1.5: book ~3 x 4 blocks, orbits ~7 blocks across; a turning ring of glyphs ~8 blocks across and a
+ed6_codex   (scale 1.3: book ~2.6 x 3.5 blocks, orbits ~6 blocks across; a turning ring of glyphs ~6 blocks across and a
     soft sun-halo behind the FRONT cover (-Z), so it frames the book when the back cover faces the viewer;
     while the book is open both slide behind the back cover, so they frame the open pages instead)
     A spell construct of the Codex of the Four Primordial Dragons: antique-bronze cover scales
@@ -301,22 +301,21 @@ def domain_mat():
             b = np.where((q == k)[..., None], cols[k][0], b)
             m = np.where((q == k)[..., None], cols[k][1], m)
         pxl = 2.0 / ctx.w
-        frame = (np.abs(r - 0.985) < pxl * 1.6) | (np.abs(r - 0.95) < pxl) | (np.abs(r - 0.745) < pxl * 1.2) | \
-                (np.abs(r - 0.36) < pxl * 1.2)
+        frame = (np.abs(r - 0.985) < pxl * 1.2) | (np.abs(r - 0.955) < pxl * 0.8) | (np.abs(r - 0.78) < pxl * 0.9)
         ng, gh, gw = stack.shape
         nb = 28
         seg = a / (2 * math.pi) * nb
         gi = np.floor(seg).astype(int) % nb
         lx = np.floor((seg - np.floor(seg)) * (gw + 2)).astype(int) - 1
-        ly = np.floor((0.93 - r) / (0.16 / gh)).astype(int)
-        inside = (lx >= 0) & (lx < gw) & (ly >= 0) & (ly < gh) & (r < 0.93) & (r > 0.77)
+        ly = np.floor((0.93 - r) / (0.12 / gh)).astype(int)
+        inside = (lx >= 0) & (lx < gw) & (ly >= 0) & (ly < gh) & (r < 0.93) & (r > 0.81)
         glyph = inside & stack[(gi * 7) % ng, np.clip(ly, 0, gh - 1), np.clip(lx, 0, gw - 1)]
         off = np.abs(((a + math.pi / 4) % (math.pi / 2)) - math.pi / 4)          # angle from the quadrant centre
-        arcs = (r > 0.66) & (r < 0.695) & (off < 0.62)
+        arcs = (r > 0.70) & (r < 0.72) & (off < 0.62)
         star = np.zeros(u.shape, dtype=bool)
         gem = np.zeros(u.shape, dtype=bool)
         for k in range(4):
-            gem |= np.hypot(u - 0.68 * math.cos(k * math.pi / 2), v - 0.68 * math.sin(k * math.pi / 2)) < 0.03
+            gem |= np.hypot(u - 0.71 * math.cos(k * math.pi / 2), v - 0.71 * math.sin(k * math.pi / 2)) < 0.025
         frame = frame & (r > 0.5)
         on = frame | glyph | arcs | star | gem
         col = np.where(frame[..., None], gl, m)
@@ -327,8 +326,9 @@ def domain_mat():
         t = T(ctx, m, 1.0, 0.0)
         t[..., :3] = col
         t[..., 3] = on * 1.0
+        t[..., 4] = np.where(glyph, 0.55, 0.8)
         return t
-    return Mat(fn, "ed6domain4", directional=True)
+    return Mat(fn, "ed6domain5", directional=True)
 
 
 def domain_model():
@@ -490,7 +490,7 @@ def codex_model():
     halo = m.bone("halo", root, pivot=CX)
     halo.plane("z", (0, cy, -10.0), 124, 124, halo_mat(None, 0.42, key="cxhalo"), density=0.45)
     glyr = m.bone("glyring", root, pivot=(0, cy, -8.5))
-    glyr.plane("z", (0, cy, -8.5), 88, 88, tex.magic_circle(DR, "#fff3c4", "#e8c27a", glow=1.0, bands=((0.8, 0.95, 24),),
+    glyr.plane("z", (0, cy, -8.5), 76, 76, tex.magic_circle(DR, "#fff3c4", "#e8c27a", glow=1.0, bands=((0.8, 0.95, 24),),
                                                               lines=(0.77, 0.975), star=0, key="ed6cxring"), density=1.0)
     book = m.bone("book", root, pivot=CX)
     gold = tex.metal(GOLD, "#fff0c0", "#7a5a1e", bands=2.0, glow=0.15)
@@ -647,7 +647,7 @@ def codex_anims(info, preview_sep=None, preview_open=None):
 
 
 CODEX_STATES = {0: ["hidden"], 1: ["rise"], 2: ["hover"], 3: ["beat"], 4: ["absorb"], 5: ["vanish"]}
-CODEX_SCALE = 1.5
+CODEX_SCALE = 1.3
 
 # ============================================================================== luminous skeletons
 SPIRIT_TINT = ["#ecffd0", "#ffe6b8", "#dcf6ff", "#f6fbff"]

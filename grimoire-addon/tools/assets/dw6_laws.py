@@ -20,7 +20,7 @@ from kit.geo import Model, ring
 from .dw6_common import BLUE, FW, GOLD, SILVER, WGOLD, extrude, gold_metal, spin, text_band
 
 TABLET_STATES = {0: ["hidden"], 1: ["form"], 2: ["idle"], 3: ["declare"], 4: ["shed"], 5: ["return"]}
-TABLET_SCALE = 2.2         # the tablets hang ~33 m away, above the written temple
+TABLET_SCALE = 1.9         # the tablets hang ~33 m away, above the written temple (tops ~15 degrees up)
 LINE_STATES = {0: ["hidden"], 1: ["assemble"], 2: ["hold"], 3: ["strike"], 4: ["unwrite"]}
 
 MARBLE = tex.marble("#f6f1e4", "#cbbf9f", vein2="#d9b45a", scale=6)
@@ -334,9 +334,9 @@ def line_formation():
     for k in range(8):
         spk.box((0, -12, -37), (1.6, 1.6, 22), RULE, rot=(0, k * 45, 0), pivot=(0, -12, 0))
     spire = m.bone("spire", root, pivot=(0, 0, 0))            # one crowning letter (kept low: it must stay in view)
-    extrude(spire, FW[13], (0, 9, -2), 3.0, 4.0, LETTERS_HOT)
-    spire.box((0, -3.5, 0), (12, 1.4, 1.4), RULE, rot=(0, 45, 0))
-    spire.box((0, 7, 0), (1.2, 34, 1.2), RULE)
+    extrude(spire, FW[13], (0, 5, -2), 2.6, 4.0, LETTERS_HOT)
+    spire.box((0, -5.5, 0), (12, 1.4, 1.4), RULE, rot=(0, 45, 0))
+    spire.box((0, 3, 0), (1.2, 26, 1.2), RULE)
     return m
 
 

@@ -28,19 +28,20 @@ const MARK = { appear: 1, burst: 3 };
 const DEG = Math.PI / 180;
 const UPV: Vector3 = { x: 0, y: 1, z: 0 };
 const EYE = 1.62;
-const PAGE_U = 3.0 / 16;            // page model unit -> blocks (dw6_codex PAGE_SCALE)
-const PAGE_TILT = 9 * DEG;          // dw6_codex PAGE_TILT
+const PAGE_U = 2.4 / 16;            // page model unit -> blocks (dw6_codex PAGE_SCALE)
+const PAGE_TILT = 7 * DEG;          // dw6_codex PAGE_TILT
 const ED_U = 2 / 16;                // edifice model unit -> blocks at size 1
 // structure kinds: 0 column, 1 arch, 2 bridge, 3 gate, 4 platform, 5 celestial
 const COLUMN = 0, ARCH = 1, BRIDGE = 2, GATE = 3, PLATFORM = 4, CELESTIAL = 5;
 /** Full height (blocks, size 1) of each structure kind, crowning letter included. */
 const ED_H = [11.0, 11.4, 7.0, 13.9, 6.0, 11.0];
 
-// ---- staging (caster's eye: the important things stay 10-45 blocks ahead, below ~20 degrees up)
+// ---- staging (caster's eye on a phone: ~60 degrees vertical, looking ~12 degrees down, so the view reaches only
+// ~18 degrees above the horizon: the temple stays below ~12 degrees, page / tablets / lines between 0 and 17)
 const STAGE_MIN = 14, STAGE_MAX = 20;   // the domain centre is kept this far ahead of the caster
-const PAGE_BACK = 26, PAGE_LIFT = 1.8;  // the giant page hangs beyond the domain, its lower edge this high
-const BOOK_HOVER = 2.0, BOOK_LECTERN = 1.35, BOOK_FINAL = 1.2;
-const TAB_LIFT = 7.0, TAB_RISE = 15, TAB_BACK = 6;   // Phase IV: the tablets rise out of the view into the sky
+const PAGE_BACK = 26, PAGE_LIFT = 0.6;  // the giant page hangs beyond the domain, its lower edge this high
+const BOOK_HOVER = 1.5, BOOK_START = 0.9, BOOK_LECTERN = 1.0, BOOK_FINAL = 1.0;
+const TAB_LIFT = 3.4, TAB_RISE = 15, TAB_BACK = 6;   // Phase IV: the tablets rise out of the view into the sky
 const FX_CAP = 88;
 
 // ---- timeline (ticks)
@@ -70,16 +71,16 @@ interface Slot { kind: number; u: number; v: number; elev: number; cap: number; 
 /** Ten letters -> a written temple 12-26 blocks ahead: tall pieces frame an open centre (the page / tablets stay
  *  visible above it), the bridge closes the back, the platforms guard the near flanks. */
 const PLAN: Slot[] = [
-  { kind: COLUMN, u: -5.0, v: 0.5, elev: 15, cap: 0.7, seek: true, a: -14, b: 21 },
-  { kind: COLUMN, u: 5.0, v: 0.5, elev: 15, cap: 0.7, seek: true, a: 26, b: 21 },
-  { kind: ARCH, u: -9.8, v: 4.0, elev: 14, cap: 0.75, a: -34, b: 21 },
-  { kind: ARCH, u: 9.8, v: 4.0, elev: 14, cap: 0.75, a: 46, b: 21 },
-  { kind: GATE, u: -9.0, v: 10.5, elev: 14, cap: 0.75, a: 6, b: 21 },
-  { kind: BRIDGE, u: 0, v: 13.0, elev: 9, cap: 0.7, a: 6, b: 53 },
-  { kind: PLATFORM, u: -8.8, v: -4.2, elev: 12, cap: 0.7, a: -34, b: 53 },
-  { kind: PLATFORM, u: 8.8, v: -4.2, elev: 12, cap: 0.7, a: 46, b: 53 },
-  { kind: CELESTIAL, u: 8.0, v: 10.0, elev: 13, cap: 0.75, seek: true, a: 26, b: 53 },
-  { kind: COLUMN, u: 13.0, v: 8.0, elev: 14, cap: 0.75, seek: true, a: -14, b: 53 },
+  { kind: COLUMN, u: -5.0, v: 0.5, elev: 13, cap: 0.7, seek: true, a: -14, b: 34 },
+  { kind: COLUMN, u: 5.0, v: 0.5, elev: 13, cap: 0.7, seek: true, a: 26, b: 34 },
+  { kind: ARCH, u: -9.8, v: 4.0, elev: 12, cap: 0.75, a: -34, b: 34 },
+  { kind: ARCH, u: 9.8, v: 4.0, elev: 12, cap: 0.75, a: 46, b: 34 },
+  { kind: GATE, u: -9.0, v: 10.5, elev: 12, cap: 0.75, a: 6, b: 34 },
+  { kind: BRIDGE, u: 0, v: 13.0, elev: 7, cap: 0.7, a: 6, b: 63 },
+  { kind: PLATFORM, u: -8.8, v: -3.6, elev: 10, cap: 0.55, a: -34, b: 63 },
+  { kind: PLATFORM, u: 8.8, v: -3.6, elev: 10, cap: 0.55, a: 46, b: 63 },
+  { kind: CELESTIAL, u: 8.0, v: 10.0, elev: 11, cap: 0.75, seek: true, a: 26, b: 63 },
+  { kind: COLUMN, u: 13.0, v: 8.0, elev: 12, cap: 0.75, seek: true, a: -14, b: 63 },
 ];
 
 /** Deterministic hash noise in [0, 1). */
@@ -210,8 +211,8 @@ export default defineSpell("dw06", ({ caster, scene, aim }) => {
 
   // the great codex
   const b1 = G(Ds - 2.5, 0, BOOK_HOVER);
-  const b2 = SKY(Lp - 3.2, 0, 1.4);
-  const bF = G(Ds + 0.5, 0, 2.4);
+  const b2 = SKY(Lp - 3.2, 0, 0.9);
+  const bF = G(Ds + 0.5, 0, 1.6);
   let bookAt = b1;
   let bookShows = true;
 
@@ -301,7 +302,7 @@ export default defineSpell("dw06", ({ caster, scene, aim }) => {
   }
 
   // ================================================================== PHASE I -- the silence before all things
-  const book = scene.spawn("dw6_book", b1, { yaw: faceOrigin(b1), state: BOOK.arrive, size: 1 });
+  const book = scene.spawn("dw6_book", b1, { yaw: faceOrigin(b1), state: BOOK.arrive, size: BOOK_START });
   snd("dw6_silence", c0, 1.0);
   scene.at(4, () => snd("dw6_book", b1, 1.1));
   tb.place(G(Ds - 2.5, 0, 0.5), LIGHT);
@@ -363,7 +364,7 @@ export default defineSpell("dw06", ({ caster, scene, aim }) => {
     const q = smooth(p);
     bookAt = bezier(b1, up(lerp(b1, b2, 0.5), 5), b2, q);
     book.move(bookAt, faceOrigin(bookAt));
-    if (scene.tick % 2 === 0) book.size(1 + (BOOK_LECTERN - 1) * q);
+    if (scene.tick % 2 === 0) book.size(BOOK_START + (BOOK_LECTERN - BOOK_START) * q);
     fx("dw6_stream", up(bookAt, -0.6));
     fx("dw6_script", add(bookAt, { x: (rnd(scene.tick) - 0.5) * 4, y: rnd(scene.tick + 0.5) * 2, z: (rnd(scene.tick + 0.9) - 0.5) * 4 }));
     if (scene.tick % 3 === 0) fx("dw6_trail", up(bookAt, 0.8));
@@ -380,7 +381,7 @@ export default defineSpell("dw06", ({ caster, scene, aim }) => {
   /** Largest size (<= cap) at which a structure at p stays below elevDeg as seen from the caster's eye. */
   function fitSize(kind: number, p: Vector3, elevDeg: number, cap: number): number {
     const d = Math.max(6, distXZ(p, c0));
-    return clamp((c0.y + EYE + d * Math.tan(elevDeg * DEG) - p.y) / ED_H[kind], 0.5, cap);
+    return clamp((c0.y + EYE + d * Math.tan(elevDeg * DEG) - p.y) / ED_H[kind], 0.42, cap);
   }
 
   function landingSpot(i: number): Vector3 {
@@ -529,7 +530,7 @@ export default defineSpell("dw06", ({ caster, scene, aim }) => {
   const stations = tabAng.map((ang) => SKY(TAB_D * Math.cos(ang * DEG), TAB_D * Math.sin(ang * DEG), TAB_LIFT + 0.5 * Math.cos(ang * 3 * DEG)));
   const ruleA = (k: number): number => -45 + (102 / 7) * (k + 0.5);
   const tabLoc = (k: number): Vector3 => (tablets[k]?.valid ? tablets[k].loc : stations[k]);
-  const emblem = (k: number): Vector3 => up(tabLoc(k), 3.9);
+  const emblem = (k: number): Vector3 => up(tabLoc(k), 3.1);
   scene.at(T_SPLIT, () => {
     page?.state(PAGE.split);
     pageGlitter = false;
@@ -838,7 +839,7 @@ export default defineSpell("dw06", ({ caster, scene, aim }) => {
   // line 1: a straight line slams down at the enemy's near edge (beyond the Station line) and rolls away, sweeping them back
   const L1 = { form: T_RISE + 14, desc: T_RISE + 42 };
   let l1: Actor | undefined;
-  const l1Hi = SKY(Ds + 4, 0, 5.4);
+  const l1Hi = SKY(Ds + 4, 0, 5.0);
   let sweepD = Ds;
   const sweepAt = (p: number): Vector3 => G(sweepD + C.sweepTravel * smooth(p), 0, 0.95);
   scene.at(L1.form, () => { l1 = spawnLine(0, l1Hi, (C.sweepHalfLength * 2) / 24.4); });
@@ -880,7 +881,7 @@ export default defineSpell("dw06", ({ caster, scene, aim }) => {
   let l2: Actor | undefined;
   let ringC = G(Ds + 2, 0);
   let ringMax = 6;
-  const l2Hi = SKY(Ds + 5, 0, 6.6);
+  const l2Hi = SKY(Ds + 5, 0, 6.0);
   let ringWarn: Actor | undefined;
   scene.at(L2.form, () => { l2 = spawnLine(1, l2Hi, 0.5); });
   scene.at(L2.desc - 20, () => {
@@ -913,7 +914,7 @@ export default defineSpell("dw06", ({ caster, scene, aim }) => {
   const L3 = { form: T_RISE + 84, desc: T_RISE + 118 };
   let l3: Actor | undefined;
   let latC = G(Ds + 3, 0);
-  const l3Hi = SKY(Ds + 7, 0, 7.8);
+  const l3Hi = SKY(Ds + 7, 0, 6.6);
   scene.at(L3.form, () => { l3 = spawnLine(2, l3Hi, 0.83); });
   scene.at(L3.desc - 2, () => { latC = clampDist(enemyFront().E, 15, Ds + 6); });
   scene.at(L3.desc, () => { if (l3) { leave(l3); descend(l3, l3Hi, up(latC, 4.6), L3.desc, L3.desc + 16); } });
@@ -958,7 +959,7 @@ export default defineSpell("dw06", ({ caster, scene, aim }) => {
   // line 4: a spiral settles on the judged region and draws the field into it
   const L4 = { form: T_RISE + 102, desc: T_RISE + 150 };
   let l4: Actor | undefined;
-  const l4Hi = SKY(Ds + 9, 0, 9.0);
+  const l4Hi = SKY(Ds + 9, 0, 7.4);
   let spiralWarn: Actor | undefined;
   let spiralR = 9;
   scene.at(L4.form, () => { l4 = spawnLine(3, l4Hi, 0.7); });
@@ -993,9 +994,9 @@ export default defineSpell("dw06", ({ caster, scene, aim }) => {
   const T_FORM = T_RISE + 160;                   // after the lattice has fallen
   const fSize = C.finalRadius / 12.4;              // its seal covers exactly the judged region
   let form: Actor | undefined;
-  let formAt = up(finalAt, 5.4);
+  let formAt = up(finalAt, 4.3);
   scene.at(T_FORM, () => {
-    formAt = up(finalAt, 5.4);
+    formAt = up(finalAt, 4.3);
     form = spawnLine(4, formAt, fSize);
     leave(form);
     snd("dw6_form", formAt, 1.8, 0.7);
@@ -1005,7 +1006,7 @@ export default defineSpell("dw06", ({ caster, scene, aim }) => {
   scene.at(T_FINAL - 68, () => snd("dw6_gather", finalAt, 2.0));
   scene.at(T_FINAL - 44, () => { if (finalWarn?.valid) finalWarn.state(TEL.warn); else finalWarn = scene.spawn("telegraph", finalAt, { kind: 0, size: C.finalRadius, state: TEL.warn }); });
   scene.span(T_FINAL - 44, T_FINAL - 8, (p, e) => {
-    const pos = up(finalAt, 5.4 - 0.9 * smooth(p));
+    const pos = up(finalAt, 4.3 - 0.7 * smooth(p));
     form?.move(pos);
     formAt = pos;
     if (e % 4 === 0) fx("dw6_converge", pos);
@@ -1024,7 +1025,7 @@ export default defineSpell("dw06", ({ caster, scene, aim }) => {
   scene.at(T_FINAL - 16, () => snd("dw6_finale", finalAt, 2.4));
   // anticipation, then the strike
   scene.span(T_FINAL - 8, T_FINAL, (p) => {
-    const pos = p < 0.5 ? up(finalAt, 4.5 + 0.7 * smooth(p * 2)) : up(finalAt, 5.2 - 3.4 * easeIn((p - 0.5) * 2));
+    const pos = p < 0.5 ? up(finalAt, 3.6 + 0.6 * smooth(p * 2)) : up(finalAt, 4.2 - 2.4 * easeIn((p - 0.5) * 2));
     form?.move(pos);
     formAt = pos;
   });
