@@ -1,0 +1,40 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:dw5_gate_cherub",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "blend": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/dw5_gate_cherub"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.dw5_gate_cherub"
+   },
+   "render_controllers": [
+    "controller.render.grimoire.dw5_gate_cherub"
+   ],
+   "animations": {
+    "hidden": "animation.grimoire.dw5_gate_cherub.hidden",
+    "manifest": "animation.grimoire.dw5_gate_cherub.manifest",
+    "closed": "animation.grimoire.dw5_gate_cherub.closed",
+    "open": "animation.grimoire.dw5_gate_cherub.open",
+    "opened": "animation.grimoire.dw5_gate_cherub.opened",
+    "close": "animation.grimoire.dw5_gate_cherub.close",
+    "fold": "animation.grimoire.dw5_gate_cherub.fold",
+    "breathe": "animation.grimoire.dw5_gate_cherub.breathe",
+    "ctl_main": "controller.animation.grimoire.dw5_gate_cherub.main"
+   },
+   "scripts": {
+    "scale": "2.0",
+    "animate": [
+     "ctl_main",
+     "breathe"
+    ],
+    "should_update_bones_and_effects_offscreen": true
+   }
+  }
+ }
+}

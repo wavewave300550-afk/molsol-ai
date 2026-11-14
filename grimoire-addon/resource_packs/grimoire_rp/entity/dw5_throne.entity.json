@@ -1,0 +1,38 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:dw5_throne",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "blend": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/dw5_throne"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.dw5_throne"
+   },
+   "render_controllers": [
+    "controller.render.grimoire.dw5_throne"
+   ],
+   "animations": {
+    "hidden": "animation.grimoire.dw5_throne.hidden",
+    "glory": "animation.grimoire.dw5_throne.glory",
+    "assemble": "animation.grimoire.dw5_throne.assemble",
+    "idle": "animation.grimoire.dw5_throne.idle",
+    "declare": "animation.grimoire.dw5_throne.declare",
+    "unmake": "animation.grimoire.dw5_throne.unmake",
+    "ctl_main": "controller.animation.grimoire.dw5_throne.main"
+   },
+   "scripts": {
+    "scale": "2.0",
+    "animate": [
+     "ctl_main",
+     "glory"
+    ],
+    "should_update_bones_and_effects_offscreen": true
+   }
+  }
+ }
+}

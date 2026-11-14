@@ -1,0 +1,33 @@
+{
+ "format_version": "1.8.0",
+ "render_controllers": {
+  "controller.render.grimoire.dw5_throne": {
+   "geometry": "Geometry.default",
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "blade_core": "Material.blend"
+    },
+    {
+     "seat_glow": "Material.blend"
+    }
+   ],
+   "textures": [
+    "Texture.default"
+   ],
+   "part_visibility": [
+    {
+     "*": true
+    },
+    {
+     "swarm": "q.property('grimoire:state') == 4"
+    },
+    {
+     "streams": "q.property('grimoire:state') == 1"
+    }
+   ]
+  }
+ }
+}

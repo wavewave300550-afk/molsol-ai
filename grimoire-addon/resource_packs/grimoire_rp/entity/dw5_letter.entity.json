@@ -1,0 +1,48 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:dw5_letter",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "blend": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/dw5_letter",
+    "k1": "textures/entity/grimoire/dw5_letter2",
+    "k2": "textures/entity/grimoire/dw5_letter3",
+    "k3": "textures/entity/grimoire/dw5_letter4",
+    "k4": "textures/entity/grimoire/dw5_letter5",
+    "k5": "textures/entity/grimoire/dw5_letter6"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.dw5_letter",
+    "k1": "geometry.grimoire.dw5_letter2",
+    "k2": "geometry.grimoire.dw5_letter3",
+    "k3": "geometry.grimoire.dw5_letter4",
+    "k4": "geometry.grimoire.dw5_letter5",
+    "k5": "geometry.grimoire.dw5_letter6"
+   },
+   "render_controllers": [
+    "controller.render.grimoire.dw5_letter"
+   ],
+   "animations": {
+    "hidden": "animation.grimoire.dw5_letter.hidden",
+    "shine": "animation.grimoire.dw5_letter.shine",
+    "ignite": "animation.grimoire.dw5_letter.ignite",
+    "hold": "animation.grimoire.dw5_letter.hold",
+    "plunge": "animation.grimoire.dw5_letter.plunge",
+    "impact": "animation.grimoire.dw5_letter.impact",
+    "ctl_main": "controller.animation.grimoire.dw5_letter.main"
+   },
+   "scripts": {
+    "scale": "1.2",
+    "animate": [
+     "ctl_main",
+     "shine"
+    ],
+    "should_update_bones_and_effects_offscreen": true
+   }
+  }
+ }
+}
