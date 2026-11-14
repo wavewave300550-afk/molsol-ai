@@ -30,7 +30,7 @@ var CONFIG = {
     /** How far the caster's aim ray reaches when picking a target point. */
     aimRange: 40,
     /** A spell is never centred closer to its caster than this (blocks), e.g. when looking at your feet. */
-    minAimDistance: 7,
+    minAimDistance: 9,
     /** Hard cap on targets a single query returns. */
     maxTargets: 24
   },
@@ -50,6 +50,305 @@ import { EquipmentSlot, system, world as world2 } from "@minecraft/server";
 
 // src/lib/scene.ts
 import { world } from "@minecraft/server";
+
+// src/config/ground.ts
+var GROUND_ACTORS = {
+  // Divine Word
+  dw_column: 0,
+  dw6_wall: 0,
+  dw6_dome: 5.4,
+  dw6_boundary: 8,
+  // Dream & Nightmare
+  dn_guest: 0,
+  dn_guest_door: 0,
+  dn_lull_wave: 1.1,
+  dn_city_corridor: 0,
+  dn_city_stair: 0,
+  dn_city_stairfall: 0,
+  dn_city_street: 0,
+  dn_city_wave: 1.1,
+  dn_dreamer_codex: 0,
+  dn_dreamer_domain: 2.1,
+  dn_dreamer_dream: 0,
+  dn_dreamer_night: 0,
+  dn_dreamer_stairs: 0,
+  dn_dreamer_wheel: 0,
+  // Elemental Dragon
+  dragon_nature: 0,
+  dragon_heat: 0,
+  ed_nature_pillar: 0,
+  ed_nature_quake: 2,
+  ed_nature_root: 0,
+  ed_nature_strata: 0,
+  ed_heat_glass: 1.8,
+  ed_heat_lane: 0,
+  ed_heat_shimmer: 0,
+  ed_heat_wave: 0,
+  ed_tide_crown: 0,
+  ed_tide_current: 0,
+  ed_tide_frozen: 0,
+  ed_air_shock: 1.3,
+  ed_air_vortex: 0,
+  ed5_gust: 1.6,
+  ed5_icefan: 0,
+  ed5_spike: 0,
+  ed5_trail: 0,
+  ed5_imprint_nature: 7.8,
+  ed5_imprint_heat: 7.8,
+  ed5_imprint_tide: 7.8,
+  ed5_imprint_air: 7.8,
+  ed5_inscription_nature: 1.9,
+  ed5_inscription_heat: 1.9,
+  ed5_inscription_tide: 1.9,
+  ed5_inscription_air: 1.9,
+  ed6_blast: 0,
+  ed6_bridge: 0,
+  ed6_emblem: 2,
+  ed6_flora: 0,
+  ed6_fog: 8,
+  ed6_horizon: 0,
+  ed6_iceshell: 0,
+  ed6_ring: 0,
+  ed6_spiral: 0,
+  ed6_stone: 0
+};
+var GROUND_NEAR = { telegraph: 1, dw_circle: 2 };
+var GROUND_NEAR_TOLERANCE = 6;
+var FLOOR_ACTORS = /* @__PURE__ */ new Set([
+  "cherub",
+  "ophanim",
+  "dw5_letter",
+  "dw6_edifice",
+  "dn_parade_bird",
+  "dn_parade_doll",
+  "dn_parade_horse",
+  "dn_parade_stag",
+  "dn_city_fragment",
+  "dn_dreamer_pillow",
+  "dn_dreamer_shard",
+  "dn_dreamer_roomcube",
+  "dragon_air",
+  "dragon_tide",
+  "ed_tide_shard",
+  "ed5_skel_nature",
+  "ed5_skel_heat",
+  "ed5_skel_tide",
+  "ed5_skel_air",
+  "ed5_tablet_nature",
+  "ed5_tablet_heat",
+  "ed5_tablet_tide",
+  "ed5_tablet_air",
+  "ed6_spirit"
+]);
+
+// src/lib/vec.ts
+var v = (x, y, z) => ({ x, y, z });
+var add = (a, b) => ({ x: a.x + b.x, y: a.y + b.y, z: a.z + b.z });
+var sub = (a, b) => ({ x: a.x - b.x, y: a.y - b.y, z: a.z - b.z });
+var mul = (a, s) => ({ x: a.x * s, y: a.y * s, z: a.z * s });
+var dot = (a, b) => a.x * b.x + a.y * b.y + a.z * b.z;
+var len = (a) => Math.hypot(a.x, a.y, a.z);
+var dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+var distXZ = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+var lerp = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, z: a.z + (b.z - a.z) * t });
+var up = (a, h) => ({ x: a.x, y: a.y + h, z: a.z });
+function norm(a) {
+  const l = len(a);
+  return l < 1e-6 ? { x: 0, y: 0, z: 1 } : { x: a.x / l, y: a.y / l, z: a.z / l };
+}
+var flat = (a) => ({ x: a.x, y: 0, z: a.z });
+function fromYaw(yawDeg) {
+  const r = yawDeg * Math.PI / 180;
+  return { x: -Math.sin(r), y: 0, z: Math.cos(r) };
+}
+function yawOf(d) {
+  return Math.atan2(-d.x, d.z) * 180 / Math.PI;
+}
+function right(d) {
+  const f = norm(flat(d));
+  return { x: -f.z, y: 0, z: f.x };
+}
+function polar(center, radius, angleDeg, dy = 0) {
+  const r = angleDeg * Math.PI / 180;
+  return { x: center.x + Math.cos(r) * radius, y: center.y + dy, z: center.z + Math.sin(r) * radius };
+}
+var clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+var smooth = (t) => {
+  const c = clamp(t, 0, 1);
+  return c * c * (3 - 2 * c);
+};
+var easeOut = (t) => 1 - Math.pow(1 - clamp(t, 0, 1), 3);
+var easeIn = (t) => Math.pow(clamp(t, 0, 1), 3);
+function bezier(a, b, c, t) {
+  return lerp(lerp(a, b, t), lerp(b, c, t), t);
+}
+function spline(pts, t) {
+  const n = pts.length - 1;
+  const f = clamp(t, 0, 1) * n;
+  const i = Math.min(Math.floor(f), n - 1);
+  const u = f - i;
+  const p0 = pts[Math.max(i - 1, 0)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(i + 2, n)];
+  const c = (a, b, cc, d) => 0.5 * (2 * b + (-a + cc) * u + (2 * a - 5 * b + 4 * cc - d) * u * u + (-a + 3 * b - 3 * cc + d) * u * u * u);
+  return { x: c(p0.x, p1.x, p2.x, p3.x), y: c(p0.y, p1.y, p2.y, p3.y), z: c(p0.z, p1.z, p2.z, p3.z) };
+}
+function angleDelta(a, b) {
+  let d = (b - a) % 360;
+  if (d > 180) d -= 360;
+  if (d < -180) d += 360;
+  return d;
+}
+function distToSegment(p, a, b) {
+  const ab = sub(b, a);
+  const t = clamp(dot(sub(p, a), ab) / Math.max(dot(ab, ab), 1e-9), 0, 1);
+  return dist(p, add(a, mul(ab, t)));
+}
+
+// src/lib/targeting.ts
+var NEVER = [
+  "minecraft:item",
+  "minecraft:xp_orb",
+  "minecraft:arrow",
+  "minecraft:armor_stand",
+  "minecraft:painting",
+  "minecraft:leash_knot",
+  "minecraft:fishing_hook",
+  "minecraft:lightning_bolt",
+  "minecraft:npc"
+];
+function isAlive(e) {
+  if (!e || !e.isValid) return false;
+  try {
+    const h = e.getComponent("minecraft:health");
+    return h === void 0 || h.currentValue > 0;
+  } catch {
+    return false;
+  }
+}
+function isHostile(e, caster) {
+  if (!isAlive(e) || e.id === caster.id) return false;
+  try {
+    if (e.matches({ families: ["grimoire_construct"] })) return false;
+    if (e.typeId === "minecraft:player") return CONFIG.targeting.pvp;
+    if (e.hasTag(CONFIG.targeting.testTag)) return true;
+    for (const f of CONFIG.targeting.hostileFamilies) if (e.matches({ families: [f] })) return true;
+  } catch {
+  }
+  return false;
+}
+function hostiles(dim, center, radius, caster, max = CONFIG.targeting.maxTargets) {
+  let found = [];
+  try {
+    found = dim.getEntities({ location: center, maxDistance: radius, excludeTypes: NEVER, excludeFamilies: ["grimoire_construct"] });
+  } catch {
+    return [];
+  }
+  const out = found.filter((e) => isHostile(e, caster));
+  out.sort((a, b) => dist(a.location, center) - dist(b.location, center));
+  return out.slice(0, max);
+}
+function allies(dim, center, radius, caster) {
+  if (CONFIG.targeting.pvp) return caster.isValid && dist(caster.location, center) <= radius ? [caster] : [];
+  try {
+    return dim.getPlayers({ location: center, maxDistance: radius }).filter((p) => isAlive(p));
+  } catch {
+    return [];
+  }
+}
+var GHOST = ["minecraft:barrier", "minecraft:light_block_15"];
+function groundBelow(dim, loc, maxDrop = 40) {
+  try {
+    let y = loc.y;
+    for (let i = 0; i < 24; i++) {
+      const b = dim.getBlock({ x: loc.x, y: y + 0.01, z: loc.z });
+      if (!b || b.isAir || b.isLiquid || GHOST.includes(b.typeId)) break;
+      y = Math.floor(y) + 1;
+    }
+    const hit = dim.getBlockFromRay(
+      { x: loc.x, y: y + 1.5, z: loc.z },
+      { x: 0, y: -1, z: 0 },
+      { maxDistance: maxDrop + 2, includePassableBlocks: false, includeLiquidBlocks: true, excludeTypes: GHOST }
+    );
+    if (hit) return { x: loc.x, y: hit.block.location.y + 1, z: loc.z };
+  } catch {
+  }
+  return { x: loc.x, y: loc.y, z: loc.z };
+}
+function terrainTop(dim, loc, maxClimb = 12) {
+  try {
+    let y = loc.y, inside = false;
+    for (let i = 0; i < maxClimb; i++) {
+      const b = dim.getBlock({ x: loc.x, y: y + 0.05, z: loc.z });
+      if (!b || b.isAir || b.isLiquid || GHOST.includes(b.typeId) || /leaves|log|wood|stem|mushroom_block/.test(b.typeId)) break;
+      inside = true;
+      y = Math.floor(y + 0.05) + 1;
+    }
+    return inside ? y : void 0;
+  } catch {
+    return void 0;
+  }
+}
+function plateau(dim, center, radius, maxRise = 2.5) {
+  const base = groundBelow(dim, center);
+  const r = Math.min(radius, 8) * 0.6;
+  if (r < 1.2) return base;
+  let y = base.y;
+  for (let i = 0; i < 6; i++) {
+    const a = i * Math.PI / 3;
+    const g = groundBelow(dim, { x: base.x + Math.cos(a) * r, y: base.y + maxRise, z: base.z + Math.sin(a) * r }, 8);
+    if (g.y > y && g.y <= base.y + maxRise + 0.01) y = g.y;
+  }
+  return { x: base.x, y, z: base.z };
+}
+function takeAim(caster, range = CONFIG.targeting.aimRange) {
+  const dir = caster.getViewDirection();
+  const head = caster.getHeadLocation();
+  const dim = caster.dimension;
+  let point;
+  let entity;
+  try {
+    for (const h of caster.getEntitiesFromViewDirection({ maxDistance: range, excludeFamilies: ["grimoire_construct"] })) {
+      if (isHostile(h.entity, caster)) {
+        entity = h.entity;
+        point = { ...h.entity.location };
+        break;
+      }
+    }
+  } catch {
+  }
+  if (!point) {
+    try {
+      const b = caster.getBlockFromViewDirection({ maxDistance: range, includePassableBlocks: false });
+      if (b) {
+        point = {
+          x: b.block.location.x + b.faceLocation.x - dir.x * 0.6,
+          y: b.block.location.y + b.faceLocation.y - dir.y * 0.6,
+          z: b.block.location.z + b.faceLocation.z - dir.z * 0.6
+        };
+      }
+    } catch {
+    }
+  }
+  if (!point) point = add(head, mul(dir, range * 0.55));
+  let forward = norm(flat(dir));
+  try {
+    forward = fromYaw(caster.getRotation().y);
+  } catch {
+  }
+  const feet = caster.location;
+  const minD = CONFIG.targeting.minAimDistance;
+  if (!entity && Math.hypot(point.x - feet.x, point.z - feet.z) < minD) {
+    point = { x: feet.x + forward.x * minD, y: feet.y + 1, z: feet.z + forward.z * minD };
+  }
+  return { point, ground: groundBelow(dim, point), entity, dir, forward, yaw: yawOf(forward), from: { ...caster.location } };
+}
+function focus(caster, aim, snap = 10) {
+  if (aim.entity && isAlive(aim.entity)) return { center: groundBelow(caster.dimension, aim.entity.location), target: aim.entity };
+  const near = hostiles(caster.dimension, aim.ground, snap, caster, 1);
+  if (near.length) return { center: groundBelow(caster.dimension, near[0].location), target: near[0] };
+  return { center: aim.ground };
+}
+
+// src/lib/scene.ts
 var NS = "grimoire";
 var secs = (s) => Math.max(0, Math.round(s * 20));
 var warned = /* @__PURE__ */ new Set();
@@ -58,12 +357,60 @@ function warnOnce(key, msg) {
   warned.add(key);
   console.warn(`[grimoire] ${msg}`);
 }
+function settledY(dim, key, loc, size) {
+  let radius = GROUND_ACTORS[key];
+  let tolerance = 24;
+  if (radius === void 0) {
+    radius = GROUND_NEAR[key];
+    if (radius === void 0) return void 0;
+    tolerance = GROUND_NEAR_TOLERANCE;
+  }
+  const g = groundBelow(dim, loc);
+  if (Math.abs(g.y - loc.y) > tolerance) return void 0;
+  return radius * size >= 2 ? plateau(dim, g, radius * size).y : g.y;
+}
+var isBound = (key) => GROUND_ACTORS[key] !== void 0 || GROUND_NEAR[key] !== void 0;
 var Actor = class {
   constructor(entity, typeId) {
     this.entity = entity;
     this.typeId = typeId;
+    this.key = typeId.startsWith(`${NS}:`) ? typeId.slice(NS.length + 1) : typeId;
   }
   lastYaw = 0;
+  sz = 1;
+  gKey = "";
+  gY;
+  key;
+  /**
+   * Terrain handling for a requested position.  Ground-bound actors follow the surface (eased, so
+   * walking over steps is not a jolt); free-moving ones are only lifted out of terrain they would
+   * otherwise sink into.
+   */
+  settle(loc) {
+    const bound = isBound(this.key);
+    if (!bound && !FLOOR_ACTORS.has(this.key)) return loc;
+    const k2 = `${Math.floor(loc.x)},${Math.floor(loc.z)},${Math.round(loc.y * 4)}`;
+    if (k2 !== this.gKey) {
+      this.gKey = k2;
+      const dim = this.entity.dimension;
+      this.gTarget = bound ? settledY(dim, this.key, loc, this.sz) : terrainTop(dim, loc);
+      if (this.gTarget !== void 0 && this.gY === void 0) this.gY = bound ? this.gTarget : Math.max(loc.y, this.gTarget - 1.5);
+    }
+    if (this.gTarget === void 0) {
+      if (this.gY === void 0) return loc;
+      this.gY += (loc.y - this.gY) * 0.35;
+      if (Math.abs(loc.y - this.gY) < 0.05) {
+        this.gY = void 0;
+        return loc;
+      }
+      return { x: loc.x, y: this.gY, z: loc.z };
+    }
+    const cur = this.gY ?? this.gTarget;
+    const next = cur + (this.gTarget - cur) * (this.gTarget > cur ? 0.6 : 0.3);
+    this.gY = Math.abs(this.gTarget - next) < 0.02 ? this.gTarget : next;
+    return { x: loc.x, y: this.gY, z: loc.z };
+  }
+  gTarget;
   get valid() {
     return this.entity !== void 0 && this.entity.isValid;
   }
@@ -89,6 +436,7 @@ var Actor = class {
     return this.prop("kind", n);
   }
   size(n) {
+    this.sz = n;
     return this.prop("size", n);
   }
   skin(n) {
@@ -99,7 +447,7 @@ var Actor = class {
     if (!this.valid) return this;
     if (yaw !== void 0) this.lastYaw = yaw;
     try {
-      this.entity.teleport(loc, { rotation: { x: 0, y: this.lastYaw } });
+      this.entity.teleport(this.settle(loc), { rotation: { x: 0, y: this.lastYaw } });
     } catch {
     }
     return this;
@@ -108,7 +456,7 @@ var Actor = class {
     if (!this.valid) return this;
     this.lastYaw = yaw;
     try {
-      this.entity.setRotation({ x: 0, y: yaw });
+      this.entity.teleport(this.entity.location, { rotation: { x: 0, y: yaw } });
     } catch {
     }
     return this;
@@ -172,6 +520,12 @@ var Scene = class {
     if (this.ended || Scenes.actorCount() >= CONFIG.limits.maxActors) return new Actor(void 0, id);
     let e;
     try {
+      const key = id.slice(NS.length + 1);
+      const gy = isBound(key) ? settledY(this.dim, key, loc, opts.size ?? 1) : FLOOR_ACTORS.has(key) ? terrainTop(this.dim, loc) : void 0;
+      if (gy !== void 0) loc = { x: loc.x, y: gy, z: loc.z };
+    } catch {
+    }
+    try {
       e = this.dim.spawnEntity(id, loc, opts.yaw !== void 0 ? { initialRotation: opts.yaw } : void 0);
     } catch (err) {
       warnOnce(`spawn.${id}`, `cannot spawn ${id}: ${err}`);
@@ -187,7 +541,7 @@ var Scene = class {
       if (opts.size !== void 0) a.size(opts.size);
       if (opts.skin !== void 0) a.skin(opts.skin);
       if (opts.state !== void 0) a.state(opts.state);
-      if (opts.yaw !== void 0) a.face(opts.yaw);
+      if (opts.yaw !== void 0) a.move(loc, opts.yaw);
     }
     return a;
   }
@@ -305,186 +659,6 @@ var Scenes = {
     }
   }
 };
-
-// src/lib/vec.ts
-var v = (x, y, z) => ({ x, y, z });
-var add = (a, b) => ({ x: a.x + b.x, y: a.y + b.y, z: a.z + b.z });
-var sub = (a, b) => ({ x: a.x - b.x, y: a.y - b.y, z: a.z - b.z });
-var mul = (a, s) => ({ x: a.x * s, y: a.y * s, z: a.z * s });
-var dot = (a, b) => a.x * b.x + a.y * b.y + a.z * b.z;
-var len = (a) => Math.hypot(a.x, a.y, a.z);
-var dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
-var distXZ = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
-var lerp = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, z: a.z + (b.z - a.z) * t });
-var up = (a, h) => ({ x: a.x, y: a.y + h, z: a.z });
-function norm(a) {
-  const l = len(a);
-  return l < 1e-6 ? { x: 0, y: 0, z: 1 } : { x: a.x / l, y: a.y / l, z: a.z / l };
-}
-var flat = (a) => ({ x: a.x, y: 0, z: a.z });
-function fromYaw(yawDeg) {
-  const r = yawDeg * Math.PI / 180;
-  return { x: -Math.sin(r), y: 0, z: Math.cos(r) };
-}
-function yawOf(d) {
-  return Math.atan2(-d.x, d.z) * 180 / Math.PI;
-}
-function right(d) {
-  const f = norm(flat(d));
-  return { x: -f.z, y: 0, z: f.x };
-}
-function polar(center, radius, angleDeg, dy = 0) {
-  const r = angleDeg * Math.PI / 180;
-  return { x: center.x + Math.cos(r) * radius, y: center.y + dy, z: center.z + Math.sin(r) * radius };
-}
-var clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
-var smooth = (t) => {
-  const c = clamp(t, 0, 1);
-  return c * c * (3 - 2 * c);
-};
-var easeOut = (t) => 1 - Math.pow(1 - clamp(t, 0, 1), 3);
-var easeIn = (t) => Math.pow(clamp(t, 0, 1), 3);
-function bezier(a, b, c, t) {
-  return lerp(lerp(a, b, t), lerp(b, c, t), t);
-}
-function spline(pts, t) {
-  const n = pts.length - 1;
-  const f = clamp(t, 0, 1) * n;
-  const i = Math.min(Math.floor(f), n - 1);
-  const u = f - i;
-  const p0 = pts[Math.max(i - 1, 0)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(i + 2, n)];
-  const c = (a, b, cc, d) => 0.5 * (2 * b + (-a + cc) * u + (2 * a - 5 * b + 4 * cc - d) * u * u + (-a + 3 * b - 3 * cc + d) * u * u * u);
-  return { x: c(p0.x, p1.x, p2.x, p3.x), y: c(p0.y, p1.y, p2.y, p3.y), z: c(p0.z, p1.z, p2.z, p3.z) };
-}
-function angleDelta(a, b) {
-  let d = (b - a) % 360;
-  if (d > 180) d -= 360;
-  if (d < -180) d += 360;
-  return d;
-}
-function distToSegment(p, a, b) {
-  const ab = sub(b, a);
-  const t = clamp(dot(sub(p, a), ab) / Math.max(dot(ab, ab), 1e-9), 0, 1);
-  return dist(p, add(a, mul(ab, t)));
-}
-
-// src/lib/targeting.ts
-var NEVER = [
-  "minecraft:item",
-  "minecraft:xp_orb",
-  "minecraft:arrow",
-  "minecraft:armor_stand",
-  "minecraft:painting",
-  "minecraft:leash_knot",
-  "minecraft:fishing_hook",
-  "minecraft:lightning_bolt",
-  "minecraft:npc"
-];
-function isAlive(e) {
-  if (!e || !e.isValid) return false;
-  try {
-    const h = e.getComponent("minecraft:health");
-    return h === void 0 || h.currentValue > 0;
-  } catch {
-    return false;
-  }
-}
-function isHostile(e, caster) {
-  if (!isAlive(e) || e.id === caster.id) return false;
-  try {
-    if (e.matches({ families: ["grimoire_construct"] })) return false;
-    if (e.typeId === "minecraft:player") return CONFIG.targeting.pvp;
-    if (e.hasTag(CONFIG.targeting.testTag)) return true;
-    for (const f of CONFIG.targeting.hostileFamilies) if (e.matches({ families: [f] })) return true;
-  } catch {
-  }
-  return false;
-}
-function hostiles(dim, center, radius, caster, max = CONFIG.targeting.maxTargets) {
-  let found = [];
-  try {
-    found = dim.getEntities({ location: center, maxDistance: radius, excludeTypes: NEVER, excludeFamilies: ["grimoire_construct"] });
-  } catch {
-    return [];
-  }
-  const out = found.filter((e) => isHostile(e, caster));
-  out.sort((a, b) => dist(a.location, center) - dist(b.location, center));
-  return out.slice(0, max);
-}
-function allies(dim, center, radius, caster) {
-  if (CONFIG.targeting.pvp) return caster.isValid && dist(caster.location, center) <= radius ? [caster] : [];
-  try {
-    return dim.getPlayers({ location: center, maxDistance: radius }).filter((p) => isAlive(p));
-  } catch {
-    return [];
-  }
-}
-function groundBelow(dim, loc, maxDrop = 40) {
-  try {
-    let y = loc.y;
-    for (let i = 0; i < 24; i++) {
-      const b = dim.getBlock({ x: loc.x, y: y + 0.01, z: loc.z });
-      if (!b || b.isAir || b.isLiquid) break;
-      y = Math.floor(y) + 1;
-    }
-    const hit = dim.getBlockFromRay(
-      { x: loc.x, y: y + 1.5, z: loc.z },
-      { x: 0, y: -1, z: 0 },
-      { maxDistance: maxDrop + 2, includePassableBlocks: false, includeLiquidBlocks: true }
-    );
-    if (hit) return { x: loc.x, y: hit.block.location.y + 1, z: loc.z };
-  } catch {
-  }
-  return { x: loc.x, y: loc.y, z: loc.z };
-}
-function takeAim(caster, range = CONFIG.targeting.aimRange) {
-  const dir = caster.getViewDirection();
-  const head = caster.getHeadLocation();
-  const dim = caster.dimension;
-  let point;
-  let entity;
-  try {
-    for (const h of caster.getEntitiesFromViewDirection({ maxDistance: range, excludeFamilies: ["grimoire_construct"] })) {
-      if (isHostile(h.entity, caster)) {
-        entity = h.entity;
-        point = { ...h.entity.location };
-        break;
-      }
-    }
-  } catch {
-  }
-  if (!point) {
-    try {
-      const b = caster.getBlockFromViewDirection({ maxDistance: range, includePassableBlocks: false });
-      if (b) {
-        point = {
-          x: b.block.location.x + b.faceLocation.x - dir.x * 0.6,
-          y: b.block.location.y + b.faceLocation.y - dir.y * 0.6,
-          z: b.block.location.z + b.faceLocation.z - dir.z * 0.6
-        };
-      }
-    } catch {
-    }
-  }
-  if (!point) point = add(head, mul(dir, range * 0.55));
-  let forward = norm(flat(dir));
-  try {
-    forward = fromYaw(caster.getRotation().y);
-  } catch {
-  }
-  const feet = caster.location;
-  const minD = CONFIG.targeting.minAimDistance;
-  if (!entity && Math.hypot(point.x - feet.x, point.z - feet.z) < minD) {
-    point = { x: feet.x + forward.x * minD, y: feet.y + 1, z: feet.z + forward.z * minD };
-  }
-  return { point, ground: groundBelow(dim, point), entity, dir, forward, yaw: yawOf(forward), from: { ...caster.location } };
-}
-function focus(caster, aim, snap = 10) {
-  if (aim.entity && isAlive(aim.entity)) return { center: groundBelow(caster.dimension, aim.entity.location), target: aim.entity };
-  const near = hostiles(caster.dimension, aim.ground, snap, caster, 1);
-  if (near.length) return { center: groundBelow(caster.dimension, near[0].location), target: near[0] };
-  return { center: aim.ground };
-}
 
 // src/core/registry.ts
 var GRIMOIRES = {
@@ -5264,7 +5438,7 @@ var dn03_shifting_house_default = defineSpell("dn03", ({ caster, scene, aim }) =
   if (distXZ(center, caster.location) < 0.5) away = aim.forward;
   const d0 = distXZ(center, caster.location);
   const shift = clamp(HALF + DN03.casterMargin - d0, 0, DN03.maxGridShift);
-  const gc = groundBelow(dim, up(add(center, mul(away, shift)), 4), 16);
+  const gc = plateau(dim, up(add(center, mul(away, shift)), 4), HALF);
   const gy = gc.y;
   const X0 = Math.floor(gc.x) - HALF, Z0 = Math.floor(gc.z) - HALF;
   const mid = (gx, gz) => ({ x: X0 + gx * CS + GAP + 0.5, y: gy, z: Z0 + gz * CS + GAP + 0.5 });

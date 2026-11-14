@@ -4,7 +4,7 @@ import { defineSpell } from "../core/registry";
 import { damage, drag, effect, shove } from "../lib/combat";
 import { burst, line, particle, ring, sound } from "../lib/fx";
 import { Actor, secs } from "../lib/scene";
-import { allies, focus, groundBelow, hostiles, isAlive } from "../lib/targeting";
+import { allies, focus, groundBelow, hostiles, isAlive, plateau } from "../lib/targeting";
 import { blocksFor } from "../lib/tempblocks";
 import { V3, add, angleDelta, bezier, clamp, distXZ, flat, lerp, mul, norm, smooth, sub, up, yawOf } from "../lib/vec";
 
@@ -55,7 +55,7 @@ export default defineSpell("dn03", ({ caster, scene, aim }) => {
   if (distXZ(center, caster.location) < 0.5) away = aim.forward;
   const d0 = distXZ(center, caster.location);
   const shift = clamp(HALF + C.casterMargin - d0, 0, C.maxGridShift);
-  const gc = groundBelow(dim, up(add(center, mul(away, shift)), 4), 16);
+  const gc = plateau(dim, up(add(center, mul(away, shift)), 4), HALF);   // on a slope: sit on the high side, never buried
   const gy = gc.y;
   const X0 = Math.floor(gc.x) - HALF, Z0 = Math.floor(gc.z) - HALF;
   const mid = (gx: number, gz: number): V3 => ({ x: X0 + gx * CS + GAP + 0.5, y: gy, z: Z0 + gz * CS + GAP + 0.5 });

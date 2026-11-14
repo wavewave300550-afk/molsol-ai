@@ -63,6 +63,10 @@ export class ItemStack {
 
 let nextId = 1;
 const GROUND = 64;
+/** Terrain height (first air y) per column.  Flat by default; setTerrain() makes hills for placement tests. */
+let terrain = () => GROUND;
+export function setTerrain(fn) { terrain = fn ?? (() => GROUND); }
+export function heightAt(x, z) { return terrain(Math.floor(x), Math.floor(z)); }
 
 export class Entity {
   constructor(dim, typeId, loc) {
@@ -229,7 +233,7 @@ export class Dimension {
   blockAt(x, y, z) {
     const k = `${x},${y},${z}`;
     if (this.blocks.has(k)) return this.blocks.get(k);
-    return y < GROUND ? "minecraft:stone" : "minecraft:air";
+    return y < terrain(x, z) ? "minecraft:stone" : "minecraft:air";
   }
   getBlock(loc) {
     if (![loc.x, loc.y, loc.z].every(Number.isFinite)) { problem("getBlock with non-finite location"); return undefined; }
@@ -238,7 +242,7 @@ export class Dimension {
   setBlockType(loc, t) {
     const id = typeof t === "string" ? t : t.id;
     const k = `${Math.floor(loc.x)},${Math.floor(loc.y)},${Math.floor(loc.z)}`;
-    if (Math.floor(loc.y) < GROUND && id !== "minecraft:stone") problem(`world terrain modified at ${k} -> ${id}`);
+    if (Math.floor(loc.y) < terrain(Math.floor(loc.x), Math.floor(loc.z)) && id !== "minecraft:stone") problem(`world terrain modified at ${k} -> ${id}`);
     if (id === "minecraft:air") this.blocks.delete(k); else this.blocks.set(k, id);
   }
   getBlockFromRay(loc, dir, o = {}) {
@@ -246,13 +250,13 @@ export class Dimension {
     for (let t = 0; t <= max; t += 0.25) {
       const p = { x: loc.x + dir.x * t, y: loc.y + dir.y * t, z: loc.z + dir.z * t };
       const b = this.getBlock(p);
-      if (b && !b.isAir && b.typeId !== "minecraft:light_block_15") {
+      if (b && !b.isAir && b.typeId !== "minecraft:light_block_15" && !(o.excludeTypes ?? []).includes(b.typeId)) {
         return { block: b, face: "Up", faceLocation: { x: p.x - Math.floor(p.x), y: 1, z: p.z - Math.floor(p.z) } };
       }
     }
     return undefined;
   }
-  getTopmostBlock(xz) { return new Block(this, Math.floor(xz.x), GROUND - 1, Math.floor(xz.z)); }
+  getTopmostBlock(xz) { return new Block(this, Math.floor(xz.x), terrain(Math.floor(xz.x), Math.floor(xz.z)) - 1, Math.floor(xz.z)); }
   spawnEntity(typeId, loc, o = {}) {
     const id = typeof typeId === "string" ? typeId : typeId.id;
     for (const k of ["x", "y", "z"]) if (!Number.isFinite(loc[k])) { problem(`spawn ${id} at non-finite location`); throw new Error("NaN spawn"); }

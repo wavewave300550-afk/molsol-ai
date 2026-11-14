@@ -1,5 +1,7 @@
 import { Dimension, Entity, Player, Vector3, world } from "@minecraft/server";
 import { CONFIG } from "../config/global";
+import { FLOOR_ACTORS, GROUND_ACTORS, GROUND_NEAR, GROUND_NEAR_TOLERANCE } from "../config/ground";
+import { groundBelow, plateau, terrainTop } from "./targeting";
 
 export const NS = "grimoire";
 /** Seconds -> ticks. */
@@ -21,10 +23,62 @@ function warnOnce(key: string, msg: string): void {
   console.warn(`[grimoire] ${msg}`);
 }
 
+/**
+ * Ground-bound actor types stand on the terrain under their own position (see config/ground.ts).
+ * Returns the height to use, or undefined when the type is free to be anywhere.
+ */
+function settledY(dim: Dimension, key: string, loc: Vector3, size: number): number | undefined {
+  let radius = GROUND_ACTORS[key];
+  let tolerance = 24;
+  if (radius === undefined) {
+    radius = GROUND_NEAR[key];
+    if (radius === undefined) return undefined;
+    tolerance = GROUND_NEAR_TOLERANCE;
+  }
+  const g = groundBelow(dim, loc);
+  if (Math.abs(g.y - loc.y) > tolerance) return undefined;
+  return radius * size >= 2 ? plateau(dim, g, radius * size).y : g.y;
+}
+const isBound = (key: string): boolean => GROUND_ACTORS[key] !== undefined || GROUND_NEAR[key] !== undefined;
+
 /** Safe wrapper around a spell entity.  Every method is a no-op once the entity is gone. */
 export class Actor {
   private lastYaw = 0;
-  constructor(public readonly entity: Entity | undefined, public readonly typeId: string) {}
+  private sz = 1;
+  private gKey = "";
+  private gY: number | undefined;
+  private readonly key: string;
+  constructor(public readonly entity: Entity | undefined, public readonly typeId: string) {
+    this.key = typeId.startsWith(`${NS}:`) ? typeId.slice(NS.length + 1) : typeId;
+  }
+  /**
+   * Terrain handling for a requested position.  Ground-bound actors follow the surface (eased, so
+   * walking over steps is not a jolt); free-moving ones are only lifted out of terrain they would
+   * otherwise sink into.
+   */
+  private settle(loc: Vector3): Vector3 {
+    const bound = isBound(this.key);
+    if (!bound && !FLOOR_ACTORS.has(this.key)) return loc;
+    const k = `${Math.floor(loc.x)},${Math.floor(loc.z)},${Math.round(loc.y * 4)}`;
+    if (k !== this.gKey) {
+      this.gKey = k;
+      const dim = this.entity!.dimension;
+      this.gTarget = bound ? settledY(dim, this.key, loc, this.sz) : terrainTop(dim, loc);
+      if (this.gTarget !== undefined && this.gY === undefined) this.gY = bound ? this.gTarget : Math.max(loc.y, this.gTarget - 1.5);
+    }
+    if (this.gTarget === undefined) {
+      if (this.gY === undefined) return loc;
+      // back in the open: ease from the lifted height to the requested one
+      this.gY += (loc.y - this.gY) * 0.35;
+      if (Math.abs(loc.y - this.gY) < 0.05) { this.gY = undefined; return loc; }
+      return { x: loc.x, y: this.gY, z: loc.z };
+    }
+    const cur = this.gY ?? this.gTarget;
+    const next = cur + (this.gTarget - cur) * (this.gTarget > cur ? 0.6 : 0.3);   // climb fast, descend gently
+    this.gY = Math.abs(this.gTarget - next) < 0.02 ? this.gTarget : next;
+    return { x: loc.x, y: this.gY, z: loc.z };
+  }
+  private gTarget: number | undefined;
 
   get valid(): boolean {
     return this.entity !== undefined && this.entity.isValid;
@@ -46,14 +100,14 @@ export class Actor {
   }
   state(n: number): this { return this.prop("state", n); }
   kind(n: number): this { return this.prop("kind", n); }
-  size(n: number): this { return this.prop("size", n); }
+  size(n: number): this { this.sz = n; return this.prop("size", n); }
   skin(n: number): this { return this.prop("skin", n); }
   /** Teleport (and optionally face a yaw).  Called every tick this gives smooth motion. */
   move(loc: Vector3, yaw?: number): this {
     if (!this.valid) return this;
     if (yaw !== undefined) this.lastYaw = yaw;
     try {
-      this.entity!.teleport(loc, { rotation: { x: 0, y: this.lastYaw } });
+      this.entity!.teleport(this.settle(loc), { rotation: { x: 0, y: this.lastYaw } });
     } catch {
       /* unloaded chunk: ignore */
     }
@@ -62,8 +116,9 @@ export class Actor {
   face(yaw: number): this {
     if (!this.valid) return this;
     this.lastYaw = yaw;
+    // teleport-in-place: unlike setRotation this always turns the rendered body, not only the head
     try {
-      this.entity!.setRotation({ x: 0, y: yaw });
+      this.entity!.teleport(this.entity!.location, { rotation: { x: 0, y: yaw } });
     } catch { /* ignore */ }
     return this;
   }
@@ -131,6 +186,11 @@ export class Scene {
     if (this.ended || Scenes.actorCount() >= CONFIG.limits.maxActors) return new Actor(undefined, id);
     let e: Entity | undefined;
     try {
+      const key = id.slice(NS.length + 1);
+      const gy = isBound(key) ? settledY(this.dim, key, loc, opts.size ?? 1) : FLOOR_ACTORS.has(key) ? terrainTop(this.dim, loc) : undefined;
+      if (gy !== undefined) loc = { x: loc.x, y: gy, z: loc.z };
+    } catch { /* keep the requested height */ }
+    try {
       e = this.dim.spawnEntity(id, loc, opts.yaw !== undefined ? { initialRotation: opts.yaw } : undefined);
     } catch (err) {
       warnOnce(`spawn.${id}`, `cannot spawn ${id}: ${err}`);
@@ -143,7 +203,7 @@ export class Scene {
       if (opts.size !== undefined) a.size(opts.size);
       if (opts.skin !== undefined) a.skin(opts.skin);
       if (opts.state !== undefined) a.state(opts.state);
-      if (opts.yaw !== undefined) a.face(opts.yaw);
+      if (opts.yaw !== undefined) a.move(loc, opts.yaw);
     }
     return a;
   }

@@ -40,7 +40,7 @@ from .a_fx_common import particles
 TP_POS = (9.5, 19.0, -5.5)      # third person: beside and above the right hand, a little forward
 TP_ROT = (18.0, 180.0, -8.0)
 TP_SCALE = 0.20
-FP_POS = (5.0, 21.0, -9.0)      # first person: up and right of the hand, clear of the crosshair
+FP_POS = (-2.0, 27.0, -6.0)     # first person (screen frame, see books_zfix): left of / above the hand point
 FP_ROT = (20.0, 196.0, -6.0)
 FP_SCALE = 0.155
 RISE = 9.0          # how far (book units) the book rises while Use is held

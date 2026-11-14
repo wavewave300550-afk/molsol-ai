@@ -226,6 +226,8 @@ class Pack:
         }
         _write(os.path.join(self.bp, "entities", f"{ident}.json"), ent)
         self.lang[f"entity.{full}.name"] = display or ident.replace("_", " ").title()
+        if os.environ.get("GRIMOIRE_SCENE"):
+            self._scene_dump(ident, models, anims, states, always, scale, size_prop, lifetime, skins)
         self.actors[ident] = {
             "id": full, "states": sorted((states or {}).keys()), "kinds": len(models),
             "size_prop": size_prop, "skins": ["default"] + skins, "anims": {a.name: a.length for a in anims}, "lifetime": lifetime,
@@ -233,6 +235,38 @@ class Pack:
             "tex": [m.tex_size for m in models],
         }
         return full
+
+    def _scene_dump(self, ident, models, anims, states, always, scale, size_prop, lifetime, skins):
+        """Compact copy of an actor (meshes, textures, animations) for tools/scene.py."""
+        import cloudpickle
+        import numpy as np
+        from .geo import _trs
+        ms = []
+        for m in models:
+            m.finalize()
+            bones = [(n, m.bones[n].parent, tuple(m.bones[n].pivot), tuple(m.bones[n].rot)) for n in m.order]
+            quads, uvs, bidx, modes = [], [], [], []
+            for bi, n in enumerate(m.order):
+                for c in m.bones[n].cubes:
+                    cm = _trs(c.pivot or tuple(c.origin[i] + c.size[i] / 2 for i in range(3)), c.rot) if c.rot else np.eye(4)
+                    for f in c.paint_faces():
+                        pts = np.array([list(p) + [1.0] for p in c.corners(f)])
+                        quads.append((cm @ pts.T).T[:, :3])
+                        uvs.append(c.uv[f])
+                        bidx.append(bi)
+                        modes.append(1 if (c.mats.get(f) or c.mat).mode == "blend" else 0)
+            ms.append({"name": m.name, "bones": bones, "quads": np.array(quads, dtype=np.float32).reshape(-1, 4, 3),
+                       "uv": np.array(uvs, dtype=np.int32).reshape(-1, 4), "bone": np.array(bidx, dtype=np.int32),
+                       "mode": np.array(modes, dtype=np.int8),
+                       "atlas": {k: np.asarray(v) for k, v in {"default": m.atlas, **m.atlases}.items()}})
+        st = {int(k): (list(v) if isinstance(v, (list, tuple)) else list(v.get("animations", []))) for k, v in (states or {}).items()}
+        d = {"ident": ident, "models": ms, "anims": {a.name: a for a in anims}, "states": st,
+             "always": [n for n in always if isinstance(n, str)], "scale": scale, "size_prop": size_prop,
+             "lifetime": lifetime, "skins": ["default"] + list(skins)}
+        out = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "_scene")
+        os.makedirs(out, exist_ok=True)
+        with open(os.path.join(out, f"{ident}.pkl"), "wb") as fh:
+            cloudpickle.dump(d, fh)
 
     # ------------------------------------------------------------------ sounds / lang
     def sound(self, sid, files, category="neutral", volume=1.0, pitch=1.0, max_distance=64.0, min_distance=4.0):

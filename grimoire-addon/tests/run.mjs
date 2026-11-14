@@ -61,7 +61,7 @@ const ctx = {
 };
 ctx.arg = arg;
 for (const f of fs.readdirSync(here).filter((f) => f.endsWith(".test.mjs")).sort()) {
-  if (filter && !f.includes(filter)) continue;
+  if (filter ? !f.includes(filter) : f.includes("trace")) continue;   // the scene recorder only runs on request
   console.log(f);
   const suite = await import(pathToFileURL(path.join(here, f)).href);
   await suite.default(ctx);

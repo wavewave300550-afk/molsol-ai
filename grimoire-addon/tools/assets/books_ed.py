@@ -50,7 +50,7 @@ from .a_fx_common import particles
 # The open-while-using motion (rise 10 units = ~4 px, tilt 28 deg, spread re-centred) is in build_book_anims.
 HAND_PIVOT = (0.0, 0.0, 0.0)
 BOOK_CENTER = (0.0, 0.0, 0.0)
-FIRST = dict(pos=(5.0, 21.0, -9.0), rot=(20.0, 196.0, -6.0), turn=0.0, lift=(0.0, 0.0, 0.0), scale=0.31)
+FIRST = dict(pos=(-2.0, 27.0, -6.0), rot=(20.0, 196.0, -6.0), turn=0.0, lift=(0.0, 0.0, 0.0), scale=0.31)
 THIRD = dict(pos=(9.5, 19.0, -5.5), rot=(18.0, 180.0, -8.0), turn=0.0, lift=(0.0, 0.0, 0.0), scale=0.405)
 # Charge construct / vision face: their front (-Z, the readable page side) points along the actor
 # yaw.  The presenter should spawn them with the yaw that faces the player (player yaw + 180).

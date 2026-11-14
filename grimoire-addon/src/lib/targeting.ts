@@ -51,6 +51,9 @@ export function allies(dim: Dimension, center: Vector3, radius: number, caster: 
   }
 }
 
+/** Temporary spell blocks: solid for players, but never "ground" for spell placement. */
+const GHOST = ["minecraft:barrier", "minecraft:light_block_15"];
+
 /**
  * Standing surface for a point: if the point is inside terrain (aimed at a wall or a slope) it first
  * climbs out, then drops to the first solid block below.  Falls back to the point itself.
@@ -60,14 +63,49 @@ export function groundBelow(dim: Dimension, loc: Vector3, maxDrop = 40): Vector3
     let y = loc.y;
     for (let i = 0; i < 24; i++) {
       const b = dim.getBlock({ x: loc.x, y: y + 0.01, z: loc.z });
-      if (!b || b.isAir || b.isLiquid) break;
+      if (!b || b.isAir || b.isLiquid || GHOST.includes(b.typeId)) break;
       y = Math.floor(y) + 1;
     }
     const hit = dim.getBlockFromRay({ x: loc.x, y: y + 1.5, z: loc.z }, { x: 0, y: -1, z: 0 },
-      { maxDistance: maxDrop + 2, includePassableBlocks: false, includeLiquidBlocks: true });
+      { maxDistance: maxDrop + 2, includePassableBlocks: false, includeLiquidBlocks: true, excludeTypes: GHOST });
     if (hit) return { x: loc.x, y: hit.block.location.y + 1, z: loc.z };
   } catch { /* unloaded */ }
   return { x: loc.x, y: loc.y, z: loc.z };
+}
+
+/**
+ * If a point is inside the terrain, the height of the surface above it (trees and temporary spell
+ * blocks do not count); undefined when the point is in the open.
+ */
+export function terrainTop(dim: Dimension, loc: Vector3, maxClimb = 12): number | undefined {
+  try {
+    let y = loc.y, inside = false;
+    for (let i = 0; i < maxClimb; i++) {
+      const b = dim.getBlock({ x: loc.x, y: y + 0.05, z: loc.z });
+      if (!b || b.isAir || b.isLiquid || GHOST.includes(b.typeId) || /leaves|log|wood|stem|mushroom_block/.test(b.typeId)) break;
+      inside = true;
+      y = Math.floor(y + 0.05) + 1;
+    }
+    return inside ? y : undefined;
+  } catch { return undefined; }
+}
+
+/**
+ * Ground for something wide and flat (a rune circle, a building footprint): the ground under the
+ * centre, raised to the highest ground found under the footprint so that the piece is not buried
+ * on a slope.  The rise is limited so a cliff or a tree next to it does not carry it away.
+ */
+export function plateau(dim: Dimension, center: Vector3, radius: number, maxRise = 2.5): Vector3 {
+  const base = groundBelow(dim, center);
+  const r = Math.min(radius, 8) * 0.6;
+  if (r < 1.2) return base;
+  let y = base.y;
+  for (let i = 0; i < 6; i++) {
+    const a = (i * Math.PI) / 3;
+    const g = groundBelow(dim, { x: base.x + Math.cos(a) * r, y: base.y + maxRise, z: base.z + Math.sin(a) * r }, 8);
+    if (g.y > y && g.y <= base.y + maxRise + 0.01) y = g.y;
+  }
+  return { x: base.x, y, z: base.z };
 }
 
 export interface Aim {

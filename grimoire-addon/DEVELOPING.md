@@ -176,6 +176,21 @@ export default defineSpell("dn02", ({ caster, scene, aim, heldTicks }) => { ... 
 * Telegraph dangerous areas with `scene.spawn("telegraph", loc, {kind: 0 dw | 1 dn | 2 ed, size: radius, state: 1})`
   (state 1 fills in 1 s, 4 fills in 2 s, 2 holds, 3 flashes out).
 
+### Look at a whole spell (`tools/scene.py`)
+Model previews show one model; they do not show whether a spell puts it in the right place.  The
+scene previewer replays a recorded cast with the real models, poses, sizes and facings:
+```
+GRIMOIRE_SCENE=1 python3 tools/build.py            # once: also writes tools/_scene/*.pkl (needs cloudpickle)
+node tests/run.mjs trace [dw01,ed03]               # record casts on the flat test world
+TERRAIN=hills node tests/run.mjs trace             # ... and on rolling ground with a ledge
+python3 tools/scene.py ed01 --view wide --n 6      # contact sheet in tools/_preview/scene/
+python3 tools/scene.py ed01 --hills --report       # table: when each actor lives, how high above the ground
+```
+Views: `chase`, `wide`, `pov`, `top`, `side`, `front`, or `--cam r,u,f,r,u,f` (eye and target relative to
+the caster).  The blue box is the caster, green boxes are enemies, rings are particles.  **Check new
+spells on the hills terrain**: anything that should stand on the ground must follow it (add its
+actor to `src/config/ground.ts`).
+
 ## 5. Tests
 ```
 npx tsc --noEmit -p tsconfig.json                  # type check (must be clean for your files)

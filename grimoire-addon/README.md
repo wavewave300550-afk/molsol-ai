@@ -134,6 +134,7 @@ Water & Ice (Spinosaurus-inspired), Air (Microraptor-inspired, four feathered wi
 | `/scriptevent grimoire:cast dw03` | Casts a spell directly (ids `dw01`-`dw06`, `dn01`-`dn06`, `ed01`-`ed06`) |
 | `/scriptevent grimoire:config pvp on` | Treat other players as enemies instead of allies |
 | `/scriptevent grimoire:config heartbeat on` | Input fallback, see Known limitations |
+| `/scriptevent grimoire:show seraph 4` | Puts one spell model in front of you for 20 s (`<actor> [state] [kind] [skin] [size]`) |
 
 ## Configuration
 
@@ -210,6 +211,37 @@ Measured in those tests:
 | DN01 | 9.5 s | 19 | | ED04 | 14.1 s | 24 |
 | DN02 | 11.8 s | 4 | | ED05 | 36.7 s | 23 |
 | DN03 | 20.0 s | 24 | | ED06 | 65.4 s | 51 |
+
+## Changes since 1.0.0
+
+Both updates answer a report from a first play-test on iPhone ("things missing, wrong positions").
+They were made from analysis and from the scene previews described in DEVELOPING.md, not from a
+second look inside the game.
+
+**1.0.2**
+
+* **Held book.** A bone bound to the hand slot does not live in the player model's space; the
+  book was drawn about half a block beside the hand and lying on its back. The placement now uses
+  the hand frame measured from the vanilla shield, trident and spyglass attachables, separately
+  for third and first person.
+* **Uneven ground.** Every earlier check used a flat test world. On slopes, ground effects, warning
+  rings and walking creatures kept the height of the spell's centre and sank into hills or hung in
+  the air. Ground-bound spell entities now follow the terrain under their own position, wide flat
+  pieces are raised to the highest ground under their footprint, and flying or charging creatures
+  are lifted out of terrain instead of passing through it.
+* **Facing.** Every turn of a spell entity now goes through a teleport, which always turns the
+  rendered body.
+* Temporary barrier and light blocks no longer count as ground when spells look for the surface.
+* A spell aimed at the ground close by is centred at least 9 blocks away (was 7), so the largest
+  summons do not appear on top of the caster.
+
+**1.0.1**
+
+* Transparent texels of 239 textures still carried colour, which the glowing material draws as
+  solid rectangles; they are now pure black.
+* Visible bounds were smaller than the scaled models, so large models vanished at screen edges.
+* Book bones named like player bones (`root`, `body`) were renamed.
+* Aim points inside walls or slopes are moved to open ground.
 
 ## Known limitations and things to check in game
 

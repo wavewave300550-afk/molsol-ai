@@ -40,7 +40,7 @@ TP_SCALE = 0.55                   # 14-unit tall model -> ~0.48 block book (38 x
 TP_OPEN_POS = (-2.5, 4.0, -2.5)   # rises toward the chest line when charging
 TP_OPEN_ROT = (34.0, 0.0, 8.0)
 
-FP_POS = (5.0, 21.0, -9.0)        # first person: up and right of the hand, clear of the crosshair
+FP_POS = (-2.0, 27.0, -6.0)       # first person (screen frame, see books_zfix): left of / above the hand point
 FP_ROT = (20.0, 196.0, -6.0)
 FP_SCALE = 0.42
 FP_OPEN_POS = (-1.5, 2.5, -1.0)
