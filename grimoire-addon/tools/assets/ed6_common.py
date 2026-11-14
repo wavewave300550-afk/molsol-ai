@@ -107,38 +107,38 @@ def build_particles(pack):
     fx = particles(pack)
     E = fx.effect
     # ---- the primordial atmosphere (continuous ambient layers)
-    E("ed6_spore", "dot", count=3, life=(3.0, 5.0), size=(0.14, 0.03), shape=("sphere", 3.5), speed=(0.05, 0.3),
+    E("ed6_spore", "dot", count=2, life=(3.0, 5.0), size=(0.14, 0.03), shape=("sphere", 3.5), speed=(0.05, 0.3),
       accel=(0, 0.15, 0), drag=0.4, colors=["#f4ffc8ff", "#c8f07acc", "#9cd45a00"])
-    E("ed6_mote", "glow", count=2, life=(3.5, 5.5), size=(0.26, 0.04), shape=("sphere", 4.0), speed=(0.1, 0.35),
+    E("ed6_mote", "glow", count=1, life=(3.5, 5.5), size=(0.26, 0.04), shape=("sphere", 4.0), speed=(0.1, 0.35),
       accel=(0, 0.12, 0), drag=0.5, colors=["#fff6d8ff", "#ffe2a0cc", "#e8c27a00"])
-    E("ed6_ember_mote", "ember", count=3, life=(2.2, 3.6), size=(0.2, 0.03), shape=("sphere", 3.0), speed=(0.2, 0.7),
+    E("ed6_ember_mote", "ember", count=2, life=(2.2, 3.6), size=(0.2, 0.03), shape=("sphere", 3.0), speed=(0.2, 0.7),
       accel=(0, 0.55, 0), drag=0.5, colors=["#fff0b0ff", "#ff9a3add", "#a8320c00"])
-    E("ed6_mist", "smoke", count=3, life=(4.0, 6.0), size=(2.4, 4.6), shape=("disc", 4.0), speed=(0.05, 0.25),
+    E("ed6_mist", "smoke", count=2, life=(4.0, 6.0), size=(2.4, 4.6), shape=("disc", 4.0), speed=(0.05, 0.25),
       accel=(0, 0.04, 0), drag=0.6, colors=["#cfd8c400", "#c4d0bc55", "#b8c4b03a", "#a8b4a000"], blend="blend", spin=(360, 6))
-    E("ed6_pollen_drift", None, sprites=["dot", "leaf"], count=4, life=(2.6, 4.0), size=(0.17, 0.08), shape=("sphere", 3.0),
+    E("ed6_pollen_drift", None, sprites=["dot", "leaf"], count=2, life=(2.6, 4.0), size=(0.17, 0.08), shape=("sphere", 3.0),
       speed=(0.2, 0.6), accel=(0.3, -0.1, 0.1), drag=0.5, colors=["#e8ffb8ff", "#8fd45acc", "#4f8a3a00"], blend="alpha",
       spin=(360, 60))
-    E("ed6_leaf_fall", "leaf", count=3, life=(2.5, 4.0), size=(0.28, 0.2), shape=("sphere", 3.0), speed=(0.2, 0.6),
+    E("ed6_leaf_fall", "leaf", count=2, life=(2.5, 4.0), size=(0.28, 0.2), shape=("sphere", 3.0), speed=(0.2, 0.6),
       accel=(0.3, -0.8, 0.15), drag=0.8, colors=["#a8d860ff", "#5f9a34ff", "#3f6a2a00"], blend="alpha", spin=(360, 140))
-    E("ed6_snow", "flake", count=3, life=(2.5, 4.0), size=(0.22, 0.12), shape=("sphere", 3.0), speed=(0.1, 0.4),
+    E("ed6_snow", "flake", count=2, life=(2.5, 4.0), size=(0.22, 0.12), shape=("sphere", 3.0), speed=(0.1, 0.4),
       accel=(0.1, -0.55, 0), drag=0.8, colors=["#ffffffff", "#dff6ffdd", "#9fd8ff00"], spin=(360, 90))
-    E("ed6_droplet", None, sprites=["drop", "dot"], count=3, life=(1.2, 2.0), size=(0.22, 0.08), shape=("sphere", 2.5),
+    E("ed6_droplet", None, sprites=["drop", "dot"], count=2, life=(1.2, 2.0), size=(0.22, 0.08), shape=("sphere", 2.5),
       speed=(0.3, 0.9), accel=(0, -2.5, 0), drag=0.6, colors=["#f0fcffff", "#7fd8ffdd", "#2a6fb000"])
     E("ed6_haze", "wave", count=2, life=(1.2, 2.0), size=(0.9, 1.9), shape=("box", (2.0, 0.3, 2.0)), direction=(0, 1, 0),
       speed=(0.6, 1.4), colors=["#fff2d000", "#ffd8a038", "#ffb06a26", "#ff8a4000"], blend="blend")
-    E("ed6_wind", None, sprites=["wave", "slash", "arc"], count=2, life=(0.9, 1.5), size=(1.5, 0.4), shape=("sphere", 3.0),
+    E("ed6_wind", None, sprites=["wave", "slash", "arc"], count=1, life=(0.9, 1.5), size=(1.5, 0.4), shape=("sphere", 3.0),
       speed=(1.0, 3.0), drag=0.4, colors=["#ffffffcc", "#e4f7ff88", "#bfe6ff00"], spin=(360, 40))
     E("ed6_rune_rise", None, sprites=[f"rune{i}" for i in range(1, 7)], count=2, life=(2.0, 3.2), size=(0.38, 0.1),
       shape=("disc", 3.0), direction=(0, 1, 0), speed=(0.6, 1.4), drag=0.3, colors=["#fff6dcff", "#ffe2a0ee", "#e8c27a00"])
     # ---- per-dragon trails (big enough to follow a creature 15-45 blocks away)
-    E("ed6_trail_nature", "puff", count=3, life=(1.2, 2.2), size=(0.9, 2.4), shape=("disc", 1.5), speed=(0.4, 1.2),
+    E("ed6_trail_nature", "puff", count=2, life=(1.2, 2.2), size=(0.9, 2.4), shape=("disc", 1.5), speed=(0.4, 1.2),
       accel=(0, 0.25, 0), drag=1.2, colors=["#c8bca4aa", "#8a7f6a55", "#6a604f00"], blend="blend", spin=(360, 30))
-    E("ed6_trail_heat", None, sprites=["ember", "glow", "spark"], count=4, life=(0.5, 1.0), size=(0.42, 0.04),
+    E("ed6_trail_heat", None, sprites=["ember", "glow", "spark"], count=3, life=(0.5, 1.0), size=(0.42, 0.04),
       shape=("sphere", 1.2), speed=(0.5, 2.0), accel=(0, 1.5, 0), drag=0.8,
       colors=["#ffffffff", "#ffd27aff", "#ff6a1acc", "#5a1a0a00"])
-    E("ed6_trail_tide", None, sprites=["drop", "ring", "dot"], count=4, life=(0.8, 1.4), size=(0.32, 0.05),
+    E("ed6_trail_tide", None, sprites=["drop", "ring", "dot"], count=3, life=(0.8, 1.4), size=(0.32, 0.05),
       shape=("sphere", 1.0), speed=(0.2, 0.8), accel=(0, -1.5, 0), drag=0.6, colors=["#ffffffff", "#9fe6ffee", "#3f8fd000"])
-    E("ed6_trail_air", "dot", count=3, life=(0.8, 1.3), size=(0.34, 0.0), shape=("sphere", 0.3), speed=(0.0, 0.2),
+    E("ed6_trail_air", "dot", count=2, life=(0.8, 1.3), size=(0.34, 0.0), shape=("sphere", 0.3), speed=(0.0, 0.2),
       colors=["#ffffffee", "#d8f0ffaa", "#a8c8ff00"])
     # ---- heartbeats: a flat ground ring, rising beams, a coloured flash and a spark burst per lineage
     for i, n in enumerate(LINEAGE_NAMES):
@@ -151,6 +151,10 @@ def build_particles(pack):
         extra = ["leaf", "ember", "flake", "feather"][i]
         E(f"ed6_burst_{n}", None, sprites=["star", "spark", extra], count=18, life=(0.6, 1.2), size=(0.42, 0.05),
           shape=("sphere", 0.8), speed=(5, 11), drag=1.4, colors=["#ffffffff", b + "ff", m + "cc", d + "00"], spin=(360, 200))
+    for i, n in enumerate(LINEAGE_NAMES):                      # leyline sparks running over the ground
+        b, m, d = LINEAGE[i]
+        E(f"ed6_ley_{n}", None, sprites=["glow", "dot"], count=2, life=(0.5, 0.9), size=(0.36, 0.05), shape=("sphere", 0.25),
+          speed=(0.1, 0.4), accel=(0, 0.5, 0), colors=["#ffffffff", b + "ff", m + "aa", d + "00"])
     E("ed6_wave", "ring", count=1, life=(1.0, 1.1), size=(1.0, 22.0), facing="emitter_transform_xz",
       colors=["#ffffffff", "#ffe2a0cc", "#e8c27a55", "#8a6a3a00"])
     E("ed6_column", "beam", count=8, life=(0.7, 1.2), size=(0.28, 0.05), size_y=(3.0, 9.0), shape=("disc", 1.0),

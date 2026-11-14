@@ -47,47 +47,90 @@ def ceramic(dur=2.0, f0=70, f1=48):
 
 def build(pack):
     fx = particles(pack)
-    # ---- particles
-    fx.effect("dn_dreamer_mote", "dot", count=10, life=(1.6, 3.0), size=(0.09, 0.0), shape=("sphere", 3.0), speed=(0.05, 0.25),
-              accel=(0, 0.25, 0), colors=["#fff3c8ff", "#ffd9b8cc", "#e8b4c800"])
-    fx.effect("dn_dreamer_petal", "petal", count=8, life=(1.8, 3.0), size=(0.16, 0.1), shape=("sphere", 2.0), speed=(0.2, 0.7),
-              accel=(0.3, -0.6, 0), drag=1.3, colors=["#ffd9e6ff", "#e8b4c8ee", "#ffd9b800"], blend="blend", spin=(360, 140))
-    fx.effect("dn_dreamer_moon", "moon", count=5, life=(1.6, 2.6), size=(0.3, 0.12), shape=("sphere", 1.6), speed=(0.2, 0.6),
+    # ---- particles (sized to read 15-30 blocks away; ambient layers emit 1-3 sprites per spawn)
+    D = dict(blend="add")
+    fx.effect("dn_dreamer_mote", "dot", count=2, life=(2.0, 3.4), size=(0.15, 0.02), shape=("sphere", 0.6), speed=(0.05, 0.25),
+              accel=(0, 0.35, 0), colors=["#fff3c8ff", "#ffd9b8dd", "#e8b4c800"])
+    fx.effect("dn_dreamer_petal", "petal", count=2, life=(2.2, 3.4), size=(0.24, 0.16), shape=("sphere", 1.0), speed=(0.2, 0.6),
+              accel=(0.3, -0.55, 0), drag=1.3, colors=["#ffd9e6ff", "#e8b4c8ee", "#ffd9b800"], blend="blend", spin=(360, 140))
+    fx.effect("dn_dreamer_moon", "moon", count=3, life=(1.8, 2.8), size=(0.42, 0.16), shape=("sphere", 1.2), speed=(0.2, 0.7),
               accel=(0, 0.3, 0), drag=0.8, colors=["#fff3c8ff", "#ffd99aee", "#ffd99a00"], spin=(360, 40))
-    fx.effect("dn_dreamer_star", "star", count=8, life=(0.8, 1.6), size=(0.14, 0.0), shape=("sphere", 2.2), speed=(0.1, 0.4),
+    fx.effect("dn_dreamer_star", "star", count=2, life=(0.9, 1.7), size=(0.26, 0.0), shape=("sphere", 0.9), speed=(0.1, 0.4),
               colors=["#ffffffff", "#fff3c8ff", "#bcd6f000"], spin=(360, 90))
-    fx.effect("dn_dreamer_porcelain", "shard", count=10, life=(1.2, 2.2), size=(0.2, 0.12), shape=("sphere", 1.6),
-              speed=(1.0, 3.0), accel=(0, -6, 0), drag=0.6, colors=["#fbf6ecff", "#e9cf8aff", "#cfc6b000"], blend="blend",
+    fx.effect("dn_dreamer_porcelain", "shard", count=3, life=(1.4, 2.4), size=(0.24, 0.14), shape=("sphere", 1.2),
+              speed=(1.0, 3.0), accel=(0, -5, 0), drag=0.6, colors=["#fbf6ecff", "#e9cf8aff", "#cfc6b000"], blend="blend",
               spin=(360, 320))
-    fx.effect("dn_dreamer_dust", "puff", count=12, life=(0.8, 1.6), size=(0.5, 1.4), shape=("disc", 1.8), speed=(0.8, 2.2),
+    fx.effect("dn_dreamer_dust", "puff", count=10, life=(1.0, 2.0), size=(0.8, 2.4), shape=("disc", 1.8), speed=(0.8, 2.4),
               accel=(0, 0.5, 0), drag=1.6, colors=["#efe4d0cc", "#cfc6b000"], blend="blend", spin=(360, 50))
-    fx.effect("dn_dreamer_feather", "feather", count=10, life=(1.6, 2.6), size=(0.2, 0.16), shape=("sphere", 1.5),
-              speed=(1.0, 2.6), accel=(0, -0.9, 0), drag=1.8, colors=["#fffdf8ff", "#f6dbe6cc", "#f6dbe600"], blend="blend",
+    fx.effect("dn_dreamer_feather", "feather", count=2, life=(2.4, 3.6), size=(0.3, 0.22), shape=("sphere", 1.2),
+              speed=(0.4, 1.4), accel=(0.2, -0.7, 0), drag=1.8, colors=["#fffdf8ff", "#f6dbe6cc", "#f6dbe600"], blend="blend",
               spin=(360, 160))
-    fx.effect("dn_dreamer_glint", "spark", count=10, life=(0.4, 0.9), size=(0.18, 0.0), shape=("sphere", 0.8), speed=(1.5, 4.0),
+    fx.effect("dn_dreamer_glint", "spark", count=6, life=(0.4, 0.9), size=(0.26, 0.0), shape=("sphere", 0.8), speed=(1.5, 4.0),
               drag=1.4, colors=["#ffffffff", "#ffe9b8ff", "#e9cf8a00"], spin=(360, 200))
-    fx.effect("dn_dreamer_key", None, sprites=["key", "window", "door"], count=4, life=(1.2, 2.0), size=(0.22, 0.1),
-              shape=("sphere", 1.4), speed=(0.2, 0.6), accel=(0, 0.6, 0), colors=["#fff3c8ff", "#ffd9b8ff", "#ffd9b800"])
-    fx.effect("dn_dreamer_heal", "cross", count=6, life=(0.8, 1.4), size=(0.14, 0.04), shape=("disc", 1.0), direction=(0, 1, 0),
+    fx.effect("dn_dreamer_key", None, sprites=["key", "window", "door"], count=2, life=(1.4, 2.2), size=(0.3, 0.12),
+              shape=("sphere", 1.0), speed=(0.2, 0.6), accel=(0, 0.6, 0), colors=["#fff3c8ff", "#ffd9b8ff", "#ffd9b800"])
+    fx.effect("dn_dreamer_heal", "cross", count=5, life=(0.9, 1.5), size=(0.2, 0.06), shape=("disc", 1.2), direction=(0, 1, 0),
               speed=(0.6, 1.4), colors=["#ffd9b8ff", "#fff3c8ff", "#e8b4c800"])
-    fx.effect("dn_dreamer_ring", "ringthin", count=1, life=(0.7, 0.8), size=(0.4, 4.2), facing="emitter_transform_xz",
+    fx.effect("dn_dreamer_ring", "ringthin", count=1, life=(0.7, 0.8), size=(0.4, 4.4), facing="emitter_transform_xz",
               colors=["#fff3c8ff", "#ffd9b8cc", "#e8b4c800"])
-    fx.effect("dn_dreamer_nring", "ringthin", count=1, life=(0.6, 0.7), size=(0.4, 4.6), facing="emitter_transform_xz",
+    fx.effect("dn_dreamer_nring", "ringthin", count=1, life=(0.6, 0.7), size=(0.4, 4.8), facing="emitter_transform_xz",
               colors=["#b8a6d6ff", "#6e2f3acc", "#2a2d5200"])
-    fx.effect("dn_dreamer_shock", "ring", count=1, life=(0.6, 0.7), size=(0.6, 9.0), facing="emitter_transform_xz",
+    fx.effect("dn_dreamer_shock", "ring", count=1, life=(0.6, 0.7), size=(0.6, 10.0), facing="emitter_transform_xz",
               colors=["#ffffffff", "#bcd6f0cc", "#6a4a6e00"])
-    fx.effect("dn_dreamer_eye", "eye", count=5, life=(0.8, 1.6), size=(0.24, 0.1), shape=("sphere", 1.6), speed=(0.1, 0.4),
+    fx.effect("dn_dreamer_eye", "eye", count=3, life=(0.9, 1.7), size=(0.34, 0.12), shape=("sphere", 1.4), speed=(0.1, 0.4),
               accel=(0, 0.2, 0), colors=["#f3e3b0ff", "#8e3446ee", "#2a2d5200"])
-    fx.effect("dn_dreamer_smoke", "smoke", count=8, life=(1.0, 1.8), size=(0.5, 1.2), shape=("disc", 2.0), speed=(0.2, 0.8),
+    fx.effect("dn_dreamer_smoke", "smoke", count=4, life=(1.0, 1.8), size=(0.6, 1.4), shape=("disc", 2.0), speed=(0.2, 0.8),
               accel=(0, 0.8, 0), drag=1.0, colors=["#4a3e6acc", "#2a2d5288", "#2a2d5200"], blend="blend", spin=(360, 30))
-    fx.effect("dn_dreamer_door", "door", count=4, life=(0.8, 1.4), size=(0.3, 0.1), shape=("sphere", 1.5), speed=(0.6, 1.6),
+    fx.effect("dn_dreamer_door", "door", count=2, life=(0.9, 1.5), size=(0.42, 0.14), shape=("sphere", 1.2), speed=(0.6, 1.6),
               drag=1.0, colors=["#b8a6d6ff", "#6e2f3aee", "#2a2d5200"], spin=(360, 120))
-    fx.effect("dn_dreamer_beam", "beam", count=10, life=(0.5, 0.9), size=(0.25, 0.05), size_y=(2.0, 4.0), shape=("disc", 3.5),
-              direction=(0, -1, 0), speed=(4, 8), colors=["#ffffffff", "#bcd6f0ee", "#ffd9b800"], facing="lookat_y")
-    fx.effect("dn_dreamer_trail", "dot", count=3, life=(0.5, 0.9), size=(0.18, 0.0), shape=("sphere", 0.3), speed=(0.0, 0.3),
+    fx.effect("dn_dreamer_beam", "beam", count=3, life=(0.5, 0.9), size=(0.3, 0.06), size_y=(2.2, 4.0), shape=("sphere", 1.2),
+              direction=(0, -1, 0), speed=(3, 7), colors=["#ffffffff", "#bcd6f0ee", "#ffd9b800"], facing="lookat_y")
+    fx.effect("dn_dreamer_trail", "dot", count=2, life=(0.6, 1.0), size=(0.26, 0.0), shape=("sphere", 0.3), speed=(0.0, 0.3),
               colors=["#fff3c8ff", "#e8b4c8cc", "#e8b4c800"])
-    fx.effect("dn_dreamer_ntrail", "dot", count=3, life=(0.5, 0.9), size=(0.2, 0.0), shape=("sphere", 0.3), speed=(0.0, 0.3),
+    fx.effect("dn_dreamer_ntrail", "dot", count=2, life=(0.6, 1.0), size=(0.28, 0.0), shape=("sphere", 0.3), speed=(0.0, 0.3),
               colors=["#b8a6d6ff", "#6e2f3acc", "#2a2d5200"])
+    # new layers
+    fx.effect("dn_dreamer_trailbig", "glow", count=1, life=(0.7, 1.1), size=(0.7, 0.0), colors=["#fffbe8ff", "#ffd9b8cc", "#e8b4c800"])
+    fx.effect("dn_dreamer_sparkle", "star", count=1, life=(0.4, 0.8), size=(0.22, 0.0), colors=["#ffffffff", "#fff3c8cc", "#bcd6f000"],
+              spin=(360, 60))
+    fx.effect("dn_dreamer_mist", "smoke", count=1, life=(2.6, 4.0), size=(1.4, 3.4), shape=("sphere", 0.6), speed=(0.1, 0.3),
+              accel=(0, 0.12, 0), drag=0.6, colors=["#ffe9f288", "#bcd6f055", "#bcd6f000"], blend="blend", spin=(360, 10))
+    fx.effect("dn_dreamer_nmist", "smoke", count=1, life=(2.0, 3.2), size=(1.2, 3.0), shape=("sphere", 0.6), speed=(0.1, 0.3),
+              accel=(0, 0.2, 0), drag=0.6, colors=["#4a3e6aaa", "#6a4a6e66", "#2a2d5200"], blend="blend", spin=(360, 14))
+    fx.effect("dn_dreamer_thread", "beam", count=1, life=(0.6, 1.0), size=(0.12, 0.04), size_y=(1.4, 0.6), direction=(0, -1, 0),
+              speed=(1.5, 3.0), colors=["#fffbe8ff", "#ffd9b8bb", "#bcd6f000"], facing="lookat_y")
+    fx.effect("dn_dreamer_column", "beam", count=1, life=(0.5, 0.8), size=(0.7, 0.2), size_y=(6.0, 9.0),
+              colors=["#ffffffcc", "#fff3c8aa", "#ffd9b800"], facing="lookat_y")
+    fx.effect("dn_dreamer_note", "note", count=1, life=(1.6, 2.4), size=(0.2, 0.12), shape=("sphere", 0.2), speed=(0.2, 0.4),
+              accel=(0.2, 0.5, 0), colors=["#fff3c8ff", "#ffd9b8ee", "#e8b4c800"])
+    fx.effect("dn_dreamer_paper", "diamond", count=1, life=(2.0, 3.0), size=(0.12, 0.08), shape=("sphere", 0.3),
+              speed=(0.2, 0.5), accel=(0, -0.15, 0), drag=1.2, colors=["#fbf4e6ff", "#efe4d0ee", "#d9cbb000"], blend="blend",
+              spin=(360, 260))
+    fx.effect("dn_dreamer_glow", "glow", count=1, life=(0.5, 0.8), size=(1.0, 2.4), colors=["#fff3c8cc", "#ffd9b866", "#ffd9b800"])
+    fx.effect("dn_dreamer_nglow", "glow", count=1, life=(0.5, 0.8), size=(1.0, 2.4), colors=["#b8a6d6cc", "#6e2f3a66", "#2a2d5200"])
+    fx.effect("dn_dreamer_flash", "glow", count=1, life=(0.3, 0.45), size=(3.0, 9.0), colors=["#ffffffff", "#fff3c8aa", "#ffd9b800"])
+    fx.effect("dn_dreamer_dwave", "ringthin", count=1, life=(1.0, 1.2), size=(0.5, 14.0), facing="emitter_transform_xz",
+              colors=["#fff3c8ff", "#ffd9b8cc", "#e8b4c800"])
+    fx.effect("dn_dreamer_nwave", "ringthin", count=1, life=(1.0, 1.2), size=(0.5, 14.0), facing="emitter_transform_xz",
+              colors=["#b8a6d6ff", "#6a4a6ecc", "#2a2d5200"])
+    fx.effect("dn_dreamer_pool", "ringthin", count=1, life=(1.3, 1.7), size=(0.4, 3.2), facing="emitter_transform_xz",
+              colors=["#e9f2fbcc", "#bcd6f088", "#bcd6f000"])
+    fx.effect("dn_dreamer_streak", "spark", count=3, life=(0.3, 0.5), size=(0.12, 0.0), size_y=(0.9, 0.2), shape=("sphere", 0.4),
+              speed=(6, 12), drag=2.0, colors=["#ffffffff", "#ffe9b8ee", "#e9cf8a00"], stretch=True)
+    fx.effect("dn_dreamer_shardbig", "shard", count=2, life=(1.8, 2.8), size=(0.4, 0.22), shape=("sphere", 1.0),
+              speed=(0.6, 2.2), accel=(0, -2.5, 0), drag=0.8, colors=["#fbf6ecff", "#e9cf8aee", "#cfc6b000"], blend="blend",
+              spin=(360, 240))
+    fx.effect("dn_dreamer_bloom", "petal", count=2, life=(1.6, 2.6), size=(0.24, 0.1), shape=("disc", 1.0), speed=(0.4, 1.0),
+              direction=(0, 1, 0), accel=(0, 0.4, 0), drag=0.8, colors=["#fff3c8ff", "#ffd9e6ee", "#bcd6f000"], spin=(360, 120))
+    fx.effect("dn_dreamer_ember", "dot", count=2, life=(1.2, 2.2), size=(0.16, 0.0), shape=("sphere", 0.8), speed=(0.2, 0.6),
+              accel=(0, 0.8, 0), colors=["#c46a7eff", "#6a4a6ecc", "#2a2d5200"])
+    fx.effect("dn_dreamer_glyph", None, sprites=["door", "key", "window"], count=1, life=(1.6, 2.6), size=(0.36, 0.2),
+              shape=("sphere", 0.5), speed=(0.3, 0.9), accel=(0, 0.3, 0), drag=0.6, colors=["#cfc6b0ff", "#b8a6d6dd", "#2a2d5200"],
+              spin=(360, 60))
+    fx.effect("dn_dreamer_gather", "dot", count=3, life=(0.7, 0.9), size=(0.24, 0.05), shape=("sphere", 4.5, "surface"),
+              direction="inwards", speed=(4.5, 6.0), colors=["#ffffffff", "#fff3c8ee", "#bcd6f0aa"])
+    fx.effect("dn_dreamer_morning", "dot", count=2, life=(2.6, 4.0), size=(0.18, 0.02), shape=("sphere", 1.2), speed=(0.05, 0.3),
+              accel=(0, 0.3, 0), colors=["#fff1c4ff", "#ffd9b8dd", "#ffffff00"])
 
     # ---- sounds
     def save(name, sig, **kw):
@@ -181,6 +224,23 @@ def build(pack):
     final = sy.at(2.2, (0.0, sy.thump(1.6, 110, 26, 0.9)), (0.0, sy.crack(0.6, 4400, 18) * 0.5),
                   (0.02, sy.bell(ROOT / 2, 2.0, inharm=1.2) * 0.6), (0.05, sy.rumble(1.8, 32) * 0.6))
     save("dn_dreamer_final", sy.reverb(final, 2.6, 0.45), max_distance=128)
+    # transitions and the finale build-up
+    swell = sy.at(2.4, (0.0, sy.whoosh(2.0, 300, 2400) * 0.35), (0.0, sy.pad(ROOT, 2.2, cutoff=1800) * 0.35),
+                  (0.3, sy.shimmer(1.8, 2200, 18) * 0.35), (1.0, sy.bell(ROOT * 3, 1.2) * 0.25))
+    save("dn_dreamer_swell", sy.reverb(swell, 2.0, 0.45), max_distance=112)
+    land = sy.at(2.2, (0.0, sy.lowpass(sy.thump(1.2, 70, 26, 0.6), 500) * 0.9), (0.05, sy.whoosh(1.4, 180, 900) * 0.5),
+                 (0.1, sy.wind(1.6, 300, 900, gust=0.6) * 0.3), (0.3, ceramic(1.2, 100, 70) * 0.35), (0.5, sy.bell(ROOT * 2, 1.4) * 0.2))
+    save("dn_dreamer_land", sy.reverb(land, 2.0, 0.4), max_distance=112)
+    rise_f = sy.sweep(ROOT / 2, ROOT * 1.5, 3.4)
+    riser = sy.at(3.6, (0.0, sy.osc(rise_f) * 0.25 * sy.env(3.4, 3.0, 0.1, 1.0, 0.3)),
+                  (0.0, sy.choir(ROOT, 3.4, "ah", voices=5) * 0.35 * sy.env(3.4, 2.6, 0.2, 1.0, 0.6)),
+                  (0.0, sy.shimmer(3.4, 1600, 40) * 0.35), (0.2, sy.osc(sy.sweep(30, 60, 3.2)) * 0.5 * sy.env(3.2, 2.8, 0.1, 1.0, 0.3)),
+                  (0.0, sy.highpass(sy.noise(3.4), 2000) * 0.12 * sy.env(3.4, 3.2, 0.05, 1.0, 0.15)))
+    save("dn_dreamer_riser", sy.reverb(riser, 2.2, 0.45), max_distance=128)
+    after = sy.at(4.4, (0.0, sy.bell(ROOT, 4.0, inharm=1.1) * 0.45), (0.0, sy.bell(ROOT * 1.5, 3.4, inharm=1.05) * 0.25),
+                  (0.0, sy.pad(ROOT / 2, 4.2, cutoff=900) * 0.3), (0.4, sy.shimmer(3.6, 2600, 30)[::-1] * 0.25),
+                  (0.2, sy.wind(3.8, 400, 1200, gust=0.3) * 0.2))
+    save("dn_dreamer_after", sy.reverb(after, 3.0, 0.5), max_distance=96)
     # Phase V: porcelain panels drifting apart, the motif resolving, one soft click
     brk = sy.at(3.4, (0.0, sy.crack(3.0, 6000, 50) * 0.5), (0.2, sy.shimmer(3.0, 2400, 36) * 0.45),
                 (0.0, breath(3.2, False, 1.0) * 0.4))

@@ -90,7 +90,7 @@ def build_particles(pack):
     fx = particles(pack)
     gl = [f"glyph{i}" for i in range(1, 9)]
     # ---- continuous ambient layers (cheap, long-lived, fade in and out)
-    fx.effect("dw6_motes", "dot", count=2, life=(2.6, 4.0), size=(0.1, 0.035), shape=("sphere", 2.2), speed=(0.03, 0.16),
+    fx.effect("dw6_motes", "dot", count=2, life=(2.2, 3.2), size=(0.1, 0.035), shape=("sphere", 2.2), speed=(0.03, 0.16),
               accel=(0, 0.07, 0), colors=["#fffdf400", "#fffdf4dd", "#fff3c4aa", "#fffdf400"])
     fx.effect("dw6_script", None, sprites=gl, count=1, life=(2.0, 3.0), size=(0.36, 0.12), shape=("sphere", 0.5),
               speed=(0.05, 0.25), accel=(0, 0.34, 0), drag=0.5, colors=["#fff3c400", "#fff3c4ff", "#e9c15add", "#c9a24a00"])

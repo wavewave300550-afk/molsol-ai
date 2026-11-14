@@ -14,6 +14,9 @@ export const DW06 = {
   landRadius: [2.6, 2.2, 6.5, 4.0, 3.2, 4.0],
   landDamage: [10, 8, 8, 12, 0, 7],
   landKnock: [1.2, 1.0, 1.6, 1.8, 1.0, 0.8],
+  /** Every landing also sends a shock along the ground: lighter damage out to this radius. */
+  landShockRadius: 7,
+  landShockDamage: 4,
   /** Columns and celestial formations land on an enemy if one is within this distance of their slot... */
   seekRadius: 7,
   /** ...and at least this far from the caster (nothing tall is built next to the caster). */
@@ -23,8 +26,8 @@ export const DW06 = {
   /** Allies within this horizontal distance of a platform or bridge take reduced damage (cover). */
   coverRadius: 4.5,
   coverFactor: 0.6,
-  /** Celestial formations pulse damage on enemies beneath them while they stand. */
-  celestialPulseRadius: 4.5,
+  /** Celestial formations fire a ray at (up to two) enemies within this radius every pulse while they stand. */
+  celestialPulseRadius: 12,
   celestialPulseDamage: 3,
   celestialPulseEvery: 20,
 
@@ -36,9 +39,11 @@ export const DW06 = {
   containPullStrength: 0.9,
   /** How long the containment walls (and their barriers) stand, in ticks. */
   containTicks: 220,
-  /** II Station: the platforms slide to a defensive line this far ahead (blocks) and this far apart (each side). */
-  stationMin: 11.5,
-  stationSpread: 5,
+  /** II Station: the platforms glide to a defensive line just in front of the enemy, no nearer than this to the
+   *  caster (blocks), this far either side of its middle, and settle at this size; a two-high barrier bar spans it. */
+  stationMin: 10.5,
+  stationSpread: 7.5,
+  stationSize: 0.45,
   /** Once the line stands, allies within this radius of the caster's place are behind it (cover). */
   stationCover: 7,
   /** III Direction: moving text walls -- damage, half-length of the wall, half-depth of the hit band. */
@@ -55,8 +60,10 @@ export const DW06 = {
   refugeFactor: 0.4,
   refugeHeal: 6,
   refugeRegen: 2,
-  /** VI Sequence: each structure strikes the enemies around it in turn. */
+  /** VI Sequence: each structure strikes the enemies around it in turn, and looses a bolt at the nearest enemy
+   *  beyond that (within sequenceReach). */
   sequenceRadius: 4.5,
+  sequenceReach: 12,
   sequenceDamage: 5,
   /** VII Judgment: radius of the designated finale region (and its telegraph), kept this far from the caster. */
   finalRadius: 7,
@@ -65,8 +72,8 @@ export const DW06 = {
   // ---- Phase IV: let it be written (descending lines)
   sweepDamage: 10,
   /** Half-length of the sweeping line (blocks) and how far it rolls away from the caster. */
-  sweepHalfLength: 7.5,
-  sweepTravel: 14,
+  sweepHalfLength: 6.5,
+  sweepTravel: 7,
   ringDamage: 10,
   ringMaxRadius: 12,
   latticeDamage: 9,

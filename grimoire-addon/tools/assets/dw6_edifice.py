@@ -416,8 +416,8 @@ def dome():
     root = m.bone("root")
     seal = m.bone("seal", root, pivot=(0, 0, 0))
     seal.plane("y", (0, 0.5, 0), 2 * R + 16, 2 * R + 16,
-               tex.magic_circle(FW, WGOLD, GOLD, bands=((0.86, 0.96, 34), (0.55, 0.66, 18)), lines=(0.84, 0.985, 0.52, 0.69),
-                                star=8, star_r=(0.1, 0.45)), faces=("up",), density=0.75)
+               tex.magic_circle(FW, WGOLD, GOLD, glow=0.8, bands=((0.88, 0.96, 34),), lines=(0.865, 0.975, 0.62)),
+               faces=("up",), density=0.75)
     fence = m.bone("fence", root, pivot=(0, 0, 0))
     ring(fence, (0, 1.2, 0), R, 30, (2 * math.pi * R / 30 * 1.02, 1.6, 1.4), GOLD_HOT, axis="y")
     for k in range(20):                                   # standing letters, knee high
@@ -425,13 +425,13 @@ def dome():
         fence.box((0, 8.5, -R), (5.2, 7.3, 0), tex.bitmap_cut(FW[(k * 5 + 2) % len(FW)], WGOLD, glow=1.0, color2="#ffffff"),
                   rot=(0, a, 0), pivot=(0, 8.5, 0), faces=("north", "south"))
     band = tex.glyph_rows(FW, "#fff3c4", glow=1.0, color2="#ffffff", fill=0.9, key="dw6domeband")
-    for i, (y, r) in enumerate(((60, R * 0.94), (84, R * 0.72))):
+    for i, (y, r) in enumerate(((82, R * 1.02), (104, R * 0.74))):     # above eye level: out of the caster's view
         b = m.bone(f"r{i + 1}", root, pivot=(0, y, 0))
         n = max(10, int(r / 4.2))
         ring(b, (0, y, 0), r, n, (2 * math.pi * r / n * 1.02, 1.0, 7.0), band, axis="y", cycle=3)
         ring(b, (0, y - 4.4, 0), r, n, (2 * math.pi * r / n * 1.02, 1.0, 0.8), GOLD_HOT, axis="y")
-    crown = m.bone("crown", root, pivot=(0, 100, 0))
-    crown.box((0, 102, 0), (8, 8, 8), tex.glow_flat("#fff3c4", 1.0, core="#ffffff"), rot=(45, 0, 45))
+    crown = m.bone("crown", root, pivot=(0, 118, 0))
+    crown.box((0, 120, 0), (8, 8, 8), tex.glow_flat("#fff3c4", 1.0, core="#ffffff"), rot=(45, 0, 45))
     return m
 
 

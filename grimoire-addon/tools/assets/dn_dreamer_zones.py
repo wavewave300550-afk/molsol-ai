@@ -6,14 +6,16 @@ import math
 import numpy as np
 
 from kit import glyphs, tex
-from kit.anim import LIFE, Anim, S
+from kit.anim import LIFE, Anim, M, S
 from kit.geo import Mat, Model, ring
 
 from .dn_dreamer import (AGED, BURG, CGRAY, INDIGO, IVORY, MAUVE, PBLUE, PEACH, PINK, SGOLD, arch_mat, door_mat,
                          eyewall, gilt, lamp_mat, porc, quilt, spin, wallpaper, window_mat)
 
 DREAMG = list(glyphs.DREAM.values())
-ZONE_R = 64          # aura half-size in units (4 blocks at scale 1)
+NIGHT_NAMES = ("dn_dreamer_uproom", "dn_dreamer_corridor", "dn_dreamer_doors")
+ZONE_SCALE = {"dream": 0.85, "night": 0.82, "sanctum": 1.0}   # rendered scale of the zone actors
+ZONE_R = 72          # aura half-size in units at scale 1 (4.5 blocks = the gameplay radius)
 
 
 def cloud_mat():
@@ -28,8 +30,8 @@ def cloud_mat():
 
 
 def dream_aura():
-    return tex.magic_circle(DREAMG, "#fff3c8", PEACH, bands=((0.8, 0.95, 14),), lines=(0.78, 0.98), star=6,
-                            star_r=(0.2, 0.6), fill="#ffd9b8", fill_glow=0.35)
+    return tex.magic_circle(DREAMG, "#fff3c8", PEACH, glow=0.8, bands=((0.86, 0.95, 16),), lines=(0.84, 0.975), star=6,
+                            star_r=(0.2, 0.6))
 
 
 def night_aura():
@@ -52,6 +54,7 @@ def night_aura():
 
 def zone_shell(name):
     m = Model(name, density=1.0, bounds=(10, 10, (0, 2, 0)))
+    m.aura_r = ZONE_R / ZONE_SCALE["sanctum" if "sanctum" in name else "night" if name in NIGHT_NAMES else "dream"]
     root = m.bone("root")
     aura = m.bone("aura", root)
     flt = m.bone("float", root, pivot=(0, 0, 0))
@@ -62,7 +65,7 @@ def zone_shell(name):
 # ---------------------------------------------------------------- dream zones
 def garden():
     m, aura, flt, sp = zone_shell("dn_dreamer_garden")
-    aura.plane("y", (0, 0.3, 0), ZONE_R * 2, ZONE_R * 2, dream_aura(), faces=("up", "down"), density=0.75)
+    aura.plane("y", (0, 0.3, 0), m.aura_r * 2, m.aura_r * 2, dream_aura(), faces=("up", "down"), density=1.5)
     earth = tex.stone("#b88f6a", "#7d5a40", "#d4ac86", cracks=0.1)
     grass = tex.mottled("#9fcf8a", "#cfe9a8", scale=3, glow=0.15)
     for k, (w, y) in enumerate(((44, 44), (34, 38), (24, 32), (14, 26), (6, 20))):
@@ -88,7 +91,7 @@ def garden():
 
 def cloudcity():
     m, aura, flt, sp = zone_shell("dn_dreamer_cloudcity")
-    aura.plane("y", (0, 0.3, 0), ZONE_R * 2, ZONE_R * 2, dream_aura(), faces=("up", "down"), density=0.75)
+    aura.plane("y", (0, 0.3, 0), m.aura_r * 2, m.aura_r * 2, dream_aura(), faces=("up", "down"), density=1.5)
     cl = cloud_mat()
     for k, (x, y, z, w, h, d) in enumerate([(0, 36, 0, 44, 10, 34), (-14, 40, 6, 22, 10, 20), (14, 39, -6, 24, 9, 22),
                                             (4, 31, 2, 30, 6, 24), (-6, 44, -4, 16, 6, 14)]):
@@ -108,7 +111,7 @@ def cloudcity():
 
 def stairway():
     m, aura, flt, sp = zone_shell("dn_dreamer_stairway")
-    aura.plane("y", (0, 0.3, 0), ZONE_R * 2, ZONE_R * 2, dream_aura(), faces=("up", "down"), density=0.75)
+    aura.plane("y", (0, 0.3, 0), m.aura_r * 2, m.aura_r * 2, dream_aura(), faces=("up", "down"), density=1.5)
     g = gilt(0.45)
     sp.box((0, 34, 0), (3, 68, 3), tex.glow_flat("#fff3c8", 1.0, core="#ffffff"))
     for k in range(15):
@@ -119,6 +122,28 @@ def stairway():
     sp.box((0, 72, 0), (14, 1.4, 14), g)
     sp.plane("z", (0, 81, 0), 10, 16, door_mat("#fff3c8", SGOLD, glass="#ffffff", key="goldDoor", glow=0.6))
     sp.box((0, 89.5, 0), (12, 1.2, 1.2), g)
+    return m
+
+
+def sanctuary():
+    """The caster's own dream zone: a glowing circle with ankle-high flowers, candles and paper moons (all low)."""
+    m, aura, flt, sp = zone_shell("dn_dreamer_sanctum")
+    aura.plane("y", (0, 0.3, 0), m.aura_r * 2, m.aura_r * 2, dream_aura(), faces=("up", "down"), density=1.5)
+    leaf = tex.foliage("#9fcf8a", "#e8f6c8", holes=0.25, glow=0.35, flowers=PINK)
+    for k in range(10):
+        a = math.radians(k * 36 + 8)
+        r = 46 + (k % 2) * 8
+        x, z = math.cos(a) * r, math.sin(a) * r
+        for rr in (0, 90):
+            sp.plane("z", (x, 3.2, z), 5, 6, leaf, rot=(0, rr + k * 23, 0), pivot=(x, 3.2, z), variant=k % 2)
+        if k % 2 == 0:
+            sp.box((x * 0.8, 1.5, z * 0.8), (1.6, 3, 1.6), tex.flat("#fbf4e6", glow=0.3))
+            sp.box((x * 0.8, 3.6, z * 0.8), (1.2, 1.2, 1.2), lamp_mat())
+    moon = tex.shaped(tex.m_crescent(0.4), "#fff3c8", PEACH, glow=1.0, key="sanctmoon")
+    for k in range(5):
+        a = math.radians(k * 72 + 30)
+        x, z = math.cos(a) * 38, math.sin(a) * 38
+        sp.plane("z", (x, 6.5, z), 4, 4, moon, rot=(0, -k * 72, 0), pivot=(x, 6.5, z))
     return m
 
 
@@ -157,7 +182,7 @@ ZONE_STATES = {0: ["hidden"], 1: ["bloom"], 2: ["idle"], 3: ["fold"], 4: ["fade"
 # ---------------------------------------------------------------- nightmare zones
 def _night_shell(name):
     m, aura, flt, sp = zone_shell(name)
-    aura.plane("y", (0, 0.3, 0), ZONE_R * 2, ZONE_R * 2, night_aura(), faces=("up", "down"), density=0.75)
+    aura.plane("y", (0, 0.3, 0), m.aura_r * 2, m.aura_r * 2, night_aura(), faces=("up", "down"), density=1.2)
     return m, aura, flt, sp
 
 
@@ -282,7 +307,7 @@ NIGHT_STATES = {0: ["hidden"], 1: ["emerge"], 2: ["idle"], 3: ["fold"], 4: ["fad
 # ---------------------------------------------------------------- formations
 WHEEL_R = 30.0
 WHEEL_H = 42.0          # axle height (units): outer rim touches the ground
-WHEEL_SCALE = 1.6
+WHEEL_SCALE = 1.2
 WHEEL_SPIN = 120.0      # deg/s while rolling
 
 
@@ -372,7 +397,7 @@ def drill_anims():
     return [hidden, form, sp, bore, brk]
 
 
-ROOM_BIG = 5.5      # expanded room scale (16 units * 5.5 = 5.5 blocks)
+ROOM_BIG = 3.6      # expanded room scale (16 units * 3.6 = 3.6 blocks)
 
 
 def roomcube_model():
@@ -412,7 +437,7 @@ def roomcube_anims():
     hidden.scl("root", 0.0)
     fly = Anim("fly", loop=True, length=1.0)
     fly.rot("room", (spin(260), spin(180), 0))
-    fly.scl("root", 0.4)
+    fly.scl("root", M("math.min(0.4, 0.05 + q.life_time * 2.0)", lambda t: min(0.4, 0.05 + t * 2.0)))
     exp = Anim("expand", length=0.8, loop="hold")    # unfolds flat, grows, walls swing up around the enemy
     exp.scl("root", {0: 0.4, 0.35: ROOM_BIG * 1.1, 0.5: ROOM_BIG}, smooth=False)
     for n in OUT:
@@ -446,7 +471,7 @@ def shard_anims():
     hidden.scl("root", 0.0)
     fly = Anim("fly", loop=True)
     fly.rot("win", (0, 0, spin(540)))
-    fly.scl("root", 1.0)
+    fly.scl("root", M("math.min(1.0, 0.2 + q.life_time * 6.0)", lambda t: min(1.0, 0.2 + t * 6.0)))
     sh = Anim("shatter", length=0.4, loop="hold")
     sh.scl("root", {0: 1.0, 0.1: 1.6, 0.4: 0.0}, smooth=False)
     sh.rot("win", {0: (0, 0, 0), 0.4: (90, 0, 180)})
@@ -487,7 +512,7 @@ def stairs_anims():
         spill.pos(f"step{k + 1}", {0: (0, 80, 30), t0: (0, 80, 30), t0 + 0.18: (0, -2, 0), t0 + 0.3: (0, 1, 0), t0 + 0.4: (0, 0, 0)},
                   smooth=False)
         spill.rot(f"step{k + 1}", {0: (40, 0, 20), t0: (40, 0, 20), t0 + 0.2: (0, 0, 0)}, smooth=False)
-        spill.scl(f"step{k + 1}", {0: 0.0, t0: 0.0, t0 + 0.05: 1.0}, smooth=False)
+        spill.scl(f"step{k + 1}", {0: 0.0, t0: 0.0, t0 + 0.1: 0.7, t0 + 0.18: 1.05, t0 + 0.3: 1.0}, smooth=False)
     fade = Anim("fade", length=1.0, loop="hold")
     for k in range(STAIRS_N):
         fade.pos(f"step{k + 1}", {0: (0, 0, 0), 0.3 + k * 0.05: (0, 0, 0), 1.0: (0, -30, 0)})
@@ -499,11 +524,16 @@ def build(pack):
     da = dream_anims()
     dz = [garden(), cloudcity(), stairway()]
     pack.actor("dn_dreamer_dream", dz[0], da, ZONE_STATES | {5: ["idle"]}, always=["turn"], kinds=dz[1:], lifetime=120,
-               display="Dream Zone")
+               scale=ZONE_SCALE["dream"], display="Dream Zone")
+    sz = sanctuary()
+    sa = dream_anims()
+    pack.actor("dn_dreamer_sanctum", sz, sa, ZONE_STATES | {5: ["idle"]}, always=["turn"], lifetime=120,
+               display="Dream Sanctuary")
+    pack.preview("dn_dreamer_zone_d3", sz, [({a.name: a for a in sa}["idle"], 0)], views=((25, 35), (0, 10)), cell=(320, 320))
     na = night_anims()
     nz = [upside_room(), corridor(), living_doors()]
     pack.actor("dn_dreamer_night", nz[0], na, NIGHT_STATES, always=["turn"], kinds=nz[1:], lifetime=120,
-               display="Nightmare Zone", blend=0.15)
+               scale=ZONE_SCALE["night"], display="Nightmare Zone", blend=0.15)
     dby = {a.name: a for a in da}
     nby = {a.name: a for a in na}
     for i, mm in enumerate(dz):
@@ -515,7 +545,7 @@ def build(pack):
                scale=WHEEL_SCALE, lifetime=60, display="Wheel of Doors")
     dm = drill_model()
     pack.actor("dn_dreamer_drill", dm, drill_anims(), {0: ["hidden"], 1: ["form"], 2: ["spin"], 3: ["bore"], 4: ["break"]},
-               scale=1.5, lifetime=60, display="Spiral Stair")
+               scale=0.9, lifetime=60, display="Spiral Stair")
     rc = roomcube_model()
     rca = roomcube_anims()
     pack.actor("dn_dreamer_roomcube", rc, rca, {0: ["hidden"], 1: ["fly"], 2: ["expand"], 3: ["crush"], 4: ["fade"]},

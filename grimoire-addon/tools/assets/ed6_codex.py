@@ -1,6 +1,8 @@
 """ED06 -- the Great Codex construct, the four dragon emblems and the luminous skeletal imagery.
 
-ed6_codex   (scale 1.5: book ~3 x 4 blocks, orbits ~7 blocks across, a soft sun-halo ~9 blocks across behind it)
+ed6_codex   (scale 1.5: book ~3 x 4 blocks, orbits ~7 blocks across; a turning ring of glyphs ~8 blocks across and a
+    soft sun-halo behind the FRONT cover (-Z), so it frames the book when the back cover faces the viewer;
+    while the book is open both slide behind the back cover, so they frame the open pages instead)
     A spell construct of the Codex of the Four Primordial Dragons: antique-bronze cover scales
     (12 front, 12 back), an articulated vertebral spine of 8 ivory vertebrae, aged-gold corners,
     a glowing draconic seal on the back cover with four lineage gems, and riffling pages with
@@ -17,8 +19,10 @@ ed6_emblem  kinds 0-3 = Nature (sauropod skull, leaves & roots) / Heat (horned c
     ring).  A monumental upright seal (radius 2 blocks at size 1, centre 2.1 blocks up) that rises
     out of its own ground sigil and faces the actor's front (-Z): a slowly turning glyph ring, the
     skull medallion, a translucent skull projection that leaps out on every beat, a soft halo behind
-    and six rune claws around the base.  STATES 0 hidden / 1 appear (1.2 s) / 2 beat (0.8 s) /
-    3 glow / 4 fade (1.2 s: tips back and sinks into the ground)
+    and six rune claws around the base.  Kind 4 = the domain seal: a flat ground circle (radius 2 blocks
+    at size 1) in all four lineage colours that the caster stands in; same states.
+    STATES 0 hidden / 1 appear (1.2 s) / 2 beat (0.8 s) / 3 glow / 4 fade (1.2 s: tips back and sinks
+    into the ground)
 ed6_spirit  kinds 0-3 = luminous line-art skeleton of each dragon in that dragon's own model space,
     so spawning it at the dragon's position / yaw with size = the dragon's SCALE overlays it.  A
     ribbon of draconic inscriptions runs along each spine.
@@ -271,6 +275,70 @@ def emblem_model(k):
     return m
 
 
+def _seg_dist(u, v, x0, y0, x1, y1):
+    dx, dy = x1 - x0, y1 - y0
+    t = np.clip(((u - x0) * dx + (v - y0) * dy) / (dx * dx + dy * dy), 0, 1)
+    return np.hypot(u - (x0 + t * dx), v - (y0 + t * dy))
+
+
+def domain_mat():
+    """The caster's ground seal: a gold frame, a glyph band and arcs in the four lineage colours (one quadrant
+    each), a four-point star and four lineage gems."""
+    # quadrant order round the circle: Nature, Heat, Air, Water & Ice (spawned with its front toward the caster's
+    # left, Nature faces away from the caster, Heat to the right, Water & Ice to the left)
+    cols = [tuple(rgb(c) for c in LINEAGE[k]) for k in (0, 1, 3, 2)]
+    gl = rgb(GOLD)
+    stack = np.array([[[c == "#" for c in row] for row in g] for g in DR], dtype=bool)
+
+    def fn(ctx):
+        u, v = ctx.U * 2 - 1, 1 - ctx.V * 2
+        r = np.hypot(u, v)
+        a = np.arctan2(v, u) % (2 * math.pi)
+        q = np.floor(((a + math.pi / 4) % (2 * math.pi)) / (math.pi / 2)).astype(int) % 4
+        b = np.zeros(u.shape + (3,))
+        m = np.zeros(u.shape + (3,))
+        for k in range(4):
+            b = np.where((q == k)[..., None], cols[k][0], b)
+            m = np.where((q == k)[..., None], cols[k][1], m)
+        pxl = 2.0 / ctx.w
+        frame = (np.abs(r - 0.985) < pxl * 1.6) | (np.abs(r - 0.95) < pxl) | (np.abs(r - 0.745) < pxl * 1.2) | \
+                (np.abs(r - 0.36) < pxl * 1.2)
+        ng, gh, gw = stack.shape
+        nb = 28
+        seg = a / (2 * math.pi) * nb
+        gi = np.floor(seg).astype(int) % nb
+        lx = np.floor((seg - np.floor(seg)) * (gw + 2)).astype(int) - 1
+        ly = np.floor((0.93 - r) / (0.16 / gh)).astype(int)
+        inside = (lx >= 0) & (lx < gw) & (ly >= 0) & (ly < gh) & (r < 0.93) & (r > 0.77)
+        glyph = inside & stack[(gi * 7) % ng, np.clip(ly, 0, gh - 1), np.clip(lx, 0, gw - 1)]
+        off = np.abs(((a + math.pi / 4) % (math.pi / 2)) - math.pi / 4)          # angle from the quadrant centre
+        arcs = (r > 0.66) & (r < 0.695) & (off < 0.62)
+        star = np.zeros(u.shape, dtype=bool)
+        gem = np.zeros(u.shape, dtype=bool)
+        for k in range(4):
+            gem |= np.hypot(u - 0.68 * math.cos(k * math.pi / 2), v - 0.68 * math.sin(k * math.pi / 2)) < 0.03
+        frame = frame & (r > 0.5)
+        on = frame | glyph | arcs | star | gem
+        col = np.where(frame[..., None], gl, m)
+        col = np.where(glyph[..., None], mix(b, gl, 0.15), col)
+        col = np.where(arcs[..., None], mix(m, b, 0.5 + 0.5 * (off < 0.2)[..., None]), col)
+        col = np.where(star[..., None], mix(gl, rgb("#ffffff"), 0.5), col)
+        col = np.where(gem[..., None], mix(b, rgb("#ffffff"), 0.3), col)
+        t = T(ctx, m, 1.0, 0.0)
+        t[..., :3] = col
+        t[..., 3] = on * 1.0
+        return t
+    return Mat(fn, "ed6domain4", directional=True)
+
+
+def domain_model():
+    m = Model("ed6_emblem_4", density=4.0, bounds=(14, 2, (0, 0, 0)))
+    root = m.bone("root")
+    sig = m.bone("sigil", root)
+    sig.plane("y", (0, 0.3, 0), 64, 64, domain_mat(), faces=("up",))
+    return m
+
+
 def emblem_anims():
     A = []
     hidden = Anim("hidden", loop=True)
@@ -318,6 +386,7 @@ def emblem_anims():
     fade.scl("sigil", {0: 1.0, 0.4: 1.08, 1.2: 0.0})
     for i in range(6):
         fade.pos(f"claw{i + 1}", {0: (0, 0, 0), 0.7: (0, -11, 0)})
+        fade.scl(f"claw{i + 1}", {0: 1.0, 0.7: 1.0, 1.0: 0.0})
     A.append(fade)
     return A
 
@@ -419,9 +488,9 @@ def codex_model():
     # a soft sun-halo and a turning ring of draconic glyphs behind the book: the codex reads as the
     # glowing sun of the primordial sky even from 30-40 blocks away
     halo = m.bone("halo", root, pivot=CX)
-    halo.plane("z", (0, cy, 10.0), 150, 150, halo_mat(None, 0.42, key="cxhalo"), density=0.4)
-    glyr = m.bone("glyring", root, pivot=(0, cy, 8.5))
-    glyr.plane("z", (0, cy, 8.5), 104, 104, tex.magic_circle(DR, "#fff3c4", "#e8c27a", glow=1.0, bands=((0.8, 0.95, 24),),
+    halo.plane("z", (0, cy, -10.0), 124, 124, halo_mat(None, 0.42, key="cxhalo"), density=0.45)
+    glyr = m.bone("glyring", root, pivot=(0, cy, -8.5))
+    glyr.plane("z", (0, cy, -8.5), 88, 88, tex.magic_circle(DR, "#fff3c4", "#e8c27a", glow=1.0, bands=((0.8, 0.95, 24),),
                                                               lines=(0.77, 0.975), star=0, key="ed6cxring"), density=1.0)
     book = m.bone("book", root, pivot=CX)
     gold = tex.metal(GOLD, "#fff0c0", "#7a5a1e", bands=2.0, glow=0.15)
@@ -539,9 +608,13 @@ def codex_anims(info, preview_sep=None, preview_open=None):
     if preview_open is None:
         orb.rot("cover_f", (0, M("v.op*158"), 0))
         orb.rot("root", (M("v.op*24"), 0, 0))
+        orb.pos("halo", (0, 0, M("v.op*20.0")))
+        orb.pos("glyring", (0, 0, M("v.op*18.0")))
     else:
         orb.rot("cover_f", (0, preview_open * 158, 0))
         orb.rot("root", (preview_open * 24, 0, 0))
+        orb.pos("halo", (0, 0, preview_open * 20.0))
+        orb.pos("glyring", (0, 0, preview_open * 18.0))
     A.append(orb)
 
     hover = Anim("hover", loop=True)
@@ -766,7 +839,7 @@ def build(pack):
                init=["v.sep = 0.0; v.op = 0.0;"],
                pre_anim=[_ease_var("sep"), _ease_var("open").replace("v.open", "v.op")],
                display="The Great Codex", blend=0.25)
-    ems = [emblem_model(k) for k in range(4)]
+    ems = [emblem_model(k) for k in range(4)] + [domain_model()]
     ea = emblem_anims()
     pack.actor("ed6_emblem", ems[0], ea, EMBLEM_STATES, always=["turn"], kinds=ems[1:], size_prop=True, lifetime=150,
                display="Dragon Emblem", blend=0.15)

@@ -285,8 +285,8 @@ def page_anims():
             manifest.rot(f"p{c}{r}", {0: (0, 0, 0), 0.9 + d: (-12, 0, 0), 1.6 + d: (3, 0, 0), 2.1 + d * 0.5: (0, 0, 0)})
     A.append(manifest)
     idle = Anim("idle", loop=True)
-    idle.pos("root", (0, LIFE(4, 7.0), 0))
-    idle.rot("root", (LIFE(1.2, 9.0), 0, LIFE(0.8, 11.0)))
+    idle.pos("root", (0, LIFE(1.5, 7.0), 0))                 # a slow breath (letters are written on its face)
+    idle.rot("root", (LIFE(0.6, 9.0), 0, LIFE(0.4, 11.0)))
     A.append(idle)
     split = Anim("split", length=1.2, loop="hold")          # the sheet parts along its ruling
     for c in range(4):
@@ -295,11 +295,11 @@ def page_anims():
             split.scl(f"p{c}{r}", {0: 1.0, 0.15 + d: (1.0, 1.06, 1.0), 0.55 + d: (0.94, 0.0, 1.0)})
             split.pos(f"p{c}{r}", {0: (0, 0, 0), 0.55 + d: (0, 0, -6)})
     A.append(split)
-    reform = Anim("reform", length=1.5, loop="hold")
+    reform = Anim("reform", length=1.1, loop="hold")
     for c in range(4):
         for r in range(4):
-            d = (3 - c) * 0.1 + r * 0.05
-            reform.scl(f"p{c}{r}", {0: (0.9, 0.0, 1.0), 0.2 + d: (0.9, 0.0, 1.0), 0.75 + d: (1.0, 1.08, 1.0), 1.0 + d: 1.0})
+            d = (3 - c) * 0.07 + r * 0.03
+            reform.scl(f"p{c}{r}", {0: (0.9, 0.0, 1.0), 0.1 + d: (0.9, 0.0, 1.0), 0.55 + d: (1.0, 1.08, 1.0), 0.75 + d: 1.0})
     A.append(reform)
     fold = Anim("fold", length=FOLD_LEN, loop="hold")        # four folds in halves, shrinking to a book page
     _fold_channels(fold)

@@ -16,8 +16,8 @@ Original design: an elongated porcelain mannequin whose anatomy is dream archite
     out of its own bedding) and as a cape down its back;
   * porcelain plates are separate shard bones: they lift away to reveal indigo corridors full
     of window-eyes and tooth-like stair edges (nightmare beneath), and fly off when it breaks.
-Rendered ~1.4 x model size: about 12.5 blocks from the hips to the crown, standing in its pool
-~30 blocks ahead of the caster so that the whole figure fits the first-person view.
+Rendered at 1.32 x model size: about 12 blocks from the hips to the crown, standing in its pool
+34+ blocks ahead of the caster so that the whole figure fits the first-person view.
 Voice: breath, humming and creaking ceramic (see dn_dreamer_sfx).
 This module also owns the Dream & Nightmare palette and painters shared by the other
 dn_dreamer_* modules.
@@ -33,7 +33,7 @@ from kit.geo import Mat, Model, ring
 # ---------------------------------------------------------------- palette
 IVORY, PEACH, PINK, SGOLD, PBLUE = "#f6efe2", "#ffd9b8", "#e8b4c8", "#e9cf8a", "#bcd6f0"
 INDIGO, MAUVE, BURG, AGED, CGRAY = "#2a2d52", "#6a4a6e", "#6e2f3a", "#cfc6b0", "#8b8f9a"
-SCALE = 1.4                       # rendered scale of the Dreamer (1 unit = SCALE/16 blocks)
+SCALE = 1.32                      # rendered scale of the Dreamer (1 unit = SCALE/16 blocks)
 BPU = SCALE / 16.0
 
 
@@ -421,6 +421,10 @@ def build_model():
             par = b
             chain.append(b.name)
         gown.append(chain)
+    for k in range(GOWN_N):   # a petticoat of shorter ruffles between the panels fills out the pool
+        slot = m.bone(f"rslot{k + 1}", pelvis, pivot=(0, 0, 0), rot=(0, k * 360.0 / GOWN_N + 22.5, 0))
+        rb = m.bone(f"ruffle{k + 1}", slot, pivot=(0, 3, -GOWN_R + 0.8))
+        rb.plane("z", (0, 3 - 15, -GOWN_R + 0.8), 19, 30, drape_e, variant=(k + 1) % 3, density=1.0)
 
     # ---- legs (folded under the gown when it stands in its pool; straight in the bed)
     for s, sx in (("r", 1), ("l", -1)):
@@ -635,7 +639,7 @@ def build_model():
         a = k * 45 + 10
         r = (21 + (k % 2) * 5) * HS
         mat = tex.bitmap_cut(glyphs.DREAM[g], "#fff3c8" if k % 2 == 0 else PEACH, glow=1.0, color2=SGOLD)
-        orb.box((math.cos(math.radians(a)) * r, HY(126 + (k % 3) * 5), math.sin(math.radians(a)) * r), (4.5, 4.5, 0), mat,
+        orb.box((math.cos(math.radians(a)) * r, HY(126 + (k % 3) * 5), math.sin(math.radians(a)) * r), (6.5, 6.5, 0), mat,
                 rot=(0, -a + 90, 0), faces=("north", "south"))
 
     # ---- arms: rooftop shoulder caps, arcade forearms that telescope, long three-jointed fingers
@@ -718,8 +722,9 @@ def cabinet_door_face():
 # ---------------------------------------------------------------- poses
 TILT_A = 40.0    # the bed is tilted toward the caster while the sleeper lies in it (dn_dreamer_bed mirrors this)
 TILT_B = 14.0    # ... and levels out to this when the sleeper sits up
-ROOT_LIE = 0.58  # root scale while it lies in the bed / sits up (it grows to 1.0 as it rises)
-ROOT_SIT = 0.62
+ROOT_LIE = 0.55  # root scale while it lies in the bed / sits up (it grows to 1.0 as it rises)
+ROOT_SIT = 0.6
+HOVER_LIFT = 0.5   # blocks: the hips float this high above the ground of the stage (the gown pools below)
 SH_LIFT = {0: 0.0, 1: 2.5, 2: 6.0, 3: 9.0}
 
 
@@ -750,9 +755,9 @@ def CURL(c1, c2, c3=None):
 FRONT_P, SIDE_P, BACK_P = (0, 1, 7), (2, 6), (3, 4, 5)
 
 
-def GOWN(top, mid, hem, front=None, back=None, sides=None):
-    """Outward flare (deg) of the three segments of every gown panel."""
-    out = {}
+def GOWN(top, mid, hem, front=None, back=None, sides=None, ruffle=None):
+    """Outward flare (deg) of the three segments of every gown panel (and of the petticoat ruffles between them)."""
+    out = {f"ruffle{k + 1}": ((top + mid * 0.6) if ruffle is None else ruffle, 0, 0) for k in range(GOWN_N)}
     for k in range(GOWN_N):
         f = (top, mid, hem)
         if front is not None and k in FRONT_P:
@@ -898,37 +903,41 @@ def build_anims(m, rig):
     press = P(LYING, rot={"body": (90 - TILT_A + 4, 0, 0), "arm_{s}_1": (-14, 0, 12), "arm_{s}_2": (12, 0, 0)},
               pos={"root": (0, -1.5, 0)})
     mid = lerp_pose(LYING, SIT, 0.55)
-    mid = P(mid, rot={"head": (-30, 0, 0), "neck1": (-14, 0, 0), "arm_{s}_1": (-30, 0, 18)}, scl={"root": 0.6})
+    mid = P(mid, rot={"head": (-30, 0, 0), "neck1": (-14, 0, 0), "arm_{s}_1": (-30, 0, 18)}, scl={"root": 0.58})
     over = P(SIT, rot={"body": (-11, 0, 0), "thigh_{s}": (86, 0, 3), "head": (-22, 0, 0)})
     keyed(sit, {0: LYING, 0.4: press, 1.4: mid, 2.1: over, 2.6: SIT})
     A.append(sit)
 
-    # ---- 3 awaken: the head turns toward the enemies and the small door opens
-    aw = Anim("awaken", length=LEN["awaken"], loop="hold")
-    look = P(SIT, rot={"head": (-16, -32, -4), "neck2": (0, -10, 0)})
-    look2 = P(SIT, rot={"head": (-20, 6, 2), "neck2": (-4, 4, 0), "face_door": (0, 40, 0)})
-    opened = P(SIT, rot={"head": (-18, 0, 0), "neck2": (-4, 0, 0), "face_door": (0, 118, 0)})
-    done = P(SIT, rot={"head": (-18, 0, 0), "neck2": (-4, 0, 0), **DOOR_OPEN})
-    keyed(aw, {0: SIT, 0.5: look, 0.9: look2, 1.25: opened, 1.5: done})
-    aw.particle(1.0, "glint", "door_c")
-    A.append(aw)
-
-    # ---- 4 rise: leaves the bed, glides down into its pool and grows to its full height
+    # ---- 4 rise: leaves the bed, glides down into its pool and grows to its full height (the face-door still shut)
+    SHUT = P(HOVER, rot={"face_door": (0, 0, 0), "head": (-12, 0, 0)})
     ri = Anim("rise", length=LEN["rise"], loop="hold")
-    d_sit = P(done)
-    push = P(d_sit, rot={"body": (-22, 0, 0), "arm_{s}_1": (-6, 0, 22), "arm_{s}_2": (6, 0, 0), "head": (-26, 0, 0)},
+    push = P(SIT, rot={"body": (-22, 0, 0), "arm_{s}_1": (-6, 0, 22), "arm_{s}_2": (6, 0, 0), "head": (-26, 0, 0)},
              pos={"root": (0, -2, 0)})
-    lift = lerp_pose(push, HOVER, 0.5)
+    lift = lerp_pose(push, SHUT, 0.5)
     lift = P(lift, rot={"body": (-12, 0, 0), "arm_{s}_1": (18, 0, 40), "arm_{s}_2": (30, 0, 0), "head": (2, 0, 0),
                         **GOWN(30, 30, 20)}, scl={"root": 0.82})
-    up_ = P(HOVER, rot={**LEAN(3), "arm_{s}_1": (4, 0, 24), "head": (-6, 0, 0)}, scl={"root": 1.03})
-    keyed(ri, {0: d_sit, 0.6: push, 1.6: lift, 2.5: up_, 3.0: HOVER})
+    up_ = P(SHUT, rot={**LEAN(3), "arm_{s}_1": (4, 0, 24), "head": (-6, 0, 0)}, scl={"root": 1.03})
+    keyed(ri, {0: SIT, 0.6: push, 1.6: lift, 2.5: up_, 3.0: SHUT})
     ri.particle(0.8, "porcelain", "chest_c")
     ri.particle(2.4, "dust", "chest_c")
     A.append(ri)
 
-    hov = Anim("hover", loop=True)
-    keyed(hov, {0: HOVER})
+    # ---- 3 awaken (in its pool): the head turns toward the enemies, back to the caster, and the small door opens
+    aw = Anim("awaken", length=LEN["awaken"], loop="hold")
+    # (the yaw of the head turn toward the enemies comes from the script through grimoire:look)
+    look = P(SHUT, rot={"head": (-17, 0, -5), "neck2": (-2, 0, 0), **LEAN(-4)})
+    look2 = P(SHUT, rot={"head": (-13, 0, 3), "neck2": (-4, 0, 0), "face_door": (0, 40, 0)})
+    opened = P(HOVER, rot={"head": (-11, 0, 0), "face_door": (0, 118, 0)})
+    keyed(aw, {0: SHUT, 0.5: look, 0.9: look2, 1.25: opened, 1.5: HOVER})
+    aw.particle(1.0, "glint", "door_c")
+    A.append(aw)
+
+    hov = Anim("hover", loop=True)                  # idle: the floating hands drift and turn, out of step
+    keyed(hov, {0: HOVER}, skip=("arm_r_1", "arm_l_1", "hand_r", "hand_l"))
+    hov.rot("arm_r_1", (LIFE(4, 6.2, base=12), 0, LIFE(4, 5.3, base=54)))
+    hov.rot("arm_l_1", (LIFE(4, 6.2, 0.45, base=12), 0, LIFE(-4, 5.3, 0.35, base=-54)))
+    hov.rot("hand_r", (LIFE(6, 4.1, base=4), LIFE(8, 5.9), LIFE(5, 3.7, base=-16)))
+    hov.rot("hand_l", (LIFE(6, 4.1, 0.5, base=4), LIFE(-8, 5.9, 0.4), LIFE(-5, 3.7, 0.3, base=16)))
     A.append(hov)
 
     # ---- 6 sweep: the right hand rakes the ground in an arc (its right side -> its left side)
@@ -1019,8 +1028,8 @@ def build_anims(m, rig):
     A.append(fr)
 
     # ---- 13 finale: it bows over the field, the face-door opens wide and the other world pours out
-    FIN = with_shards(P(COND, rot={**LEAN(-32), "neck1": (-8, 0, 0),
-                                   "neck2": (-6, 0, 0), "head": (-10, 0, 0), "arm_{s}_1": (34, 0, 74),
+    FIN = with_shards(P(COND, rot={**LEAN(-30), "neck1": (-2, 0, 0),
+                                   "neck2": (0, 0, 0), "head": (0, 0, 0), "arm_{s}_1": (34, 0, 74),
                                    "arm_{s}_2": (40, 0, 0), "hand_{s}": (0, 0, 30), "face_door": (0, 168, 0),
                                    "cdoor_r": (0, -90, 0), "cdoor_l": (0, 90, 0), **CURL(-6, -4, -2)}), 3)
     fn = Anim("finale", length=LEN["finale"], loop="hold")
@@ -1108,6 +1117,9 @@ def report(m, anims):
     fp = by["finale"].pose(2.0)
     out["door_finale"] = blocks(probe(m, fp, "head", m["head"].locators["door_c"]))
     out["beam_end"] = blocks(probe(m, fp, "head", m["head"].locators["beam_end"]))
+    d0, d1 = np.array(out["door_finale"]), np.array(out["beam_end"])
+    f = (d0[1] - (-HOVER_LIFT)) / max(d0[1] - d1[1], 1e-6)
+    out["beam_ground"] = tuple(round(float(v), 2) for v in d0 + (d1 - d0) * f)
     rp = by["raise"].pose(2.0)
     out["palm_r_raise"] = blocks(probe(m, rp, "hand_r", m["hand_r"].locators["palm_r"]))
     out["palm_l_raise"] = blocks(probe(m, rp, "hand_l", m["hand_l"].locators["palm_l"]))

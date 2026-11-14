@@ -25,6 +25,8 @@ export class Mover {
   lastYaw: number;
   /** Signed, smoothed yaw rate (deg / tick) -- used by flyers to pick banking states. */
   yawRate = 0;
+  /** Optional cap on how fast the facing may change (deg / tick, 0 = none): sharp path corners become turns. */
+  maxTurn = 0;
   private ySmooth: number | undefined;
 
   constructor(public actor: Actor, start: V3, yaw: number, t0: number, private ground?: (p: V3) => number) {
@@ -88,18 +90,20 @@ export class Mover {
   step(t: number): V3 {
     const s = this.segAt(t);
     let p = s ? s.at(t) : this.posAt(t);
+    let want = this.lastYaw;
     if (s && s.yaw !== undefined) {
       this.yawRate *= 0.7;
-      this.lastYaw = typeof s.yaw === "number" ? s.yaw : s.yaw(t);
+      want = typeof s.yaw === "number" ? s.yaw : s.yaw(t);
     } else {
       const n = s ? s.at(Math.min(t + 1, s.to)) : p;
       const dx = n.x - p.x, dz = n.z - p.z;
       if (Math.hypot(dx, dz) > 0.02) {
-        const y = yawOf({ x: dx, y: 0, z: dz });
-        this.yawRate = this.yawRate * 0.6 + angleDelta(this.lastYaw, y) * 0.4;
-        this.lastYaw = y;
+        want = yawOf({ x: dx, y: 0, z: dz });
+        this.yawRate = this.yawRate * 0.6 + angleDelta(this.lastYaw, want) * 0.4;
       } else this.yawRate *= 0.7;
     }
+    if (this.maxTurn > 0) want = this.lastYaw + clamp(angleDelta(this.lastYaw, want), -this.maxTurn, this.maxTurn);
+    this.lastYaw = want;
     if (this.ground) {
       const g = this.ground(p);
       this.ySmooth = this.ySmooth === undefined ? g : this.ySmooth + clamp(g - this.ySmooth, -0.35, 0.35);

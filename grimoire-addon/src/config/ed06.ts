@@ -51,12 +51,15 @@ export const ED06 = {
   rootRadius: 18,
   rootHoldTicks: 70,
   rootDamage: 4,
-  /** A root-bound pillar rises behind each bound enemy (damage when it erupts, barrier height). */
+  /** A root-bound pillar rises behind the first bound enemies (how many, damage when it erupts, barrier height). */
+  maxPillars: 2,
   pillarDamage: 4,
   pillarBarrierHeight: 3,
   /** Neck lash: damage and radius of the low sweep in front of the Nature Dragon. */
   lashDamage: 8,
   lashRadius: 6,
+  /** Superheated wave the Heat Dragon roars across the ground into the hostile zone (once in Phase III). */
+  heatWaveDamage: 6,
   /** Ground vitrified behind each charge: a glass patch every N blocks, burning enemies on it. */
   glassEvery: 3.5,
   glassLifeTicks: 140,
@@ -107,7 +110,7 @@ export const ED06 = {
   spiralLift: 0.22,
   spiralFinalLift: 0.95,
   /** 4. The Heat Dragon's final charge: run-up distance, horn hit, thermal detonation at the zone. */
-  finalRunUp: 20,
+  finalRunUp: 18,
   finalHornDamage: 10,
   detonationDamage: 22,
   detonationExtra: 2,

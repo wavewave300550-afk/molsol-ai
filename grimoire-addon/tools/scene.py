@@ -316,8 +316,11 @@ def cam_for(view, tr, tick, fov, size, cam_spec):
         v = [float(x) for x in cam_spec.split(",")]
         return Cam(loc(*v[:3]), loc(*v[3:6]), fov, size)
     if view == "pov":
+        # the player's own view on a phone: eye height, ~60 degrees vertical (Bedrock's default), so the
+        # horizontal angle follows the image's aspect (2.17:1 like an iPhone in landscape -> ~103 degrees)
         pitch = math.radians(cas[5])
-        return Cam(cp + up * 1.62, cp + up * 1.62 + fw * math.cos(pitch) * 10 - up * math.sin(pitch) * 10, 70, size)
+        hfov = math.degrees(2 * math.atan(math.tan(math.radians(30)) * size[0] / size[1]))
+        return Cam(cp + up * 1.62, cp + up * 1.62 + fw * math.cos(pitch) * 10 - up * math.sin(pitch) * 10, hfov, size)
     if view == "top":
         return Cam(loc(0, 70, 12), loc(0, 0, 12.01), 50, size)
     if view == "side":
@@ -367,7 +370,8 @@ def draw_frame(tr, tick, view="chase", size=(880, 500), fov=62, labels=False, ca
     # caster and mobs
     cas = min(tr["caster"], key=lambda r: abs(r[0] - tick))
     cx, cy, cz = cas[1:4]
-    fr.box((cx - 0.3, cy, cz - 0.3), (cx + 0.3, cy + 1.8, cz + 0.3), (0.2, 0.45, 1.0), glow=0.6)
+    if view != "pov":   # the caster's own box would fill the first-person view
+        fr.box((cx - 0.3, cy, cz - 0.3), (cx + 0.3, cy + 1.8, cz + 0.3), (0.2, 0.45, 1.0), glow=0.6)
     mrow = min(tr["mobs"], key=lambda r: abs(r[0] - tick))
     for mx, my, mz, alive in [m for m in mrow[1:] if isinstance(m, list)]:
         if alive:

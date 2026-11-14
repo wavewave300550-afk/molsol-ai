@@ -402,6 +402,7 @@ def stone_anims():
     for i in range(3):
         sink.pos(f"m{i + 1}", {0: (0, 0, 0), 0.1 * i: (0, 1, 0), 0.8 + 0.06 * i: (0, -60, 0)})
     sink.scl("rubble", {0: 1.0, 0.8: 0.0})
+    sink.scl("root", {0: 1.0, 0.75: 1.0, 1.0: 0.0})
     A.append(sink)
     return A
 

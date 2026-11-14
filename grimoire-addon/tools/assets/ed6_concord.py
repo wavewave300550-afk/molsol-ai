@@ -10,8 +10,8 @@ ed6_debris    aerial debris formation carried by the Air Dragon's wind: a horizo
 ed6_ring      the Nature Dragon's enclosing ring: 8 basalt-strata pillar clusters on radius 6 blocks (size 1),
               ten slots with the two slots on the actor's front / back axis left open as doorways (-Z and
               +Z), a ground fissure ring.  An amphitheatre: the four pillars on the actor's -X side are
-              low stumps (1.9-4.4 blocks) so a spectator on that side looks over them into the ring,
-              the four on the +X side are colossal (8-9.5 blocks).  Skins: 0 stone, 1 'frost' (ice
+              broken stumps (0.7-1.6 blocks) so a spectator on that side looks over them into the ring,
+              the four on the +X side are tall twin columns (6.1-7.4 blocks) with gaps between them.  Skins: 0 stone, 1 'frost' (ice
               sheathed), 2 'glass' (vitrified, glowing).  STATES 0 hidden / 1 rise (1.6 s) / 2 hold /
               3 quake (0.6 s) / 4 burst (1.2 s, pillars thrown outward) / 5 sink (1.0 s)
 ed6_iceshell  layered ice formations inside the ring: three concentric shells (radius 2.2 / 3.6 / 5.0
@@ -202,7 +202,7 @@ def debris_anims():
 # ============================================================================== pillar ring
 RING_R = 96.0
 RING_SLOTS = 10            # slots 0 (-Z) and 5 (+Z) are doorways; slots 1-4 lie on -X, 6-9 on +X
-RING_H = {1: 70.0, 2: 31.0, 3: 31.0, 4: 70.0, 6: 128.0, 7: 152.0, 8: 148.0, 9: 124.0}
+RING_H = {1: 26.0, 2: 11.0, 3: 11.0, 4: 26.0, 6: 100.0, 7: 118.0, 8: 116.0, 9: 98.0}
 
 
 def _strata_basalt(seed):
@@ -269,17 +269,21 @@ def ring_model():
         z = -RING_R
         base = m.bone(f"pb{pi}", b, pivot=(0, 0, z))
         H = RING_H[slot]
-        for j, (dx, dz, w, h, lean) in enumerate(((0, 0, 22, H, 0), (-14, 5, 15, H * 0.78, -6), (14, 4, 16, H * 0.64, 7),
-                                                   (2, 9, 12, H * 0.5, 3))):
+        tall = slot > 5
+        side = -1 if pi % 2 else 1
+        cols = ((0, 0, 20, H, 0), (13 * side, 5, 13, H * 0.7, 7 * side)) if tall else ((0, 0, 18, H, 0), (-12, 6, 10, H * 0.55, -8))
+        for j, (dx, dz, w, h, lean) in enumerate(cols):
             base.box((dx, h / 2, z + dz), (w, h, w * 0.9), _strata_basalt(pi * 3 + j), rot=(lean * 0.5, 30 * j, lean),
                      pivot=(dx, 0, z + dz), density=0.6)
-        base.box((0, H + 4, z), (26, 8, 22), _strata_basalt(pi + 40), rot=(0, 15, 6), pivot=(0, H, z), density=0.6)   # cap stone
-        base.plane("z", (0, H * 0.6, z - 10.5), 12, 16, tex.alt(rune_plate(pi, "#c8ff9a", glow=1.0, key=f"ed6rgr{pi}"),
-                                                               frost=rune_plate(pi, "#dff8ff", glow=1.0, key=f"ed6rgf{pi}"),
-                                                               glass=rune_plate(pi, "#ffffff", glow=1.0, key=f"ed6rgg{pi}")))
-        base.plane("z", (0, H * 0.35, z - 11.0), 20, H * 0.5, vine, variant=pi % 3)                         # hanging roots / moss
-        for k in range(3):
-            base.box((-16 + k * 16, 3.5, z - 13 + (k % 2) * 4), (9, 7, 9), _strata_basalt(pi + 60 + k), rot=(k * 20, k * 35, 0),
+        if tall:
+            base.box((0, H + 3, z), (24, 6, 19), _strata_basalt(pi + 40), rot=(0, 15, 6), pivot=(0, H, z), density=0.6)   # cap stone
+            base.plane("z", (0, H * 0.35, z - 10.0), 16, H * 0.5, vine, variant=pi % 3)                     # hanging roots / moss
+        ry = H * 0.6 if tall else max(6.0, H * 0.5)
+        base.plane("z", (0, ry, z - 9.6), 12 if tall else 9, 16 if tall else 12,
+                   tex.alt(rune_plate(pi, "#c8ff9a", glow=1.0, key=f"ed6rgr{pi}"), frost=rune_plate(pi, "#dff8ff", glow=1.0, key=f"ed6rgf{pi}"),
+                           glass=rune_plate(pi, "#ffffff", glow=1.0, key=f"ed6rgg{pi}")))
+        for k in range(2):
+            base.box((-12 + k * 22, 3.0, z - 11 + (k % 2) * 4), (8, 6, 8), _strata_basalt(pi + 60 + k), rot=(k * 20, k * 35, 0),
                      density=0.6)
     return m
 
@@ -368,6 +372,7 @@ def iceshell_anims():
             sh.pos(b, {0: (0, 0, 0), t0 + 0.6: (0, 40 + li * 10, 0)})
             sh.rot(b, {0: (0, 0, 0), t0 + 0.6: (0, 60 - li * 40, 0)})
     sh.scl("frost", {0: 1.0, 0.8: 0.0})
+    sh.scl("root", {0: 1.0, 0.6: 1.0, 0.8: 0.0})
     A.append(sh)
     return A
 
@@ -445,6 +450,7 @@ def spiral_anims():
     for o in range(3):
         burst.scl(f"orb{o + 1}", {0: 1.0, 0.6: 2.6, 0.8: 0.0})
     burst.scl("base", {0: 1.0, 0.8: 0.0})
+    burst.scl("root", {0: 1.0, 0.6: 1.0, 0.8: 0.0})      # nothing of the column is left lying on the ground
     A.append(burst)
     return A
 
@@ -514,6 +520,7 @@ def blast_anims():
     fade.scl("shock", 0.0)
     for j in range(12):
         fade.pos(f"k{j + 1}", {0: (0, 0, 0), 0.05 * (j % 4): (0, 0, 0), 0.9: (0, -36, 0)})
+        fade.scl(f"k{j + 1}", {0: 1.0, 0.6: 1.0, 1.0: 0.0})
     A.append(fade)
     return A
 
