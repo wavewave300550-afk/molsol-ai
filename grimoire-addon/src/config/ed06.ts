@@ -3,63 +3,67 @@ export const ED06 = {
   // ---- domain
   /** How far from the aim point the spell snaps onto the nearest enemy. */
   snap: 12,
-  /** The domain centre is kept at least this far from the caster (the dragons need room). */
-  minDistance: 12,
-  /** Height of the Great Codex above the caster and how far toward the domain it floats. */
-  codexHeight: 7.5,
-  codexAhead: 1.5,
+  /**
+   * The designated hostile zone (the Concord's target) is the enemy group, kept inside the stage in
+   * front of the caster: at least / at most this far ahead (blocks) and within this many degrees of
+   * the caster's facing.  Without enemies it sits `zoneDefault` blocks ahead.
+   */
+  zoneMinAhead: 14,
+  zoneMaxAhead: 24,
+  zoneMaxDeg: 26,
+  zoneDefault: 16,
+  /** Search radius for the enemy group and how far a member may be from the group's seed. */
+  zoneSearch: 20,
+  zoneGroup: 7,
 
   // ---- Phase I: The Four Ancient Heartbeats
-  /** Radius of each dragon emblem (blocks). */
-  emblemRadius: 4.5,
-  /** Each heartbeat jolts enemies standing on its emblem: damage, slowness ticks / amplifier, outward push. */
+  /** Each heartbeat shakes the domain: enemies within this radius of the zone take damage and are slowed. */
+  beatRadius: 16,
   beatDamage: 2,
   beatSlowTicks: 40,
   beatSlowAmp: 1,
-  beatKnock: 0.6,
+  beatKnock: 0.35,
 
   // ---- Phase II: The Sovereigns Awaken
   /** Nature Dragon: forefeet landing (damage, radius) and every footfall shockwave. */
   natureLandDamage: 8,
-  natureLandRadius: 5,
+  natureLandRadius: 6,
   stepDamage: 3,
-  stepRadius: 3.4,
+  stepRadius: 3.6,
   stepKnockH: 0.7,
   stepKnockV: 0.35,
   /** Heat Dragon charge: horn strike and body slam damage, lateral reach, shove. */
   hornDamage: 7,
   bodyDamage: 4,
-  chargeHalfWidth: 2.4,
+  chargeHalfWidth: 2.6,
   chargeKnockH: 1.3,
   chargeKnockV: 0.45,
   /** Seconds enemies struck by the Heat Dragon keep burning. */
   burnSeconds: 3,
-  /** Air Dragon's pull-up gust after its stoop: damage, radius, knockback. */
-  gustDamage: 4,
-  gustRadius: 6,
+  /** Air Dragon's pull-up gust after its stoop over the hostile zone: damage, radius, knockback. */
+  gustDamage: 5,
+  gustRadius: 7,
   gustKnock: 1.0,
 
   // ---- Phase III: The Primordial Dominion
-  /** Roots from the Nature Dragon's footprints: how many enemies, how long they hold, damage at the bind. */
+  /** Roots break out of the ground toward enemies: how many, how long they hold, damage at the bind. */
   maxRoots: 4,
-  rootRadius: 16,
+  rootRadius: 18,
   rootHoldTicks: 70,
   rootDamage: 4,
-  /** A root-bound pillar rises beside each bound enemy (damage when it erupts, barrier height). */
+  /** A root-bound pillar rises behind each bound enemy (damage when it erupts, barrier height). */
   pillarDamage: 4,
   pillarBarrierHeight: 3,
   /** Neck lash: damage and radius of the low sweep in front of the Nature Dragon. */
   lashDamage: 8,
   lashRadius: 6,
-  /** Heat Dragon chord charges between the standing stones: horn / body damage use the Phase II values. */
-  chordRadius: 7,
   /** Ground vitrified behind each charge: a glass patch every N blocks, burning enemies on it. */
   glassEvery: 3.5,
   glassLifeTicks: 140,
   glassBurnDamage: 1,
   glassBurnRadius: 1.8,
   /** Standing stones within this distance of a charge turn to glowing glass and flash heat around them. */
-  vitrifyReach: 4.2,
+  vitrifyReach: 4.6,
   vitrifyDamage: 4,
   vitrifyRadius: 3,
   /** Water & Ice Dragon: currents under its swim path shove enemies (once-per-pass damage). */
@@ -72,7 +76,7 @@ export const ED06 = {
   bridgeSlowTicks: 60,
   bridgeSlowAmp: 2,
   /** Air Dragon: aerial formations; their updraft lifts enemies below them, falling debris on release. */
-  updraftRadius: 4,
+  updraftRadius: 4.5,
   updraftDamage: 3,
   updraftLift: 0.9,
   updraftEvery: 30,
@@ -80,9 +84,6 @@ export const ED06 = {
   debrisRadius: 5,
 
   // ---- Phase IV: The Fourfold Concord
-  /** The designated hostile zone: search radius around the centre, and how far it may sit from the centre. */
-  zoneSearch: 16,
-  zoneMaxOffset: 6,
   /** Radius of the Nature Dragon's enclosing pillar ring (barrier columns except two doorways). */
   ringRadius: 6,
   ringBarrierHeight: 4,
@@ -92,7 +93,7 @@ export const ED06 = {
   slamDamage: 10,
   slamRadius: 6,
   quakeDamage: 4,
-  quakeRadius: 2.6,
+  quakeRadius: 2.8,
   shockPulseDamage: [6, 6, 8],
   shockSlowTicks: 60,
   /** 2. Moving water and freezing: current damage, shove, then each crystallising ice layer. */
@@ -106,7 +107,7 @@ export const ED06 = {
   spiralLift: 0.22,
   spiralFinalLift: 0.95,
   /** 4. The Heat Dragon's final charge: run-up distance, horn hit, thermal detonation at the zone. */
-  finalRunUp: 16,
+  finalRunUp: 20,
   finalHornDamage: 10,
   detonationDamage: 22,
   detonationExtra: 2,

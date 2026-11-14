@@ -103,58 +103,100 @@ def rune_plate(gi, color, glow=1.0, key=None):
 
 # ------------------------------------------------------------------------------------------- particles
 def build_particles(pack):
+    """Every ED06 effect is sized to read at 10-45 blocks from the caster (big sprites, long lives)."""
     fx = particles(pack)
     E = fx.effect
-    # atmosphere
-    E("ed6_spore", "dot", count=6, life=(2.5, 4.0), size=(0.07, 0.03), shape=("sphere", 4.0), speed=(0.05, 0.3),
-      accel=(0, 0.12, 0), drag=0.4, colors=["#f4ffc8ff", "#c8f07acc", "#9cd45a00"])
-    E("ed6_ember_mote", "ember", count=5, life=(2.0, 3.5), size=(0.08, 0.02), shape=("sphere", 3.5), speed=(0.1, 0.5),
-      accel=(0, 0.35, 0), drag=0.5, colors=["#fff0b0ff", "#ff9a3add", "#a8320c00"])
-    E("ed6_mist", "smoke", count=4, life=(3.0, 5.0), size=(1.6, 3.4), shape=("disc", 3.5), speed=(0.05, 0.25),
-      accel=(0, 0.04, 0), drag=0.6, colors=["#cfd8c400", "#c4d0bc66", "#b8c4b044", "#a8b4a000"], blend="blend", spin=(360, 8))
-    E("ed6_pollen_drift", None, sprites=["dot", "leaf"], count=5, life=(2.4, 3.8), size=(0.1, 0.06), shape=("sphere", 3.0),
+    # ---- the primordial atmosphere (continuous ambient layers)
+    E("ed6_spore", "dot", count=3, life=(3.0, 5.0), size=(0.14, 0.03), shape=("sphere", 3.5), speed=(0.05, 0.3),
+      accel=(0, 0.15, 0), drag=0.4, colors=["#f4ffc8ff", "#c8f07acc", "#9cd45a00"])
+    E("ed6_mote", "glow", count=2, life=(3.5, 5.5), size=(0.26, 0.04), shape=("sphere", 4.0), speed=(0.1, 0.35),
+      accel=(0, 0.12, 0), drag=0.5, colors=["#fff6d8ff", "#ffe2a0cc", "#e8c27a00"])
+    E("ed6_ember_mote", "ember", count=3, life=(2.2, 3.6), size=(0.2, 0.03), shape=("sphere", 3.0), speed=(0.2, 0.7),
+      accel=(0, 0.55, 0), drag=0.5, colors=["#fff0b0ff", "#ff9a3add", "#a8320c00"])
+    E("ed6_mist", "smoke", count=3, life=(4.0, 6.0), size=(2.4, 4.6), shape=("disc", 4.0), speed=(0.05, 0.25),
+      accel=(0, 0.04, 0), drag=0.6, colors=["#cfd8c400", "#c4d0bc55", "#b8c4b03a", "#a8b4a000"], blend="blend", spin=(360, 6))
+    E("ed6_pollen_drift", None, sprites=["dot", "leaf"], count=4, life=(2.6, 4.0), size=(0.17, 0.08), shape=("sphere", 3.0),
       speed=(0.2, 0.6), accel=(0.3, -0.1, 0.1), drag=0.5, colors=["#e8ffb8ff", "#8fd45acc", "#4f8a3a00"], blend="alpha",
       spin=(360, 60))
-    # heartbeats: a flat ground ring per lineage
+    E("ed6_leaf_fall", "leaf", count=3, life=(2.5, 4.0), size=(0.28, 0.2), shape=("sphere", 3.0), speed=(0.2, 0.6),
+      accel=(0.3, -0.8, 0.15), drag=0.8, colors=["#a8d860ff", "#5f9a34ff", "#3f6a2a00"], blend="alpha", spin=(360, 140))
+    E("ed6_snow", "flake", count=3, life=(2.5, 4.0), size=(0.22, 0.12), shape=("sphere", 3.0), speed=(0.1, 0.4),
+      accel=(0.1, -0.55, 0), drag=0.8, colors=["#ffffffff", "#dff6ffdd", "#9fd8ff00"], spin=(360, 90))
+    E("ed6_droplet", None, sprites=["drop", "dot"], count=3, life=(1.2, 2.0), size=(0.22, 0.08), shape=("sphere", 2.5),
+      speed=(0.3, 0.9), accel=(0, -2.5, 0), drag=0.6, colors=["#f0fcffff", "#7fd8ffdd", "#2a6fb000"])
+    E("ed6_haze", "wave", count=2, life=(1.2, 2.0), size=(0.9, 1.9), shape=("box", (2.0, 0.3, 2.0)), direction=(0, 1, 0),
+      speed=(0.6, 1.4), colors=["#fff2d000", "#ffd8a038", "#ffb06a26", "#ff8a4000"], blend="blend")
+    E("ed6_wind", None, sprites=["wave", "slash", "arc"], count=2, life=(0.9, 1.5), size=(1.5, 0.4), shape=("sphere", 3.0),
+      speed=(1.0, 3.0), drag=0.4, colors=["#ffffffcc", "#e4f7ff88", "#bfe6ff00"], spin=(360, 40))
+    E("ed6_rune_rise", None, sprites=[f"rune{i}" for i in range(1, 7)], count=2, life=(2.0, 3.2), size=(0.38, 0.1),
+      shape=("disc", 3.0), direction=(0, 1, 0), speed=(0.6, 1.4), drag=0.3, colors=["#fff6dcff", "#ffe2a0ee", "#e8c27a00"])
+    # ---- per-dragon trails (big enough to follow a creature 15-45 blocks away)
+    E("ed6_trail_nature", "puff", count=3, life=(1.2, 2.2), size=(0.9, 2.4), shape=("disc", 1.5), speed=(0.4, 1.2),
+      accel=(0, 0.25, 0), drag=1.2, colors=["#c8bca4aa", "#8a7f6a55", "#6a604f00"], blend="blend", spin=(360, 30))
+    E("ed6_trail_heat", None, sprites=["ember", "glow", "spark"], count=4, life=(0.5, 1.0), size=(0.42, 0.04),
+      shape=("sphere", 1.2), speed=(0.5, 2.0), accel=(0, 1.5, 0), drag=0.8,
+      colors=["#ffffffff", "#ffd27aff", "#ff6a1acc", "#5a1a0a00"])
+    E("ed6_trail_tide", None, sprites=["drop", "ring", "dot"], count=4, life=(0.8, 1.4), size=(0.32, 0.05),
+      shape=("sphere", 1.0), speed=(0.2, 0.8), accel=(0, -1.5, 0), drag=0.6, colors=["#ffffffff", "#9fe6ffee", "#3f8fd000"])
+    E("ed6_trail_air", "dot", count=3, life=(0.8, 1.3), size=(0.34, 0.0), shape=("sphere", 0.3), speed=(0.0, 0.2),
+      colors=["#ffffffee", "#d8f0ffaa", "#a8c8ff00"])
+    # ---- heartbeats: a flat ground ring, rising beams, a coloured flash and a spark burst per lineage
     for i, n in enumerate(LINEAGE_NAMES):
         b, m, d = LINEAGE[i]
-        E(f"ed6_beat_{n}", "ring", count=1, life=(0.7, 0.8), size=(0.6, 7.5), facing="emitter_transform_xz",
+        E(f"ed6_beat_{n}", "ring", count=1, life=(0.8, 0.9), size=(0.6, 9.0), facing="emitter_transform_xz",
           colors=[b + "ff", m + "cc", d + "00"])
-        E(f"ed6_rise_{n}", "beam", count=8, life=(0.5, 0.9), size=(0.1, 0.02), size_y=(1.0, 2.6), shape=("disc", 3.5),
+        E(f"ed6_rise_{n}", "beam", count=8, life=(0.6, 1.0), size=(0.16, 0.03), size_y=(1.4, 3.4), shape=("disc", 3.5),
           direction=(0, 1, 0), speed=(3, 7), colors=[b + "ff", m + "cc", d + "00"], facing="lookat_y")
-    # codex
-    E("ed6_codex_rune", None, sprites=[f"rune{i}" for i in range(1, 7)], count=6, life=(1.0, 1.8), size=(0.2, 0.08),
-      shape=("sphere", 1.6), speed=(0.3, 0.9), accel=(0, 0.5, 0), drag=0.6, colors=["#fff3c4ff", "#e8c27aff", "#8a6a3a00"])
-    E("ed6_codex_glint", None, sprites=["star", "spark"], count=10, life=(0.4, 0.9), size=(0.2, 0.0), shape=("sphere", 1.5),
+        E(f"ed6_flash_{n}", "glow", count=1, life=(0.4, 0.55), size=(2.2, 7.5), colors=[b + "ff", m + "aa", d + "00"])
+        extra = ["leaf", "ember", "flake", "feather"][i]
+        E(f"ed6_burst_{n}", None, sprites=["star", "spark", extra], count=18, life=(0.6, 1.2), size=(0.42, 0.05),
+          shape=("sphere", 0.8), speed=(5, 11), drag=1.4, colors=["#ffffffff", b + "ff", m + "cc", d + "00"], spin=(360, 200))
+    E("ed6_wave", "ring", count=1, life=(1.0, 1.1), size=(1.0, 22.0), facing="emitter_transform_xz",
+      colors=["#ffffffff", "#ffe2a0cc", "#e8c27a55", "#8a6a3a00"])
+    E("ed6_column", "beam", count=8, life=(0.7, 1.2), size=(0.28, 0.05), size_y=(3.0, 9.0), shape=("disc", 1.0),
+      direction=(0, 1, 0), speed=(6, 12), colors=["#ffffffff", "#fff3c4ee", "#e8c27a00"], facing="lookat_y")
+    E("ed6_ring_v", "ringthin", count=1, life=(0.5, 0.6), size=(0.8, 8.0), colors=["#ffffffff", "#ffe2a0aa", "#e8c27a00"])
+    # ---- codex
+    E("ed6_codex_rune", None, sprites=[f"rune{i}" for i in range(1, 7)], count=5, life=(1.2, 2.0), size=(0.32, 0.1),
+      shape=("sphere", 2.0), speed=(0.3, 0.9), accel=(0, 0.5, 0), drag=0.6, colors=["#fff3c4ff", "#e8c27aff", "#8a6a3a00"])
+    E("ed6_codex_glint", None, sprites=["star", "spark"], count=10, life=(0.4, 0.9), size=(0.3, 0.0), shape=("sphere", 1.8),
       speed=(1.5, 4.0), drag=1.5, colors=["#ffffffff", "#ffe2a0ff", "#8a6a3a00"], spin=(360, 300))
-    # luminous skeleton and inscription streams
-    E("ed6_bone_dust", None, sprites=["bone", "dot", "rune3", "rune5"], count=8, life=(0.8, 1.6), size=(0.18, 0.04),
-      shape=("sphere", 1.8), speed=(0.3, 1.2), accel=(0, 0.6, 0), drag=0.8, colors=["#fffbe8ff", "#ffe2a0cc", "#e8c27a00"],
+    E("ed6_stream", None, sprites=["glow", "rune2", "rune4", "rune6"], count=3, life=(0.5, 0.9), size=(0.42, 0.05),
+      shape=("sphere", 0.4), speed=(0.1, 0.5), drag=1.0, colors=["#ffffffff", "#fff3c4ff", "#e8c27a00"])
+    # ---- luminous skeleton and inscription streams, the seal of the codex, the restoring wave
+    E("ed6_bone_dust", None, sprites=["bone", "dot", "rune3", "rune5"], count=8, life=(1.0, 1.8), size=(0.26, 0.05),
+      shape=("sphere", 2.2), speed=(0.3, 1.2), accel=(0, 0.6, 0), drag=0.8, colors=["#fffbe8ff", "#ffe2a0cc", "#e8c27a00"],
       spin=(360, 120))
-    E("ed6_inscribe", None, sprites=[f"rune{i}" for i in range(1, 7)], count=3, life=(0.5, 0.9), size=(0.24, 0.1),
-      shape=("sphere", 0.5), speed=(0.1, 0.4), drag=1.0, colors=["#ffffffff", "#fff3c4ff", "#e8c27a00"])
-    # the dominion and the concord
-    E("ed6_updraft", "beam", count=10, life=(0.6, 1.1), size=(0.12, 0.03), size_y=(1.4, 3.0), shape=("disc", 2.2),
+    E("ed6_inscribe", None, sprites=[f"rune{i}" for i in range(1, 7)], count=3, life=(0.7, 1.2), size=(0.34, 0.1),
+      shape=("sphere", 0.6), speed=(0.1, 0.4), drag=1.0, colors=["#ffffffff", "#fff3c4ff", "#e8c27a00"])
+    E("ed6_seal", None, sprites=["star", "glow", "spark"], count=30, life=(0.8, 1.4), size=(0.55, 0.05), shape=("sphere", 1.0),
+      speed=(8, 16), drag=1.6, colors=["#ffffffff", "#fff3c4ff", "#ffd27acc", "#e8c27a00"], spin=(360, 300))
+    E("ed6_light_wave", "ring", count=1, life=(1.4, 1.5), size=(1.0, 30.0), facing="emitter_transform_xz",
+      colors=["#ffffffff", "#fff3c4dd", "#ffe2a066", "#e8c27a00"])
+    # ---- the dominion and the concord
+    E("ed6_updraft", "beam", count=10, life=(0.7, 1.2), size=(0.16, 0.03), size_y=(1.6, 3.4), shape=("disc", 2.4),
       direction=(0, 1, 0), speed=(6, 12), colors=["#ffffffcc", "#d8f4ffaa", "#9fd8ff00"], facing="lookat_y")
-    E("ed6_debris_fall", None, sprites=["rock", "leaf", "shard"], count=12, life=(0.8, 1.4), size=(0.2, 0.14),
+    E("ed6_debris_fall", None, sprites=["rock", "leaf", "shard"], count=12, life=(0.8, 1.4), size=(0.26, 0.16),
       shape=("disc", 3.0), direction=(0, -1, 0), speed=(1, 3), accel=(0, -14, 0), colors=["#7a7064ff", "#5a8a3aff", "#cfefffff"],
       blend="alpha", spin=(360, 260), collide=True)
-    E("ed6_glass_shard", "shard", count=12, life=(0.5, 1.0), size=(0.2, 0.08), shape=("sphere", 0.8), speed=(4, 9),
+    E("ed6_glass_shard", "shard", count=12, life=(0.6, 1.1), size=(0.26, 0.08), shape=("sphere", 0.8), speed=(4, 9),
       accel=(0, -10, 0), drag=0.4, colors=["#fff6d0ff", "#ffa040ff", "#5a1a0a00"], spin=(360, 400))
-    E("ed6_sizzle", "smoke", count=6, life=(0.8, 1.4), size=(0.4, 1.3), shape=("disc", 1.2), direction=(0, 1, 0),
+    E("ed6_sizzle", "smoke", count=6, life=(0.9, 1.6), size=(0.5, 1.6), shape=("disc", 1.2), direction=(0, 1, 0),
       speed=(0.8, 2.0), drag=1.0, colors=["#ffe8c8aa", "#c8b8a855", "#9a8a7a00"], blend="blend", spin=(360, 40))
-    E("ed6_thermal", None, sprites=["ember", "glow", "spark"], count=24, life=(0.6, 1.3), size=(0.45, 0.05),
+    E("ed6_thermal", None, sprites=["ember", "glow", "spark"], count=24, life=(0.6, 1.3), size=(0.55, 0.05),
       shape=("sphere", 1.5), speed=(5, 12), accel=(0, 2, 0), drag=1.4, colors=["#ffffffff", "#ffe08aff", "#ff6a1aff", "#5a1a0a00"])
-    E("ed6_thermal_ring", "ring", count=1, life=(0.7, 0.8), size=(1.0, 14.0), facing="emitter_transform_xz",
+    E("ed6_thermal_ring", "ring", count=1, life=(0.8, 0.9), size=(1.0, 16.0), facing="emitter_transform_xz",
       colors=["#ffffffff", "#ffd27aee", "#ff6a1a00"])
-    E("ed6_geo_shock", "ringthin", count=1, life=(0.6, 0.7), size=(0.8, 9.0), facing="emitter_transform_xz",
+    E("ed6_smoke", "smoke", count=4, life=(2.0, 3.5), size=(1.4, 4.0), shape=("sphere", 2.0), speed=(0.3, 1.0),
+      accel=(0, 0.8, 0), drag=0.8, colors=["#5a504888", "#3a343066", "#2a262400"], blend="blend", spin=(360, 20))
+    E("ed6_geo_shock", "ringthin", count=1, life=(0.6, 0.7), size=(0.8, 10.0), facing="emitter_transform_xz",
       colors=["#fff6dcff", "#c8ff9ad0", "#8a6a3a00"])
-    E("ed6_frost_layer", "ringthin", count=1, life=(0.6, 0.7), size=(0.5, 6.0), facing="emitter_transform_xz",
+    E("ed6_frost_layer", "ringthin", count=1, life=(0.6, 0.7), size=(0.5, 7.0), facing="emitter_transform_xz",
       colors=["#ffffffff", "#bfeaffdd", "#5fc8ff00"])
-    E("ed6_spiral_debris", None, sprites=["shard", "leaf", "flake", "puff"], count=10, life=(1.0, 1.8), size=(0.2, 0.1),
+    E("ed6_spiral_debris", None, sprites=["shard", "leaf", "flake", "puff"], count=10, life=(1.0, 1.8), size=(0.26, 0.12),
       shape=("disc", 4.0), speed=(1, 3), accel=(0, 4, 0), drag=0.6, colors=["#ffffffff", "#cfe8f0ee", "#9ab8c800"],
       blend="alpha", spin=(360, 420))
-    E("ed6_concord", None, sprites=["rune1", "rune2", "rune4", "star"], count=12, life=(1.0, 1.6), size=(0.3, 0.05),
+    E("ed6_concord", None, sprites=["rune1", "rune2", "rune4", "star"], count=12, life=(1.0, 1.6), size=(0.4, 0.05),
       shape=("sphere", 2.5, "surface"), direction="inwards", speed=(1.5, 3.0), drag=0.3,
       colors=["#ffffffff", "#ffe2a0ff", "#e8c27a00"])
 
@@ -290,6 +332,24 @@ def build_sounds(pack):
     strm = sy.at(1.8, (0.0, sy.whoosh(1.4, 300, 3200) * 0.5), (0.2, sy.choir(523.3, 1.2, "oo", voices=3) * 0.3),
                  (0.5, sy.shimmer(1.2, 2600, 12) * 0.25))
     sy.save(pack, "ed6_stream", rv(strm, 1.8, 0.45), variants=[rv(sy.pitch(strm, 0.89), 1.8, 0.45)], max_distance=96)
+
+    # ---- the finale: a rising swell under the final charge, the seal of the codex, the restoring wave
+    sw_d = 4.2
+    swell = sy.at(sw_d, (0.0, sy.rumble(sw_d, 30, 1.6) * sy.env(sw_d, 2.6, 0.2, 1.0, 0.3) * 0.8),
+                  (0.0, sy.pad(55, sw_d, cutoff=500, attack=2.8, release=0.3) * 0.45),
+                  (0.6, sy.choir(110, 3.4, "ah", voices=5, attack=2.4, release=0.3) * 0.3),
+                  (1.4, sy.wind(2.6, 300, 2400, 2.0, 0.6) * sy.env(2.6, 1.6, 0.2, 1.0, 0.2) * 0.35),
+                  (2.4, sy.shimmer(1.6, 1800, 16) * 0.18))
+    sy.save(pack, "ed6_swell", rv(swell, 1.8, 0.35), max_distance=160)
+    seal = sy.at(3.4, (0.0, sy.thump(1.6, 70, 22, 0.9)), (0.0, sy.crack(0.6, 3000, 30) * 0.3),
+                 (0.02, sy.bell(146.8, 3.0, 0.7, 1.15) * 0.55), (0.04, sy.bell(220.0, 2.8, 0.7, 1.2) * 0.4),
+                 (0.06, sy.bell(293.7, 2.6, 0.8, 1.25) * 0.3), (0.0, sy.choir(146.8, 3.0, "oh", voices=5, attack=0.05) * 0.3),
+                 (0.1, sy.shimmer(2.6, 2400, 20) * 0.25), (0.0, sy.rumble(2.6, 34, 1.2) * 0.5))
+    sy.save(pack, "ed6_seal", rv(seal, 3.0, 0.5), max_distance=160)
+    rest = sy.at(3.2, (0.0, sy.whoosh(2.8, 2400, 260) * 0.45), (0.2, sy.shimmer(2.6, 1500, 18)[::-1] * 0.2),
+                 (0.0, sy.lowpass(sy.wind(3.0, 200, 700, 1.4, 0.3), 900) * 0.35),
+                 (0.6, sy.choir(196, 2.4, "oo", voices=4, attack=0.6, release=1.2) * 0.22))
+    sy.save(pack, "ed6_restore", rv(rest, 2.4, 0.45), max_distance=160)
 
 
 def build(pack):

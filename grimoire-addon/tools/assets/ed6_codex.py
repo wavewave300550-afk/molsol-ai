@@ -1,6 +1,6 @@
 """ED06 -- the Great Codex construct, the four dragon emblems and the luminous skeletal imagery.
 
-ed6_codex   (scale 2.4, ~4.2 blocks wide, ~4.2 tall + orbits ~11 blocks across)
+ed6_codex   (scale 1.5: book ~3 x 4 blocks, orbits ~7 blocks across, a soft sun-halo ~9 blocks across behind it)
     A spell construct of the Codex of the Four Primordial Dragons: antique-bronze cover scales
     (12 front, 12 back), an articulated vertebral spine of 8 ivory vertebrae, aged-gold corners,
     a glowing draconic seal on the back cover with four lineage gems, and riffling pages with
@@ -14,8 +14,11 @@ ed6_codex   (scale 2.4, ~4.2 blocks wide, ~4.2 tall + orbits ~11 blocks across)
            4 absorb (loop: pages riffle) / 5 vanish (1.6 s: shrinks into a mote and rises)
 ed6_emblem  kinds 0-3 = Nature (sauropod skull, leaves & roots) / Heat (horned carnotaur skull,
     flame tongues) / Water & Ice (long spinosaur skull, wave crests) / Air (raptor skull, feather
-    ring).  Ground sigil radius 2 blocks at size 1, a standing translucent skull projection and six
-    rising rune claws.  STATES 0 hidden / 1 appear (1.0 s) / 2 beat (0.8 s) / 3 glow / 4 fade (1.0 s)
+    ring).  A monumental upright seal (radius 2 blocks at size 1, centre 2.1 blocks up) that rises
+    out of its own ground sigil and faces the actor's front (-Z): a slowly turning glyph ring, the
+    skull medallion, a translucent skull projection that leaps out on every beat, a soft halo behind
+    and six rune claws around the base.  STATES 0 hidden / 1 appear (1.2 s) / 2 beat (0.8 s) /
+    3 glow / 4 fade (1.2 s: tips back and sinks into the ground)
 ed6_spirit  kinds 0-3 = luminous line-art skeleton of each dragon in that dragon's own model space,
     so spawning it at the dragon's position / yaw with size = the dragon's SCALE overlays it.  A
     ribbon of draconic inscriptions runs along each spine.
@@ -153,7 +156,8 @@ def _ornament(k, u, v, r, a):
     return vane, rach
 
 
-def emblem_mat(k):
+def emblem_mat(k, part="all"):
+    """part: 'all' | 'outer' (glyph ring + ornament band) | 'inner' (skull medallion)."""
     b, m, d = (rgb(c) for c in LINEAGE[k])
     gl = rgb(GOLD)
 
@@ -180,6 +184,15 @@ def emblem_mat(k):
         disc = r < 0.505
         sk = skull_sample(k, u, v, -0.47, 0.47, -0.01)
         sk_out = disc & ~sk & (r > 0.0)
+        if part == "outer":
+            disc = disc & False
+            sk_out = sk_out & False
+            lines = lines & (r > 0.52)
+        elif part == "inner":
+            lines = lines & (r < 0.56)
+            glyph = glyph & False
+            orn = orn & False
+            orn_hi = orn_hi & False
         on = lines | glyph | orn | disc
         col = np.broadcast_to(m, t[..., :3].shape).copy()
         col = np.where(glyph[..., None] | lines[..., None], mix(b, gl, 0.35), col)
@@ -196,7 +209,23 @@ def emblem_mat(k):
         glow = np.where(orn & ~orn_hi, 0.85, glow)
         t[..., 4] = glow
         return t
-    return Mat(fn, f"ed6emblem{k}", directional=True)
+    return Mat(fn, f"ed6emblem{k}{part}", directional=True)
+
+
+def halo_mat(k, a0=0.5, key="halo"):
+    """Soft radial glow in the lineage colour (blend): reads as light behind a seal or the codex."""
+    b, m, d = (rgb(c) for c in LINEAGE[k]) if k is not None else (rgb("#fff6dc"), rgb(GOLD), rgb(BRONZE))
+
+    def fn(ctx):
+        u, v = ctx.U * 2 - 1, 1 - ctx.V * 2
+        r = np.hypot(u, v)
+        a = np.arctan2(v, u)
+        fall = np.clip(1 - r, 0, 1) ** 1.6
+        rays = 0.75 + 0.25 * np.cos(a * 12) * np.clip(r * 2, 0, 1)
+        t = T(ctx, mix(rgb("#ffffff"), mix(b, m, 0.5), np.clip(r * 1.4, 0, 1)[..., None]), 1.0, 0.0)
+        t[..., 3] = np.clip(a0 * fall * rays, 0, 1)
+        return t
+    return Mat(fn, f"ed6{key}{k}{a0}", mode="blend")
 
 
 def skull_mat(k, mode="solid", a=1.0, glow=1.0, key=""):
@@ -216,21 +245,29 @@ def skull_mat(k, mode="solid", a=1.0, glow=1.0, key=""):
     return Mat(fn, f"ed6skull{k}{mode}{a}{glow}{key}", mode=mode, directional=True)
 
 
+EM_C = 34.0          # seal centre height (model units); radius 32
+
+
 def emblem_model(k):
-    m = Model(f"ed6_emblem_{k}", density=3.0, bounds=(14, 6, (0, 2, 0)))
+    m = Model(f"ed6_emblem_{k}", density=3.0, bounds=(14, 8, (0, 3, 0)))
     asp = SKULLS[k].shape[0] / SKULLS[k].shape[1]
     root = m.bone("root")
-    sig = m.bone("sigil", root)
-    sig.plane("y", (0, 0.3, 0), 64, 64, emblem_mat(k), faces=("up",))
-    sk = m.bone("skull", root, pivot=(0, 0.7, 0))
-    sk.plane("y", (0, 0.7, 0.5), 30, 30 * asp, skull_mat(k, key="flat"), faces=("up",))
-    holo = m.bone("holo", root, pivot=(0, 22, 0))
-    holo.plane("z", (0, 22, 0), 50, 50 * asp, skull_mat(k, mode="blend", a=0.62, glow=1.0, key="holo"), density=2.0)
+    sig = m.bone("sigil", root)                               # flat footprint on the ground
+    sig.plane("y", (0, 0.3, 0), 64, 64, emblem_mat(k, "outer"), faces=("up",))
+    stand = m.bone("stand", root, pivot=(0, 1.0, 0))          # upright seal, hinged at its foot
+    rays = m.bone("rays", stand, pivot=(0, EM_C, 1.5))
+    rays.plane("z", (0, EM_C, 1.8), 100, 100, halo_mat(k, 0.42), density=0.6)
+    ringb = m.bone("ring", stand, pivot=(0, EM_C, 0))
+    ringb.plane("z", (0, EM_C, 0), 64, 64, emblem_mat(k, "outer"))
+    med = m.bone("medal", stand, pivot=(0, EM_C, -0.4))
+    med.plane("z", (0, EM_C, -0.4), 64, 64, emblem_mat(k, "inner"))
+    holo = m.bone("holo", stand, pivot=(0, EM_C, -2.5))
+    holo.plane("z", (0, EM_C, -2.5), 46, 46 * asp, skull_mat(k, mode="blend", a=0.6, glow=1.0, key="holo"), density=2.0)
     claws = m.bone("claws", root)
     b, mcol, d = LINEAGE[k]
     for i in range(6):
         cb = m.bone(f"claw{i + 1}", claws, pivot=(0, 0, 0), rot=(0, i * 60 + 30, 0))
-        cb.plane("z", (0, 4.5, -29), 5, 8, tex.bitmap_cut(DR[(i * 2 + k) % len(DR)], b, glow=1.0, color2=mcol))
+        cb.plane("z", (0, 5.0, -30), 6, 10, tex.bitmap_cut(DR[(i * 2 + k) % len(DR)], b, glow=1.0, color2=mcol))
     return m
 
 
@@ -240,37 +277,47 @@ def emblem_anims():
     hidden.scl("root", 0.0)
     A.append(hidden)
     turn = Anim("turn", loop=True)
+    turn.rot("ring", (0, 0, spin(9)))
     turn.rot("claws", (0, spin(-12), 0))
-    turn.rot("holo", (0, spin(24), 0))
-    turn.pos("holo", (0, LIFE(1.2, 3.1), 0))
+    turn.pos("holo", (0, LIFE(1.0, 3.1), 0))
+    turn.rot("stand", (LIFE(1.2, 4.3), 0, LIFE(0.8, 5.1, 0.2)))
+    turn.scl("rays", LIFE(0.05, 2.3, base=1.0))
     A.append(turn)
-    appear = Anim("appear", length=1.0, loop="hold")
-    appear.scl("sigil", {0: 0.0, 0.55: 1.1, 0.8: 0.97, 1.0: 1.0})
-    appear.scl("skull", {0: 0.0, 0.4: 0.0, 0.8: 1.15, 1.0: 1.0})
-    appear.scl("holo", 0.0)
+    appear = Anim("appear", length=1.2, loop="hold")              # the sigil burns in, the seal swings up out of it
+    appear.scl("sigil", {0: 0.0, 0.3: 1.12, 0.5: 0.97, 0.7: 1.0})
+    appear.rot("stand", {0: (86, 0, 0), 0.25: (84, 0, 0), 0.8: (-7, 0, 0), 1.0: (2.5, 0, 0), 1.2: (0, 0, 0)})
+    appear.scl("stand", {0: 0.25, 0.25: 0.3, 0.8: 1.06, 1.2: 1.0})
+    appear.pos("stand", {0: (0, -3, 0), 0.6: (0, 0, 0)})
+    appear.scl("holo", {0: 0.0, 0.85: 0.0, 1.05: 1.2, 1.2: 1.0})
+    appear.scl("rays", {0: 0.0, 0.5: 0.0, 1.0: 1.15, 1.2: 1.0})
     for i in range(6):
-        appear.pos(f"claw{i + 1}", {0: (0, -9, 0), 0.4 + i * 0.07: (0, -9, 0), 0.75 + i * 0.04: (0, 1, 0), 1.0: (0, 0, 0)})
+        appear.pos(f"claw{i + 1}", {0: (0, -11, 0), 0.3 + i * 0.07: (0, -11, 0), 0.7 + i * 0.05: (0, 1.5, 0), 1.2: (0, 0, 0)})
     A.append(appear)
-    beat = Anim("beat", length=0.8, loop="hold")     # lub-dub
-    beat.scl("sigil", {0: 1.0, 0.07: 1.13, 0.2: 0.98, 0.3: 1.08, 0.5: 0.99, 0.8: 1.0})
-    beat.scl("skull", {0: 1.0, 0.07: 1.3, 0.2: 1.0, 0.3: 1.18, 0.8: 1.05})
-    beat.scl("holo", {0: 0.0, 0.1: 1.25, 0.3: 0.95, 0.4: 1.1, 0.8: 1.0})
-    beat.pos("holo", {0: (0, -14, 0), 0.3: (0, 2, 0), 0.8: (0, 0, 0)})
+    beat = Anim("beat", length=0.8, loop="hold")                 # lub-dub
+    beat.scl("stand", {0: 1.0, 0.07: 1.1, 0.2: 0.98, 0.3: 1.06, 0.5: 0.995, 0.8: 1.0})
+    beat.scl("medal", {0: 1.0, 0.07: 1.22, 0.2: 1.0, 0.3: 1.12, 0.8: 1.0})
+    beat.scl("holo", {0: 1.0, 0.08: 1.55, 0.3: 1.1, 0.42: 1.3, 0.8: 1.0})
+    beat.pos("holo", {0: (0, 0, 0), 0.08: (0, 0, -10), 0.4: (0, 0, -4), 0.8: (0, 0, 0)})
+    beat.scl("rays", {0: 1.0, 0.07: 1.5, 0.3: 1.15, 0.4: 1.3, 0.8: 1.0})
+    beat.scl("sigil", {0: 1.0, 0.07: 1.1, 0.3: 1.04, 0.8: 1.0})
     for i in range(6):
         beat.pos(f"claw{i + 1}", {0: (0, 0, 0), 0.08: (0, 3, 0), 0.4: (0, 0, 0)})
     A.append(beat)
-    glow = Anim("glow", loop=True, length=1.6)       # heart keeps beating slowly
-    glow.scl("sigil", {0: 1.0, 0.1: 1.05, 0.25: 1.0, 0.35: 1.03, 0.6: 1.0, 1.6: 1.0})
-    glow.scl("skull", {0: 1.05, 0.1: 1.15, 0.25: 1.05, 0.35: 1.1, 0.6: 1.05, 1.6: 1.05})
-    glow.scl("holo", 1.0)
+    glow = Anim("glow", loop=True, length=1.6)                  # the heart keeps beating slowly
+    glow.scl("medal", {0: 1.0, 0.1: 1.07, 0.25: 1.0, 0.35: 1.04, 0.6: 1.0, 1.6: 1.0})
+    glow.scl("holo", {0: 1.0, 0.1: 1.12, 0.25: 1.0, 0.35: 1.06, 0.6: 1.0, 1.6: 1.0})
+    glow.scl("rays", {0: 1.0, 0.1: 1.12, 0.3: 1.0, 1.6: 1.0})
     A.append(glow)
-    fade = Anim("fade", length=1.0, loop="hold")
-    fade.scl("sigil", {0: 1.0, 0.2: 1.08, 1.0: 0.0})
-    fade.scl("skull", {0: 1.05, 0.5: 0.0})
-    fade.scl("holo", {0: 1.0, 0.5: 0.0})
-    fade.pos("holo", {0: (0, 0, 0), 0.5: (0, 14, 0)})
+    fade = Anim("fade", length=1.2, loop="hold")                # tips back and sinks into its sigil
+    fade.rot("stand", {0: (0, 0, 0), 0.25: (-5, 0, 0), 1.0: (80, 0, 0), 1.2: (86, 0, 0)})
+    fade.scl("stand", {0: 1.0, 0.25: 1.06, 1.0: 0.35, 1.2: 0.0})
+    fade.pos("stand", {0: (0, 0, 0), 1.2: (0, -4, 0)})
+    fade.scl("holo", {0: 1.0, 0.25: 1.4, 0.6: 0.0})
+    fade.pos("holo", {0: (0, 0, 0), 0.6: (0, 16, -6)})
+    fade.scl("rays", {0: 1.0, 0.25: 1.4, 0.9: 0.0})
+    fade.scl("sigil", {0: 1.0, 0.4: 1.08, 1.2: 0.0})
     for i in range(6):
-        fade.pos(f"claw{i + 1}", {0: (0, 0, 0), 0.6: (0, -9, 0)})
+        fade.pos(f"claw{i + 1}", {0: (0, 0, 0), 0.7: (0, -11, 0)})
     A.append(fade)
     return A
 
@@ -369,6 +416,13 @@ def codex_model():
     m = Model("ed6_codex", density=1.0, bounds=(16, 14, (0, 1.5, 0)), alts=("g1", "g2", "g3", "g4"))
     cx, cy, cz = CX
     root = m.bone("root")
+    # a soft sun-halo and a turning ring of draconic glyphs behind the book: the codex reads as the
+    # glowing sun of the primordial sky even from 30-40 blocks away
+    halo = m.bone("halo", root, pivot=CX)
+    halo.plane("z", (0, cy, 10.0), 150, 150, halo_mat(None, 0.42, key="cxhalo"), density=0.4)
+    glyr = m.bone("glyring", root, pivot=(0, cy, 8.5))
+    glyr.plane("z", (0, cy, 8.5), 104, 104, tex.magic_circle(DR, "#fff3c4", "#e8c27a", glow=1.0, bands=((0.8, 0.95, 24),),
+                                                              lines=(0.77, 0.975), star=0, key="ed6cxring"), density=1.0)
     book = m.bone("book", root, pivot=CX)
     gold = tex.metal(GOLD, "#fff0c0", "#7a5a1e", bands=2.0, glow=0.15)
     leather = tex.trimmed(_etched_leather(), GOLD, 1, 1, glow=0.4)
@@ -451,6 +505,8 @@ def codex_anims(info, preview_sep=None, preview_open=None):
     A.append(hidden)
 
     life = Anim("life", loop=True)
+    life.rot("glyring", (0, 0, spin(14)))
+    life.scl("halo", LIFE(0.06, 2.9, base=1.0))
     life.pos("book", (0, LIFE(0.8, 3.4), 0))
     life.rot("book", (LIFE(1.5, 5.3), LIFE(4.0, 7.1), LIFE(1.5, 4.4, 0.3)))
     life.scl("gems", LIFE(0.06, 1.1, base=1.0))
@@ -497,6 +553,8 @@ def codex_anims(info, preview_sep=None, preview_open=None):
     A.append(rise)
     beat = Anim("beat", length=0.6, loop="hold")
     beat.scl("book", {0: 1.0, 0.06: 1.07, 0.16: 0.99, 0.26: 1.04, 0.6: 1.0})
+    beat.scl("halo", {0: 1.0, 0.06: 1.45, 0.2: 1.05, 0.28: 1.25, 0.6: 1.0})
+    beat.scl("glyring", {0: 1.0, 0.06: 1.12, 0.3: 1.04, 0.6: 1.0})
     beat.scl("gems", {0: 1.0, 0.06: 1.6, 0.3: 1.0})
     A.append(beat)
     absorb = Anim("absorb", length=1.2, loop=True)
@@ -505,6 +563,7 @@ def codex_anims(info, preview_sep=None, preview_open=None):
         absorb.rot(f"leaf{k + 1}", {0: (0, 0, 0), t0: (0, 0, 0), t0 + 0.35: (0, 150 - k * 6, 0), 1.0: (0, 152 - k * 6, 0),
                                     1.2: (0, 0, 0)})
     absorb.scl("book", {0: 1.0, 0.1: 1.03, 0.6: 1.0, 1.2: 1.0})
+    absorb.scl("halo", {0: 1.15, 0.1: 1.35, 0.6: 1.15, 1.2: 1.15})
     A.append(absorb)
     vanish = Anim("vanish", length=1.6, loop="hold")
     vanish.scl("root", {0: 1.0, 0.35: 1.1, 1.3: 0.08, 1.6: 0.0})
@@ -515,6 +574,7 @@ def codex_anims(info, preview_sep=None, preview_open=None):
 
 
 CODEX_STATES = {0: ["hidden"], 1: ["rise"], 2: ["hover"], 3: ["beat"], 4: ["absorb"], 5: ["vanish"]}
+CODEX_SCALE = 1.5
 
 # ============================================================================== luminous skeletons
 SPIRIT_TINT = ["#ecffd0", "#ffe6b8", "#dcf6ff", "#f6fbff"]
@@ -700,7 +760,7 @@ SPIRIT_STATES = {0: ["hidden"], 1: ["form"], 2: ["hold"], 3: ["stream"]}
 def build(pack):
     cm, info = codex_model()
     ca = codex_anims(info)
-    pack.actor("ed6_codex", cm, ca, CODEX_STATES, always=["life", "orbit"], scale=2.4, lifetime=150,
+    pack.actor("ed6_codex", cm, ca, CODEX_STATES, always=["life", "orbit"], scale=CODEX_SCALE, lifetime=150,
                props={"sep": {"type": "float", "range": [0.0, 1.0], "default": 0.0, "client_sync": True},
                       "open": {"type": "float", "range": [0.0, 1.0], "default": 0.0, "client_sync": True}},
                init=["v.sep = 0.0; v.op = 0.0;"],
@@ -731,7 +791,7 @@ def build(pack):
     if getattr(pack.preview, "enabled", False):
         out = Image.new("RGBA", (4 * 340, 2 * 340))
         for k in range(4):
-            out.paste(render(ems[k], (eb["glow"].pose(0.1)), yaw=0, pitch=88, size=(340, 340)), (340 * k, 0))
+            out.paste(render(ems[k], (eb["glow"].pose(0.1)), yaw=0, pitch=6, size=(340, 340)), (340 * k, 0))
             out.paste(render(ems[k], (eb["beat"].pose(0.3)), yaw=25, pitch=22, size=(340, 340)), (340 * k, 340))
         out.save(os.path.join(PREVIEW, "ed6_emblems.png"))
         out = Image.new("RGBA", (4 * 380, 2 * 300))

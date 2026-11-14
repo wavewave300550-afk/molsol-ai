@@ -14,7 +14,7 @@ from kit import tex
 from kit.anim import LIFE, Anim
 from kit.geo import Model, ring
 
-from .dw6_codex import PAGE_TILT
+from .dw6_codex import PAGE_SCALE, PAGE_TILT
 from .dw6_common import FW, GOLD, LETTER, WGOLD, engraved, extrude, extrude_strokes, gold_metal, spin, text_band
 
 GLYPH_STATES = {0: ["hidden"], 1: ["draw"], 2: ["fall"], 3: ["land"]}
@@ -48,20 +48,21 @@ def glyph_model(kind):
 def glyph_anims():
     hidden = Anim("hidden", loop=True)
     hidden.scl("root", 0.0)
-    draw = Anim("draw", length=1.2, loop="hold")
+    draw = Anim("draw", length=1.0, loop="hold")          # five strokes written one after another
     draw.rot("body", (PAGE_TILT, 0, 0))
     for k in range(5):
-        t = 0.05 + 0.2 * k
-        draw.scl(f"s{k + 1}", {0: 0.0, t: 0.0, t + 0.16: 1.18, t + 0.24: 1.0})
-    draw.scl("aura", {0: 0.0, 0.9: 0.4, 1.05: 1.3, 1.2: 1.0})
-    fall = Anim("fall", length=0.8, loop="hold")
-    fall.rot("body", {0: (PAGE_TILT, 0, 0), 0.25: (PAGE_TILT + 18, 40, -8), 0.8: (0, 360, 0)})
-    fall.pos("body", {0: (0, 0, 0), 0.2: (0, 2, -10), 0.8: (0, 0, 0)})
-    fall.scl("aura", {0: 1.0, 0.8: 0.5})
-    land = Anim("land", length=0.5, loop="hold")
-    land.scl("body", {0: 1.0, 0.12: (1.25, 0.72, 1.25), 0.5: (0.2, 0.0, 0.2)})
+        t = 0.04 + 0.17 * k
+        draw.scl(f"s{k + 1}", {0: 0.0, t: 0.0, t + 0.13: 1.18, t + 0.2: 1.0})
+    draw.scl("aura", {0: 0.0, 0.72: 0.4, 0.88: 1.3, 1.0: 1.0})
+    fall = Anim("fall", length=0.9, loop="hold")          # it tips out of the page, turns once and shrinks as it falls
+    fall.rot("body", {0: (PAGE_TILT, 0, 0), 0.25: (PAGE_TILT + 18, 40, -8), 0.9: (0, 360, 0)})
+    fall.pos("body", {0: (0, 0, 0), 0.2: (0, 2, -10), 0.9: (0, 0, 0)})
+    fall.scl("body", {0: 1.0, 0.15: 1.06, 0.9: 0.55})
+    fall.scl("aura", {0: 1.0, 0.9: 0.45})
+    land = Anim("land", length=0.5, loop="hold")          # squashes into the ground as the marble rises
+    land.scl("body", {0: 0.55, 0.12: (0.7, 0.4, 0.7), 0.5: (0.1, 0.0, 0.1)})
     land.pos("body", {0: (0, 0, 0), 0.5: (0, -16, 0)})
-    land.scl("aura", {0: 0.5, 0.15: 2.4, 0.5: 0.0})
+    land.scl("aura", {0: 0.45, 0.15: 2.2, 0.5: 0.0})
     return [hidden, draw, fall, land]
 
 
@@ -258,40 +259,41 @@ def platform():
 
 
 def celestial():
+    Y = 46                                                    # armillary centre (kept low so it stays in view)
     m = Model("dw6_edifice5", density=1.0, bounds=(14, 20, (0, 8, 0)))
     root = m.bone("root")
     gtext = tex.glyph_rows(FW, "#ffffff", glow=1.0, color2=WGOLD, bg="#c9a24a", bg_glow=0.55, fill=0.75, key="dw6armil")
     for i, (bn, rot, r, n) in enumerate((("spa", (0, 0, 0), 28, 18), ("spb", (0, 0, 62), 24, 16), ("spc", (64, 0, 0), 20, 14))):
-        sp = m.bone(bn, root, pivot=(0, 60, 0), rot=rot)
-        c = _course(m, sp, i + 1, (0, 60, 0))
-        ring(c, (0, 60, 0), r, n, (2 * math.pi * r / n * 1.02, 1.4, 4.2), gtext, axis="y", cycle=3)
-        ring(c, (0, 62.6, 0), r + 0.3, n, (2 * math.pi * r / n * 1.02, 1.8, 0.8), GOLD_M, axis="y")
-    spd = m.bone("spd", root, pivot=(0, 60, 0))
-    c4 = _course(m, spd, 4, (0, 60, 0))
+        sp = m.bone(bn, root, pivot=(0, Y, 0), rot=rot)
+        c = _course(m, sp, i + 1, (0, Y, 0))
+        ring(c, (0, Y, 0), r, n, (2 * math.pi * r / n * 1.02, 1.4, 4.2), gtext, axis="y", cycle=3)
+        ring(c, (0, Y + 2.6, 0), r + 0.3, n, (2 * math.pi * r / n * 1.02, 1.8, 0.8), GOLD_M, axis="y")
+    spd = m.bone("spd", root, pivot=(0, Y, 0))
+    c4 = _course(m, spd, 4, (0, Y, 0))
     R, L = 15.0, 15.0 * math.sqrt(2)
     for sx in (-1, 1):
         for sy in (-1, 1):
-            c4.box((sx * R / 2, 60 + sy * R / 2, 0), (1.5, L, 1.5), GOLD_HOT, rot=(0, 0, 45 * sx * sy))
-            c4.box((0, 60 + sy * R / 2, sx * R / 2), (1.5, L, 1.5), GOLD_HOT, rot=(-45 * sy * sx, 0, 0))
-            c4.box((sx * R / 2, 60, sy * R / 2), (L, 1.5, 1.5), GOLD_HOT, rot=(0, 45 * sx * sy, 0))
+            c4.box((sx * R / 2, Y + sy * R / 2, 0), (1.5, L, 1.5), GOLD_HOT, rot=(0, 0, 45 * sx * sy))
+            c4.box((0, Y + sy * R / 2, sx * R / 2), (1.5, L, 1.5), GOLD_HOT, rot=(-45 * sy * sx, 0, 0))
+            c4.box((sx * R / 2, Y, sy * R / 2), (L, 1.5, 1.5), GOLD_HOT, rot=(0, 45 * sx * sy, 0))
     for (x, y, z) in ((R, 0, 0), (-R, 0, 0), (0, R, 0), (0, -R, 0), (0, 0, R), (0, 0, -R)):
-        c4.box((x, 60 + y, z), (3.4, 3.4, 3.4), GOLD_M, rot=(45, 45, 0))
-    c5 = _course(m, spd, 5, (0, 60, 0))
+        c4.box((x, Y + y, z), (3.4, 3.4, 3.4), GOLD_M, rot=(45, 45, 0))
+    c5 = _course(m, spd, 5, (0, Y, 0))
     core = tex.glow_flat("#fff3c4", 1.0, core="#ffffff")
-    c5.box((0, 60, 0), (8, 8, 8), core, rot=(45, 0, 45))
-    c5.box((0, 60, 0), (6.5, 6.5, 6.5), core, rot=(0, 45, 45))
+    c5.box((0, Y, 0), (8, 8, 8), core, rot=(45, 0, 45))
+    c5.box((0, Y, 0), (6.5, 6.5, 6.5), core, rot=(0, 45, 45))
     for k in range(6):
         a = k * 60
-        c5.box((0, 60, -10.5), (4, 5.6, 0), tex.bitmap_cut(FW[(k * 7 + 2) % len(FW)], WGOLD, glow=1.0, color2="#ffffff"),
-               rot=(0, a, 0), pivot=(0, 60, 0), faces=("north", "south"))
+        c5.box((0, Y, -10.5), (4, 5.6, 0), tex.bitmap_cut(FW[(k * 7 + 2) % len(FW)], WGOLD, glow=1.0, color2="#ffffff"),
+               rot=(0, a, 0), pivot=(0, Y, 0), faces=("north", "south"))
     c6 = _course(m, root, 6, (0, 0, 0))
     c6.plane("y", (0, 0.4, 0), 44, 44, tex.magic_circle(FW, WGOLD, GOLD, bands=((0.7, 0.92, 16),), lines=(0.66, 0.96),
                                                          star=5, star_r=(0.2, 0.6), core=0.1), faces=("up",))
     beam = m.bone("beam", c6, pivot=(0, 0, 0))
-    beam.plane("z", (0, 26, 0), 3.5, 52, FLASH)
-    beam.plane("x", (0, 26, 0), 3.5, 52, FLASH)
-    _sigil(m, root, 5, (0, 96, 0), 1.6)
-    _text_and_flash(m, root, 56, 50, 56, y0=36)
+    beam.plane("z", (0, Y / 2, 0), 3.5, Y, FLASH)
+    beam.plane("x", (0, Y / 2, 0), 3.5, Y, FLASH)
+    _sigil(m, root, 5, (0, Y + 36, 0), 1.6)
+    _text_and_flash(m, root, 56, 50, 56, y0=Y - 24)
     return m
 
 
@@ -403,49 +405,62 @@ def wall_anims():
 
 
 # ============================================================================== refuge dome
+DOME_R = 106          # 6.6 blocks: the refuge is drawn AROUND the caster, never across their eyes
+
+
 def dome():
-    R = 80
-    m = Model("dw6_dome", density=1.0, bounds=(14, 8, (0, 3, 0)))
+    """Refuge of Law V, seen from inside: a seal on the ground, a low fence of standing letters at
+    6.6 blocks, and two rings of text that turn above eye level (nothing crosses the view)."""
+    R = DOME_R
+    m = Model("dw6_dome", density=1.0, bounds=(16, 8, (0, 3, 0)))
     root = m.bone("root")
     seal = m.bone("seal", root, pivot=(0, 0, 0))
-    seal.plane("y", (0, 0.5, 0), 172, 172, tex.magic_circle(FW, WGOLD, GOLD, bands=((0.8, 0.94, 30), (0.5, 0.62, 16)),
-                                                            lines=(0.77, 0.97, 0.47, 0.65), star=8, star_r=(0.1, 0.45)),
-               faces=("up",))
+    seal.plane("y", (0, 0.5, 0), 2 * R + 16, 2 * R + 16,
+               tex.magic_circle(FW, WGOLD, GOLD, bands=((0.86, 0.96, 34), (0.55, 0.66, 18)), lines=(0.84, 0.985, 0.52, 0.69),
+                                star=8, star_r=(0.1, 0.45)), faces=("up",), density=0.75)
+    fence = m.bone("fence", root, pivot=(0, 0, 0))
+    ring(fence, (0, 1.2, 0), R, 30, (2 * math.pi * R / 30 * 1.02, 1.6, 1.4), GOLD_HOT, axis="y")
+    for k in range(20):                                   # standing letters, knee high
+        a = k * 18
+        fence.box((0, 8.5, -R), (5.2, 7.3, 0), tex.bitmap_cut(FW[(k * 5 + 2) % len(FW)], WGOLD, glow=1.0, color2="#ffffff"),
+                  rot=(0, a, 0), pivot=(0, 8.5, 0), faces=("north", "south"))
     band = tex.glyph_rows(FW, "#fff3c4", glow=1.0, color2="#ffffff", fill=0.9, key="dw6domeband")
-    for i, phi in enumerate((8, 32, 55, 76)):
-        r, y = R * math.cos(math.radians(phi)), R * math.sin(math.radians(phi))
+    for i, (y, r) in enumerate(((60, R * 0.94), (84, R * 0.72))):
         b = m.bone(f"r{i + 1}", root, pivot=(0, y, 0))
-        n = max(8, int(28 * math.cos(math.radians(phi))))
+        n = max(10, int(r / 4.2))
         ring(b, (0, y, 0), r, n, (2 * math.pi * r / n * 1.02, 1.0, 7.0), band, axis="y", cycle=3)
-    bar = tex.glyph_rows(FW, "#ffffff", glow=1.0, color2=WGOLD, bg="#c9a24a", bg_glow=0.6, fill=0.6, key="dw6domebar")
-    for k in range(4):
-        b = m.bone(f"m{k + 1}", root, pivot=(0, 0, 0), rot=(0, k * 45, 0))
-        ring(b, (0, 0, 0), R + 1.5, 10, (2 * math.pi * R / 20 * 1.02, 2.2, 2.4), bar, axis="x", start=0, sweep=180, cycle=2)
-    crown = m.bone("crown", root, pivot=(0, R + 4, 0))
-    crown.box((0, R + 6, 0), (8, 8, 8), tex.glow_flat("#fff3c4", 1.0, core="#ffffff"), rot=(45, 0, 45))
+        ring(b, (0, y - 4.4, 0), r, n, (2 * math.pi * r / n * 1.02, 1.0, 0.8), GOLD_HOT, axis="y")
+    crown = m.bone("crown", root, pivot=(0, 100, 0))
+    crown.box((0, 102, 0), (8, 8, 8), tex.glow_flat("#fff3c4", 1.0, core="#ffffff"), rot=(45, 0, 45))
     return m
 
 
 def dome_anims():
     always = Anim("drift", loop=True)
-    for i in range(4):
-        always.rot(f"r{i + 1}", (0, spin(14 * (1 if i % 2 else -1) * (1 + i * 0.3)), 0))
+    always.rot("r1", (0, spin(-16), 0))
+    always.rot("r2", (0, spin(22), 0))
+    always.rot("fence", (0, spin(5), 0))
     always.rot("seal", (0, spin(-10), 0))
     always.rot("crown", (0, spin(80), 0))
     hidden = Anim("hidden", loop=True)
     hidden.scl("root", 0.0)
     form = Anim("form", length=1.2, loop="hold")
     form.scl("seal", {0: 0.0, 0.4: 1.1, 0.55: 1.0})
-    for i in range(4):
-        t = 0.25 + i * 0.15
+    form.scl("fence", {0: (0.0, 0.0, 0.0), 0.2: (1.0, 0.0, 1.0), 0.6: (1.0, 1.25, 1.0), 0.8: 1.0})
+    for i in range(2):
+        t = 0.45 + i * 0.2
         form.scl(f"r{i + 1}", {0: 0.0, t: 0.0, t + 0.3: 1.1, t + 0.45: 1.0})
-    for k in range(4):
-        form.scl(f"m{k + 1}", {0: (1, 0, 1), 0.3 + k * 0.1: (1, 0, 1), 0.85 + k * 0.08: (1, 1, 1)})
     form.scl("crown", {0: 0.0, 1.0: 0.0, 1.2: 1.0})
     hold = Anim("hold", loop=True)
     hold.scl("crown", LIFE(0.15, 1.2, base=1.0))
+    hold.pos("r1", (0, LIFE(1.5, 3.1), 0))
+    hold.pos("r2", (0, LIFE(1.5, 3.7, 0.3), 0))
     fade = Anim("fade", length=1.0, loop="hold")
-    fade.scl("root", {0: 1.0, 0.25: 1.08, 1.0: (1.3, 0.0, 1.3)})
+    fade.scl("fence", {0: 1.0, 0.25: (1.0, 1.2, 1.0), 0.8: (1.0, 0.0, 1.0)})
+    fade.scl("r1", {0: 1.0, 0.3: 1.1, 0.9: 0.0})
+    fade.scl("r2", {0: 1.0, 0.2: 1.1, 0.8: 0.0})
+    fade.scl("seal", {0: 1.0, 0.4: 1.05, 1.0: 0.0})
+    fade.scl("crown", {0: 1.0, 0.5: 0.0})
     return [always, hidden, form, hold, fade]
 
 
@@ -482,13 +497,18 @@ def boundary_anims():
     always.rot("plates", (0, spin(-7), 0))
     hidden = Anim("hidden", loop=True)
     hidden.scl("root", 0.0)
+    # written from the far point of the ring (the actor faces the caster: bb +Z is the far side) around both
+    # sides toward the caster, so the inscription is seen being written
     ins = Anim("inscribe", length=2.0, loop="hold")
     for k in range(8):
-        t = 0.1 + k * 0.17
-        ins.scl(f"a{k + 1}", {0: 0.0, t: 0.0, t + 0.3: 1.0})
+        mid = k * 45 + 22.5
+        rank = round((abs((mid - 90 + 180) % 360 - 180) - 22.5) / 45)
+        t = 0.1 + rank * 0.36
+        ins.scl(f"a{k + 1}", {0: 0.0, t: 0.0, t + 0.36: 1.0})
     for k in range(16):
-        t = 0.9 + (k % 8) * 0.08
+        t = 0.45 + min(abs(k - 8), 16 - abs(k - 8)) * 0.15
         ins.pos(f"pl{k + 1}", {0: (0, -30, 0), t: (0, -30, 0), t + 0.4: (0, 3, 0), t + 0.55: (0, 0, 0)})
+        ins.scl(f"pl{k + 1}", {0: 0.0, t: 0.0, t + 0.3: 1.0})
     hold = Anim("hold", loop=True)
     for k in range(16):
         hold.pos(f"pl{k + 1}", (0, LIFE(2.0, 3.2, k * 0.11), 0))
@@ -505,11 +525,12 @@ def boundary_anims():
 def build(pack):
     gms = [glyph_model(k) for k in range(6)]
     ga = glyph_anims()
-    pack.actor("dw6_glyph", gms[0], ga, GLYPH_STATES, kinds=gms[1:], scale=4.0, lifetime=90, display="Golden Letter", blend=0.05)
+    pack.actor("dw6_glyph", gms[0], ga, GLYPH_STATES, kinds=gms[1:], scale=PAGE_SCALE, lifetime=90, display="Golden Letter",
+               blend=0.05)
     ems = [f() for f in EDIFICES]
     ea = edifice_anims()
-    pack.actor("dw6_edifice", ems[0], ea, EDIFICE_STATES, always=["turn"], kinds=ems[1:], scale=2.0, lifetime=90,
-               display="Written Edifice", blend=0.1)
+    pack.actor("dw6_edifice", ems[0], ea, EDIFICE_STATES, always=["turn"], kinds=ems[1:], scale=2.0, size_prop=True,
+               lifetime=90, display="Written Edifice", blend=0.1)
     wms = [wall_marble(), wall_text()]
     wa = wall_anims()
     pack.actor("dw6_wall", wms[0], wa, WALL_STATES, kinds=wms[1:], size_prop=True, lifetime=90, display="Written Wall")
@@ -522,7 +543,7 @@ def build(pack):
 
     gb = {a.name: a for a in ga}
     for k in (0, 3):
-        pack.preview(f"dw6_glyph{k}", gms[k], [(gb["draw"], 0.45), (gb["draw"], 1.2), (gb["fall"], 0.3)], views=((15, 10),))
+        pack.preview(f"dw6_glyph{k}", gms[k], [(gb["draw"], 0.4), (gb["draw"], 1.0), (gb["fall"], 0.3)], views=((15, 10),))
     eb = {a.name: a for a in ea}
     tn = (eb["turn"], 0.6)
     for k, em in enumerate(ems):

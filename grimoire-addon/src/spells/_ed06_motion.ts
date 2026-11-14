@@ -3,8 +3,8 @@ import { V3, angleDelta, clamp, lerp, spline, yawOf } from "../lib/vec";
 
 /**
  * ED06 choreography helpers: a timeline of motion segments per dragon (script-moved actors),
- * arc-length paths so creatures travel at their species' documented speeds, and a frame of
- * reference around the domain centre.
+ * arc-length paths so creatures travel at their species' documented speeds, a frame of reference
+ * anchored on the caster (the stage), and a tiny deterministic hash for scattering ambient effects.
  */
 
 /** One stretch of motion between absolute scene ticks.  `at(t)` gives the position at tick t. */
@@ -50,6 +50,12 @@ export class Mover {
   path(pts: V3[], speed: number, opts: { tag?: string; ease?: (p: number) => number; yaw?: Seg["yaw"] } = {}): Seg {
     const L = new ArcPath((u) => spline(pts, u), 48);
     const ticks = Math.max(2, Math.round((L.length / speed) * 20));
+    const ease = opts.ease ?? ((p: number) => p);
+    return this.add(ticks, (p) => L.at(ease(p) * L.length), { tag: opts.tag, yaw: opts.yaw });
+  }
+  /** Catmull-Rom through pts covered in exactly `ticks` ticks (arc-length paced, optional easing). */
+  pathIn(pts: V3[], ticks: number, opts: { tag?: string; ease?: (p: number) => number; yaw?: Seg["yaw"] } = {}): Seg {
+    const L = new ArcPath((u) => spline(pts, u), 48);
     const ease = opts.ease ?? ((p: number) => p);
     return this.add(ticks, (p) => L.at(ease(p) * L.length), { tag: opts.tag, yaw: opts.yaw });
   }
@@ -129,7 +135,7 @@ export class ArcPath {
   }
 }
 
-/** Domain frame: F = away from the caster, R = to its right; angles measured from F toward R. */
+/** Stage frame: F = away from the caster, R = to its right; angles measured from F toward R. */
 export class Frame {
   constructor(public readonly c: V3, public readonly F: V3, public readonly R: V3) {}
   p(f: number, r: number, h = 0): V3 {
@@ -146,4 +152,10 @@ export class Frame {
     const a = (deg * Math.PI) / 180;
     return { x: this.F.x * Math.cos(a) + this.R.x * Math.sin(a), y: 0, z: this.F.z * Math.cos(a) + this.R.z * Math.sin(a) };
   }
+}
+
+/** Deterministic pseudo-random number in [0, 1) for a pair of integers (no RNG spikes, same every cast). */
+export function hash01(a: number, b = 0): number {
+  const x = Math.sin(a * 12.9898 + b * 78.233 + 0.5) * 43758.5453;
+  return x - Math.floor(x);
 }

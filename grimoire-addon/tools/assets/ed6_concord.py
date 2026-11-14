@@ -7,9 +7,11 @@ ed6_debris    aerial debris formation carried by the Air Dragon's wind: a horizo
               a tilted ring of leaf clumps, a counter-tilted ring of ice and a central helix
               (radius ~4 blocks at size 1, centred ~7 blocks above its origin).
               STATES 0 hidden / 1 lift (1.6 s, lifted off the ground) / 2 orbit / 3 scatter (1.0 s)
-ed6_ring      the Nature Dragon's enclosing ring: 8 colossal basalt-strata pillars (~9 blocks tall) on
-              radius 6 blocks (size 1), ten slots with the two slots on the actor's front / back axis left
-              open as doorways (-Z and +Z), a ground fissure ring.  Skins: 0 stone, 1 'frost' (ice
+ed6_ring      the Nature Dragon's enclosing ring: 8 basalt-strata pillar clusters on radius 6 blocks (size 1),
+              ten slots with the two slots on the actor's front / back axis left open as doorways (-Z and
+              +Z), a ground fissure ring.  An amphitheatre: the four pillars on the actor's -X side are
+              low stumps (1.9-4.4 blocks) so a spectator on that side looks over them into the ring,
+              the four on the +X side are colossal (8-9.5 blocks).  Skins: 0 stone, 1 'frost' (ice
               sheathed), 2 'glass' (vitrified, glowing).  STATES 0 hidden / 1 rise (1.6 s) / 2 hold /
               3 quake (0.6 s) / 4 burst (1.2 s, pillars thrown outward) / 5 sink (1.0 s)
 ed6_iceshell  layered ice formations inside the ring: three concentric shells (radius 2.2 / 3.6 / 5.0
@@ -199,7 +201,8 @@ def debris_anims():
 
 # ============================================================================== pillar ring
 RING_R = 96.0
-RING_SLOTS = 10            # slots 0 (-Z) and 5 (+Z) are doorways
+RING_SLOTS = 10            # slots 0 (-Z) and 5 (+Z) are doorways; slots 1-4 lie on -X, 6-9 on +X
+RING_H = {1: 70.0, 2: 31.0, 3: 31.0, 4: 70.0, 6: 128.0, 7: 152.0, 8: 148.0, 9: 124.0}
 
 
 def _strata_basalt(seed):
@@ -265,7 +268,7 @@ def ring_model():
         b = m.bone(f"p{pi}", root, pivot=(0, 0, 0), rot=(0, a, 0))
         z = -RING_R
         base = m.bone(f"pb{pi}", b, pivot=(0, 0, z))
-        H = 128 + 20 * ((pi * 3) % 3)
+        H = RING_H[slot]
         for j, (dx, dz, w, h, lean) in enumerate(((0, 0, 22, H, 0), (-14, 5, 15, H * 0.78, -6), (14, 4, 16, H * 0.64, 7),
                                                    (2, 9, 12, H * 0.5, 3))):
             base.box((dx, h / 2, z + dz), (w, h, w * 0.9), _strata_basalt(pi * 3 + j), rot=(lean * 0.5, 30 * j, lean),

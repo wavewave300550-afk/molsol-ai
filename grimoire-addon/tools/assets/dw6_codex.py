@@ -10,7 +10,8 @@ from kit.geo import Mat, Model
 from .dw6_common import BLUE, FW, GOLD, IVORY, WGOLD, spin
 
 # ------------------------------------------------------------------------------------------- book
-BOOK_STATES = {0: ["hidden"], 1: ["arrive"], 2: ["open"], 3: ["unbind"], 4: ["layered"], 5: ["gather"], 6: ["close"]}
+BOOK_STATES = {0: ["hidden"], 1: ["arrive"], 2: ["open"], 3: ["unbind"], 4: ["layered"], 5: ["gather"], 6: ["close"],
+               7: ["vanish"]}
 BOOK_TILT = -28
 # separated page-layer offsets (right side; left mirrored), in the half's frame
 LAYER_OFF = [(-6, 14, -2), (-12, 27, 3), (-4, 41, 7)]
@@ -90,14 +91,14 @@ def book_anims():
     hidden.scl("root", 0.0)
     A.append(hidden)
 
-    arrive = Anim("arrive", length=3.0, loop="hold")
-    arrive.scl("root", {0: 0.0, 0.5: 0.9, 0.8: 1.0})
-    arrive.pos("root", {0: (0, -26, 0), 1.0: (0, 3, 0), 1.4: (0, 0, 0)})
-    arrive.rot("root", {0: (0, -200, 0), 1.2: (0, 0, 0)})
+    arrive = Anim("arrive", length=2.8, loop="hold")     # the seal opens first, the codex rises through it
+    arrive.scl("seal", {0: 0.0, 0.45: 1.15, 0.75: 1.0})
+    arrive.scl("book", {0: 0.0, 0.3: 0.0, 0.75: 0.92, 1.0: 1.0})
+    arrive.pos("book", {0: (0, -26, 0), 0.3: (0, -26, 0), 1.1: (0, 3, 0), 1.45: (0, 0, 0)})
+    arrive.rot("book", {0: (0, -200, 0), 0.3: (0, -200, 0), 1.25: (0, 0, 0)})
     arrive.rot("half_r", {0: (0, 0, 179), 1.2: (0, 0, 179), 1.95: (0, 0, -9), 2.3: (0, 0, 3), 2.6: (0, 0, 0)})
     for k, lag in ((4, 0.1), (5, 0.2), (6, 0.3)):                                 # pages trail behind the cover
         arrive.rot(f"lay{k}", {0: (0, 0, 0), 1.3 + lag: (0, 0, 0), 1.95 + lag: (0, 0, 28 - lag * 30), 2.6 + lag: (0, 0, 0)})
-    arrive.scl("seal", {0: 0.0, 1.6: 0.0, 2.4: 1.15, 2.8: 1.0})
     A.append(arrive)
 
     open_ = Anim("open", loop=True)
@@ -136,25 +137,32 @@ def book_anims():
         gather.rot(f"lay{k}", {0: r, 1.1 + d: (0, 0, 0), 1.5: (0, 0, 0)})
     A.append(gather)
 
-    close = Anim("close", length=2.5, loop="hold")
-    close.rot("half_r", {0: (0, 0, 0), 0.3: (0, 0, -7), 1.25: (0, 0, 183), 1.45: (0, 0, 179)})
-    close.scl("root", {0: 1.0, 1.5: 1.0, 1.85: 1.12, 2.5: 0.0})
-    close.pos("root", {0: (0, 0, 0), 1.5: (0, 2, 0), 2.5: (0, -14, 0)})
-    close.rot("root", {0: (0, 0, 0), 1.6: (0, 0, 0), 2.5: (0, 160, 0)})
-    close.scl("seal", {0: 1.0, 1.4: 1.25, 2.0: 0.0})
+    close = Anim("close", length=1.6, loop="hold")       # the cover swings shut and stays shut
+    close.rot("half_r", {0: (0, 0, 0), 0.25: (0, 0, -7), 0.95: (0, 0, 183), 1.1: (0, 0, 179), 1.6: (0, 0, 179)})
+    close.pos("root", {0: (0, 0, 0), 0.85: (0, 2.5, 0), 1.05: (0, -1.2, 0), 1.6: (0, 0, 0)})
+    close.scl("seal", {0: 1.0, 0.9: 1.0, 1.1: 1.4, 1.6: 1.08})
     A.append(close)
+    vanish = Anim("vanish", length=1.5, loop="hold")     # the closed codex lifts, flares and dissolves into light
+    vanish.rot("half_r", (0, 0, 179))
+    vanish.pos("root", {0: (0, 0, 0), 0.5: (0, 6, 0), 1.5: (0, 22, 0)})
+    vanish.rot("root", {0: (0, 0, 0), 1.5: (0, 220, 0)})
+    vanish.scl("root", {0: 1.0, 0.45: 1.12, 1.5: 0.0})
+    vanish.scl("seal", {0: 1.08, 0.4: 1.7, 1.1: 0.0})
+    A.append(vanish)
     return A
 
 
 # ------------------------------------------------------------------------------------------- page
 PAGE_STATES = {0: ["hidden"], 1: ["manifest"], 2: ["idle"], 3: ["split"], 4: ["reform"], 5: ["fold"], 6: ["slip"]}
-PAGE_TILT = 32            # degrees the page leans back (its face tilts down toward the caster)
-PW, PH = 120, 88          # page size in model units (scale 4 -> 30 x 22 blocks)
+PAGE_TILT = 9             # degrees the page leans back: it hangs ~40 m away, its face toward the caster's eye
+PAGE_SCALE = 3.0          # 120 x 88 model units -> 22.5 x 16.5 blocks (fits the upper view at ~40 m)
+PW, PH = 120, 88
 COLS = [-60, -30, 0, 30]
 ROWS = [0, 22, 44, 66]
 FOLD_PIVOT = {1: (0, 0, 0), 2: (0, 44, 0), 3: (-30, 0, 0), 4: (0, 22, 0)}
 FOLD_ROT = {1: (0, 180, 0), 2: (-180, 0, 0), 3: (0, 180, 0), 4: (-180, 0, 0)}
-FOLD_T = {1: (0.4, 1.4), 2: (1.4, 2.4), 3: (2.4, 3.3), 4: (3.3, 4.2)}
+FOLD_T = {1: (0.15, 0.7), 2: (0.7, 1.25), 3: (1.25, 1.8), 4: (1.8, 2.35)}
+FOLD_LEN = 2.6
 S_FOLD = [1.0, 0.8, 0.62, 0.45, 0.3]
 # columns of the page ruling, in page units measured from the viewer's left (a = -X) -> tablet slots
 RULE_A0, RULE_A1 = -45.0, 57.0
@@ -259,8 +267,8 @@ def _fold_channels(a, final=False):
                     a.pos(b, (0, 0, dz))
                 else:
                     mid = tuple(v * 0.55 for v in rot)
-                    a.rot(b, {0: (0, 0, 0), t0: (0, 0, 0), t0 + (t1 - t0) * 0.45: mid, t1: rot, 5.0: rot})
-                    a.pos(b, {0: (0, 0, 0), t0: (0, 0, 0), t0 + 0.1: (0, 0, dz), 5.0: (0, 0, dz)})
+                    a.rot(b, {0: (0, 0, 0), t0: (0, 0, 0), t0 + (t1 - t0) * 0.45: mid, t1: rot, FOLD_LEN: rot})
+                    a.pos(b, {0: (0, 0, 0), t0: (0, 0, 0), t0 + 0.1: (0, 0, dz), FOLD_LEN: (0, 0, dz)})
 
 
 def page_anims():
@@ -293,7 +301,7 @@ def page_anims():
             d = (3 - c) * 0.1 + r * 0.05
             reform.scl(f"p{c}{r}", {0: (0.9, 0.0, 1.0), 0.2 + d: (0.9, 0.0, 1.0), 0.75 + d: (1.0, 1.08, 1.0), 1.0 + d: 1.0})
     A.append(reform)
-    fold = Anim("fold", length=5.0, loop="hold")             # four folds in halves, shrinking to a book page
+    fold = Anim("fold", length=FOLD_LEN, loop="hold")        # four folds in halves, shrinking to a book page
     _fold_channels(fold)
     keys_s, keys_p = {0: 1.0}, {0: (0, 0, 0)}
     shift = [0, 30, 30, 45, 45]
@@ -301,10 +309,10 @@ def page_anims():
         t1 = FOLD_T[k][1]
         keys_s[t1] = S_FOLD[k]
         keys_p[t1] = (shift[k] * S_FOLD[k], 0, 0)
-    keys_s[5.0], keys_p[5.0] = S_FOLD[4], (shift[4] * S_FOLD[4], 0, 0)
+    keys_s[FOLD_LEN], keys_p[FOLD_LEN] = S_FOLD[4], (shift[4] * S_FOLD[4], 0, 0)
     fold.scl("root", keys_s)
     fold.pos("root", keys_p)
-    fold.rot("tilt", {0: (0, 0, 0), 2.0: (-PAGE_TILT * 0.5, 0, 0), 4.2: (-PAGE_TILT, 0, 0), 5.0: (-PAGE_TILT, 0, 0)})
+    fold.rot("tilt", {0: (0, 0, 0), 1.0: (-PAGE_TILT * 0.5, 0, 0), 2.35: (-PAGE_TILT, 0, 0), FOLD_LEN: (-PAGE_TILT, 0, 0)})
     A.append(fold)
     slip = Anim("slip", length=0.8, loop="hold")             # the folded page slides into the codex
     _fold_channels(slip, final=True)
@@ -319,17 +327,18 @@ def page_anims():
 def build(pack):
     bm = build_book()
     ba = book_anims()
-    pack.actor("dw6_book", bm, ba, BOOK_STATES, always=["float"], scale=1.3, lifetime=90, display="Codex of the First Word")
+    pack.actor("dw6_book", bm, ba, BOOK_STATES, always=["float"], scale=1.3, size_prop=True, lifetime=90,
+               display="Codex of the First Word")
     pm = build_page()
     pa = page_anims()
-    pack.actor("dw6_page", pm, pa, PAGE_STATES, scale=4.0, lifetime=90, display="The First Page", blend=0.1)
+    pack.actor("dw6_page", pm, pa, PAGE_STATES, scale=PAGE_SCALE, lifetime=90, display="The First Page", blend=0.1)
     by = {a.name: a for a in ba}
     fl = (by["float"], 0.5)
     pack.preview("dw6_book", bm, [[(by["arrive"], 0.9), fl], [(by["open"], 0.0), fl], [(by["layered"], 1.0), fl],
-                                  [(by["close"], 1.5), fl]], views=((25, 30), (160, 25)), skin=None)
+                                  [(by["close"], 1.6), fl], [(by["vanish"], 0.6), fl]], views=((25, 30), (160, 25)), skin=None)
     pack.preview("dw6_book_blank", bm, [[(by["layered"], 1.0), fl]], views=((25, 30),), skin="blank")
     pb = {a.name: a for a in pa}
-    pack.preview("dw6_page", pm, [(pb["idle"], 0.0), (pb["fold"], 1.0), (pb["fold"], 2.0), (pb["fold"], 3.0), (pb["fold"], 5.0)],
+    pack.preview("dw6_page", pm, [(pb["idle"], 0.0), (pb["fold"], 0.7), (pb["fold"], 1.25), (pb["fold"], 1.8), (pb["fold"], 2.6)],
                  views=((20, 15), (-60, 10)))
     print(f"    dw6_book: {bm.cube_count()} cubes, {len(bm.order)} bones, tex {bm.tex_size}; "
           f"dw6_page: {pm.cube_count()} cubes, {len(pm.order)} bones, tex {pm.tex_size}")

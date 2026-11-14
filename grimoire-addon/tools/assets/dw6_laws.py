@@ -20,6 +20,7 @@ from kit.geo import Model, ring
 from .dw6_common import BLUE, FW, GOLD, SILVER, WGOLD, extrude, gold_metal, spin, text_band
 
 TABLET_STATES = {0: ["hidden"], 1: ["form"], 2: ["idle"], 3: ["declare"], 4: ["shed"], 5: ["return"]}
+TABLET_SCALE = 2.8         # the tablets hang ~38 m away: big enough to read there
 LINE_STATES = {0: ["hidden"], 1: ["assemble"], 2: ["hold"], 3: ["strike"], 4: ["unwrite"]}
 
 MARBLE = tex.marble("#f6f1e4", "#cbbf9f", vein2="#d9b45a", scale=6)
@@ -332,11 +333,11 @@ def line_formation():
     spk = m.bone("spokes", root, pivot=(0, 0, 0))
     for k in range(8):
         spk.box((0, -12, -37), (1.6, 1.6, 22), RULE, rot=(0, k * 45, 0), pivot=(0, -12, 0))
-    spire = m.bone("spire", root, pivot=(0, 0, 0))
-    for j, code in enumerate((0, 13, 6)):
-        extrude(spire, FW[code], (0, 10 + j * 26, -2), 3.0, 4.0, LETTERS_HOT)
-        spire.box((0, 10 + j * 26 - 13, 0), (12, 1.4, 1.4), RULE, rot=(0, 45, 0))
-    spire.box((0, 36, 0), (1.2, 92, 1.2), RULE)
+    spire = m.bone("spire", root, pivot=(0, 0, 0))            # two crowning letters (kept low: it must stay in view)
+    for j, code in enumerate((13, 0)):
+        extrude(spire, FW[code], (0, 9 + j * 24, -2), 3.0, 4.0, LETTERS_HOT)
+        spire.box((0, 9 + j * 24 - 12.5, 0), (12, 1.4, 1.4), RULE, rot=(0, 45, 0))
+    spire.box((0, 18, 0), (1.2, 56, 1.2), RULE)
     return m
 
 
@@ -392,7 +393,7 @@ def line_anims():
 def build(pack):
     tms = [tablet(k) for k in range(7)]
     ta = tablet_anims()
-    pack.actor("dw6_tablet", tms[0], ta, TABLET_STATES, kinds=tms[1:], scale=2.5, lifetime=90, display="Tablet of Law")
+    pack.actor("dw6_tablet", tms[0], ta, TABLET_STATES, kinds=tms[1:], scale=TABLET_SCALE, lifetime=90, display="Tablet of Law")
     lms = [f() for f in LINES]
     la = line_anims()
     pack.actor("dw6_line", lms[0], la, LINE_STATES, always=["turn"], kinds=lms[1:], scale=3.0, size_prop=True, lifetime=90,

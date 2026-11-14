@@ -2,12 +2,13 @@
 
 ed6_horizon  ring of far silhouettes around the domain: a smoking volcano with lava streams, giant
              araucarias, tree-fern / cycad thickets and a jagged ridge, as large thin cut-out panels.
-             Radius 26 blocks (scale 1).  STATES 0 hidden / 1 rise (3.0 s) / 2 hold / 3 sink (2.0 s)
-ed6_fog      low translucent primordial mist: four layered planes + a curtain at the domain edge
-             (radius ~22 blocks).  STATES 0 hidden / 1..4 = density level (each heartbeat adds a
-             layer; controller blend 1.2 s) / 5 clear
-ed6_flora    kinds 0 tree-fern / 1 cycad / 2 horsetail stand / 3 giant fern clump (scale 1.6,
-             2.5-6 blocks tall).  STATES 0 hidden / 1 sprout (2.0 s: trunk grows, fronds unfurl)
+             Radius 52 blocks (scale 1), panels 14-26 blocks tall; the volcano sits on the actor's
+             front (-Z).  STATES 0 hidden / 1 rise (3.0 s) / 2 hold / 3 sink (2.4 s)
+ed6_fog      low translucent primordial mist: four layered planes (all below a standing player's eye,
+             0.3-1.3 blocks) + a curtain at the domain edge (radius ~30 blocks).  STATES 0 hidden /
+             1..4 = density level (each heartbeat adds a layer; controller blend 1.2 s) / 5 clear
+ed6_flora    kinds 0 tree-fern / 1 cycad / 2 horsetail stand / 3 giant fern clump (scale 2.0,
+             3-7.5 blocks tall).  STATES 0 hidden / 1 sprout (2.0 s: trunk grows, fronds unfurl)
              / 2 sway / 3 wither (1.4 s)
 ed6_stone    cluster of three rune-carved standing stones (~3.5 blocks).  Skins: 0 weathered stone,
              1 'glass' vitrified glowing amber glass, 2 'obsidian' cooled dark glass.
@@ -24,7 +25,7 @@ from kit.geo import Mat, Model
 from .ed6_common import DR, T, mix, px, rgb, rune_plate, spin, stone_skins
 
 # ============================================================================== horizon panels
-HZ_R = 26 * 16.0
+HZ_R = 52 * 16.0
 
 
 def _panel_mat(kind, key):
@@ -89,21 +90,21 @@ def _plume_mat():
 
 
 # (angle deg, kind, width blocks, height blocks)
-HZ = [(0, 0, 26, 14), (34, 1, 20, 15), (70, 3, 24, 10), (104, 2, 18, 9), (140, 1, 22, 13), (176, 3, 22, 8),
-      (212, 2, 20, 9), (246, 1, 18, 12), (282, 3, 26, 11), (318, 2, 20, 9)]
+HZ = [(0, 0, 50, 24), (34, 1, 38, 25), (70, 3, 44, 17), (104, 2, 36, 15), (140, 1, 40, 22), (176, 3, 42, 14),
+      (212, 2, 38, 15), (246, 1, 36, 21), (282, 3, 46, 18), (318, 2, 38, 15)]
 
 
 def horizon_model():
-    m = Model("ed6_horizon", density=0.22, bounds=(64, 26, (0, 8, 0)))
+    m = Model("ed6_horizon", density=0.14, bounds=(120, 40, (0, 12, 0)))
     root = m.bone("root")
     mats = [_panel_mat(k, f"ed6hz{k}") for k in range(4)]
     for i, (ang, kind, w, h) in enumerate(HZ):
         b = m.bone(f"p{i + 1}", root, pivot=(0, 0, 0), rot=(0, ang, 0))
         W, H = w * 16, h * 16
-        b.plane("z", (0, H / 2 - 8, -HZ_R - (i % 2) * 24), W, H, mats[kind], variant=i % 2)
+        b.plane("z", (0, H / 2 - 12, -HZ_R - (i % 2) * 40), W, H, mats[kind], variant=i % 2)
         if kind == 0:
-            pl = m.bone(f"plume{i + 1}", b, pivot=(0, H - 6, -HZ_R))
-            pl.plane("z", (0, H + 60, -HZ_R + 4), 120, 140, _plume_mat())
+            pl = m.bone(f"plume{i + 1}", b, pivot=(0, H - 10, -HZ_R))
+            pl.plane("z", (0, H + 110, -HZ_R + 6), 220, 260, _plume_mat(), density=0.2)
     return m
 
 
@@ -121,18 +122,18 @@ def horizon_anims():
             life.scl(f"plume{i + 1}", (LIFE(0.08, 5.0, base=1.0), LIFE(0.1, 6.3, base=1.0), 1))
     A.append(life)
     rise = Anim("rise", length=3.0, loop="hold")
-    sink = Anim("sink", length=2.0, loop="hold")
+    sink = Anim("sink", length=2.4, loop="hold")
     for i, (ang, kind, w, h) in enumerate(HZ):
         H = h * 16
         t0 = 0.12 * ((i * 3) % 10)
-        rise.pos(f"p{i + 1}", {0: (0, -H - 10, 0), t0: (0, -H - 10, 0), t0 + 1.6: (0, 4, 0), min(3.0, t0 + 1.9): (0, 0, 0)})
-        sink.pos(f"p{i + 1}", {0: (0, 0, 0), 0.08 * i: (0, 0, 0), 0.08 * i + 1.1: (0, -H - 10, 0)})
+        rise.pos(f"p{i + 1}", {0: (0, -H - 10, 0), t0: (0, -H - 10, 0), t0 + 1.6: (0, 6, 0), min(3.0, t0 + 1.9): (0, 0, 0)})
+        sink.pos(f"p{i + 1}", {0: (0, 0, 0), 0.1 * i: (0, 4, 0), 0.1 * i + 1.3: (0, -H - 10, 0)})
     A.extend([rise, sink])
     return A
 
 
 # ============================================================================== fog
-FOG_R = 22 * 16.0
+FOG_R = 30 * 16.0
 
 
 def _fog_mat(seed, a0, hole=0.0):
@@ -159,10 +160,10 @@ def _curtain_mat():
 
 
 def fog_model():
-    m = Model("ed6_fog", density=0.12, bounds=(52, 10, (0, 2, 0)))
+    m = Model("ed6_fog", density=0.09, bounds=(70, 10, (0, 2, 0)))
     root = m.bone("root")
     D = FOG_R * 2
-    for i, (y, a, hole) in enumerate(((7, 0.3, 0.0), (15, 0.24, 0.08), (26, 0.2, 0.15), (40, 0.16, 0.25))):
+    for i, (y, a, hole) in enumerate(((5, 0.3, 0.0), (10, 0.24, 0.06), (15, 0.2, 0.12), (21, 0.16, 0.2))):
         b = m.bone(f"layer{i + 1}", root, pivot=(0, y, 0))
         b.plane("y", (0, y, 0), D * (1 - 0.04 * i), D * (1 - 0.04 * i), _fog_mat(i * 13, a, hole), faces=("up",))
     cur = m.bone("curtain", root)
@@ -170,7 +171,7 @@ def fog_model():
     for k in range(n):
         a = k * 360 / n
         cb = m.bone(f"cur{k + 1}", cur, pivot=(0, 0, 0), rot=(0, a, 0))
-        cb.plane("z", (0, 48, -FOG_R * 0.98), 2 * math.pi * FOG_R / n * 1.15, 96, _curtain_mat(), variant=k % 3)
+        cb.plane("z", (0, 56, -FOG_R * 0.98), 2 * math.pi * FOG_R / n * 1.15, 112, _curtain_mat(), variant=k % 3)
     return m
 
 
@@ -419,7 +420,7 @@ def build(pack):
     pack.actor("ed6_fog", fm, fa, FOG_STATES, always=["drift"], lifetime=150, display="Primordial Mist", blend=1.2)
     fl = [flora_model(k) for k in range(4)]
     fla = flora_anims()
-    pack.actor("ed6_flora", fl[0], fla, FLORA_STATES, kinds=fl[1:], scale=1.6, lifetime=150, display="Primordial Growth",
+    pack.actor("ed6_flora", fl[0], fla, FLORA_STATES, kinds=fl[1:], scale=2.0, lifetime=150, display="Primordial Growth",
                blend=0.3)
     sm = stone_model()
     sa = stone_anims()
