@@ -36,6 +36,11 @@ from kit.tex import _hash, fbm, grain, mix, rgb, tile
 
 from .a_fx_common import particles
 
+# Size of the selection vision / charge construct.  They float 1.3 m / 2.2 m from the eyes (src/config/books.ts),
+# where at full size they covered two-thirds of an iPhone screen instead of sitting on the held book.
+# Scaled so the vision is ~0.45 and the construct ~0.7 screen-half-heights tall (60 degree vertical view).
+EFFECT_SCALE = {"vision": 0.51, "charge": 0.42}
+
 # =====================================================================================
 # ATTACHABLE PLACEMENT -- every hand offset lives here (bb space: +X = the holder's right, +Y up,
 # -Z = the holder's forward; units 1/16 block; degrees).  The root bone is bound with
@@ -1683,13 +1688,14 @@ def build(pack):
     vanims = build_vision_anims(vinfo)
     vstates = {0: ["hidden"], 1: ["show"] + [{f"show_k{k}": f"q.property('grimoire:kind') == {k}"} for k in range(6)]}
     pack.actor("book_ed_vision", vmodels[0], vanims, vstates, kinds=vmodels[1:], lifetime=30, blend=0.0,
-               sounds=ACTOR_SOUNDS, particles=ACTOR_PARTICLES, display="Codex Vision")
+               sounds=ACTOR_SOUNDS, particles=ACTOR_PARTICLES, display="Codex Vision", scale=EFFECT_SCALE["vision"])
     cmodels, cinfo = build_charge()
     canims = build_charge_anims(cinfo)
     gate = lambda pre: [{f"{pre}_k{k}": f"q.property('grimoire:kind') == {k}"} for k in range(6)]  # noqa: E731
     cstates = {0: ["hidden"], 1: ["form"] + gate("form"), 2: gate("loop"), 3: ["release"], 4: ["cancel"]}
     pack.actor("book_ed_charge", cmodels[0], canims, cstates, kinds=cmodels[1:], always=["life"], lifetime=120,
-               sounds=ACTOR_SOUNDS, particles=ACTOR_PARTICLES, display="Codex Manifestation")
+               sounds=ACTOR_SOUNDS, particles=ACTOR_PARTICLES, display="Codex Manifestation",
+               scale=EFFECT_SCALE["charge"])
     for k, (vm, cm) in enumerate(zip(vmodels, cmodels)):
         print(f"    vision k{k}: {vm.cube_count()} cubes {len(vm.order)} bones tex {vm.tex_size} | "
               f"charge k{k}: {cm.cube_count()} cubes {len(cm.order)} bones tex {cm.tex_size}")

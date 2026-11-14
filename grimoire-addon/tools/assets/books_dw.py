@@ -26,6 +26,11 @@ from kit.render import render
 
 from .a_fx_common import particles
 
+# Size of the selection vision / charge construct.  They float 1.3 m / 2.2 m from the eyes (src/config/books.ts),
+# where at full size they covered two-thirds of an iPhone screen instead of sitting on the held book.
+# Scaled so the vision is ~0.45 and the construct ~0.7 screen-half-heights tall (60 degree vertical view).
+EFFECT_SCALE = {"vision": 0.34, "charge": 0.43}
+
 # =====================================================================================================
 # HELD-BOOK PLACEMENT -- the only numbers to tune after an in-game look (bb space: +X = the holder's
 # right, +Y up, -Z = the holder's forward; units 1/16 block; degrees).  The attachable root bone is bound
@@ -1027,11 +1032,13 @@ def build(pack):
     # ---- selection vision
     vms = [vision_model(k, mt) for k in range(6)]
     va = vision_anims()
-    pack.actor("book_dw_vision", vms[0], va, VISION_STATES, kinds=vms[1:], lifetime=30, display="Codex Vision", blend=0.0)
+    pack.actor("book_dw_vision", vms[0], va, VISION_STATES, kinds=vms[1:], lifetime=30, display="Codex Vision", blend=0.0,
+               scale=EFFECT_SCALE["vision"])
     # ---- charge construct
     cms = [charge_model(k, mt) for k in range(6)]
     ca = charge_anims()
-    pack.actor("book_dw_charge", cms[0], ca, CHARGE_STATES, kinds=cms[1:], lifetime=120, display="Rising Word", blend=0.1)
+    pack.actor("book_dw_charge", cms[0], ca, CHARGE_STATES, kinds=cms[1:], lifetime=120, display="Rising Word", blend=0.1,
+               scale=EFFECT_SCALE["charge"])
     print("    vision cubes", [v.cube_count() for v in vms], "charge cubes", [c.cube_count() for c in cms],
           "bones", [len(c.order) for c in cms], "tex", [c.tex_size for c in cms])
 

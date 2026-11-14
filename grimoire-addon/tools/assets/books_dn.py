@@ -28,6 +28,11 @@ from kit.render import render, sheet
 
 from .a_fx_common import particles
 
+# Size of the selection vision / charge construct.  They float 1.3 m / 2.2 m from the eyes (src/config/books.ts),
+# where at full size they covered two-thirds of an iPhone screen instead of sitting on the held book.
+# Scaled so the vision is ~0.45 and the construct ~0.7 screen-half-heights tall (60 degree vertical view).
+EFFECT_SCALE = {"vision": 0.39, "charge": 0.45}
+
 # =====================================================================================
 # HELD-BOOK PLACEMENT - every offset that positions the attachable lives here.
 # Same frame and numbers as books_dw.py / books_ed.py so the three Grimoires sit in the same place:
@@ -1699,7 +1704,8 @@ def build(pack):
     vanims = vision_anims()
     pack.actor("book_dn_vision", visions[0], vanims, {0: ["hidden"], 1: ["show"]}, always=["life"],
                kinds=visions[1:], lifetime=30, sounds={"door": "grimoire.book_dn_door"},
-               particles={"spill": "grimoire:book_dn_spill"}, display="Unawakened Codex Vision", blend=0.0)
+               particles={"spill": "grimoire:book_dn_spill"}, display="Unawakened Codex Vision", blend=0.0,
+               scale=EFFECT_SCALE["vision"])
 
     charges = [charge_model(i) for i in range(6)]
     canims = charge_anims()
@@ -1707,5 +1713,5 @@ def build(pack):
                {0: ["hidden"], 1: ["form"], 2: ["loop"], 3: ["release"], 4: ["cancel"]}, always=["life"],
                kinds=charges[1:], lifetime=120,
                particles={"mote": "grimoire:book_dn_mote"},
-               display="Unawakened Codex Construct", blend=0.15)
+               display="Unawakened Codex Construct", blend=0.15, scale=EFFECT_SCALE["charge"])
     previews(pack, book, banims, visions, vanims, charges, canims)
