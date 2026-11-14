@@ -1,0 +1,1 @@
+{"format_version":"1.8.0","render_controllers":{"controller.render.grimoire.ed_heat_wave":{"geometry":"Geometry.default","materials":[{"*":"Material.default"},{"arc1":"Material.blend"},{"arc2":"Material.blend"},{"arc3":"Material.blend"}],"textures":["Texture.default"]}}}

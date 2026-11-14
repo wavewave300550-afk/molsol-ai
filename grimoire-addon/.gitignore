@@ -1,0 +1,8 @@
+node_modules/
+__pycache__/
+*.pyc
+tools/_preview/
+tests/.out/
+tools/.build.lock
+*.wav
+tools/_scene/

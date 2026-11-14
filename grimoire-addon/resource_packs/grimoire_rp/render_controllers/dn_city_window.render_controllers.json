@@ -1,0 +1,1 @@
+{"format_version":"1.8.0","render_controllers":{"controller.render.grimoire.dn_city_window":{"geometry":"Geometry.default","materials":[{"*":"Material.default"},{"pane_1":"Material.blend"},{"pane_2":"Material.blend"},{"pane_3":"Material.blend"},{"pane_4":"Material.blend"}],"textures":["Texture.default"]}}}

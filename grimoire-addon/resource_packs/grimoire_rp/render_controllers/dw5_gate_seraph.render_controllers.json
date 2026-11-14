@@ -1,0 +1,1 @@
+{"format_version":"1.8.0","render_controllers":{"controller.render.grimoire.dw5_gate_seraph":{"geometry":"Geometry.default","materials":[{"*":"Material.default"},{"light":"Material.blend"}],"textures":["Texture.default"]}}}

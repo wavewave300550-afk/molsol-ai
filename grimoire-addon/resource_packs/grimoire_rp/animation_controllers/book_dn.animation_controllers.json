@@ -1,0 +1,1 @@
+{"format_version":"1.10.0","animation_controllers":{"controller.animation.grimoire.book_dn.pose":{"initial_state":"rest","states":{"rest":{"animations":[],"transitions":[{"flip":"q.is_sneaking && v.open < 0.05"}],"blend_transition":0.25},"flip":{"animations":["flip"],"blend_transition":0.15,"transitions":[{"rest":"!q.is_sneaking && q.all_animations_finished"}]}}}}}
