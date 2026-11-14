@@ -1,0 +1,31 @@
+{
+ "format_version": "1.8.0",
+ "render_controllers": {
+  "controller.render.grimoire.ed6_spiral": {
+   "geometry": "Geometry.default",
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "base": "Material.blend"
+    },
+    {
+     "core": "Material.blend"
+    },
+    {
+     "hx1": "Material.blend"
+    },
+    {
+     "hx2": "Material.blend"
+    },
+    {
+     "hx3": "Material.blend"
+    }
+   ],
+   "textures": [
+    "Texture.default"
+   ]
+  }
+ }
+}

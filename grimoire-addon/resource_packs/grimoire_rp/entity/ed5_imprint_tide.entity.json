@@ -1,0 +1,36 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:ed5_imprint_tide",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "blend": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/ed5_imprint_tide"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.ed5_imprint_tide"
+   },
+   "render_controllers": [
+    "controller.render.grimoire.ed5_imprint_tide"
+   ],
+   "animations": {
+    "hidden": "animation.grimoire.ed5_imprint_tide.hidden",
+    "warn": "animation.grimoire.ed5_imprint_tide.warn",
+    "brand": "animation.grimoire.ed5_imprint_tide.brand",
+    "pulse": "animation.grimoire.ed5_imprint_tide.pulse",
+    "fade": "animation.grimoire.ed5_imprint_tide.fade",
+    "ctl_main": "controller.animation.grimoire.ed5_imprint_tide.main"
+   },
+   "scripts": {
+    "scale": "(1.3) * q.property('grimoire:size')",
+    "animate": [
+     "ctl_main"
+    ],
+    "should_update_bones_and_effects_offscreen": true
+   }
+  }
+ }
+}

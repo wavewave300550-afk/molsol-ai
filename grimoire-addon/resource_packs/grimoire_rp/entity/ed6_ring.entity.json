@@ -1,0 +1,39 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:ed6_ring",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "blend": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/ed6_ring",
+    "s1": "textures/entity/grimoire/ed6_ring__frost",
+    "s2": "textures/entity/grimoire/ed6_ring__glass"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.ed6_ring"
+   },
+   "render_controllers": [
+    "controller.render.grimoire.ed6_ring"
+   ],
+   "animations": {
+    "hidden": "animation.grimoire.ed6_ring.hidden",
+    "rise": "animation.grimoire.ed6_ring.rise",
+    "hold": "animation.grimoire.ed6_ring.hold",
+    "quake": "animation.grimoire.ed6_ring.quake",
+    "burst": "animation.grimoire.ed6_ring.burst",
+    "sink": "animation.grimoire.ed6_ring.sink",
+    "ctl_main": "controller.animation.grimoire.ed6_ring.main"
+   },
+   "scripts": {
+    "scale": "(1.0) * q.property('grimoire:size')",
+    "animate": [
+     "ctl_main"
+    ],
+    "should_update_bones_and_effects_offscreen": true
+   }
+  }
+ }
+}

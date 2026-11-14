@@ -1,0 +1,205 @@
+{
+ "format_version": "1.8.0",
+ "render_controllers": {
+  "controller.render.grimoire.ed5_tablet_air": {
+   "geometry": "Geometry.default",
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "r_crest1": "Material.blend"
+    },
+    {
+     "r_crest2": "Material.blend"
+    },
+    {
+     "r_crest3": "Material.blend"
+    },
+    {
+     "r_crest4": "Material.blend"
+    },
+    {
+     "r_crest5": "Material.blend"
+    },
+    {
+     "r_fan_c": "Material.blend"
+    },
+    {
+     "r_fan_l1": "Material.blend"
+    },
+    {
+     "r_fan_l2": "Material.blend"
+    },
+    {
+     "r_fan_l3": "Material.blend"
+    },
+    {
+     "r_fan_r1": "Material.blend"
+    },
+    {
+     "r_fan_r2": "Material.blend"
+    },
+    {
+     "r_fan_r3": "Material.blend"
+    },
+    {
+     "r_leg_l_f2_1": "Material.blend"
+    },
+    {
+     "r_leg_l_f2_2": "Material.blend"
+    },
+    {
+     "r_leg_l_f2_3": "Material.blend"
+    },
+    {
+     "r_leg_l_f2_4": "Material.blend"
+    },
+    {
+     "r_leg_l_f3_1": "Material.blend"
+    },
+    {
+     "r_leg_l_f3_2": "Material.blend"
+    },
+    {
+     "r_leg_l_f3_3": "Material.blend"
+    },
+    {
+     "r_leg_l_f3_4": "Material.blend"
+    },
+    {
+     "r_leg_r_f2_1": "Material.blend"
+    },
+    {
+     "r_leg_r_f2_2": "Material.blend"
+    },
+    {
+     "r_leg_r_f2_3": "Material.blend"
+    },
+    {
+     "r_leg_r_f2_4": "Material.blend"
+    },
+    {
+     "r_leg_r_f3_1": "Material.blend"
+    },
+    {
+     "r_leg_r_f3_2": "Material.blend"
+    },
+    {
+     "r_leg_r_f3_3": "Material.blend"
+    },
+    {
+     "r_leg_r_f3_4": "Material.blend"
+    },
+    {
+     "r_wf_l_f1_1": "Material.blend"
+    },
+    {
+     "r_wf_l_f1_2": "Material.blend"
+    },
+    {
+     "r_wf_l_f1_3": "Material.blend"
+    },
+    {
+     "r_wf_l_f2_1": "Material.blend"
+    },
+    {
+     "r_wf_l_f2_2": "Material.blend"
+    },
+    {
+     "r_wf_l_f2_3": "Material.blend"
+    },
+    {
+     "r_wf_l_f2_4": "Material.blend"
+    },
+    {
+     "r_wf_l_f2_5": "Material.blend"
+    },
+    {
+     "r_wf_l_f3_1": "Material.blend"
+    },
+    {
+     "r_wf_l_f3_2": "Material.blend"
+    },
+    {
+     "r_wf_l_f3_3": "Material.blend"
+    },
+    {
+     "r_wf_l_f3_4": "Material.blend"
+    },
+    {
+     "r_wf_l_f3_5": "Material.blend"
+    },
+    {
+     "r_wf_l_t1": "Material.blend"
+    },
+    {
+     "r_wf_l_t2": "Material.blend"
+    },
+    {
+     "r_wf_l_t3": "Material.blend"
+    },
+    {
+     "r_wf_r_f1_1": "Material.blend"
+    },
+    {
+     "r_wf_r_f1_2": "Material.blend"
+    },
+    {
+     "r_wf_r_f1_3": "Material.blend"
+    },
+    {
+     "r_wf_r_f2_1": "Material.blend"
+    },
+    {
+     "r_wf_r_f2_2": "Material.blend"
+    },
+    {
+     "r_wf_r_f2_3": "Material.blend"
+    },
+    {
+     "r_wf_r_f2_4": "Material.blend"
+    },
+    {
+     "r_wf_r_f2_5": "Material.blend"
+    },
+    {
+     "r_wf_r_f3_1": "Material.blend"
+    },
+    {
+     "r_wf_r_f3_2": "Material.blend"
+    },
+    {
+     "r_wf_r_f3_3": "Material.blend"
+    },
+    {
+     "r_wf_r_f3_4": "Material.blend"
+    },
+    {
+     "r_wf_r_f3_5": "Material.blend"
+    },
+    {
+     "r_wf_r_t1": "Material.blend"
+    },
+    {
+     "r_wf_r_t2": "Material.blend"
+    },
+    {
+     "r_wf_r_t3": "Material.blend"
+    }
+   ],
+   "textures": [
+    "Array.skin[q.property('grimoire:skin')]"
+   ],
+   "arrays": {
+    "textures": {
+     "Array.skin": [
+      "Texture.default",
+      "Texture.s1",
+      "Texture.s2"
+     ]
+    }
+   }
+  }
+ }
+}

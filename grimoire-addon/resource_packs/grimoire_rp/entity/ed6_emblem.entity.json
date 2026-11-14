@@ -1,0 +1,44 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:ed6_emblem",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "blend": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/ed6_emblem_0",
+    "k1": "textures/entity/grimoire/ed6_emblem_1",
+    "k2": "textures/entity/grimoire/ed6_emblem_2",
+    "k3": "textures/entity/grimoire/ed6_emblem_3"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.ed6_emblem_0",
+    "k1": "geometry.grimoire.ed6_emblem_1",
+    "k2": "geometry.grimoire.ed6_emblem_2",
+    "k3": "geometry.grimoire.ed6_emblem_3"
+   },
+   "render_controllers": [
+    "controller.render.grimoire.ed6_emblem"
+   ],
+   "animations": {
+    "hidden": "animation.grimoire.ed6_emblem.hidden",
+    "turn": "animation.grimoire.ed6_emblem.turn",
+    "appear": "animation.grimoire.ed6_emblem.appear",
+    "beat": "animation.grimoire.ed6_emblem.beat",
+    "glow": "animation.grimoire.ed6_emblem.glow",
+    "fade": "animation.grimoire.ed6_emblem.fade",
+    "ctl_main": "controller.animation.grimoire.ed6_emblem.main"
+   },
+   "scripts": {
+    "scale": "(1.0) * q.property('grimoire:size')",
+    "animate": [
+     "ctl_main",
+     "turn"
+    ],
+    "should_update_bones_and_effects_offscreen": true
+   }
+  }
+ }
+}

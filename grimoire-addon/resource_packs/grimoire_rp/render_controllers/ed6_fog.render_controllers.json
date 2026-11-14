@@ -1,0 +1,70 @@
+{
+ "format_version": "1.8.0",
+ "render_controllers": {
+  "controller.render.grimoire.ed6_fog": {
+   "geometry": "Geometry.default",
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "cur1": "Material.blend"
+    },
+    {
+     "cur10": "Material.blend"
+    },
+    {
+     "cur11": "Material.blend"
+    },
+    {
+     "cur12": "Material.blend"
+    },
+    {
+     "cur13": "Material.blend"
+    },
+    {
+     "cur14": "Material.blend"
+    },
+    {
+     "cur2": "Material.blend"
+    },
+    {
+     "cur3": "Material.blend"
+    },
+    {
+     "cur4": "Material.blend"
+    },
+    {
+     "cur5": "Material.blend"
+    },
+    {
+     "cur6": "Material.blend"
+    },
+    {
+     "cur7": "Material.blend"
+    },
+    {
+     "cur8": "Material.blend"
+    },
+    {
+     "cur9": "Material.blend"
+    },
+    {
+     "layer1": "Material.blend"
+    },
+    {
+     "layer2": "Material.blend"
+    },
+    {
+     "layer3": "Material.blend"
+    },
+    {
+     "layer4": "Material.blend"
+    }
+   ],
+   "textures": [
+    "Texture.default"
+   ]
+  }
+ }
+}

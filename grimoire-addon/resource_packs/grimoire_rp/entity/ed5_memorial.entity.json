@@ -1,0 +1,37 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:ed5_memorial",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "blend": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/ed5_memorial"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.ed5_memorial"
+   },
+   "render_controllers": [
+    "controller.render.grimoire.ed5_memorial"
+   ],
+   "animations": {
+    "spin": "animation.grimoire.ed5_memorial.spin",
+    "hidden": "animation.grimoire.ed5_memorial.hidden",
+    "assemble": "animation.grimoire.ed5_memorial.assemble",
+    "hold": "animation.grimoire.ed5_memorial.hold",
+    "dissolve": "animation.grimoire.ed5_memorial.dissolve",
+    "ctl_main": "controller.animation.grimoire.ed5_memorial.main"
+   },
+   "scripts": {
+    "scale": "2.0",
+    "animate": [
+     "ctl_main",
+     "spin"
+    ],
+    "should_update_bones_and_effects_offscreen": true
+   }
+  }
+ }
+}

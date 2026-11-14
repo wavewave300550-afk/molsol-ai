@@ -1,0 +1,41 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:ed6_flora",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "blend": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/ed6_flora_0",
+    "k1": "textures/entity/grimoire/ed6_flora_1",
+    "k2": "textures/entity/grimoire/ed6_flora_2",
+    "k3": "textures/entity/grimoire/ed6_flora_3"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.ed6_flora_0",
+    "k1": "geometry.grimoire.ed6_flora_1",
+    "k2": "geometry.grimoire.ed6_flora_2",
+    "k3": "geometry.grimoire.ed6_flora_3"
+   },
+   "render_controllers": [
+    "controller.render.grimoire.ed6_flora"
+   ],
+   "animations": {
+    "hidden": "animation.grimoire.ed6_flora.hidden",
+    "sprout": "animation.grimoire.ed6_flora.sprout",
+    "sway": "animation.grimoire.ed6_flora.sway",
+    "wither": "animation.grimoire.ed6_flora.wither",
+    "ctl_main": "controller.animation.grimoire.ed6_flora.main"
+   },
+   "scripts": {
+    "scale": "1.6",
+    "animate": [
+     "ctl_main"
+    ],
+    "should_update_bones_and_effects_offscreen": true
+   }
+  }
+ }
+}

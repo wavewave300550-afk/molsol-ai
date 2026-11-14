@@ -1,0 +1,37 @@
+{
+ "format_version": "1.8.0",
+ "render_controllers": {
+  "controller.render.grimoire.ed6_emblem": {
+   "geometry": "Array.geo[q.property('grimoire:kind')]",
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "holo": "Material.blend"
+    }
+   ],
+   "textures": [
+    "Array.tex[q.property('grimoire:kind')]"
+   ],
+   "arrays": {
+    "geometries": {
+     "Array.geo": [
+      "Geometry.default",
+      "Geometry.k1",
+      "Geometry.k2",
+      "Geometry.k3"
+     ]
+    },
+    "textures": {
+     "Array.tex": [
+      "Texture.default",
+      "Texture.k1",
+      "Texture.k2",
+      "Texture.k3"
+     ]
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,97 @@
+{
+ "format_version": "1.8.0",
+ "render_controllers": {
+  "controller.render.grimoire.ed5_tablet_tide": {
+   "geometry": "Geometry.default",
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "r_sailice_1": "Material.blend"
+    },
+    {
+     "r_sailice_10": "Material.blend"
+    },
+    {
+     "r_sailice_11": "Material.blend"
+    },
+    {
+     "r_sailice_12": "Material.blend"
+    },
+    {
+     "r_sailice_2": "Material.blend"
+    },
+    {
+     "r_sailice_3": "Material.blend"
+    },
+    {
+     "r_sailice_4": "Material.blend"
+    },
+    {
+     "r_sailice_5": "Material.blend"
+    },
+    {
+     "r_sailice_6": "Material.blend"
+    },
+    {
+     "r_sailice_7": "Material.blend"
+    },
+    {
+     "r_sailice_8": "Material.blend"
+    },
+    {
+     "r_sailice_9": "Material.blend"
+    },
+    {
+     "r_sailm_1": "Material.blend"
+    },
+    {
+     "r_sailm_10": "Material.blend"
+    },
+    {
+     "r_sailm_11": "Material.blend"
+    },
+    {
+     "r_sailm_12": "Material.blend"
+    },
+    {
+     "r_sailm_2": "Material.blend"
+    },
+    {
+     "r_sailm_3": "Material.blend"
+    },
+    {
+     "r_sailm_4": "Material.blend"
+    },
+    {
+     "r_sailm_5": "Material.blend"
+    },
+    {
+     "r_sailm_6": "Material.blend"
+    },
+    {
+     "r_sailm_7": "Material.blend"
+    },
+    {
+     "r_sailm_8": "Material.blend"
+    },
+    {
+     "r_sailm_9": "Material.blend"
+    }
+   ],
+   "textures": [
+    "Array.skin[q.property('grimoire:skin')]"
+   ],
+   "arrays": {
+    "textures": {
+     "Array.skin": [
+      "Texture.default",
+      "Texture.s1",
+      "Texture.s2"
+     ]
+    }
+   }
+  }
+ }
+}

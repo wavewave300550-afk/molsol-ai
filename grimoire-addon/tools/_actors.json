@@ -4440,5 +4440,1350 @@
     256
    ]
   ]
+ },
+ "ed6_codex": {
+  "id": "grimoire:ed6_codex",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default",
+   "g1",
+   "g2",
+   "g3",
+   "g4"
+  ],
+  "anims": {
+   "hidden": null,
+   "life": null,
+   "orbit": null,
+   "hover": null,
+   "rise": 2.0,
+   "beat": 0.6,
+   "absorb": 1.2,
+   "vanish": 1.6
+  },
+  "lifetime": 150,
+  "cubes": [
+   104
+  ],
+  "bones": [
+   42
+  ],
+  "tex": [
+   [
+    256,
+    128
+   ]
+  ]
+ },
+ "ed6_emblem": {
+  "id": "grimoire:ed6_emblem",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
+  "kinds": 4,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "turn": null,
+   "appear": 1.0,
+   "beat": 0.8,
+   "glow": 1.6,
+   "fade": 1.0
+  },
+  "lifetime": 150,
+  "cubes": [
+   9,
+   9,
+   9,
+   9
+  ],
+  "bones": [
+   11,
+   11,
+   11,
+   11
+  ],
+  "tex": [
+   [
+    512,
+    256
+   ],
+   [
+    512,
+    256
+   ],
+   [
+    256,
+    256
+   ],
+   [
+    512,
+    256
+   ]
+  ]
+ },
+ "ed6_spirit": {
+  "id": "grimoire:ed6_spirit",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 4,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "form": 1.2,
+   "hold": null,
+   "stream": 1.4
+  },
+  "lifetime": 150,
+  "cubes": [
+   82,
+   63,
+   85,
+   95
+  ],
+  "bones": [
+   8,
+   8,
+   8,
+   8
+  ],
+  "tex": [
+   [
+    256,
+    128
+   ],
+   [
+    128,
+    64
+   ],
+   [
+    128,
+    64
+   ],
+   [
+    128,
+    64
+   ]
+  ]
+ },
+ "ed6_bridge": {
+  "id": "grimoire:ed6_bridge",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "form": 1.2,
+   "hold": null,
+   "shatter": 0.8
+  },
+  "lifetime": 150,
+  "cubes": [
+   82
+  ],
+  "bones": [
+   27
+  ],
+  "tex": [
+   [
+    256,
+    128
+   ]
+  ]
+ },
+ "ed6_debris": {
+  "id": "grimoire:ed6_debris",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "spin": null,
+   "lift": 1.6,
+   "orbit": null,
+   "scatter": 1.0
+  },
+  "lifetime": 150,
+  "cubes": [
+   47
+  ],
+  "bones": [
+   9
+  ],
+  "tex": [
+   [
+    512,
+    256
+   ]
+  ]
+ },
+ "ed6_ring": {
+  "id": "grimoire:ed6_ring",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default",
+   "frost",
+   "glass"
+  ],
+  "anims": {
+   "hidden": null,
+   "rise": 1.6,
+   "hold": null,
+   "quake": 0.6,
+   "burst": 1.2,
+   "sink": 1.0
+  },
+  "lifetime": 150,
+  "cubes": [
+   81
+  ],
+  "bones": [
+   18
+  ],
+  "tex": [
+   [
+    512,
+    512
+   ]
+  ]
+ },
+ "ed6_iceshell": {
+  "id": "grimoire:ed6_iceshell",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "grow": 2.4,
+   "hold": null,
+   "shatter": 0.8
+  },
+  "lifetime": 150,
+  "cubes": [
+   85
+  ],
+  "bones": [
+   8
+  ],
+  "tex": [
+   [
+    512,
+    256
+   ]
+  ]
+ },
+ "ed6_spiral": {
+  "id": "grimoire:ed6_spiral",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "whirl": null,
+   "form": 1.0,
+   "spin": null,
+   "burst": 0.8
+  },
+  "lifetime": 150,
+  "cubes": [
+   72
+  ],
+  "bones": [
+   10
+  ],
+  "tex": [
+   [
+    256,
+    256
+   ]
+  ]
+ },
+ "ed6_blast": {
+  "id": "grimoire:ed6_blast",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default",
+   "cool"
+  ],
+  "anims": {
+   "hidden": null,
+   "blast": 1.2,
+   "hold": null,
+   "fade": 1.0
+  },
+  "lifetime": 150,
+  "cubes": [
+   50
+  ],
+  "bones": [
+   17
+  ],
+  "tex": [
+   [
+    256,
+    256
+   ]
+  ]
+ },
+ "ed6_horizon": {
+  "id": "grimoire:ed6_horizon",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "hold": null,
+   "life": null,
+   "rise": 3.0,
+   "sink": 2.0
+  },
+  "lifetime": 150,
+  "cubes": [
+   11
+  ],
+  "bones": [
+   12
+  ],
+  "tex": [
+   [
+    256,
+    256
+   ]
+  ]
+ },
+ "ed6_fog": {
+  "id": "grimoire:ed6_fog",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "drift": null,
+   "lv1": null,
+   "lv2": null,
+   "lv3": null,
+   "lv4": null,
+   "clear": 2.5
+  },
+  "lifetime": 150,
+  "cubes": [
+   18
+  ],
+  "bones": [
+   20
+  ],
+  "tex": [
+   [
+    256,
+    256
+   ]
+  ]
+ },
+ "ed6_flora": {
+  "id": "grimoire:ed6_flora",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 4,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "sprout": 2.0,
+   "sway": null,
+   "wither": 1.4
+  },
+  "lifetime": 150,
+  "cubes": [
+   33,
+   17,
+   71,
+   28
+  ],
+  "bones": [
+   29,
+   18,
+   11,
+   25
+  ],
+  "tex": [
+   [
+    128,
+    128
+   ],
+   [
+    128,
+    64
+   ],
+   [
+    128,
+    128
+   ],
+   [
+    128,
+    128
+   ]
+  ]
+ },
+ "ed6_stone": {
+  "id": "grimoire:ed6_stone",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default",
+   "glass",
+   "obsidian"
+  ],
+  "anims": {
+   "hidden": null,
+   "rise": 1.2,
+   "hold": null,
+   "flare": 0.5,
+   "sink": 1.0
+  },
+  "lifetime": 150,
+  "cubes": [
+   16
+  ],
+  "bones": [
+   8
+  ],
+  "tex": [
+   [
+    128,
+    128
+   ]
+  ]
+ },
+ "ed5_skel_nature": {
+  "id": "grimoire:ed5_skel_nature",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "emerge": 2.6,
+   "return": 2.2,
+   "rattle": null,
+   "idle": 8.0,
+   "move": 3.2,
+   "attack_a": 3.2,
+   "attack_b": 2.4,
+   "turn_l": 2.4,
+   "turn_r": 2.4,
+   "power": 2.6
+  },
+  "lifetime": 60,
+  "cubes": [
+   321
+  ],
+  "bones": [
+   64
+  ],
+  "tex": [
+   [
+    256,
+    128
+   ]
+  ]
+ },
+ "ed5_skel_heat": {
+  "id": "grimoire:ed5_skel_heat",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "emerge": 2.4,
+   "return": 2.0,
+   "rattle": null,
+   "idle": 6.0,
+   "walk": 1.2,
+   "charge": 0.6,
+   "skid": 0.7,
+   "attack_a": 1.2,
+   "attack_b": 1.3,
+   "roar": 1.4,
+   "turn_l": 0.8,
+   "turn_r": 0.8,
+   "move": 0.6
+  },
+  "lifetime": 60,
+  "cubes": [
+   235
+  ],
+  "bones": [
+   60
+  ],
+  "tex": [
+   [
+    256,
+    128
+   ]
+  ]
+ },
+ "ed5_skel_tide": {
+  "id": "grimoire:ed5_skel_tide",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "emerge": 2.4,
+   "return": 2.0,
+   "rattle": null,
+   "idle": 6.0,
+   "move": 1.6,
+   "attack_a": 1.5,
+   "attack_b": 1.7,
+   "attack_c": 1.1,
+   "roar": 1.4,
+   "turn_l": 1.0,
+   "turn_r": 1.0
+  },
+  "lifetime": 60,
+  "cubes": [
+   266
+  ],
+  "bones": [
+   88
+  ],
+  "tex": [
+   [
+    256,
+    128
+   ]
+  ]
+ },
+ "ed5_skel_air": {
+  "id": "grimoire:ed5_skel_air",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "emerge": 2.0,
+   "return": 1.8,
+   "rattle": null,
+   "idle": 6.0,
+   "move": 0.8,
+   "glide": 2.6,
+   "flutter": 0.4,
+   "stoop": 0.45,
+   "attack_a": 0.7,
+   "attack_b": 0.8,
+   "roll": 1.0,
+   "flare": 0.5,
+   "turn_l": 1.6,
+   "turn_r": 1.6
+  },
+  "lifetime": 60,
+  "cubes": [
+   226
+  ],
+  "bones": [
+   92
+  ],
+  "tex": [
+   [
+    256,
+    128
+   ]
+  ]
+ },
+ "ed5_tablet_nature": {
+  "id": "grimoire:ed5_tablet_nature",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default",
+   "awake",
+   "blaze"
+  ],
+  "anims": {
+   "hidden": null,
+   "flat": null,
+   "rise": 2.2,
+   "stand": null,
+   "memorial": 0.6,
+   "awaken": 1.2,
+   "empty": 0.6,
+   "receive": 0.9,
+   "formation": 2.0,
+   "aim": null,
+   "project": 1.0,
+   "project_all": 0.5,
+   "fracture": 1.8
+  },
+  "lifetime": 60,
+  "cubes": [
+   223
+  ],
+  "bones": [
+   81
+  ],
+  "tex": [
+   [
+    512,
+    512
+   ]
+  ]
+ },
+ "ed5_imprint_nature": {
+  "id": "grimoire:ed5_imprint_nature",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "warn": 1.2,
+   "brand": 0.5,
+   "pulse": null,
+   "fade": 0.6
+  },
+  "lifetime": 60,
+  "cubes": [
+   2
+  ],
+  "bones": [
+   3
+  ],
+  "tex": [
+   [
+    256,
+    256
+   ]
+  ]
+ },
+ "ed5_inscription_nature": {
+  "id": "grimoire:ed5_inscription_nature",
+  "states": [
+   0,
+   1
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "spin": null,
+   "hidden": null,
+   "descend": 2.2
+  },
+  "lifetime": 60,
+  "cubes": [
+   25
+  ],
+  "bones": [
+   5
+  ],
+  "tex": [
+   [
+    256,
+    256
+   ]
+  ]
+ },
+ "ed5_tablet_heat": {
+  "id": "grimoire:ed5_tablet_heat",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default",
+   "awake",
+   "blaze"
+  ],
+  "anims": {
+   "hidden": null,
+   "flat": null,
+   "rise": 2.2,
+   "stand": null,
+   "memorial": 0.6,
+   "awaken": 1.2,
+   "empty": 0.6,
+   "receive": 0.9,
+   "formation": 2.0,
+   "aim": null,
+   "project": 1.0,
+   "project_all": 0.5,
+   "fracture": 1.8
+  },
+  "lifetime": 60,
+  "cubes": [
+   196
+  ],
+  "bones": [
+   77
+  ],
+  "tex": [
+   [
+    512,
+    512
+   ]
+  ]
+ },
+ "ed5_imprint_heat": {
+  "id": "grimoire:ed5_imprint_heat",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "warn": 1.2,
+   "brand": 0.5,
+   "pulse": null,
+   "fade": 0.6
+  },
+  "lifetime": 60,
+  "cubes": [
+   2
+  ],
+  "bones": [
+   3
+  ],
+  "tex": [
+   [
+    256,
+    256
+   ]
+  ]
+ },
+ "ed5_inscription_heat": {
+  "id": "grimoire:ed5_inscription_heat",
+  "states": [
+   0,
+   1
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "spin": null,
+   "hidden": null,
+   "descend": 2.2
+  },
+  "lifetime": 60,
+  "cubes": [
+   25
+  ],
+  "bones": [
+   5
+  ],
+  "tex": [
+   [
+    256,
+    256
+   ]
+  ]
+ },
+ "ed5_tablet_tide": {
+  "id": "grimoire:ed5_tablet_tide",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default",
+   "awake",
+   "blaze"
+  ],
+  "anims": {
+   "hidden": null,
+   "flat": null,
+   "rise": 2.2,
+   "stand": null,
+   "memorial": 0.6,
+   "awaken": 1.2,
+   "empty": 0.6,
+   "receive": 0.9,
+   "formation": 2.0,
+   "aim": null,
+   "project": 1.0,
+   "project_all": 0.5,
+   "fracture": 1.8
+  },
+  "lifetime": 60,
+  "cubes": [
+   218
+  ],
+  "bones": [
+   105
+  ],
+  "tex": [
+   [
+    512,
+    512
+   ]
+  ]
+ },
+ "ed5_imprint_tide": {
+  "id": "grimoire:ed5_imprint_tide",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "warn": 1.2,
+   "brand": 0.5,
+   "pulse": null,
+   "fade": 0.6
+  },
+  "lifetime": 60,
+  "cubes": [
+   2
+  ],
+  "bones": [
+   3
+  ],
+  "tex": [
+   [
+    256,
+    256
+   ]
+  ]
+ },
+ "ed5_inscription_tide": {
+  "id": "grimoire:ed5_inscription_tide",
+  "states": [
+   0,
+   1
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "spin": null,
+   "hidden": null,
+   "descend": 2.2
+  },
+  "lifetime": 60,
+  "cubes": [
+   25
+  ],
+  "bones": [
+   5
+  ],
+  "tex": [
+   [
+    256,
+    256
+   ]
+  ]
+ },
+ "ed5_tablet_air": {
+  "id": "grimoire:ed5_tablet_air",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default",
+   "awake",
+   "blaze"
+  ],
+  "anims": {
+   "hidden": null,
+   "flat": null,
+   "rise": 2.2,
+   "stand": null,
+   "memorial": 0.6,
+   "awaken": 1.2,
+   "empty": 0.6,
+   "receive": 0.9,
+   "formation": 2.0,
+   "aim": null,
+   "project": 1.0,
+   "project_all": 0.5,
+   "fracture": 1.8
+  },
+  "lifetime": 60,
+  "cubes": [
+   208
+  ],
+  "bones": [
+   109
+  ],
+  "tex": [
+   [
+    512,
+    512
+   ]
+  ]
+ },
+ "ed5_imprint_air": {
+  "id": "grimoire:ed5_imprint_air",
+  "states": [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "warn": 1.2,
+   "brand": 0.5,
+   "pulse": null,
+   "fade": 0.6
+  },
+  "lifetime": 60,
+  "cubes": [
+   2
+  ],
+  "bones": [
+   3
+  ],
+  "tex": [
+   [
+    256,
+    256
+   ]
+  ]
+ },
+ "ed5_inscription_air": {
+  "id": "grimoire:ed5_inscription_air",
+  "states": [
+   0,
+   1
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "spin": null,
+   "hidden": null,
+   "descend": 2.2
+  },
+  "lifetime": 60,
+  "cubes": [
+   25
+  ],
+  "bones": [
+   5
+  ],
+  "tex": [
+   [
+    256,
+    256
+   ]
+  ]
+ },
+ "ed5_memorial": {
+  "id": "grimoire:ed5_memorial",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "spin": null,
+   "hidden": null,
+   "assemble": 3.0,
+   "hold": null,
+   "dissolve": 1.6
+  },
+  "lifetime": 60,
+  "cubes": [
+   46
+  ],
+  "bones": [
+   10
+  ],
+  "tex": [
+   [
+    512,
+    256
+   ]
+  ]
+ },
+ "ed5_spike": {
+  "id": "grimoire:ed5_spike",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "rise": 0.6,
+   "hold": null,
+   "sink": 0.7
+  },
+  "lifetime": 60,
+  "cubes": [
+   10
+  ],
+  "bones": [
+   3
+  ],
+  "tex": [
+   [
+    256,
+    128
+   ]
+  ]
+ },
+ "ed5_trail": {
+  "id": "grimoire:ed5_trail",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": false,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "warn": 0.8,
+   "burn": 1.2,
+   "fade": 0.8
+  },
+  "lifetime": 60,
+  "cubes": [
+   36
+  ],
+  "bones": [
+   25
+  ],
+  "tex": [
+   [
+    64,
+    32
+   ]
+  ]
+ },
+ "ed5_icefan": {
+  "id": "grimoire:ed5_icefan",
+  "states": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "burst": 0.7,
+   "hold": null,
+   "shatter": 0.5
+  },
+  "lifetime": 60,
+  "cubes": [
+   43
+  ],
+  "bones": [
+   23
+  ],
+  "tex": [
+   [
+    128,
+    128
+   ]
+  ]
+ },
+ "ed5_gust": {
+  "id": "grimoire:ed5_gust",
+  "states": [
+   0,
+   1
+  ],
+  "kinds": 1,
+  "size_prop": true,
+  "skins": [
+   "default"
+  ],
+  "anims": {
+   "hidden": null,
+   "burst": 0.8
+  },
+  "lifetime": 60,
+  "cubes": [
+   30
+  ],
+  "bones": [
+   4
+  ],
+  "tex": [
+   [
+    32,
+    32
+   ]
+  ]
  }
 }

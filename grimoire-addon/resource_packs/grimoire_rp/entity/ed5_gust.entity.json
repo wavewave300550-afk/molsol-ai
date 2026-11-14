@@ -1,0 +1,33 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:ed5_gust",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "blend": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/ed5_gust"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.ed5_gust"
+   },
+   "render_controllers": [
+    "controller.render.grimoire.ed5_gust"
+   ],
+   "animations": {
+    "hidden": "animation.grimoire.ed5_gust.hidden",
+    "burst": "animation.grimoire.ed5_gust.burst",
+    "ctl_main": "controller.animation.grimoire.ed5_gust.main"
+   },
+   "scripts": {
+    "scale": "(1.0) * q.property('grimoire:size')",
+    "animate": [
+     "ctl_main"
+    ],
+    "should_update_bones_and_effects_offscreen": true
+   }
+  }
+ }
+}

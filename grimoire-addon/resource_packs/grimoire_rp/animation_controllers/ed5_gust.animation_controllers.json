@@ -1,0 +1,32 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.grimoire.ed5_gust.main": {
+   "initial_state": "s0",
+   "states": {
+    "s0": {
+     "animations": [
+      "hidden"
+     ],
+     "transitions": [
+      {
+       "s1": "q.property('grimoire:state') == 1"
+      }
+     ],
+     "blend_transition": 0.0
+    },
+    "s1": {
+     "animations": [
+      "burst"
+     ],
+     "transitions": [
+      {
+       "s0": "q.property('grimoire:state') == 0"
+      }
+     ],
+     "blend_transition": 0.0
+    }
+   }
+  }
+ }
+}

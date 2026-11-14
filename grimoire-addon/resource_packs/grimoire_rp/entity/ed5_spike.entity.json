@@ -1,0 +1,35 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "grimoire:ed5_spike",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "blend": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/grimoire/ed5_spike"
+   },
+   "geometry": {
+    "default": "geometry.grimoire.ed5_spike"
+   },
+   "render_controllers": [
+    "controller.render.grimoire.ed5_spike"
+   ],
+   "animations": {
+    "hidden": "animation.grimoire.ed5_spike.hidden",
+    "rise": "animation.grimoire.ed5_spike.rise",
+    "hold": "animation.grimoire.ed5_spike.hold",
+    "sink": "animation.grimoire.ed5_spike.sink",
+    "ctl_main": "controller.animation.grimoire.ed5_spike.main"
+   },
+   "scripts": {
+    "scale": "(1.0) * q.property('grimoire:size')",
+    "animate": [
+     "ctl_main"
+    ],
+    "should_update_bones_and_effects_offscreen": true
+   }
+  }
+ }
+}
