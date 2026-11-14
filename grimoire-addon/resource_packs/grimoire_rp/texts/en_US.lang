@@ -137,6 +137,7 @@ entity.grimoire:ed_tide_frozen.name=Ice Encasement
 entity.grimoire:ed_tide_mass.name=Suspended Deep
 entity.grimoire:ed_tide_shard.name=Ice Shard
 entity.grimoire:ed_tide_stream.name=Tidal Stream
+entity.grimoire:ledger.name=Grimoire Block Ledger
 entity.grimoire:ophanim.name=Ophanim
 entity.grimoire:seraph.name=Seraphim
 entity.grimoire:telegraph.name=Warning Sigil

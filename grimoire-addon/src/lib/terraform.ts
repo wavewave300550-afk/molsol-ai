@@ -1,5 +1,6 @@
 import { Block, BlockPermutation, Dimension, Vector3, system, world } from "@minecraft/server";
 import { CONFIG } from "../config/global";
+import { Ledger, Rec } from "./ledger";
 import { Scene } from "./scene";
 
 /**
@@ -10,8 +11,9 @@ import { Scene } from "./scene";
  *   * only natural surface blocks are replaced (REPLACEABLE); a column next to anything that is not
  *     natural (a player's build) is skipped; nothing with a block entity, no liquids, no falling
  *     blocks over air
- *   * every change is written to a ledger in world dynamic properties BEFORE the block changes
- *     (write-ahead), so a crash or quit mid-cast is repaired on the next world load
+ *   * every change is recorded BEFORE the block changes (write-ahead) on a marker entity inside its
+ *     chunk (src/lib/ledger.ts), saved together with the chunk's blocks, so a crash or quit mid-cast is
+ *     repaired when the world loads again (or when that chunk loads)
  *   * changes are applied in paced pulses (a band sweeping around the caster) so the client rebuilds
  *     each chunk section a few times, not every tick
  *   * a plant is never left on a ground that cannot hold it (it would break and drop an item):
@@ -68,18 +70,14 @@ export interface GroundChange {
   plantStates?: Record<string, string | number | boolean>;
 }
 
-// ---------------------------------------------------------------------------------------------- the ledger
-type Entry = { d: string; x: number; y: number; z: number; o: number; p: number; owner?: GroundSet };
-const KEY = "grim:gl";
-const CHUNK = 30000;
-const MAX_CHUNKS = 8;
+// ---------------------------------------------------------------------------------------------- held cells
+/** A changed cell: o = what it was, p = what we put there, both "type|{states json}". */
+type Entry = { d: string; x: number; y: number; z: number; o: string; p: string; owner?: GroundSet };
 const AIR = "minecraft:air";
 const DIMS: Record<string, string> = { "minecraft:overworld": "o", "minecraft:nether": "n", "minecraft:the_end": "e" };
 const DIM_IDS: Record<string, string> = { o: "minecraft:overworld", n: "minecraft:nether", e: "minecraft:the_end" };
+/** Every cell held changed right now, world-wide (owned by a running cast, or an orphan waiting for its chunk). */
 const live = new Map<string, Entry>();
-let palette: string[] = [];
-let palIndex = new Map<string, number>();
-let dirty = false;
 let pulseTick = -1;
 /** One pulse a tick world-wide (every cast shares it): a pulse that finds the tick taken waits for the next. */
 function takePulse(): boolean {
@@ -90,51 +88,33 @@ function takePulse(): boolean {
 
 const key = (d: string, x: number, y: number, z: number) => `${d}|${x}|${y}|${z}`;
 const keyOf = (e: Entry) => key(e.d, e.x, e.y, e.z);
-function pal(type: string, states: Record<string, unknown> = {}): number {
+/** A block as text: "type|{states}" (states sorted, so equal blocks give equal text). */
+function spec(type: string, states: Record<string, unknown> = {}): string {
   const ks = Object.keys(states).sort();
-  const s = `${type}|${ks.length ? JSON.stringify(Object.fromEntries(ks.map((k) => [k, states[k]]))) : ""}`;
-  let i = palIndex.get(s);
-  if (i === undefined) { i = palette.length; palette.push(s); palIndex.set(s, i); }
-  return i;
+  return `${type}|${ks.length ? JSON.stringify(Object.fromEntries(ks.map((k) => [k, states[k]]))) : ""}`;
 }
-function unpal(i: number): { t: string; s: Record<string, string | number | boolean> } {
-  const e = palette[i] ?? `${AIR}|`;
-  const bar = e.indexOf("|");
-  const js = e.slice(bar + 1);
-  return { t: e.slice(0, bar), s: js ? JSON.parse(js) : {} };
+function unspec(s: string): { t: string; s: Record<string, string | number | boolean> } {
+  const bar = s.indexOf("|");
+  if (bar < 0) return { t: s, s: {} };
+  const js = s.slice(bar + 1);
+  try { return { t: s.slice(0, bar), s: js ? JSON.parse(js) : {} }; } catch { return { t: s.slice(0, bar), s: {} }; }
 }
-const typeOf = (i: number) => unpal(i).t;
+const typeOf = (s: string) => unspec(s).t;
 /** Ground entries replaced a natural ground block; the others hold the cell above (a plant or air). */
 const isGround = (e: Entry) => REPLACEABLE.has(typeOf(e.o));
+const recOf = (e: Entry): Rec => ({ x: e.x, y: e.y, z: e.z, o: e.o, p: e.p });
+const dimOf = (d: string): Dimension => world.getDimension(DIM_IDS[d]);
 
-function save(): void {
-  dirty = false;
-  const parts: string[] = [];
-  for (const e of live.values()) parts.push(`${e.d},${e.x},${e.y},${e.z},${e.o},${e.p}`);
-  const data = parts.join(";");
-  if (!data) {
-    for (const id of world.getDynamicPropertyIds()) if (id === KEY || id.startsWith(`${KEY}.`)) world.setDynamicProperty(id, undefined);
-    palette = []; palIndex = new Map();
-    return;
-  }
-  if (data.length > CHUNK * MAX_CHUNKS) throw new Error("ground ledger full");
-  world.setDynamicProperty(KEY, JSON.stringify({ v: 2, pal: palette }));
-  let i = 0;
-  for (let off = 0; off < data.length; off += CHUNK, i++) world.setDynamicProperty(`${KEY}.${i}`, data.slice(off, off + CHUNK));
-  for (; i < MAX_CHUNKS; i++) if (world.getDynamicProperty(`${KEY}.${i}`) !== undefined) world.setDynamicProperty(`${KEY}.${i}`, undefined);
-}
-/** Persist the ledger when it changed (called once per tick from main.ts). */
-export function flushGround(): void {
-  if (dirty) { try { save(); } catch (e) { console.warn(`[grimoire] ground ledger: ${e}`); } }
-}
+/** Persist nothing per tick any more: the record is written ahead on the chunk markers.  (Kept for main.ts.) */
+export function flushGround(): void { /* the chunk markers are written ahead of every change */ }
 /** Cells held world-wide right now. */
 export function groundCount(): number { return live.size; }
 
 function blockAt(e: Entry): Block | undefined {
-  try { return world.getDimension(DIM_IDS[e.d]).getBlock({ x: e.x, y: e.y, z: e.z }); } catch { return undefined; }
+  try { return dimOf(e.d).getBlock({ x: e.x, y: e.y, z: e.z }); } catch { return undefined; }
 }
-function setTo(b: Block, i: number): void {
-  const { t, s } = unpal(i);
+function setTo(b: Block, sp: string): void {
+  const { t, s } = unspec(sp);
   if (Object.keys(s).length) b.setPermutation(BlockPermutation.resolve(t, s));
   else b.setType(t);
 }
@@ -173,47 +153,33 @@ function restoreEntries(list: Entry[]): Set<Entry> {
   return failed;
 }
 
-function load(): Entry[] {
-  const meta = world.getDynamicProperty(KEY);
-  if (typeof meta !== "string") return [];
-  try {
-    const m = JSON.parse(meta) as { v: number; pal: string[] };
-    palette = Array.isArray(m.pal) ? m.pal : [];
-  } catch { palette = []; }
-  palIndex = new Map(palette.map((s, i) => [s, i]));
-  let s = "";
-  for (let i = 0; i < MAX_CHUNKS; i++) {
-    const p = world.getDynamicProperty(`${KEY}.${i}`);
-    if (typeof p === "string") s += p;
+/** A chunk marker loaded with nobody holding it: put its cells back (those not reachable stay recorded). */
+function restoreOrphans(dim: Dimension, recs: Rec[]): Rec[] {
+  const d = DIMS[dim.id] ?? "o";
+  const entries: Entry[] = recs.map((r) => ({ d, x: r.x, y: r.y, z: r.z, o: r.o, p: r.p }));
+  const failed = restoreEntries(entries);
+  const left: Rec[] = [];
+  for (const e of entries) {
+    if (failed.has(e)) { left.push(recOf(e)); continue; }
+    const held = live.get(keyOf(e));
+    if (held && !held.owner) live.delete(keyOf(e));
   }
-  const out: Entry[] = [];
-  for (const rec of s.split(";")) {
-    const f = rec.split(",");
-    if (f.length !== 6 || !DIM_IDS[f[0]]) continue;
-    const [x, y, z, o, p] = f.slice(1).map(Number);
-    if ([x, y, z, o, p].some((n) => !Number.isFinite(n))) continue;
-    out.push({ d: f[0], x, y, z, o, p });
-  }
-  return out;
+  return left;
 }
 
-/** Repair ground left behind by an interrupted session (world load, cleanup command). */
+/** Repair ground left behind by an interrupted session (world load, the recover and cleanup commands). */
 export function restoreGround(): void {
-  if (live.size) { retryGround(); return; }                       // this session's state is the truth
-  const entries = load();
-  if (!entries.length) { if (palette.length) dirty = true; return; }
-  const failed = restoreEntries(entries);
-  for (const e of failed) live.set(keyOf(e), e);
-  dirty = true;
-  if (failed.size) console.log(`[grimoire] ${failed.size} ground blocks are in unloaded chunks; they will be restored when loaded.`);
+  retryGround();                                                  // markers in loaded chunks; the rest come with their chunks
 }
-/** Retry cells nobody owns any more (their chunk was unloaded); every 100 ticks from main.ts. */
+/** Retry cells nobody owns any more (their chunk was unloaded, a barrier stood there); every 100 ticks from main.ts. */
 export function retryGround(): void {
+  Ledger.scan();                                                  // unheld markers with blocks still to put back
   const orphans = [...live.values()].filter((e) => !e.owner);
   if (!orphans.length) return;
   const failed = restoreEntries(orphans);
-  for (const e of orphans) if (!failed.has(e)) live.delete(keyOf(e));
-  if (failed.size !== orphans.length) dirty = true;
+  const done = orphans.filter((e) => !failed.has(e));
+  for (const e of done) live.delete(keyOf(e));
+  // their markers (released when the cast ended) are cleared when those chunks load: restoring twice is a no-op
 }
 /** True when a cell is held by a living-ground change (used to protect it). */
 export function claimed(dimId: string, loc: Vector3): boolean {
@@ -222,10 +188,15 @@ export function claimed(dimId: string, loc: Vector3): boolean {
 }
 
 let guarded = false;
-/** Our blocks cannot be broken (no item duplication, no lost originals) or blown up while a spell holds them. */
+/**
+ * Our blocks cannot be broken (no item duplication, no lost originals) or blown up while a spell holds
+ * them; chunk markers that load unheld put their blocks back.
+ */
 export function installGroundGuards(): void {
   if (guarded) return;
   guarded = true;
+  Ledger.onOrphans(restoreOrphans);
+  try { Ledger.install(); } catch { /* event missing */ }
   try {
     world.beforeEvents.playerBreakBlock.subscribe((ev) => {
       if (claimed(ev.block.dimension.id, ev.block.location)) ev.cancel = true;
@@ -367,9 +338,7 @@ export class GroundSet {
       if (e && e.owner === this && typeOf(e.p) !== AIR) cells.push(e);
     }
     if (!cells.length) return;
-    const failed = restoreEntries(cells);
-    for (const e of cells) if (!failed.has(e)) live.delete(keyOf(e));
-    dirty = true;
+    this.settle(cells, restoreEntries(cells));
   }
   /** Put back everything now (scene end, caster gone): one tick. */
   restoreNow(): void {
@@ -406,7 +375,7 @@ export class GroundSet {
     if (this.scene.ended) return;
     const dim = this.scene.dim;
     // claim and record every cell of this pulse first (write-ahead), then change the blocks
-    const todo: { e: Entry; b: Block; to: number; plant: boolean }[] = [];
+    const todo: { e: Entry; b: Block; to: string; plant: boolean }[] = [];
     let budget = CONFIG.limits.maxGroundBlocks - live.size;
     for (const { cell, change } of batch) {
       if (budget < 2) break;
@@ -423,22 +392,21 @@ export class GroundSet {
         // the cell above: our plant, or air where a natural plant would be left on a ground that cannot hold it
         const upTo = plant ?? (aType !== AIR && change.ground ? AIR : undefined);
         if (upTo !== undefined) {
-          const e: Entry = { d: this.d, x: cell.x, y: cell.y + 1, z: cell.z, o: pal(aType, a.permutation.getAllStates()), p: pal(upTo, plant ? change.plantStates : undefined), owner: this };
+          const e: Entry = { d: this.d, x: cell.x, y: cell.y + 1, z: cell.z, o: spec(aType, a.permutation.getAllStates()), p: spec(upTo, plant ? change.plantStates : undefined), owner: this };
           live.set(ak, e); budget--;
           todo.push({ e, b: a, to: e.p, plant: true });
         }
         if (change.ground) {
-          const e: Entry = { d: this.d, x: cell.x, y: cell.y, z: cell.z, o: pal(g.typeId, g.permutation.getAllStates()), p: pal(change.ground, change.states), owner: this };
+          const e: Entry = { d: this.d, x: cell.x, y: cell.y, z: cell.z, o: spec(g.typeId, g.permutation.getAllStates()), p: spec(change.ground, change.states), owner: this };
           live.set(gk, e); budget--;
           todo.push({ e, b: g, to: e.p, plant: false });
         }
       } catch { /* unloaded: skip */ }
     }
     if (!todo.length) return;
-    try { save(); } catch (err) {
-      // the ledger could not be written: change nothing we could not put back after a crash
+    if (!Ledger.write(dim, todo.map((t) => recOf(t.e)))) {
+      // the record could not be written: change nothing we could not put back after a crash
       for (const t of todo) live.delete(keyOf(t.e));
-      console.warn(`[grimoire] ground ledger: ${err}`);
       return;
     }
     // natural plants come off first, then the ground changes, then our plants go on the new ground
@@ -447,9 +415,11 @@ export class GroundSet {
       ...todo.filter((t) => !t.plant),
       ...todo.filter((t) => t.plant && typeOf(t.to) !== AIR),
     ];
+    const undone: Rec[] = [];
     for (const t of order) {
-      try { setTo(t.b, t.to); } catch { live.delete(keyOf(t.e)); dirty = true; }
+      try { setTo(t.b, t.to); } catch { live.delete(keyOf(t.e)); undone.push(recOf(t.e)); }
     }
+    if (undone.length) Ledger.drop(dim, undone);
   }
 
   private restoreBatch(batch: Planned[]): void {
@@ -461,12 +431,18 @@ export class GroundSet {
       }
     }
     if (!cells.length) return;
-    const failed = restoreEntries(cells);
+    this.settle(cells, restoreEntries(cells));
+  }
+  /** After a restore: forget the cells that are back; let go of those out of reach (their marker keeps them). */
+  private settle(cells: Entry[], failed: Set<Entry>): void {
+    const back: Rec[] = [], away: Rec[] = [];
     for (const e of cells) {
-      if (failed.has(e)) e.owner = undefined;                    // unloaded: an orphan for retryGround()
-      else live.delete(keyOf(e));
+      if (failed.has(e)) { e.owner = undefined; away.push(recOf(e)); }   // unloaded: an orphan until its chunk loads
+      else { live.delete(keyOf(e)); back.push(recOf(e)); }
     }
-    dirty = true;
+    const dim = this.scene.dim;
+    if (back.length) Ledger.drop(dim, back);
+    if (away.length) Ledger.release(dim, away);
   }
 }
 

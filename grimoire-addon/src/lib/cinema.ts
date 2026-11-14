@@ -19,6 +19,7 @@ import { hostiles } from "./targeting";
  */
 
 const CAM_FLAG = "grim:cam";
+let toldCamera = false;
 const LOCK = [InputPermissionCategory.Camera, InputPermissionCategory.LateralMovement,
   InputPermissionCategory.Jump, InputPermissionCategory.Sneak];
 
@@ -81,8 +82,9 @@ export class Cinema {
       const first = path(0);
       p.camera.setCamera("minecraft:free", { location: first.at, facingLocation: first.look,
         easeOptions: { easeTime: enter / 20, easeType: EasingType.InOutSine } });
-    } catch {
+    } catch (e) {
       this.restoreInputs(p, locked);
+      if (!toldCamera && p.isValid) { toldCamera = true; console.warn(`[grimoire] camera shot skipped: ${e}`); }
       return false;
     }
     this.shots++;

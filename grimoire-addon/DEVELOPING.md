@@ -35,7 +35,8 @@ Reference slice to imitate: `tools/assets/dw_seraph.py`, `tools/assets/dw_common
   * `src/lib/atmos.ts` - one tagged per-player fog entry (never `setStack`), and one shared lease on
     the time of day that sweeps back to where the clock would have been;
   * `src/lib/terraform.ts` - natural surface blocks only (never next to a build, never containers or
-    liquids), plants only into air, every change in a write-ahead ledger, paced pulses.
+    liquids), plants only into air, every change written ahead on the chunk's ledger marker
+    (`src/lib/ledger.ts`), paced pulses.
   Never break or replace any other block. `tools/validate.py` enforces this per source file.
 * The central thing in every spell is an **original animated 3D model**, never a particle cloud,
   a vanilla mob, or a recolour of another model. Particles and sound support the model.
@@ -269,8 +270,15 @@ along their yaw) come closer than half a block. Keep it at zero bodies and only 
   the time.
 * **Shots** (`cinemaFor(scene).shot(ticks, path, opts)`): `path(t)` gives `{ at, look }`; skipped in
   the air, gliding, riding, low on health or with an enemy within 5 blocks.
+* **Crash safety** (`src/lib/ledger.ts`): measured on a real server killed hard, a chunk's blocks and
+  the entities in it are saved together within ~10 s, world dynamic properties only every ~30 s. So
+  every block a spell changes (living ground, and the barriers / lights of `blocksFor`) is recorded
+  before it changes on an invisible persistent marker entity (`grimoire:ledger`, one per chunk)
+  inside that chunk; a marker that loads while no spell holds its chunk puts its blocks back and
+  goes. Never record changed blocks only in world dynamic properties.
 * Tests: `node tests/run.mjs world_state`; `/scriptevent grimoire:recover` does what a world load
-  does after a crash.
+  does after a crash. On the real server: `probe:hash` before a cast, kill the server mid-cast,
+  restart, `probe:hash` again (see `tests/probe`).
 
 ### Run it in the real server (`tests/probe`)
 `tests/probe/README.md` describes a harness pack that makes a simulated player cast spells through

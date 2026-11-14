@@ -47,7 +47,7 @@ export default function ({ mock, test, eq, ok }) {
     eq(constructs().length, 0, "entities left:");
     ok(stats.maxGroundEditsPerTick <= 80, `${stats.maxGroundEditsPerTick} ground changes in one tick`);
     ok(stats.maxGroundSubchunksPerTick <= 4, `${stats.maxGroundSubchunksPerTick} chunk sections of ground rebuilt in one tick`);
-    eq([...mock.worldDynamic.keys()].filter((k) => k.startsWith("grim:gl") || k === "grim:tod").join(","), "", "ledger left behind:");
+    eq([...mock.worldDynamic.keys()].filter((k) => k === "grim:tod").join(","), "", "time record left behind:");
     console.log(`         ed06 ground: peak ${peak} cells, ${stats.blockEdits} edits; ground max ${stats.maxGroundEditsPerTick}/tick in ` +
       `${stats.maxGroundSubchunksPerTick} sections (all blocks: ${stats.maxEditsPerTick}/tick, ${stats.maxSubchunksPerTick} sections)`);
     noProblems("ground");
@@ -199,28 +199,50 @@ export default function ({ mock, test, eq, ok }) {
     noProblems("leave");
   });
 
-  test("ed06 crash mid-cast: the next load puts the ground and the clock back (and unloaded chunks later)", () => {
+  // A real 26.62 server killed hard saved a chunk's blocks and the entities in it within ~10 s, but world
+  // dynamic properties (and the clock) only every half minute: the world that loads after a crash can
+  // have the spell's blocks without any world-level record of them.
+  test("ed06 hard crash mid-cast (chunks saved, world data older): the next load still puts every block back", () => {
     fresh();
+    const level = mock.snapshotWorld();                  // the world data as last saved, before the cast
     const p = caster("Crash");
     enemies();
-    let snap, snapTick = 0, cells = 0;
-    run(p, T.end + 40, (t) => { if (t === 420) { snap = mock.snapshotWorld(); snapTick = system.currentTick; cells = changedBlocks().length; } });
+    let snap, cells = 0;
+    run(p, T.end + 40, (t) => { if (t === 420) { snap = mock.snapshotWorld(); cells = changedBlocks().length; } });
     ok(cells > 1000, `only ${cells} cells changed at the crash`);
-    // the world as it was saved at the crash, loaded again (the spell's memory is gone)
-    mock.restoreWorld(snap);
-    eq(changedBlocks().length, cells, "snapshot not restored");
-    mock.setUnloaded((x) => x > 12);                     // part of the domain is not loaded yet
+    const markers = snap.dims.overworld.e.filter((e) => e.typeId === "grimoire:ledger").length;
+    ok(markers >= 4, `only ${markers} chunk markers at the crash`);
+    mock.restoreWorld(snap, level);                      // load the world as the crash left it
+    eq(changedBlocks().length, cells, "crash state not loaded");
+    eq(mock.worldDynamic.has("grim:tod"), false, "world data should be the older save (no time record)");
+    mock.setUnloaded((x) => x >= 16);                    // the chunks east of x = 16 are not loaded yet
     send("grimoire:recover");
     const left = changedBlocks().length;
     ok(left > 0 && left < cells, `expected only the unloaded part left, ${left} of ${cells}`);
-    // the record is at most 20 ticks old: the clock comes back to (start + elapsed at the crash) within that
+    mock.setUnloaded(null);                              // the player walks over: those chunks (and markers) load
+    tick(3);
+    eq(changedBlocks().length, 0, "blocks left after the crash:");
+    eq(constructs().length, 0, "markers or entities left after recovery:");
+    noProblems("hard crash");
+  });
+
+  test("ed06 save and quit mid-cast: ground, temporary blocks and the clock come back on the next load", () => {
+    fresh();
+    const p = caster("Quit");
+    enemies();
+    let snap, snapTick = 0;
+    run(p, T.end + 40, (t) => { if (t === 700) { snap = mock.snapshotWorld(); snapTick = system.currentTick; } });
+    mock.restoreWorld(snap);                             // everything saved together, then loaded again
+    ok(changedBlocks().length > 1000, "nothing to recover");
+    send("grimoire:recover");
+    tick(3);
+    eq(changedBlocks().length, 0, "blocks left after save and quit:");
+    eq(constructs().length, 0, "markers or entities left:");
+    // the time record is at most 20 ticks old: the clock comes back to (start + elapsed at the save) within that
     const dt = world.getAbsoluteTime() - (6000 + (snapTick - t0));
     ok(dt <= 2 && dt >= -22, `clock off by ${dt} after recovery`);
-    mock.setUnloaded(null);
-    tick(110);                                           // the 100-tick retry
-    eq(changedBlocks().length, 0, "unloaded ground never restored:");
-    eq([...mock.worldDynamic.keys()].filter((k) => k.startsWith("grim:gl") || k === "grim:tod").join(","), "", "ledger left:");
-    noProblems("crash");
+    eq([...mock.worldDynamic.keys()].filter((k) => k === "grim:tod").join(","), "", "time record left:");
+    noProblems("save and quit");
   });
 
   test("ed06 holds its blocks: they cannot be broken or blown up while the spell runs", () => {

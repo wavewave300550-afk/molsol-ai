@@ -19,6 +19,13 @@ import { Scene } from "./scene";
 export const FOG_TAG = "grimoire_ed6";
 const FOG_FLAG = "grim:fog";
 const TOD_KEY = "grim:tod";
+const told = new Set<string>();
+/** Say once per session when the engine refuses something (the content log is the only place a player sees it). */
+function once(key: string, msg: string): void {
+  if (told.has(key)) return;
+  told.add(key);
+  console.warn(`[grimoire] ${msg}`);
+}
 
 // ---------------------------------------------------------------------------------------------- fog
 /** The fog of one cast: applied to the caster and to the players near them; removed on scene end. */
@@ -46,7 +53,9 @@ export class SceneFog {
       p.fogSettings.push(id, FOG_TAG);
       p.setDynamicProperty(FOG_FLAG, 1);
       this.players.add(p);
-    } catch { /* gone, or the stack is full of other packs' fogs */ }
+    } catch (e) {
+      if (p.isValid) once(`fog.${id}`, `spell fog ${id} could not be applied: ${e}`);   // e.g. the stack is full of other packs' fogs
+    }
   }
   private near(radius: number): Player[] {
     const out: Player[] = [];

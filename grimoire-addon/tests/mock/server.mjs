@@ -9,14 +9,18 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const readJson = (p, d) => { try { return JSON.parse(fs.readFileSync(p, "utf8")); } catch { return d; } };
 
-export const assets = { actors: {}, particles: new Set(), sounds: new Set(), items: new Set(), fogs: new Set(), blocks: new Set() };
+export const assets = { actors: {}, families: {}, persistent: new Set(), particles: new Set(), sounds: new Set(), items: new Set(), fogs: new Set(), blocks: new Set() };
 export function loadAssets() {
-  assets.actors = {};
+  assets.actors = {}; assets.families = {}; assets.persistent = new Set();
   const edir = path.join(ROOT, "behavior_packs/grimoire_bp/entities");
   if (fs.existsSync(edir)) for (const f of fs.readdirSync(edir)) {
     const j = readJson(path.join(edir, f), null);
     const d = j?.["minecraft:entity"]?.description;
-    if (d) assets.actors[d.identifier] = d.properties ?? {};
+    if (!d) continue;
+    assets.actors[d.identifier] = d.properties ?? {};
+    const comps = j["minecraft:entity"].components ?? {};
+    assets.families[d.identifier] = comps["minecraft:type_family"]?.family ?? [];
+    if (!comps["minecraft:transient"]) assets.persistent.add(d.identifier);   // saved with its chunk
   }
   assets.particles = new Set();
   const pdir = path.join(ROOT, "resource_packs/grimoire_rp/particles");
@@ -107,7 +111,14 @@ let cover = () => undefined;
 export function setCover(fn) { cover = fn ?? (() => undefined); }
 /** Columns whose chunk is not loaded (getBlock returns undefined there, as in the engine). */
 let unloaded = () => false;
-export function setUnloaded(fn) { unloaded = fn ?? (() => false); }
+export function setUnloaded(fn) {
+  const was = unloaded;
+  unloaded = fn ?? (() => false);
+  for (const d of Object.values(dims)) for (const e of d.entities) {
+    const x = Math.floor(e.location.x), z = Math.floor(e.location.z);
+    if (e.isValid && was(x, z) && !unloaded(x, z)) world.afterEvents.entityLoad.emit({ entity: e });
+  }
+}
 export function natural(x, y, z) {
   const h = terrain(x, z);
   if (y === h) { const c = cover(x, z); if (c) return c; }
@@ -410,7 +421,7 @@ export class Dimension {
     if (this.outside(loc)) { problem(`spawn ${id} outside the world at y=${loc.y.toFixed(2)}`); throw new Error("LocationOutOfWorldBoundariesError"); }
     if (id.startsWith("grimoire:") && !assets.actors[id]) { problem(`spawnEntity: unknown entity ${id}`); throw new Error(`unknown entity ${id}`); }
     const e = new Entity(this, id, loc);
-    if (id.startsWith("grimoire:")) { e.families = ["grimoire_construct", "inanimate"]; e.invulnerable = true; }
+    if (id.startsWith("grimoire:")) { e.families = [...(assets.families[id] ?? ["grimoire_construct", "inanimate"])]; e.invulnerable = true; }
     if (o.initialRotation !== undefined) e.rotation.y = o.initialRotation;
     this.entities.add(e);
     stats.spawned[id] = (stats.spawned[id] ?? 0) + 1;
@@ -421,6 +432,7 @@ export class Dimension {
     const out = [];
     for (const e of this.entities) {
       if (!e.isValid) continue;
+      if (unloaded(Math.floor(e.location.x), Math.floor(e.location.z))) continue;
       if (o.type && e.typeId !== o.type) continue;
       if (o.excludeTypes && o.excludeTypes.includes(e.typeId)) continue;
       if (o.families && !o.families.every((f) => e.families.includes(f))) continue;
@@ -466,6 +478,12 @@ export const world = {
   getAllPlayers() { return Object.values(dims).flatMap((d) => d.getPlayers()); },
   getPlayers(o) { return Object.values(dims).flatMap((d) => d.getPlayers(o)); },
   getDimension(id) { const d = dims[String(id).replace("minecraft:", "")]; if (!d) throw new Error(`no dimension ${id}`); return d; },
+  getEntity(id) {
+    for (const d of Object.values(dims)) for (const e of d.entities) {
+      if (e.id === id && e.isValid && !unloaded(Math.floor(e.location.x), Math.floor(e.location.z))) return e;
+    }
+    return undefined;
+  },
   getDynamicProperty(k) { return worldDyn.get(k); },
   setDynamicProperty(k, v) {
     if (typeof v === "string" && v.length > 32767) { problem(`world dynamic property ${k} too long (${v.length})`); throw new Error("too long"); }
@@ -552,16 +570,32 @@ export function reset() {
 export function changedBlocks(dim = "overworld") { return [...dims[dim].blocks.entries()]; }
 /** Save / bring back blocks, world dynamic properties and the clock (a world save and reload after a crash). */
 export function snapshotWorld() {
+  const ents = (d) => [...d.entities].filter((e) => e.isValid && assets.persistent.has(e.typeId))
+    .map((e) => ({ id: e.id, typeId: e.typeId, loc: { ...e.location }, dyn: new Map(e.dyn), families: [...e.families] }));
   return {
-    dims: Object.fromEntries(Object.entries(dims).map(([n, d]) => [n, { b: new Map(d.blocks), s: new Map(d.bstates) }])),
+    dims: Object.fromEntries(Object.entries(dims).map(([n, d]) => [n, { b: new Map(d.blocks), s: new Map(d.bstates), e: ents(d) }])),
     dyn: new Map(worldDyn), clock: { ...clock }, now: absNow(),
   };
 }
-export function restoreWorld(snap) {
-  for (const [n, d] of Object.entries(dims)) { d.blocks = new Map(snap.dims[n].b); d.bstates = new Map(snap.dims[n].s); }
+/**
+ * Load a saved world again after a crash: blocks and the persistent entities in them come from `snap`;
+ * world dynamic properties and the clock from `levelSnap` (default: the same) - on a real server those are
+ * saved on a slower timer, so after a hard crash they can be older than the chunks.
+ */
+export function restoreWorld(snap, levelSnap = snap) {
+  for (const [n, d] of Object.entries(dims)) {
+    d.blocks = new Map(snap.dims[n].b); d.bstates = new Map(snap.dims[n].s);
+    for (const e of [...d.entities]) if (assets.persistent.has(e.typeId)) { e.isValid = false; d.entities.delete(e); }
+    for (const x of snap.dims[n].e ?? []) {
+      const e = new Entity(d, x.typeId, x.loc);
+      e.id = x.id; e.families = [...x.families]; e.invulnerable = true;
+      for (const [k, v] of x.dyn) e.dyn.set(k, v);
+      d.entities.add(e);
+    }
+  }
   worldDyn.clear();
-  for (const [k, v] of snap.dyn) worldDyn.set(k, v);
-  clock.abs = snap.now; clock.at = system.currentTick;
+  for (const [k, v] of levelSnap.dyn) worldDyn.set(k, v);
+  clock.abs = levelSnap.now; clock.at = system.currentTick;
 }
 export function getDimension(n = "overworld") { return dims[n]; }
 export function constructs(dim = "overworld") { return [...dims[dim].entities].filter((e) => e.typeId.startsWith("grimoire:")); }

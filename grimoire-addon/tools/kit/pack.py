@@ -286,6 +286,35 @@ class Pack:
         with open(os.path.join(out, f"{ident}.pkl"), "wb") as fh:
             cloudpickle.dump(d, fh)
 
+    # ------------------------------------------------------------------ marker
+    def marker(self, ident, display=None):
+        """An invisible, persistent bookkeeping entity: no model, never drawn, never despawns, cannot be hurt
+        or pushed.  It is saved with its chunk, which is what src/lib/ledger.ts relies on (family
+        grimoire_ledger, NOT grimoire_construct: the construct sweep on world load must leave it alone)."""
+        full = f"{NS}:{ident}"
+        _write(os.path.join(self.rp, "entity", f"{ident}.entity.json"),
+               {"format_version": "1.10.0", "minecraft:client_entity": {"description": {
+                   "identifier": full, "materials": {}, "textures": {}, "geometry": {}, "render_controllers": []}}})
+        _write(os.path.join(self.bp, "entities", f"{ident}.json"), {
+            "format_version": ENTITY_FORMAT,
+            "minecraft:entity": {
+                "description": {"identifier": full, "is_spawnable": False, "is_summonable": True, "is_experimental": False},
+                "components": {
+                    "minecraft:type_family": {"family": ["grimoire_ledger", "inanimate"]},
+                    "minecraft:collision_box": {"width": 0.1, "height": 0.1},
+                    "minecraft:health": {"value": 1, "max": 1},
+                    "minecraft:damage_sensor": {"triggers": [{"cause": "all", "deals_damage": "no"}]},
+                    "minecraft:physics": {"has_gravity": False, "has_collision": False},
+                    "minecraft:pushable": {"is_pushable": False, "is_pushable_by_piston": False},
+                    "minecraft:knockback_resistance": {"value": 1.0},
+                    "minecraft:fire_immune": {},
+                    "minecraft:persistent": {},
+                },
+            },
+        })
+        self.lang[f"entity.{full}.name"] = display or ident.replace("_", " ").title()
+        self.manifest[full] = {"kind": "marker"}
+
     # ------------------------------------------------------------------ fog
     def fog(self, ident, *, start, end, color, weather=None):
         """Write fogs/<name>.json: distance fog for the air (and rain / snow) around a player.

@@ -1,13 +1,15 @@
 import { Dimension, Vector3, world } from "@minecraft/server";
 import { CONFIG } from "../config/global";
+import { Ledger, Rec } from "./ledger";
 import { Scene } from "./scene";
 
 /**
  * Temporary blocks (invisible barriers for real collision, light blocks for real illumination).
  * Rules that keep worlds safe:
  *   - a block is only ever placed into AIR, and only removed if it is still the block we placed;
- *   - every placement is written to a world ledger, so a crash / quit mid-spell is repaired the
- *     next time the world loads (see restoreLedger);
+ *   - every placement is recorded before it happens on the chunk's ledger marker (src/lib/ledger.ts,
+ *     saved together with the chunk's blocks) and in a world ledger, so a crash / quit mid-spell is
+ *     repaired the next time the world (or that chunk) loads (see restoreLedger);
  *   - never placed inside a player's body.
  */
 export const BARRIER = "minecraft:barrier";
@@ -20,6 +22,7 @@ const KEY = "grim:tb";
 const CHUNK = 30000;
 
 const k = (d: string, x: number, y: number, z: number) => `${d}|${x}|${y}|${z}`;
+const recOf = (e: Entry): Rec => ({ x: e.x, y: e.y, z: e.z, o: "minecraft:air|", p: `${e.t}|` });
 
 function saveLedger(): void {
   dirty = false;
@@ -98,8 +101,10 @@ export class BlockSet {
           if (Math.abs(l.x - (x + 0.5)) < 0.85 && Math.abs(l.z - (z + 0.5)) < 0.85 && y >= Math.floor(l.y) - 0 && y <= Math.floor(l.y + 1.9)) return false;
         }
       }
+      const e: Entry = { d: this.scene.dimId, x, y, z, t: type };
+      if (!Ledger.write(dim, [recOf(e)])) return false;            // written ahead, or not placed at all
       b.setType(type);
-      live.set(key, { d: this.scene.dimId, x, y, z, t: type });
+      live.set(key, e);
       this.mine.add(key);
       dirty = true;
       return true;
@@ -114,7 +119,8 @@ export class BlockSet {
   private removeKey(key: string): void {
     const e = live.get(key);
     if (!e || !this.mine.has(key)) return;
-    if (clear(e)) live.delete(key);
+    if (clear(e)) { live.delete(key); Ledger.drop(this.scene.dim, [recOf(e)]); }
+    else Ledger.release(this.scene.dim, [recOf(e)]);             // not loaded: its chunk marker removes it later
     this.mine.delete(key);
     dirty = true;
   }

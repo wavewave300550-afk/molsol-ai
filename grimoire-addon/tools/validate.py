@@ -271,7 +271,16 @@ def main():
         if f"entity.{i}.name" not in lang:
             warn(f"{i}: no display name in en_US.lang")
         comps = bp_ents[i]["components"]
-        if "minecraft:transient" not in comps:
+        fam = comps.get("minecraft:type_family", {}).get("family", [])
+        if "grimoire_ledger" in fam:
+            # the block ledger marker must be saved with its chunk (src/lib/ledger.ts): persistent, never drawn
+            if "minecraft:transient" in comps or "minecraft:persistent" not in comps:
+                err(f"{i}: a ledger marker must be persistent and not transient")
+            if "grimoire_construct" in fam:
+                err(f"{i}: a ledger marker must not be a construct (the construct sweep would delete it)")
+            if rp_ents.get(i, {}).get("render_controllers"):
+                err(f"{i}: a ledger marker is never drawn")
+        elif "minecraft:transient" not in comps:
             warn(f"{i}: not transient (could persist after a crash)")
     for i in rp_ents:
         if i not in bp_ents:

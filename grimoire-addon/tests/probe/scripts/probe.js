@@ -1,4 +1,4 @@
-import { world, system, ItemStack, GameMode } from "@minecraft/server";
+import { world, system, ItemStack, GameMode, BlockPermutation, EasingType } from "@minecraft/server";
 import { spawnSimulatedPlayer } from "@minecraft/server-gametest";
 
 const BOOK = { dw: "grimoire:divine_word", dn: "grimoire:dream_nightmare", ed: "grimoire:elemental_dragon" };
@@ -9,6 +9,51 @@ let sim, busy = false, queue = [];
 const SEL = { dw: 0, dn: 0, ed: 0 };          // the add-on remembers the selected spell per book and player
 const NAME = "T" + (Date.now() % 100000);
 let BASE = { x: 0.5, z: 0.5 };
+
+/** Every block (type + states) of the domain around the caster: compared before / during / after a cast. */
+function snapshot(dim, cx, cy, cz, r = 24, dy0 = -6, dy1 = 8) {
+  const m = new Map();
+  for (let x = cx - r; x <= cx + r; x++) for (let z = cz - r; z <= cz + r; z++) for (let y = cy + dy0; y <= cy + dy1; y++) {
+    let v = "unloaded";
+    try {
+      const b = dim.getBlock({ x, y, z });
+      if (b) { const st = b.permutation.getAllStates(); v = b.typeId + (Object.keys(st).length ? JSON.stringify(st) : ""); }
+    } catch (e) { v = "err"; }
+    m.set(`${x},${y},${z}`, v);
+  }
+  return m;
+}
+function diff(a, b) {
+  let n = 0; const ex = [], kinds = {};
+  for (const [k, v] of a) {
+    const w = b.get(k);
+    if (w === v) continue;
+    n++;
+    const kk = (w ?? "?").replace("minecraft:", "").replace(/\{.*$/, "");
+    kinds[kk] = (kinds[kk] ?? 0) + 1;
+    if (ex.length < 6) ex.push([k, v, w]);
+  }
+  return { n, kinds, ex };
+}
+/** The engine's answer to the calls ED06's world helpers make, on a simulated player. */
+function apiCheck(p) {
+  const res = {};
+  const tryIt = (k, f) => { try { res[k] = f() ?? "ok"; } catch (e) { res[k] = "ERR " + String(e); } };
+  tryIt("fogPush", () => p.fogSettings.push("grimoire:ed6_fog_4", "probe"));
+  tryIt("fogTags", () => p.fogSettings.getTags().join("|"));
+  tryIt("fogRemove", () => p.fogSettings.remove("probe"));
+  tryIt("fogUnknown", () => p.fogSettings.push("grimoire:no_such_fog", "probe"));
+  tryIt("fogClean", () => p.fogSettings.remove("probe"));
+  tryIt("camSet", () => p.camera.setCamera("minecraft:free", { location: { x: p.location.x, y: p.location.y + 5, z: p.location.z - 4 },
+    facingLocation: p.location, easeOptions: { easeTime: 0.5, easeType: EasingType.InOutSine } }));
+  tryIt("camClear", () => p.camera.clear());
+  tryIt("inputCam", () => p.inputPermissions.isPermissionCategoryEnabled(1));
+  for (const id of ["pink_petals", "wildflowers", "leaf_litter"]) {
+    tryIt("perm_" + id, () => BlockPermutation.resolve("minecraft:" + id, { growth: 3, "minecraft:cardinal_direction": "south" }).getAllStates());
+  }
+  tryIt("time", () => [world.getTimeOfDay(), world.getAbsoluteTime(), world.gameRules.doDayLightCycle]);
+  return res;
+}
 
 function ground(dim, x, z) {
   try { const b = dim.getTopmostBlock({ x, z }); return b ? b.location.y + 1 : undefined; } catch (e) { return undefined; }
@@ -23,6 +68,62 @@ system.afterEvents.scriptEventReceive.subscribe((ev) => {
       pump();
     }
     if (ev.id === "probe:terrain") terrain();
+    if (ev.id === "probe:flatten") {
+      // put the superflat profile back round the base (test world only): bedrock, dirt, dirt, grass, air
+      const dim = world.getDimension("overworld");
+      const r = Number(ev.message || 26), cx = Math.floor(BASE.x), cz = Math.floor(BASE.z);
+      let n = 0;
+      for (let x = cx - r; x <= cx + r; x++) for (let z = cz - r; z <= cz + r; z++) for (let y = -64; y <= -50; y++) {
+        const want = y === -64 ? "minecraft:bedrock" : y < -61 ? "minecraft:dirt" : y === -61 ? "minecraft:grass_block" : "minecraft:air";
+        const b = dim.getBlock({ x, y, z });
+        if (b && (b.typeId !== want || Object.keys(b.permutation.getAllStates()).length)) { b.setType(want); n++; }
+      }
+      out({ k: "flatten", n });
+    }
+    if (ev.id === "probe:durable") {
+      // what survives a hard crash next to block changes: an entity's dynamic property, a world dynamic property
+      const dim = world.getDimension("overworld");
+      const gy = ground(dim, BASE.x, BASE.z);
+      const x0 = Math.floor(BASE.x) + 40, z0 = Math.floor(BASE.z) + 2;
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) dim.getBlock({ x: x0 + i, y: gy - 1, z: z0 + j }).setType("minecraft:moss_block");
+      const e = dim.spawnEntity("probe:keeper", { x: x0 + 0.5, y: gy, z: z0 + 0.5 });
+      const stamp = String(Date.now());
+      e.setDynamicProperty("ledger", "x".repeat(5000) + stamp);
+      e.addTag("probe_ledger");
+      world.setDynamicProperty("probe:ledger", stamp);
+      out({ k: "durable", stamp, at: [x0, gy - 1, z0] });
+    }
+    if (ev.id === "probe:durable_check") {
+      const dim = world.getDimension("overworld");
+      const gy = ground(dim, BASE.x, BASE.z);
+      const x0 = Math.floor(BASE.x) + 40, z0 = Math.floor(BASE.z) + 2;
+      let moss = 0;
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) if (dim.getBlock({ x: x0 + i, y: gy - 1, z: z0 + j })?.typeId === "minecraft:moss_block") moss++;
+      const ents = dim.getEntities({ tags: ["probe_ledger"] }).map((e) => [e.id, String(e.getDynamicProperty("ledger") ?? "").slice(5000)]);
+      out({ k: "durable_check", moss, ents, world: world.getDynamicProperty("probe:ledger") ?? null });
+      if (ev.message === "clean") {
+        for (const e of dim.getEntities({ tags: ["probe_ledger"] })) e.remove();
+        for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) dim.getBlock({ x: x0 + i, y: gy - 1, z: z0 + j }).setType("minecraft:grass_block");
+        world.setDynamicProperty("probe:ledger", undefined);
+      }
+    }
+    if (ev.id === "probe:hash") {
+      // every block of the domain round the base: compare before a cast and after a crash + reload
+      const dim = world.getDimension("overworld");
+      const gy = ground(dim, BASE.x, BASE.z);
+      const snap = snapshot(dim, Math.floor(BASE.x), gy, Math.floor(BASE.z));
+      let h = 2166136261, unl = 0;
+      const kinds = {};
+      for (const [k, v] of snap) {
+        if (v === "unloaded") unl++;
+        const t = v.replace("minecraft:", "").replace(/\{.*$/, "");
+        kinds[t] = (kinds[t] ?? 0) + 1;
+        for (const c of k + "=" + v + ";") { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
+      }
+      out({ k: "hash", label: ev.message, h: h.toString(16), cells: snap.size, unloaded: unl, gy, kinds,
+        abs: world.getAbsoluteTime(), tod: world.getTimeOfDay(), props: world.getDynamicPropertyIds().filter((k) => k.startsWith("grim:")),
+        markers: dim.getEntities({ type: "grimoire:ledger" }).length, constructs: dim.getEntities({ families: ["grimoire_construct"] }).length });
+    }
     if (ev.id === "probe:body" || ev.id === "probe:head" || ev.id === "probe:tgt") { const e = ev.sourceEntity; if (e) { ROT[e.id] = ROT[e.id] ?? {}; ROT[e.id][ev.id.slice(6)] = -180 + Number(ev.message) * 22.5 + 11.25; } }
     if (ev.id === "probe:rot") rotTest();
   } catch (e) { out({ k: "err", e: String(e), s: e?.stack }); }
@@ -92,6 +193,15 @@ function run(id, mode) {
   }
   const rec = { id, t: 0, release: 0, last: {}, seen: false, quiet: 0 };
   out({ k: "start", id, mode, base: [BASE.x, gy, BASE.z] });
+  const world6 = id === "ed06";
+  const bx = Math.floor(BASE.x), bz = Math.floor(BASE.z);
+  let before;
+  if (world6) {
+    out({ k: "api", r: apiCheck(sim) });
+    before = snapshot(dim, bx, gy, bz);
+    out({ k: "snap", when: "before", cells: before.size, abs: world.getAbsoluteTime() });
+  }
+  const abs0 = world.getAbsoluteTime();
   const events = [];
   const subs = [
     world.afterEvents.itemStartUse.subscribe((e) => { if (e.source.id === sim.id) out({ k: "ev", t: rec.t, e: "itemStartUse", item: e.itemStack?.typeId, dur: e.useDuration }); }),
@@ -130,6 +240,13 @@ function run(id, mode) {
       }
       for (const i of Object.keys(rec.last)) if (!(i in cur)) out({ k: "x", t, i });
       rec.last = cur;
+      if (world6 && t % 20 === 0) {
+        let fog = "?", inp = "?";
+        try { fog = sim.fogSettings.getTags().join("|"); } catch (e) { fog = "ERR " + e; }
+        try { inp = [1, 4, 5, 6].map((c) => (sim.inputPermissions.isPermissionCategoryEnabled(c) ? 1 : 0)).join(""); } catch (e) { inp = "ERR " + e; }
+        out({ k: "w", t, tod: world.getTimeOfDay(), fog, inp, hp: Math.round(sim.getComponent("minecraft:health")?.currentValue ?? -1) });
+      }
+      if (world6 && t === relAt + 420) { const d = diff(before, snapshot(dim, bx, gy, bz)); out({ k: "snap", when: "mid", t, n: d.n, kinds: d.kinds, ex: d.ex }); }
       if (t % 5 === 0) {
         const pl = sim.location, pr = sim.getRotation();
         out({ k: "p", t, c: [r3(pl.x), r3(pl.y), r3(pl.z), r3(pr.y), r3(pr.x)], m: mobs.map((m) => m.isValid ? [r3(m.location.x), r3(m.location.y), r3(m.location.z), 1] : [0, 0, 0, 0]) });
@@ -142,6 +259,12 @@ function run(id, mode) {
         let hp = [];
         for (const m of mobs) { try { if (m.isValid) { hp.push(Math.round(m.getComponent("minecraft:health").currentValue)); m.remove(); } else hp.push(-1); } catch { hp.push(-2); } }
         out({ k: "end", id, ticks: t, release: rec.release, seen: rec.seen, hp, cd: sim.getDynamicProperty("grim:cd") });
+        if (world6) {
+          const d = diff(before, snapshot(dim, bx, gy, bz));
+          let fog = "?"; try { fog = sim.fogSettings.getTags().join("|"); } catch (e) { fog = "ERR " + e; }
+          out({ k: "snap", when: "after", n: d.n, kinds: d.kinds, ex: d.ex, clockDrift: world.getAbsoluteTime() - abs0 - t,
+            fog, ledger: world.getDynamicPropertyIds().filter((k) => k.startsWith("grim:")) });
+        }
         try { sim.setDynamicProperty("grim:cd", undefined); sim.setDynamicProperty("grim:sel", undefined); } catch {}
         busy = false;
         system.runTimeout(pump, 40);

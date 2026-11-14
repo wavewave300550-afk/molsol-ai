@@ -29,3 +29,12 @@ python3 tools/scene.py dn02 --real --view wide
 ```
 
 What the server cannot show is anything the client draws: models, textures, the held book.
+
+Crash safety (ED06's living ground and every spell's temporary blocks):
+
+```
+scriptevent probe:flatten 30         # test world only: superflat profile back round the base
+scriptevent probe:hash pristine      # hash of every block (type + states) of the domain
+scriptevent probe:run ed06           # then kill -9 the server mid-cast, start it again, and:
+scriptevent probe:hash after         # must equal the pristine hash; markers 0, constructs 0
+```

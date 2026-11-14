@@ -78,7 +78,7 @@ var RUNTIME = CONFIG;
 var VERSION = "1.2.0";
 
 // src/main.ts
-import { CommandPermissionLevel, CustomCommandStatus, ItemStack as ItemStack2, Player as Player6, system as system6, world as world7 } from "@minecraft/server";
+import { CommandPermissionLevel, CustomCommandStatus, ItemStack as ItemStack2, Player as Player6, system as system7, world as world8 } from "@minecraft/server";
 
 // src/core/input.ts
 import { EquipmentSlot, system, world as world2 } from "@minecraft/server";
@@ -1572,7 +1572,213 @@ function dissolveProjectiles(scene, center, radius) {
 }
 
 // src/lib/tempblocks.ts
-import { world as world4 } from "@minecraft/server";
+import { world as world5 } from "@minecraft/server";
+
+// src/lib/ledger.ts
+import { system as system4, world as world4 } from "@minecraft/server";
+var LEDGER_ENTITY = "grimoire:ledger";
+var PARTS = 4;
+var PART_LEN = 3e4;
+var chunks = /* @__PURE__ */ new Map();
+var ckey = (dimId, cx, cz) => `${dimId}|${cx}|${cz}`;
+var rkey = (r) => `${r.x}|${r.y}|${r.z}`;
+var restorer;
+var warned2 = false;
+function groupByChunk(dim, recs) {
+  const out = /* @__PURE__ */ new Map();
+  for (const r of recs) {
+    const cx = r.x >> 4, cz = r.z >> 4, k2 = ckey(dim.id, cx, cz);
+    let g = out.get(k2);
+    if (!g) {
+      g = { cx, cz, recs: [] };
+      out.set(k2, g);
+    }
+    g.recs.push(r);
+  }
+  return out;
+}
+function encode(c) {
+  const pal = [], idx = /* @__PURE__ */ new Map();
+  const ix = (s) => {
+    let i = idx.get(s);
+    if (i === void 0) {
+      i = pal.length;
+      pal.push(s);
+      idx.set(s, i);
+    }
+    return i;
+  };
+  const e = [];
+  for (const r of c.recs.values()) e.push(`${r.x - c.cx * 16},${r.y},${r.z - c.cz * 16},${ix(r.o)},${ix(r.p)}`);
+  return JSON.stringify({ v: 1, cx: c.cx, cz: c.cz, pal, e: e.join(";") });
+}
+function decode(s) {
+  try {
+    const j = JSON.parse(s);
+    const recs = [];
+    for (const t of (j.e ?? "").split(";")) {
+      const f = t.split(",").map(Number);
+      if (f.length !== 5 || f.some((n) => !Number.isFinite(n)) || !j.pal[f[3]] || !j.pal[f[4]]) continue;
+      recs.push({ x: j.cx * 16 + f[0], y: f[1], z: j.cz * 16 + f[2], o: j.pal[f[3]], p: j.pal[f[4]] });
+    }
+    return { cx: j.cx, cz: j.cz, recs };
+  } catch {
+    return void 0;
+  }
+}
+function readMarker(e) {
+  let s = "";
+  for (let i = 0; i < PARTS; i++) {
+    const p = e.getDynamicProperty(`gl${i}`);
+    if (typeof p !== "string") break;
+    s += p;
+  }
+  return s ? decode(s) : void 0;
+}
+function writeMarker(e, s) {
+  if (s.length > PARTS * PART_LEN) throw new Error("chunk ledger full");
+  let i = 0;
+  for (let off = 0; off < s.length; off += PART_LEN, i++) e.setDynamicProperty(`gl${i}`, s.slice(off, off + PART_LEN));
+  for (; i < PARTS; i++) if (e.getDynamicProperty(`gl${i}`) !== void 0) e.setDynamicProperty(`gl${i}`, void 0);
+}
+function markerOf(c) {
+  if (!c.id) return void 0;
+  try {
+    const e = world4.getEntity(c.id);
+    return e?.isValid ? e : void 0;
+  } catch {
+    return void 0;
+  }
+}
+function sync(k2, c) {
+  let e = markerOf(c);
+  if (!c.recs.size) {
+    if (e) e.remove();
+    chunks.delete(k2);
+    return;
+  }
+  if (!e) {
+    let y = 0;
+    for (const r of c.recs.values()) {
+      y = r.y + 1;
+      break;
+    }
+    const hr = c.dim.heightRange;
+    y = Math.min(hr.max - 2, Math.max(hr.min + 1, y));
+    e = c.dim.spawnEntity(LEDGER_ENTITY, { x: c.cx * 16 + 8, y, z: c.cz * 16 + 8 });
+    c.id = e.id;
+  }
+  writeMarker(e, encode(c));
+}
+var Ledger = {
+  /**
+   * Record blocks before they change (write-ahead).  False when the record could not be written:
+   * then nothing is recorded and the caller must not change those blocks.
+   */
+  write(dim, recs) {
+    const touched = [];
+    for (const [k2, g] of groupByChunk(dim, recs)) {
+      let c = chunks.get(k2);
+      if (!c) {
+        c = { dim, cx: g.cx, cz: g.cz, recs: /* @__PURE__ */ new Map() };
+        chunks.set(k2, c);
+      }
+      for (const r of g.recs) c.recs.set(rkey(r), r);
+      touched.push([k2, c, g.recs]);
+    }
+    try {
+      for (const [k2, c] of touched) sync(k2, c);
+      return true;
+    } catch (err) {
+      for (const [k2, c, rs] of touched) {
+        for (const r of rs) c.recs.delete(rkey(r));
+        try {
+          sync(k2, c);
+        } catch {
+        }
+      }
+      if (!warned2) {
+        warned2 = true;
+        console.warn(`[grimoire] block ledger could not be written (changes skipped): ${err}`);
+      }
+      return false;
+    }
+  },
+  /** These blocks are back as they were: forget them (a chunk's marker goes with its last record). */
+  drop(dim, recs) {
+    for (const [k2, g] of groupByChunk(dim, recs)) {
+      const c = chunks.get(k2);
+      if (!c) continue;
+      for (const r of g.recs) c.recs.delete(rkey(r));
+      try {
+        sync(k2, c);
+      } catch {
+      }
+    }
+  },
+  /**
+   * The spell can no longer put these back now (their chunk is not loaded): let go of them.  Their
+   * marker still lists them, and restores them when the chunk loads.
+   */
+  release(dim, recs) {
+    for (const k2 of groupByChunk(dim, recs).keys()) chunks.delete(k2);
+  },
+  /** Blocks a marker restores when it loads unheld are put back by `fn` (it returns those it could not). */
+  onOrphans(fn) {
+    restorer = fn;
+  },
+  /** A marker entity loaded or was found: restore its blocks unless a running spell holds its chunk. */
+  adopt(e) {
+    try {
+      if (!e.isValid || e.typeId !== LEDGER_ENTITY) return;
+      const m = readMarker(e);
+      const dim = e.dimension;
+      if (!m) {
+        e.remove();
+        return;
+      }
+      const k2 = ckey(dim.id, m.cx, m.cz);
+      const held = chunks.get(k2);
+      if (held) {
+        held.id = e.id;
+        return;
+      }
+      const left = restorer ? restorer(dim, m.recs) : m.recs;
+      if (!left.length) {
+        e.remove();
+        return;
+      }
+      if (left.length !== m.recs.length) {
+        const c = { dim, cx: m.cx, cz: m.cz, id: e.id, recs: new Map(left.map((r) => [rkey(r), r])) };
+        writeMarker(e, encode(c));
+      }
+    } catch (err) {
+      console.warn(`[grimoire] block ledger marker: ${err}`);
+    }
+  },
+  /** Every marker in loaded chunks (world load, cleanup); the rest arrive through entityLoad. */
+  scan() {
+    for (const id of ["overworld", "nether", "the_end"]) {
+      try {
+        for (const e of world4.getDimension(id).getEntities({ type: LEDGER_ENTITY })) Ledger.adopt(e);
+      } catch {
+      }
+    }
+  },
+  /** Markers that load with their chunk later (a player walks back to where a spell was cut short). */
+  install() {
+    world4.afterEvents.entityLoad.subscribe((ev) => {
+      const e = ev.entity;
+      if (e.typeId === LEDGER_ENTITY) system4.run(() => Ledger.adopt(e));
+    });
+  },
+  /** Chunks a running spell holds (for tests and diagnostics). */
+  heldChunks() {
+    return chunks.size;
+  }
+};
+
+// src/lib/tempblocks.ts
 var BARRIER = "minecraft:barrier";
 var LIGHT = "minecraft:light_block_15";
 var live = /* @__PURE__ */ new Map();
@@ -1580,14 +1786,15 @@ var dirty = false;
 var KEY = "grim:tb";
 var CHUNK = 3e4;
 var k = (d, x, y, z) => `${d}|${x}|${y}|${z}`;
+var recOf = (e) => ({ x: e.x, y: e.y, z: e.z, o: "minecraft:air|", p: `${e.t}|` });
 function saveLedger() {
   dirty = false;
   const parts = [];
   for (const e of live.values()) parts.push(`${e.d},${e.x},${e.y},${e.z},${e.t}`);
   const s = parts.join(";");
   let i = 0;
-  for (let off = 0; off < s.length || i === 0; off += CHUNK, i++) world4.setDynamicProperty(`${KEY}${i}`, s.slice(off, off + CHUNK));
-  for (; i < 8; i++) if (world4.getDynamicProperty(`${KEY}${i}`) !== void 0) world4.setDynamicProperty(`${KEY}${i}`, void 0);
+  for (let off = 0; off < s.length || i === 0; off += CHUNK, i++) world5.setDynamicProperty(`${KEY}${i}`, s.slice(off, off + CHUNK));
+  for (; i < 8; i++) if (world5.getDynamicProperty(`${KEY}${i}`) !== void 0) world5.setDynamicProperty(`${KEY}${i}`, void 0);
 }
 function flushLedger() {
   if (dirty) {
@@ -1601,7 +1808,7 @@ function flushLedger() {
 function restoreLedger() {
   let s = "";
   for (let i = 0; i < 8; i++) {
-    const p = world4.getDynamicProperty(`${KEY}${i}`);
+    const p = world5.getDynamicProperty(`${KEY}${i}`);
     if (typeof p === "string") s += p;
   }
   if (!s) return;
@@ -1629,7 +1836,7 @@ function retryOrphans(owned) {
 }
 function clear(e) {
   try {
-    const b = world4.getDimension(e.d).getBlock({ x: e.x, y: e.y, z: e.z });
+    const b = world5.getDimension(e.d).getBlock({ x: e.x, y: e.y, z: e.z });
     if (!b) return false;
     if (b.typeId === e.t) b.setType("minecraft:air");
     return true;
@@ -1664,8 +1871,10 @@ var BlockSet = class {
           if (Math.abs(l.x - (x + 0.5)) < 0.85 && Math.abs(l.z - (z + 0.5)) < 0.85 && y >= Math.floor(l.y) - 0 && y <= Math.floor(l.y + 1.9)) return false;
         }
       }
+      const e = { d: this.scene.dimId, x, y, z, t: type };
+      if (!Ledger.write(dim, [recOf(e)])) return false;
       b.setType(type);
-      live.set(key2, { d: this.scene.dimId, x, y, z, t: type });
+      live.set(key2, e);
       this.mine.add(key2);
       dirty = true;
       return true;
@@ -1680,7 +1889,10 @@ var BlockSet = class {
   removeKey(key2) {
     const e = live.get(key2);
     if (!e || !this.mine.has(key2)) return;
-    if (clear(e)) live.delete(key2);
+    if (clear(e)) {
+      live.delete(key2);
+      Ledger.drop(this.scene.dim, [recOf(e)]);
+    } else Ledger.release(this.scene.dim, [recOf(e)]);
     this.mine.delete(key2);
     dirty = true;
   }
@@ -1713,7 +1925,7 @@ function anySetOwns(key2) {
 }
 
 // src/lib/terraform.ts
-import { BlockPermutation, system as system4, world as world5 } from "@minecraft/server";
+import { BlockPermutation, system as system5, world as world6 } from "@minecraft/server";
 var REPLACEABLE = /* @__PURE__ */ new Set([
   "minecraft:grass_block",
   "minecraft:dirt",
@@ -1785,78 +1997,47 @@ var NATURAL_RE = /_leaves$|_log$|^minecraft:(water|flowing_water|lava|flowing_la
 var LIQUID_RE = /water|lava/;
 var FALLING = /* @__PURE__ */ new Set(["minecraft:sand", "minecraft:red_sand", "minecraft:gravel"]);
 var TEMP_RE = /^minecraft:(barrier|light_block_\d+)$/;
-var KEY2 = "grim:gl";
-var CHUNK2 = 3e4;
-var MAX_CHUNKS = 8;
 var AIR = "minecraft:air";
 var DIMS = { "minecraft:overworld": "o", "minecraft:nether": "n", "minecraft:the_end": "e" };
 var DIM_IDS = { o: "minecraft:overworld", n: "minecraft:nether", e: "minecraft:the_end" };
 var live2 = /* @__PURE__ */ new Map();
-var palette = [];
-var palIndex = /* @__PURE__ */ new Map();
-var dirty2 = false;
 var pulseTick = -1;
 function takePulse() {
-  if (system4.currentTick === pulseTick) return false;
-  pulseTick = system4.currentTick;
+  if (system5.currentTick === pulseTick) return false;
+  pulseTick = system5.currentTick;
   return true;
 }
 var key = (d, x, y, z) => `${d}|${x}|${y}|${z}`;
 var keyOf = (e) => key(e.d, e.x, e.y, e.z);
-function pal(type, states2 = {}) {
+function spec(type, states2 = {}) {
   const ks = Object.keys(states2).sort();
-  const s = `${type}|${ks.length ? JSON.stringify(Object.fromEntries(ks.map((k2) => [k2, states2[k2]]))) : ""}`;
-  let i = palIndex.get(s);
-  if (i === void 0) {
-    i = palette.length;
-    palette.push(s);
-    palIndex.set(s, i);
+  return `${type}|${ks.length ? JSON.stringify(Object.fromEntries(ks.map((k2) => [k2, states2[k2]]))) : ""}`;
+}
+function unspec(s) {
+  const bar = s.indexOf("|");
+  if (bar < 0) return { t: s, s: {} };
+  const js = s.slice(bar + 1);
+  try {
+    return { t: s.slice(0, bar), s: js ? JSON.parse(js) : {} };
+  } catch {
+    return { t: s.slice(0, bar), s: {} };
   }
-  return i;
 }
-function unpal(i) {
-  const e = palette[i] ?? `${AIR}|`;
-  const bar = e.indexOf("|");
-  const js = e.slice(bar + 1);
-  return { t: e.slice(0, bar), s: js ? JSON.parse(js) : {} };
-}
-var typeOf = (i) => unpal(i).t;
+var typeOf = (s) => unspec(s).t;
 var isGround = (e) => REPLACEABLE.has(typeOf(e.o));
-function save() {
-  dirty2 = false;
-  const parts = [];
-  for (const e of live2.values()) parts.push(`${e.d},${e.x},${e.y},${e.z},${e.o},${e.p}`);
-  const data = parts.join(";");
-  if (!data) {
-    for (const id of world5.getDynamicPropertyIds()) if (id === KEY2 || id.startsWith(`${KEY2}.`)) world5.setDynamicProperty(id, void 0);
-    palette = [];
-    palIndex = /* @__PURE__ */ new Map();
-    return;
-  }
-  if (data.length > CHUNK2 * MAX_CHUNKS) throw new Error("ground ledger full");
-  world5.setDynamicProperty(KEY2, JSON.stringify({ v: 2, pal: palette }));
-  let i = 0;
-  for (let off = 0; off < data.length; off += CHUNK2, i++) world5.setDynamicProperty(`${KEY2}.${i}`, data.slice(off, off + CHUNK2));
-  for (; i < MAX_CHUNKS; i++) if (world5.getDynamicProperty(`${KEY2}.${i}`) !== void 0) world5.setDynamicProperty(`${KEY2}.${i}`, void 0);
-}
+var recOf2 = (e) => ({ x: e.x, y: e.y, z: e.z, o: e.o, p: e.p });
+var dimOf = (d) => world6.getDimension(DIM_IDS[d]);
 function flushGround() {
-  if (dirty2) {
-    try {
-      save();
-    } catch (e) {
-      console.warn(`[grimoire] ground ledger: ${e}`);
-    }
-  }
 }
 function blockAt(e) {
   try {
-    return world5.getDimension(DIM_IDS[e.d]).getBlock({ x: e.x, y: e.y, z: e.z });
+    return dimOf(e.d).getBlock({ x: e.x, y: e.y, z: e.z });
   } catch {
     return void 0;
   }
 }
-function setTo(b, i) {
-  const { t, s } = unpal(i);
+function setTo(b, sp) {
+  const { t, s } = unspec(sp);
   if (Object.keys(s).length) b.setPermutation(BlockPermutation.resolve(t, s));
   else b.setType(t);
 }
@@ -1908,52 +2089,31 @@ function restoreEntries(list) {
   }
   return failed;
 }
-function load2() {
-  const meta = world5.getDynamicProperty(KEY2);
-  if (typeof meta !== "string") return [];
-  try {
-    const m = JSON.parse(meta);
-    palette = Array.isArray(m.pal) ? m.pal : [];
-  } catch {
-    palette = [];
+function restoreOrphans(dim, recs) {
+  const d = DIMS[dim.id] ?? "o";
+  const entries = recs.map((r) => ({ d, x: r.x, y: r.y, z: r.z, o: r.o, p: r.p }));
+  const failed = restoreEntries(entries);
+  const left = [];
+  for (const e of entries) {
+    if (failed.has(e)) {
+      left.push(recOf2(e));
+      continue;
+    }
+    const held = live2.get(keyOf(e));
+    if (held && !held.owner) live2.delete(keyOf(e));
   }
-  palIndex = new Map(palette.map((s2, i) => [s2, i]));
-  let s = "";
-  for (let i = 0; i < MAX_CHUNKS; i++) {
-    const p = world5.getDynamicProperty(`${KEY2}.${i}`);
-    if (typeof p === "string") s += p;
-  }
-  const out = [];
-  for (const rec of s.split(";")) {
-    const f = rec.split(",");
-    if (f.length !== 6 || !DIM_IDS[f[0]]) continue;
-    const [x, y, z, o, p] = f.slice(1).map(Number);
-    if ([x, y, z, o, p].some((n) => !Number.isFinite(n))) continue;
-    out.push({ d: f[0], x, y, z, o, p });
-  }
-  return out;
+  return left;
 }
 function restoreGround() {
-  if (live2.size) {
-    retryGround();
-    return;
-  }
-  const entries = load2();
-  if (!entries.length) {
-    if (palette.length) dirty2 = true;
-    return;
-  }
-  const failed = restoreEntries(entries);
-  for (const e of failed) live2.set(keyOf(e), e);
-  dirty2 = true;
-  if (failed.size) console.log(`[grimoire] ${failed.size} ground blocks are in unloaded chunks; they will be restored when loaded.`);
+  retryGround();
 }
 function retryGround() {
+  Ledger.scan();
   const orphans = [...live2.values()].filter((e) => !e.owner);
   if (!orphans.length) return;
   const failed = restoreEntries(orphans);
-  for (const e of orphans) if (!failed.has(e)) live2.delete(keyOf(e));
-  if (failed.size !== orphans.length) dirty2 = true;
+  const done = orphans.filter((e) => !failed.has(e));
+  for (const e of done) live2.delete(keyOf(e));
 }
 function claimed(dimId, loc) {
   if (!live2.size) return false;
@@ -1963,14 +2123,19 @@ var guarded = false;
 function installGroundGuards() {
   if (guarded) return;
   guarded = true;
+  Ledger.onOrphans(restoreOrphans);
   try {
-    world5.beforeEvents.playerBreakBlock.subscribe((ev) => {
+    Ledger.install();
+  } catch {
+  }
+  try {
+    world6.beforeEvents.playerBreakBlock.subscribe((ev) => {
       if (claimed(ev.block.dimension.id, ev.block.location)) ev.cancel = true;
     });
   } catch {
   }
   try {
-    world5.beforeEvents.explosion.subscribe((ev) => {
+    world6.beforeEvents.explosion.subscribe((ev) => {
       if (!live2.size) return;
       const blocks = ev.getImpactedBlocks();
       const keep = blocks.filter((b) => !claimed(b.dimension.id, b.location));
@@ -2046,7 +2211,7 @@ var GroundSet = class {
       }
     }
     try {
-      system4.runJob(job());
+      system5.runJob(job());
     } catch {
       this.ready = true;
     }
@@ -2123,9 +2288,7 @@ var GroundSet = class {
       if (e && e.owner === this && typeOf(e.p) !== AIR) cells.push(e);
     }
     if (!cells.length) return;
-    const failed = restoreEntries(cells);
-    for (const e of cells) if (!failed.has(e)) live2.delete(keyOf(e));
-    dirty2 = true;
+    this.settle(cells, restoreEntries(cells));
   }
   /** Put back everything now (scene end, caster gone): one tick. */
   restoreNow() {
@@ -2186,13 +2349,13 @@ var GroundSet = class {
         const plant = change.plant && !cell.wet ? change.plant : void 0;
         const upTo = plant ?? (aType !== AIR && change.ground ? AIR : void 0);
         if (upTo !== void 0) {
-          const e = { d: this.d, x: cell.x, y: cell.y + 1, z: cell.z, o: pal(aType, a.permutation.getAllStates()), p: pal(upTo, plant ? change.plantStates : void 0), owner: this };
+          const e = { d: this.d, x: cell.x, y: cell.y + 1, z: cell.z, o: spec(aType, a.permutation.getAllStates()), p: spec(upTo, plant ? change.plantStates : void 0), owner: this };
           live2.set(ak, e);
           budget2--;
           todo.push({ e, b: a, to: e.p, plant: true });
         }
         if (change.ground) {
-          const e = { d: this.d, x: cell.x, y: cell.y, z: cell.z, o: pal(g.typeId, g.permutation.getAllStates()), p: pal(change.ground, change.states), owner: this };
+          const e = { d: this.d, x: cell.x, y: cell.y, z: cell.z, o: spec(g.typeId, g.permutation.getAllStates()), p: spec(change.ground, change.states), owner: this };
           live2.set(gk, e);
           budget2--;
           todo.push({ e, b: g, to: e.p, plant: false });
@@ -2201,11 +2364,8 @@ var GroundSet = class {
       }
     }
     if (!todo.length) return;
-    try {
-      save();
-    } catch (err) {
+    if (!Ledger.write(dim, todo.map((t) => recOf2(t.e)))) {
       for (const t of todo) live2.delete(keyOf(t.e));
-      console.warn(`[grimoire] ground ledger: ${err}`);
       return;
     }
     const order = [
@@ -2213,14 +2373,16 @@ var GroundSet = class {
       ...todo.filter((t) => !t.plant),
       ...todo.filter((t) => t.plant && typeOf(t.to) !== AIR)
     ];
+    const undone = [];
     for (const t of order) {
       try {
         setTo(t.b, t.to);
       } catch {
         live2.delete(keyOf(t.e));
-        dirty2 = true;
+        undone.push(recOf2(t.e));
       }
     }
+    if (undone.length) Ledger.drop(dim, undone);
   }
   restoreBatch(batch) {
     const cells = [];
@@ -2231,12 +2393,23 @@ var GroundSet = class {
       }
     }
     if (!cells.length) return;
-    const failed = restoreEntries(cells);
+    this.settle(cells, restoreEntries(cells));
+  }
+  /** After a restore: forget the cells that are back; let go of those out of reach (their marker keeps them). */
+  settle(cells, failed) {
+    const back = [], away = [];
     for (const e of cells) {
-      if (failed.has(e)) e.owner = void 0;
-      else live2.delete(keyOf(e));
+      if (failed.has(e)) {
+        e.owner = void 0;
+        away.push(recOf2(e));
+      } else {
+        live2.delete(keyOf(e));
+        back.push(recOf2(e));
+      }
     }
-    dirty2 = true;
+    const dim = this.scene.dim;
+    if (back.length) Ledger.drop(dim, back);
+    if (away.length) Ledger.release(dim, away);
   }
 };
 function sweep(list, start) {
@@ -2267,10 +2440,16 @@ function groundFor(scene) {
 }
 
 // src/lib/atmos.ts
-import { world as world6 } from "@minecraft/server";
+import { world as world7 } from "@minecraft/server";
 var FOG_TAG = "grimoire_ed6";
 var FOG_FLAG = "grim:fog";
 var TOD_KEY = "grim:tod";
+var told = /* @__PURE__ */ new Set();
+function once(key2, msg) {
+  if (told.has(key2)) return;
+  told.add(key2);
+  console.warn(`[grimoire] ${msg}`);
+}
 var SceneFog = class {
   constructor(scene) {
     this.scene = scene;
@@ -2296,7 +2475,8 @@ var SceneFog = class {
       p.fogSettings.push(id, FOG_TAG);
       p.setDynamicProperty(FOG_FLAG, 1);
       this.players.add(p);
-    } catch {
+    } catch (e) {
+      if (p.isValid) once(`fog.${id}`, `spell fog ${id} could not be applied: ${e}`);
     }
   }
   near(radius) {
@@ -2327,13 +2507,13 @@ var ease = (p) => p <= 0 ? 0 : p >= 1 ? 1 : p * p * (3 - 2 * p);
 var natural = (l) => l.abs0 + (l.cycle ? l.t : 0);
 function setAbs(l, v2) {
   const a = Math.max(0, Math.round(v2));
-  world6.setAbsoluteTime(a);
+  world7.setAbsoluteTime(a);
   l.lastSet = a;
   l.lastAt = l.t;
 }
 function record(l) {
   try {
-    world6.setDynamicProperty(TOD_KEY, l ? JSON.stringify({ a: l.abs0, c: l.cycle, e: l.t }) : void 0);
+    world7.setDynamicProperty(TOD_KEY, l ? JSON.stringify({ a: l.abs0, c: l.cycle, e: l.t }) : void 0);
   } catch {
   }
 }
@@ -2355,7 +2535,7 @@ function mayChangeTime(caster) {
   if (CONFIG.atmosphere.time === "off") return false;
   try {
     if (caster.dimension.id !== "minecraft:overworld") return false;
-    for (const p of world6.getAllPlayers()) {
+    for (const p of world7.getAllPlayers()) {
       if (p.id === caster.id) continue;
       if (p.dimension.id !== caster.dimension.id) return false;
       const d = Math.hypot(p.location.x - caster.location.x, p.location.z - caster.location.z);
@@ -2370,14 +2550,14 @@ function leaseTime(scene, target, inTicks) {
   if (!mayChangeTime(scene.caster)) return false;
   try {
     if (!lease) {
-      const abs0 = world6.getAbsoluteTime();
-      const cycle = world6.gameRules.doDayLightCycle;
+      const abs0 = world7.getAbsoluteTime();
+      const cycle = world7.gameRules.doDayLightCycle;
       let delta = shortest(abs0 % 24e3, target);
       if (abs0 + delta < 0) delta += 24e3;
       lease = { holders: /* @__PURE__ */ new Set(), abs0, cycle, t: 0, phase: "in", from: abs0, to: abs0 + delta, k: 0, n: Math.max(1, inTicks), lastSet: abs0, lastAt: 0 };
       record(lease);
     } else if (lease.phase === "out") {
-      const cur = world6.getAbsoluteTime();
+      const cur = world7.getAbsoluteTime();
       const delta = shortest(cur % 24e3, target);
       lease.phase = "in";
       lease.from = cur;
@@ -2401,7 +2581,7 @@ function releaseTime(scene, outTicks) {
   if (!l || !l.holders.delete(scene)) return;
   if (l.holders.size) return;
   try {
-    const cur = world6.getAbsoluteTime();
+    const cur = world7.getAbsoluteTime();
     l.phase = "out";
     l.from = cur;
     l.k = 0;
@@ -2419,7 +2599,7 @@ function tickAtmos() {
   if (!l) return;
   try {
     const expect = l.lastSet + (l.cycle ? l.t - l.lastAt : 0);
-    if (Math.abs(world6.getAbsoluteTime() - expect) > 40) {
+    if (Math.abs(world7.getAbsoluteTime() - expect) > 40) {
       finish(false);
       return;
     }
@@ -2444,14 +2624,14 @@ function tickAtmos() {
   }
 }
 function restoreTime() {
-  const s = world6.getDynamicProperty(TOD_KEY);
+  const s = world7.getDynamicProperty(TOD_KEY);
   if (typeof s !== "string") return;
   try {
     const r = JSON.parse(s);
-    if (Number.isFinite(r.a) && Number.isFinite(r.e)) world6.setAbsoluteTime(Math.max(0, Math.round(r.a + (r.c ? r.e : 0))));
+    if (Number.isFinite(r.a) && Number.isFinite(r.e)) world7.setAbsoluteTime(Math.max(0, Math.round(r.a + (r.c ? r.e : 0))));
   } catch {
   }
-  world6.setDynamicProperty(TOD_KEY, void 0);
+  world7.setDynamicProperty(TOD_KEY, void 0);
 }
 function recoverFog(p) {
   try {
@@ -2461,8 +2641,9 @@ function recoverFog(p) {
 }
 
 // src/lib/cinema.ts
-import { EasingType, InputPermissionCategory, system as system5 } from "@minecraft/server";
+import { EasingType, InputPermissionCategory, system as system6 } from "@minecraft/server";
 var CAM_FLAG = "grim:cam";
+var toldCamera = false;
 var LOCK = [
   InputPermissionCategory.Camera,
   InputPermissionCategory.LateralMovement,
@@ -2524,14 +2705,18 @@ var Cinema = class {
         facingLocation: first.look,
         easeOptions: { easeTime: enter / 20, easeType: EasingType.InOutSine }
       });
-    } catch {
+    } catch (e) {
       this.restoreInputs(p, locked);
+      if (!toldCamera && p.isValid) {
+        toldCamera = true;
+        console.warn(`[grimoire] camera shot skipped: ${e}`);
+      }
       return false;
     }
     this.shots++;
     const ward = addWard({ scene: this.scene, protects: (e) => e.id === p.id, factor: 0 });
     const t0 = this.scene.tick + enter;
-    const watchdog = system5.runTimeout(() => this.handBack(), enter + duration + exit + 20);
+    const watchdog = system6.runTimeout(() => this.handBack(), enter + duration + exit + 20);
     this.live = { ward, locked, watchdog, until: t0 + duration };
     for (let a = 0; a < duration; a += step) {
       const b = Math.min(a + step, duration);
@@ -2575,7 +2760,7 @@ var Cinema = class {
     if (!l) return;
     this.live = void 0;
     try {
-      system5.clearRun(l.watchdog);
+      system6.clearRun(l.watchdog);
     } catch {
     }
     removeWard(l.ward);
@@ -11989,17 +12174,17 @@ var ed05_buried_kingdoms_default = defineSpell("ed05", ({ caster, scene, aim }) 
     scene.after(ticks, () => t.state(3));
     scene.after(ticks + 8, () => scene.despawn(t));
   }
-  function spikeAt(p, dmg, radius, lift, once, holdS = 1.5, size = 1) {
+  function spikeAt(p, dmg, radius, lift, once2, holdS = 1.5, size = 1) {
     const g = gnd(p);
     const s = scene.spawn(P5.spike.actor, g, { yaw: ti++ * 67 % 360, size, state: P5.spike.states.rise });
     sound(dim, "ed5_spike", g, 0.75, 0.88 + ti % 5 * 0.06);
     particle(dim, "ed5_rock", up(g, 0.4));
     if (ti % 2) particle(dim, "ed5_moss", up(g, 1.2));
-    scene.after(4, () => hit(g, radius, dmg, { once, from: g, kb: 0.25, kv: lift }));
+    scene.after(4, () => hit(g, radius, dmg, { once: once2, from: g, kb: 0.25, kv: lift }));
     scene.after(secs(holdS), () => s.state(P5.spike.states.sink));
     scene.after(secs(holdS + P5.spike.sink) + 1, () => scene.despawn(s));
   }
-  function iceFan(o, yaw, size, dmg, slow, once, holdS = 1.3) {
+  function iceFan(o, yaw, size, dmg, slow, once2, holdS = 1.3) {
     const g = gnd(o);
     const f = scene.spawn(P5.icefan.actor, g, { yaw, size, state: P5.icefan.states.burst });
     sound(dim, "ed5_ice", g, 1, 1.15 - size * 0.04);
@@ -12009,7 +12194,7 @@ var ed05_buried_kingdoms_default = defineSpell("ed05", ({ caster, scene, aim }) 
     scene.after(3, () => {
       for (const p of [0.35, 0.7, 1]) particle(dim, "ed5_frost", up(local2(g, yaw, 0, 0, -reach * p), 1));
       hit(g, reach + 1, dmg, {
-        once,
+        once: once2,
         slow,
         kb: 0.9,
         kv: 0.35,
@@ -12020,13 +12205,13 @@ var ed05_buried_kingdoms_default = defineSpell("ed05", ({ caster, scene, aim }) 
     scene.after(secs(holdS), () => f.state(P5.icefan.states.shatter));
     scene.after(secs(holdS + P5.icefan.shatter) + 1, () => scene.despawn(f));
   }
-  function gust(p, size, dmg, radius, kb, once, lev = 0) {
+  function gust(p, size, dmg, radius, kb, once2, lev = 0) {
     const g = gnd(p);
     const a = scene.spawn(P5.gust.actor, g, { yaw: ti++ * 53 % 360, size, state: P5.gust.states.burst });
     sound(dim, "ed5_gust", g, 0.9, 0.95 + ti % 4 * 0.05);
     particle(dim, "ed5_ring_air", up(g, 0.3));
     particle(dim, "ed5_wind", up(g, 1));
-    hit(g, radius, dmg, { once, from: g, kb, kv: 0.45, lev });
+    hit(g, radius, dmg, { once: once2, from: g, kb, kv: 0.45, lev });
     scene.after(secs(P5.gust.burst) + 1, () => scene.despawn(a));
   }
   sound(dim, "ed5_open", caster.location, 1);
@@ -12192,14 +12377,14 @@ var ed05_buried_kingdoms_default = defineSpell("ed05", ({ caster, scene, aim }) 
       const dirs = foes.map((e) => yawOf(sub(e.location, slamPt)));
       const spread = [0, -38, 38, -70, 70];
       for (let k2 = 0; dirs.length < ED05.slamLines; k2++) dirs.push(yaw + spread[k2 % spread.length]);
-      const once = /* @__PURE__ */ new Set();
+      const once2 = /* @__PURE__ */ new Set();
       dirs.forEach((dy, li) => {
         const d = fromYaw(dy);
         for (let j = 0; j < ED05.spikesPerLine; j++) {
           const p = add(slamPt, mul(d, ED05.spikeFirst + j * ED05.spikeSpacing));
           scene.after(2 + j * 3 + li, () => {
             particle(dim, "ed5_line", up(gnd(p), 0.25));
-            spikeAt(p, ED05.spikeDamage, ED05.spikeRadius, ED05.spikeLift, once);
+            spikeAt(p, ED05.spikeDamage, ED05.spikeRadius, ED05.spikeLift, once2);
           });
         }
       });
@@ -12213,9 +12398,9 @@ var ed05_buried_kingdoms_default = defineSpell("ed05", ({ caster, scene, aim }) 
     scene.after(tB + secs(lv.hitB), () => {
       sound(dim, "ed5_slam", sweepC, 1, 1.25);
       const left = mul(right(fromYaw(yaw)), -1);
-      const once = /* @__PURE__ */ new Set();
+      const once2 = /* @__PURE__ */ new Set();
       hit(L3, ED05.sweepMaxReach + 1, ED05.sweepDamage, {
-        once,
+        once: once2,
         kb: ED05.sweepKnock,
         kv: 0.4,
         from: add(sweepC, mul(left, -6)),
@@ -12224,7 +12409,7 @@ var ed05_buried_kingdoms_default = defineSpell("ed05", ({ caster, scene, aim }) 
       [60, 25, -10, -45].forEach((a, k2) => scene.after(k2 * 2, () => {
         const p = add(L3, mul(fromYaw(yaw + a), 12));
         particle(dim, "ed5_line", up(gnd(p), 0.25));
-        spikeAt(p, ED05.spikeDamage, ED05.spikeRadius, ED05.spikeLift, once, 1.2, 0.8);
+        spikeAt(p, ED05.spikeDamage, ED05.spikeRadius, ED05.spikeLift, once2, 1.2, 0.8);
       }));
     });
     scene.after(tB + secs(lv.attackB) + 2, () => returnHome("nature", sk));
@@ -12256,14 +12441,14 @@ var ed05_buried_kingdoms_default = defineSpell("ed05", ({ caster, scene, aim }) 
     sk.state(s.states.charge);
     trail.state(P5.trail.states.burn);
     sound(dim, "ed5_burn", from, 1);
-    const once = /* @__PURE__ */ new Set();
+    const once2 = /* @__PURE__ */ new Set();
     let reached = from;
     const t0 = scene.tick;
     scene.span(t0, t0 + n, (p, e) => {
       const pos = lerp(from, end, p);
       reached = pos;
       sk.move(pos, yaw);
-      hit(pos, ED05.chargeRadius, ED05.chargeDamage, { once, from: sub(pos, mul(dir, 2)), kb: ED05.chargeKnock, kv: 0.45 });
+      hit(pos, ED05.chargeRadius, ED05.chargeDamage, { once: once2, from: sub(pos, mul(dir, 2)), kb: ED05.chargeKnock, kv: 0.45 });
       if (e % 2 === 0) particle(dim, "ed5_haze", up(pos, 0.6));
       if (e % 3 === 0) particle(dim, "ed5_ember", up(pos, 2.5));
     });
@@ -12327,14 +12512,14 @@ var ed05_buried_kingdoms_default = defineSpell("ed05", ({ caster, scene, aim }) 
     const tC = tA + secs(lv.attackA) + 2;
     scene.at(tC, () => sk.state(s.states.attack_c));
     scene.at(tC + secs(lv.hitC), () => {
-      const once = /* @__PURE__ */ new Set();
+      const once2 = /* @__PURE__ */ new Set();
       for (const side of [90, -90]) iceFan(
         local2(walkTo, yaw1, side > 0 ? -1.5 : 1.5, 0, 0),
         yaw1 + side,
         ED05.fanSize,
         ED05.flareDamage,
         [ED05.fanSlowTicks, ED05.fanSlowAmp],
-        once
+        once2
       );
       burst(dim, "ed5_frost", up(walkTo, 5), 2.5, 5);
     });
@@ -12428,11 +12613,11 @@ var ed05_buried_kingdoms_default = defineSpell("ed05", ({ caster, scene, aim }) 
       burst(dim, `ed5_mote_${sp}`, faceAt(tb), 3, 3);
     }
   });
-  function imprintEffect(sp, imp, yaw, size, once) {
+  function imprintEffect(sp, imp, yaw, size, once2) {
     const o = ED5_IMPRINT.outline[sp];
     const toW = (q) => local2(imp, yaw, q[0] * size, 0, q[1] * size);
     if (sp === "nature") {
-      o.rim.forEach((q, k2) => scene.after(k2, () => spikeAt(toW(q), ED05.p3SpikeDamage, ED05.p3SpikeRadius, 0.8, once, 1.3, 1.1)));
+      o.rim.forEach((q, k2) => scene.after(k2, () => spikeAt(toW(q), ED05.p3SpikeDamage, ED05.p3SpikeRadius, 0.8, once2, 1.3, 1.1)));
     } else if (sp === "heat") {
       const pts = [...o.rim, ...o.fill].map(toW);
       scene.every(ED05.brandEvery, (e) => {
@@ -12457,13 +12642,13 @@ var ed05_buried_kingdoms_default = defineSpell("ed05", ({ caster, scene, aim }) 
         ED05.p3FanSize,
         ED05.p3FanDamage,
         [ED05.p3FanSlowTicks, ED05.p3FanSlowAmp],
-        once,
+        once2,
         1.4
       );
       for (const q of o.fill.slice(0, 6)) particle(dim, "ed5_frost", up(toW(q), 0.8));
     } else {
-      for (const q of o.rim.slice(0, 4)) gust(toW(q), 1.3, ED05.galeDamage, ED05.galeRadius, ED05.galeKnock, once, ED05.galeLevitate);
-      gust(imp, 1.6, ED05.galeDamage, ED05.galeRadius, ED05.galeKnock, once, ED05.galeLevitate);
+      for (const q of o.rim.slice(0, 4)) gust(toW(q), 1.3, ED05.galeDamage, ED05.galeRadius, ED05.galeKnock, once2, ED05.galeLevitate);
+      gust(imp, 1.6, ED05.galeDamage, ED05.galeRadius, ED05.galeKnock, once2, ED05.galeLevitate);
     }
   }
   function projectFrom(sp, tHit2, imp, yaw, all) {
@@ -12507,12 +12692,12 @@ var ed05_buried_kingdoms_default = defineSpell("ed05", ({ caster, scene, aim }) 
   scene.at(tAll - secs(0.8), () => sound(dim, "ed5_finale", up(center, 2), 1.6));
   scene.at(tAll, () => {
     const g = gnd(center);
-    const once = /* @__PURE__ */ new Set();
-    hit(g, ED05.finaleRadius, ED05.finaleDamage, { once, kb: ED05.finaleKnock, kv: 0.6, slow: [ED05.p3FanSlowTicks, ED05.p3FanSlowAmp], fire: 2 });
+    const once2 = /* @__PURE__ */ new Set();
+    hit(g, ED05.finaleRadius, ED05.finaleDamage, { once: once2, kb: ED05.finaleKnock, kv: 0.6, slow: [ED05.p3FanSlowTicks, ED05.p3FanSlowAmp], fire: 2 });
     const o = ED5_IMPRINT.outline.nature;
-    o.rim.slice(0, 8).forEach((q, k2) => scene.after(k2, () => spikeAt(local2(g, phiF, q[0], 0, q[1]), 0, 1, 0.5, once, 1.2, 1.2)));
-    iceFan(g, yawOf(fwd), ED05.p3FanSize * 0.8, 0, [ED05.p3FanSlowTicks, ED05.p3FanSlowAmp], once, 1.2);
-    for (let k2 = 0; k2 < 4; k2++) scene.after(3 + k2 * 2, () => gust(polar(g, 4.5, phiF + 45 + k2 * 90), 1.4, 0, 4, ED05.finaleKnock, once));
+    o.rim.slice(0, 8).forEach((q, k2) => scene.after(k2, () => spikeAt(local2(g, phiF, q[0], 0, q[1]), 0, 1, 0.5, once2, 1.2, 1.2)));
+    iceFan(g, yawOf(fwd), ED05.p3FanSize * 0.8, 0, [ED05.p3FanSlowTicks, ED05.p3FanSlowAmp], once2, 1.2);
+    for (let k2 = 0; k2 < 4; k2++) scene.after(3 + k2 * 2, () => gust(polar(g, 4.5, phiF + 45 + k2 * 90), 1.4, 0, 4, ED05.finaleKnock, once2));
     burst(dim, "ed5_frag", up(g, 3), 3, 6);
     particle(dim, "fx_flash", up(g, 2));
   });
@@ -12948,35 +13133,51 @@ function vein(f, r) {
   }
   return false;
 }
+function patch(x, z, cell, seed) {
+  const gx = x / cell, gz = z / cell;
+  const x0 = Math.floor(gx), z0 = Math.floor(gz);
+  const s = (t) => t * t * (3 - 2 * t);
+  const u = s(gx - x0), v2 = s(gz - z0);
+  const h = (i, j) => hash012(i * 7 + seed * 31, j * 13 - seed * 17);
+  const a = h(x0, z0), b = h(x0 + 1, z0), c = h(x0, z0 + 1), d = h(x0 + 1, z0 + 1);
+  return a + (b - a) * u + (c - a) * v2 + (a - b - c + d) * u * v2;
+}
 function groundPlan(W2) {
   return (c) => {
     const rx = c.x + 0.5 - W2.c.x, rz = c.z + 0.5 - W2.c.z;
     const f = rx * W2.F.x + rz * W2.F.z, r = rx * W2.R.x + rz * W2.R.z;
     const h = (k2) => hash012(c.x * 3 + k2, c.z * 5 - k2);
-    const s = sectorOf(f, r, c.x, c.z);
-    switch (s) {
+    const n = (cell, seed) => patch(c.x, c.z, cell, seed);
+    switch (sectorOf(f, r, c.x, c.z)) {
       case "domain":
         return { ground: "minecraft:moss_block" };
       case "volcanic": {
         if (vein(f, r)) return { ground: "minecraft:magma" };
-        return { ground: h(1) < 0.62 ? "minecraft:basalt" : h(2) < 0.7 ? "minecraft:blackstone" : "minecraft:smooth_basalt" };
+        const v2 = n(4, 8);
+        return { ground: v2 < 0.5 ? "minecraft:basalt" : v2 < 0.78 ? "minecraft:blackstone" : "minecraft:smooth_basalt" };
       }
       case "shore": {
-        const moss = h(3) < 0.35;
-        return { ground: moss ? "minecraft:moss_block" : "minecraft:mud", plant: moss && h(4) < 0.5 ? "minecraft:fern" : void 0 };
+        const moss = n(4, 7) > 0.6;
+        return { ground: moss ? "minecraft:moss_block" : "minecraft:mud", plant: moss && h(4) < 0.55 ? "minecraft:fern" : void 0 };
       }
       case "meadow": {
-        const ground = h(5) < 0.72 ? "minecraft:moss_block" : "minecraft:podzol";
-        const p = h(6);
-        const plant = p < 0.22 ? "minecraft:short_grass" : p < 0.36 ? "minecraft:fern" : p < 0.43 ? "minecraft:wildflowers" : p < 0.47 ? "minecraft:pink_petals" : void 0;
+        const ground = n(5, 1) > 0.68 ? "minecraft:podzol" : "minecraft:moss_block";
+        let plant;
+        if (n(6, 2) > 0.68) plant = h(6) < 0.55 ? "minecraft:wildflowers" : h(6) < 0.68 ? "minecraft:pink_petals" : void 0;
+        else if (n(4, 3) > 0.62) plant = h(6) < 0.65 ? "minecraft:fern" : void 0;
+        else plant = h(6) < 0.28 ? "minecraft:short_grass" : void 0;
         return { ground, plant, plantStates: petals(plant, h(7)) };
       }
       default: {
-        const g = h(8);
-        const ground = g < 0.5 ? "minecraft:moss_block" : g < 0.82 ? "minecraft:podzol" : "minecraft:dirt_with_roots";
-        const p = h(9);
+        const g = n(6, 4);
+        const ground = g < 0.45 ? "minecraft:moss_block" : g < 0.8 ? "minecraft:podzol" : "minecraft:dirt_with_roots";
         const onMoss = ground === "minecraft:moss_block";
-        const plant = p < 0.26 ? "minecraft:fern" : p < 0.4 ? "minecraft:short_grass" : p < 0.5 ? "minecraft:leaf_litter" : p < 0.55 && onMoss ? "minecraft:moss_carpet" : p < 0.585 && c.dist > 7 ? "minecraft:firefly_bush" : void 0;
+        let plant;
+        if (n(4, 5) > 0.55) plant = h(9) < 0.7 ? "minecraft:fern" : void 0;
+        else if (n(7, 6) > 0.6) plant = h(9) < 0.45 ? "minecraft:leaf_litter" : void 0;
+        else if (onMoss && h(9) < 0.08) plant = "minecraft:moss_carpet";
+        else if (c.dist > 7 && h(9) < 0.12) plant = "minecraft:firefly_bush";
+        else if (h(9) < 0.3) plant = "minecraft:short_grass";
         return { ground, plant, plantStates: petals(plant, h(10)) };
       }
     }
@@ -15268,14 +15469,14 @@ function forceCast(p, id) {
   startCooldown(p, spell.id, spell.cooldown);
   return `cast ${id} (${META_BY_ID[id].name})`;
 }
-system6.beforeEvents.startup.subscribe((ev) => {
+system7.beforeEvents.startup.subscribe((ev) => {
   const reg = ev.customCommandRegistry;
   reg.registerCommand(
     { name: "grimoire:give", description: "Give yourself the three Grimoires", permissionLevel: CommandPermissionLevel.Any, cheatsRequired: true },
     (origin) => {
       const p = origin.sourceEntity;
       if (!(p instanceof Player6)) return { status: CustomCommandStatus.Failure, message: "Players only" };
-      system6.run(() => giveBooks(p));
+      system7.run(() => giveBooks(p));
       return { status: CustomCommandStatus.Success, message: "Three Grimoires added to your inventory" };
     }
   );
@@ -15284,14 +15485,14 @@ system6.beforeEvents.startup.subscribe((ev) => {
     (origin) => {
       const p = origin.sourceEntity;
       if (!(p instanceof Player6)) return { status: CustomCommandStatus.Failure, message: "Players only" };
-      system6.run(() => clearCooldowns(p));
+      system7.run(() => clearCooldowns(p));
       return { status: CustomCommandStatus.Success, message: "Grimoire cooldowns cleared" };
     }
   );
   reg.registerCommand(
     { name: "grimoire:cleanup", description: "End every active Grimoire spell and remove its constructs", permissionLevel: CommandPermissionLevel.GameDirectors, cheatsRequired: true },
     () => {
-      system6.run(() => {
+      system7.run(() => {
         Scenes.endAll();
         Scenes.sweepOrphans();
         restoreGround();
@@ -15300,7 +15501,7 @@ system6.beforeEvents.startup.subscribe((ev) => {
     }
   );
 });
-system6.afterEvents.scriptEventReceive.subscribe((ev) => {
+system7.afterEvents.scriptEventReceive.subscribe((ev) => {
   const p = ev.sourceEntity instanceof Player6 ? ev.sourceEntity : void 0;
   const arg = ev.message.trim().toLowerCase();
   switch (ev.id) {
@@ -15325,7 +15526,7 @@ system6.afterEvents.scriptEventReceive.subscribe((ev) => {
       if (!Scenes.active.size) restoreLedger();
       restoreGround();
       if (!timeLeased()) restoreTime();
-      for (const q of world7.getAllPlayers()) recoverPlayer(q);
+      for (const q of world8.getAllPlayers()) recoverPlayer(q);
       break;
     case "grimoire:show": {
       if (!p) break;
@@ -15359,16 +15560,16 @@ system6.afterEvents.scriptEventReceive.subscribe((ev) => {
     }
   }
 }, { namespaces: ["grimoire"] });
-world7.afterEvents.playerSpawn.subscribe((ev) => {
+world8.afterEvents.playerSpawn.subscribe((ev) => {
   const p = ev.player;
-  system6.runTimeout(() => {
+  system7.runTimeout(() => {
     try {
       recoverPlayer(p);
     } catch {
     }
   }, 10);
   if (!ev.initialSpawn) return;
-  system6.runTimeout(() => {
+  system7.runTimeout(() => {
     try {
       if (!p.isValid) return;
       p.sendMessage(`\xA76Grimoire: Rebirth of the Arcane \xA7f${VERSION}`);
@@ -15381,7 +15582,7 @@ world7.afterEvents.playerSpawn.subscribe((ev) => {
     }
   }, 60);
 });
-world7.afterEvents.worldLoad.subscribe(() => {
+world8.afterEvents.worldLoad.subscribe(() => {
   installWards();
   installInput();
   installBooks();
@@ -15390,9 +15591,9 @@ world7.afterEvents.worldLoad.subscribe(() => {
   restoreGround();
   restoreTime();
   Scenes.sweepOrphans();
-  for (const p of world7.getAllPlayers()) recoverPlayer(p);
+  for (const p of world8.getAllPlayers()) recoverPlayer(p);
   let n = 0;
-  system6.runInterval(() => {
+  system7.runInterval(() => {
     tickInput();
     Scenes.tickAll();
     tickAtmos();

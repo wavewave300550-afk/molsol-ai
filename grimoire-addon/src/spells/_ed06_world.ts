@@ -49,38 +49,57 @@ function vein(f: number, r: number): boolean {
   return false;
 }
 
+/**
+ * Smooth value noise in [0, 1) over a grid of `cell` blocks (world coordinates, so the same every cast):
+ * ground and plants come in patches - podzol clearings, fern clumps, drifts of flowers - not salt and pepper.
+ */
+function patch(x: number, z: number, cell: number, seed: number): number {
+  const gx = x / cell, gz = z / cell;
+  const x0 = Math.floor(gx), z0 = Math.floor(gz);
+  const s = (t: number) => t * t * (3 - 2 * t);
+  const u = s(gx - x0), v = s(gz - z0);
+  const h = (i: number, j: number) => hash01(i * 7 + seed * 31, j * 13 - seed * 17);
+  const a = h(x0, z0), b = h(x0 + 1, z0), c = h(x0, z0 + 1), d = h(x0 + 1, z0 + 1);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+
 /** The living-ground plan for this cast: what each natural surface cell around the caster becomes. */
 export function groundPlan(W: Frame): (c: SurfaceCell) => GroundChange | undefined {
   return (c) => {
     const rx = c.x + 0.5 - W.c.x, rz = c.z + 0.5 - W.c.z;
     const f = rx * W.F.x + rz * W.F.z, r = rx * W.R.x + rz * W.R.z;
-    const h = (k: number) => hash01(c.x * 3 + k, c.z * 5 - k);
-    const s = sectorOf(f, r, c.x, c.z);
-    switch (s) {
+    const h = (k: number) => hash01(c.x * 3 + k, c.z * 5 - k);           // per cell
+    const n = (cell: number, seed: number) => patch(c.x, c.z, cell, seed);  // per patch
+    switch (sectorOf(f, r, c.x, c.z)) {
       case "domain":
         return { ground: "minecraft:moss_block" };
       case "volcanic": {
         if (vein(f, r)) return { ground: "minecraft:magma" };
-        return { ground: h(1) < 0.62 ? "minecraft:basalt" : h(2) < 0.7 ? "minecraft:blackstone" : "minecraft:smooth_basalt" };
+        const v = n(4, 8);
+        return { ground: v < 0.5 ? "minecraft:basalt" : v < 0.78 ? "minecraft:blackstone" : "minecraft:smooth_basalt" };
       }
       case "shore": {
-        const moss = h(3) < 0.35;
-        return { ground: moss ? "minecraft:moss_block" : "minecraft:mud", plant: moss && h(4) < 0.5 ? "minecraft:fern" : undefined };
+        const moss = n(4, 7) > 0.6;
+        return { ground: moss ? "minecraft:moss_block" : "minecraft:mud", plant: moss && h(4) < 0.55 ? "minecraft:fern" : undefined };
       }
       case "meadow": {
-        const ground = h(5) < 0.72 ? "minecraft:moss_block" : "minecraft:podzol";
-        const p = h(6);
-        const plant = p < 0.22 ? "minecraft:short_grass" : p < 0.36 ? "minecraft:fern"
-          : p < 0.43 ? "minecraft:wildflowers" : p < 0.47 ? "minecraft:pink_petals" : undefined;
+        const ground = n(5, 1) > 0.68 ? "minecraft:podzol" : "minecraft:moss_block";
+        let plant: string | undefined;
+        if (n(6, 2) > 0.68) plant = h(6) < 0.55 ? "minecraft:wildflowers" : h(6) < 0.68 ? "minecraft:pink_petals" : undefined;
+        else if (n(4, 3) > 0.62) plant = h(6) < 0.65 ? "minecraft:fern" : undefined;
+        else plant = h(6) < 0.28 ? "minecraft:short_grass" : undefined;
         return { ground, plant, plantStates: petals(plant, h(7)) };
       }
       default: {
-        const g = h(8);
-        const ground = g < 0.5 ? "minecraft:moss_block" : g < 0.82 ? "minecraft:podzol" : "minecraft:dirt_with_roots";
-        const p = h(9);
+        const g = n(6, 4);
+        const ground = g < 0.45 ? "minecraft:moss_block" : g < 0.8 ? "minecraft:podzol" : "minecraft:dirt_with_roots";
         const onMoss = ground === "minecraft:moss_block";
-        const plant = p < 0.26 ? "minecraft:fern" : p < 0.4 ? "minecraft:short_grass" : p < 0.5 ? "minecraft:leaf_litter"
-          : p < 0.55 && onMoss ? "minecraft:moss_carpet" : p < 0.585 && c.dist > 7 ? "minecraft:firefly_bush" : undefined;
+        let plant: string | undefined;
+        if (n(4, 5) > 0.55) plant = h(9) < 0.7 ? "minecraft:fern" : undefined;
+        else if (n(7, 6) > 0.6) plant = h(9) < 0.45 ? "minecraft:leaf_litter" : undefined;
+        else if (onMoss && h(9) < 0.08) plant = "minecraft:moss_carpet";
+        else if (c.dist > 7 && h(9) < 0.12) plant = "minecraft:firefly_bush";
+        else if (h(9) < 0.3) plant = "minecraft:short_grass";
         return { ground, plant, plantStates: petals(plant, h(10)) };
       }
     }

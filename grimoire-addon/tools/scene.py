@@ -315,12 +315,15 @@ def cam_for(view, tr, tick, fov, size, cam_spec):
     if cam_spec:
         v = [float(x) for x in cam_spec.split(",")]
         return Cam(loc(*v[:3]), loc(*v[3:6]), fov, size)
-    if view == "pov":
+    if view in ("pov", "pov_left", "pov_right", "pov_back"):
         # the player's own view on a phone: eye height, ~60 degrees vertical (Bedrock's default), so the
-        # horizontal angle follows the image's aspect (2.17:1 like an iPhone in landscape -> ~103 degrees)
+        # horizontal angle follows the image's aspect (2.17:1 like an iPhone in landscape -> ~103 degrees);
+        # pov_left / pov_right / pov_back: the same, turned round (the world is all around the caster)
         pitch = math.radians(cas[5])
         hfov = math.degrees(2 * math.atan(math.tan(math.radians(30)) * size[0] / size[1]))
-        return Cam(cp + up * 1.62, cp + up * 1.62 + fw * math.cos(pitch) * 10 - up * math.sin(pitch) * 10, hfov, size)
+        a = math.radians({"pov": 0, "pov_left": -90, "pov_right": 90, "pov_back": 180}[view])
+        d = fw * math.cos(a) + rt * math.sin(a)
+        return Cam(cp + up * 1.62, cp + up * 1.62 + d * math.cos(pitch) * 10 - up * math.sin(pitch) * 10, hfov, size)
     if view == "top":
         return Cam(loc(0, 70, 12), loc(0, 0, 12.01), 50, size)
     if view == "side":
@@ -370,7 +373,7 @@ def draw_frame(tr, tick, view="chase", size=(880, 500), fov=62, labels=False, ca
     # caster and mobs
     cas = min(tr["caster"], key=lambda r: abs(r[0] - tick))
     cx, cy, cz = cas[1:4]
-    if view != "pov":   # the caster's own box would fill the first-person view
+    if not view.startswith("pov"):   # the caster's own box would fill the first-person view
         fr.box((cx - 0.3, cy, cz - 0.3), (cx + 0.3, cy + 1.8, cz + 0.3), (0.2, 0.45, 1.0), glow=0.6)
     mrow = min(tr["mobs"], key=lambda r: abs(r[0] - tick))
     for mx, my, mz, alive in [m for m in mrow[1:] if isinstance(m, list)]:
@@ -397,6 +400,7 @@ def draw_frame(tr, tick, view="chase", size=(880, 500), fov=62, labels=False, ca
                            (bx + 0.62, by + 0.5, bz + 0.62), (bx + 0.38, by + 0.5, bz + 0.62)))
         if bq:
             fr.add_quads(np.array(bq, dtype=float), flat=(1.0, 0.15, 0.15), glow_flat=1.0)
+        draw_living_ground(fr, cells)
     if tr.get("terrain"):
         tq, tc = terrain_quads(tr)
         fr.add_quads(tq, flat=tc)
@@ -422,6 +426,45 @@ def draw_frame(tr, tick, view="chase", size=(880, 500), fov=62, labels=False, ca
     for i, nline in enumerate(sorted(set(notes))[:6]):
         dr.text((6, 18 + 12 * i), nline, fill=(255, 120, 120))
     return img
+
+
+# living ground (src/lib/terraform.ts): top colours of the ground blocks, and plants as crossed cards
+GROUND_COL = {
+    "moss_block": ((0.33, 0.49, 0.17), 0.0), "podzol": ((0.40, 0.28, 0.15), 0.0), "dirt_with_roots": ((0.50, 0.36, 0.24), 0.0),
+    "mud": ((0.23, 0.20, 0.20), 0.0), "basalt": ((0.31, 0.31, 0.34), 0.0), "smooth_basalt": ((0.22, 0.22, 0.25), 0.0),
+    "blackstone": ((0.15, 0.13, 0.16), 0.0), "magma": ((0.95, 0.42, 0.10), 1.0), "coarse_dirt": ((0.45, 0.32, 0.22), 0.0),
+    "packed_mud": ((0.55, 0.42, 0.32), 0.0),
+}
+PLANT_COL = {
+    "short_grass": ((0.42, 0.62, 0.22), 0.55, 0.0), "fern": ((0.25, 0.48, 0.16), 0.8, 0.0),
+    "firefly_bush": ((0.20, 0.32, 0.12), 0.9, 0.0), "wildflowers": ((0.95, 0.85, 0.30), 0.12, 0.3),
+    "pink_petals": ((0.98, 0.62, 0.80), 0.08, 0.2), "leaf_litter": ((0.62, 0.40, 0.16), 0.03, 0.0),
+    "moss_carpet": ((0.38, 0.55, 0.20), 0.06, 0.0), "poppy": ((0.85, 0.12, 0.10), 0.4, 0.0),
+}
+
+
+def draw_living_ground(fr, cells):
+    tops, cards = {}, {}
+    for (bx, by, bz), typ in cells.items():
+        t = typ.replace("minecraft:", "")
+        if t in GROUND_COL:
+            y = by + 1.004
+            tops.setdefault(t, []).append(((bx, y, bz), (bx + 1, y, bz), (bx + 1, y, bz + 1), (bx, y, bz + 1)))
+        elif t in PLANT_COL:
+            h = PLANT_COL[t][1]
+            if h < 0.15:                                  # flat covers: a quad just above the ground
+                y = by + h
+                cards.setdefault(t, []).append(((bx + 0.05, y, bz + 0.05), (bx + 0.95, y, bz + 0.05), (bx + 0.95, y, bz + 0.95), (bx + 0.05, y, bz + 0.95)))
+            else:                                         # standing plants: two crossed cards
+                y0, y1 = by, by + h
+                cards.setdefault(t, []).append(((bx + 0.1, y1, bz + 0.1), (bx + 0.9, y1, bz + 0.9), (bx + 0.9, y0, bz + 0.9), (bx + 0.1, y0, bz + 0.1)))
+                cards.setdefault(t, []).append(((bx + 0.9, y1, bz + 0.1), (bx + 0.1, y1, bz + 0.9), (bx + 0.1, y0, bz + 0.9), (bx + 0.9, y0, bz + 0.1)))
+    for t, q in tops.items():
+        col, glow = GROUND_COL[t]
+        fr.add_quads(np.array(q, dtype=float), flat=col, glow_flat=glow)
+    for t, q in cards.items():
+        col, _, glow = PLANT_COL[t]
+        fr.add_quads(np.array(q, dtype=float), flat=col, glow_flat=glow)
 
 
 def report(tr):
