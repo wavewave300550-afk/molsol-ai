@@ -409,10 +409,10 @@ DOME_R = 106          # 6.6 blocks: the refuge is drawn AROUND the caster, never
 
 
 def dome():
-    """Refuge of Law V, seen from inside: a seal on the ground, a low fence of standing letters at
-    6.6 blocks, and two rings of text that turn above eye level (nothing crosses the view)."""
+    """Refuge of Law V, seen from inside: a seal on the ground and a knee-high fence of standing letters at 6.6
+    blocks, turning slowly.  Nothing rises into the caster's view; the spell raises a curtain of light from it."""
     R = DOME_R
-    m = Model("dw6_dome", density=1.0, bounds=(16, 8, (0, 3, 0)))
+    m = Model("dw6_dome", density=1.0, bounds=(16, 4, (0, 1, 0)))
     root = m.bone("root")
     seal = m.bone("seal", root, pivot=(0, 0, 0))
     seal.plane("y", (0, 0.5, 0), 2 * R + 16, 2 * R + 16,
@@ -424,43 +424,29 @@ def dome():
         a = k * 18
         fence.box((0, 8.5, -R), (5.2, 7.3, 0), tex.bitmap_cut(FW[(k * 5 + 2) % len(FW)], WGOLD, glow=1.0, color2="#ffffff"),
                   rot=(0, a, 0), pivot=(0, 8.5, 0), faces=("north", "south"))
+    inner = m.bone("inner", root, pivot=(0, 0, 0))       # a second, counter-turning band of script just inside
     band = tex.glyph_rows(FW, "#fff3c4", glow=1.0, color2="#ffffff", fill=0.9, key="dw6domeband")
-    for i, (y, r) in enumerate(((82, R * 1.02), (104, R * 0.74))):     # above eye level: out of the caster's view
-        b = m.bone(f"r{i + 1}", root, pivot=(0, y, 0))
-        n = max(10, int(r / 4.2))
-        ring(b, (0, y, 0), r, n, (2 * math.pi * r / n * 1.02, 1.0, 7.0), band, axis="y", cycle=3)
-        ring(b, (0, y - 4.4, 0), r, n, (2 * math.pi * r / n * 1.02, 1.0, 0.8), GOLD_HOT, axis="y")
-    crown = m.bone("crown", root, pivot=(0, 118, 0))
-    crown.box((0, 120, 0), (8, 8, 8), tex.glow_flat("#fff3c4", 1.0, core="#ffffff"), rot=(45, 0, 45))
+    ring(inner, (0, 0.9, 0), R - 9, 24, (2 * math.pi * (R - 9) / 24 * 1.02, 0.8, 5.0), band, axis="y", cycle=3, tilt=90)
     return m
 
 
 def dome_anims():
     always = Anim("drift", loop=True)
-    always.rot("r1", (0, spin(-16), 0))
-    always.rot("r2", (0, spin(22), 0))
     always.rot("fence", (0, spin(5), 0))
+    always.rot("inner", (0, spin(-9), 0))
     always.rot("seal", (0, spin(-10), 0))
-    always.rot("crown", (0, spin(80), 0))
     hidden = Anim("hidden", loop=True)
     hidden.scl("root", 0.0)
     form = Anim("form", length=1.2, loop="hold")
     form.scl("seal", {0: 0.0, 0.4: 1.1, 0.55: 1.0})
     form.scl("fence", {0: (0.0, 0.0, 0.0), 0.2: (1.0, 0.0, 1.0), 0.6: (1.0, 1.25, 1.0), 0.8: 1.0})
-    for i in range(2):
-        t = 0.45 + i * 0.2
-        form.scl(f"r{i + 1}", {0: 0.0, t: 0.0, t + 0.3: 1.1, t + 0.45: 1.0})
-    form.scl("crown", {0: 0.0, 1.0: 0.0, 1.2: 1.0})
+    form.scl("inner", {0: 0.0, 0.5: 0.0, 0.9: 1.06, 1.2: 1.0})
     hold = Anim("hold", loop=True)
-    hold.scl("crown", LIFE(0.15, 1.2, base=1.0))
-    hold.pos("r1", (0, LIFE(1.5, 3.1), 0))
-    hold.pos("r2", (0, LIFE(1.5, 3.7, 0.3), 0))
+    hold.scl("inner", (1, LIFE(0.2, 1.6, base=1.0), 1))
     fade = Anim("fade", length=1.0, loop="hold")
     fade.scl("fence", {0: 1.0, 0.25: (1.0, 1.2, 1.0), 0.8: (1.0, 0.0, 1.0)})
-    fade.scl("r1", {0: 1.0, 0.3: 1.1, 0.9: 0.0})
-    fade.scl("r2", {0: 1.0, 0.2: 1.1, 0.8: 0.0})
+    fade.scl("inner", {0: 1.0, 0.3: 1.05, 0.7: 0.0})
     fade.scl("seal", {0: 1.0, 0.4: 1.05, 1.0: 0.0})
-    fade.scl("crown", {0: 1.0, 0.5: 0.0})
     return [always, hidden, form, hold, fade]
 
 
@@ -485,9 +471,9 @@ def boundary():
     for k in range(16):
         a = k * 22.5
         pb = m.bone(f"pl{k + 1}", plates, pivot=(0, 0, 0), rot=(0, a, 0))
-        pb.box((0, 16, -(BR + 14)), (12, 17, 0), tex.bitmap_cut(FW[(k * 5 + 3) % len(FW)], WGOLD, glow=1.0, color2="#ffffff"),
+        pb.box((0, 12.5, -(BR + 14)), (12, 17, 0), tex.bitmap_cut(FW[(k * 5 + 3) % len(FW)], WGOLD, glow=1.0, color2="#ffffff"),
                faces=("north", "south"))
-        pb.box((0, 5, -(BR + 14)), (4, 4, 4), GOLD_HOT, rot=(45, 0, 45))
+        pb.box((0, 2.6, -(BR + 14)), (3.4, 3.4, 3.4), GOLD_HOT, rot=(45, 0, 45))
     return m
 
 

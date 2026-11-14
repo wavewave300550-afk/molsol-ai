@@ -301,7 +301,7 @@ def domain_mat():
             b = np.where((q == k)[..., None], cols[k][0], b)
             m = np.where((q == k)[..., None], cols[k][1], m)
         pxl = 2.0 / ctx.w
-        frame = (np.abs(r - 0.985) < pxl * 1.2) | (np.abs(r - 0.955) < pxl * 0.8) | (np.abs(r - 0.78) < pxl * 0.9)
+        frame = (np.abs(r - 0.985) < pxl * 1.0) | (np.abs(r - 0.86) < pxl * 0.8)
         ng, gh, gw = stack.shape
         nb = 28
         seg = a / (2 * math.pi) * nb
@@ -311,12 +311,13 @@ def domain_mat():
         inside = (lx >= 0) & (lx < gw) & (ly >= 0) & (ly < gh) & (r < 0.93) & (r > 0.81)
         glyph = inside & stack[(gi * 7) % ng, np.clip(ly, 0, gh - 1), np.clip(lx, 0, gw - 1)]
         off = np.abs(((a + math.pi / 4) % (math.pi / 2)) - math.pi / 4)          # angle from the quadrant centre
-        arcs = (r > 0.70) & (r < 0.72) & (off < 0.62)
+        arcs = (r > 0.885) & (r < 0.925) & (off < 0.62)
         star = np.zeros(u.shape, dtype=bool)
         gem = np.zeros(u.shape, dtype=bool)
         for k in range(4):
-            gem |= np.hypot(u - 0.71 * math.cos(k * math.pi / 2), v - 0.71 * math.sin(k * math.pi / 2)) < 0.025
+            gem |= np.hypot(u - 0.905 * math.cos(k * math.pi / 2), v - 0.905 * math.sin(k * math.pi / 2)) < 0.03
         frame = frame & (r > 0.5)
+        glyph = glyph & False                                                    # no lettering: a quiet ring
         on = frame | glyph | arcs | star | gem
         col = np.where(frame[..., None], gl, m)
         col = np.where(glyph[..., None], mix(b, gl, 0.15), col)
@@ -328,7 +329,7 @@ def domain_mat():
         t[..., 3] = on * 1.0
         t[..., 4] = np.where(glyph, 0.55, 0.8)
         return t
-    return Mat(fn, "ed6domain5", directional=True)
+    return Mat(fn, "ed6domain6", directional=True)
 
 
 def domain_model():

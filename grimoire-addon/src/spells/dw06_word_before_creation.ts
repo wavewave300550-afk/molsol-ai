@@ -275,10 +275,13 @@ export default defineSpell("dw06", ({ caster, scene, aim }) => {
       const ln = hovering[j];
       if (ln.valid) fx((t + j) % 3 ? "dw6_glint" : "dw6_stream", add(ln.loc, { x: (rnd(t + j * 3) - 0.5) * 10, y: (rnd(t * 1.3 + j) - 0.5) * 1.5, z: (rnd(t * 0.9 + j) - 0.5) * 10 }));
     }
-    // the refuge: feathers and motes drift around the caster (never across the view)
+    // the refuge: a curtain of rising letters, motes and feathers at its fence, around the caster's sides and back
+    // (the 70 degrees in front of them stay clear)
     if (refugeOn && t % 2 === 0) {
-      const a = rnd(t * 0.77) * 2 * Math.PI;
-      fx(t % 6 ? "dw6_motes" : "dw6_feather", { x: refugeAt.x + Math.cos(a) * 5.8, y: refugeAt.y + 0.3 + rnd(t + 1) * 2.4, z: refugeAt.z + Math.sin(a) * 5.8 });
+      const a = (35 + rnd(t * 0.77) * 290) * DEG;           // measured from straight ahead
+      const dir = add(mul(fwd, Math.cos(a)), mul(rt, Math.sin(a)));
+      const p = add(refugeAt, add(mul(dir, 6.4), { x: 0, y: 0.3 + rnd(t + 1) * 1.6, z: 0 }));
+      fx(t % 6 === 0 ? "dw6_feather" : t % 4 === 0 ? "dw6_letters" : "dw6_motes", p);
     }
   }, 0, T_END - 4);
   // a soft choir bed under the long middle of the spell (it never goes silent)
@@ -964,7 +967,7 @@ export default defineSpell("dw06", ({ caster, scene, aim }) => {
   let spiralR = 9;
   scene.at(L4.form, () => { l4 = spawnLine(3, l4Hi, 0.7); });
   scene.at(L4.desc - 20, () => {
-    spiralR = clamp(distXZ(finalAt, c0) - 7.5, 5, 11);
+    spiralR = clamp(distXZ(finalAt, c0) - 8.5, 4.5, 10);     // its outer turn stays > 7 blocks from the caster
     spiralWarn = scene.spawn("telegraph", finalAt, { kind: 0, size: spiralR, state: TEL.warn });
   });
   scene.at(L4.desc, () => { if (l4) { leave(l4); descend(l4, l4Hi, up(finalAt, 1.4), L4.desc, L4.desc + 16); } });

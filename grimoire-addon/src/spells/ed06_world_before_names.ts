@@ -59,6 +59,7 @@ const A_BANK = 1.4;          // deg / tick of yaw change that makes the raptor b
 const CLOUD = { form: 1, part: 2, fade: 3 };
 // ---- ED06 constructs (tools/assets/ed6_*.py)
 const CODEX = { rise: 1, hover: 2, beat: 3, absorb: 4, vanish: 5 };
+const CODEX_CORE = (24 / 16) * 1.3;   // book centre above the origin (blocks) at its SCALE 1.3
 const EMBLEM = { appear: 1, beat: 2, glow: 3, fade: 4 };
 const EMBLEM_C = 34 / 16;    // seal centre height per unit of size (blocks); seal radius = 2 * size
 const EMBLEM_DOMAIN = 4;     // kind 4: the caster's flat domain seal (radius 2 * size)
@@ -92,21 +93,22 @@ const T_END = T_SEAL + 78;
 
 // ================================================================================================
 // The stage, in blocks relative to the caster: f ahead, r to the right, h up.  Nothing big comes within
-// ~10 blocks of the caster; every dragon owns a region of the view so all four read at once:
-//   Nature - the far back (a 37-block titan walking side-on along f = 42, its waterfall flank toward the caster)
-//   Heat   - the right half (a diagonal charge lane between standing stones, cutting through the hostile zone)
-//   Water  - the left half, swimming figure-eights through suspended water 3-6 blocks up
-//   Air    - the sky above the back of the stage (an ellipse 14-16 blocks up)
+// ~12 blocks of the caster; every dragon owns a region of the view so all four read at once, layered in depth
+// so no two bodies cross (a phone view spans about -42..+18 degrees vertically at the caster's pitch):
+//   Heat   - the right, 21-31 blocks out (a diagonal charge lane between standing stones)
+//   Water  - the left, 28-38 blocks out, swimming figure-eights through suspended water just above the ground
+//   Air    - the sky 38-46 blocks out, a figure-eight 11.5 blocks up, in front of the titan
+//   Nature - the far back (a 37-block titan walking side-on along f = 50, its waterfall flank toward the caster)
 // The Codex hangs in the upper part of the view; the hostile zone (the Concord's target) is the enemy
 // group, kept 14-24 blocks ahead.
 const ST = {
-  codexK1: [27, 0, 7.5], codexK2: [42, -18, 14], codexK3: [22, -1, 8],
-  emblems: [[42, -5, 2.2], [30, 17, 1.4], [29, -11, 1.6], [34, 5, 1.5]] as [number, number, number][],
-  natureLane: 42, natureFrom: -5,
+  codexK1: [30, 0, 6.3], codexK2: [46, -20, 11], codexK3: [26, -1, 4.8],
+  emblems: [[50, -6, 2.4], [30, 17, 1.4], [33, -12, 1.6], [36, 6, 1.5]] as [number, number, number][],
+  natureLane: 50, natureFrom: -6,
   heatA: [30, 17], heatB: [21, 9.5],
   stones: [[27.5, 10.8], [23.5, 15.7], [20.6, 13.6]] as [number, number][],
-  tideC: [29, -11], tideA: 10, tideB: 5, tideH: 4.5,
-  airC: [38, 1], airA: 15, airB: 9, airH: 14,
+  tideC: [33, -12], tideA: 10, tideB: 4.5, tideH: 1.6,
+  airC: [42, 0], airA: 14, airB: 4, airH: 11.5,
   groves: [[20, -21, 0], [17, 21, 1], [31, -27, 2], [29, 25, 3], [53, -20, 0], [56, 15, 1], [12, -15, 3], [13, 15, 2]] as
     [number, number, number][],
 };
@@ -235,7 +237,7 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
   const cxAt = (): V3 => cxMv.posAt(scene.tick);
   sound(dim, "ed6_codex_rise", BOOK, 1.0);
   sound(dim, "ed6_codex_rise", K1, 1.6);
-  stream(BOOK, up(K1, 2.2), 16, ["ed6_stream", "ed6_codex_rune", "ed6_codex_glint"], 5, 3);   // the book casts its codex up
+  stream(BOOK, up(K1, CODEX_CORE), 16, ["ed6_stream", "ed6_codex_rune", "ed6_codex_glint"], 5, 3);   // the book casts its codex up
   scene.every(2, (e) => particle(dim, e % 4 ? "ed6_codex_glint" : "ed6_codex_rune", up(cxAt(), 1.5 + (e % 3))), 10, 50);
   scene.at(28, () => {
     codex.prop("sep", 1);                              // cover scales and vertebrae separate and orbit
@@ -245,7 +247,7 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
   });
   scene.at(40, () => codex.state(CODEX.hover));
   const codexBeat = (): void => { codex.state(CODEX.beat); scene.after(12, () => codex.state(CODEX.hover)); };
-  const cxCore = (): V3 => up(cxAt(), 2.25);
+  const cxCore = (): V3 => up(cxAt(), CODEX_CORE);
 
   // ================================================================================== Phase I: heartbeats, seals, the old world
   const EM = ST.emblems.map(([f, r, s]) => ({ at: at(f, r), size: s, c: at(f, r, EMBLEM_C * s) }));
@@ -290,10 +292,10 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
   // the caster stands in the domain seal: a flat circle in the four lineage colours that every heartbeat pulses
   let domain: Actor | undefined;
   scene.at(16, () => {
-    domain = scene.spawn("ed6_emblem", ground(C0), { kind: EMBLEM_DOMAIN, size: 2.3, yaw: yawOf(mul(R, -1)), state: EMBLEM.appear });
+    domain = scene.spawn("ed6_emblem", ground(C0), { kind: EMBLEM_DOMAIN, size: 2.0, yaw: yawOf(mul(R, -1)), state: EMBLEM.appear });
     scene.after(24, () => domain?.state(EMBLEM.glow));
     particle(dim, "ed6_wave", up(ground(C0), 0.2));
-    ring(dim, "ed6_rune_rise", up(ground(C0), 0.2), 4.4, 8);
+    ring(dim, "ed6_rune_rise", up(ground(C0), 0.2), 3.8, 8);
     sound(dim, "ed6_codex_unbind", up(C0, 1), 0.7, 0.8);
   });
   const domainBeat = (): void => { domain?.state(EMBLEM.beat); scene.after(16, () => domain?.state(EMBLEM.glow)); };
@@ -377,7 +379,7 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
 
   // ---------------------------------------------------------------- the living atmosphere: sound bed + ambient layers
   scene.every(100, () => sound(dim, "ed6_ambience", up(at(14, 0), 2), 0.4 + 0.15 * level), BEATS[0], T5 + 120);
-  const ZONE_HEAT = { f: 25, r: 13, w: 7, d: 7 }, ZONE_TIDE = { f: 29, r: -11, w: 11, d: 6 }, ZONE_NAT = { f: 42, r: 2, w: 20, d: 6 };
+  const ZONE_HEAT = { f: 25, r: 13, w: 7, d: 7 }, ZONE_TIDE = { f: 33, r: -12, w: 10, d: 5 }, ZONE_NAT = { f: 50, r: 2, w: 22, d: 6 };
   const inBox = (b: { f: number; r: number; w: number; d: number }, i: number, s: number, h: number): V3 =>
     at(b.f + (hash01(i, s) * 2 - 1) * b.d, b.r + (hash01(i, s + 1) * 2 - 1) * b.w, h);
   let fading = 1;                                      // 1 until the world starts to return to normal
@@ -989,19 +991,21 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
 
   // ================================================================================== the Air Dragon
   const airC = sky(ST.airC[0], ST.airC[1], ST.airH);
+  /** The Air Dragon's sky lane: a figure-eight across the view, parameter in degrees. */
   const ellipse = (deg: number, t: number): V3 => {
     const a = (deg * Math.PI) / 180;
-    const p = add(airC, add(mul(R, ST.airA * Math.sin(a)), mul(F, ST.airB * Math.cos(a))));
-    return { x: p.x, y: airC.y + 1.0 * Math.sin(t * 0.06), z: p.z };
+    const p = add(airC, add(mul(R, ST.airA * Math.sin(a)), mul(F, ST.airB * Math.sin(2 * a))));
+    return { x: p.x, y: airC.y + 0.8 * Math.sin(t * 0.06), z: p.z };
   };
-  const ELLIPSE = new ArcPath((u) => ellipse(u * 360, 0), 96, true);
-  const OMEGA = ((16 / 20) / ELLIPSE.length) * 360;    // deg of ellipse parameter per tick at ~16 blocks / s
-  const ellDegAt = (p: V3): number => {
-    const v = sub(p, airC);
-    return (Math.atan2(dot(v, R) / ST.airA, dot(v, F) / ST.airB) * 180) / Math.PI;
+  const ELLIPSE = new ArcPath((u) => ellipse(u * 360, 0), 120, true);
+  const OMEGA = ((16 / 20) / ELLIPSE.length) * 360;    // deg of lane parameter per tick at ~16 blocks / s
+  const ellDegAt = (p: V3): number => {                // nearest point of the lane
+    let best = 0, bd = Infinity;
+    for (let d = 0; d < 360; d += 4) { const q = ellipse(d, 0); const dd = distXZ(q, p); if (dd < bd) { bd = dd; best = d; } }
+    return best;
   };
-  const airStart = sky(52, 14, 26);
-  const air = scene.spawn(AIR.actor, airStart, { yaw: yawOf(sub(sky(42, 10, 19), airStart)), state: A.hidden });
+  const airStart = sky(58, 12, 25);
+  const air = scene.spawn(AIR.actor, airStart, { yaw: yawOf(sub(sky(50, 8, 17), airStart)), state: A.hidden });
   const airMv = new Mover(air, airStart, air.yaw, T_AIR);
   airMv.maxTurn = 12;
   const airForce: { from: number; to: number; s: number }[] = [];
@@ -1015,11 +1019,11 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
   function airBreak(t: number): V3 { airMv.truncate(t); return airMv.last; }
 
   // Phase II: through the clouds, a barrel roll, a stoop at the enemies, a pull-up gust and a climb into its orbit
-  const cloudAt = sky(42, 9, 20);
+  const cloudAt = sky(50, 6, 16);
   let clouds: Actor[] = [];
   scene.at(T_AIR - 24, () => {
     clouds = [scene.spawn("ed_air_cloud", cloudAt, { yaw: yawOf(F) + 90, size: 1.5, state: CLOUD.form }),
-      scene.spawn("ed_air_cloud", sky(48, -2, 22), { yaw: yawOf(F), size: 1.1, state: CLOUD.form })];
+      scene.spawn("ed_air_cloud", sky(56, -4, 18), { yaw: yawOf(F), size: 1.1, state: CLOUD.form })];
     sound(dim, "ed_air_cloud", cloudAt, 1.8);
     burst(dim, "ed_air_cloud", cloudAt, 6, 6);
   });
@@ -1029,10 +1033,10 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
   }, T_AIR - 24, T_AIR + 66);
   scene.at(T_AIR + 66, () => clouds.forEach((c) => c.state(CLOUD.fade)));
   scene.at(T_AIR + 90, () => clouds.forEach((c) => scene.despawn(c)));
-  airMv.add(A_T.arrive, (p) => bezier3([airStart, sky(44, 10, 20), sky(38, 14, 16), sky(33, 11, 14)], smooth(p)));
+  airMv.add(A_T.arrive, (p) => bezier3([airStart, sky(50, 7, 16), sky(43, 12, 12.5), sky(37, 11, 11)], smooth(p)));
   force(T_AIR, A_T.arrive, A.arrive);
   const tRoll = airMv.cursor;
-  airMv.add(A_T.roll, (p) => lerp(sky(33, 11, 14), sky(29, 4, 13), smooth(p)));
+  airMv.add(A_T.roll, (p) => lerp(sky(37, 11, 11), sky(33, 4, 10), smooth(p)));
   force(tRoll, A_T.roll, A.roll);
   const tGlide = airMv.cursor;
   let tStoop = 0, tFlap = 0;
@@ -1041,14 +1045,14 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     const rel = sub(G, C0);
     const gf = dot(rel, F), gr = dot(rel, R);
     airMv.truncate(tGlide);
-    airMv.path([sky(29, 4, 13), sky(27, gr * 0.6 - 2, 12), sky(gf + 8, gr - 1, 9.5)], 16);
+    airMv.path([sky(33, 4, 10), sky(29, gr * 0.6 - 2, 9.5), sky(gf + 8, gr - 1, 8)], 16);
     tStoop = airMv.cursor;
-    const s0 = sky(gf + 8, gr - 1, 9.5), s1 = sky(gf + 2.5, gr, 3.2);
+    const s0 = sky(gf + 8, gr - 1, 8), s1 = sky(gf + 2.5, gr, 3.2);
     airMv.add(A_T.stoop, (p) => lerp(s0, s1, p * p));
     force(tStoop, A_T.stoop, A.stoop);
     tFlap = airMv.cursor;
-    const e0 = ellDegAt(sky(gf + 12, gr + 8, 14)) + 10;
-    airMv.path([s1, sky(gf - 1, gr + 4, 5), sky(gf + 4, gr + 9, 9), sky(gf + 12, gr + 8, 13), ellipse(e0, airMv.cursor + 30)], 12);
+    const e0 = ellDegAt(sky(gf + 22, gr + 9, 12)) + 8;
+    airMv.path([s1, sky(gf - 1, gr + 4, 5), sky(gf + 5, gr + 9, 7.5), sky(gf + 14, gr + 10, 10.5), ellipse(e0, airMv.cursor + 30)], 12);
     force(tFlap, airMv.cursor - tFlap, A.move);
     airOrbit(e0, 4000);
     scene.at(tStoop, () => { sound(dim, "ed_air_dive", s0, 1.8); particle(dim, "ed_air_boom", s0); particle(dim, "ed6_ring_v", s0); });
@@ -1087,7 +1091,7 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
 
   // Phase III: a full-spread beat high over the stage; its wind lifts rock, leaves and ice into aerial formations
   const debris: { a: Actor; at: V3 }[] = [];
-  const AH = sky(30, -2, 15);
+  const AH = sky(34, -2, 11);
   scene.at(T3 + 130, () => {
     const p0 = airBreak(T3 + 130);
     airMv.path([p0, lerp(p0, AH, 0.5), AH], 14);
@@ -1178,7 +1182,7 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
   });
 
   // ---------------------------------------------------------------- leylines of the domain
-  const DOMAIN_R = 4.6;
+  const DOMAIN_R = 4.0;
   const leyEnd = (k: number, t: number): V3 | undefined => {
     const a = [nature, heat, tide, air][k];
     const arrived = t >= [T_NATURE + 10, T_HEAT + 4, T_TIDE + 4, T_AIR + 30][k];
@@ -1496,12 +1500,12 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
 
   // ---- 3. Spiraling ice and wind (Air): all four feathered surfaces drive a spiral column
   let spiral: Actor | undefined;
-  const HELIX_R = 6;
+  const HELIX_R = 5;
   scene.at(T4 + 168, () => {
     const z = zone();
-    const HC = add(z.G, mul(F, 4.5));
+    const HC = add(z.G, mul(F, 6));
     const p0 = airBreak(T4 + 168);
-    const hs = up(W.polar(HELIX_R, 0, 0, HC), 11);
+    const hs = up(W.polar(HELIX_R, 0, 0, HC), 7.5);
     airMv.path([p0, up(lerp(p0, hs, 0.5), 2), hs], 16);
     const tPw = airMv.cursor;
     airMv.add(A_T.power, (p) => add(hs, mul(R, -1.5 * smooth(p))), { yaw: yawOf(mul(R, -1)) });
@@ -1516,7 +1520,7 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
     const tHx = airMv.cursor;
     const start = add(hs, mul(R, -1.5));
     const ang0 = (Math.atan2(-1.5, HELIX_R) * 180) / Math.PI;
-    const hx = (p: number): V3 => up(W.polar(HELIX_R, ang0 - 540 * p, 0, HC), 11 - 5 * Math.sin(p * Math.PI) - 1.5 * p);
+    const hx = (p: number): V3 => up(W.polar(HELIX_R, ang0 - 540 * p, 0, HC), 7.5 - 3 * Math.sin(p * Math.PI) - 0.8 * p);
     airMv.add(2, (p) => lerp(start, hx(0), p));
     airMv.add(64, (p) => hx(p), { tag: "helix" });
     const back = airMv.last;
@@ -1692,8 +1696,8 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
         codex.state(CODEX.absorb);
         sound(dim, "ed6_absorb", K3, 1.6, 0.9 + k * 0.08);
         burst(dim, "ed6_codex_glint", up(K3, 2), 2.5, 5);
-        particle(dim, `ed6_flash_${LINEAGE[k]}`, up(K3, 2.2));
-        particle(dim, "ed6_ring_v", up(K3, 2.2));
+        particle(dim, `ed6_flash_${LINEAGE[k]}`, up(K3, CODEX_CORE));
+        particle(dim, "ed6_ring_v", up(K3, CODEX_CORE));
         scene.despawn(s);
       });
     });
@@ -1750,20 +1754,20 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
   scene.at(T5, () => { tide.prop("frost", 0).skin(0); sound(dim, "ed_tide_sail", up(tideMv.last, 6), 1.3); tide.state(D.rest); });
   scene.at(T5 + 10, () => {
     const z = zone();
-    massV = scene.spawn("ed_tide_mass", up(z.TL, 6.5), { state: MASS.gather, size: 1.0 });
-    sound(dim, "ed_tide_mass", up(z.TL, 6.5), 1.5);
+    massV = scene.spawn("ed_tide_mass", up(z.TL, 3.8), { state: MASS.gather, size: 1.0 });
+    sound(dim, "ed_tide_mass", up(z.TL, 3.8), 1.5);
   });
   scene.at(T5 + 30, () => massV?.state(MASS.hold));
   scene.at(T5 + 40, () => {
     const z = zone();
     tideMv.truncate(T5 + 40);
-    tideMv.pathIn([z.TL, up(z.TL, 3), up(z.TL, 6.5)], 24, { tag: "swim", ease: smooth, yaw: z.tideYaw });
+    tideMv.pathIn([z.TL, up(z.TL, 1.8), up(z.TL, 3.5)], 24, { tag: "swim", ease: smooth, yaw: z.tideYaw });
     tideMv.hold(300, z.tideYaw);
     tide.state(D.swim);
   });
-  scene.at(T5 + 64, () => { tide.state(D.depart); sound(dim, "ed_tide_depart", up(zone().TL, 6.5), 1.6); });
+  scene.at(T5 + 64, () => { tide.state(D.depart); sound(dim, "ed_tide_depart", up(zone().TL, 3.5), 1.6); });
   scene.at(T5 + 64 + D_T.depart, () => scene.despawn(tide));
-  remember(2, () => ({ p: up(zone().TL, 6.5), yaw: zone().tideYaw }), TIDE.scale, T5 + 68, T5 + 100);
+  remember(2, () => ({ p: up(zone().TL, 3.5), yaw: zone().tideYaw }), TIDE.scale, T5 + 68, T5 + 100);
   scene.at(T5 + 112, () => massV?.state(MASS.disperse));
   scene.at(T5 + 134, () => { if (massV) scene.despawn(massV); });
   // Heat: closes its vents, lets the heat go in a long plume of steam, settles, becomes inscription
@@ -1794,13 +1798,13 @@ export default defineSpell("ed06", ({ caster, scene, aim }) => {
   scene.at(T_SEAL - 26, () => sound(dim, "ed6_swell", K3, 1.2, 1.3));
   scene.every(2, (e) => {                              // the pages draw the last light in
     const a = e * 47, r = 6 - (e % 6) * 0.8;
-    particle(dim, e % 3 ? "ed6_stream" : "ed6_codex_rune", add(up(K3, 2.2), { x: Math.cos((a * Math.PI) / 180) * r, y: (e % 5) - 2, z: Math.sin((a * Math.PI) / 180) * r }));
+    particle(dim, e % 3 ? "ed6_stream" : "ed6_codex_rune", add(up(K3, CODEX_CORE), { x: Math.cos((a * Math.PI) / 180) * r, y: (e % 5) - 2, z: Math.sin((a * Math.PI) / 180) * r }));
   }, T_SEAL - 24, T_SEAL);
   scene.at(T_SEAL, () => {
     codex.prop("sep", 0).prop("open", 0).state(CODEX.beat);
     scene.after(12, () => codex.state(CODEX.hover));
     codex.skin(4);
-    const Kc = up(K3, 2.2);
+    const Kc = up(K3, CODEX_CORE);
     sound(dim, "ed6_seal", Kc, 2.4);
     sound(dim, "ed6_codex_close", Kc, 1.8);
     particle(dim, "fx_flash", Kc);
