@@ -6,19 +6,19 @@
    "bones": {
     "place": {
      "position": [
-      "-(c.is_first_person ? -2.5 : 4.5)",
-      "c.is_first_person ? -4.0 : 2.0",
-      "c.is_first_person ? -6.0 : -3.0"
+      "-(c.is_first_person ? 5.0 : 9.5)",
+      "c.is_first_person ? 21.0 : 19.0",
+      "c.is_first_person ? -9.0 : -5.5"
      ],
      "rotation": [
-      "-(c.is_first_person ? 82.0 : -8.0)",
-      "-(c.is_first_person ? 168.0 : -140.0)",
-      "c.is_first_person ? 0.0 : 0.0"
+      "-(c.is_first_person ? 20.0 : 18.0)",
+      "-(c.is_first_person ? 196.0 : 180.0)",
+      "c.is_first_person ? -6.0 : -8.0"
      ],
      "scale": [
-      "c.is_first_person ? 0.26 : 0.32",
-      "c.is_first_person ? 0.26 : 0.32",
-      "c.is_first_person ? 0.26 : 0.32"
+      "c.is_first_person ? 0.155 : 0.2",
+      "c.is_first_person ? 0.155 : 0.2",
+      "c.is_first_person ? 0.155 : 0.2"
      ]
     }
    }

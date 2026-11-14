@@ -30,24 +30,19 @@ from .a_fx_common import particles
 
 # =====================================================================================
 # HELD-BOOK PLACEMENT - every offset that positions the attachable lives here.
-# Units: 1/16 block, bb space of the bound hand bone (rightItem / leftItem):
-#   +X = holder's right, +Y = up along the arm, -Z = forward.  Rotations in degrees, X then Y then Z.
-# The book is authored upright, front cover facing -Z, spine on the left as the reader sees it,
-# centred on the origin, about 32 x 38 x 9 units; PLACE_SCALE brings it to ~0.6 x 0.7 block.
-#
-# Third person: the arm hangs (almost) straight, so the hand frame ~ the body frame.  The book
-#   floats a hand's width outward and slightly forward of the fist at hip height, turned so its
-#   cover faces back-and-outward (readable from the usual over-the-shoulder camera).
-# First person: the arm is raised forward, so in the hand frame -Y points into the screen and
-#   -Z points up.  (90, 180, 0) maps the book's up to screen-up and its cover toward the camera;
-#   the extra few degrees turn it toward the screen centre.  The offset lifts it above the fist and
-#   slides it toward the middle of the screen so it never covers the crosshair.
-FP_POS = (-2.5, -4.0, -6.0)
-FP_ROT = (82.0, 168.0, 0.0)
-FP_SCALE = 0.26
-TP_POS = (4.5, 2.0, -3.0)
-TP_ROT = (-8.0, -140.0, 0.0)
-TP_SCALE = 0.32
+# Same frame and numbers as books_dw.py / books_ed.py so the three Grimoires sit in the same place:
+# bb space of the bound hand bone (whose space is the player model's space, right hand ~ (6, 12..15, 1)),
+#   +X = holder's right, +Y up, -Z = forward; units 1/16 block; degrees, X then Y then Z.
+# The book is modelled upright, centred on its own origin, cover facing -Z, spine on +X.
+#   ROT: ry 180 turns the cover toward the caster; rx tips the cover face upward.
+# Scale: this model is ~38 units tall (DW's is 14 at 0.55 / 0.42), so 0.20 / 0.155 give the same
+# ~0.48-block book (38 x 27 x 8 cm).
+TP_POS = (9.5, 19.0, -5.5)      # third person: beside and above the right hand, a little forward
+TP_ROT = (18.0, 180.0, -8.0)
+TP_SCALE = 0.20
+FP_POS = (5.0, 21.0, -9.0)      # first person: up and right of the hand, clear of the crosshair
+FP_ROT = (20.0, 196.0, -6.0)
+FP_SCALE = 0.155
 RISE = 9.0          # how far (book units) the book rises while Use is held
 OPEN_TILT = 16.0    # tilt back (deg) while open so the pages face the reader
 # =====================================================================================
