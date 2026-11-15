@@ -387,6 +387,21 @@ export class MountainModel {
     this.plantTrees();
     yield;
     this.decorateSurface();
+    this.lightLegAnchors();
+  }
+
+  /**
+   * An entity is lit by the light level at its anchor. The leg anchors hang a few blocks inside the
+   * underside's shadow, so each gets an invisible light block: the roots read clearly from below.
+   */
+  private lightLegAnchors(): void {
+    for (const leg of this.legs) {
+      const x = Math.floor(leg.pos.x);
+      const y = Math.floor(leg.pos.y);
+      const z = Math.floor(leg.pos.z);
+      const v = this.get(x, y, z);
+      if (v === P.AIR || v === P.KEEP) this.set(x, y, z, P.LIGHT_12);
+    }
   }
 
   private placeLegs(): void {
@@ -403,7 +418,9 @@ export class MountainModel {
       const yaw = (Math.atan2(-nx, nz) * 180) / Math.PI;
       this.legs.push({
         index: k,
-        pos: { x: ex * 0.9, y: MM.rimUnderY + 1.5, z: ez * 0.9 },
+        // the anchor sits in open air just below the underside (an entity is lit by the light
+        // level at its anchor; inside rock it renders black); the model is lifted to compensate
+        pos: { x: ex * 0.9, y: MM.rimUnderY - 4.5, z: ez * 0.9 },
         yaw,
         dir: { x: nx, z: nz },
         t,

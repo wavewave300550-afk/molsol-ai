@@ -576,7 +576,13 @@ export class Entity {
     this.flying = true;
   }
   get nameTag() {
-    return "";
+    return this._nameTag ?? "";
+  }
+  set nameTag(v) {
+    mutating("nameTag");
+    if (!this.isValid) throw new Error("InvalidEntityError: nameTag on an unloaded/removed entity");
+    if (typeof v !== "string") issue("nameTag must be a string");
+    this._nameTag = v;
   }
 }
 const MockEntity = Entity;
@@ -925,7 +931,7 @@ const tickingAreaManager = {
 // ------------------------------------------------------------------ chunk loading: entities + queued structure cells
 const stored = [];
 function snapshot(e) {
-  return { id: e.id, typeId: e.typeId, dimension: e.dimension, location: { ...e.location }, rot: { ...e.rot }, props: { ...e.props }, tags: [...e.tags], hp: e.health?.currentValue, dyn: [...e.dyn], item: e.item, vel: { ...e.vel }, flying: e.flying };
+  return { id: e.id, typeId: e.typeId, dimension: e.dimension, location: { ...e.location }, rot: { ...e.rot }, props: { ...e.props }, tags: [...e.tags], hp: e.health?.currentValue, dyn: [...e.dyn], item: e.item, vel: { ...e.vel }, flying: e.flying, nameTag: e._nameTag };
 }
 function restore(sn) {
   const e = new Entity(sn.typeId, { ...sn.location }, sn.dimension);
@@ -938,6 +944,7 @@ function restore(sn) {
   e.item = sn.item;
   e.vel = { ...sn.vel };
   e.flying = sn.flying;
+  e._nameTag = sn.nameTag;
   return e;
 }
 /** Unload entities whose chunk is no longer loaded; reload stored ones (new handles, entityLoad fires). */

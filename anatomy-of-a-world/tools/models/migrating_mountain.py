@@ -85,7 +85,8 @@ LEG = {
 
 def build_leg() -> Model:
     """Anchorage Root: a massive root-limb of mantle musculature armoured with living strata."""
-    m = Model("geometry.anatomy.mm_root_leg", seed=11, visible_bounds=(48, 48, (0, -10, 0)))
+    # anchor 6 blocks below the old one (out of the rock, see placeLegs in src/gen/mountain.ts): lift the model 96 px
+    m = Model("geometry.anatomy.mm_root_leg", seed=11, visible_bounds=(48, 48, (0, -10, 0)), offset=(0, 96, 0))
     L = LEG
     root = m.bone("root", (0, 0, 0))
     # shoulder mass that blends into the underside arches
@@ -407,7 +408,8 @@ PETAL_FOLDED = {"root": 64.0, "segs": [8, 10, 12, 12, 12, 12, 12, 14]}
 
 
 def build_petal() -> Model:
-    m = Model("geometry.anatomy.mm_petal", seed=51, visible_bounds=(60, 60, (0, 20, 0)))
+    # anchor 4.5 blocks above the old one (above the Phase 2 cut, in open air): lower the model 72 px
+    m = Model("geometry.anatomy.mm_petal", seed=51, visible_bounds=(60, 60, (0, 20, 0)), offset=(0, -72, 0))
     root = m.bone("root", (0, 0, 0))
     root.cube((-180, -24, -40), (360, 30, 80), MUSCLE, 0.375)  # hinge into the rim
     parent = "root"

@@ -289,11 +289,15 @@ class Bone:
 
 
 class Model:
-    def __init__(self, identifier: str, seed: int = 1, visible_bounds=(8, 8, (0, 2, 0))):
+    def __init__(self, identifier: str, seed: int = 1, visible_bounds=(8, 8, (0, 2, 0)), offset=(0.0, 0.0, 0.0)):
         self.identifier = identifier
         self.bones: List[Bone] = []
         self.seed = seed
         self.visible_bounds = visible_bounds
+        # Exported geometry is moved by `offset` (pixels) relative to the entity's anchor, without
+        # changing the painted textures. Used to keep an anchor in open air (entities are lit by the
+        # light level at their anchor) while the model stays where it was.
+        self.offset = tuple(float(v) for v in offset)
         self.tex_w = 0
         self.tex_h = 0
         self.atlas: Optional[Image.Image] = None
@@ -372,26 +376,29 @@ class Model:
     # -- export ----------------------------------------------------------------------------
     def geometry_json(self) -> dict:
         vb_w, vb_h, vb_off = self.visible_bounds
+        ox, oy, oz = self.offset
+        mv = lambda p: [round(p[0] + ox, 4), round(p[1] + oy, 4), round(p[2] + oz, 4)]
+        vb_off = (vb_off[0] + ox / 16, vb_off[1] + oy / 16, vb_off[2] + oz / 16)
         bones = []
         for b in self.bones:
-            jb = {"name": b.name, "pivot": [round(v, 4) for v in b.pivot]}
+            jb = {"name": b.name, "pivot": mv(b.pivot)}
             if b.parent:
                 jb["parent"] = b.parent
             if b.rotation:
                 jb["rotation"] = [round(v, 4) for v in b.rotation]
             cubes = []
             for c in b.cubes:
-                jc = {"origin": [round(v, 4) for v in c.origin], "size": [round(v, 4) for v in c.size], "uv": c.uv}
+                jc = {"origin": mv(c.origin), "size": [round(v, 4) for v in c.size], "uv": c.uv}
                 if c.rotation:
                     jc["rotation"] = [round(v, 4) for v in c.rotation]
-                    jc["pivot"] = [round(v, 4) for v in (c.pivot or b.pivot)]
+                    jc["pivot"] = mv(c.pivot or b.pivot)
                 if c.inflate:
                     jc["inflate"] = c.inflate
                 cubes.append(jc)
             if cubes:
                 jb["cubes"] = cubes
             if b.locators:
-                jb["locators"] = {k: [round(v, 4) for v in pos] for k, pos in b.locators.items()}
+                jb["locators"] = {k: mv(pos) for k, pos in b.locators.items()}
             bones.append(jb)
         return {
             "format_version": "1.16.0",
@@ -402,7 +409,7 @@ class Model:
                     "texture_height": self.tex_h,
                     "visible_bounds_width": vb_w,
                     "visible_bounds_height": vb_h,
-                    "visible_bounds_offset": list(vb_off),
+                    "visible_bounds_offset": [round(v, 4) for v in vb_off],
                 },
                 "bones": bones,
             }],

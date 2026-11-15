@@ -20,7 +20,8 @@ export const PETALS = 12;
 
 export function petalSite(k: number): { pos: V3; yaw: number; angle: number } {
   const ang = ((15 + (360 / PETALS) * k) * Math.PI) / 180;
-  const pos = { x: HX + Math.cos(ang) * MM.A * 0.8, y: MM.disk.y - 3, z: HZ + Math.sin(ang) * MM.B * 0.8 };
+  // anchored above the Phase 2 cut (open air: an entity inside rock renders black); the model is lowered to match
+  const pos = { x: HX + Math.cos(ang) * MM.A * 0.8, y: MM.disk.y + 1.5, z: HZ + Math.sin(ang) * MM.B * 0.8 };
   // the model's front (-Z) faces the heart
   const fx = HX - pos.x;
   const fz = HZ - pos.z;
@@ -109,8 +110,8 @@ export function* greatUnfolding(ctx: MMContext, hooks: Hooks): Co {
     ctx.petal(k, 0);
     cutColumns(ctx.writer, sectors[k]);
     const s = petalSite(k);
-    particle(ctx.dim, PX.dust, { x: s.pos.x, y: s.pos.y + 14, z: s.pos.z }, { size: 2.2 });
-    particle(ctx.dim, PX.debris, { x: (s.pos.x + HX) / 2, y: s.pos.y + 20, z: (s.pos.z + HZ) / 2 }, { size: 3 });
+    particle(ctx.dim, PX.dust, { x: s.pos.x, y: s.pos.y + 9.5, z: s.pos.z }, { size: 2.2 });
+    particle(ctx.dim, PX.debris, { x: (s.pos.x + HX) / 2, y: s.pos.y + 15.5, z: (s.pos.z + HZ) / 2 }, { size: 3 });
     if (k % 3 === 0) sound(ctx.dim, SND.unfold, s.pos, 1, 0.8 + k * 0.03);
     else sound(ctx.dim, SND.crack, s.pos, 1, 0.7);
     yield 2;

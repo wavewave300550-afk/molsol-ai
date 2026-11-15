@@ -14,7 +14,7 @@ const A = 58, B = 46, DY = 146, HX = 0.5, HZ = 0.5;
 const petals = [];
 for (let k = 0; k < 12; k++) {
   const ang = ((15 + 30 * k) * Math.PI) / 180;
-  const pos = [HX + Math.cos(ang) * A * 0.8, DY - 3, HZ + Math.sin(ang) * B * 0.8];
+  const pos = [HX + Math.cos(ang) * A * 0.8, DY + 1.5, HZ + Math.sin(ang) * B * 0.8]; // petal anchor (see petalSite)
   const yaw = (Math.atan2(-(HX - pos[0]), HZ - pos[2]) * 180) / Math.PI;
   petals.push({ pos, yaw });
 }

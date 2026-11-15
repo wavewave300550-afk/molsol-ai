@@ -155,6 +155,10 @@ check(ents("anatomy:mm_resonance_node").length === 3, "3 resonance nodes");
 check(ents("anatomy:mm_lithic_heart").length === 1, "1 lithic heart");
 check(ents("anatomy:mm_resonance_node").filter((e) => e.getProperty("anatomy:hanging")).length === 1, "the root node hangs");
 check(new Set(ents("anatomy:mm_root_leg").map((e) => e.getProperty("anatomy:leg_index"))).size === 14, "legs have distinct gait indices");
+// an entity is lit by the light level at its anchor: an anchor inside rock renders the whole model black
+const buried = (types) => mock.allEntities().filter((e) => e.dimension === arena() && types.includes(e.typeId) && arena().isSolidAt(e.location.x, e.location.y, e.location.z));
+check(buried(["anatomy:mm_root_leg", "anatomy:mm_resonance_node", "anatomy:mm_lithic_heart"]).length === 0, `every Phase 1 part is anchored in open air (buried: ${buried(["anatomy:mm_root_leg", "anatomy:mm_resonance_node", "anatomy:mm_lithic_heart"]).map((e) => e.typeId.slice(11) + "@" + Math.floor(e.location.y)).join(" ")})`);
+check(ents("anatomy:mm_lithic_heart")[0]?.nameTag === "The Migrating Mountain", "the heart carries its boss bar name");
 check(alex.fogStack.some((f) => f.id === "anatomy:migration_mist"), "migration mist fog pushed");
 check(alex.music === "anatomy.music.mm_phase1", "phase 1 music playing");
 check(alex.inputs[2] !== false && alex.cameraState === "default", "controls restored after the intro");
@@ -263,6 +267,7 @@ await until(() => enc()?.state === "phase2", 3000, "phase 2");
 log(`phase 2 reached; petals ${ents("anatomy:mm_petal").length}`);
 check(ents("anatomy:mm_petal").length === 12, "12 petals form the crown");
 check(ents("anatomy:mm_petal").every((e) => e.getProperty("anatomy:petal_state") === 1), "petals unfolded");
+check(buried(["anatomy:mm_petal", "anatomy:mm_root_leg", "anatomy:mm_lithic_heart"]).length === 0, `every Phase 2 part is anchored in open air (buried: ${buried(["anatomy:mm_petal", "anatomy:mm_root_leg", "anatomy:mm_lithic_heart"]).map((e) => e.typeId.slice(11) + "@" + Math.floor(e.location.y)).join(" ")})`);
 check(ents("anatomy:mm_root_leg").every((e) => e.getProperty("anatomy:pose") === 1), "legs splay for phase 2");
 check(heart.getProperty("anatomy:phase") === 2, "heart in phase 2");
 const D = MM.disk;

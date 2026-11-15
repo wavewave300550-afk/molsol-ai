@@ -263,7 +263,7 @@ export function* lithicPeristalsis(ctx: MMContext, target: Player): Co {
       /* ignore */
     }
   }
-  const origin = { x: ox, y: leg.pos.y + 4, z: oz };
+  const origin = { x: ox, y: leg.pos.y + 10, z: oz };
   warn(near(ctx, p, 40), "Lithic Peristalsis", "waves of strata roll through — jump them!");
   sound(ctx.dim, SND.rumble, origin, 1, 1);
   yield 22;

@@ -59,6 +59,8 @@ const SWEEP_ID = "anatomy_mm_sweep";
 /** Thai names of the Resonance Nodes. */
 const NODE_TH: Record<string, string> = { dorsal: "ผลึกยอดเขา", cavern: "ผลึกในถ้ำ", root: "ผลึกใต้ราก" };
 const NODE_COLOR = { red: 0.78, green: 0.38, blue: 1 };
+/** Shown on the boss bar. */
+const HEART_NAME = "The Migrating Mountain";
 
 export class MigratingMountainEncounter implements BossEncounter, MMContext {
   readonly dim: Dimension;
@@ -568,6 +570,8 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
       init: (e) => {
         e.getComponent("minecraft:health")?.setCurrentValue(this.heartHpCache);
         this.heartHpDebt = 0;
+        // the boss bar shows the name tag (the pack's .lang name did not reach it: "Unknown")
+        e.nameTag = HEART_NAME;
       },
     });
   }
