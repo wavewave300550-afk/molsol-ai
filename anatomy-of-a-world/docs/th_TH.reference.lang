@@ -1,0 +1,11 @@
+pack.name=THE ANATOMY OF A WORLD
+pack.description=บอสทดลองขนาดมหึมา ร่างกายของพวกมันคือสนามรบ
+entity.anatomy:mm_lithic_heart.name=เทือกเขาอพยพ
+entity.anatomy:mm_resonance_node.name=ไหนดประสานงาน
+entity.anatomy:mm_root_leg.name=รากยึดสมดุล
+entity.anatomy:mm_petal.name=ชั้นหินที่คลี่ออก
+entity.anatomy:mm_strata_slab.name=แผ่นหินที่ผลัดลอก
+entity.anatomy:mm_strata_plate.name=ชั้นหินพลิกกลับ
+item.anatomy:anatomical_atlas.name=สมุดกายวิภาคแห่งโลก
+item.anatomy:restless_lodestone.name=หินแม่เหล็กไร้สงบ
+item.anatomy:lithic_heart_shard.name=เศษหัวใจศิลา

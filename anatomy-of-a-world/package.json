@@ -1,0 +1,19 @@
+{
+  "name": "the-anatomy-of-a-world",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Minecraft Bedrock add-on: THE ANATOMY OF A WORLD - experimental colossal bosses",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "python3 tools/build.py",
+    "test": "npm run typecheck && npm run build"
+  },
+  "devDependencies": {
+    "@minecraft/server": "2.11.0",
+    "@minecraft/server-ui": "2.3.0",
+    "@minecraft/vanilla-data": "1.26.60",
+    "three": "^0.187.0",
+    "typescript": "5.6.3"
+  }
+}
