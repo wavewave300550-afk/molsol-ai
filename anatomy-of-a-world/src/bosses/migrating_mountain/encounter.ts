@@ -44,7 +44,9 @@ import { greatUnfolding, PETALS, rebloom, ringSpot, spawnPetal, victorySequence 
 type State = "loading" | "intro" | "phase1" | "unfolding" | "phase2" | "victory" | "aftermath" | "ending" | "finished";
 
 const D = MM.disk;
-const HEART_MAX = 2000;
+/** Health attribute of the heart (kept at 1000; incoming damage is halved for a 2000-point fight). */
+const HEART_MAX = 1000;
+const HEART_DAMAGE = 0.5;
 const NODE_SHARE = 0.1333;
 const REBLOOM_AT = 0.3;
 const AREA_ID = "anatomy_mm_arena";
@@ -85,7 +87,7 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     this.dim = world.getDimension(DIMENSION);
     this.m = mountain();
     this.writer = new BlockWriter(this.dim, 1500);
-    this.terrain = new DorsalTerrain(this.m, this.dim, this.writer);
+    this.terrain = new DorsalTerrain(this.m, this.dim, this.writer, pristineBlock);
     this.random = new Rng((Date.now() & 0xffff) ^ 0x5eed);
     this.rng = () => this.random.next();
     this.director = new Director(this, () => this.pockets());
@@ -109,7 +111,7 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
   }
 
   entryPoint(): { pos: V3; facing: V3 } {
-    if (this.phase === 2) return ringSpot(Math.floor(this.rng() * 8), 8);
+    if (this.phase === 2) return this.safeRingSpot();
     const ar = MM.arrival;
     return { pos: { x: ar.x + 0.5, y: ar.y + 1.05, z: ar.z + 0.5 }, facing: { x: 0, y: 150, z: 0 } };
   }
@@ -152,6 +154,25 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     this.tasks.cancelAll();
     this.state = "ending";
     this.tasks.start("mm:ending", this.ending(reason), () => this.finishNow());
+  }
+
+  /** A ring spot whose feet and head cells are free (abilities may have raised flesh or rubble). */
+  private safeRingSpot(): { pos: V3; facing: V3 } {
+    const start = Math.floor(this.rng() * 16);
+    let first: { pos: V3; facing: V3 } | undefined;
+    for (let k = 0; k < 16; k++) {
+      const s = ringSpot((start + k) % 16, 16);
+      first ??= s;
+      try {
+        const feet = this.dim.getBlock(s.pos);
+        const head = this.dim.getBlock({ x: s.pos.x, y: s.pos.y + 1, z: s.pos.z });
+        if ((feet?.isAir ?? true) && (head?.isAir ?? true)) return s;
+      } catch {
+        return s;
+      }
+    }
+    const f = first!;
+    return { pos: { x: f.pos.x, y: f.pos.y + 3, z: f.pos.z }, facing: f.facing };
   }
 
   // ------------------------------------------------------------------ MMContext
@@ -246,6 +267,15 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     for (let i = 0; i < 600 && loaded === undefined; i++) yield 2;
     if (!loaded) console.warn("[anatomy] arena ticking area not confirmed; continuing (chunks may load as players arrive)");
     this.killLeftovers();
+    // players already inside (a resumed fight) are held safely while the body is rebuilt
+    const holding = saved ? this.audience() : [];
+    for (const p of holding)
+      try {
+        p.addEffect("slow_falling", 2400, { amplifier: 0, showParticles: false });
+        p.addEffect("resistance", 2400, { amplifier: 4, showParticles: false });
+      } catch {
+        /* ignore */
+      }
     yield* clearArena(this.dim);
     // the arrival shelf first, so the party has somewhere to stand
     const ar = MM.arrival;
@@ -256,6 +286,14 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
           if (v >= 2) this.writer.set(x, y, z, v);
         }
     this.writer.flushAll();
+    for (const p of holding) {
+      const e = this.entryPoint();
+      try {
+        p.teleport({ x: ar.x + 0.5, y: ar.y + 1.05, z: ar.z + 0.5 }, { facingLocation: e.facing });
+      } catch {
+        /* ignore */
+      }
+    }
     this.startedAt = system.currentTick;
     if (!saved) {
       manager.record(this.def.id, "attempts");
@@ -298,6 +336,18 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
       }
       for (const e of this.legs) if (e.isValid) e.setProperty(PROP.pose, 1);
       this.terrain.enabled = false;
+      for (let i = 0; i < 80 && this.writer.pending > 0; i++) yield 1;
+      const inside = this.audience();
+      inside.forEach((p, i) => {
+        const r = ringSpot(i, inside.length);
+        try {
+          p.teleport(r.pos, { facingLocation: r.facing });
+          p.removeEffect("slow_falling");
+          p.removeEffect("resistance");
+        } catch {
+          /* ignore */
+        }
+      });
       this.enterPhase2(false);
     } else {
       if (!saved) {
@@ -307,6 +357,13 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
         this.cinematic(false);
         title(this.audience(), "§aPHASE 1", "§2THE SLEEPING CONTINENT §7— find and destroy the 3 Resonance Nodes", 70, 10, 20);
       }
+      for (const p of holding)
+        try {
+          p.removeEffect("slow_falling");
+          p.removeEffect("resistance");
+        } catch {
+          /* ignore */
+        }
       this.state = "phase1";
       this.phase = 1;
       this.director.reset(this.now, saved ? 100 : 240);
@@ -563,10 +620,11 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
   }
 
   private rescue(everyone: Player[]): void {
+    if (this.state === "loading" || this.state === "ending" || this.state === "finished") return;
     for (const p of everyone) {
       if (p.location.y > 108) continue;
       let to: V3;
-      if (this.phase === 2) to = ringSpot(Math.floor(this.rng() * 12), 12).pos;
+      if (this.phase === 2) to = this.safeRingSpot().pos;
       else {
         const pts = this.m.pathPoints;
         let best = pts[0];
@@ -615,7 +673,7 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
         system.run(() => this.deflect(e, src));
         return;
       }
-      ev.damage *= this.partyScale(0.55);
+      ev.damage *= this.partyScale(0.55) * HEART_DAMAGE;
       const hp = e.getComponent("minecraft:health")?.currentValue ?? HEART_MAX;
       if (hp - ev.damage <= 1) {
         ev.cancel = true;
@@ -880,6 +938,13 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
 
   private *ending(reason: "victory" | "defeat" | "abort"): Co {
     const players = this.audience();
+    // anything players dropped (or loot they left behind) is carried home with them
+    let strays: Entity[] = [];
+    try {
+      strays = this.dim.getEntities({ type: "minecraft:item" }).concat(this.dim.getEntities({ type: "minecraft:xp_orb" }));
+    } catch {
+      strays = [];
+    }
     for (const p of players)
       try {
         p.camera.fade({ fadeColor: { red: 0, green: 0, blue: 0 }, fadeTime: { fadeInTime: 0.6, holdTime: 0.8, fadeOutTime: 1.0 } });
@@ -891,6 +956,16 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     for (const p of players) {
       this.farewell(p);
       leaveArena(p);
+    }
+    const home = players.find((p) => p.isValid && p.dimension.id !== DIMENSION) ?? world.getAllPlayers().find((p) => p.getDynamicProperty("anatomy:return") === undefined);
+    for (const e of strays) {
+      try {
+        if (!e.isValid) continue;
+        if (home) e.teleport({ x: home.location.x, y: home.location.y + 0.5, z: home.location.z }, { dimension: home.dimension });
+        else e.teleport(world.getDefaultSpawnLocation(), { dimension: world.getDimension("minecraft:overworld") });
+      } catch {
+        /* ignore */
+      }
     }
     for (const id of [...this.known]) {
       const p = world.getAllPlayers().find((pl) => pl.id === id);

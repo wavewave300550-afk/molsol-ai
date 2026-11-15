@@ -108,7 +108,7 @@ def behaviour_entities() -> Dict[str, dict]:
     }, {"anatomy:hanging": prop_bool(), "anatomy:charging": prop_bool(), "anatomy:dying": prop_bool()}, ("anatomy_part", "migrating_mountain", "anatomy_target"))
     E["mm_lithic_heart"] = entity("anatomy:mm_lithic_heart", {
         **immovable(5.0, 6.0),
-        "minecraft:health": {"value": 2000, "max": 2000},
+        "minecraft:health": {"value": 1000, "max": 1000},
         "minecraft:boss": {"hud_range": 150, "should_darken_sky": False},
         "minecraft:damage_sensor": damage_sensor_env_only(),
         "minecraft:nameable": {"always_show": False, "allow_name_tag_renaming": False},
@@ -120,7 +120,7 @@ def behaviour_entities() -> Dict[str, dict]:
         "minecraft:pushable": {"is_pushable": False, "is_pushable_by_piston": False},
         "minecraft:projectile": {
             "on_hit": {"remove_on_hit": {}},
-            "power": 1.0, "gravity": 0.05, "inertia": 1.0, "liquid_inertia": 1.0, "uncertainty_base": 0.0,
+            "power": 1.0, "gravity": 0.08, "inertia": 1.0, "liquid_inertia": 1.0, "uncertainty_base": 0.0,
             "uncertainty_multiplier": 0.0, "reflect_on_hurt": False,
             "ignored_entities": ["anatomy:mm_strata_slab", "anatomy:mm_root_leg", "anatomy:mm_petal", "anatomy:mm_lithic_heart", "anatomy:mm_resonance_node", "anatomy:mm_strata_plate"],
         },
@@ -321,7 +321,7 @@ def items() -> Dict[str, dict]:
         "anatomical_atlas": item("anatomical_atlas", "anatomy_atlas", "items", 1, {"anatomy:atlas": {}}),
         "restless_lodestone": item("restless_lodestone", "anatomy_restless_lodestone", "items", 16,
                                    {"anatomy:summoner": {"boss": "migrating_mountain"}}, glint=True),
-        "lithic_heart_shard": item("lithic_heart_shard", "anatomy_lithic_heart_shard", "items", 64, {}),
+        "lithic_heart_shard": item("lithic_heart_shard", "anatomy_lithic_heart_shard", "items", 64, {"anatomy:heart_shard": {}}, glint=True),
     }
 
 

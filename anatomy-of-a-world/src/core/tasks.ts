@@ -40,9 +40,9 @@ export class TaskRunner {
     return t;
   }
 
-  /** Advance every task by one tick. */
+  /** Advance every task by one tick. Tasks started during the tick run from the next tick. */
   tick(): void {
-    const list = this.tasks;
+    const list = this.tasks.slice();
     for (let i = 0; i < list.length; i++) {
       const t = list[i];
       if (t.done) continue;
@@ -60,16 +60,16 @@ export class TaskRunner {
         else console.error(`[anatomy] task ${t.name} failed: ${String(e)}${e instanceof Error && e.stack ? "\n" + e.stack : ""}`);
       }
     }
-    if (list.some((t) => t.done)) this.tasks = list.filter((t) => !t.done);
+    if (this.tasks.some((t) => t.done)) this.tasks = this.tasks.filter((t) => !t.done);
   }
 
   count(prefix?: string): number {
     return this.tasks.filter((t) => !t.done && (!prefix || t.name.startsWith(prefix))).length;
   }
 
+  /** Cancel tasks (they are pruned at the end of the current/next tick). */
   cancelAll(prefix?: string): void {
-    for (const t of this.tasks) if (!prefix || t.name.startsWith(prefix)) t.cancel();
-    this.tasks = this.tasks.filter((t) => !t.done);
+    for (const t of this.tasks.slice()) if (!prefix || t.name.startsWith(prefix)) t.cancel();
   }
 }
 

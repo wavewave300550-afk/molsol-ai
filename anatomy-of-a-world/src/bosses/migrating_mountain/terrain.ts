@@ -14,6 +14,8 @@ import { ColFlag, MM, MountainModel, treeBlocks, TreeInfo } from "../../gen/moun
 import * as P from "../../gen/palette.js";
 import { PX } from "./ids.js";
 
+const TREE_BLOCKS = new Set<number>([P.SPRUCE_LOG, P.SPRUCE_LEAVES, P.OAK_LOG, P.OAK_LEAVES, P.AZALEA_LEAVES]);
+
 export interface Field {
   /** Column bounds (inclusive) currently influenced. */
   x0: number;
@@ -58,6 +60,8 @@ export class DorsalTerrain {
     readonly m: MountainModel,
     readonly dim: Dimension,
     readonly writer: BlockWriter,
+    /** Pristine body lookup: settled columns are restored exactly (moss, plants, cliff detail). */
+    private readonly pristine?: (x: number, y: number, z: number) => number,
   ) {
     this.cur = new Int16Array(m.top);
     this.scarred = new Uint8Array(m.top.length);
@@ -193,9 +197,13 @@ export class DorsalTerrain {
       const drop = this.dropAt(x, z, tgt);
       const lo = Math.min(old, t) - 3;
       const hi = Math.max(old, t) + 1;
+      const settled = t === m.top[c] && !sc && this.pristine;
       for (let y = lo; y <= hi; y++) {
         let b: number;
-        if (y > t) b = P.AIR;
+        if (settled) {
+          b = this.pristine!(x, y, z);
+          if (TREE_BLOCKS.has(b)) b = P.AIR; // trees come back through regrowth
+        } else if (y > t) b = P.AIR;
         else if (sc) b = this.scarBlock(x, y, z, t);
         else b = m.dorsalBlock(x, y, z, t, drop);
         this.writer.set(x, y, z, b);

@@ -193,31 +193,56 @@ export function writeDisk(writer: BlockWriter, layout: number, filter?: (x: numb
   });
 }
 
-/** Phase 2 disk as an animated structure (rises layer by layer); falls back to the writer. */
+/**
+ * Phase 2 disk as animated structures (it rises layer by layer); falls back to the writer.
+ * The disk box is split into tiles no wider than 48 blocks to stay well inside structure limits.
+ */
 export function placeDisk(dim: Dimension, writer: BlockWriter, layout: number, seconds: number): void {
   const b = MM_DATA.p2box;
   const sm = world.structureManager;
-  const id = `anatomy:mm_disk_${layout}`;
+  const T = 36;
+  const tx = Math.ceil(b.sx / T);
+  const tz = Math.ceil(b.sz / T);
   try {
-    try {
-      sm.delete(id);
-    } catch {
-      /* none */
-    }
-    const s = sm.createEmpty(id, { x: b.sx, y: b.sy, z: b.sz }, StructureSaveMode.Memory);
-    const covered = new Uint8Array(b.sx * b.sz * b.sy);
+    const tiles: import("@minecraft/server").Structure[] = [];
+    const covered: Uint8Array[] = [];
+    for (let i = 0; i < tx; i++)
+      for (let k = 0; k < tz; k++) {
+        const id = `anatomy:mm_disk_${layout}_${i}_${k}`;
+        try {
+          sm.delete(id);
+        } catch {
+          /* none */
+        }
+        const sx = Math.min(T, b.sx - i * T);
+        const sz = Math.min(T, b.sz - k * T);
+        tiles.push(sm.createEmpty(id, { x: sx, y: b.sy, z: sz }, StructureSaveMode.Memory));
+        covered.push(new Uint8Array(sx * sz * b.sy));
+      }
     forEachRun(disk(layout), b.sx, b.sz, (cx, cz, y0, len, v) => {
+      const ti = Math.floor(cx / T) * tz + Math.floor(cz / T);
+      const s = tiles[ti];
+      const lx = cx % T;
+      const lz = cz % T;
+      const sz = s.size.z;
       const p = perm(v === 255 ? AIR : v);
       for (let k = 0; k < len; k++) {
-        s.setBlockPermutation({ x: cx, y: y0 + k, z: cz }, p);
-        covered[(cx * b.sz + cz) * b.sy + y0 + k] = 1;
+        s.setBlockPermutation({ x: lx, y: y0 + k, z: lz }, p);
+        covered[ti][(lx * sz + lz) * b.sy + y0 + k] = 1;
       }
     });
-    // everything outside the disk cylinder must stay structure void (never overwrite the rim shelf)
-    for (let cx = 0; cx < b.sx; cx++)
-      for (let cz = 0; cz < b.sz; cz++)
-        for (let y = 0; y < b.sy; y++) if (!covered[(cx * b.sz + cz) * b.sy + y]) s.setBlockPermutation({ x: cx, y, z: cz }, undefined);
-    sm.place(s, dim, { x: b.x0, y: b.y0, z: b.z0 }, seconds > 0 ? { animationMode: StructureAnimationMode.Layers, animationSeconds: seconds } : {});
+    // everything outside the disk cylinder stays structure void (never overwrite the rim shelf)
+    tiles.forEach((s, ti) => {
+      const { x: sx, z: sz } = s.size;
+      for (let lx = 0; lx < sx; lx++)
+        for (let lz = 0; lz < sz; lz++)
+          for (let y = 0; y < b.sy; y++) if (!covered[ti][(lx * sz + lz) * b.sy + y]) s.setBlockPermutation({ x: lx, y, z: lz }, undefined);
+    });
+    tiles.forEach((s, ti) => {
+      const i = Math.floor(ti / tz);
+      const k = ti % tz;
+      sm.place(s, dim, { x: b.x0 + i * T, y: b.y0, z: b.z0 + k * T }, seconds > 0 ? { animationMode: StructureAnimationMode.Layers, animationSeconds: seconds } : {});
+    });
   } catch (e) {
     console.warn(`[anatomy] disk structure failed (${String(e)}), writing directly`);
     writeDisk(writer, layout);

@@ -44,7 +44,7 @@ export const MIGRATING_MOUNTAIN: BossDefinition = {
     ],
     scale: "≈78 blocks tall, 116 long, 92 wide; a player is 1.8 blocks.",
     arena: "Its own void dimension: the boss's body is the arena, drifting over a sea of clouds.",
-    summon: "Use a Restless Lodestone (tuff, amethyst shards, a compass and mossy cobblestone). Players within 32 blocks are drawn in with you.",
+    summon: "Use a Restless Lodestone (tuff, amethyst shards, a compass and mossy cobblestone). Players within 32 blocks are drawn in with you.\n§6Reward§r Lithic Heart Shards — use one for Mountain's Resolve (Health Boost II + Resistance I for 5 minutes).",
   },
   create(party: Player[]) {
     return new MigratingMountainEncounter(MIGRATING_MOUNTAIN, party);

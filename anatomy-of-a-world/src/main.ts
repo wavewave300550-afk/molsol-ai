@@ -48,6 +48,12 @@ system.beforeEvents.startup.subscribe((ev) => {
   ev.itemComponentRegistry.registerCustomComponent("anatomy:atlas", {
     onUse: (e) => useItem(e.source, ATLAS_ITEM),
   });
+  ev.itemComponentRegistry.registerCustomComponent("anatomy:heart_shard", {
+    onUse: (e) => {
+      const p = e.source;
+      system.run(() => consumeShard(p));
+    },
+  });
   ev.itemComponentRegistry.registerCustomComponent("anatomy:summoner", {
     onUse: (e) => {
       if (e.itemStack) useItem(e.source, e.itemStack.typeId);
@@ -142,6 +148,34 @@ function bossAction(p: Player | undefined, action: string, specimen?: string): s
       return "leaving";
   }
   return "unknown action";
+}
+
+/** Lithic Heart Shard: "Mountain's Resolve" — the stability of the mountain, borrowed for five minutes. */
+function consumeShard(p: Player): void {
+  const last = recentUse.get(p.id + ":shard") ?? -100;
+  if (system.currentTick - last < 10) return;
+  recentUse.set(p.id + ":shard", system.currentTick);
+  const inv = p.getComponent("minecraft:inventory")?.container;
+  if (!inv) return;
+  const slot = p.selectedSlotIndex;
+  const it = inv.getItem(slot);
+  if (it?.typeId !== "anatomy:lithic_heart_shard") return;
+  if (p.getGameMode() !== "Creative") {
+    if (it.amount > 1) {
+      it.amount--;
+      inv.setItem(slot, it);
+    } else inv.setItem(slot, undefined);
+  }
+  p.addEffect("health_boost", 6000, { amplifier: 1, showParticles: true });
+  p.addEffect("resistance", 6000, { amplifier: 0, showParticles: true });
+  p.addEffect("instant_health", 1, { amplifier: 1, showParticles: false });
+  try {
+    p.dimension.playSound("anatomy.mm.heartbeat", p.location, { volume: 0.8, pitch: 1.2 });
+    p.dimension.spawnParticle("anatomy:mm_shard", { x: p.location.x, y: p.location.y + 1, z: p.location.z });
+  } catch {
+    /* ignore */
+  }
+  p.onScreenDisplay.setActionBar("§d◆ Mountain's Resolve §7— the strata steady you (5:00)");
 }
 
 function giveAtlas(p: Player, force: boolean): void {

@@ -471,12 +471,14 @@ function launchSlab(ctx: MMContext, from: V3, to: V3): void {
   const dy = to.y - from.y;
   const dz = to.z - from.z;
   const horiz = Math.hypot(dx, dz);
-  const T = Math.round(clamp(horiz / 1.0, 14, 32));
-  const g = 0.05;
+  // a high, slow arc: the slab is flung up off the body and comes crashing down on the ring
+  const T = Math.round(clamp(26 + horiz * 0.5, 30, 44));
+  const g = 0.08;
   const vel = { x: dx / T, y: (dy + 0.5 * g * T * (T + 1)) / T, z: dz / T };
   try {
     const proj = slab.getComponent("minecraft:projectile");
     if (proj) {
+      proj.gravity = g;
       if (ctx.heart?.isValid) proj.owner = ctx.heart;
       proj.shoot(vel, { uncertainty: 0 });
     } else slab.applyImpulse(vel);
@@ -578,28 +580,42 @@ export function* invertedStrata(ctx: MMContext, target: Player): Co {
   }
   const t = ctx.terrain;
   const p = target.location;
-  // find a flat 5x11 strip near the target
+  // find a 5x11 strip near the target; the strata level themselves into a slab before flipping
   let strip: { cx: number; cz: number; alongX: boolean; top: number } | undefined;
-  for (let attempt = 0; attempt < 16 && !strip; attempt++) {
+  for (let attempt = 0; attempt < 40 && !strip; attempt++) {
     const alongX = ctx.rng() < 0.5;
-    const cx = Math.floor(p.x + (ctx.rng() - 0.5) * 6);
-    const cz = Math.floor(p.z + (ctx.rng() - 0.5) * 6);
-    let lo = 1e9;
-    let hi = -1e9;
+    const radius = attempt < 12 ? 4 : 10;
+    const cx = Math.floor(p.x + (ctx.rng() - 0.5) * radius * 2);
+    const cz = Math.floor(p.z + (ctx.rng() - 0.5) * radius * 2);
+    const tops: number[] = [];
     let ok = true;
     for (let u = -2; u <= 2 && ok; u++)
       for (let v = -5; v <= 5; v++) {
         const x = alongX ? cx + v : cx + u;
         const z = alongX ? cz + u : cz + v;
-        if (!t.isDeformable(x, z) || ctx.m.flags[ctx.m.col(x, z)] & ColFlag.CAVE) {
+        if (!t.isDeformable(x, z)) {
           ok = false;
           break;
         }
-        const y = t.topAt(x, z);
-        lo = Math.min(lo, y);
-        hi = Math.max(hi, y);
+        tops.push(t.topAt(x, z));
       }
-    if (ok && hi - lo <= 2) strip = { cx, cz, alongX, top: hi };
+    if (!ok) continue;
+    tops.sort((a, b) => a - b);
+    if (tops[tops.length - 1] - tops[0] > 6) continue;
+    const h0 = tops[Math.floor(tops.length / 2)];
+    // the flipped bed must stay clear of the Organ Cavern roof
+    let safe = true;
+    for (let u = -2; u <= 2 && safe; u++)
+      for (let v = -5; v <= 5; v++) {
+        const x = alongX ? cx + v : cx + u;
+        const z = alongX ? cz + u : cz + v;
+        const ct = ctx.m.caveTop[ctx.m.col(x, z)];
+        if (ct > -32768 && h0 - 3 < ct + 3) {
+          safe = false;
+          break;
+        }
+      }
+    if (safe) strip = { cx, cz, alongX, top: h0 };
   }
   if (!strip) return;
   const s = strip;
@@ -609,9 +625,27 @@ export function* invertedStrata(ctx: MMContext, target: Player): Co {
   const toWorld = (u: number, v: number) => (s.alongX ? { x: s.cx + v, z: s.cz + u } : { x: s.cx + u, z: s.cz + v });
   const mode: 1 | 2 = ctx.rng() < 0.55 ? 1 : 2;
   const centre = { x: s.cx + 0.5, y: s.top + 1, z: s.cz + 0.5 };
+  const x0 = Math.min(...cells.map((c) => c.x));
+  const z0 = Math.min(...cells.map((c) => c.z));
+  const x1 = Math.max(...cells.map((c) => c.x));
+  const z1 = Math.max(...cells.map((c) => c.z));
+  const level = t.add({
+    x0,
+    z0,
+    x1,
+    z1,
+    k: 0,
+    bed: false,
+    scar: false,
+    dh(x: number, z: number): number {
+      const target = this.bed ? s.top - 3 : s.top;
+      return (target - ctx.m.top[ctx.m.col(x, z)]) * (this.bed ? 1 : this.k);
+    },
+  } as import("./terrain.js").Field & { k: number; bed: boolean });
   warn(near(ctx, centre, 22), "Inverted Strata", mode === 1 ? "the walkway will stand up as a wall!" : "the walkway will roll over into a ceiling!");
   sound(ctx.dim, SND.grind, centre, 1, 1.2);
   for (let k = 0; k < 28; k += 4) {
+    level.k = Math.min(1, (k + 4) / 16);
     for (let v = -5; v <= 5; v += 2) {
       for (const u of [-2.5, 2.5]) {
         const w = toWorld(0, v);
@@ -635,7 +669,8 @@ export function* invertedStrata(ctx: MMContext, target: Player): Co {
   } catch {
     plate = undefined;
   }
-  const bed = t.add(patchField(Math.min(...cells.map((c) => c.x)), Math.min(...cells.map((c) => c.z)), Math.max(...cells.map((c) => c.x)), Math.max(...cells.map((c) => c.z)), s.top - base + 1));
+  level.bed = true;
+  level.scar = true;
   sound(ctx.dim, SND.crack, centre, 1, 0.7);
   sound(ctx.dim, SND.grind, centre, 1, 0.8);
   for (const pl of ctx.combatants()) {
@@ -681,7 +716,7 @@ export function* invertedStrata(ctx: MMContext, target: Player): Co {
   }
   sound(ctx.dim, SND.grind, centre, 0.8, 1.1);
   yield 22;
-  t.remove(bed);
+  t.remove(level);
   yield 2;
   if (plate?.isValid) plate.remove();
 }
@@ -857,7 +892,7 @@ function* diskContraction(ctx: MMContext): Co {
     yield 5;
   }
   const cells: { x: number; z: number; r: number }[] = [];
-  const R = D.ribEnd + 2;
+  const R = D.outerR + 1;
   for (let x = Math.floor(HX - R); x <= Math.ceil(HX + R); x++)
     for (let z = Math.floor(HZ - R); z <= Math.ceil(HZ + R); z++) {
       const r = Math.hypot(x + 0.5 - HX, z + 0.5 - HZ);
