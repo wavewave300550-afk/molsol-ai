@@ -1,6 +1,6 @@
-## Playable Races - Foundation Release (Races 001-003)
-pack.name=Playable Races: Foundation (Resources)
-pack.description=Races 001-003: Flora Salamander, Runic Titan Golem, Blood Moon Jackalope
+## Playable Races - Foundation + Expansion 01 (Races 001-006)
+pack.name=Playable Races (Resources)
+pack.description=Races 001-006: Flora Salamander, Runic Titan Golem, Blood Moon Jackalope, Xenentoma, Flying Spaghetti Monster, Nurariten [Unique]
 item.plrace:form_salamander=Aberrant Flora Salamander Form (Stable)
 item.plrace:form_salamander_bloom=Aberrant Flora Salamander Form (Blooming)
 item.plrace:form_salamander_dormant=Aberrant Flora Salamander Form (Dormant)

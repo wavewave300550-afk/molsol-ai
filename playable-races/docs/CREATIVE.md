@@ -132,16 +132,114 @@ as a stack of layers that run together on each form (see `tools/anims/life.py` a
 
 **New anatomy for it:** eyelids (all three), a throat pouch, a tongue and pulsing viscera (Salamander), a hinged chewing jaw and whiskers (Jackalope), stone eye shutters and footfall dust points (Golem); the Golem's trunk now pivots at the hips.
 
+## Expansion 01 (v1.1.0): races 004–006
+
+The expansion was built into the existing add-on, not beside it: same packs and pack ids, the same race framework, and races 001–003 preserved: their generated models, textures, animations, attachables and items are byte-for-byte identical to v1.0.2 (checked file by file), their item ids, race codes and saved data are unchanged, their scripts only gained the fields the new Codex needs (focus names, control hints, reticle cones), and all 136 of their runtime assertions still pass. Permanent codes **004**, **005** and **006** were added.
+
+### Research behind the designs
+* **Protura** (the real "coneheads"): tiny soil hexapods with **no eyes and no antennae**; they walk on four legs and hold the **front legs up as sensory organs**; the head carries a pair of **pseudoculi** of uncertain function; mouthparts are internal **stylets**; development is **anamorphic** — abdominal segments are added at moults until the adult has **twelve**. ([Wikipedia: Protura](https://en.wikipedia.org/wiki/Protura))
+* **The Flying Spaghetti Monster**: the deity of Pastafarianism, introduced in Bobby Henderson's **2005 open letter to the Kansas State Board of Education**; usually drawn as a tangle of spaghetti with **two meatballs and two eyes on stalks**; believers are "touched by His Noodly Appendage". ([Wikipedia: Flying Spaghetti Monster](https://en.wikipedia.org/wiki/Flying_Spaghetti_Monster))
+* **Nurarihyon**: a yokai pictured as an elderly gentleman with an **elongated, gourd-shaped head** in fine clothes who **walks into homes at the busy evening hour, sits down, drinks the tea and is taken for the master of the house**; later popular culture made him the **commander of the yokai** (and, in modern fiction, the leader of the Night Parade of One Hundred Demons, *hyakki yagyō* 百鬼夜行). ([Wikipedia: Nurarihyon](https://en.wikipedia.org/wiki/Nurarihyon), [yokai.com: Nurarihyon](https://yokai.com/nurarihyon/))
+
+### 004 · Xenentoma — เซเนนโทมา
+
+**Identity kept:** an alien arthropod that *does not see*: it reads the world through the ground, and its body changes by moulting and adding segments.
+
+| Brief element | Delivered |
+|---|---|
+| ~1.75 blocks, eyeless, Protura-inspired, six limbs | 1.75-block hexapod built on the proturan blueprint; three limb pairs with three jobs (below) |
+| Conical head, false eyes (pseudoculi), retractable needle feeding apparatus | Conical head with two glowing pseudoculi, palps, and a **stylet that extends** to probe (idle behaviour) and to inject (Anamorphic Surge) |
+| Translucent ivory / pale grey / muted violet chitin; sensory hairs | Procedural chitin with translucent edges, a violet **nerve cord glowing through the body**, sensilla bristles on the forelimbs and head |
+| Anterior sensory limbs, middle manipulative limbs (hold items), posterior segmented locomotor legs | Forelimbs held forward ending in glowing sensilla (raised in Survey); middle limbs bound to the player's arms so **items are held normally**; posterior legs with pretarsal claws that carry the gait |
+| 12 abdominal segments; overlapping dorsal plates (not wings) | Twelve articulated segments with intersegmental membranes that show when the abdomen stretches; split dorsal **tergites** that open when it moults — never wings |
+| Vibration Mapping (not a wallhack), Ecdysis (shell decoy), Anamorphic Expansion | **Vibration Sense** (private, approximate, ground-borne, close range) + **Sensory Clarity** resource; **Exuvia Proxy** with a real shed-shell entity; **Anamorphic Surge** extending the twelve segments one after another |
+| Survey 15 s / Exuvia 28 s / Glide 18 s / Surge 40 s | All four at the brief's cooldowns and ranges (see ABILITIES.md) |
+| Passives: darkness awareness without a dark screen, quieter movement, vibration detection | **Eyeless** (Blindness/Darkness removed, the screen is never darkened), **Stillness** (motionless → invisible), Vibration Sense, Six-Point Landing |
+| Weaknesses: explosions/vibrations overwhelm senses; airborne reduces detection | Explosions within 14 blocks and lightning **overload** it (no senses, no Survey, slower cooldowns, +15% explosion damage); in the air the senses shrink and blur |
+| Animations: idle, walk, run, jump, scanning, molting, gliding, surge, sleeping, combat, swim, damage, recovery | Restless sensing idle; a six-limbed walk and a scuttling run with posterior legs carrying the gait; jump tuck; **Survey** pose with forelimbs raised and sensilla flicking; **teneral** form after moulting (soft, pale) and the shell left behind; flattened **glide** with folded legs; segment-by-segment **surge**; asleep, the sensory limbs fold and the abdomen curls; a stylet stab on every attack, a curl-and-retract flinch when hurt, soft and hard landing recovery; swimming uses the player's own swim pose (the gait layer steps aside); idle behaviours: stylet probe, sensilla grooming, listening to the ground, an anamorphic ripple down the segments |
+
+**Additions:** Sensory Clarity as a readable resource with hysteresis, "sensed" creatures that the Surge strikes harder, the exuvia provoking nearby hostiles, Speed II escape then Resistance as the cuticle hardens, tripping enemies during the glide.
+**Changed:** "vibration mapping" is deliberately *not* an outline/X-ray effect: it is a few private, jittered rings at approximate positions, because a wallhack would break survival and PvP.
+
+![Xenentoma](images/race_004_xenentoma.png)
+
+### 005 · Flying Spaghetti Monster — สปาเกตตีมอนสเตอร์บินได้
+
+**Identity kept:** absurd on purpose, engineered seriously — every power is a property of its pasta anatomy.
+
+| Brief element | Delivered |
+|---|---|
+| Floating spaghetti mass ~1.1 blocks wide, ~1.7 tall with eyestalks | Dense asymmetric mass of ~40 curved noodle strands in slowly circulating twist groups, dangling and trailing strands, hovering a hand's breadth above the ground |
+| Exactly two meatballs | Two meatballs on orbit pivots — they leave (Ricochet), circle (Revelation) and come back |
+| Two independent eyes on stalks | Two noodle eyestalks with their own lids; they look and blink independently (one watches your back: Dual-Eye Awareness) |
+| Sauce that flows, even against gravity | Sauce on the strands, a sauce crown and drips that sometimes **run upward**; Sauce is also its resource |
+| Temporary noodle appendages for items | Braided noodle arms that only form while a hand holds something or strikes, so tools sit in a "hand" of strands |
+| Hovering visual without unrestricted flight | Visual hover + **Noodle Parachute** (sneak while falling) — no flight |
+| Touch 15 s / Al Dente 22 s / Ricochet 28 s / Revelation 50 s | All four at the brief's cooldowns; the Revelation is three rotating spiral layers of the body itself with opposite-orbit meatballs and raised eyestalks, not a particle burst |
+| Passives & weaknesses: Noodly Float, Flexible Appendages, Elastic Form, Dual-Eye Awareness; fire brittleness; meatballs detached | All, plus **SAUCY** empowerment; fire leaves a visibly singed **brittle** form |
+
+**Additions:** blessing allies with the Touch, gathering dropped items, projectile-proof Al Dente with a counter, meatball tethers and target sharing, pasta-themed food bonuses.
+**Changed:** none of the brief's numbers; the hover is purely visual (Bedrock cannot give a player a free-floating hitbox without flight).
+
+![Flying Spaghetti Monster](images/race_005_spaghetti.png)
+
+### 006 · Nurariten — นูราริเทน (UNIQUE)
+
+**Identity kept:** *The Uninvited Sovereign* — it does not ask, it arrives; it treats every place as its house and every crowd as its court.
+
+| Brief element | Delivered |
+|---|---|
+| ~1.95 blocks; elongated cranium curving back; ivory mask face; narrow golden slit-pupil eyes | Gourd-like cranium sweeping back under a gold diadem; ivory mask face with vermilion court marks; narrow golden eyes with vertical pupils that shift while the face stays still; slow, heavy blinks |
+| Fragmented floating golden halo | Eight halo fragments (arcs and glyph tablets) that each drift on their own around the head and flare when it attacks |
+| Layered collars, long sleeves, slender fingers | Stacked ceremonial collars on an elongated neck; sleeves that **hide the hands** — slender long-fingered hands slide out only to hold an item, strike or issue a decree (two fingers for an edict, one finger for the Final Edict) |
+| Ivory, aged gold, vermilion garments | Ivory silk with a faint gold cloud-scroll damask, aged gold trims, vermilion hakama and lacquered clogs |
+| Architectural back halos / heavenly gates that unfold; procession-like shadow | A folded gate and rings on the back that **unfold into a court** (Temple) and rise into a **throne-palace** (ultimate); an idle behaviour where it stands perfectly still while its shadow becomes a procession |
+| Divine Jurisdiction (Sovereign Presence, Celestial Edicts, The Hundred Heavens), shared judgment marks | Implemented as a system (`src/systems/jurisdiction.ts`): **courts** (temporary, block-free) and **judgment marks** (1–3, shared by all its abilities) |
+| Arrival 18 s / Lowered Gaze 25 s / Temple 35 s / Expulsion 40 s | All four at the brief's cooldowns, with the requested safety rules (safe teleport, no forced camera, no flashing, no land seizure) |
+| HYAKUTEN CHŪKŌ 百天昼行 (ขบวนร้อยสวรรค์ยาตรายามทิวา), 180 s, five stages, real consequences, full restoration, no 100 AI mobs, iPhone-friendly | All five stages (below), each with combat consequences; ten script-owned entities in total; everything dissolves and every temporary state (fog, movement lock, forms, courts, marks) is restored — also on interruption, death, logout and reload |
+| Day / midday / dusk / night relationship without changing world time or sky | **Solar Mandate** (day/midday bonuses), **dusk = the hour of visiting** (Nurarihyon's hour: 2 Arrival charges, longer Temple), **Nocturne Radiance** at night; at night the ultimate brings a *private* daylight haze to its witnesses; world time/sky never touched |
+| Passives: Celestial Bearing, Royal Presence (subtle, not permanent CC), Uninvited Authority; weaknesses: Judicial Weakness, Arrogant Posture, Broken Mandate | All six, with numbers in ABILITIES.md; Royal Presence never affects players and never stacks |
+| Unique classification must be meaningful and extensible | One holder per world (operator-configurable, `/plrace:unique`), world announcement, a fifth ability, its own world system and presentation; `rarity: "unique"` + `ultimate: true` is all a future Unique needs |
+
+**HYAKUTEN CHŪKŌ — the five stages as built**
+1. **The Sky Must Open** — a gate (the Temple's gate at ×3.6) opens 9 blocks ahead in the sky with fractures of light, a ground shadow, a bell and one soft golden fade; the Sovereign stands still. *Interruptible* (Judicial Weakness): a heavy hit returns half the cooldown and breaks the mandate.
+2. **The Proclamation** — two heralds descend from the gate carrying the decree; every enemy within 16 blocks is judged and bows.
+3. **The Hundred Heavens March** — eight columns (standard bearers, guards, heralds with horns, judges with scrolls, palanquin bearers, parasol bearers; an empty palanquin reserved for the Sovereign in each) emerge in a ring and march around it, spiralling inward, trampling and herding enemies toward the centre. 96 attendants + 2 heralds + the gate + the Sovereign = **one hundred**.
+4. **The Throne Without Permission** — the court rises into a throne-palace behind it; the columns halt and face inward; the Sovereign is protected and everything within 12 blocks is weakened and judged.
+5. **The Final Edict** — one finger rises; golden seals converge on every judged creature and the judgment lands (4 +4 per mark, +25% at midday). Then the procession dissolves into light, the gate closes and the haze lifts.
+
+**Additions:** Master of the House (Hero of the Village indoors among villagers — the yokai who is taken for the master), the exile rule that turns expelled creatures back at the court's edge, accessibility toggle for the ultimate's screen effects, cancel-in-preparation with a partial refund.
+**Changed (and why):** the brief's "Hundred Heavens March" is not a hundred separate mobs — that would cost pathfinding, collision and network traffic on every phone in range; columns of shared geometry marching on a script path keep the image (one hundred figures) at the cost of ten entities. The brief's "sky must open" uses a giant gate and a private fog instead of changing the sky, which Bedrock cannot do per player. When cast under a roof, the gate enters "through the door" (ground level, normal size) instead of the sky — a deliberate nod to a yokai who walks into houses.
+
+![Nurariten](images/race_006_nurariten.png)
+![HYAKUTEN CHŪKŌ](images/hyakuten_chuko.png)
+
+### Motion for 004–006
+The three new bodies use the same layered, stateless animation system as v1.0.2 (life, locomotion, airborne/landing, attack, hurt, idle behaviours, form transitions), with gaits fitted to the measured foot floor (Xenentoma within 0.02 px, Nurariten within 0.16 px; the Spaghetti Monster hovers):
+
+| | | |
+|---|---|---|
+| ![Xenentoma motion](images/anim_xenentoma.gif) | ![Spaghetti motion](images/anim_spaghetti.gif) | ![Nurariten motion](images/anim_nurariten.gif) |
+| ![Xenentoma idle behaviours](images/fidgets_xenentoma.gif) | ![Spaghetti idle behaviours](images/fidgets_spaghetti.gif) | ![Nurariten idle behaviours](images/fidgets_nurariten.gif) |
+
+* **Xenentoma:** constant small sensing (sensilla flicking, forelimbs tasting the air), a six-legged gait, the stylet that slides out to probe, grooming of the sensilla, freezing to listen to the ground, a ripple running down the twelve segments.
+* **Flying Spaghetti Monster:** strands circulating in twist groups, meatballs bobbing, eyes looking and blinking separately, trailing strands streaming back when it moves, sauce running uphill; idle behaviours: it doodles shapes with a noodle, its eyes look in two directions, a meatball does a lap around the body, sauce defies gravity.
+* **Nurariten:** serene and minimal — the face barely moves while the halo fragments and the architecture do; slow ceremonial steps with almost still arms; a brief pause and a slow turn toward whoever struck it; idle behaviours: it surveys its "court", settles its sleeves with a flick, two fingers emerge to write a glyph in the air, and (by day) it stands utterly still while its shadow becomes a procession.
+
 ## Shared systems built for this release
 
 * **Lineage Codex** — selection with race portraits, detail pages (lore, strengths, weaknesses, passives, abilities with the original brief values), a confirmation step, the Rite of Unbecoming (policy-controlled race change), Veil/Manifest, Crest Infusion, Recall Focus, an archive of all races and operator settings. Opens once automatically for new players and never nags.
 * **Rite ceremony** on transformation (rune aura in the race colour, arms-raised pose, title).
 * **Ability engine** — cooldowns, charges, channels with explicit interruption rules, failure reasons that never waste a cooldown, a green aim reticle for targeted abilities, an action-bar HUD.
 * **Persistence & safety** — per-player data (race, selection, cooldowns as remaining time, resources, enchantments, input locks) and world data (settings, Blood Moon); clean-up on death, logout, dimension change and race change; villagers, golems, pets, armour stands and (unless PvP is enabled) players are never hit; no terrain is modified.
-* **Expansion-ready** — permanent race codes 001–003; a new race is one model module, one animation set and one `RaceDef` registered in `src/races/registry.ts` (see the README).
+* **Expansion-ready** — permanent race codes 001–006; a new race is one model module, one animation set and one `RaceDef` registered in `src/races/registry.ts` (see the README).
+* **Added for Expansion 01:** helper entities with owners, lifetimes and guaranteed cleanup (`src/systems/proxies.ts`); Unique lineages with world-level claims (`src/systems/unique.ts`); Divine Jurisdiction (`src/systems/jurisdiction.ts`); explosion and item-use hooks for races; a race-wide 4-tick world hook; five-ability support in the engine, HUD and Codex; the Codex shows six lineages with the Unique badge and who holds it.
 
 ## Lore summary
 
 * **The Mirefold (001):** a cave salamander lineage that swallowed the seeds of a carnivorous bog-bloom; the two organisms now share one bloodstream. Wet, they bloom; dry, they wait for rain.
 * **The Unsleeping Masonry (002):** an empire carved its laws into basalt so they could never be forgotten; the laws remembered themselves and stood up. Its thoughts are written and rewritten on three turning rings.
 * **The Hollow-Moon Kin (003):** hare-folk whose antlers are organs of the moon. When the full moon rises red, they remember what they were.
+* **The Eyeless Choir (004):** a lineage of soil-dwellers that never needed eyes; they sing to each other through the ground, and they hear everything that walks on it.
+* **The Noodly Existence (005):** in 2005 a letter described a deity of spaghetti and meatballs, invisible to science because it touches every measurement. Somewhere, it seems, the joke was taken literally.
+* **The Uninvited Sovereign (006):** what the old yokai who walks into houses becomes in heaven — a sovereign of the celestial courts. It was never invited. It was always expected.

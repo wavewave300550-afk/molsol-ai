@@ -84,9 +84,9 @@ function inside(c: Court, dimId: string, loc: Vector3, pad = 0): boolean {
   return c.dim === dimId && hdist(loc, c.center) <= c.radius + pad && Math.abs(loc.y - c.center.y) <= 6;
 }
 
-/** Is the player standing inside one of their own courts? */
-export function inOwnCourt(p: Player): boolean {
-  return courts.some((c) => c.owner === p.id && inside(c, p.dimension.id, p.location, 0.5));
+/** Is the player standing inside one of their own courts (of `kind`, or any)? */
+export function inOwnCourt(p: Player, kind?: CourtKind): boolean {
+  return courts.some((c) => c.owner === p.id && (kind === undefined || c.kind === kind) && inside(c, p.dimension.id, p.location, 0.5));
 }
 
 /** Is `e` inside a court owned by `ownerId`? */

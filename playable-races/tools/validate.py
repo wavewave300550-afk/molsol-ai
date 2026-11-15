@@ -275,7 +275,8 @@ for f in glob.glob(os.path.join(RP, "animation_controllers", "**", "*.json"), re
 # ----------------------------------------------------------------------------- items & icons
 item_tex = load(os.path.join(RP, "textures", "item_texture.json"))["texture_data"]
 for k, v in item_tex.items():
-    check(os.path.exists(os.path.join(RP, v["textures"] + ".png")), f"item texture {k}")
+    for t in ([v["textures"]] if isinstance(v["textures"], str) else v["textures"]):
+        check(os.path.exists(os.path.join(RP, t + ".png")), f"item texture {k}")
 lang = {}
 for line in open(os.path.join(RP, "texts", "en_US.lang"), encoding="utf-8"):
     if "=" in line and not line.startswith("#"):

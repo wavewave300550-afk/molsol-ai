@@ -35,8 +35,8 @@ export function endCourt(ownerId, kind, reason) {
 function inside(c, dimId, loc, pad = 0) {
     return c.dim === dimId && hdist(loc, c.center) <= c.radius + pad && Math.abs(loc.y - c.center.y) <= 6;
 }
-export function inOwnCourt(p) {
-    return courts.some((c) => c.owner === p.id && inside(c, p.dimension.id, p.location, 0.5));
+export function inOwnCourt(p, kind) {
+    return courts.some((c) => c.owner === p.id && (kind === undefined || c.kind === kind) && inside(c, p.dimension.id, p.location, 0.5));
 }
 export function inCourtOf(ownerId, e) {
     return courts.find((c) => c.owner === ownerId && inside(c, e.dimension.id, e.location));

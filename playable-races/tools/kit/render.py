@@ -160,6 +160,66 @@ def render(model: Model, texture: Image.Image, *, variant: Optional[str] = None,
     return img
 
 
+def render_scene(items, *, yaw: float = 0.0, pitch: float = 20.0, size: Tuple[int, int] = (960, 600),
+                 scale: float = 4.0, center: Sequence[float] = (0, 0, 0), ss: int = 2, bg=(232, 230, 226),
+                 bloom: bool = True, ground: bool = True, light_dir=(-0.45, 0.75, -0.55), backdrop=None) -> Image.Image:
+    """Several textured models in one orthographic view (shared z-buffer).
+    items: (model, texture, variant, pose, offset_xyz_units, yaw_deg, scale_k, hide)."""
+    th, ph_ = math.radians(yaw), math.radians(pitch)
+    f = np.array([math.sin(th) * math.cos(ph_), -math.sin(ph_), math.cos(th) * math.cos(ph_)])
+    up = np.array([0.0, 1.0, 0.0])
+    r = np.cross(up, f)
+    r /= np.linalg.norm(r)
+    u = np.cross(f, r)
+    W, H = size[0] * ss, size[1] * ss
+    sc = scale * ss
+    C = np.array(center, dtype=float)
+    color = np.zeros((H, W, 3))
+    glowbuf = np.zeros((H, W, 3))
+    zbuf = np.full((H, W), np.inf)
+    L = np.array(light_dir, dtype=float)
+    L /= np.linalg.norm(L)
+    for model, texture, variant, pose, off, ry, k, hide in items:
+        tex = np.asarray(texture.convert("RGBA"), dtype=np.float64) / 255.0
+        TH, TW = tex.shape[:2]
+        a = math.radians(ry)
+        R = np.array([[math.cos(a), 0, math.sin(a)], [0, 1, 0], [-math.sin(a), 0, math.cos(a)]])
+        o = np.array(off, dtype=float)
+        for pts, uvs, nrm, cutout in collect_quads(model, variant, pose, hide, False):
+            wp = o + k * (pts @ R.T)
+            wn = nrm @ R.T
+            rel = wp - C
+            X = W / 2 + (rel @ r) * sc
+            Y = H / 2 - (rel @ u) * sc
+            Z = rel @ f
+            facing = wn @ f
+            lam = max(0.0, float(wn @ L))
+            shade = 0.52 + 0.55 * lam + 0.08 * max(0.0, wn[1])
+            if cutout:
+                shade = 0.55 + 0.45 * abs(float(wn @ L))
+            elif facing > 1e-4:
+                continue
+            for tri in ((0, 1, 2), (0, 2, 3)):
+                _raster(X[list(tri)], Y[list(tri)], Z[list(tri)], uvs[list(tri)], tex, TW, TH, color, glowbuf, zbuf, shade, cutout)
+    covered = np.isfinite(zbuf)
+    bgimg = _background(W, H, bg)
+    if ground:
+        bgimg = _shadow(bgimg, covered)
+    if backdrop is not None:
+        bimg = Image.fromarray((np.clip(bgimg, 0, 1) * 255).astype(np.uint8))
+        backdrop(bimg, ss, lambda p: (W / 2 + ((np.array(p, dtype=float) - C) @ r) * sc, H / 2 - ((np.array(p, dtype=float) - C) @ u) * sc))
+        bgimg = np.asarray(bimg, dtype=np.float64) / 255.0
+    out = np.where(covered[..., None], color, bgimg)
+    if bloom:
+        g = Image.fromarray((np.clip(glowbuf, 0, 1) * 255).astype(np.uint8))
+        g = g.filter(ImageFilter.GaussianBlur(radius=6 * ss))
+        out = out + np.asarray(g, dtype=np.float64) / 255.0 * 0.9
+    img = Image.fromarray((np.clip(out, 0, 1) * 255).astype(np.uint8))
+    if ss > 1:
+        img = img.resize(size, Image.LANCZOS)
+    return img
+
+
 def _raster(X, Y, Z, UV, tex, TW, TH, color, glowbuf, zbuf, shade, cutout):
     H, W = zbuf.shape
     x0, x1 = int(max(0, math.floor(X.min()))), int(min(W - 1, math.ceil(X.max())))

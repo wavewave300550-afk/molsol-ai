@@ -15,9 +15,9 @@ sys.path.insert(0, HERE)
 from PIL import Image, ImageDraw  # noqa: E402
 
 from kit.geo import Model  # noqa: E402
-from kit.render import render, sheet  # noqa: E402
+from kit.render import render, render_scene, sheet  # noqa: E402
 from kit.tex import hx  # noqa: E402
-from models import golem, jackalope, salamander  # noqa: E402
+from models import golem, jackalope, nurariten, salamander, spaghetti, xenentoma  # noqa: E402
 
 RP = os.path.join(ROOT, "packs", "PlayableRaces_RP")
 OUT = os.path.join(ROOT, "docs", "images")
@@ -93,6 +93,91 @@ def views(model, texture, variant, scale, cy, size=(300, 400), pose=None, yaws=(
     return out
 
 
+def kpose(anim_file, anim_name, t):
+    """Keyframe pose with player-skeleton bone names fixed up for the renderer."""
+    fix = {"rightarm": "rightArm", "leftarm": "leftArm", "rightleg": "rightLeg", "leftleg": "leftLeg"}
+    return {fix.get(k, k): v for k, v in keyframe_pose(anim_file, anim_name, t).items()}
+
+
+def expansion(xen, fsm, nur):
+    """Expansion 01 sheets: races 004-006, their helper entities and the unique ultimate."""
+    # ---------------------------------------------------------------- 004 xenentoma
+    imgs, labs = [], []
+    for im, lab in views(xen, tex("xenentoma", "base"), "base", 7.4, 15):
+        imgs.append(im)
+        labs.append(f"base - {lab}")
+    for v, tv, lab in (("survey", "sense", "Foretarsal Survey: sensory limbs raised"), ("glide", "base", "Interstitial Glide: flattened"),
+                       ("surge", "sense", "Anamorphic Surge: segments extended"), ("teneral", "teneral", "teneral (fresh after Ecdysis)")):
+        imgs.append(render(xen, tex("xenentoma", tv), variant=v, yaw=55 if v != "surge" else 70, pitch=10, size=(300, 400), scale=6.4 if v == "surge" else 7.4,
+                           center=(0, 13 if v == "glide" else 15, 1), hide=HIDE, bg=BG))
+        labs.append(lab)
+    sheet(imgs, cols=4, labels=labs, title="004 Xenentoma - turnaround and configurations (eyeless; six limbs; twelve abdominal segments)").save(os.path.join(OUT, "race_004_xenentoma.png"))
+
+    # ---------------------------------------------------------------- 005 flying spaghetti monster
+    imgs, labs = [], []
+    for im, lab in views(fsm, tex("spaghetti", "base"), "base", 7.4, 15):
+        imgs.append(im)
+        labs.append(f"base - {lab}")
+    for v, tv, lab, sc, cy in (("rigid", "dente", "Al Dente Reversal: rigid lattice", 7.4, 15), ("detached", "base", "meatballs away (Meatball Ricochet)", 7.4, 15),
+                               ("revelation", "holy", "The Great Pasta Revelation", 3.6, 20), ("brittle", "burnt", "brittle (fire)", 7.4, 15)):
+        imgs.append(render(fsm, tex("spaghetti", tv), variant=v, yaw=35, pitch=14 if v == "revelation" else 8, size=(300, 400), scale=sc, center=(0, cy, 1), hide=HIDE, bg=BG))
+        labs.append(lab)
+    sheet(imgs, cols=4, labels=labs, title="005 Flying Spaghetti Monster - turnaround and configurations").save(os.path.join(OUT, "race_005_spaghetti.png"))
+
+    # ---------------------------------------------------------------- 006 nurariten
+    imgs, labs = [], []
+    for im, lab in views(nur, tex("nurariten", "base"), "base", 6.6, 20):
+        imgs.append(im)
+        labs.append(f"base - {lab}")
+    edict = kpose("poses.animation.json", "animation.plrace.pose.nur_edict", 0.4)
+    final = kpose("poses.animation.json", "animation.plrace.pose.nur_final", 0.7)
+    for v, tv, pose, lab, sc, cy, bg in (("nocturne", "nocturne", None, "Nocturne Radiance (night)", 6.6, 20, (34, 38, 56)),
+                                         ("edict", "radiant", edict, "Edict of the Lowered Gaze", 6.6, 20, BG),
+                                         ("court", "radiant", None, "The Uninvited Temple: the court unfolds", 5.2, 22, BG),
+                                         ("throne", "radiant", final, "The Throne Without Permission / Final Edict", 4.6, 24, BG)):
+        imgs.append(render(nur, tex("nurariten", tv), variant=v, yaw=30, pitch=8, size=(300, 400), scale=sc, center=(0, cy, 1), hide=HIDE, pose=pose, bg=bg))
+        labs.append(lab)
+    sheet(imgs, cols=4, labels=labs, title="006 Nurariten [UNIQUE] - the Uninvited Sovereign: turnaround and configurations").save(os.path.join(OUT, "race_006_nurariten.png"))
+
+    # ---------------------------------------------------------------- helper entities
+    def etex(race, name):
+        return Image.open(os.path.join(RP, TEX, race, f"{name}.png")).convert("RGBA")
+    imgs, labs = [], []
+    imgs.append(render(xen, tex("xenentoma", "exuvia"), variant="exuvia", yaw=40, pitch=10, size=(300, 300), scale=6.0, center=(0, 13, 1), hide=HIDE, bg=BG))
+    labs.append("004 shed exuvia (decoy)")
+    imgs.append(render(spaghetti.build_meatball(), etex("spaghetti", "meatball"), yaw=30, pitch=10, size=(300, 300), scale=13.0, center=None, bg=BG))
+    labs.append("005 detached meatball")
+    imgs.append(render(nurariten.build_gate(), etex("nurariten", "celestial_gate"), yaw=20, pitch=8, size=(300, 300), scale=4.6, center=(0, 25, 0), bg=BG))
+    labs.append("006 celestial gate (x3.6 in the sky)")
+    imgs.append(render(nurariten.build_heralds(), etex("nurariten", "herald"), yaw=25, pitch=8, size=(300, 300), scale=11.0, center=(0, 6, 0), bg=BG))
+    labs.append("006 heralds with the decree")
+    imgs.append(render(nurariten.build_procession(), etex("nurariten", "procession"), yaw=35, pitch=14, size=(300, 300), scale=6.4, center=(0, 7, 0), bg=BG))
+    labs.append("006 one procession column (12 attendants)")
+    sheet(imgs, cols=5, labels=labs, title="Helper entities (script-owned, no AI, self-despawning)").save(os.path.join(OUT, "helper_entities.png"))
+
+    # ---------------------------------------------------------------- HYAKUTEN CHUKO staged as in game (stage III-IV)
+    B = 16.0
+    items = [(nur, tex("nurariten", "radiant"), "throne", final, (0, 0, 0), 0, 1.0, HIDE),
+             (nurariten.build_gate(), etex("nurariten", "celestial_gate"), None, None, (0, 2.5 * B, -9 * B), 0, 3.6, []),
+             (nurariten.build_heralds(), etex("nurariten", "herald"), None, None, (0, 1.4 * B, -2.6 * B), 0, 2.2, [])]
+    col = nurariten.build_procession()
+    ctex = etex("nurariten", "procession")
+    import math
+    for k in range(8):
+        ph = math.radians(k * 45 + 22.5)
+        t = (-math.sin(ph), 0, math.cos(ph))
+        items.append((col, ctex, None, None, (8.4 * B * math.cos(ph), 0, 8.4 * B * math.sin(ph)), math.degrees(math.atan2(-t[0], -t[2])), 2.0, []))
+
+    def court(img, ss, proj):
+        d = ImageDraw.Draw(img, "RGBA")
+        for rad, colr, w in ((11 * B, (255, 214, 120, 160), 3), (12 * B, (255, 230, 170, 90), 2)):
+            pts = [proj((rad * math.cos(math.radians(a)), 0.2, rad * math.sin(math.radians(a)))) for a in range(0, 361, 4)]
+            d.line(pts, fill=colr, width=w * ss)
+    shot = render_scene(items, yaw=120, pitch=18, size=(1100, 700), scale=1.55, center=(0, 60, -40), bg=(238, 226, 196), backdrop=court)
+    ImageDraw.Draw(shot).text((14, 10), "HYAKUTEN CHUKO - stages III-IV: the gate in the sky, the heralds, eight columns (96 attendants) circling the throne", fill=(60, 40, 20))
+    shot.save(os.path.join(OUT, "hyakuten_chuko.png"))
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     sal, gol, jak = salamander.build(), golem.build(), jackalope.build()
@@ -101,11 +186,14 @@ def main():
     # ---------------------------------------------------------------- lineup (same scale, same ground)
     cells = []
     sc = 7.2
+    xen, fsm, nur = xenentoma.build(), spaghetti.build(), nurariten.build()
     for m, t, v, name in ((hm, htex, "base", "Vanilla player (scale)"), (sal, tex("salamander", "bloom"), "bloom", "001 Aberrant Flora Salamander"),
-                          (gol, tex("golem", "base"), "base", "002 Runic Titan Golem"), (jak, tex("jackalope", "base"), "base", "003 Blood Moon Jackalope")):
+                          (gol, tex("golem", "base"), "base", "002 Runic Titan Golem"), (jak, tex("jackalope", "base"), "base", "003 Blood Moon Jackalope"),
+                          (xen, tex("xenentoma", "base"), "base", "004 Xenentoma"), (fsm, tex("spaghetti", "base"), "base", "005 Flying Spaghetti Monster"),
+                          (nur, tex("nurariten", "base"), "base", "006 Nurariten [UNIQUE]")):
         im = render(m, t, variant=v, yaw=28, pitch=6, size=(330, 440), scale=sc, center=(0, 22, 1), hide=HIDE, bg=BG)
         cells.append(label(im, name))
-    sheet(cells, cols=4, title="Playable Races - Foundation Release (rendered from the shipped geometry and textures)").save(os.path.join(OUT, "lineup.png"))
+    sheet(cells, cols=4, title="Playable Races - six lineages at the same scale (rendered from the shipped geometry and textures)").save(os.path.join(OUT, "lineup.png"))
 
     # ---------------------------------------------------------------- salamander
     imgs, labs = [], []
@@ -165,6 +253,8 @@ def main():
     labs.append("Lunar Bound push-off")
     sheet(imgs, cols=4, labels=labs, title="003 Blood Moon Jackalope - turnaround, hunt and Blood Moon awakening").save(os.path.join(OUT, "race_003_jackalope.png"))
 
+    expansion(xen, fsm, nur)
+
     # ---------------------------------------------------------------- atlases + icons
     atl = []
     for race, names in (("salamander", ("base", "bloom", "dormant", "predatory")), ("golem", ("base", "charged", "disrupted")), ("jackalope", ("base", "hunt", "awakened"))):
@@ -180,13 +270,14 @@ def main():
     sheet(atl, cols=4, labels=[f"{r}_{n}" for r, ns in (("salamander", ("base", "bloom", "dormant", "predatory")), ("golem", ("base", "charged", "disrupted")), ("jackalope", ("base", "hunt", "awakened"))) for n in ns],
           title="Procedural texture atlases (per-face UV, 2 px per model unit)").save(os.path.join(OUT, "texture_atlases.png"))
     ic = []
-    for p in ("ui/portrait_001", "ui/portrait_002", "ui/portrait_003", "items/crest_salamander", "items/crest_golem", "items/crest_jackalope",
-              "items/focus_salamander", "items/focus_golem", "items/focus_jackalope", "items/codex"):
+    keys = ("salamander", "golem", "jackalope", "xenentoma", "spaghetti", "nurariten")
+    for p in [f"ui/portrait_00{k}" for k in range(1, 7)] + [f"items/crest_{k}" for k in keys] + [f"items/focus_{k}" for k in keys] + ["items/codex"]:
         im = Image.open(os.path.join(RP, TEX, p + ".png")).convert("RGBA").resize((160, 160), Image.NEAREST)
         bgim = Image.new("RGBA", (160, 160), (52, 52, 58, 255))
         bgim.alpha_composite(im)
         ic.append(bgim.convert("RGB"))
-    sheet(ic, cols=5, labels=["portrait 001", "portrait 002", "portrait 003", "crest 001", "crest 002", "crest 003", "Dewheart focus", "Rune Keystone focus", "Moonbone focus", "Lineage Codex"],
+    sheet(ic, cols=6, labels=[f"portrait 00{k}" for k in range(1, 7)] + [f"crest 00{k}" for k in range(1, 7)]
+          + ["Dewheart focus", "Rune Keystone focus", "Moonbone focus", "Sensillum focus", "Holy Colander focus", "Mandate Shaku focus", "Lineage Codex"],
           title="Selection portraits and item icons").save(os.path.join(OUT, "ui_and_items.png"))
     pk = Image.open(os.path.join(RP, "pack_icon.png"))
     pk.save(os.path.join(OUT, "pack_icon.png"))

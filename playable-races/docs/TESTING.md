@@ -1,20 +1,25 @@
 # Testing Report
 
-**Bottom line:** everything that can be verified without a Minecraft client was verified and passes. What only a real client or server can show — visuals, timing, and "feel" — has **not** been verified in game, and is listed separately below.
+*Version 1.1.0 (races 001–006).*
+
+**Bottom line:** everything that can be verified without a Minecraft client was verified and passes. What only a real client or server can show — visuals, timing, and "feel" — has **not** been verified in game, and is listed separately below as **proposed** in-game tests. Nothing in this report claims an in-game result that did not happen.
 
 ## What was executed (all passing)
 
 | Check | Tool | Result |
 |---|---|---|
 | TypeScript strict typecheck against the official **@minecraft/server 2.11.0** and **@minecraft/server-ui 2.3.0** typings | `npx tsc --noEmit` | **0 errors** |
-| Minecraft Creator Tools 0.21.0 validation (the "Add-On Best Practices" suite Mojang points creators to) | `mct validate` via the debug-addon skill | **0 errors**, 3 warnings, 7 noise, 23 recommendations (below) |
-| Project static validator: manifests, every geometry/texture/animation/render-controller/particle/locator link, animation bone names, UV bounds, attachable skeleton pivots = vanilla player skeleton, player/armour render-controller overrides = vanilla + one condition, items/icons/lang, every identifier string in the compiled scripts (particles, vanilla sound events, effect ids, items, entities, pose animations), texture memory budget; **since v1.0.2 also every Molang expression** in animations, controllers and attachable scripts parses, uses only known queries, and every variable it reads is set in `pre_animation` or exposed by the player; controller transitions point at existing states | `python3 tools/validate.py` | **24,283 checks, 0 errors** |
-| Runtime smoke test: the **compiled behavior-pack scripts** run on a strict mock of the Script API, driven through real gameplay scenarios (table below) | `node tests/run.mjs` | **136 / 136 assertions** |
+| Minecraft Creator Tools 0.21.0 validation (the "Add-On Best Practices" suite Mojang points creators to) | `npx @minecraft/creator-tools@0.21.0 validate -i packs` | **0 errors**, 6 warnings, 52 recommendations, 41 test suites passed (below) |
+| Project static validator: manifests, every geometry/texture/animation/render-controller/particle/locator link, animation bone names, UV bounds, attachable skeleton pivots = vanilla player skeleton, player/armour render-controller overrides = vanilla + one condition, items/icons/lang, every identifier string in the compiled scripts (particles, vanilla sound events, effect ids, items, entities, pose animations), texture memory budget; **since v1.0.2 also every Molang expression** in animations, controllers and attachable scripts parses, uses only known queries, and every variable it reads is set in `pre_animation` or exposed by the player; controller transitions point at existing states | `python3 tools/validate.py` | **63,151 checks, 0 errors** (v1.1.0; 24,283 in v1.0.2) |
+| Runtime smoke test: the **compiled behavior-pack scripts** run on a strict mock of the Script API, driven through real gameplay scenarios (table below) | `node tests/run.mjs` | **276 / 276 assertions** (136 for races 001–003, unchanged and still passing; 140 new) |
 | **Animation runtime (v1.0.2):** the shipped attachables (animate lists, blend conditions, `pre_animation`, Molang, Catmull-Rom keyframes, animation controllers) are executed by an offline interpreter on top of the vanilla player skeleton (walk swing, arm bob, head look, attack swing from Mojang's `player.animation.json`) through idle, walk, sprint, jump/landing, attack and hurt scenarios; idle-behaviour controllers cycle through all their behaviours; no query used by the packs is left unsimulated | `python3 tools/anim_gifs.py` (+ `--fidgets`) | GIFs in `docs/images` |
 | **Feet on the ground (v1.0.2):** lowest leg point sampled every tick through walk and sprint cycles of the final packs | runtime above | Salamander −0.04…+0.26, Golem −0.04…+0.11, Jackalope walk −0.08…+0.07 model px from the ground; Jackalope sprint −0.12 at contact, up to +1.57 in the deliberate flight phase |
+| **Gait fit for the new races (v1.1.0):** body bob fitted to the measured foot floor | `tools/build.py` report | Xenentoma walk/sprint max error 0.02 px; Nurariten walk 0.13 px, sprint 0.16 px; the Spaghetti Monster hovers (no feet to fit) |
+| **Animated previews of races 004–006** from the shipped files (idle, walk, sprint, jump + idle behaviours) | `python3 tools/anim_gifs.py --races xenentoma,spaghetti,nurariten` (+ `--fidgets`) | `docs/images/anim_*.gif`, `fidgets_*.gif` |
+| **HYAKUTEN CHŪKŌ staging** rendered with the shipped models placed exactly as the script places them (gate 9 blocks ahead and ×3.6, heralds, eight columns on the 8.4-block circle) | `python3 tools/previews.py` | `docs/images/hyakuten_chuko.png` |
 | Visual previews rendered from the exact shipped geometry and textures, including posed states | `python3 tools/previews.py` | images in `docs/images` |
 
-The mock is deliberately strict: unknown particle, sound, effect, item, entity or animation ids **throw**, using a removed or dead entity throws (like `InvalidEntityError`), world-modifying calls inside before-events throw (restricted execution), and any exception inside an event listener or scheduled job fails the run. It simulates time of day, days and moon phases, biomes, water, a flat world with block ray-casts, damage events (before/after), deaths and respawns, logout/login, dimension changes, inventories, equipment, item lock modes, enchantments, input permissions and forms with scripted answers.
+The mock is deliberately strict (and was made stricter for 1.1.0: fog ids must exist in the pack, spawn events must exist on the entity, `getPlayers` honours distance filters, and a weaker effect never replaces a stronger one, as in Bedrock): unknown particle, sound, effect, item, entity or animation ids **throw**, using a removed or dead entity throws (like `InvalidEntityError`), world-modifying calls inside before-events throw (restricted execution), and any exception inside an event listener or scheduled job fails the run. It simulates time of day, days and moon phases, biomes, water, a flat world with block ray-casts, damage events (before/after), deaths and respawns, logout/login, dimension changes, inventories, equipment, item lock modes, enchantments, input permissions and forms with scripted answers.
 
 ### Runtime smoke test coverage
 
@@ -48,12 +53,35 @@ The mock is deliberately strict: unknown particle, sound, effect, item, entity o
 | race change policy & cleanup | 4/4 | lineage change gated by the cooldown policy; removing a lineage removes the form; removing a lineage removes the focus; no stray illusions after removal |
 | crest infusion keeps enchantments across swaps | 3/3 | crest absorbed Protection IV; configuration swap during edict; enchantment carried across the swap |
 | veil and manifest | 4/4 | veiled: head slot free; veiled golem can wear a real helmet; manifest restores the form; the helmet is moved to the inventory, not lost |
+| xenentoma: assignment & form | 4/4 | race 004 persisted; xenentoma crest worn; Sensillum Focus given; HUD shows Sensory Clarity |
+| xenentoma: eyeless & vibration sense | 4/4 | Blindness and Darkness are removed (no eyes); a moving creature on the ground sends a private vibration ping; vibration pings are private (never broadcast); HUD counts the tremor |
+| xenentoma: Foretarsal Survey | 4/4 | survey form raises the forelimbs; survey reports vibrations on the HUD; a still creature close by is felt faintly; survey cooldown spent |
+| xenentoma: sensory overload | 4/4 | an explosion 2 blocks away overloads the senses; survey refuses while overloaded; refused cast spends no cooldown; clarity recovers over time |
+| xenentoma: Exuvia Proxy | 9/9 | selected ability 2; the shed exuvia stays behind; the shell is a decoy hostile mobs hunt; nearby hostiles are provoked by the shell (it strikes them first); teneral (freshly moulted) form; springs free with Speed II; teneral body takes +20% damage; the new cuticle hardens (Resistance); the exuvia expires and is removed |
+| xenentoma: Interstitial Glide | 3/3 | slides several blocks along the ground; a creature slipped past is tripped; glide refuses in mid-air |
+| xenentoma: Anamorphic Surge | 3/3 | surge form: the abdomen extends and arches; three timed strikes at range (4 + 4 + 6); the final strike injects through the stylet (Weakness) |
+| xenentoma: cleanup | 2/2 | shell present; the exuvia is removed when its owner dies |
+| spaghetti: assignment & form | 4/4 | race 005 persisted; spaghetti crest worn; Holy Colander Focus given; HUD shows Sauce |
+| spaghetti: His Noodly Touch | 6/6 | the noodles wrap the target (3 damage); the target is held (Slowness IV); the target is pulled toward the monster; a noodle strand extends to the target; with no creature in reach the noodles gather dropped items; nothing to touch -> clear failure, no cooldown |
+| spaghetti: Al Dente Reversal | 5/5 | the strands lock into the al dente lattice; projectiles are stopped outright; melee damage reduced by 60%; the first melee attacker is countered; the lattice relaxes afterwards |
+| spaghetti: Meatball Ricochet | 7/7 | both meatballs detach; the body shows its empty meatball sockets; softer while the meatballs are away (+20%); the meatballs ricochet between targets (several 4-damage hits); sauce splashes on impact; the meatballs return and are removed; meatballs back in place |
+| spaghetti: The Great Pasta Revelation | 5/5 | the body unfolds into the spiral vortex; enemies are dragged toward the vortex; the sauce shockwave lands; sauce shockwave ring; the vortex folds back up |
+| spaghetti: sauce, fire and falling | 3/3 | stews fill the sauce to SAUCY; fire makes the pasta brittle; sneaking in the air opens the noodle parachute |
+| nurariten: assignment & unique claim | 8/8 | race 006 persisted; Nurariten crest worn; Mandate Shaku Focus given; the arrival of a Unique is announced to the world; the Unique claim is stored with the world; HUD shows the sun's mandate (midday); a second player cannot take a Unique lineage that is already held; the refusal is explained |
+| nurariten: Unannounced Arrival | 5/5 | the Sovereign steps 12 blocks along its gaze; gates of light mark departure and arrival; creatures at the arrival are pushed aside and slowed; arriving under a roof it is received as the master of the house; never through walls |
+| nurariten: Edict of the Lowered Gaze | 6/6 | enemies in the cone are weakened (II); and staggered (Slowness II); the creature bows its head; nothing behind the Sovereign is affected; a judgment seal appears above the judged; no one in front -> clear failure, no cooldown |
+| nurariten: Imperial Expulsion (marks) | 3/3 | 5 damage +3 for its judgment mark; thrown out of the Sovereign's presence; no target -> clear failure |
+| nurariten: The Uninvited Temple | 17/17 | the architecture on its back unfolds; a heavy blow interrupts the declaration (Judicial Weakness); half of the cooldown is returned; no court was declared; the court's gate stands at its edge; inside its court it keeps the court form; HUD shows the court timer; enemies inside the court are slowed; +20% damage dealt inside its own court; -15% damage taken inside its own court; pillars of light and a ring mark the boundary; the court changes no blocks and summons nothing hostile; expelled out of the court; an exiled creature is turned back at the threshold; leaving the court breaks it (gate dissolves); Broken Mandate: the Sovereign is weakened; the back architecture folds away |
+| nurariten: HYAKUTEN CHUKO - interruption | 12/12 | the title 百天昼行 is shown; one soft golden fade for those near; a golden haze for the caster and witnesses only (no world sky change); the world's time, weather and rules are untouched; a gate opens in the sky; the sky gate is the vast form; the Sovereign stands still; a heavy blow during Stage I interrupts it; the sky closes; every haze is removed; movement restored; half of the 180 s cooldown is returned (76 s left) |
+| nurariten: HYAKUTEN CHUKO - five stages | 15/15 | II: two heralds descend with the decree; II: every enemy within 16 is judged (judgment mark); II: and bows (Slowness II); III: eight columns (96 attendants) march - one entity per column, no AI; III: the columns circle the Sovereign; III: the procession tramples whoever stands in its way; IV: the throne without permission; IV: the enthroned Sovereign is protected; IV: all within 12 are weakened; V: the Final Edict strikes 4 +4 per judgment mark; V: the seals converge on the judged; everything dissolves afterwards; the haze is lifted for everyone; movement restored; the Sovereign returns to its usual form |
+| nurariten: logout during the procession | 6/6 | procession under way; the caster's helpers are removed when it leaves; the witness' haze is lifted; movement restored on rejoin; no haze left on rejoin; the lineage and its Unique claim survive the relog |
+| nurariten: the sun | 5/5 | at night it shines (Nocturne Radiance); HUD shows the night (Nocturne); dusk is the hour of visiting: two arrivals in a row; taking the Rite of Unbecoming releases the Unique claim; then another player may become Nurariten |
 | script health | 1/1 | no listener/job exceptions () |
 
 ### Creator Tools findings and why they remain
-* **3 warnings — "texture not used by any item"** for `textures/plrace/races/ui/portrait_00X.png`. They are the race portraits shown on the selection-form buttons (`ActionFormData.button(text, iconPath)`); the validator cannot see references made from scripts.
-* **7 "likely noise"** — `item_texture.json` entries use a single string for `textures`, which Bedrock accepts.
-* **23 recommendations** — newer `format_version` numbers are available for items (1.21.90 is kept because it is the version that introduced data-driven custom components v2), recipe, fog and client entity. Optional; nothing is wrong with the current versions.
+* **6 warnings — "texture not used by any item"** for `textures/plrace/races/ui/portrait_001…006.png`. They are the race portraits shown on the selection-form buttons (`ActionFormData.button(text, iconPath)`); the validator cannot see references made from scripts.
+* The 13 `item_texture.json` structure warnings it raised for 1.1.0 (single string instead of a list) were fixed by writing one-element lists.
+* **52 recommendations** — newer `format_version` numbers are available for items (1.21.90 is kept because it is the version that introduced data-driven custom components v2), entities, recipe, fogs and client entities. Optional; nothing is wrong with the current versions, and changing them would only add risk to an update that must keep old worlds working.
 
 ### Bugs the tests caught and that were fixed during development
 * `dolphins_grace` is not a Bedrock effect → the Salamander's aquatic agility now uses the underwater-movement attribute.
@@ -75,6 +103,16 @@ The mock is deliberately strict: unknown particle, sound, effect, item, entity o
   - Offsets applied to parts that hang from the player's swinging limbs (legs, arms) or turning head were rotated with that limb, so a vertical bob partly became a forward slide → offsets are now counter-rotated by the parent's swing / look pitch.
   - The Golem's bob was fitted before its flat-foot correction was added (body floated up to 1.6 px) and measured its sole runes, which are hidden on the ground → fit runs after every leg contribution and ignores the runes.
 
+### Bugs the tests caught during Expansion 01 (fixed before release)
+* `world.afterEvents.explosion` was missing from the mock → added, so the Xenentoma's sensory overload is exercised by a real explosion event.
+* A sprite named `glyph` collided with the existing `glyph_a…d` sprite family in the particle atlas generator (the build crashed) → renamed `decree`.
+* The validator flagged the gate's `plrace:huge` spawn event and the `plrace:heaven_light` fog as unknown ids → it now reads entity events and fog definitions and checks the script's references against them.
+* **Nurariten's ultimate could not be interrupted** in the test although the description promised it: its own court (−15% damage taken) turned a 7-damage blow into 5.95, under the 6-damage threshold → the threshold applies to the reduced hit (5+) or to the total damage taken during the preparation (8+); the Temple likewise (4+ / 6 total).
+* **The ultimate's court shortened its own cooldown** (noticed in the test output: the refunded cooldown was 61 s instead of 76 s; the court was declared before the cooldown was spent, and courts speed up cooldowns) → only the Temple's court speeds up cooldowns.
+* Found in code review before the first run: the court containment check used a helper that normalises vectors (every creature would have been "1 block" from the centre) → horizontal distance.
+* The mock replaced a strong effect with a weaker, longer one; Bedrock does not → the mock now behaves like Bedrock, and the court's Slowness I no longer hides the Proclamation's Slowness II in the tests.
+* Renders showed the procession's attendants as glowing pegs and the decree scroll as a ladder of black bars → robed attendants with masks, collars and sleeves; brushed text columns and a vermilion seal on the decree.
+
 ## Not tested — needs a real game (please check these)
 
 The sandbox has no Minecraft client. A **Bedrock Dedicated Server** test was attempted through Minecraft Creator Tools, but the server requires the **Minecraft EULA to be accepted by you**; I did not accept it on your behalf, so no real-engine run happened. Recommended in-game checklist:
@@ -87,7 +125,14 @@ The sandbox has no Minecraft client. A **Bedrock Dedicated Server** test was att
 6. **Feel and balance:** dash/leap distances (knockback values), shockwave reach, Blood Moon fog density, swim speed.
 7. **Multiplayer:** other players see your form and VFX; PvP setting respected.
 8. **Blood Moon:** `/plrace:bloodmoon start` at night; fog + awakening; dawn or `stop` cleans up; reload the world during it.
-9. **Living motion (v1.0.2)** — what the offline runtime cannot prove about the real client:
+9. **Races 004–006 (v1.1.0) — proposed in-game tests** (none of these were run in a real game):
+   * **Selection:** the Codex lists six lineages with portraits; Nurariten shows **✦ UNIQUE ✦**; a second player sees it as *already held*; `/plrace:unique status` names the holder; a player who had chosen a race in 1.0.x still has it after updating.
+   * **Xenentoma:** vibration rings appear only for you and only for moving creatures on the ground; Survey's pings drift (approximate); an explosion or lightning nearby overloads (HUD "OVERLOADED"); the exuvia keeps your shape and mobs attack it; Glide stops at walls and doors; the Surge's segments extend one by one and the three hits land where you aim; Stillness makes you invisible only while motionless.
+   * **Flying Spaghetti Monster:** the strand reaches the target and retracts; dropped items fly to you; Al Dente blocks arrows; the meatballs leave their sockets (empty sockets visible), ricochet and come back, and never remain after death/logout; the Revelation's three spiral layers turn in alternating directions with the meatballs orbiting oppositely; Noodle Parachute slows falls; fire makes the body look burnt.
+   * **Nurariten:** Arrival never lands inside walls, on lava or in the void, including in caves and on slopes; Lowered Gaze tilts mob heads down for a moment and never moves player cameras; the Temple's pillars and gate appear and vanish without touching blocks; leaving the court breaks it; Expulsion turns exiled mobs back at the edge.
+   * **HYAKUTEN CHŪKŌ:** in daylight, at night (local golden haze only for players nearby; the sky and time unchanged for everyone else), under a roof (gate at the door instead of the sky) and in the Nether; all five stage messages; a hit of 5+ damage in the first 2 s interrupts it; the fade is soft and happens once; after the Final Edict, nothing is left behind (`/testfor @e[family=plrace_proxy]` finds nothing) and the haze is gone; on an iPhone the frame rate stays acceptable during stage III.
+   * **Dusk / midday:** two Arrival charges at dusk; the Final Edict's midday bonus.
+10. **Living motion (v1.0.2)** — what the offline runtime cannot prove about the real client:
    * the attachable reads the player's swing variable (`v.attack_time`) and owner queries such as `q.is_item_equipped`, `q.vertical_speed` and `q.yaw_speed` (if one is not resolved, that one reaction is simply absent — the expressions fall back to 0);
    * `pre_animation` variables, controller `blend_transition` cross-fades and `q.all_animations_finished` on the idle-behaviour timer behave as in the interpreter (idle behaviours should start after ~6–8 s of standing still and stop instantly when you move);
    * feet stay on the ground in game for walk and sprint, including with Speed/Slowness effects (the fit assumes the vanilla limb-swing model, `modified_move_speed` 0…1);
@@ -101,4 +146,5 @@ npm test             # typecheck -> build -> validate -> smoke
 python3 tools/previews.py
 python3 tools/anim_gifs.py && python3 tools/anim_gifs.py --fidgets   # animated previews
 npx -y @minecraft/creator-tools@0.21.0 validate -i packs
+python3 tools/anim_gifs.py --races xenentoma,spaghetti,nurariten && python3 tools/anim_gifs.py --races xenentoma,spaghetti,nurariten --fidgets
 ```

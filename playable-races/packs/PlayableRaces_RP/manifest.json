@@ -7,8 +7,8 @@
   "pack_scope": "world",
   "version": [
    1,
-   0,
-   2
+   1,
+   0
   ],
   "min_engine_version": [
    1,
@@ -22,8 +22,8 @@
    "uuid": "ae7b6a5c-c18f-4dbe-9a6c-5f9b1c3d4e65",
    "version": [
     1,
-    0,
-    2
+    1,
+    0
    ]
   }
  ],
@@ -32,8 +32,8 @@
    "uuid": "6a3f2c1e-8d4b-4f7a-9c2e-1b5d7e9f0a21",
    "version": [
     1,
-    0,
-    2
+    1,
+    0
    ]
   }
  ],
@@ -44,7 +44,7 @@
   "product_type": "addon",
   "generated_with": {
    "plrace_build": [
-    "1.0.0"
+    "1.1.0"
    ]
   }
  }

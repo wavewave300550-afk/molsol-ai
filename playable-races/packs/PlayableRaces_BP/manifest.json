@@ -6,8 +6,8 @@
   "uuid": "6a3f2c1e-8d4b-4f7a-9c2e-1b5d7e9f0a21",
   "version": [
    1,
-   0,
-   2
+   1,
+   0
   ],
   "min_engine_version": [
    1,
@@ -21,8 +21,8 @@
    "uuid": "7b4e3d2f-9e5c-4a8b-8d3f-2c6e8f0a1b32",
    "version": [
     1,
-    0,
-    2
+    1,
+    0
    ]
   },
   {
@@ -31,8 +31,8 @@
    "uuid": "8c5f4e3a-af6d-4b9c-9e4a-3d7f9a1b2c43",
    "version": [
     1,
-    0,
-    2
+    1,
+    0
    ],
    "entry": "scripts/main.js"
   }
@@ -42,8 +42,8 @@
    "uuid": "9d6a5f4b-b07e-4cad-8f5b-4e8a0b2c3d54",
    "version": [
     1,
-    0,
-    2
+    1,
+    0
    ]
   },
   {
@@ -62,7 +62,7 @@
   "product_type": "addon",
   "generated_with": {
    "plrace_build": [
-    "1.0.0"
+    "1.1.0"
    ]
   }
  }

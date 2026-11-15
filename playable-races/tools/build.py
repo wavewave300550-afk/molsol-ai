@@ -34,7 +34,7 @@ from anims import spaghetti as anim_spaghetti  # noqa: E402
 import fx  # noqa: E402
 
 NS = "plrace"
-VERSION = [1, 0, 2]
+VERSION = [1, 1, 0]
 MIN_ENGINE = [1, 26, 60]
 SERVER_API = "2.11.0"
 UI_API = "2.3.0"
@@ -591,6 +591,8 @@ def icons():
         tex_entries[f"{NS}:focus_{race}"] = {"textures": f"{TEXROOT}/items/focus_{race}"}
     _codex_icon().save(os.path.join(d, "codex.png"))
     tex_entries[f"{NS}:codex"] = {"textures": f"{TEXROOT}/items/codex"}
+    # list form (one entry each): accepted by every client and preferred by the Creator Tools schema
+    tex_entries = {k: {"textures": [v["textures"]] if isinstance(v["textures"], str) else v["textures"]} for k, v in tex_entries.items()}
     wjson(os.path.join(RP, "textures/item_texture.json"),
           {"resource_pack_name": RP_NAME, "texture_name": "atlas.items", "texture_data": tex_entries})
 
@@ -689,17 +691,21 @@ def _codex_icon():
 
 
 def pack_icon(path_bp, path_rp):
-    imgs = []
-    for race in ("salamander", "golem", "jackalope"):
-        imgs.append(_key_out_black(_render_icon(race, 128, yaw=26, pitch=6, focus="body")).resize((128, 128), Image.LANCZOS))
+    imgs = {}
+    for race in ("salamander", "golem", "jackalope", "xenentoma", "spaghetti", "nurariten"):
+        imgs[race] = _key_out_black(_render_icon(race, 128, yaw=26, pitch=6, focus="body")).resize((128, 128), Image.LANCZOS)
     icon = Image.new("RGBA", (256, 256), (20, 16, 30, 255))
     g = Image.new("L", (256, 256), 0)
     ImageDraw.Draw(g).ellipse([30, 10, 226, 206], fill=160)
     icon = Image.composite(Image.new("RGBA", (256, 256), (120, 30, 50, 255)), icon, g.filter(ImageFilter.GaussianBlur(40)))
-    ImageDraw.Draw(icon).ellipse([150, 18, 214, 82], fill=(200, 30, 50, 255))
-    icon.alpha_composite(imgs[1].resize((150, 150), Image.LANCZOS), (53, 70))
-    icon.alpha_composite(imgs[0].resize((120, 120), Image.LANCZOS), (-4, 128))
-    icon.alpha_composite(imgs[2].resize((120, 120), Image.LANCZOS), (140, 128))
+    ImageDraw.Draw(icon).ellipse([166, 14, 222, 70], fill=(200, 30, 50, 255))          # the Blood Moon
+    halo = Image.new("L", (256, 256), 0)
+    ImageDraw.Draw(halo).ellipse([24, 22, 88, 86], outline=200, width=5)                  # a broken celestial halo
+    icon = Image.composite(Image.new("RGBA", (256, 256), (240, 200, 110, 255)), icon, halo.filter(ImageFilter.GaussianBlur(1.5)))
+    # back row: Nurariten, Golem, Xenentoma - front row: Salamander, Spaghetti Monster, Jackalope
+    for race, size, x, y in (("nurariten", 112, -6, 46), ("xenentoma", 112, 150, 52), ("golem", 140, 58, 40),
+                             ("salamander", 108, -8, 140), ("jackalope", 108, 156, 140), ("spaghetti", 104, 76, 150)):
+        icon.alpha_composite(imgs[race].resize((size, size), Image.LANCZOS), (x, y))
     icon.save(path_bp)
     icon.save(path_rp)
 
@@ -720,7 +726,7 @@ def _mk(path):
 
 
 def texts(lang_rp, lang_bp):
-    lines = ["## Playable Races - Foundation Release (Races 001-003)"]
+    lines = ["## Playable Races - Foundation + Expansion 01 (Races 001-006)"]
     lines += [f"{k}={v}" for k, v in lang_rp]
     os.makedirs(os.path.join(RP, "texts"), exist_ok=True)
     with open(os.path.join(RP, "texts/en_US.lang"), "w", encoding="utf-8") as f:
@@ -744,14 +750,14 @@ def manifests():
             {"module_name": "@minecraft/server", "version": SERVER_API},
             {"module_name": "@minecraft/server-ui", "version": UI_API}],
         "metadata": {"authors": ["Playable Races project"], "product_type": "addon",
-                     "generated_with": {"plrace_build": ["1.0.0"]}}}
+                     "generated_with": {"plrace_build": ["1.1.0"]}}}
     rp = {"format_version": 2, "header": {
         "name": "pack.name", "description": "pack.description", "uuid": UUID["rp"], "pack_scope": "world",
         "version": VERSION, "min_engine_version": MIN_ENGINE},
         "modules": [{"type": "resources", "uuid": UUID["rp_res"], "version": VERSION}],
         "dependencies": [{"uuid": UUID["bp"], "version": VERSION}],
         "metadata": {"authors": ["Playable Races project"], "product_type": "addon",
-                     "generated_with": {"plrace_build": ["1.0.0"]}}}
+                     "generated_with": {"plrace_build": ["1.1.0"]}}}
     wjson(os.path.join(BP, "manifest.json"), bp)
     wjson(os.path.join(RP, "manifest.json"), rp)
 
@@ -812,10 +818,10 @@ def main():
     icons()
     particles()
     pack_icon(os.path.join(BP, "pack_icon.png"), os.path.join(RP, "pack_icon.png"))
-    lang_rp = [("pack.name", "Playable Races: Foundation (Resources)"),
-               ("pack.description", "Races 001-003: Flora Salamander, Runic Titan Golem, Blood Moon Jackalope")] + lang_rp
-    lang_bp = [("pack.name", "Playable Races: Foundation"),
-               ("pack.description", "Become an Aberrant Flora Salamander, a Runic Titan Golem or a Blood Moon Jackalope")]
+    lang_rp = [("pack.name", "Playable Races (Resources)"),
+               ("pack.description", "Races 001-006: Flora Salamander, Runic Titan Golem, Blood Moon Jackalope, Xenentoma, Flying Spaghetti Monster, Nurariten [Unique]")] + lang_rp
+    lang_bp = [("pack.name", "Playable Races"),
+               ("pack.description", "Six playable lineages: Salamander, Golem, Jackalope, Xenentoma, Flying Spaghetti Monster and the Unique Nurariten")]
     texts(lang_rp, lang_bp)
     manifests()
     compiled = False if no_tsc else compile_scripts()

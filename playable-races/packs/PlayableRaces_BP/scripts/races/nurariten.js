@@ -649,7 +649,7 @@ export const nurariten = {
         "Nurariten: stay inside your own court - leaving it breaks the mandate.",
     ],
     variant(p, s) {
-        if (courtOf(s.id, "temple") && inOwnCourt(p))
+        if (courtOf(s.id, "temple") && inOwnCourt(p, "temple"))
             return "court";
         if (phase(p) === "night")
             return "nocturne";
@@ -658,7 +658,7 @@ export const nurariten = {
     cooldownMul(p, s) {
         const ph = phase(p);
         let m = ph === "day" || ph === "midday" ? 0.85 : 1;
-        if (inOwnCourt(p))
+        if (inOwnCourt(p, "temple"))
             m *= 0.8;
         if (hasFlag(s, "broken"))
             m *= 1.15;

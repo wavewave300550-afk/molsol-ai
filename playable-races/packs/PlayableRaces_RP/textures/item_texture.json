@@ -3,43 +3,69 @@
  "texture_name": "atlas.items",
  "texture_data": {
   "plrace:crest_salamander": {
-   "textures": "textures/plrace/races/items/crest_salamander"
+   "textures": [
+    "textures/plrace/races/items/crest_salamander"
+   ]
   },
   "plrace:crest_golem": {
-   "textures": "textures/plrace/races/items/crest_golem"
+   "textures": [
+    "textures/plrace/races/items/crest_golem"
+   ]
   },
   "plrace:crest_jackalope": {
-   "textures": "textures/plrace/races/items/crest_jackalope"
+   "textures": [
+    "textures/plrace/races/items/crest_jackalope"
+   ]
   },
   "plrace:crest_xenentoma": {
-   "textures": "textures/plrace/races/items/crest_xenentoma"
+   "textures": [
+    "textures/plrace/races/items/crest_xenentoma"
+   ]
   },
   "plrace:crest_spaghetti": {
-   "textures": "textures/plrace/races/items/crest_spaghetti"
+   "textures": [
+    "textures/plrace/races/items/crest_spaghetti"
+   ]
   },
   "plrace:crest_nurariten": {
-   "textures": "textures/plrace/races/items/crest_nurariten"
+   "textures": [
+    "textures/plrace/races/items/crest_nurariten"
+   ]
   },
   "plrace:focus_salamander": {
-   "textures": "textures/plrace/races/items/focus_salamander"
+   "textures": [
+    "textures/plrace/races/items/focus_salamander"
+   ]
   },
   "plrace:focus_golem": {
-   "textures": "textures/plrace/races/items/focus_golem"
+   "textures": [
+    "textures/plrace/races/items/focus_golem"
+   ]
   },
   "plrace:focus_jackalope": {
-   "textures": "textures/plrace/races/items/focus_jackalope"
+   "textures": [
+    "textures/plrace/races/items/focus_jackalope"
+   ]
   },
   "plrace:focus_xenentoma": {
-   "textures": "textures/plrace/races/items/focus_xenentoma"
+   "textures": [
+    "textures/plrace/races/items/focus_xenentoma"
+   ]
   },
   "plrace:focus_spaghetti": {
-   "textures": "textures/plrace/races/items/focus_spaghetti"
+   "textures": [
+    "textures/plrace/races/items/focus_spaghetti"
+   ]
   },
   "plrace:focus_nurariten": {
-   "textures": "textures/plrace/races/items/focus_nurariten"
+   "textures": [
+    "textures/plrace/races/items/focus_nurariten"
+   ]
   },
   "plrace:codex": {
-   "textures": "textures/plrace/races/items/codex"
+   "textures": [
+    "textures/plrace/races/items/codex"
+   ]
   }
  }
 }

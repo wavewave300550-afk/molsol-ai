@@ -31,11 +31,12 @@ from PIL import Image, ImageDraw  # noqa: E402
 
 from kit import animrt, ljson, molang  # noqa: E402
 from kit.render import render  # noqa: E402
-from models import golem, jackalope, salamander, spaghetti, xenentoma  # noqa: E402
+from models import golem, jackalope, nurariten, salamander, spaghetti, xenentoma  # noqa: E402
 
 RP = os.path.join(ROOT, "packs", "PlayableRaces_RP")
 HIDE = ["r_arm_fp", "l_arm_fp"]
-MODS = {"salamander": salamander, "golem": golem, "jackalope": jackalope, "xenentoma": xenentoma, "spaghetti": spaghetti}
+MODS = {"salamander": salamander, "golem": golem, "jackalope": jackalope, "xenentoma": xenentoma, "spaghetti": spaghetti,
+        "nurariten": nurariten}
 
 
 from kit.playersim import DT, FPS, Sim, vanilla_skeleton  # noqa: E402
@@ -95,6 +96,7 @@ CAMERA = {  # race -> (scale, center y)
     "jackalope": (6.2, 17.0),
     "xenentoma": (5.0, 16.0),
     "spaghetti": (5.6, 15.0),
+    "nurariten": (5.0, 18.0),
 }
 
 
@@ -170,6 +172,8 @@ FIDGETS = {
                   ("fidget_ripple", "anamorphic ripple")],
     "spaghetti": [("fidget_shape", "noodle doodle"), ("fidget_eyes", "independent eyes"), ("fidget_meatballs", "meatball lap"),
                   ("fidget_sauce", "sauce defies gravity")],
+    "nurariten": [("fidget_survey", "surveys its court"), ("fidget_sleeves", "settles its sleeves"), ("fidget_glyph", "writes a glyph"),
+                  ("fidget_procession", "its shadow becomes a procession")],
 }
 
 
@@ -248,7 +252,7 @@ def grid(cols: List[List[Image.Image]], title: str = "") -> List[Image.Image]:
 
 
 TITLES = {"salamander": "001 Aberrant Flora Salamander", "golem": "002 Runic Titan Golem", "jackalope": "003 Blood Moon Jackalope",
-          "xenentoma": "004 Xenentoma", "spaghetti": "005 Flying Spaghetti Monster"}
+          "xenentoma": "004 Xenentoma", "spaghetti": "005 Flying Spaghetti Monster", "nurariten": "006 Nurariten [Unique]"}
 
 
 def main():

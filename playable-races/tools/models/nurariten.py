@@ -347,16 +347,18 @@ def mat_glyph_panel(ctx):
 
 
 def mat_figure(ctx):
-    """Celestial attendants: luminous ivory-gold beings (glow strongly)."""
+    """Celestial attendants: luminous ivory-gold beings (they glow softly, but keep their form)."""
     n = nz.fbm(ctx.p, 0.8, 2, seed=3)
-    c = ramp([(0, "#e8d9b0"), (1, "#fff8e0")], n)
-    return c, ctx.ones(), ctx.zeros() + 0.55
+    c = ramp([(0, "#d9c79a"), (0.6, "#efe2be"), (1, "#fff6dc")], n)
+    edge = ctx.edge < 0.5
+    c = np.where(edge[:, None], mix3(c, hx("#c39a48"), 0.5), c)
+    return face_light(ctx, c, 0.12, 0.25), ctx.ones(), ctx.zeros() + 0.3
 
 
 def mat_figure_red(ctx):
     n = nz.fbm(ctx.p, 0.8, 2, seed=4)
-    c = ramp([(0, "#d0563c"), (1, "#ff8e62")], n)
-    return c, ctx.ones(), ctx.zeros() + 0.45
+    c = ramp([(0, "#b8402c"), (1, "#e86a48")], n)
+    return face_light(ctx, c, 0.1, 0.2), ctx.ones(), ctx.zeros() + 0.3
 
 
 def mat_banner(ctx):
@@ -367,9 +369,15 @@ def mat_banner(ctx):
 
 
 def mat_scroll(ctx):
+    """A decree: columns of brushed characters and a vermilion seal."""
     c = mix3(hx("#efe2bc"), hx("#fbf3dc"), nz.fbm(ctx.p, 1.2, 2))
-    st = _glyphs(ctx.s / max(ctx.fw, 1e-6), ctx.t / max(ctx.fh, 1e-6), 4.0)
-    c = np.where(st[:, None], hx("#2a160c"), c)
+    u = ctx.s / max(ctx.fw, 1e-6)
+    v = ctx.t / max(ctx.fh, 1e-6)
+    col = np.floor(ctx.s).astype(int)
+    text = (col % 2 == 0) & (v > 0.14) & (v < 0.86) & (u > 0.1) & (u < 0.78) & (nz.hash_points(ctx.p, 1.0, 7) < 0.62)
+    c = np.where(text[:, None], hx("#4a2a18"), c)
+    seal = (u > 0.83) & (u < 0.95) & (v > 0.58) & (v < 0.86)
+    c = np.where(seal[:, None], hx("#c23a24"), c)
     return c, ctx.ones(), ctx.zeros() + 0.35
 
 
@@ -399,9 +407,14 @@ def build_gate() -> Model:
 def _figure(m: Model, parent: str, name: str, x: float, z: float, rank: str) -> None:
     """One celestial attendant (2.2 x 7 units) with the attribute of its rank."""
     b = m.bone(name, parent, (x, 0, z))
-    m.box(b.name, (x, 3.4, z), (2.2, 6.0, 1.8), "figure")                         # robe
-    m.box(b.name, (x, 3.0, z), (2.5, 0.5, 2.0), "figure_red")                     # sash
-    m.box(b.name, (x, 7.2, z), (1.5, 1.5, 1.5), "figure")                         # head
+    m.box(b.name, (x, 1.7, z), (3.0, 3.4, 2.4), "figure")                         # flared hem of the robe
+    m.box(b.name, (x, 5.0, z), (2.1, 3.4, 1.7), "figure")                         # upper robe
+    m.box(b.name, (x, 3.6, z), (2.6, 0.5, 2.0), "figure_red")                     # sash
+    m.box(b.name, (x, 6.75, z), (2.3, 0.45, 1.9), "gold")                        # collar
+    for sd in (-1, 1):                                                            # long hanging sleeves
+        m.box(b.name, (x + 1.5 * sd, 4.6, z - 0.1), (0.9, 3.0, 1.3), "figure")
+    m.box(b.name, (x, 7.75, z), (1.5, 1.6, 1.5), "mask")                          # ivory mask face
+    m.box(b.name, (x, 8.75, z + 0.1), (1.2, 0.5, 1.2), "lacquer")                 # cap
     if rank == "standard":           # tall pole with a nobori banner
         m.box(b.name, (x + 1.4, 8.0, z), (0.3, 16.0, 0.3), "figure_red")
         fl = m.bone(f"{name}_banner", b.name, (x + 1.55, 15.6, z))
