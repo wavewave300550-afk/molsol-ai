@@ -217,6 +217,7 @@ world.beforeEvents.playerBreakBlock.subscribe((ev) => manager.onBreakBefore(ev))
 world.afterEvents.playerPlaceBlock.subscribe((ev) => manager.onPlace(ev));
 world.beforeEvents.explosion.subscribe((ev) => manager.onExplosionBefore(ev));
 world.afterEvents.entitySpawn.subscribe((ev) => manager.onEntitySpawn(ev));
+world.afterEvents.entityLoad.subscribe((ev) => manager.onEntityLoad(ev));
 
 system.afterEvents.scriptEventReceive.subscribe((ev) => {
   if (!ev.id.startsWith("anatomy:")) return;

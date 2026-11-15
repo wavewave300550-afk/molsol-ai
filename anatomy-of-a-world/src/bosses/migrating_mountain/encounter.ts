@@ -17,29 +17,34 @@ import {
   HudVisibility,
   InputPermissionCategory,
   ItemStack,
+  LocationWaypoint,
   Player,
   ProjectileHitBlockAfterEvent,
   ProjectileHitEntityAfterEvent,
   system,
+  WaypointTexture,
   world,
 } from "@minecraft/server";
-import { combatants, enterArena, hurt, knock, leaveArena, loadArea, playersIn, unloadArea } from "../../core/arena.js";
+import { combatants, enterArena, hurt, knock, leaveArena, playersIn } from "../../core/arena.js";
 import { BlockWriter } from "../../core/blocks.js";
-import { actionbar, particle, quake, shake, sound, title } from "../../core/fx.js";
+import { AreaKeeper, awaitPromise, chunkBudget, ChunkRect, rectOf, sweepDeferred } from "../../core/chunks.js";
+import { actionbar, particle, quake, shake, sound, titleFor } from "../../core/fx.js";
+import { tr } from "../../core/lang.js";
 import { manager } from "../../core/manager.js";
+import { Parts } from "../../core/parts.js";
 import { BossDefinition, BossEncounter, SavedEncounter } from "../../core/registry.js";
 import { Co, TaskRunner } from "../../core/tasks.js";
 import { angleDiffDeg, V3 } from "../../core/vec.js";
-import { ColFlag, MM, MountainModel } from "../../gen/mountain.js";
+import { ColFlag, MM, MountainModel, NodeSite } from "../../gen/mountain.js";
 import { Rng } from "../../gen/noise.js";
 import * as P from "../../gen/palette.js";
 import { ABILITY_IDS, AbilityId, slabImpact } from "./abilities.js";
 import { LivingNode, MMContext, Zone } from "./context.js";
 import { Director } from "./director.js";
 import { ANIM, DIMENSION, ENT, FOG, MUSIC, PROP, PX, SND, TAG } from "./ids.js";
-import { arenaBounds, clearArena, cutColumns, mountain, placeBody, placeDisk, pristineBlock, sectorColumns } from "./runtime.js";
+import { arenaChunks, clearArena, cutColumns, mountain, placeBody, placeDisk, pristineBlock, sectorColumns } from "./runtime.js";
 import { DorsalTerrain } from "./terrain.js";
-import { greatUnfolding, PETALS, rebloom, ringSpot, spawnPetal, victorySequence } from "./unfolding.js";
+import { greatUnfolding, PETALS, petalSite, rebloom, ringSpot, victorySequence } from "./unfolding.js";
 
 type State = "loading" | "intro" | "phase1" | "unfolding" | "phase2" | "victory" | "aftermath" | "ending" | "finished";
 
@@ -49,7 +54,11 @@ const HEART_MAX = 1000;
 const HEART_DAMAGE = 0.5;
 const NODE_SHARE = 0.1333;
 const REBLOOM_AT = 0.3;
-const AREA_ID = "anatomy_mm_arena";
+const AREA_PREFIX = "anatomy_mm_area";
+const SWEEP_ID = "anatomy_mm_sweep";
+/** Thai names of the Resonance Nodes. */
+const NODE_TH: Record<string, string> = { dorsal: "ผลึกยอดเขา", cavern: "ผลึกในถ้ำ", root: "ผลึกใต้ราก" };
+const NODE_COLOR = { red: 0.78, green: 0.38, blue: 1 };
 
 export class MigratingMountainEncounter implements BossEncounter, MMContext {
   readonly dim: Dimension;
@@ -62,10 +71,14 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
   phase: 1 | 2 = 1;
   now = 0;
   layout = 0;
-  heart: Entity | undefined;
-  legs: Entity[] = [];
-  petals: Entity[] = [];
-  private nodeEnts = new Map<string, Entity>();
+  /** Every boss part entity (legs, nodes, heart, petals): spawned when loaded, re-bound after reloads. */
+  readonly parts: Parts;
+  /** Keeps the arena's chunks ticking as far as the pack's budget allows. */
+  readonly keeper: AreaKeeper;
+  private heartHpCache = HEART_MAX;
+  private waypoints = new Map<string, LocationWaypoint>();
+  private waypointsBroken = false;
+  private briefed = new Set<string>();
   private nodeDead = new Set<string>();
   private nodeDying = new Set<string>();
   private exposedUntil = 0;
@@ -77,6 +90,8 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
   private startedAt = 0;
   private stopReason: "victory" | "defeat" | "abort" | undefined;
   private lootSpot: V3 = { x: MM.heart.x, y: D.y + 1, z: MM.heart.z };
+  private heartHpDebt = 0;
+  private focusing = false;
   private readonly random: Rng;
   readonly rng: () => number;
 
@@ -91,12 +106,38 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     this.random = new Rng((Date.now() & 0xffff) ^ 0x5eed);
     this.rng = () => this.random.next();
     this.director = new Director(this, () => this.pockets());
+    this.parts = new Parts(this.dim, TAG);
+    this.keeper = new AreaKeeper(AREA_PREFIX, this.dim);
+  }
+
+  get heart(): Entity | undefined {
+    return this.parts.get("heart");
+  }
+
+  get legs(): Entity[] {
+    return this.parts.list("leg:");
+  }
+
+  get petals(): Entity[] {
+    return this.parts.list("petal:");
   }
 
   // ------------------------------------------------------------------ BossEncounter
   status(): string {
     const hp = this.heartHp();
-    return `${this.def.id}: state=${this.state} phase=${this.phase} nodes=${3 - this.nodeDead.size}/3 heart=${hp.toFixed(0)}/${HEART_MAX} layout=${this.layout} writer=${this.writer.pending} tasks=${this.tasks.count()}`;
+    const n = this.parts.summary("node:");
+    const l = this.parts.summary("leg:");
+    const h = this.parts.summary("heart");
+    const b = chunkBudget();
+    const sites = this.remainingSites()
+      .map((s) => `${s.id}@${Math.floor(s.pos.x)},${Math.floor(s.pos.y)},${Math.floor(s.pos.z)}${this.parts.get(`node:${s.id}`) ? "" : this.parts.summary(`node:${s.id}`).spawned ? "(unloaded)" : "(waiting for chunk)"}`)
+      .join(" ");
+    return (
+      `${this.def.id}: state=${this.state} phase=${this.phase} nodes=${3 - this.nodeDead.size}/3 heart=${hp.toFixed(0)}/${HEART_MAX} layout=${this.layout}\n` +
+      `parts: nodes ${n.loaded}/${n.spawned}/${n.total} legs ${l.loaded}/${l.spawned}/${l.total} heart ${h.loaded}/${h.spawned}/${h.total} (loaded/spawned/wanted) respawns=${this.parts.respawns}\n` +
+      `remaining: ${sites || "-"}\n` +
+      `chunks: kept ${this.keeper.kept}/${this.keeper.wanted} ticking, budget ${b.used}/${b.max ?? "?"}; writer queued=${this.writer.pending} deferred=${this.writer.deferredOps} failed=${this.writer.failures}; tasks=${this.tasks.count()}`
+    );
   }
 
   begin(saved?: SavedEncounter): void {
@@ -126,7 +167,7 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
 
   forcePhase(phase: number): boolean {
     if (phase === 2 && this.state === "phase1") {
-      for (const [id, e] of this.nodeEnts) if (!this.nodeDead.has(id) && e.isValid) this.destroyNode(id, e, true);
+      for (const site of this.remainingSites()) this.destroyNode(site.id, this.parts.get(`node:${site.id}`), true);
       return true;
     }
     return false;
@@ -163,12 +204,17 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     for (let k = 0; k < 16; k++) {
       const s = ringSpot((start + k) % 16, 16);
       first ??= s;
+      const bx = Math.floor(s.pos.x);
+      const bz = Math.floor(s.pos.z);
+      // edits still waiting for this chunk (e.g. the cut of the shell) would land on the player
+      if (this.writer.hasDeferredIn(bx, bz, bx, bz)) continue;
       try {
         const feet = this.dim.getBlock(s.pos);
         const head = this.dim.getBlock({ x: s.pos.x, y: s.pos.y + 1, z: s.pos.z });
-        if ((feet?.isAir ?? true) && (head?.isAir ?? true)) return s;
+        if (feet?.isAir && head?.isAir) return s;
+        if (!feet || !head) first = s; // not loaded yet: a usable fallback, nothing known in the way
       } catch {
-        return s;
+        /* unloaded */
       }
     }
     const f = first!;
@@ -178,11 +224,16 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
   // ------------------------------------------------------------------ MMContext
   livingNodes(): LivingNode[] {
     const out: LivingNode[] = [];
-    for (const site of this.m.nodes) {
-      const e = this.nodeEnts.get(site.id);
-      if (e && e.isValid && !this.nodeDead.has(site.id) && !this.nodeDying.has(site.id)) out.push({ site, entity: e });
+    for (const site of this.remainingSites()) {
+      const e = this.parts.get(`node:${site.id}`);
+      if (e) out.push({ site, entity: e });
     }
     return out;
+  }
+
+  /** Nodes not destroyed yet (whether or not their entity is loaded right now). */
+  remainingSites(): NodeSite[] {
+    return this.m.nodes.filter((s) => !this.nodeDead.has(s.id) && !this.nodeDying.has(s.id));
   }
 
   combatants(): Player[] {
@@ -232,12 +283,12 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
   }
 
   exposeHeart(ticks: number): void {
-    if (this.state !== "phase2" || !this.heart?.isValid) return;
+    if (this.state !== "phase2") return;
     this.exposedUntil = this.now + ticks;
     this.director.lastExposure = this.now;
-    this.heart.setProperty(PROP.open, true);
+    this.heartProp(PROP.open, true);
     sound(this.dim, SND.heartOpen, this.heartCentre(), 1, 1);
-    title(this.audience(), "", "§a◆ The Lithic Heart is EXPOSED — strike it now!", 40, 4, 10);
+    titleFor(this.audience(), (p) => ["", tr(p, "§a◆ The Lithic Heart is EXPOSED — strike it now!", "§a◆ หัวใจศิลาเปิดออกแล้ว — โจมตีเลย!")], 40, 4, 10);
   }
 
   isWalkway(x: number, z: number): boolean {
@@ -254,18 +305,95 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     this.slabs.push({ e, target, land, power });
   }
 
+  partProp(e: Entity, name: string, value: boolean | number): void {
+    this.parts.propOf(e, name, value);
+  }
+
+  setLegPose(pose: number): void {
+    this.parts.propAll("leg:", PROP.pose, pose);
+  }
+
+  petal(k: number, state: number): Entity | undefined {
+    const key = `petal:${k}`;
+    if (!this.parts.has(key)) {
+      const s = petalSite(k);
+      return this.parts.want(key, { type: ENT.petal, pos: s.pos, yaw: s.yaw, props: { [PROP.petalIndex]: k, [PROP.petalState]: state } });
+    }
+    this.parts.prop(key, PROP.petalState, state);
+    return this.parts.get(key);
+  }
+
+  setPetals(state: number): void {
+    this.parts.propAll("petal:", PROP.petalState, state);
+  }
+
+  heartProp(name: string, value: boolean | number): void {
+    this.parts.prop("heart", name, value);
+  }
+
+  removeHeart(): void {
+    this.parts.drop("heart");
+  }
+
+  *settleArea(x0: number, z0: number, x1: number, z1: number, timeout: number): Co {
+    const t0 = this.now;
+    this.focusing = true; // the background sweep steps aside so this one gets the chunk budget
+    try {
+      while (this.now - t0 < timeout && (this.writer.pending > 0 || this.writer.hasDeferredIn(x0, z0, x1, z1))) {
+        if (this.writer.pending > 0) {
+          yield 1;
+          continue;
+        }
+        yield* sweepDeferred(this.writer, `${SWEEP_ID}_focus`, Math.max(20, timeout - (this.now - t0)), { focus: rectOf(x0, z0, x1, z1) });
+        yield 1;
+      }
+    } finally {
+      this.focusing = false;
+    }
+  }
+
+  /** world.afterEvents.entityLoad (routed by the manager). */
+  onEntityLoad(e: Entity): void {
+    try {
+      if (e.dimension.id !== DIMENSION) return;
+    } catch {
+      return;
+    }
+    this.parts.onLoad(e);
+  }
+
   // ------------------------------------------------------------------ setup
+  /**
+   * Regions kept ticking, most important first: the nodes and the heart, the
+   * arrival shelf, the Organ Cavern, the Phase 2 disk, then the whole body.
+   * Whatever does not fit in the pack's budget loads around the players.
+   */
+  private areaPlan(): ChunkRect[] {
+    const pts: V3[] = [MM.heart, ...this.m.nodes.map((n) => n.pos)];
+    const xs = pts.map((q) => q.x);
+    const zs = pts.map((q) => q.z);
+    const ar = MM.arrival;
+    const cv = MM.cavern;
+    return [
+      rectOf(Math.min(...xs), Math.min(...zs), Math.max(...xs), Math.max(...zs)),
+      rectOf(ar.x - ar.r - 3, ar.z - ar.r - 3, ar.x + ar.r + 3, ar.z + ar.r + 3),
+      rectOf(cv.x - cv.rx, cv.z - cv.rz, cv.x + cv.rx, cv.z + cv.rz),
+      rectOf(MM.heart.x - D.outerR, MM.heart.z - D.outerR, MM.heart.x + D.outerR, MM.heart.z + D.outerR),
+      arenaChunks(),
+    ];
+  }
+
   private *setup(saved?: SavedEncounter): Co {
     this.state = "loading";
-    if (!saved) title(this.party, "§7The ground beneath you begins to migrate…", "", 40, 10, 10);
-    const b = arenaBounds();
-    let loaded: boolean | undefined;
-    loadArea(AREA_ID, this.dim, b.from, b.to).then(
-      (ok) => (loaded = ok),
-      () => (loaded = false),
-    );
-    for (let i = 0; i < 600 && loaded === undefined; i++) yield 2;
-    if (!loaded) console.warn("[anatomy] arena ticking area not confirmed; continuing (chunks may load as players arrive)");
+    if (!saved) titleFor(this.party, (p) => [tr(p, "§7The ground beneath you begins to migrate…", "§7พื้นดินใต้เท้าเริ่มเคลื่อนย้าย…"), ""], 40, 10, 10);
+    AreaKeeper.releaseAll(); // stale areas of an interrupted session
+    const loading = yield* awaitPromise(this.keeper.keep(this.areaPlan()), 600);
+    if (!loading.done || this.keeper.kept < this.keeper.wanted) {
+      const b = chunkBudget();
+      console.warn(
+        `[anatomy] arena: ${this.keeper.kept}/${this.keeper.wanted} chunks kept ticking (budget ${b.used}/${b.max ?? "?"})${loading.done ? "" : ", still loading"} — the rest loads around players and boss parts appear as it does`,
+      );
+    }
     this.killLeftovers();
     // players already inside (a resumed fight) are held safely while the body is rebuilt
     const holding = saved ? this.audience() : [];
@@ -276,7 +404,10 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
       } catch {
         /* ignore */
       }
-    yield* clearArena(this.dim);
+    yield* clearArena(this.writer);
+    this.tasks.start("mm:housekeeping", this.housekeeping());
+    // chunks that were not loaded are cleaned before any structure is placed over them
+    if (this.writer.deferredOps > 0) yield* sweepDeferred(this.writer, SWEEP_ID, 300);
     // the arrival shelf first, so the party has somewhere to stand
     const ar = MM.arrival;
     for (let x = ar.x - ar.r - 3; x <= ar.x + ar.r + 3; x++)
@@ -301,13 +432,21 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
       this.party.forEach((p, i) => {
         const a = (i / Math.max(1, this.party.length)) * Math.PI * 2;
         enterArena(p, this.dim, { x: ar.x + 0.5 + Math.cos(a) * 3, y: ar.y + 1.05, z: ar.z + 0.5 + Math.sin(a) * 3 }, facing);
+        try {
+          // the shelf may still be waiting for its chunk to load
+          p.addEffect("slow_falling", 200, { amplifier: 0, showParticles: false });
+          p.addEffect("resistance", 200, { amplifier: 4, showParticles: false });
+        } catch {
+          /* ignore */
+        }
         this.welcome(p);
       });
       yield 20;
+      yield* this.settleOnShelf(this.party);
       this.cinematic(true);
     }
     // the mountain surfaces from the cloud sea
-    this.spawnLegs();
+    this.wantLegs();
     sound(this.dim, SND.rumble, { x: 0, y: 130, z: -40 }, 1, 0.7);
     yield* placeBody(this.dim, this.writer, saved ? 0 : 7);
     if (!saved) {
@@ -318,26 +457,26 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
         yield 20;
       }
     }
-    this.spawnHeart(saved);
-    this.spawnNodes(saved);
+    this.wantHeart(saved);
+    this.wantNodes(saved);
     if (saved && saved.phase === 2) {
       this.layout = Number(saved.data.layout ?? 0);
       this.rebloomed = Boolean(saved.data.rebloomed);
       const all = sectorColumns(1, 0)[0];
       for (let i = 0; i < all.length; i += 400) {
-        cutColumns(this.dim, this.writer, all.slice(i, i + 400));
+        cutColumns(this.writer, all.slice(i, i + 400));
         yield 1;
       }
       while (this.writer.pending > 0) yield 1;
       placeDisk(this.dim, this.writer, this.layout, 0);
-      for (let k = 0; k < PETALS; k++) {
-        const e = spawnPetal(this, k, 1);
-        if (e) this.petals.push(e);
-      }
-      for (const e of this.legs) if (e.isValid) e.setProperty(PROP.pose, 1);
+      for (let k = 0; k < PETALS; k++) this.petal(k, 1);
+      this.setLegPose(1);
       this.terrain.enabled = false;
-      for (let i = 0; i < 80 && this.writer.pending > 0; i++) yield 1;
       const inside = this.audience();
+      for (let i = 0; i < inside.length; i++) {
+        const at = ringSpot(i, inside.length).pos;
+        yield* this.settleArea(Math.floor(at.x) - 2, Math.floor(at.z) - 2, Math.floor(at.x) + 2, Math.floor(at.z) + 2, 200);
+      }
       inside.forEach((p, i) => {
         const r = ringSpot(i, inside.length);
         try {
@@ -352,10 +491,16 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     } else {
       if (!saved) {
         this.camTo({ x: -30, y: 150, z: -96 }, { x: -4, y: 140, z: -50 }, 3);
-        title(this.audience(), "§f001 · §lTHE MIGRATING MOUNTAIN", "§7The Mountain That Never Belonged to the Earth", 80, 10, 30);
+        titleFor(this.audience(), (p) => ["§f001 · §lTHE MIGRATING MOUNTAIN", tr(p, "§7The Mountain That Never Belonged to the Earth", "§7ภูเขาที่ไม่เคยเป็นของผืนโลก")], 80, 10, 30);
         yield 70;
         this.cinematic(false);
-        title(this.audience(), "§aPHASE 1", "§2THE SLEEPING CONTINENT §7— find and destroy the 3 Resonance Nodes", 70, 10, 20);
+        titleFor(
+          this.audience(),
+          (p) => [tr(p, "§aPHASE 1", "§aเฟส 1"), tr(p, "§2THE SLEEPING CONTINENT §7— find and destroy the 3 Resonance Nodes", "§2ทวีปที่หลับใหล §7— ตามหาและทำลายผลึกสีม่วงทั้ง 3 จุด")],
+          70,
+          10,
+          20,
+        );
       }
       for (const p of holding)
         try {
@@ -367,6 +512,35 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
       this.state = "phase1";
       this.phase = 1;
       this.director.reset(this.now, saved ? 100 : 240);
+      for (const p of this.audience()) this.brief(p);
+    }
+  }
+
+  /** If the arrival shelf had to wait for its chunks, it is there now: put the party back on it. */
+  private *settleOnShelf(players: Player[]): Co {
+    const ar = MM.arrival;
+    const r = ar.r + 3;
+    for (let i = 0; i < 100 && this.writer.hasDeferredIn(ar.x - r, ar.z - r, ar.x + r, ar.z + r); i++) yield 2;
+    players.forEach((p, i) => {
+      try {
+        if (!p.isValid || p.dimension.id !== DIMENSION) return;
+        if (Math.abs(p.location.y - (ar.y + 1.05)) > 0.5) {
+          const a = (i / Math.max(1, players.length)) * Math.PI * 2;
+          p.teleport({ x: ar.x + 0.5 + Math.cos(a) * 3, y: ar.y + 1.05, z: ar.z + 0.5 + Math.sin(a) * 3 }, { facingLocation: { x: 0, y: 150, z: 0 } });
+        }
+        p.removeEffect("slow_falling");
+      } catch {
+        /* ignore */
+      }
+    });
+  }
+
+  /** Background upkeep: finish block edits that wait for chunks nobody is near. */
+  private *housekeeping(): Co {
+    for (;;) {
+      const busy = this.state === "loading" || this.state === "ending" || this.state === "finished";
+      if (!busy && !this.focusing && this.writer.deferredOps > 0) yield* sweepDeferred(this.writer, `${SWEEP_ID}_bg`, 600, { abort: () => this.focusing });
+      yield 40;
     }
   }
 
@@ -378,53 +552,72 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     }
   }
 
-  private spawnLegs(): void {
-    this.legs = [];
-    for (const site of this.m.legs) {
-      try {
-        const e = this.dim.spawnEntity(ENT.leg, site.pos, { initialRotation: site.yaw });
-        e.setProperty(PROP.legIndex, site.index);
-        e.setProperty(PROP.pose, this.phase === 2 ? 1 : 0);
-        e.addTag(TAG);
-        this.legs.push(e);
-      } catch (err) {
-        console.warn(`[anatomy] leg ${site.index} spawn failed: ${String(err)}`);
-      }
-    }
+  private wantLegs(): void {
+    for (const site of this.m.legs)
+      this.parts.want(`leg:${site.index}`, { type: ENT.leg, pos: site.pos, yaw: site.yaw, props: { [PROP.legIndex]: site.index, [PROP.pose]: this.phase === 2 ? 1 : 0 } });
   }
 
-  private spawnHeart(saved?: SavedEncounter): void {
-    try {
-      const e = this.dim.spawnEntity(ENT.heart, MM.heart, { initialRotation: 0 });
-      e.addTag(TAG);
-      e.setProperty(PROP.phase, 1);
-      this.heart = e;
-      const hp = saved ? Number(saved.data.heartHp ?? HEART_MAX) : HEART_MAX;
-      e.getComponent("minecraft:health")?.setCurrentValue(Math.max(1, Math.min(HEART_MAX, hp)));
-    } catch (err) {
-      console.warn(`[anatomy] heart spawn failed: ${String(err)}`);
-    }
+  private wantHeart(saved?: SavedEncounter): void {
+    this.heartHpCache = saved ? Math.max(1, Math.min(HEART_MAX, Number(saved.data.heartHp ?? HEART_MAX))) : HEART_MAX;
+    this.heartHpDebt = 0;
+    this.parts.want("heart", {
+      type: ENT.heart,
+      pos: MM.heart,
+      props: { [PROP.phase]: this.phase === 2 ? 2 : 1 },
+      init: (e) => {
+        e.getComponent("minecraft:health")?.setCurrentValue(this.heartHpCache);
+        this.heartHpDebt = 0;
+      },
+    });
   }
 
-  private spawnNodes(saved?: SavedEncounter): void {
+  private wantNodes(saved?: SavedEncounter): void {
     const dead = new Set<string>(((saved?.data.nodeDead as string[] | undefined) ?? []).map(String));
     for (const id of dead) this.nodeDead.add(id);
     if (saved && saved.phase === 2) return;
     for (const site of this.m.nodes) {
       if (dead.has(site.id)) continue;
-      try {
-        const e = this.dim.spawnEntity(ENT.node, site.pos, { initialRotation: 0 });
-        e.addTag(TAG);
-        if (site.id === "root") e.setProperty(PROP.hanging, true);
-        this.nodeEnts.set(site.id, e);
-      } catch (err) {
-        console.warn(`[anatomy] node ${site.id} spawn failed: ${String(err)}`);
-      }
+      this.parts.want(`node:${site.id}`, { type: ENT.node, pos: site.pos, props: site.id === "root" ? { [PROP.hanging]: true } : {} });
+    }
+  }
+
+  /** Chat briefing: where the remaining nodes are (once per player per fight). */
+  private brief(p: Player): void {
+    if (this.state !== "phase1" || this.briefed.has(p.id)) return;
+    const left = this.remainingSites();
+    if (!left.length) return;
+    this.briefed.add(p.id);
+    const where: Record<string, [string, string]> = {
+      dorsal: ["on the summit crag — follow the golden motes up the pilgrim path", "บนยอดผาสูงสุด — เดินตามละอองสีทองขึ้นไปตามทางเดิน"],
+      cavern: ["inside the Organ Cavern — the tunnel mouth is on the front slope", "ในถ้ำอวัยวะ — ปากอุโมงค์อยู่ที่ลาดเขาด้านหน้า"],
+      root: ["hanging under the body — take the spiral shaft down from the cavern", "ห้อยอยู่ใต้ตัวภูเขา — ลงบันไดวนจากในถ้ำลงไปด้านล่าง"],
+    };
+    const lines = [tr(p, `§5◆ §dDestroy the Resonance Nodes §7(purple crystals) — §f${left.length}§7 left:`, `§5◆ §dทำลาย Resonance Node §7(ผลึกสีม่วง) — เหลือ §f${left.length}§7 จุด:`)];
+    for (const s of left) {
+      const w = where[s.id];
+      lines.push(`§7 • §f${tr(p, s.name, NODE_TH[s.id] ?? s.name)} §7${w ? tr(p, w[0], w[1]) : ""} §8(${Math.floor(s.pos.x)}, ${Math.floor(s.pos.y)}, ${Math.floor(s.pos.z)})`);
+    }
+    lines.push(
+      tr(
+        p,
+        "§7Purple light pillars and the §d★§7 on the locator bar point to them; the action bar shows the nearest one. §8(Atlas → ภาษาไทย)",
+        "§7เสาแสงสีม่วงและ §d★§7 บนแถบระบุตำแหน่งชี้ไปที่ผลึก แถบข้อความด้านล่างบอกระยะของผลึกที่ใกล้ที่สุด §8(Atlas → English)",
+      ),
+    );
+    try {
+      p.sendMessage(lines.join("\n"));
+    } catch {
+      /* ignore */
     }
   }
 
   private welcome(p: Player): void {
     this.known.add(p.id);
+    try {
+      p.locatorBar.removeAllWaypoints(); // markers left by an interrupted fight (only this pack's are touched)
+    } catch {
+      /* ignore */
+    }
     try {
       p.fogSettings.push(FOG, "anatomy");
     } catch {
@@ -435,10 +628,17 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     } catch {
       /* ignore */
     }
+    this.brief(p);
   }
 
   private farewell(p: Player): void {
     this.known.delete(p.id);
+    this.briefed.delete(p.id);
+    try {
+      p.locatorBar.removeAllWaypoints();
+    } catch {
+      /* ignore */
+    }
     try {
       p.fogSettings.remove("anatomy");
       p.stopMusic();
@@ -479,6 +679,14 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
   tick(): void {
     this.now++;
     this.tasks.tick();
+    if (this.now % 5 === 0) this.parts.tick(this.now);
+    if (this.writer.deferredOps > 0) {
+      // edits waiting where a player stands come first, with a bigger budget: they are about to be seen or stood in
+      const here = this.audience().map((p) => [Math.floor(p.location.x) >> 4, Math.floor(p.location.z) >> 4] as [number, number]);
+      const urgent = here.some(([cx, cz]) => this.writer.hasDeferredIn(cx * 16, cz * 16, cx * 16, cz * 16));
+      this.writer.retryDeferred(urgent ? 2500 : this.writer.pending > 0 ? 300 : 1200, here);
+    }
+    if (this.now % 10 === 0) this.syncHeartHp();
     const fighting = this.state === "phase1" || this.state === "phase2";
     const everyone = this.audience();
     if (this.state === "phase1" && this.terrain.enabled) {
@@ -490,6 +698,7 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     this.trackSlabs();
     this.environment(everyone);
     if (this.now % 10 === 0) this.hud(everyone);
+    if (this.now % 20 === 0) this.syncWaypoints(everyone);
     if (this.now % 4 === 0) this.rescue(everyone);
     if (this.state === "phase2") this.phase2Upkeep(everyone);
     if (this.state === "phase1") this.phase1Upkeep(everyone);
@@ -519,33 +728,47 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
 
   private hud(everyone: Player[]): void {
     if (this.state === "phase1") {
-      const live = this.livingNodes();
+      const sites = this.remainingSites();
       for (const p of everyone) {
         let hint = "";
-        if (live.length) {
-          const n = live.reduce((a, b) => (dist3(a.entity.location, p.location) < dist3(b.entity.location, p.location) ? a : b));
-          const d = Math.round(dist3(n.entity.location, p.location));
-          hint = ` §8| §7nearest: §f${n.site.name} §7${d}m ${arrow(p, n.entity.location)}`;
+        if (sites.length) {
+          const n = sites.reduce((a, b) => (dist3(a.pos, p.location) < dist3(b.pos, p.location) ? a : b));
+          const d = Math.round(dist3(n.pos, p.location));
+          hint = tr(p, ` §8| §7nearest: §f${n.name} §7${d}m ${arrow(p, n.pos, "en")}`, ` §8| §7ใกล้สุด: §f${NODE_TH[n.id] ?? n.name} §7${d} ม. ${arrow(p, n.pos, "th")}`);
         }
-        actionbar([p], `§5◆ §dResonance Nodes destroyed §f${this.nodeDead.size}/3${hint}`);
+        actionbar([p], tr(p, `§5◆ §dResonance Nodes destroyed §f${this.nodeDead.size}/3`, `§5◆ §dทำลายผลึกแล้ว §f${this.nodeDead.size}/3`) + hint);
       }
     } else if (this.state === "phase2") {
       const left = Math.max(0, this.exposedUntil - this.now);
-      const zoneHint = (p: Player) => (this.zoneOf(p) === "mantle" ? " §8| §6stand on a steam vent to be thrown back up" : "");
+      const zoneHint = (p: Player) => (this.zoneOf(p) === "mantle" ? tr(p, " §8| §6stand on a steam vent to be thrown back up", " §8| §6ยืนบนช่องไอน้ำเพื่อให้ถูกดีดกลับขึ้นไป") : "");
       for (const p of everyone)
-        actionbar([p], left > 0 ? `§5◆ §dLithic Heart §aEXPOSED §f${Math.ceil(left / 20)}s${zoneHint(p)}` : `§5◆ §dLithic Heart §7sealed — survive its attacks to make it open${zoneHint(p)}`);
+        actionbar(
+          [p],
+          left > 0
+            ? tr(p, `§5◆ §dLithic Heart §aEXPOSED §f${Math.ceil(left / 20)}s`, `§5◆ §dหัวใจศิลา §aเปิดออกแล้ว §f${Math.ceil(left / 20)} วิ`) + zoneHint(p)
+            : tr(p, "§5◆ §dLithic Heart §7sealed — survive its attacks to make it open", "§5◆ §dหัวใจศิลา §7ปิดอยู่ — เอาตัวรอดจากการโจมตีจนกว่ามันจะเปิด") + zoneHint(p),
+        );
     } else if (this.state === "aftermath") {
       const left = Math.max(0, this.aftermathEnd - this.now);
-      actionbar(everyone, `§aThe mountain has settled. §7Returning home in §f${Math.ceil(left / 20)}s §8(Atlas: leave now)`);
+      for (const p of everyone)
+        actionbar([p], tr(p, `§aThe mountain has settled. §7Returning home in §f${Math.ceil(left / 20)}s §8(Atlas: leave now)`, `§aภูเขาสงบลงแล้ว §7กลับบ้านใน §f${Math.ceil(left / 20)} วิ §8(ใช้ Atlas เพื่อออกทันที)`));
     }
   }
 
   private phase1Upkeep(everyone: Player[]): void {
     const heartC = this.heartCentre();
+    if (this.now % 20 === 0) {
+      // a tall purple light pillar over every remaining node (downwards for the hanging one)
+      for (const s of this.remainingSites()) {
+        const hanging = s.id === "root";
+        particle(this.dim, PX.nodeBeacon, { x: s.pos.x, y: s.pos.y + (hanging ? -1 : 3.6), z: s.pos.z }, { up: hanging ? -1 : 1 });
+      }
+    }
     if (this.now % 30 === 0) {
-      // the resonance network: beams from every living node into the shielded heart
-      for (const n of this.livingNodes()) {
-        const from = { x: n.entity.location.x, y: n.entity.location.y + (n.site.id === "root" ? 1.5 : 2), z: n.entity.location.z };
+      // the resonance network: beams from every remaining node into the shielded heart
+      for (const s of this.remainingSites()) {
+        const at = this.parts.get(`node:${s.id}`)?.location ?? s.pos;
+        const from = { x: at.x, y: at.y + (s.id === "root" ? 1.5 : 2), z: at.z };
         const v = { x: heartC.x - from.x, y: heartC.y - from.y, z: heartC.z - from.z };
         const L = Math.hypot(v.x, v.y, v.z) || 1;
         particle(this.dim, PX.beam, from, { dir: { x: v.x / L, y: v.y / L, z: v.z / L }, speed: L / 1.5, life: 1.5 });
@@ -576,9 +799,9 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
 
   private phase2Upkeep(everyone: Player[]): void {
     const heartC = this.heartCentre();
-    if (this.heart?.isValid && this.exposedUntil > 0 && this.now >= this.exposedUntil) {
+    if (this.exposedUntil > 0 && this.now >= this.exposedUntil) {
       this.exposedUntil = 0;
-      this.heart.setProperty(PROP.open, false);
+      this.heartProp(PROP.open, false);
       sound(this.dim, SND.heartClose, heartC, 1, 1);
     }
     if (this.now % 10 === 0) particle(this.dim, PX.heartGlow, heartC, { intensity: this.exposedUntil > this.now ? 1 : 0 });
@@ -646,7 +869,7 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
         /* ignore */
       }
       if (p.getGameMode() !== GameMode.Creative) hurt(p, 4, EntityDamageCause.void, this.heart);
-      p.sendMessage("§7The mist of the cloud sea hurls you back onto the mountain.");
+      p.sendMessage(tr(p, "§7The mist of the cloud sea hurls you back onto the mountain.", "§7หมอกแห่งทะเลเมฆเหวี่ยงคุณกลับขึ้นไปบนภูเขา"));
     }
   }
 
@@ -682,8 +905,10 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
       return;
     }
     if (e.typeId === ENT.node) {
-      const site = [...this.nodeEnts.entries()].find(([, n]) => n === e)?.[0];
-      if (this.state !== "phase1" || !site || this.nodeDying.has(site)) {
+      // matched by entity id: a node whose chunk reloaded has a new handle
+      const key = this.parts.keyOf(e);
+      const site = key?.startsWith("node:") ? key.slice(5) : undefined;
+      if (this.state !== "phase1" || !site || this.nodeDying.has(site) || this.nodeDead.has(site)) {
         ev.cancel = true;
         return;
       }
@@ -742,10 +967,11 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     sound(this.dim, SND.deflect, c, 1, 0.9 + this.rng() * 0.2);
     particle(this.dim, PX.shield, c, { radius: 3.6 });
     if (src instanceof Player) {
+      const left = 3 - this.nodeDead.size;
       const msg =
         this.state === "phase1"
-          ? `§dThe Resonance Network shields the Lithic Heart §7(${3 - this.nodeDead.size} nodes remain)`
-          : "§7The heart's iris is sealed — survive its attack and wait for it to open";
+          ? tr(src, `§dThe Resonance Network shields the Lithic Heart §7(${left} nodes remain)`, `§dเครือข่ายกังวานปกป้องหัวใจศิลาอยู่ §7(เหลือผลึกอีก ${left} จุด)`)
+          : tr(src, "§7The heart's iris is sealed — survive its attack and wait for it to open", "§7ม่านตาของหัวใจปิดอยู่ — เอาตัวรอดแล้วรอให้มันเปิด");
       src.onScreenDisplay.setActionBar(msg);
     }
   }
@@ -770,9 +996,27 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
 
   private heartHp(): number {
     try {
-      return this.heart?.isValid ? (this.heart.getComponent("minecraft:health")?.currentValue ?? HEART_MAX) : HEART_MAX;
+      const h = this.heart;
+      return h ? Math.max(1, (h.getComponent("minecraft:health")?.currentValue ?? this.heartHpCache) - this.heartHpDebt) : this.heartHpCache;
     } catch {
-      return HEART_MAX;
+      return this.heartHpCache;
+    }
+  }
+
+  /** Keep the last known heart health (and apply node damage dealt while its chunk was unloaded). */
+  private syncHeartHp(): void {
+    const h = this.heart;
+    if (!h) return;
+    try {
+      const c = h.getComponent("minecraft:health");
+      if (!c) return;
+      if (this.heartHpDebt > 0) {
+        c.setCurrentValue(Math.max(1, c.currentValue - this.heartHpDebt));
+        this.heartHpDebt = 0;
+      }
+      this.heartHpCache = c.currentValue;
+    } catch {
+      /* stale */
     }
   }
 
@@ -782,15 +1026,21 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
   }
 
   // ------------------------------------------------------------------ nodes & phase change
-  private destroyNode(id: string, e: Entity, silent: boolean): void {
+  private destroyNode(id: string, e: Entity | undefined, silent: boolean): void {
     if (this.nodeDying.has(id) || this.nodeDead.has(id)) return;
     this.nodeDying.add(id);
-    const at = { x: e.location.x, y: e.location.y + 1.6, z: e.location.z };
+    const site = this.m.nodes.find((n) => n.id === id);
+    // no longer a tracked part: it plays its death animation and is removed (or removed when its chunk loads)
+    const released = this.parts.release(`node:${id}`);
+    const ent = released ?? (e?.isValid ? e : undefined);
+    const base = ent?.isValid ? ent.location : (site?.pos ?? MM.heart);
+    const at = { x: base.x, y: base.y + 1.6, z: base.z };
     try {
-      e.setProperty(PROP.dying, true);
+      ent?.setProperty(PROP.dying, true);
     } catch {
       /* ignore */
     }
+    this.removeWaypoint(id);
     sound(this.dim, SND.shatter, at, 1, 1.1);
     particle(this.dim, PX.shard, at, { size: 2.5 });
     particle(this.dim, PX.dust, at, { size: 1.5 });
@@ -802,21 +1052,25 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
       }
     quake(this.audience(), at, 1.5, 1.0, 200);
     sound(this.dim, SND.groan, this.heartCentre(), 1, 0.8);
-    const site = this.m.nodes.find((n) => n.id === id);
-    this.tasks.start(`mm:node:${id}`, this.nodeDeath(id, e, site?.name ?? "Resonance Node", silent));
+    this.tasks.start(`mm:node:${id}`, this.nodeDeath(id, ent, site?.name ?? "Resonance Node", silent));
   }
 
-  private *nodeDeath(id: string, e: Entity, name: string, silent: boolean): Co {
+  private *nodeDeath(id: string, e: Entity | undefined, name: string, silent: boolean): Co {
     yield 32;
-    if (e.isValid) e.remove();
+    try {
+      if (e?.isValid) e.remove();
+    } catch {
+      /* ignore */
+    }
     this.nodeDying.delete(id);
     this.nodeDead.add(id);
-    if (this.heart?.isValid) {
-      const h = this.heart.getComponent("minecraft:health");
-      if (h) h.setCurrentValue(Math.max(1, h.currentValue - HEART_MAX * NODE_SHARE));
-    }
+    // each node strips part of the heart's health (applied when the heart is loaded)
+    this.heartHpCache = Math.max(1, this.heartHpCache - HEART_MAX * NODE_SHARE);
+    this.heartHpDebt += HEART_MAX * NODE_SHARE;
+    this.syncHeartHp();
     this.director.aggression = 1 + this.nodeDead.size * 0.12;
-    if (!silent) title(this.audience(), "", `§d${name} destroyed §f(${this.nodeDead.size}/3)`, 40, 5, 15);
+    const n = this.nodeDead.size;
+    if (!silent) titleFor(this.audience(), (p) => ["", tr(p, `§d${name} destroyed §f(${n}/3)`, `§dทำลาย${NODE_TH[id] ?? name}แล้ว §f(${n}/3)`)], 40, 5, 15);
     manager.save();
     if (this.nodeDead.size >= 3 && this.state === "phase1") {
       yield 40;
@@ -840,7 +1094,6 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
       "mm:unfolding",
       greatUnfolding(this, {
         setPhase: () => this.enterPhase2(true),
-        addPetal: (e) => this.petals.push(e),
         setLayout: (l) => (this.layout = l),
         onFinished: () => {
           /* enterPhase2 already switched state */
@@ -857,7 +1110,8 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     this.phase = 2;
     this.state = "phase2";
     this.terrain.enabled = false;
-    if (this.heart?.isValid) this.heart.setProperty(PROP.phase, 2);
+    this.heartProp(PROP.phase, 2);
+    this.clearWaypoints();
     for (const p of this.audience())
       try {
         p.playMusic(MUSIC.phase2, { fade: 2, loop: true, volume: 0.9 });
@@ -877,7 +1131,6 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
       "mm:ability:great_unfolding",
       rebloom(this, {
         setPhase: () => undefined,
-        addPetal: () => undefined,
         setLayout: (l) => (this.layout = l),
         onFinished: () => this.director.reset(this.now, 60),
       }),
@@ -951,7 +1204,7 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
       } catch {
         /* ignore */
       }
-    if (reason !== "victory") title(players, "§7The mountain migrates on…", "", 40, 10, 20);
+    if (reason !== "victory") titleFor(players, (p) => [tr(p, "§7The mountain migrates on…", "§7ภูเขาอพยพต่อไป…"), ""], 40, 10, 20);
     yield 14;
     for (const p of players) {
       this.farewell(p);
@@ -972,12 +1225,18 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
       if (p) this.farewell(p);
     }
     this.known.clear();
+    this.clearWaypoints();
+    this.parts.clear();
     this.killLeftovers();
     this.writer.clear();
-    yield* clearArena(this.dim, 4);
+    yield* clearArena(this.writer, 4);
+    // the chunks the fight kept loaded are clean now; the whole budget goes to the rest
+    this.keeper.release();
+    if (this.writer.deferredOps > 0) yield* sweepDeferred(this.writer, SWEEP_ID, 2400);
+    if (this.writer.deferredOps > 0) console.warn(`[anatomy] arena clean-up: ${this.writer.deferredOps} edits wait for chunks that could not be loaded; the next fight clears them`);
     yield 40;
     this.killLeftovers();
-    unloadArea(AREA_ID);
+    AreaKeeper.releaseAll();
     this.finishNow();
   }
 
@@ -985,6 +1244,54 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     this.state = "finished";
     void this.stopReason;
     void this.lootSpot;
+  }
+
+  // ------------------------------------------------------------------ locator bar
+  /** Purple ★ markers on every player's locator bar, one per remaining node (Phase 1 only). */
+  private syncWaypoints(everyone: Player[]): void {
+    if (this.state !== "phase1") {
+      if (this.waypoints.size) this.clearWaypoints();
+      return;
+    }
+    if (this.waypointsBroken) return;
+    for (const site of this.remainingSites()) {
+      let wp = this.waypoints.get(site.id);
+      if (!wp) {
+        try {
+          wp = new LocationWaypoint(
+            { dimension: this.dim, x: site.pos.x, y: site.pos.y + (site.id === "root" ? 0 : 1.7), z: site.pos.z },
+            { textureBoundsList: [{ lowerBound: 0, texture: WaypointTexture.SmallStar }] },
+            NODE_COLOR,
+          );
+        } catch (e) {
+          this.waypointsBroken = true;
+          console.warn(`[anatomy] locator bar waypoints unavailable: ${String(e)}`);
+          return;
+        }
+        this.waypoints.set(site.id, wp);
+      }
+      for (const p of everyone)
+        try {
+          if (!p.locatorBar.hasWaypoint(wp)) p.locatorBar.addWaypoint(wp);
+        } catch {
+          /* bar full or locator bar disabled */
+        }
+    }
+  }
+
+  private removeWaypoint(id: string): void {
+    const wp = this.waypoints.get(id);
+    if (!wp) return;
+    this.waypoints.delete(id);
+    try {
+      wp.remove();
+    } catch {
+      /* ignore */
+    }
+  }
+
+  private clearWaypoints(): void {
+    for (const id of [...this.waypoints.keys()]) this.removeWaypoint(id);
   }
 
   private pockets(): V3[] {
@@ -1018,12 +1325,14 @@ function dist3(a: V3, b: V3): number {
 const ARROWS = ["↑", "↗", "→", "↘", "↓", "↙", "←", "↖"];
 
 /** Screen-relative arrow from the player's facing toward a location. */
-function arrow(p: Player, to: V3): string {
+function arrow(p: Player, to: V3, lang: "en" | "th" = "en"): string {
   const yaw = p.getRotation().y;
   const fwd = Math.atan2(-Math.sin((yaw * Math.PI) / 180), Math.cos((yaw * Math.PI) / 180));
   const dir = Math.atan2(to.x - p.location.x, to.z - p.location.z);
   const d = angleDiffDeg((dir * 180) / Math.PI, (fwd * 180) / Math.PI);
   const up = to.y - p.location.y;
   const idx = Math.round(((-d % 360) + 360) % 360 / 45) % 8;
-  return `${ARROWS[idx]}${up > 6 ? " §7(above)" : up < -6 ? " §7(below)" : ""}`;
+  const above = lang === "th" ? " §7(ด้านบน)" : " §7(above)";
+  const below = lang === "th" ? " §7(ด้านล่าง)" : " §7(below)";
+  return `${ARROWS[idx]}${up > 6 ? above : up < -6 ? below : ""}`;
 }

@@ -5,6 +5,7 @@
 import {
   EntityHurtAfterEvent,
   EntityHurtBeforeEvent,
+  EntityLoadAfterEvent,
   EntitySpawnAfterEvent,
   ExplosionBeforeEvent,
   Player,
@@ -210,6 +211,18 @@ class EncounterManager {
 
   onExplosionBefore(ev: ExplosionBeforeEvent): void {
     if (this.isArenaDimension(ev.dimension.id)) ev.setImpactedBlocks([]);
+  }
+
+  /** Boss parts reloaded with their chunk: the active fight re-binds them; leftovers of finished fights are removed. */
+  onEntityLoad(ev: EntityLoadAfterEvent): void {
+    const e = ev.entity;
+    try {
+      if (!e.isValid || !this.isArenaDimension(e.dimension.id)) return;
+      if (this.active && !this.active.isFinished()) this.active.onEntityLoad?.(e);
+      else if (e.typeId.startsWith("anatomy:")) e.remove();
+    } catch {
+      /* entity vanished */
+    }
   }
 
   onEntitySpawn(ev: EntitySpawnAfterEvent): void {

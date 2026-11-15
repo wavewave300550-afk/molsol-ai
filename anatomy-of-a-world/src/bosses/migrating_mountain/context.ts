@@ -1,7 +1,7 @@
 /** Shared encounter state that abilities read and act upon. */
 import { Dimension, Entity, EntityDamageCause, Player } from "@minecraft/server";
 import { BlockWriter } from "../../core/blocks.js";
-import { TaskRunner } from "../../core/tasks.js";
+import { Co, TaskRunner } from "../../core/tasks.js";
 import { V3 } from "../../core/vec.js";
 import { MountainModel, NodeSite } from "../../gen/mountain.js";
 import { DorsalTerrain } from "./terrain.js";
@@ -44,5 +44,19 @@ export interface MMContext {
   originalBlock(x: number, y: number, z: number): number;
   /** Register a slab in flight so the impact handler can resolve it. */
   trackSlab(e: Entity, target: V3, landTick: number, power: number): void;
+  /** Set a property on a boss part and keep it applied when the part's chunk reloads. */
+  partProp(e: Entity, name: string, value: boolean | number): void;
+  /** Pose of every Anchorage Root (0 walk, 1 splayed, 2 collapsed). */
+  setLegPose(pose: number): void;
+  /** Ensure petal `k` exists and set its state (0 closed, 1 open, 2 folded, 3 dead). */
+  petal(k: number, state: number): Entity | undefined;
+  /** Set the state of every petal. */
+  setPetals(state: number): void;
+  /** Set a property of the Lithic Heart (kept while its chunk is unloaded). */
+  heartProp(name: string, value: boolean | number): void;
+  /** Remove the Lithic Heart for good (end of the victory sequence). */
+  removeHeart(): void;
+  /** Wait until queued and deferred block edits inside a rectangle are applied (loading it briefly if needed). */
+  settleArea(x0: number, z0: number, x1: number, z1: number, timeout: number): Co;
   readonly rng: () => number;
 }

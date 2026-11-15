@@ -357,6 +357,15 @@ def effects() -> dict:
         "minecraft:particle_appearance_billboard": {"size": ["math.max(v.radius, 0.5)", 3.0], "facing_camera_mode": "lookat_y", "uv": uv("pillar")},
         "minecraft:particle_appearance_tinting": fade([0.4, 1.0, 0.7, 0.0], [0.4, 1.0, 0.8, 0.0], [0.45, 1.0, 0.75, 0.75]),
     })
+    # a tall soft light pillar over each remaining Resonance Node (downwards for the hanging one)
+    E["mm_node_beacon"] = effect("anatomy:mm_node_beacon", "particles_add", {
+        "minecraft:emitter_rate_instant": {"num_particles": 1},
+        "minecraft:emitter_lifetime_once": {"active_time": 0.05},
+        "minecraft:emitter_shape_point": {"offset": [0, "12 * v.up", 0]},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": 1.2},
+        "minecraft:particle_appearance_billboard": {"size": [1.1, 12.0], "facing_camera_mode": "lookat_y", "uv": uv("pillar")},
+        "minecraft:particle_appearance_tinting": fade([0.8, 0.4, 1.0, 0.0], [0.75, 0.35, 1.0, 0.0], [0.85, 0.45, 1.0, 0.85]),
+    })
     return E
 
 

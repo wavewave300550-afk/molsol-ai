@@ -2,14 +2,15 @@
  * 07 THE GREAT UNFOLDING — the transition into Phase 2 (and the mid-fight
  * re-bloom), plus the victory sequence.
  */
-import { EasingType, Entity, EntityDamageCause, HudVisibility, InputPermissionCategory, Player } from "@minecraft/server";
+import { EasingType, EntityDamageCause, HudVisibility, InputPermissionCategory, Player } from "@minecraft/server";
 import { knock } from "../../core/arena.js";
-import { particle, quake, shake, sound, title } from "../../core/fx.js";
+import { particle, quake, shake, sound, titleFor } from "../../core/fx.js";
+import { tr } from "../../core/lang.js";
 import { Co } from "../../core/tasks.js";
 import { V3 } from "../../core/vec.js";
 import { MM } from "../../gen/mountain.js";
 import { MMContext } from "./context.js";
-import { ANIM, ENT, PROP, PX, SND } from "./ids.js";
+import { ANIM, PROP, PX, SND } from "./ids.js";
 import { cutColumns, sectorColumns, placeDisk, writeDisk } from "./runtime.js";
 
 const D = MM.disk;
@@ -27,20 +28,6 @@ export function petalSite(k: number): { pos: V3; yaw: number; angle: number } {
   return { pos, yaw, angle: (ang * 180) / Math.PI };
 }
 
-export function spawnPetal(ctx: MMContext, k: number, state: number): Entity | undefined {
-  const s = petalSite(k);
-  try {
-    const e = ctx.dim.spawnEntity(ENT.petal, s.pos, { initialRotation: s.yaw });
-    e.setProperty(PROP.petalIndex, k);
-    e.setProperty(PROP.petalState, state);
-    e.addTag("anatomy_mm");
-    return e;
-  } catch (err) {
-    console.warn(`[anatomy] petal ${k} spawn failed: ${String(err)}`);
-    return undefined;
-  }
-}
-
 /** Rim spots on the outer ring where players land in Phase 2. */
 export function ringSpot(i: number, n: number): { pos: V3; facing: V3 } {
   const a = (i / Math.max(1, n)) * Math.PI * 2 + Math.PI * 1.5;
@@ -50,7 +37,6 @@ export function ringSpot(i: number, n: number): { pos: V3; facing: V3 } {
 
 interface Hooks {
   setPhase(p: 2): void;
-  addPetal(e: Entity): void;
   setLayout(l: number): void;
   onFinished(): void;
 }
@@ -102,7 +88,7 @@ export function* greatUnfolding(ctx: MMContext, hooks: Hooks): Co {
   });
   lockPlayers(viewers, true);
   cam(viewers, { x: -70, y: 168, z: -108 }, { x: 0, y: 150, z: 0 }, 0);
-  title(viewers, "§d07 · THE GREAT UNFOLDING", "§7The resonance is broken. The mountain opens itself.", 70, 10, 20);
+  titleFor(viewers, (p) => ["§d07 · THE GREAT UNFOLDING", tr(p, "§7The resonance is broken. The mountain opens itself.", "§7เครือข่ายกังวานแตกสลาย ภูเขากำลังเปิดตัวออก")], 70, 10, 20);
   sound(ctx.dim, SND.groan, heartPos, 1, 0.7);
   for (const e of ctx.legs)
     try {
@@ -119,21 +105,16 @@ export function* greatUnfolding(ctx: MMContext, hooks: Hooks): Co {
 
   // peel the shell sector by sector; each sector becomes a petal that swings outward
   const sectors = sectorColumns(PETALS, 0);
-  const petals: Entity[] = [];
   for (let k = 0; k < PETALS; k++) {
-    const e = spawnPetal(ctx, k, 0);
-    if (e) {
-      petals.push(e);
-      hooks.addPetal(e);
-    }
-    cutColumns(ctx.dim, ctx.writer, sectors[k]);
+    ctx.petal(k, 0);
+    cutColumns(ctx.writer, sectors[k]);
     const s = petalSite(k);
     particle(ctx.dim, PX.dust, { x: s.pos.x, y: s.pos.y + 14, z: s.pos.z }, { size: 2.2 });
     particle(ctx.dim, PX.debris, { x: (s.pos.x + HX) / 2, y: s.pos.y + 20, z: (s.pos.z + HZ) / 2 }, { size: 3 });
     if (k % 3 === 0) sound(ctx.dim, SND.unfold, s.pos, 1, 0.8 + k * 0.03);
     else sound(ctx.dim, SND.crack, s.pos, 1, 0.7);
     yield 2;
-    if (e?.isValid) e.setProperty(PROP.petalState, 1);
+    ctx.petal(k, 1);
     quake(viewers, s.pos, 1.1, 0.6, 140);
     if (k === 4) cam(viewers, { x: -40, y: 205, z: 86 }, { x: 0, y: 150, z: 0 }, 6);
     yield 8;
@@ -143,19 +124,17 @@ export function* greatUnfolding(ctx: MMContext, hooks: Hooks): Co {
   while (ctx.writer.pending > 0) yield 1;
   placeDisk(ctx.dim, ctx.writer, 0, 2.5);
   hooks.setLayout(0);
-  for (const e of ctx.legs) if (e.isValid) e.setProperty(PROP.pose, 1);
+  ctx.setLegPose(1);
   cam(viewers, { x: -22, y: 166, z: -34 }, { x: HX, y: heartPos.y, z: HZ }, 5);
   yield 50;
-  if (ctx.heart?.isValid) {
-    ctx.heart.setProperty(PROP.phase, 2);
-    ctx.heart.setProperty(PROP.open, true);
-  }
+  ctx.heartProp(PROP.phase, 2);
+  ctx.heartProp(PROP.open, true);
   particle(ctx.dim, PX.shield, heartPos, { radius: 4 });
   particle(ctx.dim, PX.shard, heartPos, { size: 3 });
   sound(ctx.dim, SND.shatter, heartPos, 1, 1.3);
   sound(ctx.dim, SND.heartbeat, heartPos, 1, 1);
   yield 50;
-  if (ctx.heart?.isValid) ctx.heart.setProperty(PROP.open, false);
+  ctx.heartProp(PROP.open, false);
   sound(ctx.dim, SND.heartClose, heartPos, 1, 1);
   for (const p of viewers)
     try {
@@ -164,8 +143,13 @@ export function* greatUnfolding(ctx: MMContext, hooks: Hooks): Co {
       /* ignore */
     }
   yield 10;
-  hooks.setPhase(2);
   const players = ctx.audience();
+  // the disk must be finished where players land (edits may still wait for chunks nobody was near)
+  for (let i = 0; i < players.length; i++) {
+    const at = ringSpot(i, players.length).pos;
+    yield* ctx.settleArea(Math.floor(at.x) - 2, Math.floor(at.z) - 2, Math.floor(at.x) + 2, Math.floor(at.z) + 2, 200);
+  }
+  hooks.setPhase(2);
   players.forEach((p, i) => {
     const s = ringSpot(i, players.length);
     try {
@@ -175,14 +159,14 @@ export function* greatUnfolding(ctx: MMContext, hooks: Hooks): Co {
     }
   });
   lockPlayers(players, false);
-  title(players, "§5PHASE 2", "§dTHE UNFOLDED WORLD §7— strike the Lithic Heart when its iris opens", 80, 10, 20);
+  titleFor(players, (p) => [tr(p, "§5PHASE 2", "§5เฟส 2"), tr(p, "§dTHE UNFOLDED WORLD §7— strike the Lithic Heart when its iris opens", "§dโลกที่คลี่ออก §7— โจมตีหัวใจศิลาตอนที่ม่านตาของมันเปิด")], 80, 10, 20);
   hooks.onFinished();
 }
 
 /** Phase 2 at half health: the petals slam shut and the rib layout re-blooms rotated. */
 export function* rebloom(ctx: MMContext, hooks: Hooks): Co {
   const centre = { x: HX, y: D.y + 1, z: HZ };
-  title(ctx.audience(), "", "§c⚠ The world refolds §7— stay on the heart's rings!", 50, 6, 12);
+  titleFor(ctx.audience(), (p) => ["", tr(p, "§c⚠ The world refolds §7— stay on the heart's rings!", "§c⚠ โลกกำลังพับกลับ §7— อยู่บนวงรอบหัวใจ!")], 50, 6, 12);
   sound(ctx.dim, SND.warn, centre, 1, 0.7);
   sound(ctx.dim, SND.groan, centre, 1, 0.9);
   for (let t = 0; t < 60; t += 5) {
@@ -193,7 +177,7 @@ export function* rebloom(ctx: MMContext, hooks: Hooks): Co {
     }
     yield 5;
   }
-  for (const e of ctx.petals) if (e.isValid) e.setProperty(PROP.petalState, 2);
+  ctx.setPetals(2);
   yield 20;
   sound(ctx.dim, SND.quake, centre, 1, 0.6);
   quake(ctx.audience(), centre, 2.5, 1.0, 80);
@@ -209,7 +193,7 @@ export function* rebloom(ctx: MMContext, hooks: Hooks): Co {
   writeDisk(ctx.writer, next, (x, y) => y >= D.y - 3);
   hooks.setLayout(next);
   yield 60;
-  for (const e of ctx.petals) if (e.isValid) e.setProperty(PROP.petalState, 1);
+  ctx.setPetals(1);
   sound(ctx.dim, SND.unfold, centre, 1, 1.2);
   ctx.exposeHeart(130);
   hooks.onFinished();
@@ -218,12 +202,10 @@ export function* rebloom(ctx: MMContext, hooks: Hooks): Co {
 export function* victorySequence(ctx: MMContext, onLoot: () => void): Co {
   const h = ctx.heart;
   const at = { x: HX, y: (h?.location.y ?? 148) + 3, z: HZ };
-  if (h?.isValid) {
-    h.setProperty(PROP.open, true);
-    h.setProperty(PROP.dying, true);
-  }
+  ctx.heartProp(PROP.open, true);
+  ctx.heartProp(PROP.dying, true);
   const everyone = ctx.audience();
-  title(everyone, "§dTHE MOUNTAIN SETTLES", "§7Specimen 001 — dissected", 90, 10, 30);
+  titleFor(everyone, (p) => [tr(p, "§dTHE MOUNTAIN SETTLES", "§dภูเขาสงบลงแล้ว"), tr(p, "§7Specimen 001 — dissected", "§7ตัวอย่างที่ 001 — ผ่าพิสูจน์สำเร็จ")], 90, 10, 30);
   sound(ctx.dim, SND.heartbeat, at, 1, 0.8);
   for (const p of everyone)
     try {
@@ -240,10 +222,10 @@ export function* victorySequence(ctx: MMContext, onLoot: () => void): Co {
   particle(ctx.dim, PX.shard, at, { size: 5 });
   particle(ctx.dim, PX.dust, at, { size: 3 });
   quake(everyone, at, 3, 1.5, 120);
-  for (const e of ctx.legs) if (e.isValid) e.setProperty(PROP.pose, 2);
-  for (const e of ctx.petals) if (e.isValid) e.setProperty(PROP.petalState, 3);
+  ctx.setLegPose(2);
+  ctx.setPetals(3);
   yield 30;
   onLoot();
   yield 60;
-  if (h?.isValid) h.remove();
+  ctx.removeHeart();
 }

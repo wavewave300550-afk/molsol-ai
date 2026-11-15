@@ -5,7 +5,10 @@
 // Violations are collected in `issues` instead of being silently accepted.
 const DATA = globalThis.__SIM_DATA;
 export const issues = [];
-export const stats = { blockWrites: 0, fills: 0, particles: 0, sounds: 0, maxWritesPerTick: 0, writesThisTick: 0, spawned: {}, animations: {}, titles: [], messages: [], structuresPlaced: 0 };
+export const stats = { blockWrites: 0, fills: 0, particles: 0, sounds: 0, maxWritesPerTick: 0, writesThisTick: 0, spawned: {}, animations: {}, titles: [], messages: [], structuresPlaced: 0, refusedWrites: 0, refusedSpawns: 0, unloads: 0, reloads: 0, queuedStructureCells: 0 };
+/** Chunk loading emulation for custom dimensions: ticking areas + a circle of `radius` chunks around players. */
+export const chunkSim = { enabled: process.env.SIM_CHUNKS !== "0", radius: Number(process.env.SIM_SIM_DISTANCE ?? 4) };
+let chunkEpoch = 0;
 function issue(msg) {
   if (issues.length < 400) issues.push(`[t${tick}] ${msg}`);
 }
@@ -29,6 +32,43 @@ export const CommandPermissionLevel = { Any: 0, GameDirectors: 1, Admin: 2, Host
 export const CustomCommandParamType = mk(["BlockType", "Boolean", "EntitySelector", "EntityType", "Enum", "Float", "Integer", "ItemType", "Location", "PlayerSelector", "String"]);
 export const CustomCommandStatus = { Success: 0, Failure: 1 };
 export const PlayerPermissionLevel = { Visitor: 0, Member: 1, Operator: 2, Custom: 3 };
+export const WaypointTexture = { Circle: "minecraft:circle", SmallSquare: "minecraft:small_square", SmallStar: "minecraft:small_star", Square: "minecraft:square" };
+export class LocationInUnloadedChunkError extends Error {
+  constructor(m = "LocationInUnloadedChunkError") {
+    super(m);
+    this.name = "LocationInUnloadedChunkError";
+  }
+}
+export class LocationWaypoint {
+  constructor(dl, sel, color) {
+    if (!dl?.dimension || ![dl.x, dl.y, dl.z].every(Number.isFinite)) issue("LocationWaypoint: bad dimension location");
+    const list = sel?.textureBoundsList;
+    if (!Array.isArray(list) || list.length < 1 || list.length > 16) issue("LocationWaypoint: textureBoundsList needs 1..16 entries");
+    for (const b of list ?? []) {
+      if (!(b.lowerBound >= 0)) issue("LocationWaypoint: lowerBound must be >= 0");
+      if (b.upperBound !== undefined && !(b.upperBound >= b.lowerBound)) issue("LocationWaypoint: upperBound below lowerBound");
+      if (!Object.values(WaypointTexture).includes(b.texture)) issue(`LocationWaypoint: unknown texture ${b.texture}`);
+    }
+    if (color && ![color.red, color.green, color.blue].every((v) => v >= 0 && v <= 1)) issue("LocationWaypoint: colour components must be 0..1");
+    this.location = { ...dl };
+    this.textureSelector = sel;
+    this.color = color;
+    this.isEnabled = true;
+    this.isValid = true;
+    this.bars = new Set();
+  }
+  getDimensionLocation() {
+    return this.location;
+  }
+  setDimensionLocation(dl) {
+    mutating("waypoint.setDimensionLocation");
+    this.location = { ...dl };
+  }
+  remove() {
+    for (const b of this.bars) b.list.delete(this);
+    this.bars.clear();
+  }
+}
 
 // ------------------------------------------------------------------ scheduler
 let tick = 0;
@@ -107,6 +147,7 @@ export async function advance(n = 1) {
         jobs.delete(id);
       }
     }
+    chunkStep();
     physics();
     stats.maxWritesPerTick = Math.max(stats.maxWritesPerTick, stats.writesThisTick);
     await Promise.resolve();
@@ -181,12 +222,46 @@ class MockDimension {
     this.id = id;
     this.blocks = new Map();
     this.heightRange = { min: -64, max: 320 };
+    this.lc = undefined;
+    this.lcKey = "";
+  }
+  /** Loaded chunks: finished ticking areas + a circle of `chunkSim.radius` chunks around each player. */
+  loadedChunks() {
+    const k = `${tick}:${chunkEpoch}`;
+    if (this.lc && this.lcKey === k) return this.lc;
+    const set = new Set();
+    for (const a of tickingAreas.values()) {
+      if (!a.loaded || a.dimension !== this) continue;
+      for (let cx = Math.floor(a.from.x / 16); cx <= Math.floor(a.to.x / 16); cx++) for (let cz = Math.floor(a.from.z / 16); cz <= Math.floor(a.to.z / 16); cz++) set.add(`${cx},${cz}`);
+    }
+    const R = chunkSim.radius;
+    for (const p of players) {
+      if (!p.isValid || p.dimension !== this) continue;
+      const pcx = Math.floor(p.location.x / 16);
+      const pcz = Math.floor(p.location.z / 16);
+      for (let dx = -R; dx <= R; dx++) for (let dz = -R; dz <= R; dz++) if (dx * dx + dz * dz <= R * R) set.add(`${pcx + dx},${pcz + dz}`);
+    }
+    this.lc = set;
+    this.lcKey = k;
+    return set;
+  }
+  chunkLoadedAt(x, z) {
+    if (!chunkSim.enabled || this.id.startsWith("minecraft:")) return true;
+    return this.loadedChunks().has(`${Math.floor(x / 16)},${Math.floor(z / 16)}`);
+  }
+  isChunkLoaded(loc) {
+    if (![loc.x, loc.y, loc.z].every(Number.isFinite)) issue("isChunkLoaded non-finite location");
+    return this.chunkLoadedAt(loc.x, loc.z);
   }
   setBlockPermutation(loc, perm) {
     mutating("setBlockPermutation");
     if (!(perm instanceof BlockPermutation)) issue("setBlockPermutation without a permutation");
     if (![loc.x, loc.y, loc.z].every(Number.isInteger)) issue(`setBlockPermutation non-integer location ${JSON.stringify(loc)}`);
     if (loc.y < -64 || loc.y > 319) throw new Error("LocationOutOfWorldBoundariesError");
+    if (!this.chunkLoadedAt(loc.x, loc.z)) {
+      stats.refusedWrites++;
+      throw new LocationInUnloadedChunkError();
+    }
     stats.blockWrites++;
     stats.writesThisTick++;
     if (perm.typeId === "minecraft:air") this.blocks.delete(kb(loc.x, loc.y, loc.z));
@@ -203,14 +278,22 @@ class MockDimension {
       issue(`fillBlocks volume ${n} exceeds 32768`);
       throw new Error("fill too large");
     }
+    let unloaded = false;
+    for (let cx = Math.floor(Math.min(a.x, b.x) / 16); cx <= Math.floor(Math.max(a.x, b.x) / 16); cx++)
+      for (let cz = Math.floor(Math.min(a.z, b.z) / 16); cz <= Math.floor(Math.max(a.z, b.z) / 16); cz++) if (!this.chunkLoadedAt(cx * 16, cz * 16)) unloaded = true;
+    if (unloaded && !opts?.ignoreChunkBoundErrors) {
+      stats.refusedWrites++;
+      throw new LocationInUnloadedChunkError("UnloadedChunksError");
+    }
     stats.fills++;
     for (let x = Math.min(a.x, b.x); x <= Math.max(a.x, b.x); x++)
-      for (let y = Math.min(a.y, b.y); y <= Math.max(a.y, b.y); y++)
-        for (let z = Math.min(a.z, b.z); z <= Math.max(a.z, b.z); z++) {
+      for (let z = Math.min(a.z, b.z); z <= Math.max(a.z, b.z); z++) {
+        if (unloaded && !this.chunkLoadedAt(x, z)) continue; // ignoreChunkBoundErrors: unloaded parts are skipped
+        for (let y = Math.min(a.y, b.y); y <= Math.max(a.y, b.y); y++) {
           if (perm.typeId === "minecraft:air") this.blocks.delete(kb(x, y, z));
           else this.blocks.set(kb(x, y, z), perm);
         }
-    void opts;
+      }
     return {};
   }
   getBlockId(x, y, z) {
@@ -220,6 +303,7 @@ class MockDimension {
     return !NON_SOLID.has(this.getBlockId(Math.floor(x), Math.floor(y), Math.floor(z)));
   }
   getBlock(loc) {
+    if (!this.chunkLoadedAt(loc.x, loc.z)) return undefined;
     const id = this.getBlockId(Math.floor(loc.x), Math.floor(loc.y), Math.floor(loc.z));
     return { typeId: id, isAir: id === "minecraft:air", isLiquid: id.includes("water"), x: Math.floor(loc.x), y: Math.floor(loc.y), z: Math.floor(loc.z), dimension: this, permutation: this.blocks.get(kb(Math.floor(loc.x), Math.floor(loc.y), Math.floor(loc.z))) };
   }
@@ -227,6 +311,10 @@ class MockDimension {
     mutating("spawnEntity");
     if (!DATA.entities[id] && !DATA.vanillaEntities.has(id)) issue(`spawnEntity unknown ${id}`);
     if (![loc.x, loc.y, loc.z].every(Number.isFinite)) issue(`spawnEntity ${id} at non-finite location`);
+    if (!this.chunkLoadedAt(loc.x, loc.z)) {
+      stats.refusedSpawns++;
+      throw new LocationInUnloadedChunkError();
+    }
     const e = new MockEntity(id, { ...loc }, this);
     if (opts?.initialRotation !== undefined) e.rot.y = opts.initialRotation;
     stats.spawned[id] = (stats.spawned[id] ?? 0) + 1;
@@ -236,6 +324,7 @@ class MockDimension {
   }
   spawnItem(stack, loc) {
     mutating("spawnItem");
+    if (!this.chunkLoadedAt(loc.x, loc.z)) throw new LocationInUnloadedChunkError();
     const e = new MockEntity("minecraft:item", { ...loc }, this);
     e.item = stack;
     entities.add(e);
@@ -335,6 +424,7 @@ export class Entity {
   }
   setProperty(name, value) {
     mutating("setProperty");
+    if (!this.isValid) throw new Error(`InvalidEntityError: setProperty ${name} on an unloaded/removed ${this.typeId}`);
     const d = this.propDefs[name];
     if (!d) {
       issue(`setProperty ${name} not declared on ${this.typeId}`);
@@ -378,7 +468,10 @@ export class Entity {
     if (!this.isValid) throw new Error("InvalidEntityError");
     if (![loc.x, loc.y, loc.z].every(Number.isFinite)) issue(`teleport ${this.typeId} to non-finite location`);
     if (opts.dimension) this.dimension = opts.dimension;
-    if (this instanceof Player) this.lastTeleport = { tick, to: { ...loc }, stack: new Error().stack.split("\n").slice(2, 6).map((l) => l.trim().replace(/file:\/\/\S*\//, "")).join(" < ") };
+    if (this instanceof Player) {
+      this.lastTeleport = { tick, to: { ...loc }, stack: new Error().stack.split("\n").slice(2, 6).map((l) => l.trim().replace(/file:\/\/\S*\//, "")).join(" < ") };
+      chunkEpoch++;
+    }
     this.location = { ...loc };
     if (!opts.keepVelocity) this.vel = { x: 0, y: 0, z: 0 };
   }
@@ -426,6 +519,7 @@ export class Entity {
   }
   playAnimation(name, opts) {
     mutating("playAnimation");
+    if (!this.isValid) throw new Error(`InvalidEntityError: playAnimation on an unloaded/removed ${this.typeId}`);
     if (!DATA.animations.has(name)) issue(`playAnimation unknown ${name}`);
     const users = DATA.animUsers[name] ?? [];
     if (!users.includes(this.typeId)) issue(`playAnimation ${name} on ${this.typeId}, whose geometry it was not made for`);
@@ -545,6 +639,36 @@ export class Player extends Entity {
         self.hud = v;
       },
       updateSubtitle() {},
+    };
+    this.locatorBar = {
+      list: new Set(),
+      maxCount: 64,
+      get count() {
+        return this.list.size;
+      },
+      addWaypoint(w) {
+        mutating("locatorBar.addWaypoint");
+        if (!(w instanceof LocationWaypoint)) issue("addWaypoint: not a waypoint");
+        if (this.list.has(w)) throw new Error("LocatorBarError: waypoint already in the locator bar");
+        if (this.list.size >= this.maxCount) throw new Error("LocatorBarError: locator bar full");
+        this.list.add(w);
+        w.bars.add(this);
+      },
+      hasWaypoint(w) {
+        return this.list.has(w);
+      },
+      removeWaypoint(w) {
+        if (!this.list.has(w)) throw new Error("LocatorBarError: waypoint not in the locator bar");
+        this.list.delete(w);
+        w.bars.delete(this);
+      },
+      removeAllWaypoints() {
+        for (const w of this.list) w.bars.delete(this);
+        this.list.clear();
+      },
+      getAllWaypoints() {
+        return [...this.list];
+      },
     };
     this.inputPermissions = {
       setPermissionCategory(c, en) {
@@ -672,6 +796,7 @@ class MockStructure {
   }
 }
 const structures = new Map();
+const queuedCells = new Map();
 const structureManager = {
   createEmpty(id, size, mode) {
     mutating("structureManager.createEmpty");
@@ -699,16 +824,27 @@ const structureManager = {
     if (!st) throw new Error("no structure");
     if (opts?.animationMode && !["Blocks", "Layers", "None"].includes(opts.animationMode)) issue("bad animationMode");
     stats.structuresPlaced++;
+    // "Structures placed in unloaded chunks will be queued for loading": cells of unloaded chunks wait
     for (const [k, perm] of st.cells) {
       const [x, y, z] = k.split(",").map(Number);
-      if (perm.typeId === "minecraft:air") dim.blocks.delete(kb(loc.x + x, loc.y + y, loc.z + z));
-      else dim.blocks.set(kb(loc.x + x, loc.y + y, loc.z + z), perm);
+      const wx = loc.x + x;
+      const wy = loc.y + y;
+      const wz = loc.z + z;
+      if (!dim.chunkLoadedAt(wx, wz)) {
+        const ck = `${dim.id}|${Math.floor(wx / 16)},${Math.floor(wz / 16)}`;
+        if (!queuedCells.has(ck)) queuedCells.set(ck, []);
+        queuedCells.get(ck).push([wx, wy, wz, perm]);
+        stats.queuedStructureCells++;
+        continue;
+      }
+      if (perm.typeId === "minecraft:air") dim.blocks.delete(kb(wx, wy, wz));
+      else dim.blocks.set(kb(wx, wy, wz), perm);
     }
   },
 };
 const tickingAreas = new Map();
 const tickingAreaManager = {
-  maxChunkCount: 300,
+  maxChunkCount: Number(process.env.SIM_MAX_CHUNKS ?? 300),
   get chunkCount() {
     let n = 0;
     for (const a of tickingAreas.values()) n += a.chunks;
@@ -720,28 +856,120 @@ const tickingAreaManager = {
     return cx * cz;
   },
   hasCapacity(o) {
+    const cx = Math.floor(o.to.x / 16) - Math.floor(o.from.x / 16) + 1;
+    const cz = Math.floor(o.to.z / 16) - Math.floor(o.from.z / 16) + 1;
+    if (cx > 255 || cz > 255 || cx < 1 || cz < 1) return false;
     return this.chunkCount + this.chunksOf(o) <= this.maxChunkCount;
   },
   createTickingArea(id, o) {
-    if (!this.hasCapacity(o)) return Promise.reject(new Error("ticking area capacity"));
-    tickingAreas.set(id, { ...o, chunks: this.chunksOf(o) });
-    return new Promise((res) => schedule(res, 3));
+    mutating("createTickingArea");
+    if (!o?.dimension || !o.from || !o.to) issue("createTickingArea: options need dimension/from/to");
+    if (tickingAreas.has(id)) throw new Error(`TickingAreaError: identifier ${id} already used`);
+    if (!this.hasCapacity(o)) return Promise.reject(new Error("TickingAreaError: not enough chunk capacity"));
+    const area = { ...o, id, chunks: this.chunksOf(o), loaded: false };
+    tickingAreas.set(id, area);
+    return new Promise((res) =>
+      schedule(() => {
+        if (tickingAreas.get(id) === area) {
+          area.loaded = true;
+          chunkEpoch++;
+        }
+        res();
+      }, 3),
+    );
   },
   hasTickingArea(id) {
     return tickingAreas.has(id);
   },
+  getTickingArea(id) {
+    const a = tickingAreas.get(typeof id === "string" ? id : id.identifier);
+    return a ? { identifier: a.id, chunkCount: a.chunks, dimension: a.dimension, isFullyLoaded: a.loaded } : undefined;
+  },
   removeTickingArea(id) {
-    tickingAreas.delete(typeof id === "string" ? id : id.identifier);
+    const k = typeof id === "string" ? id : id.identifier;
+    if (!tickingAreas.has(k)) throw new Error(`TickingAreaError: no ticking area ${k}`);
+    tickingAreas.delete(k);
+    chunkEpoch++;
   },
   getAllTickingAreas() {
-    return [...tickingAreas.keys()];
+    return [...tickingAreas.values()].map((a) => ({ identifier: a.id, chunkCount: a.chunks, dimension: a.dimension, isFullyLoaded: a.loaded }));
   },
   removeAllTickingAreas() {
     tickingAreas.clear();
+    chunkEpoch++;
   },
 };
+
+// ------------------------------------------------------------------ chunk loading: entities + queued structure cells
+const stored = [];
+function snapshot(e) {
+  return { id: e.id, typeId: e.typeId, dimension: e.dimension, location: { ...e.location }, rot: { ...e.rot }, props: { ...e.props }, tags: [...e.tags], hp: e.health?.currentValue, dyn: [...e.dyn], item: e.item, vel: { ...e.vel }, flying: e.flying };
+}
+function restore(sn) {
+  const e = new Entity(sn.typeId, { ...sn.location }, sn.dimension);
+  e.id = sn.id;
+  e.rot = { ...sn.rot };
+  e.props = { ...sn.props };
+  e.tags = new Set(sn.tags);
+  if (e.health && sn.hp !== undefined) e.health.currentValue = sn.hp;
+  e.dyn = new Map(sn.dyn);
+  e.item = sn.item;
+  e.vel = { ...sn.vel };
+  e.flying = sn.flying;
+  return e;
+}
+/** Unload entities whose chunk is no longer loaded; reload stored ones (new handles, entityLoad fires). */
+function chunkStep() {
+  if (!chunkSim.enabled) return;
+  for (const e of [...entities]) {
+    if (!e.isValid || e instanceof Player || e.dimension.id.startsWith("minecraft:")) continue;
+    if (e.dimension.chunkLoadedAt(e.location.x, e.location.z)) continue;
+    stored.push(snapshot(e));
+    e.isValid = false;
+    entities.delete(e);
+    stats.unloads++;
+  }
+  for (let i = stored.length - 1; i >= 0; i--) {
+    const sn = stored[i];
+    if (!sn.dimension.chunkLoadedAt(sn.location.x, sn.location.z)) continue;
+    stored.splice(i, 1);
+    const e = restore(sn);
+    entities.add(e);
+    stats.reloads++;
+    world.afterEvents.entityLoad.fire({ entity: e });
+  }
+  for (const [ck, cells] of [...queuedCells]) {
+    const [did, c] = ck.split("|");
+    const dim = dims.get(did);
+    const [cx, cz] = c.split(",").map(Number);
+    if (!dim || !dim.chunkLoadedAt(cx * 16, cz * 16)) continue;
+    queuedCells.delete(ck);
+    for (const [x, y, z, perm] of cells) {
+      if (perm.typeId === "minecraft:air") dim.blocks.delete(kb(x, y, z));
+      else dim.blocks.set(kb(x, y, z), perm);
+    }
+  }
+}
+export function storedEntities() {
+  return stored.map((s) => ({ ...s }));
+}
+/** Put an entity straight into storage (as if a chunk was saved with it). */
+export function storeEntity(typeId, dim, location, tags = []) {
+  const e = new Entity(typeId, { ...location }, dim);
+  e.tags = new Set(tags);
+  stored.push(snapshot(e));
+  return e.id;
+}
+export function queuedStructureCells() {
+  let n = 0;
+  for (const c of queuedCells.values()) n += c.length;
+  return n;
+}
 export function tickingAreaIds() {
   return [...tickingAreas.keys()];
+}
+export function tickingAreaChunks() {
+  return tickingAreaManager.chunkCount;
 }
 
 // ------------------------------------------------------------------ world
@@ -758,6 +986,7 @@ export const world = {
     projectileHitEntity: sig("projectileHitEntity"),
     playerPlaceBlock: sig("playerPlaceBlock"),
     entitySpawn: sig("entitySpawn"),
+    entityLoad: sig("entityLoad"),
   },
   beforeEvents: { entityHurt: sig("entityHurt(before)"), playerBreakBlock: sig("playerBreakBlock(before)"), explosion: sig("explosion(before)") },
   structureManager,

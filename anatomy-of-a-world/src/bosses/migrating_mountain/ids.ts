@@ -46,6 +46,7 @@ export const PX = {
   leaf: "anatomy:mm_leaf",
   guide: "anatomy:mm_guide",
   pillar: "anatomy:mm_pillar",
+  nodeBeacon: "anatomy:mm_node_beacon",
 } as const;
 
 export const SND = {

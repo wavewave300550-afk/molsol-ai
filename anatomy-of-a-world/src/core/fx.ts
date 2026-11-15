@@ -9,6 +9,8 @@ export interface FxVars {
   gap?: number;
   gapDir?: number;
   intensity?: number;
+  /** +1 / -1: which way a vertical effect (beacon) extends */
+  up?: number;
   /** direction + speed -> variable.dir.{speed,direction_x,direction_y,direction_z} */
   dir?: V3;
   speed?: number;
@@ -34,6 +36,7 @@ export function particle(dim: Dimension, id: string, loc: Vector3, vars?: FxVars
       if (vars.gap !== undefined) m.setFloat("variable.gap", vars.gap);
       if (vars.gapDir !== undefined) m.setFloat("variable.gap_dir", vars.gapDir);
       if (vars.intensity !== undefined) m.setFloat("variable.intensity", vars.intensity);
+      if (vars.up !== undefined) m.setFloat("variable.up", vars.up);
       if (vars.dir) m.setSpeedAndDirection("variable.dir", vars.speed ?? 1, vars.dir);
       dim.spawnParticle(id, loc, m);
     } else dim.spawnParticle(id, loc);
@@ -77,6 +80,14 @@ export function title(players: Player[], main: string, sub = "", stay = 50, fade
     } catch {
       /* ignore */
     }
+  }
+}
+
+/** A title whose text depends on the player (language). */
+export function titleFor(players: Player[], text: (p: Player) => [string, string], stay = 50, fadeIn = 8, fadeOut = 16): void {
+  for (const p of players) {
+    const [main, sub] = text(p);
+    title([p], main, sub, stay, fadeIn, fadeOut);
   }
 }
 

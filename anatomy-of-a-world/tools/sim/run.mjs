@@ -438,10 +438,152 @@ check(sam.dimension.id === MM.dimensionId, "the Atlas lets a player rejoin the f
 manager.stop("abort");
 await until(() => !enc(), 1600, "abort after the Atlas test");
 
+// ------------------------------------------------------------------ I. a small chunk budget
+// Parts wait for their chunks, survive unload/reload with new handles, stale parts are removed,
+// and block edits in unloaded chunks are deferred and swept with short-lived ticking areas.
+if (!mock.chunkSim.enabled) log("I. skipped (chunk emulation off)");
+else await (async () => {
+log("I. small chunk budget");
+const tam = mock.world.tickingAreaManager;
+const fullBudget = tam.maxChunkCount;
+tam.maxChunkCount = Number(process.env.SIM_LOW_BUDGET ?? 12);
+for (const p of [alex, sam]) {
+  p.gameMode = "Survival";
+  p.health.currentValue = 20;
+}
+const inArena = (e) => e.dimension === arena() && e.typeId.startsWith("anatomy:");
+check(run("anatomy:boss", "start", "migrating_mountain")?.status === 0, "start with a small chunk budget");
+await mock.advance(2);
+await until(() => enc()?.state === "phase1", 6000, "phase 1 with a small chunk budget");
+check(mock.tickingAreaChunks() <= tam.maxChunkCount, `ticking areas stay inside the budget (${mock.tickingAreaChunks()}/${tam.maxChunkCount})`);
+// the nodes and the heart share a 3-chunk strip: with room for it (plus one spare chunk) they never wait
+const roomy = tam.maxChunkCount >= 4;
+if (roomy) check(ents("anatomy:mm_resonance_node").length === 3 && ents("anatomy:mm_lithic_heart").length === 1, "nodes and heart spawn (highest-priority region)");
+check(Math.hypot(alex.location.x - ar.x, alex.location.z - ar.z) < ar.r + 2 && Math.abs(alex.location.y - (ar.y + 1)) < 1.5, "party stands on the arrival shelf (small budget)");
+const legSum = () => enc().parts.summary("leg:");
+log(`small budget: ${enc().keeper.kept}/${enc().keeper.wanted} chunks kept, legs spawned ${legSum().spawned}/14, refused spawns ${mock.stats.refusedSpawns}`);
+if (process.env.SIM_DEBUG) console.log(enc().status());
+check((!roomy || /parts: nodes 3\/3\/3/.test(enc().status())) && /chunks: kept \d+\/100 ticking/.test(enc().status()), "status reports parts and chunk coverage");
+alex.gameMode = "Creative"; // tour the rim so every leg's chunk loads once
+for (const l of m.legs) {
+  alex.teleport({ x: l.pos.x, y: l.pos.y + 4, z: l.pos.z }, { dimension: arena() });
+  await mock.advance(8);
+}
+check(legSum().spawned === 14, `all 14 legs spawn once their chunks load (${legSum().spawned})`);
+const staleId = mock.storeEntity("anatomy:mm_resonance_node", arena(), { x: 60.5, y: 150, z: 50.5 }, ["anatomy_mm"]);
+alex.teleport({ x: 60.5, y: 160, z: 50.5 }, { dimension: arena() });
+await mock.advance(8);
+check(!mock.allEntities().some((e) => e.id === staleId) && !mock.storedEntities().some((e) => e.id === staleId), "a stale boss part from an earlier fight is removed when its chunk loads");
+// every ticking area is lost and everyone walks away: the nodes unload with their chunks ...
+quiet();
+await until(() => enc().writer.deferredOps === 0, 8000, "phase 1 backlog swept (no short-lived areas left)");
+const radius0 = mock.chunkSim.radius;
+mock.chunkSim.radius = Math.min(radius0, 4);
+tam.removeAllTickingAreas();
+for (const p of [alex, sam]) p.teleport({ x: ar.x + 0.5, y: ar.y + 1.05, z: ar.z + 0.5 }, { dimension: arena() });
+await mock.advance(12);
+check(ents("anatomy:mm_resonance_node").length === 0 && mock.storedEntities().filter((e) => e.typeId === "anatomy:mm_resonance_node").length === 3, "nodes unload with their chunks");
+check(/nearest:.*Node.*\d+m/.test(alex.actionbar ?? ""), `the HUD points to the nearest node while it is unloaded (${alex.actionbar})`);
+check(alex.locatorBar.list.size === 3, `3 node markers on the locator bar (${alex.locatorBar.list.size})`);
+check(sam.locatorBar.list.size === 3, "every player gets the markers");
+// ... and come back with new handles when a player returns; they can still be destroyed
+quiet();
+alex.gameMode = "Survival";
+const dn = m.nodes.find((n) => n.id === "dorsal");
+alex.teleport({ x: dn.safe.x, y: dn.safe.y + 0.05, z: dn.safe.z }, { dimension: arena() });
+await mock.advance(10);
+const back = ents("anatomy:mm_resonance_node").find((e) => Math.hypot(e.location.x - dn.pos.x, e.location.z - dn.pos.z) < 1);
+check(!!back, "the dorsal node reloads with its chunk");
+mock.chunkSim.radius = radius0;
+if (back) {
+  let hits = 0;
+  while (back.isValid && !back.getProperty("anatomy:dying") && hits < 200) {
+    mock.playerAttack(alex, back, 9);
+    alex.health.currentValue = 20;
+    hits++;
+    await mock.advance(8);
+  }
+  if (process.env.SIM_DEBUG) log(`node loop exit: valid=${back.isValid} hits=${hits} alex=${JSON.stringify(alex.location)} hp=${back.health.currentValue} last=${alex.lastTeleport?.tick}:${alex.lastTeleport?.stack} msgs=${mock.stats.messages.slice(-3).join(" / ")}`);
+  check(back.getProperty("anatomy:dying") === true, `a reloaded node can still be destroyed (${hits} hits)`);
+}
+await mock.advance(50);
+check(enc().parts.respawns === 0, `reloads never duplicate parts (re-created: ${enc().parts.respawns})`);
+check(alex.locatorBar.list.size === 2, `the destroyed node's marker is removed (${alex.locatorBar.list.size} left)`);
+check(/destroyed §f1\/3/.test(alex.actionbar ?? ""), "HUD counts the destroyed node");
+// the Great Unfolding cuts the whole body; edits in chunks nobody is near are deferred and swept
+enc().forcePhase(2);
+await until(() => enc()?.state === "phase2", 6000, "phase 2 with a small chunk budget");
+quiet(); // sample the cut without phase 2 abilities (flesh, rubble) in the way
+await until(() => abilityTasks() === 0 && enc()?.writer.deferredOps === 0, 9000, "deferred edits swept");
+if (process.env.SIM_DEBUG && enc()?.writer.deferredOps) console.log(`  deferred left: ${enc().writer.deferredOps} in ${JSON.stringify(enc().writer.deferredChunks())}; areas ${JSON.stringify(mock.tickingAreaIds())} chunks ${mock.tickingAreaChunks()}/${tam.maxChunkCount}; tasks ${enc().tasks.tasks.filter((t) => !t.done).map((t) => t.name + "(w" + t.wait + ")").join(",")}; focusing=${enc().focusing}`);
+check(alex.suffocatingTicks === 0 && sam.suffocatingTicks === 0, "players land on the disk, not inside uncut rock");
+let strays = 0;
+for (let i = 0; i < 3000; i++) {
+  const x = g.x0 + Math.floor(Math.random() * g.sx);
+  const z = g.z0 + Math.floor(Math.random() * g.sz);
+  for (let y = D.y + 1; y < g.y0 + g.sy; y += 2) if (arena().getBlockId(x, y, z) !== "minecraft:air" && !arena().getBlockId(x, y, z).includes("water")) strays++;
+}
+if (process.env.SIM_DEBUG && strays >= 40) {
+  const seen = new Map();
+  for (const k of arena().blocks.keys()) {
+    const [x, y, z] = k.split(",").map(Number);
+    if (y <= D.y || x < g.x0 || x >= g.x0 + g.sx || z < g.z0 || z >= g.z0 + g.sz) continue;
+    const id = arena().getBlockId(x, y, z);
+    if (id.includes("water")) continue;
+    const ck = `${Math.floor(x / 16)},${Math.floor(z / 16)}`;
+    const e = seen.get(ck) ?? { n: 0, ids: new Map(), ys: [1e9, -1e9] };
+    e.n++;
+    e.ids.set(id, (e.ids.get(id) ?? 0) + 1);
+    e.ys = [Math.min(e.ys[0], y), Math.max(e.ys[1], y)];
+    seen.set(ck, e);
+  }
+  for (const [ck, e] of [...seen].sort((a, b) => b[1].n - a[1].n).slice(0, 12)) console.log(`  strays chunk ${ck}: ${e.n} blocks y${e.ys[0]}..${e.ys[1]} ${[...e.ids].slice(0, 4).map(([i, n]) => i.replace("minecraft:", "") + "x" + n).join(" ")}`);
+  console.log(`  writer deferred chunks: ${JSON.stringify(enc().writer.deferredChunks())} queued cells ${mock.queuedStructureCells()}`);
+}
+check(strays < 40, `the whole shell is cut, far chunks included (${strays} stray blocks sampled)`);
+let walk2 = 0;
+let walk2ok = 0;
+for (let r = 6; r < 33; r += 1)
+  for (let a = 0; a < 360; a += 7) {
+    const x = Math.floor(MM.heart.x + Math.cos((a * Math.PI) / 180) * r);
+    const z = Math.floor(MM.heart.z + Math.sin((a * Math.PI) / 180) * r);
+    if (!enc().isWalkway(x, z)) continue;
+    walk2++;
+    if (arena().getBlockId(x, D.y, z) !== "minecraft:air") walk2ok++;
+  }
+check(walk2 > 100 && walk2ok / walk2 > 0.97, `disk walkways placed with a small budget (${walk2ok}/${walk2})`);
+check(enc().parts.summary("petal:").total === 12, "12 petals wanted");
+alex.gameMode = "Creative"; // petals in chunks nobody was near appear once a player comes close
+for (let k = 0; k < 12; k++) {
+  const a = ((15 + 30 * k) * Math.PI) / 180;
+  alex.teleport({ x: MM.heart.x + Math.cos(a) * MM.A * 0.8, y: D.y + 6, z: MM.heart.z + Math.sin(a) * MM.B * 0.8 }, { dimension: arena() });
+  await mock.advance(6);
+}
+check(enc().parts.summary("petal:").spawned === 12, `all 12 petals spawn once their chunks load (${enc().parts.summary("petal:").spawned})`);
+check(enc().petals.every((e) => e.getProperty("anatomy:petal_state") === 1), "late petals spawn already unfolded");
+alex.gameMode = "Survival";
+check(alex.locatorBar.list.size === 0, "node markers cleared in phase 2");
+log(`small budget stats: refused writes ${mock.stats.refusedWrites}, refused spawns ${mock.stats.refusedSpawns}, unloads ${mock.stats.unloads}, reloads ${mock.stats.reloads}, queued structure cells ${mock.stats.queuedStructureCells}`);
+manager.stop("abort");
+await until(() => !enc(), 8000, "clean-up with a small chunk budget");
+let left2 = 0;
+for (const k of arena().blocks.keys()) {
+  const [x, y, z] = k.split(",").map(Number);
+  if (x >= g.x0 && x < g.x0 + g.sx && z >= g.z0 && z < g.z0 + g.sz && y >= g.y0) left2++;
+}
+check(left2 === 0 && mock.queuedStructureCells() === 0, `arena fully cleared with a small budget (${left2} blocks left, ${mock.queuedStructureCells()} queued cells)`);
+check(mock.allEntities().filter(inArena).length === 0 && mock.storedEntities().filter(inArena).length === 0, "no boss parts left behind, loaded or stored");
+check(mock.tickingAreaIds().length === 0, "ticking areas released after the small-budget fight");
+check(alex.dimension.id === "minecraft:overworld" && alex.locatorBar.list.size === 0, "players home, locator bar clean");
+check(mock.stats.queuedStructureCells === 0, `no structure placement ever left to the engine's unloaded-chunk queue (${mock.stats.queuedStructureCells} cells)`);
+tam.maxChunkCount = fullBudget;
+})();
+
 // ------------------------------------------------------------------ report
 console.log("");
 console.log(`simulation: ${passed} checks passed, ${failures.length} failed, ${mock.issues.length} API issues, ${((Date.now() - t0) / 1000).toFixed(1)} s wall`);
 console.log(`stats: block writes ${mock.stats.blockWrites}, fills ${mock.stats.fills}, structures ${mock.stats.structuresPlaced}, particles ${mock.stats.particles}, sounds ${mock.stats.sounds}, max writes/tick ${mock.stats.maxWritesPerTick}`);
+console.log(`chunks: refused writes ${mock.stats.refusedWrites}, refused spawns ${mock.stats.refusedSpawns}, entity unloads ${mock.stats.unloads}, reloads ${mock.stats.reloads}, queued structure cells ${mock.stats.queuedStructureCells}`);
 console.log(`animations: ${JSON.stringify(mock.stats.animations)}`);
 for (const i of mock.issues.slice(0, 60)) console.log("  ISSUE", i);
 for (const f of failures) console.log("  FAILED", f);

@@ -16,8 +16,10 @@ entities, a deformable terrain system and a scripted encounter director.
 
 > **สรุปภาษาไทย:** แอดออนบอสยักษ์ที่ "ร่างกายของบอสคือสนามรบ" บอสตัวแรก **The Migrating Mountain (เทือกเขาอพยพ)** สร้างเสร็จสมบูรณ์แล้ว
 > มี 2 เฟส (The Sleeping Continent / The Unfolded World) และ 7 ความสามารถตามแผ่นคอนเซปต์ เรียกบอสได้ด้วย *Restless Lodestone*
-> (คราฟต์จากทัฟฟ์ เศษอะเมทิสต์ เข็มทิศ และหินมอส) หรือจาก *Anatomical Atlas* ที่ได้ตอนเข้าโลกครั้งแรก ชื่อภาษาไทยของไอเท็มและเอนทิตีอยู่ใน
-> `docs/th_TH.reference.lang` (Bedrock ไม่โหลดไฟล์ภาษาไทยจากแพ็ก)
+> (คราฟต์จากทัฟฟ์ เศษอะเมทิสต์ เข็มทิศ และหินมอส) หรือจาก *Anatomical Atlas* ที่ได้ตอนเข้าโลกครั้งแรก
+> เฟส 1 ต้องทำลาย **ผลึกสีม่วง 3 จุด (Resonance Node)**: บนยอดเขา · ในถ้ำอวัยวะ (อุโมงค์ด้านหน้า) · ห้อยอยู่ใต้ตัวภูเขา (ลงบันไดวนจากถ้ำ)
+> มีเสาแสงสีม่วง เครื่องหมาย ★ บนแถบระบุตำแหน่ง และแถบข้อความบอกระยะ กดปุ่ม **Language** ใน Atlas เพื่อให้คำแนะนำระหว่างสู้เป็นภาษาไทย
+> ชื่อภาษาไทยของไอเท็มและเอนทิตีอยู่ใน `docs/th_TH.reference.lang` (Bedrock ไม่โหลดไฟล์ภาษาไทยจากแพ็ก)
 
 ![The Migrating Mountain](docs/images/boss001_hero.png)
 
@@ -38,6 +40,7 @@ Restless Lodestone        T = tuff   A = amethyst shard
    T M T
 ```
 
+The Atlas' **Language** button switches the in-fight guidance (HUD, titles, briefings) between English and ภาษาไทย.
 During a fight the Atlas offers **Leave the encounter** / **Join the encounter**. Players who die are pulled back in a
 moment after respawning. If nobody is left fighting for 30 s the mountain wanders on and the arena is cleaned up.
 Your world is never modified — the whole fight happens in its own dimension and is erased afterwards; anything left on
@@ -50,7 +53,7 @@ the ground is carried home with you.
 | `/anatomy:boss start` | start Specimen 001 for you and nearby players (no lodestone needed) |
 | `/anatomy:boss skip` | destroy the remaining Resonance Nodes → The Great Unfolding → Phase 2 |
 | `/anatomy:ability <id>` | force an ability: `continental_fold`, `lithic_peristalsis`, `geological_shedding`, `resonance_network`, `inverted_strata`, `mantle_contraction`, `great_unfolding` |
-| `/anatomy:boss kill` · `stop` · `status` · `join` · `leave` | finish the fight · abort and clean up · print state · join · leave |
+| `/anatomy:boss kill` · `stop` · `status` · `join` · `leave` | finish the fight · abort and clean up · print state (incl. which parts are loaded/spawned, the remaining nodes' coordinates and chunk coverage) · join · leave |
 | `/scriptevent anatomy:start` (also `stop`, `skip`, `kill`, `status`, `ability <id>`) | same actions without custom commands |
 
 The Atlas also has a **Test tools** page for operators and creative players.
@@ -76,10 +79,12 @@ of stratified cliffs, snow crags and waterfalls, walking on fourteen Anchorage R
 ![Cutaway: Organ Cavern, heart cradle, shaft and underbelly gallery](docs/images/boss001_cutaway.png)
 
 ### Phase 1 — The Sleeping Continent
-Climb and explore the body to find and destroy the three **Resonance Nodes** — on the summit crag, inside the Organ
-Cavern, and hanging beneath the body over the underbelly gallery. Purple beams link every node to the shielded heart,
-golden motes mark the path, and the action bar points to the nearest node. Each destroyed node strips 13% of the
-mountain's health and makes it more aggressive.
+Climb and explore the body to find and destroy the three **Resonance Nodes** (the purple crystals) — on the summit
+crag, inside the Organ Cavern, and hanging beneath the body over the underbelly gallery. A chat briefing lists where they
+are (with coordinates); a tall purple light pillar stands over each one (pointing down for the hanging node), a purple ★
+marks each on the locator bar, purple beams link them to the shielded heart, golden motes mark the path, and the action
+bar shows the nearest one with distance and direction. Each destroyed node strips 13% of the mountain's health and makes
+it more aggressive.
 
 ### Phase 2 — The Unfolded World
 **07 The Great Unfolding**: the shell peels open sector by sector; each sector becomes a giant petal that swings
@@ -126,6 +131,15 @@ diamonds, emeralds, experience. Victories and best time are recorded in the Atla
   animated entities driven by client-synced properties and animation controllers.
 * **Encounter director.** `director.ts` reads each player's zone (dorsal, cavern, underbelly, disk, mantle), cooldowns,
   enrage and how long the heart has stayed shut, and picks one main ability at a time plus a Geological Shedding barrage.
+* **Chunk loading.** `spawnEntity` and block edits only work in loaded, ticking chunks, and script ticking areas share a
+  per-pack chunk budget the engine does not document. The arena (100 chunks) is kept ticking region by region in priority
+  order — the nodes and the heart, the arrival shelf, the Organ Cavern, the Phase 2 disk, the rest — as far as the budget
+  allows (`src/core/chunks.ts`). Boss parts go through a registry (`src/core/parts.ts`): each one spawns as soon as its
+  chunk is loaded, is re-acquired by entity id when its chunk unloads and reloads (with its state re-applied), is
+  re-created if it vanishes, and stale parts of earlier fights are removed when they load. Block edits in unloaded chunks
+  are deferred per chunk, in order, and replayed when the chunk loads; short-lived ticking areas sweep the rest, and
+  structure tiles are only placed over loaded chunks. The Content Log reports `[anatomy] arena: N/100 chunks kept
+  ticking` when the budget is smaller than the arena.
 * **Robustness.** The fight is saved every 5 s and rebuilt deterministically at its phase after a reload; arena blocks
   can't be broken (player-placed blocks excepted), explosions don't damage the arena, natural mob spawns are removed,
   falls into the cloud sea are caught.
@@ -140,7 +154,7 @@ anatomy-of-a-world/
 │  ├─ build.py             full build → build/packs + dist/*.mcaddon
 │  ├─ packdefs.py          BP/RP JSON (entities, client entities, controllers, items, dimension, sounds, fog)
 │  ├─ models/              procedural model kit + Boss 001 models and baked animations
-│  ├─ fx/particles.py      17 particle effects + atlas
+│  ├─ fx/particles.py      18 particle effects + atlas
 │  ├─ audio/synth.py       21 synthesised sound effects + 3 music tracks (OGG)
 │  ├─ export_mountain.mjs  pre-generates the mountain data module
 │  ├─ validate.py          cross-file validation
@@ -160,8 +174,9 @@ Pillow, numpy and scipy, and ffmpeg with libvorbis.
 |---|---|
 | TypeScript `strict` against the official `@minecraft/server` 2.11.0 / `server-ui` 2.3.0 typings | 0 errors |
 | Minecraft Creator Tools 0.21 validation (both packs) | 0 errors, 0 warnings |
-| `tools/validate.py` — geometry ↔ animations ↔ controllers ↔ client entities ↔ scripts, block ids + states vs vanilla 1.26.60, sounds, particles, fog, items, lang | 2 826 checks, 0 errors |
-| `tools/sim/run.mjs` — the compiled scripts run against a strict API mock with a voxel world: summoning, intro, all 7 abilities in both phases, node destruction, the Great Unfolding, heart windows, re-bloom, victory, loot, cleanup, resume after reload (both phases), respawn pull-back, defeat, commands, Atlas UI | 84 checks, 0 failures, 0 API issues (repeated runs with random seeds) |
+| `tools/validate.py` — geometry ↔ animations ↔ controllers ↔ client entities ↔ scripts, block ids + states vs vanilla 1.26.60, sounds, particles, fog, items, lang | 2 827 checks, 0 errors |
+| `tools/sim/run.mjs` — the compiled scripts run against a strict API mock with a voxel world: summoning, intro, all 7 abilities in both phases, node destruction, the Great Unfolding, heart windows, re-bloom, victory, loot, cleanup, resume after reload (both phases), respawn pull-back, defeat, commands, Atlas UI | 112 checks, 0 failures, 0 API issues (repeated runs with random seeds) |
+| Chunk loading in the same simulation — chunks load only inside ticking areas and around players; spawns, block edits and lookups fail in unloaded chunks, entities unload/reload with new handles, structure placements queue. A whole fight with a pack budget of 1–40 chunks and a simulation distance of 2–10: parts wait and appear, nodes stay destroyable after reloading, markers/HUD point to unloaded nodes, the whole shell is cut, the arena is fully cleared | passes for every budget/distance combination tried |
 | Visual review | models, the assembled creature, cavern cutaway and the Phase 2 crown rendered from the real geometry/textures (images above) |
 
 **Not verifiable in this environment:** I could not run the Minecraft client or a dedicated server here, so these still

@@ -2,7 +2,7 @@
  * Boss registry. Every boss of THE ANATOMY OF A WORLD plugs into the shared
  * encounter framework through a BossDefinition.
  */
-import { EntityHurtAfterEvent, EntityHurtBeforeEvent, Player, ProjectileHitBlockAfterEvent, ProjectileHitEntityAfterEvent } from "@minecraft/server";
+import { Entity, EntityHurtAfterEvent, EntityHurtBeforeEvent, Player, ProjectileHitBlockAfterEvent, ProjectileHitEntityAfterEvent } from "@minecraft/server";
 import { V3 } from "./vec.js";
 
 export interface AtlasPage {
@@ -45,6 +45,8 @@ export interface BossEncounter {
   onProjectileHitBlock?(ev: ProjectileHitBlockAfterEvent): void;
   onProjectileHitEntity?(ev: ProjectileHitEntityAfterEvent): void;
   onPlayerJoin?(p: Player): void;
+  /** An entity was loaded from a chunk (re-bind boss parts, remove stale ones). */
+  onEntityLoad?(e: Entity): void;
 }
 
 export interface BossDefinition {

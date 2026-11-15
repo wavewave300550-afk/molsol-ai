@@ -10,6 +10,7 @@
 import { Entity, EntityDamageCause, Player } from "@minecraft/server";
 import { knock } from "../../core/arena.js";
 import { line, particle, quake, sound, title } from "../../core/fx.js";
+import { tr } from "../../core/lang.js";
 import { Co } from "../../core/tasks.js";
 import { angleDiffDeg, clamp, distXZ, V3 } from "../../core/vec.js";
 import { ColFlag, MM } from "../../gen/mountain.js";
@@ -48,8 +49,24 @@ function near(ctx: MMContext, at: V3, r: number): Player[] {
   return ctx.audience().filter((p) => Math.hypot(p.location.x - at.x, p.location.y - at.y, p.location.z - at.z) <= r);
 }
 
+/** Thai text of the ability warnings (players pick their language in the Atlas). */
+const TH_HINT: Record<string, string> = {
+  "the strata buckle along the glowing fault!": "ชั้นหินกำลังโก่งตัวตามรอยเลื่อนที่เรืองแสง!",
+  "a petal is folding over its sector — get out!": "กลีบภูเขากำลังพับลงมาทับส่วนนี้ — ออกไปเร็ว!",
+  "waves of strata roll through — jump them!": "คลื่นชั้นหินกำลังซัดมา — กระโดดข้าม!",
+  "the ribs ripple inward — jump each wave!": "ซี่โครงกระเพื่อมเข้าหาศูนย์กลาง — กระโดดข้ามทุกลูก!",
+  "the rock skin peels away — leave the marked rings!": "ผิวหินลอกออก — ออกจากวงที่ถูกทำเครื่องหมาย!",
+  "rings of resonance — stand in the green gaps!": "วงคลื่นกังวาน — ยืนในช่องว่างสีเขียว!",
+  "the walkway will stand up as a wall!": "ทางเดินนี้จะตั้งขึ้นเป็นกำแพง!",
+  "the walkway will roll over into a ceiling!": "ทางเดินนี้จะม้วนขึ้นไปเป็นเพดาน!",
+  "a rib will stand up as a wall!": "ซี่โครงจะตั้งขึ้นเป็นกำแพง!",
+  "a rib will roll into the ceiling — don't stand on it!": "ซี่โครงจะม้วนขึ้นเป็นเพดาน — อย่ายืนบนนั้น!",
+  "the cavern squeezes shut — get into a glowing pocket!": "ถ้ำกำลังบีบปิด — เข้าไปในโพรงที่เรืองแสง!",
+  "the world closes in — reach the heart's ring!": "โลกกำลังบีบเข้ามา — ไปที่วงรอบหัวใจ!",
+};
+
 function warn(players: Player[], name: string, hint: string): void {
-  title(players, "", `§c⚠ ${name} §7— ${hint}`, 34, 4, 10);
+  for (const p of players) title([p], "", `§c⚠ ${name} §7— ${tr(p, hint, TH_HINT[hint] ?? hint)}`, 34, 4, 10);
 }
 
 function surface(ctx: MMContext, x: number, z: number): number {
@@ -177,7 +194,7 @@ function* petalFold(ctx: MMContext, target: Player): Co {
     }
     yield 5;
   }
-  petal.setProperty(PROP.petalState, 2);
+  ctx.partProp(petal, PROP.petalState, 2);
   yield 18;
   // impact
   sound(ctx.dim, SND.quake, at, 1, 0.7);
@@ -206,7 +223,7 @@ function* petalFold(ctx: MMContext, target: Player): Co {
     }
   }
   yield 160;
-  petal.setProperty(PROP.petalState, 1);
+  ctx.partProp(petal, PROP.petalState, 1);
   sound(ctx.dim, SND.grind, petal.location, 0.9, 1.1);
   yield 12;
   for (const q of rubble) ctx.writer.set(q.x, q.y, q.z, P.AIR);
@@ -507,8 +524,13 @@ export function* resonanceNetwork(ctx: MMContext, target: Player): Co {
     const site = nodes[0].site;
     src = site.id === "root" ? { x: site.pos.x, y: MM.gallery.y + 1, z: site.pos.z } : { x: site.pos.x, y: site.pos.y, z: site.pos.z };
   }
-  if (!srcEnt?.isValid) return;
-  srcEnt.setProperty(PROP.charging, true);
+  const charge = (on: boolean) => {
+    if (ctx.phase === 2) ctx.heartProp(PROP.charging, on);
+    else if (srcEnt) ctx.partProp(srcEnt, PROP.charging, on);
+  };
+  // phase 2 rings come from the heart's position whether or not its chunk is loaded right now
+  if (ctx.phase === 1 && !srcEnt?.isValid) return;
+  charge(true);
   warn(near(ctx, src, 40), "Resonance Network", "rings of resonance — stand in the green gaps!");
   sound(ctx.dim, SND.resonance, src, 1, 1);
   // the network lights up: beams from every living node to the heart
@@ -568,7 +590,7 @@ export function* resonanceNetwork(ctx: MMContext, target: Player): Co {
     tick++;
     yield 1;
   }
-  if (srcEnt.isValid) srcEnt.setProperty(PROP.charging, false);
+  charge(false);
   if (ctx.phase === 2) ctx.exposeHeart(170);
 }
 

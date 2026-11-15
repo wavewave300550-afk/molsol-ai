@@ -78,45 +78,6 @@ export function combatants(dimId: string): Player[] {
   });
 }
 
-/**
- * Keeps a rectangular area loaded via the TickingAreaManager (async: resolves once loaded).
- * Falls back to splitting the area if a single area is too large.
- */
-export async function loadArea(id: string, dim: Dimension, from: V3, to: V3): Promise<boolean> {
-  const tam = world.tickingAreaManager;
-  try {
-    if (tam.hasTickingArea(id)) tam.removeTickingArea(id);
-    const opts = { dimension: dim, from, to };
-    if (!tam.hasCapacity(opts)) {
-      console.warn(`[anatomy] ticking area ${id} exceeds capacity (${tam.chunkCount}/${tam.maxChunkCount} chunks used)`);
-      // try two halves
-      const midX = Math.floor((from.x + to.x) / 2);
-      const a = { dimension: dim, from, to: { x: midX, y: to.y, z: to.z } };
-      const b = { dimension: dim, from: { x: midX + 1, y: from.y, z: from.z }, to };
-      if (!tam.hasCapacity(a)) return false;
-      await tam.createTickingArea(id, a);
-      if (tam.hasCapacity(b)) await tam.createTickingArea(id + "_b", b);
-      return true;
-    }
-    await tam.createTickingArea(id, opts);
-    return true;
-  } catch (e) {
-    console.warn(`[anatomy] ticking area ${id} failed: ${String(e)}`);
-    return false;
-  }
-}
-
-export function unloadArea(id: string): void {
-  const tam = world.tickingAreaManager;
-  for (const n of [id, id + "_b"]) {
-    try {
-      if (tam.hasTickingArea(n)) tam.removeTickingArea(n);
-    } catch {
-      /* ignore */
-    }
-  }
-}
-
 /** Damage a player with the boss as the source when possible (death messages, armour). */
 export function hurt(p: Player, amount: number, cause: EntityDamageCause, source?: import("@minecraft/server").Entity): boolean {
   if (amount <= 0 || !p.isValid) return false;

@@ -2,8 +2,9 @@
  * In-game access to the pre-generated mountain (tools/export_mountain.mjs) and
  * the routines that place it into the arena dimension.
  */
-import { Dimension, StructureAnimationMode, StructureSaveMode, world } from "@minecraft/server";
-import { BlockWriter, fillBox, perm } from "../../core/blocks.js";
+import { Dimension, Structure, StructureAnimationMode, StructureSaveMode, world } from "@minecraft/server";
+import { BlockWriter, perm } from "../../core/blocks.js";
+import { ChunkRect, chunkOf, rectLoaded, rectOf } from "../../core/chunks.js";
 import { Co } from "../../core/tasks.js";
 import { forEachRun, unpack } from "../../gen/codec.js";
 import { ColFlag, MM, MountainModel } from "../../gen/mountain.js";
@@ -54,74 +55,103 @@ export function arenaBounds(): { from: { x: number; y: number; z: number }; to: 
   return { from: { x: g.x0, y: -64, z: g.z0 }, to: { x: g.x0 + g.sx - 1, y: g.y0 + g.sy - 1, z: g.z0 + g.sz - 1 } };
 }
 
-/** Clear the arena box (time-sliced). */
-export function* clearArena(dim: Dimension, perTick = 6): Co {
+/** Chunks of the whole arena (grid), for ticking-area planning. */
+export function arenaChunks(): ChunkRect {
   const g = MM.grid;
+  return { cx0: chunkOf(g.x0), cz0: chunkOf(g.z0), cx1: chunkOf(g.x0 + g.sx - 1), cz1: chunkOf(g.z0 + g.sz - 1) };
+}
+
+/**
+ * Clear the arena box (time-sliced, one chunk column per fill). Chunks that are
+ * not loaded are cleared as soon as they are (the writer defers those fills).
+ */
+export function* clearArena(writer: BlockWriter, perTick = 6): Co {
+  const g = MM.grid;
+  const x1 = g.x0 + g.sx - 1;
+  const z1 = g.z0 + g.sz - 1;
   let n = 0;
-  for (let x = g.x0; x < g.x0 + g.sx; x += 16)
-    for (let z = g.z0; z < g.z0 + g.sz; z += 16) {
-      fillBox(dim, x, g.y0, z, Math.min(x + 15, g.x0 + g.sx - 1), g.y0 + g.sy - 1, Math.min(z + 15, g.z0 + g.sz - 1), AIR);
+  for (let cx = chunkOf(g.x0); cx <= chunkOf(x1); cx++)
+    for (let cz = chunkOf(g.z0); cz <= chunkOf(z1); cz++) {
+      writer.fill(Math.max(g.x0, cx * 16), g.y0, Math.max(g.z0, cz * 16), Math.min(x1, cx * 16 + 15), g.y0 + g.sy - 1, Math.min(z1, cz * 16 + 15), AIR);
       if (++n % perTick === 0) yield 1;
     }
   // the rim waterfall falls through the cloud sea: clear its column too
-  for (const wf of mountain().waterfalls) if (wf.kind === "void") fillBox(dim, wf.source.x - 3, -64, wf.source.z - 3, wf.source.x + 3, g.y0 - 1, wf.source.z + 3, AIR);
+  for (const wf of mountain().waterfalls) if (wf.kind === "void") writer.fill(wf.source.x - 3, -64, wf.source.z - 3, wf.source.x + 3, g.y0 - 1, wf.source.z + 3, AIR);
 }
 
 const TILE = 48;
 
 /**
- * Place the Phase 1 body. Tries in-memory structures placed with the native
- * layer-by-layer animation; falls back to direct budgeted writes.
+ * Place the Phase 1 body. Tiles go in as in-memory structures placed with the
+ * native layer-by-layer animation where possible; every other tile is written
+ * through the (budgeted, order-keeping) writer.
  * `sliceMs` bounds the script time spent per tick.
  */
-export function* placeBody(dim: Dimension, writer: BlockWriter, animateSeconds: number, sliceMs = 25, only?: (cx: number, cz: number) => boolean): Co {
+export function* placeBody(dim: Dimension, writer: BlockWriter, animateSeconds: number, sliceMs = 25): Co {
   const g = MM.grid;
   const data = body();
   const tilesX = Math.ceil(g.sx / TILE);
   const tilesZ = Math.ceil(g.sz / TILE);
   const sm = world.structureManager;
-  const tiles: (import("@minecraft/server").Structure | undefined)[] = [];
-  let useStructures = true;
-  try {
-    for (let tx = 0; tx < tilesX; tx++)
-      for (let tz = 0; tz < tilesZ; tz++) {
+  const tileRect = (tx: number, tz: number) => {
+    const x0 = g.x0 + tx * TILE;
+    const z0 = g.z0 + tz * TILE;
+    return { x0, z0, x1: Math.min(x0 + TILE, g.x0 + g.sx) - 1, z1: Math.min(z0 + TILE, g.z0 + g.sz) - 1 };
+  };
+  // A structure is only placed over chunks that are loaded and have no edits waiting: a placement the
+  // engine queues for unloaded chunks would not be ordered with the writer's deferred edits.
+  const placeable = (tx: number, tz: number) => {
+    const r = tileRect(tx, tz);
+    return !writer.hasDeferredIn(r.x0, r.z0, r.x1, r.z1) && rectLoaded(dim, rectOf(r.x0, r.z0, r.x1, r.z1));
+  };
+  const tiles: (Structure | undefined)[] = [];
+  let warned = false;
+  for (let tx = 0; tx < tilesX; tx++)
+    for (let tz = 0; tz < tilesZ; tz++) {
+      let st: Structure | undefined;
+      if (placeable(tx, tz)) {
         const id = `anatomy:mm_body_${tx}_${tz}`;
         try {
           sm.delete(id);
         } catch {
           /* not present */
         }
-        tiles.push(sm.createEmpty(id, { x: Math.min(TILE, g.sx - tx * TILE), y: g.sy, z: Math.min(TILE, g.sz - tz * TILE) }, StructureSaveMode.Memory));
+        try {
+          st = sm.createEmpty(id, { x: Math.min(TILE, g.sx - tx * TILE), y: g.sy, z: Math.min(TILE, g.sz - tz * TILE) }, StructureSaveMode.Memory);
+        } catch (e) {
+          if (!warned) console.warn(`[anatomy] structure tiles unavailable (${String(e)}), using direct block writes`);
+          warned = true;
+        }
       }
-  } catch (e) {
-    console.warn(`[anatomy] structure tiles unavailable (${String(e)}), using direct block writes`);
-    useStructures = false;
-  }
+      tiles.push(st);
+    }
   let t0 = Date.now();
   let i = 0;
   for (let cx = 0; cx < g.sx; cx++) {
+    const tx = Math.floor(cx / TILE);
     for (let cz = 0; cz < g.sz; cz++) {
       const n = data[i++];
-      const skip = only ? !only(cx, cz) : false;
-      for (let r = 0; r < n; r++) {
+      const ti = tx * tilesZ + Math.floor(cz / TILE);
+      const st = tiles[ti];
+      if (!st) {
+        i += n * 3;
+        continue;
+      }
+      const lx = cx % TILE;
+      const lz = cz % TILE;
+      for (let r = 0; r < n; r++, i += 3) {
         const y0 = data[i];
         const len = data[i + 1];
-        const b = data[i + 2];
-        i += 3;
-        if (skip) continue;
-        if (useStructures) {
-          const s = tiles[Math.floor(cx / TILE) * tilesZ + Math.floor(cz / TILE)]!;
-          const p = perm(b);
-          const lx = cx % TILE;
-          const lz = cz % TILE;
-          try {
-            for (let k = 0; k < len; k++) s.setBlockPermutation({ x: lx, y: y0 + k, z: lz }, p);
-          } catch (e) {
-            console.warn(`[anatomy] structure write failed (${String(e)}), switching to direct writes`);
-            useStructures = false;
-          }
+        const p = perm(data[i + 2]);
+        try {
+          for (let k = 0; k < len; k++) st.setBlockPermutation({ x: lx, y: y0 + k, z: lz }, p);
+        } catch (e) {
+          if (!warned) console.warn(`[anatomy] structure write failed (${String(e)}), using direct block writes for that tile`);
+          warned = true;
+          tiles[ti] = undefined;
+          i += (n - r) * 3;
+          break;
         }
-        if (!useStructures) for (let k = 0; k < len; k++) writer.set(g.x0 + cx, g.y0 + y0 + k, g.z0 + cz, b);
       }
     }
     if (Date.now() - t0 > sliceMs) {
@@ -129,36 +159,51 @@ export function* placeBody(dim: Dimension, writer: BlockWriter, animateSeconds: 
       t0 = Date.now();
     }
   }
-  if (useStructures) {
-    let k = 0;
-    for (let tx = 0; tx < tilesX; tx++)
-      for (let tz = 0; tz < tilesZ; tz++) {
-        const s = tiles[k++]!;
+  let k = 0;
+  for (let tx = 0; tx < tilesX; tx++)
+    for (let tz = 0; tz < tilesZ; tz++) {
+      const st = tiles[k++];
+      let placed = false;
+      if (st && placeable(tx, tz)) {
         try {
-          sm.place(s, dim, { x: g.x0 + tx * TILE, y: g.y0, z: g.z0 + tz * TILE }, animateSeconds > 0 ? { animationMode: StructureAnimationMode.Layers, animationSeconds: animateSeconds } : {});
+          sm.place(st, dim, { x: g.x0 + tx * TILE, y: g.y0, z: g.z0 + tz * TILE }, animateSeconds > 0 ? { animationMode: StructureAnimationMode.Layers, animationSeconds: animateSeconds } : {});
+          placed = true;
         } catch (e) {
           console.warn(`[anatomy] structure place failed: ${String(e)}`);
         }
       }
-  }
+      if (!placed) {
+        writeBodyRect(writer, tileRect(tx, tz));
+        yield 1;
+      }
+    }
   while (writer.pending > 0) yield 1;
 }
 
+/** Queue the pristine body inside a block rectangle on the writer. */
+export function writeBodyRect(writer: BlockWriter, r: { x0: number; z0: number; x1: number; z1: number }): void {
+  const g = MM.grid;
+  const data = body();
+  const idx = columnIndex();
+  for (let x = Math.max(g.x0, r.x0); x <= Math.min(g.x0 + g.sx - 1, r.x1); x++)
+    for (let z = Math.max(g.z0, r.z0); z <= Math.min(g.z0 + g.sz - 1, r.z1); z++) {
+      let i = idx[(x - g.x0) * g.sz + (z - g.z0)];
+      const n = data[i++];
+      for (let q = 0; q < n; q++, i += 3) for (let k = 0; k < data[i + 1]; k++) writer.set(x, g.y0 + data[i] + k, z, data[i + 2]);
+    }
+}
+
 /** Remove everything above the Phase 2 cut for the given columns (sector peel). */
-export function cutColumns(dim: Dimension, writer: BlockWriter, cols: number[]): void {
+export function cutColumns(writer: BlockWriter, cols: number[]): void {
   const m = mountain();
   const g = MM.grid;
   const cut = m.phase2CutY();
   for (const c of cols) {
     const x = Math.floor(c / g.sz) + g.x0;
     const z = (c % g.sz) + g.z0;
-    if (m.top[c] > cut) {
-      fillBox(dim, x, cut + 1, z, x, g.y0 + g.sy - 1, z, AIR);
-      for (let y = cut - 3; y <= cut; y++) writer.set(x, y, z, m.dorsalBlock(x, y, z, cut, 2));
-    } else {
-      // trees and decorations on lower columns that reach above the cut
-      fillBox(dim, x, cut + 1, z, x, g.y0 + g.sy - 1, z, AIR);
-    }
+    // everything above the cut goes (trees and decorations on lower columns included)
+    writer.fill(x, cut + 1, z, x, g.y0 + g.sy - 1, z, AIR);
+    if (m.top[c] > cut) for (let y = cut - 3; y <= cut; y++) writer.set(x, y, z, m.dorsalBlock(x, y, z, cut, 2));
   }
 }
 
@@ -199,6 +244,11 @@ export function writeDisk(writer: BlockWriter, layout: number, filter?: (x: numb
  */
 export function placeDisk(dim: Dimension, writer: BlockWriter, layout: number, seconds: number): void {
   const b = MM_DATA.p2box;
+  if (writer.hasDeferredIn(b.x0, b.z0, b.x0 + b.sx - 1, b.z0 + b.sz - 1) || !rectLoaded(dim, rectOf(b.x0, b.z0, b.x0 + b.sx - 1, b.z0 + b.sz - 1))) {
+    // part of the disk is not loaded or still has edits waiting: the writer keeps the order
+    writeDisk(writer, layout);
+    return;
+  }
   const sm = world.structureManager;
   const T = 36;
   const tx = Math.ceil(b.sx / T);
@@ -257,6 +307,21 @@ export function diskBox() {
 // ----------------------------------------------------------------------------- pristine block lookup
 let colIndex: Int32Array | undefined;
 
+/** Start offset of every column in the body stream. */
+function columnIndex(): Int32Array {
+  if (!colIndex) {
+    const g = MM.grid;
+    const data = body();
+    colIndex = new Int32Array(g.sx * g.sz);
+    let i = 0;
+    for (let c = 0; c < g.sx * g.sz; c++) {
+      colIndex[c] = i;
+      i += 1 + data[i] * 3;
+    }
+  }
+  return colIndex;
+}
+
 /** Palette index of the pristine Phase 1 body at a world position (AIR when empty). */
 export function pristineBlock(x: number, y: number, z: number): number {
   const g = MM.grid;
@@ -265,15 +330,7 @@ export function pristineBlock(x: number, y: number, z: number): number {
   const cy = y - g.y0;
   if (cx < 0 || cz < 0 || cy < 0 || cx >= g.sx || cz >= g.sz || cy >= g.sy) return AIR;
   const data = body();
-  if (!colIndex) {
-    colIndex = new Int32Array(g.sx * g.sz);
-    let i = 0;
-    for (let c = 0; c < g.sx * g.sz; c++) {
-      colIndex[c] = i;
-      i += 1 + data[i] * 3;
-    }
-  }
-  let i = colIndex[cx * g.sz + cz];
+  let i = columnIndex()[cx * g.sz + cz];
   const n = data[i++];
   for (let r = 0; r < n; r++, i += 3) {
     const y0 = data[i];

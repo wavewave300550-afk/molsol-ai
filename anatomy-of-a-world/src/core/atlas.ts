@@ -5,6 +5,7 @@
 import { GameMode, ItemStack, Player, PlayerPermissionLevel, system } from "@minecraft/server";
 import { ActionFormData, MessageFormData } from "@minecraft/server-ui";
 import { leaveArena } from "./arena.js";
+import { langOf, setLang } from "./lang.js";
 import { manager } from "./manager.js";
 import { allBosses, BossDefinition } from "./registry.js";
 
@@ -41,6 +42,13 @@ export function openAtlas(p: Player): void {
     form.button("§6Test tools §8(operators)");
     actions.push(() => testTools(p));
   }
+  // in-fight guidance language (HUD, titles, briefings)
+  const th = langOf(p) === "th";
+  form.button(th ? "§9Language: ภาษาไทย\n§8switch to English" : "§9Language: English\n§8เปลี่ยนเป็นภาษาไทย");
+  actions.push(() => {
+    setLang(p, th ? "en" : "th");
+    p.sendMessage(th ? "§7In-fight guidance is now in §fEnglish§7." : "§7คำแนะนำระหว่างการต่อสู้จะแสดงเป็น§fภาษาไทย§7แล้ว");
+  });
   show(p, form, actions);
 }
 
