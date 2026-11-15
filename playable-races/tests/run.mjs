@@ -621,6 +621,122 @@ await settle(4);
 ok(head(bob)?.typeId?.startsWith("plrace:form_golem"), "manifest restores the form");
 ok(inv(bob).slots.some((s) => s?.typeId === "minecraft:diamond_helmet"), "the helmet is moved to the inventory, not lost");
 
+// ======================================================================== race 004 Xenentoma
+begin("xenentoma: assignment & form");
+const xia = harness.join("Xia", { x: 200.5, y: 64, z: 0.5 });
+await settle(12);
+tickN(60);
+await settle(10);
+commands.get("plrace:setrace").cb({ sourceEntity: xia }, "xenentoma", [xia]);
+await settle(4);
+eq(data(xia).race, "004", "race 004 persisted");
+eq(head(xia)?.typeId, "plrace:form_xenentoma", "xenentoma crest worn");
+ok(inv(xia).slots.some((s) => s?.typeId === "plrace:focus_xenentoma"), "Sensillum Focus given");
+hold(xia, "plrace:focus_xenentoma");
+tickN(25);
+ok(String(sim.log.actionbar.get(xia.id)).includes("Clarity"), "HUD shows Sensory Clarity");
+
+begin("xenentoma: eyeless & vibration sense");
+xia.addEffect("blindness", 200, { amplifier: 0 });
+xia.addEffect("darkness", 200, { amplifier: 0 });
+const xmover = mob("minecraft:zombie", 205.5, 0.5);
+xmover._vel = { x: 0.12, y: 0, z: 0 };
+const pingsBefore = sim.log.privateParticles.filter((x) => x.id === "plrace:vibration_ping").length;
+tickN(21);
+ok(!xia.getEffect("blindness") && !xia.getEffect("darkness"), "Blindness and Darkness are removed (no eyes)");
+ok(sim.log.privateParticles.filter((x) => x.id === "plrace:vibration_ping").length > pingsBefore, "a moving creature on the ground sends a private vibration ping");
+ok(sim.log.particles.every((x) => x.id !== "plrace:vibration_ping"), "vibration pings are private (never broadcast)");
+ok(/Tremors 1/.test(String(sim.log.actionbar.get(xia.id))), "HUD counts the tremor");
+
+begin("xenentoma: Foretarsal Survey");
+const xstill = mob("minecraft:zombie", 203.5, 0.5); // still, within 5 blocks
+const xfar = mob("minecraft:zombie", 209.5, 0.5); // still, 9 blocks: not felt
+await use(xia);
+tickN(2);
+eq(head(xia)?.typeId, "plrace:form_xenentoma_survey", "survey form raises the forelimbs");
+tickN(12);
+ok(String(sim.log.actionbar.get(xia.id)).includes("Survey"), "survey reports vibrations on the HUD");
+const traces = sim.log.privateParticles.filter((x) => x.id === "plrace:vibration_trace").length;
+ok(traces > 0, "a still creature close by is felt faintly");
+forceSave();
+ok(cdLeft(xia, "foretarsal_survey") > 0, "survey cooldown spent");
+
+begin("xenentoma: sensory overload");
+world.afterEvents.explosion.fire({ dimension: OW, source: mob("minecraft:creeper", 202.5, 0.5), getImpactedBlocks: () => [] });
+tickN(5);
+ok(String(sim.log.actionbar.get(xia.id)).includes("OVERLOADED"), "an explosion 2 blocks away overloads the senses");
+commands.get("plrace:resetcooldowns").cb({}, [xia]);
+await settle(2);
+await use(xia);
+ok(String(sim.log.actionbar.get(xia.id)).includes("overloaded"), "survey refuses while overloaded");
+forceSave();
+eq(cdLeft(xia, "foretarsal_survey"), 0, "refused cast spends no cooldown");
+tickN(20 * 12);
+ok(String(sim.log.actionbar.get(xia.id)).includes("Clarity"), "clarity recovers over time");
+
+begin("xenentoma: Exuvia Proxy");
+await use(xia, true); // -> Exuvia
+eq(data(xia).sel, 1, "selected ability 2");
+const xz = mob("minecraft:zombie", 204.5, 0.5);
+const proxiesBefore = OW.getEntities({ type: "plrace:exuvia" }).length;
+await use(xia);
+const shells = OW.getEntities({ type: "plrace:exuvia" });
+eq(shells.length, proxiesBefore + 1, "the shed exuvia stays behind");
+ok(shells[0]?._families.includes("plrace_proxy") && shells[0]?._families.includes("player"), "the shell is a decoy hostile mobs hunt");
+ok(hp(xz) < 20, "nearby hostiles are provoked by the shell (it strikes them first)");
+tickN(2);
+eq(head(xia)?.typeId, "plrace:form_xenentoma_teneral", "teneral (freshly moulted) form");
+ok(xia.getEffect("speed")?.amplifier === 1, "springs free with Speed II");
+const tBefore = xia._health;
+xia.applyDamage(5, { cause: "entityAttack", damagingEntity: xz });
+ok(tBefore - xia._health >= 6 - 0.01, "teneral body takes +20% damage");
+xia._health = 20;
+tickN(82);
+ok(!!xia.getEffect("resistance"), "the new cuticle hardens (Resistance)");
+tickN(90);
+eq(OW.getEntities({ type: "plrace:exuvia" }).length, proxiesBefore, "the exuvia expires and is removed");
+
+begin("xenentoma: Interstitial Glide");
+await use(xia, true); // -> Glide
+const gz = mob("minecraft:zombie", xia.location.x, xia.location.z + 2);
+xia.setRotation({ x: 0, y: 0 });
+const gx0 = { ...xia.location };
+await use(xia);
+tickN(12);
+ok(Math.hypot(xia.location.x - gx0.x, xia.location.z - gx0.z) > 3, "slides several blocks along the ground");
+ok(!!gz.getEffect("slowness"), "a creature slipped past is tripped");
+xia.isOnGround = false;
+commands.get("plrace:resetcooldowns").cb({}, [xia]);
+await settle(2);
+await use(xia);
+ok(String(sim.log.actionbar.get(xia.id)).includes("ground contact"), "glide refuses in mid-air");
+xia.isOnGround = true;
+
+begin("xenentoma: Anamorphic Surge");
+await use(xia, true); // -> Surge
+const xsz = mob("minecraft:zombie", xia.location.x, xia.location.z + 4);
+faceTo(xia, xsz);
+const xsHp = hp(xsz);
+await use(xia);
+tickN(2);
+eq(head(xia)?.typeId, "plrace:form_xenentoma_surge", "surge form: the abdomen extends and arches");
+tickN(30);
+ok(xsHp - hp(xsz) >= 14, "three timed strikes at range (4 + 4 + 6)");
+ok(!!xsz.getEffect("weakness"), "the final strike injects through the stylet (Weakness)");
+
+begin("xenentoma: cleanup");
+await use(xia, true); // -> Survey
+await use(xia, true); // -> Exuvia
+commands.get("plrace:resetcooldowns").cb({}, [xia]);
+await settle(2);
+await use(xia);
+ok(OW.getEntities({ type: "plrace:exuvia" }).length > 0, "shell present");
+xia.kill();
+tickN(2);
+eq(OW.getEntities({ type: "plrace:exuvia" }).length, 0, "the exuvia is removed when its owner dies");
+harness.respawn(xia);
+await settle(15);
+
 // ======================================================================== summary
 const warns = sim.log.warns.concat();
 begin("script health");

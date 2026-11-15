@@ -28,7 +28,16 @@ for (const f of walk(path.join(BP, "items"))) {
   const d = readJson(f)["minecraft:item"];
   defs.items.set(d.description.identifier, d.components["minecraft:tags"]?.tags ?? []);
 }
-for (const f of walk(path.join(BP, "entities"))) defs.entities.add(readJson(f)["minecraft:entity"].description.identifier);
+defs.entityInfo = new Map();
+for (const f of walk(path.join(BP, "entities"))) {
+  const d = readJson(f)["minecraft:entity"];
+  defs.entities.add(d.description.identifier);
+  defs.entityInfo.set(d.description.identifier, {
+    families: d.components["minecraft:type_family"]?.family ?? ["mob"],
+    health: d.components["minecraft:health"]?.value ?? 20,
+    events: Object.keys(d.events ?? {}),
+  });
+}
 for (const f of walk(path.join(RP, "particles"))) defs.particles.add(readJson(f).particle_effect.description.identifier);
 for (const f of walk(path.join(RP, "animations"))) for (const k of Object.keys(readJson(f).animations)) defs.anims.add(k);
 const EFFECTS = new Set(["speed", "slowness", "haste", "mining_fatigue", "strength", "instant_health", "instant_damage", "jump_boost", "nausea", "regeneration", "resistance", "fire_resistance", "water_breathing", "invisibility", "blindness", "night_vision", "hunger", "weakness", "poison", "wither", "health_boost", "absorption", "saturation", "levitation", "fatal_poison", "conduit_power", "slow_falling", "bad_omen", "village_hero", "darkness", "wind_charged", "weaving", "oozing", "infested", "trial_omen", "raid_omen"]);
@@ -220,13 +229,28 @@ export class Dimension {
     }
     return undefined;
   }
+  getLightLevel(_loc) {
+    return sim.light ?? 15;
+  }
+  getSkyLightLevel(_loc) {
+    return sim.light ?? 15;
+  }
   getBiome(loc) {
     return { id: sim.biomeAt(loc) };
   }
   spawnEntity(typeId, loc, opts) {
     writeAllowed("spawnEntity");
     if (!defs.entities.has(typeId)) throw new Error(`unknown entity ${typeId}`);
-    const e = new Entity(typeId, this, { ...loc });
+    const info = defs.entityInfo.get(typeId);
+    const e = new Entity(typeId, this, { ...loc }, info?.families);
+    if (info) {
+      e._maxHealth = info.health;
+      e._health = info.health;
+    }
+    if (opts?.spawnEvent !== undefined) {
+      if (!info || !info.events.includes(opts.spawnEvent)) throw new Error(`unknown spawn event ${opts.spawnEvent} for ${typeId}`);
+      e._spawnEvent = opts.spawnEvent;
+    }
     if (opts?.initialRotation !== undefined) e._rot.y = opts.initialRotation;
     world.afterEvents.entitySpawn.fire({ entity: e });
     return e;
@@ -628,7 +652,7 @@ export class Player extends Entity {
 
 // ------------------------------------------------------------------ world object
 export const world = {
-  afterEvents: Object.fromEntries(["playerSpawn", "playerLeave", "playerDimensionChange", "entityHurt", "entityDie", "itemCompleteUse", "weatherChange", "entitySpawn", "playerButtonInput", "worldLoad"].map((k) => [k, new Signal(k)])),
+  afterEvents: Object.fromEntries(["playerSpawn", "playerLeave", "playerDimensionChange", "entityHurt", "entityDie", "itemCompleteUse", "weatherChange", "entitySpawn", "playerButtonInput", "worldLoad", "explosion"].map((k) => [k, new Signal(k)])),
   beforeEvents: Object.fromEntries(["entityHurt", "playerInteractWithBlock", "playerLeave"].map((k) => [k, new Signal(k)])),
   gameRules: {
     get pvp() {

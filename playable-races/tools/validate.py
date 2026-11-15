@@ -353,7 +353,8 @@ for f in glob.glob(os.path.join(BP, "scripts", "**", "*.js"), recursive=True):
 for pid in set(re.findall(r'"(plrace:[a-z_]+)"', js)):
     known = pid in particles or pid in items or pid in entities or pid in atts or pid in {
         "plrace:focus", "plrace:codex", "plrace:form", "plrace:data", "plrace:settings", "plrace:bloodmoon", "plrace:weather",
-        "plrace:race", "plrace:moon_action", "plrace:blood_moon", "plrace:setrace", "plrace:resetcooldowns"}
+        "plrace:race", "plrace:moon_action", "plrace:blood_moon", "plrace:setrace", "plrace:resetcooldowns",
+        "plrace:unique", "plrace:unique_action"}
     check(known, f"script references unknown id {pid}")
 for m in re.finditer(r'(?:sound|privateSound)\([^,]+,\s*"([a-z0-9_.]+)"', js):
     check(m.group(1) in VANILLA_SOUNDS, f"script sound {m.group(1)} not a vanilla sound event")

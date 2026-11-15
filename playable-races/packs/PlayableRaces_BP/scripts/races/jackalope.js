@@ -155,6 +155,7 @@ const waltz = {
     short: "Waltz",
     cooldown: 42,
     range: 10,
+    cone: 60,
     needsTarget: true,
     original: "Cooldown 45 s; consecutive high-speed leaps around a target with crimson crescent attacks from the antlers.",
     desc: "Choose a target within 10 blocks (branded enemies first) and dance around it: 4 blinding leaps (6 under the Blood Moon), each ending in a crimson antler crescent (4 damage, 6 vs branded), then a full-moon cross slash (6, 9 vs branded) that launches it. You take 50% less damage while waltzing. Blood Moon slashes also heal you for 20% of their damage.",
@@ -294,6 +295,8 @@ export const jackalope = {
     ],
     abilities: [bound, brandAbility, mirage, waltz],
     focusItem: "plrace:focus_jackalope",
+    focusName: "Moonbone Focus",
+    controls: ["Jackalope: §fsneak and stand still§7 for 1 s to Thump & Listen."],
     variant(p, s) {
         const aw = awakened(p);
         const hunt = hasFlag(s, "hunt");

@@ -1,7 +1,8 @@
 import { golem } from "./golem.js";
 import { jackalope } from "./jackalope.js";
 import { salamander } from "./salamander.js";
-export const RACES = [salamander, golem, jackalope];
+import { xenentoma } from "./xenentoma.js";
+export const RACES = [salamander, golem, jackalope, xenentoma];
 const byCode = new Map(RACES.map((r) => [r.code, r]));
 const byKey = new Map(RACES.map((r) => [r.key, r]));
 export function raceByCode(code) {

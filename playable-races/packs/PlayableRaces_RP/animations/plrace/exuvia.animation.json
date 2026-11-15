@@ -1,0 +1,69 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.plrace.exuvia.settle": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 6.0,
+   "bones": {
+    "body": {
+     "rotation": {
+      "0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.4": [
+       6.0,
+       0.0,
+       0.0
+      ],
+      "6": [
+       14.0,
+       0.0,
+       2.0
+      ]
+     }
+    },
+    "thorax": {
+     "position": {
+      "0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "6": [
+       0.0,
+       -0.8,
+       0.0
+      ]
+     }
+    },
+    "head": {
+     "rotation": {
+      "0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "1": [
+       10.0,
+       0.0,
+       0.0
+      ],
+      "6": [
+       26.0,
+       0.0,
+       -4.0
+      ]
+     }
+    },
+    "r_arm_fp": {
+     "scale": 0.0
+    },
+    "l_arm_fp": {
+     "scale": 0.0
+    }
+   }
+  }
+ }
+}

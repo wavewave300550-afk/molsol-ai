@@ -18,7 +18,9 @@ import { cleanupEnsnared, salamanderDrink } from "./races/salamander.js";
 import { applyFog, bloodMoonTick, onBloodMoonChange } from "./systems/bloodmoon.js";
 import { consume, markedBy, tickMarks } from "./systems/marks.js";
 import { isMirage, pop, removeMiragesOf, tickMirages } from "./systems/mirage.js";
+import { isProxy, proxyDied, proxyHurt, purgeOrphans, removeProxiesOf, tickProxies } from "./systems/proxies.js";
 import { openCodex } from "./ui/menu.js";
+import { RACES } from "./races/registry.js";
 const INTERACTIVE = /(door|chest|barrel|button|lever|gate|table|furnace|smoker|anvil|shulker|bed|hopper|dispenser|dropper|crafter|lectern|loom|grindstone|stonecutter|cartography|smithing|brewing|beacon|bell|cake|noteblock|repeater|comparator|daylight|jukebox|campfire|composter|cauldron|respawn_anchor|lodestone|trapdoor|sign|frame|decorated_pot|chiseled_bookshelf|vault|trial_spawner)/;
 function players() {
     try {
@@ -30,6 +32,19 @@ function players() {
 }
 function playerById(id) {
     return players().find((p) => p.id === id);
+}
+function releaseAll(id, reason) {
+    removeProxiesOf(id);
+    const s = peek(id);
+    const race = s && raceOf(s);
+    if (s && race?.release) {
+        try {
+            race.release(s, reason);
+        }
+        catch (e) {
+            warn("race release failed", e);
+        }
+    }
 }
 function useFocus(p) {
     const s = get(p);
@@ -144,6 +159,7 @@ world.beforeEvents.playerLeave.subscribe((ev) => {
             s.channel = undefined;
             cancel(id);
             removeMiragesOf(id);
+            releaseAll(id, "leave");
             drop(id);
         }
     });
@@ -154,6 +170,7 @@ world.afterEvents.playerDimensionChange.subscribe((ev) => {
     if (s.channel)
         endChannel(p, s, "dimension");
     cancel(p.id);
+    releaseAll(p.id, "dimension");
     system.runTimeout(() => {
         if (!p.isValid)
             return;
@@ -181,6 +198,10 @@ world.beforeEvents.entityHurt.subscribe((ev) => {
 });
 world.afterEvents.entityHurt.subscribe((ev) => {
     const e = ev.hurtEntity;
+    if (isProxy(e)) {
+        proxyHurt(e, ev.damage, ev.damageSource.damagingEntity);
+        return;
+    }
     if (e.typeId === ENTITY_MIRAGE) {
         pop(e, true, playerById, ev.damageSource.damagingEntity);
         return;
@@ -209,7 +230,12 @@ world.afterEvents.entityDie.subscribe((ev) => {
             s.tempVariant = undefined;
             s.flags.clear();
             removeMiragesOf(e.id);
+            releaseAll(e.id, "death");
         }
+        return;
+    }
+    if (isProxy(e)) {
+        proxyDied(e);
         return;
     }
     if (isMirage(e))
@@ -224,11 +250,62 @@ world.afterEvents.entityDie.subscribe((ev) => {
     }
 });
 world.afterEvents.itemCompleteUse.subscribe((ev) => {
-    if (ev.itemStack.typeId !== "minecraft:potion")
-        return;
     const s = peek(ev.source.id);
-    if (s && raceOf(s)?.key === "salamander")
+    const race = s && raceOf(s);
+    if (!s || !race)
+        return;
+    const typeId = ev.itemStack.typeId;
+    if (typeId === "minecraft:potion" && race.key === "salamander")
         salamanderDrink(ev.source, s);
+    if (race.onItemComplete) {
+        try {
+            race.onItemComplete(ev.source, s, typeId);
+        }
+        catch (e) {
+            warn("onItemComplete failed", e);
+        }
+    }
+});
+world.afterEvents.explosion.subscribe((ev) => {
+    let center;
+    try {
+        if (ev.source?.isValid)
+            center = ev.source.location;
+    }
+    catch {
+        center = undefined;
+    }
+    if (!center) {
+        try {
+            const blocks = ev.getImpactedBlocks().slice(0, 64);
+            if (blocks.length) {
+                const n = blocks.length;
+                center = blocks.reduce((a, b) => ({ x: a.x + b.location.x / n, y: a.y + b.location.y / n, z: a.z + b.location.z / n }), { x: 0, y: 0, z: 0 });
+            }
+        }
+        catch {
+            center = undefined;
+        }
+    }
+    if (!center)
+        return;
+    for (const p of players()) {
+        if (p.dimension.id !== ev.dimension.id)
+            continue;
+        const s = peek(p.id);
+        const race = s && raceOf(s);
+        if (!s || !race?.onExplosion)
+            continue;
+        const d = Math.hypot(p.location.x - center.x, p.location.y - center.y, p.location.z - center.z);
+        if (d > 14)
+            continue;
+        try {
+            race.onExplosion(p, s, d);
+        }
+        catch (e) {
+            warn("onExplosion failed", e);
+        }
+    }
 });
 world.afterEvents.weatherChange.subscribe((ev) => {
     if (ev.dimension === "minecraft:overworld" || ev.dimension === "overworld")
@@ -240,10 +317,14 @@ world.afterEvents.entitySpawn.subscribe((ev) => {
         return;
     for (const p of players()) {
         const s = peek(p.id);
-        if (!s || raceOf(s)?.key !== "golem" || p.dimension.id !== e.dimension.id)
+        const race = s && raceOf(s);
+        if (!s || !race || p.dimension.id !== e.dimension.id)
             continue;
         const d = Math.hypot(p.location.x - e.location.x, p.location.y - e.location.y, p.location.z - e.location.z);
-        golemLightning(p, s, d);
+        if (race.key === "golem")
+            golemLightning(p, s, d);
+        else if (race.onExplosion && d <= 12)
+            race.onExplosion(p, s, d);
     }
 });
 onBloodMoonChange(() => {
@@ -260,7 +341,7 @@ function reticle(p, s) {
     const a = selected(s, race);
     if (!a.needsTarget || !a.range)
         return;
-    const t = aimTarget(p, a.range, a.id === "carnivorous_embrace" ? 70 : a.id === "crimson_waltz" ? 60 : 14);
+    const t = aimTarget(p, a.range, a.cone ?? 14);
     if (t)
         privateParticle(p, "plrace:target_reticle", chest(t), rgb(RGB.green));
 }
@@ -274,6 +355,7 @@ function startLoops() {
             if (p)
                 tickChannel(p, s);
         }
+        tickProxies();
     }, 1);
     let phase = 0;
     system.runInterval(() => {
@@ -300,6 +382,16 @@ function startLoops() {
         if (phase % 2 === 0) {
             tickMarks();
             tickMirages();
+        }
+        for (const r of RACES) {
+            if (!r.worldTick4)
+                continue;
+            try {
+                r.worldTick4();
+            }
+            catch (e) {
+                warn(`${r.key} world tick failed`, e);
+            }
         }
     }, 4);
     system.runInterval(() => {
@@ -333,6 +425,8 @@ function startLoops() {
                 save(p, s);
         }
     }, SAVE_INTERVAL);
+    system.runTimeout(() => purgeOrphans(), 40);
+    system.runInterval(() => purgeOrphans(), 1200);
 }
 world.afterEvents.worldLoad.subscribe(() => {
     startLoops();

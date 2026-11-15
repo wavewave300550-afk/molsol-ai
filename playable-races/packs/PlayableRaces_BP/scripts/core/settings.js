@@ -1,7 +1,8 @@
 import { world } from "@minecraft/server";
 import { WORLD_SETTINGS } from "../config.js";
 import { safeJson, warn } from "./util.js";
-const DEFAULTS = { pvp: true, change: "cooldown", changeDays: 3, bloodChance: 34, bloodFog: true, autoOpen: true, hudAlways: false };
+const DEFAULTS = { pvp: true, change: "cooldown", changeDays: 3, bloodChance: 34, bloodFog: true, autoOpen: true, hudAlways: false,
+    uniqueExclusive: true };
 let cache;
 export function settings() {
     if (!cache) {

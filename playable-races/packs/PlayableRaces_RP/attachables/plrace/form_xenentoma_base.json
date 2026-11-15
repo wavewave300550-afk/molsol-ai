@@ -1,0 +1,103 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "plrace:form_xenentoma",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "cutout": "entity_alphatest",
+    "accent": "entity_alphatest"
+   },
+   "textures": {
+    "default": "textures/plrace/races/xenentoma/xenentoma_base"
+   },
+   "geometry": {
+    "default": "geometry.plrace.xenentoma.base",
+    "cutout": "geometry.plrace.xenentoma.base.cutout",
+    "accent": "geometry.plrace.xenentoma.base.accent"
+   },
+   "animations": {
+    "first_person": "animation.plrace.xenentoma.first_person",
+    "third_person": "animation.plrace.xenentoma.third_person",
+    "life": "animation.plrace.xenentoma.life",
+    "detail": "animation.plrace.xenentoma.detail",
+    "fidget": "controller.animation.plrace.xenentoma.fidget",
+    "locomotion": "animation.plrace.xenentoma.locomotion",
+    "airborne": "animation.plrace.xenentoma.airborne",
+    "landing": "controller.animation.plrace.xenentoma.landing",
+    "attack": "animation.plrace.xenentoma.attack",
+    "hurt": "animation.plrace.xenentoma.hurt",
+    "intro_base": "animation.plrace.xenentoma.intro_base",
+    "fx_base": "animation.plrace.xenentoma.fx_base",
+    "fidget_wait": "animation.plrace.xenentoma.fidget_wait",
+    "fidget_rest": "animation.plrace.xenentoma.fidget_rest",
+    "fidget_probe": "animation.plrace.xenentoma.fidget_probe",
+    "fidget_groom": "animation.plrace.xenentoma.fidget_groom",
+    "fidget_listen": "animation.plrace.xenentoma.fidget_listen",
+    "fidget_ripple": "animation.plrace.xenentoma.fidget_ripple",
+    "land": "animation.plrace.xenentoma.land",
+    "land_hard": "animation.plrace.xenentoma.land_hard"
+   },
+   "particle_effects": {
+    "motes": "plrace:sensilla_mote",
+    "senseping": "plrace:sensilla_ripple",
+    "fluid": "plrace:molt_fluid",
+    "strike": "plrace:surge_strike",
+    "stepdust": "plrace:step_dust",
+    "landdust": "plrace:land_dust"
+   },
+   "scripts": {
+    "pre_animation": [
+     "v.plr_ph = q.modified_distance_moved * 38.17;",
+     "v.plr_tc = math.cos(v.plr_ph) * q.modified_move_speed * 57.3;",
+     "v.plr_mv = math.clamp(q.modified_move_speed, 0, 1);",
+     "v.plr_still = 1 - math.clamp(q.modified_move_speed * 5, 0, 1);",
+     "v.plr_spr = q.is_sprinting ? 1 : 0;",
+     "v.plr_walk = 1 - v.plr_spr;",
+     "v.plr_bob = ((v.plr_walk) * (math.clamp(q.modified_move_speed / 0.8, 0, 1.25)) * ((-0.8538 + -0.8006 * math.cos(v.plr_ph * 2) + -0.02655 * math.sin(v.plr_ph * 4)) - (-0.040))) + ((v.plr_spr) * (v.plr_mv) * ((-1.29 + -1.227 * math.cos(v.plr_ph * 2) + -0.0267 * math.sin(v.plr_ph * 4)) - (-0.040)));"
+    ],
+    "animate": [
+     {
+      "first_person": "c.is_first_person"
+     },
+     {
+      "third_person": "!c.is_first_person"
+     },
+     {
+      "life": "!c.is_first_person"
+     },
+     "detail",
+     {
+      "fidget": "!c.is_first_person"
+     },
+     {
+      "locomotion": "!c.is_first_person && !q.is_riding && !q.is_gliding && !q.is_swimming"
+     },
+     {
+      "airborne": "!c.is_first_person && !q.is_on_ground && !q.is_in_water && !q.is_riding && !q.is_gliding"
+     },
+     {
+      "landing": "!c.is_first_person && !q.is_riding"
+     },
+     {
+      "attack": "!c.is_first_person"
+     },
+     {
+      "hurt": "!c.is_first_person && q.hurt_time > 0"
+     },
+     "intro_base",
+     {
+      "fx_base": "!c.is_first_person"
+     }
+    ]
+   },
+   "render_controllers": [
+    "controller.render.plrace.form",
+    "controller.render.plrace.form_cutout",
+    "controller.render.plrace.xenentoma_accent_c",
+    "controller.render.plrace.xenentoma_accent_l",
+    "controller.render.plrace.xenentoma_accent_f"
+   ]
+  }
+ }
+}

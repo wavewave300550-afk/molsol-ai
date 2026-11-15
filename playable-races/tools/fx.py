@@ -318,6 +318,39 @@ def particles() -> Dict[str, dict]:
         **bb(["(0.1 + v.particle_age * 0.22) * " + fade, "(0.1 + v.particle_age * 0.22) * " + fade], _uv("smoke")),
         "minecraft:particle_appearance_tinting": {"color": "#c09a9088"},
         "minecraft:particle_appearance_lighting": {}})
+    # ---- xenentoma (attachable + script) ----
+    add("sensilla_mote", "particles_add", {**burst(2), "minecraft:emitter_shape_sphere": {"radius": 0.12, "direction": "outwards"},
+        "minecraft:particle_initial_speed": 0.15, "minecraft:particle_lifetime_expression": {"max_lifetime": "0.9 + variable.particle_random_1 * 0.6"},
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, 0.25, 0], "linear_drag_coefficient": 1.5},
+        **bb(["0.045 * " + fade, "0.045 * " + fade], _uv("spark")),
+        "minecraft:particle_appearance_tinting": {"color": grad([(0.0, "#ffe9dcff"), (1.0, "#ff9a7ad8")])}})
+    add("sensilla_ripple", "particles_add", {**burst(1), "minecraft:emitter_shape_point": {},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": 0.5},
+        **bb(["0.1 + v.particle_age * 1.2", "0.1 + v.particle_age * 1.2"], _uv("ring")),
+        "minecraft:particle_appearance_tinting": {"color": grad([(0.0, "#ffd9c8ff"), (1.0, "#00a07ae0")])}})
+    add("vibration_ping", "particles_add", {**burst(1), "minecraft:emitter_shape_point": {},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": 0.9},
+        **bb(["0.25 + v.particle_age * 1.6", "0.25 + v.particle_age * 1.6"], _uv("ring"), "emitter_transform_xz"),
+        "minecraft:particle_appearance_tinting": {"color": grad([(0.0, "#fff4ecff"), (0.4, "#ffc0a4f2"), (1.0, "#00a07ae0")])}})
+    add("vibration_trace", "particles_add", {**burst(1), "minecraft:emitter_shape_point": {},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": 0.7},
+        **bb(["0.15 + v.particle_age * 0.9", "0.15 + v.particle_age * 0.9"], _uv("ring"), "emitter_transform_xz"),
+        "minecraft:particle_appearance_tinting": {"color": grad([(0.0, "#a08c78c0"), (1.0, "#005a4a80")])}})
+    add("molt_fluid", "particles_alpha", {**burst(3), "minecraft:emitter_shape_sphere": {"radius": 0.35},
+        "minecraft:particle_initial_speed": 0.2, "minecraft:particle_lifetime_expression": {"max_lifetime": 0.9},
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, -4.0, 0]},
+        **bb(["0.05", "0.07"], _uv("drop")), "minecraft:particle_appearance_tinting": {"color": "#ccdfc8f2"},
+        "minecraft:particle_appearance_lighting": {}})
+    add("chitin_shards", "particles_alpha", {**burst(16), "minecraft:emitter_shape_box": {"half_dimensions": [0.3, 0.8, 0.3], "direction": "outwards"},
+        "minecraft:particle_initial_speed": "1.6 + variable.particle_random_1 * 1.4", "minecraft:particle_lifetime_expression": {"max_lifetime": 1.1},
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, -9, 0], "linear_drag_coefficient": 0.6},
+        "minecraft:particle_initial_spin": {"rotation": "variable.particle_random_1 * 360", "rotation_rate": 360},
+        **bb(["0.11", "0.11"], _uv("shard")), "minecraft:particle_appearance_tinting": {"color": "#ffe6e0d2"},
+        "minecraft:particle_appearance_lighting": {}})
+    add("surge_strike", "particles_add", {**burst(6), "minecraft:emitter_shape_sphere": {"radius": 0.2, "direction": "outwards"},
+        "minecraft:particle_initial_speed": 2.2, "minecraft:particle_lifetime_expression": {"max_lifetime": 0.35},
+        "minecraft:particle_motion_dynamic": {"linear_drag_coefficient": 4},
+        **bb(["0.09", "0.09"], _uv("spark")), "minecraft:particle_appearance_tinting": {"color": "#ffd2b4ff"}})
     # ---- golem (script) ----
     add("shock_rupture", "particles_alpha", {**burst(9), "minecraft:emitter_shape_disc": {"radius": 0.7, "plane_normal": "y", "direction": [0, 1, 0]},
         "minecraft:particle_initial_speed": "3.2 + variable.particle_random_1 * 2", "minecraft:particle_lifetime_expression": {"max_lifetime": 0.8},

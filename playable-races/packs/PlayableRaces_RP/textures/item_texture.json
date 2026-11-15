@@ -11,6 +11,9 @@
   "plrace:crest_jackalope": {
    "textures": "textures/plrace/races/items/crest_jackalope"
   },
+  "plrace:crest_xenentoma": {
+   "textures": "textures/plrace/races/items/crest_xenentoma"
+  },
   "plrace:focus_salamander": {
    "textures": "textures/plrace/races/items/focus_salamander"
   },
@@ -19,6 +22,9 @@
   },
   "plrace:focus_jackalope": {
    "textures": "textures/plrace/races/items/focus_jackalope"
+  },
+  "plrace:focus_xenentoma": {
+   "textures": "textures/plrace/races/items/focus_xenentoma"
   },
   "plrace:codex": {
    "textures": "textures/plrace/races/items/codex"

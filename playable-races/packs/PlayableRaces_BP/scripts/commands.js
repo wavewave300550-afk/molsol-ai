@@ -2,6 +2,7 @@ import { CommandPermissionLevel, CustomCommandParamType, CustomCommandStatus, Pl
 import { resetCooldowns } from "./core/abilities.js";
 import { get, save } from "./core/session.js";
 import { assignRace, removeRace } from "./lineage.js";
+import { releaseCode, uniqueStatus } from "./systems/unique.js";
 import { RACES, raceByKey } from "./races/registry.js";
 import { bloodMoonStatus, end, forceNext, start } from "./systems/bloodmoon.js";
 import { openCodex } from "./ui/menu.js";
@@ -15,6 +16,7 @@ export function registerCommands(ev) {
     const reg = ev.customCommandRegistry;
     reg.registerEnum("plrace:race", [...RACES.map((r) => r.key), ...RACES.map((r) => r.code), "none"]);
     reg.registerEnum("plrace:moon_action", ["start", "stop", "next", "status"]);
+    reg.registerEnum("plrace:unique_action", ["status", "release"]);
     reg.registerCommand({ name: "plrace:codex", description: "Open the Lineage Codex (race selection and abilities)", permissionLevel: CommandPermissionLevel.Any }, (origin) => {
         const p = sourcePlayer(origin);
         if (!p)
@@ -24,7 +26,7 @@ export function registerCommands(ev) {
     });
     reg.registerCommand({
         name: "plrace:setrace",
-        description: "Set a player's lineage (001 salamander, 002 golem, 003 jackalope, none)",
+        description: "Set a player's lineage (001-006 or salamander, golem, jackalope, xenentoma, spaghetti, nurariten, none)",
         permissionLevel: CommandPermissionLevel.GameDirectors,
         mandatoryParameters: [{ name: "plrace:race", type: CustomCommandParamType.Enum }],
         optionalParameters: [{ name: "players", type: CustomCommandParamType.PlayerSelector }],
@@ -38,13 +40,15 @@ export function registerCommands(ev) {
             return bad(`Unknown race ${key}`);
         system.run(() => {
             for (const p of targets) {
-                if (race)
-                    assignRace(p, race.code);
+                if (race) {
+                    if (!assignRace(p, race.code))
+                        p.sendMessage(`§cCould not assign ${race.name} (Unique lineage already held? See /plrace:unique status).`);
+                }
                 else
                     removeRace(p);
             }
         });
-        return ok(`Lineage ${race ? race.name : "removed"} for ${targets.length} player(s).`);
+        return ok(`Lineage ${race ? race.name : "removed"} requested for ${targets.length} player(s).`);
     });
     reg.registerCommand({
         name: "plrace:resetcooldowns",
@@ -61,6 +65,24 @@ export function registerCommands(ev) {
             }
         });
         return ok(`Cooldowns reset for ${targets.length} player(s).`);
+    });
+    reg.registerCommand({
+        name: "plrace:unique",
+        description: "Unique lineages: status | release <race> (frees a Unique lineage held by an absent player)",
+        permissionLevel: CommandPermissionLevel.GameDirectors,
+        mandatoryParameters: [{ name: "plrace:unique_action", type: CustomCommandParamType.Enum }],
+        optionalParameters: [{ name: "plrace:race", type: CustomCommandParamType.Enum }],
+    }, (_origin, action, raceArg) => {
+        if (String(action) === "status")
+            return ok(uniqueStatus());
+        const race = raceArg === undefined ? undefined : raceByKey(String(raceArg));
+        if (!race)
+            return bad("Name the Unique lineage to release, e.g. /plrace:unique release nurariten");
+        let done = false;
+        system.run(() => {
+            done = releaseCode(race.code);
+        });
+        return ok(`${race.name}: claim released${done ? "" : " (if it was held)"}.`);
     });
     reg.registerCommand({
         name: "plrace:bloodmoon",

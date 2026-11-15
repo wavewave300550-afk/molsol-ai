@@ -326,6 +326,7 @@ export const golem: RaceDef = {
   ],
   abilities: [edict, bastion, dominion, reassembly],
   focusItem: "plrace:focus_golem",
+  focusName: "Rune Keystone Focus",
   variant(_p, s) {
     if (s.channel?.ability === "runic_bastion") return "bastion";
     if (disrupted(s)) return "disrupted";

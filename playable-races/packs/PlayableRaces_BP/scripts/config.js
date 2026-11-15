@@ -3,11 +3,18 @@ export const PROP_DATA = `${NS}:data`;
 export const WORLD_SETTINGS = `${NS}:settings`;
 export const WORLD_BLOODMOON = `${NS}:bloodmoon`;
 export const WORLD_WEATHER = `${NS}:weather`;
+export const WORLD_UNIQUE = `${NS}:unique`;
 export const ITEM_CODEX = `${NS}:codex`;
 export const TAG_FORM = `${NS}:form`;
 export const TAG_FOCUS = `${NS}:focus`;
 export const ENTITY_MIRAGE = `${NS}:velvet_mirage`;
 export const FAMILY_MIRAGE = `${NS}_mirage`;
+export const FAMILY_PROXY = `${NS}_proxy`;
+export const ENTITY_EXUVIA = `${NS}:exuvia`;
+export const ENTITY_MEATBALL = `${NS}:meatball`;
+export const ENTITY_GATE = `${NS}:celestial_gate`;
+export const ENTITY_HERALD = `${NS}:herald`;
+export const ENTITY_PROCESSION = `${NS}:procession`;
 export const FOG_BLOOD_MOON = `${NS}:blood_moon`;
 export const FOG_USER = `${NS}_bm`;
 export const TPS = 20;
@@ -32,8 +39,13 @@ export const PROTECTED_TYPES = [
     "minecraft:copper_golem",
     "minecraft:happy_ghast",
     ENTITY_MIRAGE,
+    ENTITY_EXUVIA,
+    ENTITY_MEATBALL,
+    ENTITY_GATE,
+    ENTITY_HERALD,
+    ENTITY_PROCESSION,
 ];
-export const PROTECTED_FAMILIES = ["inanimate", "villager", "npc", "projectile", FAMILY_MIRAGE];
+export const PROTECTED_FAMILIES = ["inanimate", "villager", "npc", "projectile", FAMILY_MIRAGE, FAMILY_PROXY];
 export const PHYSICAL_CAUSES = new Set([
     "entityAttack",
     "projectile",
@@ -49,3 +61,4 @@ export const PHYSICAL_CAUSES = new Set([
 ]);
 export const MAGIC_CAUSES = new Set(["magic", "lightning", "sonicBoom", "wither"]);
 export const FIRE_CAUSES = new Set(["fire", "fireTick", "lava", "magma", "campfire", "soulCampfire"]);
+export const EXPLOSION_CAUSES = new Set(["blockExplosion", "entityExplosion", "fireworks"]);

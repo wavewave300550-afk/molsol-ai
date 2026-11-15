@@ -1,5 +1,5 @@
 /**
- * Playable Races - Foundation Release (races 001-003).
+ * Playable Races (races 001-006).
  * Entry point: wires world events, the tick loops and the custom item components.
  * The vanilla player entity is NOT overridden; everything is driven from here.
  */
@@ -10,7 +10,7 @@ import { setWeather } from "./core/env.js";
 import { holdingFocus } from "./core/forms.js";
 import { privateParticle, rgb, RGB } from "./core/fx.js";
 import { updateHud } from "./core/hud.js";
-import { Session, all, drop, get, load, peek, save } from "./core/session.js";
+import { EndReason, Session, all, drop, get, load, peek, save } from "./core/session.js";
 import { settings } from "./core/settings.js";
 import { aimTarget, chest } from "./core/targets.js";
 import { cancel, startScheduler } from "./core/tasks.js";
@@ -23,7 +23,9 @@ import { cleanupEnsnared, salamanderDrink } from "./races/salamander.js";
 import { applyFog, bloodMoonTick, onBloodMoonChange } from "./systems/bloodmoon.js";
 import { consume, markedBy, tickMarks } from "./systems/marks.js";
 import { isMirage, pop, removeMiragesOf, tickMirages } from "./systems/mirage.js";
+import { isProxy, proxyDied, proxyHurt, purgeOrphans, removeProxiesOf, tickProxies } from "./systems/proxies.js";
 import { openCodex } from "./ui/menu.js";
+import { RACES } from "./races/registry.js";
 
 const INTERACTIVE = /(door|chest|barrel|button|lever|gate|table|furnace|smoker|anvil|shulker|bed|hopper|dispenser|dropper|crafter|lectern|loom|grindstone|stonecutter|cartography|smithing|brewing|beacon|bell|cake|noteblock|repeater|comparator|daylight|jukebox|campfire|composter|cauldron|respawn_anchor|lodestone|trapdoor|sign|frame|decorated_pot|chiseled_bookshelf|vault|trial_spawner)/;
 
@@ -37,6 +39,20 @@ function players(): Player[] {
 
 function playerById(id: string): Player | undefined {
   return players().find((p) => p.id === id);
+}
+
+/** Remove everything temporary a player's lineage created (summons, zones, states). */
+function releaseAll(id: string, reason: EndReason): void {
+  removeProxiesOf(id);
+  const s = peek(id);
+  const race = s && raceOf(s);
+  if (s && race?.release) {
+    try {
+      race.release(s, reason);
+    } catch (e) {
+      warn("race release failed", e);
+    }
+  }
 }
 
 // ------------------------------------------------------------------ input
@@ -154,6 +170,7 @@ world.beforeEvents.playerLeave.subscribe((ev) => {
       s.channel = undefined; // locks are restored on next join from persisted data
       cancel(id);
       removeMiragesOf(id);
+      releaseAll(id, "leave");
       drop(id);
     }
   });
@@ -164,6 +181,7 @@ world.afterEvents.playerDimensionChange.subscribe((ev) => {
   const s = get(p);
   if (s.channel) endChannel(p, s, "dimension");
   cancel(p.id);
+  releaseAll(p.id, "dimension");
   system.runTimeout(() => {
     if (!p.isValid) return;
     applyFog(p);
@@ -191,6 +209,10 @@ world.beforeEvents.entityHurt.subscribe((ev: EntityHurtBeforeEvent) => {
 
 world.afterEvents.entityHurt.subscribe((ev) => {
   const e = ev.hurtEntity;
+  if (isProxy(e)) {
+    proxyHurt(e, ev.damage, ev.damageSource.damagingEntity);
+    return;
+  }
   if (e.typeId === ENTITY_MIRAGE) {
     pop(e, true, playerById, ev.damageSource.damagingEntity);
     return;
@@ -218,7 +240,12 @@ world.afterEvents.entityDie.subscribe((ev) => {
       s.tempVariant = undefined;
       s.flags.clear();
       removeMiragesOf(e.id);
+      releaseAll(e.id, "death");
     }
+    return;
+  }
+  if (isProxy(e)) {
+    proxyDied(e);
     return;
   }
   if (isMirage(e)) return;
@@ -232,9 +259,53 @@ world.afterEvents.entityDie.subscribe((ev) => {
 });
 
 world.afterEvents.itemCompleteUse.subscribe((ev) => {
-  if (ev.itemStack.typeId !== "minecraft:potion") return;
   const s = peek(ev.source.id);
-  if (s && raceOf(s)?.key === "salamander") salamanderDrink(ev.source, s);
+  const race = s && raceOf(s);
+  if (!s || !race) return;
+  const typeId = ev.itemStack.typeId;
+  if (typeId === "minecraft:potion" && race.key === "salamander") salamanderDrink(ev.source, s);
+  if (race.onItemComplete) {
+    try {
+      race.onItemComplete(ev.source, s, typeId);
+    } catch (e) {
+      warn("onItemComplete failed", e);
+    }
+  }
+});
+
+/** Explosions shake nearby players (Xenentoma's senses are overwhelmed by them). */
+world.afterEvents.explosion.subscribe((ev) => {
+  let center: { x: number; y: number; z: number } | undefined;
+  try {
+    if (ev.source?.isValid) center = ev.source.location;
+  } catch {
+    center = undefined;
+  }
+  if (!center) {
+    try {
+      const blocks = ev.getImpactedBlocks().slice(0, 64);
+      if (blocks.length) {
+        const n = blocks.length;
+        center = blocks.reduce((a, b) => ({ x: a.x + b.location.x / n, y: a.y + b.location.y / n, z: a.z + b.location.z / n }), { x: 0, y: 0, z: 0 });
+      }
+    } catch {
+      center = undefined;
+    }
+  }
+  if (!center) return;
+  for (const p of players()) {
+    if (p.dimension.id !== ev.dimension.id) continue;
+    const s = peek(p.id);
+    const race = s && raceOf(s);
+    if (!s || !race?.onExplosion) continue;
+    const d = Math.hypot(p.location.x - center.x, p.location.y - center.y, p.location.z - center.z);
+    if (d > 14) continue;
+    try {
+      race.onExplosion(p, s, d);
+    } catch (e) {
+      warn("onExplosion failed", e);
+    }
+  }
 });
 
 world.afterEvents.weatherChange.subscribe((ev) => {
@@ -246,9 +317,11 @@ world.afterEvents.entitySpawn.subscribe((ev) => {
   if (!e.isValid || e.typeId !== "minecraft:lightning_bolt") return;
   for (const p of players()) {
     const s = peek(p.id);
-    if (!s || raceOf(s)?.key !== "golem" || p.dimension.id !== e.dimension.id) continue;
+    const race = s && raceOf(s);
+    if (!s || !race || p.dimension.id !== e.dimension.id) continue;
     const d = Math.hypot(p.location.x - e.location.x, p.location.y - e.location.y, p.location.z - e.location.z);
-    golemLightning(p, s, d);
+    if (race.key === "golem") golemLightning(p, s, d);
+    else if (race.onExplosion && d <= 12) race.onExplosion(p, s, d); // thunder shakes the ground like a blast
   }
 });
 
@@ -266,7 +339,7 @@ function reticle(p: Player, s: Session): void {
   if (!race) return;
   const a = selected(s, race);
   if (!a.needsTarget || !a.range) return;
-  const t = aimTarget(p, a.range, a.id === "carnivorous_embrace" ? 70 : a.id === "crimson_waltz" ? 60 : 14);
+  const t = aimTarget(p, a.range, a.cone ?? 14);
   if (t) privateParticle(p, "plrace:target_reticle", chest(t), rgb(RGB.green));
 }
 
@@ -278,6 +351,7 @@ function startLoops(): void {
       const p = playerById(s.id);
       if (p) tickChannel(p, s);
     }
+    tickProxies();
   }, 1);
   let phase = 0;
   system.runInterval(() => {
@@ -299,6 +373,14 @@ function startLoops(): void {
     if (phase % 2 === 0) {
       tickMarks();
       tickMirages();
+    }
+    for (const r of RACES) {
+      if (!r.worldTick4) continue;
+      try {
+        r.worldTick4();
+      } catch (e) {
+        warn(`${r.key} world tick failed`, e);
+      }
     }
   }, 4);
   system.runInterval(() => {
@@ -328,6 +410,9 @@ function startLoops(): void {
       if (s) save(p, s);
     }
   }, SAVE_INTERVAL);
+  // helper entities left over from a reload or crash (each also despawns itself on a timer)
+  system.runTimeout(() => purgeOrphans(), 40);
+  system.runInterval(() => purgeOrphans(), 1200);
 }
 
 world.afterEvents.worldLoad.subscribe(() => {

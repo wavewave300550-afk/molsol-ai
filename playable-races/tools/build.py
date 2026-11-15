@@ -27,7 +27,8 @@ from kit.render import render  # noqa: E402
 from anims import core as acore  # noqa: E402
 from anims import races as aset  # noqa: E402
 from anims import life  # noqa: E402
-from models import salamander, golem, jackalope, common  # noqa: E402
+from models import salamander, golem, jackalope, xenentoma, common  # noqa: E402
+from anims import xenentoma as anim_xenentoma  # noqa: E402
 import fx  # noqa: E402
 
 NS = "plrace"
@@ -50,19 +51,44 @@ RP = os.path.join(PACKS, RP_NAME)
 DIST = os.path.join(ROOT, "dist")
 TEXROOT = "textures/plrace/races"
 
+# One entry per race.  Codes and keys are permanent (worlds store them); a new race is a
+# model module, an animation set, a RaceDef in src/races and one entry here.
 RACES = {
-    "salamander": {"code": "001", "mod": salamander, "bounds": (3.2, 3.2, (0, 1.2, 0.4)), "fx_bones": None},
-    "golem": {"code": "002", "mod": golem, "bounds": (4.6, 4.2, (0, 1.6, 0)), "fx_bones": None},
-    "jackalope": {"code": "003", "mod": jackalope, "bounds": (3.0, 3.2, (0, 1.2, 0)), "fx_bones": None},
+    "salamander": {
+        "code": "001", "mod": salamander, "anims": lambda m: aset.salamander(m), "bounds": (3.2, 3.2, (0, 1.2, 0.4)),
+        "display": "Aberrant Flora Salamander", "protection": 2, "hover": "green", "focus": ("Dewheart Focus", "green"),
+        "variants": {"base": "Stable", "bloom": "Blooming", "dormant": "Dormant", "predatory": "Predatory", "rooted": "Rooted"},
+        "icon": {"variant": "bloom", "tex": "bloom", "head": ((0, 27.5, -2), 4.3), "body": ((0, 19, 3), 5.4)},
+        "portrait_bg": (24, 58, 30)},
+    "golem": {
+        "code": "002", "mod": golem, "anims": lambda m: aset.golem(m, list(golem.MOVABLE)), "bounds": (4.6, 4.2, (0, 1.6, 0)),
+        "display": "Runic Titan Golem", "protection": 3, "hover": "gold", "focus": ("Rune Keystone Focus", "gold"),
+        "variants": {"base": "Aligned", "siege": "Siege Configuration", "bastion": "Bastion Configuration",
+                     "arcane": "Arcane Configuration", "scattered": "Reassembling", "disrupted": "Disrupted"},
+        "icon": {"variant": "base", "tex": "base", "head": ((0, 37.5, 0), 3.7), "body": ((0, 22, 0), 4.7)},
+        "portrait_bg": (52, 40, 18)},
+    "jackalope": {
+        "code": "003", "mod": jackalope, "anims": lambda m: aset.jackalope(m), "bounds": (3.0, 3.2, (0, 1.2, 0)),
+        "display": "Blood Moon Jackalope", "protection": 1, "hover": "red", "focus": ("Moonbone Focus", "red"),
+        "variants": {"base": "Ordinary Lunar", "hunt": "Hunting", "awakened": "Blood Moon Awakened",
+                     "awakened_hunt": "Blood Moon Hunt"},
+        "icon": {"variant": "awakened", "tex": "awakened", "head": ((0, 28.5, -1), 3.4), "body": ((0, 19, 0), 5.8)},
+        "portrait_bg": (46, 14, 26)},
+    "xenentoma": {
+        "code": "004", "mod": xenentoma, "anims": anim_xenentoma.anims, "bounds": (3.8, 3.8, (0, 1.3, 0.5)),
+        "display": "Xenentoma", "protection": 2, "hover": "light_purple", "focus": ("Sensillum Focus", "light_purple"),
+        "variants": {"base": "Listening", "survey": "Foretarsal Survey", "glide": "Interstitial Glide",
+                     "surge": "Anamorphic Surge", "teneral": "Freshly Moulted"},
+        "icon": {"variant": "survey", "tex": "sense", "head": ((0, 27.5, -3), 3.6), "body": ((0, 18, 3), 4.6)},
+        "portrait_bg": (40, 30, 58)},
 }
-DISPLAY = {"salamander": "Aberrant Flora Salamander", "golem": "Runic Titan Golem", "jackalope": "Blood Moon Jackalope"}
-VARIANT_NAMES = {
-    "salamander": {"base": "Stable", "bloom": "Blooming", "dormant": "Dormant", "predatory": "Predatory", "rooted": "Rooted"},
-    "golem": {"base": "Aligned", "siege": "Siege Configuration", "bastion": "Bastion Configuration",
-              "arcane": "Arcane Configuration", "scattered": "Reassembling", "disrupted": "Disrupted"},
-    "jackalope": {"base": "Ordinary Lunar", "hunt": "Hunting", "awakened": "Blood Moon Awakened",
-                  "awakened_hunt": "Blood Moon Hunt"},
-}
+DISPLAY = {race: info["display"] for race, info in RACES.items()}
+VARIANT_NAMES = {race: info["variants"] for race, info in RACES.items()}
+
+
+def crest_variants(race):
+    mod = RACES[race]["mod"]
+    return [v for v in mod.VARIANTS if v not in getattr(mod, "ENTITY_ONLY", set())]
 ARMOR_TINT = [  # (item-name fragment, rgb) for armour assimilation accents
     ("leather", (0.62, 0.42, 0.26)), ("chainmail", (0.62, 0.64, 0.68)), ("golden", (1.0, 0.82, 0.30)),
     ("diamond", (0.36, 0.90, 0.86)), ("netherite", (0.30, 0.26, 0.29)), ("copper", (0.86, 0.52, 0.34)),
@@ -115,12 +141,7 @@ def build_races(report):
         report.append(f"{race}: atlas {model.tex_w}x{model.tex_h}, base form {nb} bones / {nc} cubes, "
                       f"{len(mod.VARIANTS)} variants, {len(mod.TEXTURES)} texture sets")
         # animations
-        if race == "salamander":
-            A = aset.salamander(model)
-        elif race == "golem":
-            A = aset.golem(model, list(golem.MOVABLE))
-        else:
-            A = aset.jackalope(model)
+        A = info["anims"](model)
         wjson(os.path.join(RP, f"animations/plrace/{race}.animation.json"), life.compact(acore.file(A["anims"])))
         if A["controllers"]:
             wjson(os.path.join(RP, f"animation_controllers/plrace/{race}.ac.json"),
@@ -129,8 +150,8 @@ def build_races(report):
         short = {a.name.split(f"animation.{NS}.{race}.")[1]: a.name for a in A["anims"]}
         for cid in A["controllers"]:
             short[cid.split(".")[-1]] = cid
-        # attachables (one per form item)
-        for v in mod.VARIANTS:
+        # attachables (one per form item; entity-only variants are geometry for helper entities)
+        for v in crest_variants(race):
             iid = item_id(race, v)
             gid = f"geometry.{NS}.{race}.{v}"
             geometry = {"default": gid}
@@ -223,7 +244,7 @@ def _tint_expr(slot):
 def form_hidden_expr():
     """Client-side test 'a race form crest is worn'. Uses explicit item names (always known
     to clients); regenerated automatically when future races add crest items."""
-    names = [item_id(r, v) for r, info in RACES.items() for v in info["mod"].VARIANTS]
+    names = [item_id(r, v) for r in RACES for v in crest_variants(r)]
     return "query.is_item_name_any('slot.armor.head', 0, " + ", ".join(f"'{n}'" for n in names) + ")"
 
 
@@ -260,8 +281,7 @@ def player_overrides():
 def items(lang):
     out = {}
     for race, info in RACES.items():
-        mod = info["mod"]
-        for v in mod.VARIANTS:
+        for v in crest_variants(race):
             iid = item_id(race, v)
             out[iid] = {"format_version": "1.21.90", "minecraft:item": {
                 "description": {"identifier": iid, "menu_category": {"category": "none", "is_hidden_in_commands": True}},
@@ -269,14 +289,13 @@ def items(lang):
                     "minecraft:icon": f"{NS}:crest_{race}",
                     "minecraft:display_name": {"value": f"item.{iid}"},
                     "minecraft:max_stack_size": 1,
-                    "minecraft:wearable": {"slot": "slot.armor.head", "protection": {"salamander": 2, "golem": 3, "jackalope": 1}[race]},
+                    "minecraft:wearable": {"slot": "slot.armor.head", "protection": info["protection"]},
                     "minecraft:enchantable": {"slot": "armor_head", "value": 10},
                     "minecraft:tags": {"tags": [f"{NS}:form", f"{NS}:form_{info['code']}", f"{NS}:form_{race}"]},
-                    "minecraft:hover_text_color": {"salamander": "green", "golem": "gold", "jackalope": "red"}[race],
+                    "minecraft:hover_text_color": info["hover"],
                 }}}
-    focus = {"salamander": ("Dewheart Focus", "green"), "golem": ("Rune Keystone Focus", "gold"),
-             "jackalope": ("Moonbone Focus", "red")}
-    for race, (name, col) in focus.items():
+    for race, info in RACES.items():
+        name, col = info["focus"]
         iid = f"{NS}:focus_{race}"
         out[iid] = {"format_version": "1.21.90", "minecraft:item": {
             "description": {"identifier": iid, "menu_category": {"category": "equipment", "is_hidden_in_commands": False}},
@@ -381,6 +400,68 @@ def mirage_entity(lang):
     out.save(os.path.join(RP, f"{TEXROOT}/jackalope/jackalope_mirage.png"))
 
 
+def proxy_entity(lang, ident, name, geometry, texture, anims, families, health=1, size=(0.6, 1.6), timer=30,
+                 physics=True, gravity=True, materials=None, scale_events=None, particles=None, extra=None):
+    """A script-owned helper entity: no AI, no drops, no XP, a behaviour-pack timer that
+    despawns it on its own (safety net), visual only unless `health` > 1."""
+    comps = {
+        "minecraft:type_family": {"family": [f"{NS}_proxy"] + list(families)},
+        "minecraft:health": {"value": health, "max": health},
+        "minecraft:collision_box": {"width": size[0], "height": size[1]},
+        "minecraft:physics": {"has_gravity": gravity, "has_collision": physics},
+        "minecraft:pushable": {"is_pushable": False, "is_pushable_by_piston": False},
+        "minecraft:knockback_resistance": {"value": 1.0},
+        "minecraft:fire_immune": {},
+        "minecraft:breathable": {"total_supply": 15, "suffocate_time": 0, "breathes_water": True},
+        "minecraft:loot": {"table": "loot_tables/empty.json"},
+        "minecraft:experience_reward": {"on_death": "0"},
+        "minecraft:conditional_bandwidth_optimization": {},
+        "minecraft:timer": {"time": timer, "looping": False, "time_down_event": {"event": f"{NS}:expire"}},
+        "minecraft:damage_sensor": {"triggers": [{"cause": c, "deals_damage": "no"} for c in ("fall", "suffocation", "drowning", "fire", "fire_tick", "lava")]
+                                    if health > 1 else [{"cause": "all", "deals_damage": "no"}]},
+    }
+    comps.update(extra or {})
+    groups = {f"{NS}:expire": {"minecraft:instant_despawn": {}}}
+    events = {f"{NS}:expire": {"add": {"component_groups": [f"{NS}:expire"]}}}
+    for ev, sc in (scale_events or {}).items():
+        groups[f"{NS}:{ev}"] = {"minecraft:scale": {"value": sc}}
+        events[f"{NS}:{ev}"] = {"add": {"component_groups": [f"{NS}:{ev}"]}}
+    bp = {"format_version": "1.21.90", "minecraft:entity": {
+        "description": {"identifier": ident, "is_spawnable": False, "is_summonable": True},
+        "component_groups": groups, "components": comps, "events": events}}
+    short = ident.split(":")[1]
+    wjson(os.path.join(BP, f"entities/plrace/{short}.json"), bp)
+    rcs = [f"controller.render.{NS}.form"] + ([f"controller.render.{NS}.form_cutout"] if "cutout" in geometry else [])
+    rp = {"format_version": "1.10.0", "minecraft:client_entity": {"description": {
+        "identifier": ident,
+        "materials": materials or {"default": "entity_emissive_alpha", "cutout": "entity_alphatest"},
+        "textures": {"default": texture},
+        "geometry": geometry,
+        "animations": {k: v for k, v in anims.items()},
+        "scripts": {"animate": list(anims.keys())},
+        "particle_effects": particles or {},
+        "render_controllers": rcs,
+        "enable_attachables": False}}}
+    wjson(os.path.join(RP, f"entity/plrace/{short}.entity.json"), rp)
+    lang.append((f"entity.{ident}.name", name))
+
+
+def race_entities(lang):
+    """Helper entities of races 004+ (shells, meatballs, gates, heralds, processions)."""
+    # Xenentoma: the shed exuvia (a decoy that keeps the creature's shape)
+    a = acore.Anim(f"animation.{NS}.exuvia.settle", loop="hold", length=6.0)
+    a.bone("body", rot={0.0: [0, 0, 0], 0.4: [6, 0, 0], 6.0: [14, 0, 2]})
+    a.bone("thorax", pos={0.0: [0, 0, 0], 6.0: [0, -0.8, 0]})
+    a.bone("head", rot={0.0: [0, 0, 0], 1.0: [10, 0, 0], 6.0: [26, 0, -4]})
+    for b in common.FIRST_PERSON_ONLY:
+        a.bone(b, scale=0)
+    wjson(os.path.join(RP, "animations/plrace/exuvia.animation.json"), acore.file([a]))
+    proxy_entity(lang, f"{NS}:exuvia", "Shed Exuvia",
+                 {"default": f"geometry.{NS}.xenentoma.exuvia", "cutout": f"geometry.{NS}.xenentoma.exuvia.cutout"},
+                 f"{TEXROOT}/xenentoma/xenentoma_exuvia", {"settle": f"animation.{NS}.exuvia.settle"},
+                 [f"{NS}_decoy", "player", "mob"], health=16, size=(0.6, 1.6), timer=16, physics=True)
+
+
 def mirage_render_controllers(rc):
     rc["render_controllers"][f"controller.render.{NS}.mirage"] = {
         "geometry": "Geometry.default", "materials": [{"*": "Material.default"}], "textures": ["Texture.default"],
@@ -395,14 +476,15 @@ def mirage_render_controllers(rc):
 def _render_icon(race, size, yaw=28, pitch=12, focus="head"):
     info = RACES[race]
     model = info["model"]
-    tex = info["tex_img"][{"salamander": "bloom", "golem": "base", "jackalope": "awakened"}[race]]
-    v = {"salamander": "bloom", "golem": "base", "jackalope": "awakened"}[race]
+    ic = info["icon"]
+    tex = info["tex_img"][ic["tex"]]
+    v = ic["variant"]
     if focus == "head":
-        center = {"salamander": (0, 27.5, -2), "golem": (0, 37.5, 0), "jackalope": (0, 28.5, -1)}[race]
-        scale = {"salamander": 4.3, "golem": 3.7, "jackalope": 3.4}[race] * size / 32
+        center, k = ic["head"]
+        scale = k * size / 32
     else:
-        center = {"salamander": (0, 19, 3), "golem": (0, 22, 0), "jackalope": (0, 19, 0)}[race]
-        scale = {"salamander": 5.4, "golem": 4.7, "jackalope": 5.8}[race] * size / 128
+        center, k = ic["body"]
+        scale = k * size / 128
     img = render(model, tex, variant=v, yaw=yaw, pitch=pitch, size=(size * 2, size * 2), scale=scale,
                  center=center, ss=2, bg=(0, 0, 0), bloom=False, ground=False, hide=["r_arm_fp", "l_arm_fp"])
     return img
@@ -433,7 +515,7 @@ def icons():
         # UI portraits for the lineage selection forms
         por = _render_icon(race, 128, yaw=24, pitch=8, focus="body")
         por = _key_out_black(por).resize((128, 128), Image.LANCZOS)
-        bgc = {"salamander": (24, 58, 30), "golem": (52, 40, 18), "jackalope": (46, 14, 26)}[race]
+        bgc = info["portrait_bg"]
         bg = Image.new("RGBA", (128, 128), bgc + (255,))
         g = Image.new("L", (128, 128), 0)
         ImageDraw.Draw(g).ellipse([8, 8, 120, 120], fill=150)
@@ -493,6 +575,17 @@ def _focus_icons():
     d.ellipse([9 * S, 17 * S, 15 * S, 23 * S], fill=(210, 20, 40, 255))
     d.ellipse([10 * S, 18 * S, 12 * S, 20 * S], fill=(255, 160, 170, 255))
     out["jackalope"] = _finish(img)
+    # Sensillum: a pale chitin rod ending in a fan of glowing sensory hairs
+    img, d, S = _pix()
+    d.polygon([(6 * S, 27 * S), (9 * S, 27 * S), (19 * S, 12 * S), (16 * S, 11 * S)], fill=(226, 220, 206, 255))
+    for k, (x, y) in enumerate(((10, 23), (13, 18.5), (16, 14))):
+        d.ellipse([(x - 1.6) * S, (y - 1.6) * S, (x + 1.6) * S, (y + 1.6) * S], fill=(140, 118, 176, 255))
+    for k in range(7):
+        a = -2.3 + k * 0.32
+        x2, y2 = 18 * S + math.cos(a) * 11 * S, 11 * S + math.sin(a) * 11 * S
+        d.line([18 * S, 11 * S, x2, y2], fill=(222, 204, 255, 255), width=int(0.9 * S))
+        d.ellipse([x2 - S, y2 - S, x2 + S, y2 + S], fill=(250, 238, 255, 255))
+    out["xenentoma"] = _finish(img)
     return out
 
 
@@ -623,6 +716,7 @@ def main():
     lang_rp, _ = build_races(report)
     rc = render_controllers()
     mirage_entity(lang_rp)
+    race_entities(lang_rp)
     mirage_render_controllers(rc)
     wjson(os.path.join(RP, "render_controllers/plrace/forms.render_controllers.json"), rc)
     prc, arc = player_overrides()

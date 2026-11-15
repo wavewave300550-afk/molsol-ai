@@ -6,10 +6,18 @@ import { captureEnchantments, headItem, isCrest } from "../core/forms.js";
 import { get, save } from "../core/session.js";
 import { ChangePolicy, settings, updateSettings } from "../core/settings.js";
 import { warn } from "../core/util.js";
-import { assignRace, changeBlocked, giveFocus, isOperator, removeRace, setVeiled } from "../lineage.js";
+import { assignRace, changeBlocked, giveFocus, isOperator, raceBlocked, removeRace, setVeiled } from "../lineage.js";
 import { RACES, raceByCode } from "../races/registry.js";
 import { RaceDef } from "../races/types.js";
 import { bloodMoonStatus } from "../systems/bloodmoon.js";
+import { holderOf, isUnique, uniqueStatus } from "../systems/unique.js";
+
+const UNIQUE_TAG = "§6§l✦ UNIQUE ✦§r";
+
+function raceButton(r: RaceDef): string {
+  const tag = isUnique(r) ? ` ${UNIQUE_TAG}` : "";
+  return `${r.color}§l${r.name}${tag}\n§r§8Race ${r.code} - ${r.title}`;
+}
 
 const PORTRAIT = (r: RaceDef) => `textures/plrace/races/ui/portrait_${r.code}`;
 
@@ -52,7 +60,7 @@ export async function openCodex(p: Player, retries = 0): Promise<void> {
     actions.push(() => raceDetail(p, race, false));
   } else {
     f.body("§7You have not chosen a lineage.\nEach lineage reshapes your body, grants four abilities and changes how the world treats you.\n\n§fChoose carefully - changing later requires the Rite of Unbecoming.");
-    f.button("§l§2Choose a Lineage\n§r§8three races await", "textures/plrace/races/items/codex");
+    f.button(`§l§2Choose a Lineage\n§r§8${RACES.length} lineages await`, "textures/plrace/races/items/codex");
     actions.push(() => chooseRace(p));
   }
   f.button("§lAbilities & Controls\n§r§8how to cast, cooldowns", "textures/plrace/races/items/focus_jackalope");
@@ -89,7 +97,7 @@ export async function openCodex(p: Player, retries = 0): Promise<void> {
 export async function chooseRace(p: Player, browseOnly = false): Promise<void> {
   const f = new ActionFormData().title(browseOnly ? "§lLineage Archive" : "§lChoose your Lineage");
   f.body(browseOnly ? "§7The known lineages of this world." : "§7Select a lineage to read about it. You will be asked to confirm before anything changes.");
-  for (const r of RACES) f.button(`${r.color}§l${r.name}\n§r§8Race ${r.code} - ${r.title}`, PORTRAIT(r));
+  for (const r of RACES) f.button(raceButton(r), PORTRAIT(r));
   const sel = await showAction(p, f);
   if (sel === undefined) return;
   await raceDetail(p, RACES[sel], !browseOnly);
@@ -97,6 +105,13 @@ export async function chooseRace(p: Player, browseOnly = false): Promise<void> {
 
 function detailText(r: RaceDef): string {
   const lines: string[] = [];
+  if (isUnique(r)) {
+    lines.push(UNIQUE_TAG, "§7A Unique lineage: more elaborate systems, a signature ultimate ability and a presence the world reacts to." +
+      (settings().uniqueExclusive ? " §eOnly one player in this world may hold it at a time." : ""));
+    const h = holderOf(r.code);
+    if (h && settings().uniqueExclusive) lines.push(`§6Current holder: §f${h.name}`);
+    lines.push("");
+  }
   lines.push(`§o§7${r.tagline}§r`);
   lines.push("");
   for (const para of r.lore) lines.push(`§f${para}`, "");
@@ -108,7 +123,8 @@ function detailText(r: RaceDef): string {
   for (const x of r.passives) lines.push(`§e${x.name}: §7${x.desc}`);
   lines.push("", "§d§lAbilities§r");
   r.abilities.forEach((a, i) => {
-    lines.push(`§d${i + 1}. ${a.name} §7(${a.cooldown}s${a.charges || a.maxCharges ? ", charges" : ""})`);
+    const head = a.ultimate ? `§6§l${i + 1}. ${a.name} §r§6[UNIQUE ULTIMATE]` : `§d${i + 1}. ${a.name}`;
+    lines.push(`${head} §7(${a.cooldown}s${a.charges || a.maxCharges ? ", charges" : ""})`);
     lines.push(`§7${a.desc}`);
   });
   return lines.join("\n");
@@ -119,9 +135,13 @@ async function raceDetail(p: Player, r: RaceDef, offerChoose: boolean): Promise<
   const f = new ActionFormData().title(`${r.color}§l${r.name}`).body(detailText(r));
   const acts: (() => Promise<void> | void)[] = [];
   const mine = s.data.race === r.code;
-  if (offerChoose && !mine) {
+  const held = raceBlocked(p, r);
+  if (offerChoose && !mine && !held) {
     f.button(`${r.color}§lBecome the ${r.name}`, PORTRAIT(r));
     acts.push(() => confirmChoice(p, r));
+  } else if (offerChoose && !mine && held) {
+    f.button(`§8${r.name}\n§8already held by another player`, PORTRAIT(r));
+    acts.push(() => p.sendMessage(`§c${held}`));
   }
   f.button("§lBack");
   acts.push(() => (offerChoose ? chooseRace(p) : openCodex(p)));
@@ -132,7 +152,7 @@ async function raceDetail(p: Player, r: RaceDef, offerChoose: boolean): Promise<
 
 async function confirmChoice(p: Player, r: RaceDef): Promise<void> {
   const s = get(p);
-  const blocked = changeBlocked(p, s);
+  const blocked = changeBlocked(p, s) ?? raceBlocked(p, r);
   if (blocked) {
     p.sendMessage(`§c${blocked}`);
     return;
@@ -141,7 +161,7 @@ async function confirmChoice(p: Player, r: RaceDef): Promise<void> {
   const policy = set.change === "free" ? "You may change again at any time." : set.change === "cooldown" ? `After this, the Rite of Unbecoming waits ${set.changeDays} in-game days.` : "Only operators can change it afterwards.";
   const m = new MessageFormData()
     .title(`${r.color}§lEmbrace the ${r.name}?`)
-    .body(`§fYour body will become a ${r.name} (Race ${r.code}).\n\n§7You receive a §f${r.focusItem === "plrace:focus_salamander" ? "Dewheart" : r.focusItem === "plrace:focus_golem" ? "Rune Keystone" : "Moonbone"} Focus§7 to cast abilities, and your racial form is worn as a locked crest in your helmet slot.\n\n§e${policy}`)
+    .body(`§fYour body will become a ${r.name} (Race ${r.code}).${isUnique(r) ? `\n${UNIQUE_TAG}${settings().uniqueExclusive ? " §7While you hold it, no one else in this world can." : ""}` : ""}\n\n§7You receive a §f${r.focusName}§7 to cast abilities, and your racial form is worn as a locked crest in your helmet slot.\n\n§e${policy}`)
     .button1("§l§2Embrace")
     .button2("§lNot yet");
   s.menuOpen = true;
@@ -154,8 +174,8 @@ async function confirmChoice(p: Player, r: RaceDef): Promise<void> {
     s.menuOpen = false;
   }
   if (res.canceled || res.selection !== 0) return;
-  if (changeBlocked(p, s)) return;
-  assignRace(p, r.code);
+  if (changeBlocked(p, s) || raceBlocked(p, r)) return;
+  if (!assignRace(p, r.code)) return;
   p.sendMessage(`${r.color}You are now a ${r.name}. §7Hold your focus: USE casts, SNEAK + USE switches ability.`);
 }
 
@@ -167,7 +187,7 @@ async function unbecoming(p: Player): Promise<void> {
     return;
   }
   const f = new ActionFormData().title("§lRite of Unbecoming").body("§7Choose a new lineage, or return to an ordinary body. Cooldowns and race resources reset.");
-  for (const r of RACES) if (r.code !== s.data.race) f.button(`${r.color}${r.name}`, PORTRAIT(r));
+  for (const r of RACES) if (r.code !== s.data.race) f.button(`${r.color}${r.name}${isUnique(r) ? " §6✦" : ""}${raceBlocked(p, r) ? "\n§8held by another player" : ""}`, PORTRAIT(r));
   f.button("§7Return to an ordinary body");
   const others = RACES.filter((r) => r.code !== s.data.race);
   const sel = await showAction(p, f);
@@ -193,14 +213,13 @@ async function controls(p: Player): Promise<void> {
     "§7Targeted abilities show a reticle on the creature they will hit while you hold the focus. Failed casts (no target, conditions unmet) never spend the cooldown.",
     "",
     "§l§fOther controls§r",
-    "§7Salamander: §fJUMP§7 uproots Root Metamorphosis early.",
-    "§7Jackalope: §fsneak and stand still§7 for 1 s to Thump & Listen.",
-    "§7Any channelled ability ends if you use the same ability again.",
+    ...RACES.flatMap((r) => (r.controls ?? []).map((c) => `§7${c}`)),
+    "§7Root Metamorphosis and Runic Bastion end early if you use them again (after 0.6 s).",
     "§7Commands: §f/plrace:codex§7 opens this book anywhere.",
   ];
   if (race) {
     lines.push("", `${race.color}§l${race.name} abilities§r`);
-    race.abilities.forEach((a, i) => lines.push(`${race.color}${i + 1}. ${a.name} §7- ${a.cooldown}s`, `§7${a.desc}`, `§8Original brief: ${a.original ?? "-"}`));
+    race.abilities.forEach((a, i) => lines.push(`${a.ultimate ? "§6§l" : race.color}${i + 1}. ${a.name}${a.ultimate ? " §r§6[UNIQUE ULTIMATE]" : ""} §7- ${a.cooldown}s`, `§7${a.desc}`, `§8Original brief: ${a.original ?? "-"}`));
   }
   await showAction(p, new ActionFormData().title("§lAbilities & Controls").body(lines.join("\n")).button("§lBack"));
   await openCodex(p);
@@ -295,6 +314,7 @@ async function worldSettings(p: Player): Promise<void> {
     .toggle("Crimson fog during the Blood Moon", { defaultValue: cur.bloodFog })
     .toggle("Open lineage selection for new players", { defaultValue: cur.autoOpen })
     .toggle("Show the ability HUD without holding the focus", { defaultValue: cur.hudAlways })
+    .toggle(`Unique lineages: one holder per world (${uniqueStatus()})`, { defaultValue: cur.uniqueExclusive })
     .submitButton("Save");
   const s = get(p);
   s.menuOpen = true;
@@ -316,6 +336,7 @@ async function worldSettings(p: Player): Promise<void> {
     bloodFog: !!v[4],
     autoOpen: !!v[5],
     hudAlways: !!v[6],
+    uniqueExclusive: !!v[7],
   });
   p.sendMessage(`§6Settings saved. ${bloodMoonStatus()}`);
 }

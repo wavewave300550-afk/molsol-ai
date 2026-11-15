@@ -1,0 +1,101 @@
+{
+ "format_version": "1.21.90",
+ "minecraft:entity": {
+  "description": {
+   "identifier": "plrace:exuvia",
+   "is_spawnable": false,
+   "is_summonable": true
+  },
+  "component_groups": {
+   "plrace:expire": {
+    "minecraft:instant_despawn": {}
+   }
+  },
+  "components": {
+   "minecraft:type_family": {
+    "family": [
+     "plrace_proxy",
+     "plrace_decoy",
+     "player",
+     "mob"
+    ]
+   },
+   "minecraft:health": {
+    "value": 16,
+    "max": 16
+   },
+   "minecraft:collision_box": {
+    "width": 0.6,
+    "height": 1.6
+   },
+   "minecraft:physics": {
+    "has_gravity": true,
+    "has_collision": true
+   },
+   "minecraft:pushable": {
+    "is_pushable": false,
+    "is_pushable_by_piston": false
+   },
+   "minecraft:knockback_resistance": {
+    "value": 1.0
+   },
+   "minecraft:fire_immune": {},
+   "minecraft:breathable": {
+    "total_supply": 15,
+    "suffocate_time": 0,
+    "breathes_water": true
+   },
+   "minecraft:loot": {
+    "table": "loot_tables/empty.json"
+   },
+   "minecraft:experience_reward": {
+    "on_death": "0"
+   },
+   "minecraft:conditional_bandwidth_optimization": {},
+   "minecraft:timer": {
+    "time": 16,
+    "looping": false,
+    "time_down_event": {
+     "event": "plrace:expire"
+    }
+   },
+   "minecraft:damage_sensor": {
+    "triggers": [
+     {
+      "cause": "fall",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "suffocation",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "drowning",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "fire",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "fire_tick",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "lava",
+      "deals_damage": "no"
+     }
+    ]
+   }
+  },
+  "events": {
+   "plrace:expire": {
+    "add": {
+     "component_groups": [
+      "plrace:expire"
+     ]
+    }
+   }
+  }
+ }
+}

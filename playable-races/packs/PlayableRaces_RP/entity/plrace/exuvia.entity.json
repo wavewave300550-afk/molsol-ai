@@ -1,0 +1,33 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "plrace:exuvia",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "cutout": "entity_alphatest"
+   },
+   "textures": {
+    "default": "textures/plrace/races/xenentoma/xenentoma_exuvia"
+   },
+   "geometry": {
+    "default": "geometry.plrace.xenentoma.exuvia",
+    "cutout": "geometry.plrace.xenentoma.exuvia.cutout"
+   },
+   "animations": {
+    "settle": "animation.plrace.exuvia.settle"
+   },
+   "scripts": {
+    "animate": [
+     "settle"
+    ]
+   },
+   "particle_effects": {},
+   "render_controllers": [
+    "controller.render.plrace.form",
+    "controller.render.plrace.form_cutout"
+   ],
+   "enable_attachables": false
+  }
+ }
+}

@@ -13,9 +13,11 @@ export interface Settings {
   bloodFog: boolean; // crimson fog during the Blood Moon
   autoOpen: boolean; // open the selection menu automatically for new players
   hudAlways: boolean; // show the ability HUD even when the focus is not held
+  uniqueExclusive: boolean; // a Unique lineage can be held by only one player at a time
 }
 
-const DEFAULTS: Settings = { pvp: true, change: "cooldown", changeDays: 3, bloodChance: 34, bloodFog: true, autoOpen: true, hudAlways: false };
+const DEFAULTS: Settings = { pvp: true, change: "cooldown", changeDays: 3, bloodChance: 34, bloodFog: true, autoOpen: true, hudAlways: false,
+  uniqueExclusive: true };
 
 let cache: Settings | undefined;
 

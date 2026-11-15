@@ -31,11 +31,11 @@ from PIL import Image, ImageDraw  # noqa: E402
 
 from kit import animrt, ljson, molang  # noqa: E402
 from kit.render import render  # noqa: E402
-from models import golem, jackalope, salamander  # noqa: E402
+from models import golem, jackalope, salamander, xenentoma  # noqa: E402
 
 RP = os.path.join(ROOT, "packs", "PlayableRaces_RP")
 HIDE = ["r_arm_fp", "l_arm_fp"]
-MODS = {"salamander": salamander, "golem": golem, "jackalope": jackalope}
+MODS = {"salamander": salamander, "golem": golem, "jackalope": jackalope, "xenentoma": xenentoma}
 
 
 from kit.playersim import DT, FPS, Sim, vanilla_skeleton  # noqa: E402
@@ -93,6 +93,7 @@ CAMERA = {  # race -> (scale, center y)
     "salamander": (6.0, 17.0),
     "golem": (4.7, 20.0),
     "jackalope": (6.2, 17.0),
+    "xenentoma": (5.0, 16.0),
 }
 
 
@@ -164,6 +165,8 @@ FIDGETS = {
               ("fidget_inspect", "inspects a fist")],
     "jackalope": [("fidget_groom", "ear wash"), ("fidget_sentinel", "sentinel"), ("fidget_thump", "warning thump"),
                   ("fidget_stretch", "stretch & shake")],
+    "xenentoma": [("fidget_probe", "stylet probe"), ("fidget_groom", "sensilla grooming"), ("fidget_listen", "listening"),
+                  ("fidget_ripple", "anamorphic ripple")],
 }
 
 
@@ -241,7 +244,8 @@ def grid(cols: List[List[Image.Image]], title: str = "") -> List[Image.Image]:
     return out
 
 
-TITLES = {"salamander": "001 Aberrant Flora Salamander", "golem": "002 Runic Titan Golem", "jackalope": "003 Blood Moon Jackalope"}
+TITLES = {"salamander": "001 Aberrant Flora Salamander", "golem": "002 Runic Titan Golem", "jackalope": "003 Blood Moon Jackalope",
+          "xenentoma": "004 Xenentoma"}
 
 
 def main():

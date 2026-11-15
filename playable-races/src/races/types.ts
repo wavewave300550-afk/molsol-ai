@@ -1,5 +1,5 @@
 import { EntityHurtBeforeEvent, Player } from "@minecraft/server";
-import { Session } from "../core/session.js";
+import { EndReason, Session } from "../core/session.js";
 
 export interface CastContext {
   p: Player;
@@ -20,7 +20,10 @@ export interface AbilityDef {
   desc: string;
   original?: string; // what the creator's brief specified (for the in-game codex)
   range?: number; // for the targeting reticle
+  cone?: number; // aim-assist cone for the reticle (degrees, default 14)
   needsTarget?: boolean;
+  /** Unique ultimate (shown with its own styling in the Codex and HUD). */
+  ultimate?: boolean;
   /** Pre-check; return a reason string to block casting. */
   check?(c: CastContext): string | undefined;
   cast(c: CastContext): CastResult;
@@ -33,9 +36,12 @@ export interface Passive {
   desc: string;
 }
 
+/** "unique" lineages have more elaborate systems, a signature ultimate and (by default) one holder per world. */
+export type Rarity = "normal" | "unique";
+
 export interface RaceDef {
   code: string; // permanent identifier "001", "002", ...
-  key: string; // salamander | golem | jackalope
+  key: string; // salamander | golem | jackalope | xenentoma | spaghetti | nurariten
   name: string;
   thai: string; // original Thai name from the design brief (shown in docs)
   title: string; // short epithet
@@ -47,6 +53,10 @@ export interface RaceDef {
   passives: Passive[];
   abilities: AbilityDef[];
   focusItem: string;
+  focusName: string; // display name of the focus item
+  rarity?: Rarity; // default "normal"
+  /** Extra control hints for the Codex (race-specific inputs). */
+  controls?: string[];
   /** Visual form variant the race shows right now (crest item suffix, "" = base). */
   variant(p: Player, s: Session): string;
   /** Cooldown speed multiplier (1 = normal, <1 faster). */
@@ -62,4 +72,15 @@ export interface RaceDef {
   onDealDamage?(p: Player, s: Session, ev: EntityHurtBeforeEvent): void;
   /** After-event hook when this player was hurt. */
   afterHurt?(p: Player, s: Session, cause: string, amount: number, attackerId?: string): void;
+  /**
+   * Remove temporary zones, summons and states the race created. Called on death, logout,
+   * dimension change and lineage change (the player may already be gone: use the session id).
+   */
+  release?(s: Session, reason: EndReason): void;
+  /** An explosion went off `distance` blocks away (within 14). */
+  onExplosion?(p: Player, s: Session, distance: number): void;
+  /** The player finished using an item (eating, drinking...). */
+  onItemComplete?(p: Player, s: Session, typeId: string): void;
+  /** Race-wide systems (zones, marks): called every 4 ticks whether or not anyone holds the race. */
+  worldTick4?(): void;
 }

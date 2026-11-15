@@ -10,10 +10,15 @@ import { raceByCode } from "./races/registry.js";
 import { applyFog } from "./systems/bloodmoon.js";
 import { clearMarksBy } from "./systems/marks.js";
 import { removeMiragesOf } from "./systems/mirage.js";
+import { removeProxiesOf } from "./systems/proxies.js";
+import { claim, isUnique, releasePlayer, uniqueBlocked } from "./systems/unique.js";
 const RACE_RGB = {
     "001": { red: 0.45, green: 1, blue: 0.4 },
     "002": { red: 1, green: 0.78, blue: 0.3 },
     "003": { red: 1, green: 0.18, blue: 0.25 },
+    "004": { red: 0.78, green: 0.66, blue: 1 },
+    "005": { red: 1, green: 0.86, blue: 0.45 },
+    "006": { red: 1, green: 0.92, blue: 0.62 },
 };
 export function worldDay() {
     try {
@@ -22,6 +27,9 @@ export function worldDay() {
     catch {
         return 0;
     }
+}
+export function raceBlocked(p, race) {
+    return uniqueBlocked(p, race);
 }
 export function changeBlocked(p, s) {
     if (!s.data.race)
@@ -52,8 +60,15 @@ export function stripRace(p, s) {
     cancel(p.id);
     clearMarksBy(p.id);
     removeMiragesOf(p.id);
+    removeProxiesOf(p.id);
     restoreInput(p, s);
     if (race) {
+        try {
+            race.release?.(s, "race");
+        }
+        catch (e) {
+            warn("race release failed", e);
+        }
         try {
             race.cleanup(p, s);
         }
@@ -70,11 +85,16 @@ export function stripRace(p, s) {
     s.data.res = {};
     s.data.st = {};
 }
-export function assignRace(p, code, ceremony = true) {
+export function assignRace(p, code, ceremony = true, force = false) {
     const race = raceByCode(code);
     if (!race)
         return false;
     const s = get(p);
+    const blocked = force ? undefined : raceBlocked(p, race);
+    if (blocked) {
+        p.sendMessage(`§c${blocked}`);
+        return false;
+    }
     captureEnchantments(p, s);
     stripRace(p, s);
     s.data.race = race.code;
@@ -82,6 +102,9 @@ export function assignRace(p, code, ceremony = true) {
     s.data.veiled = false;
     s.data.lastChange = worldDay();
     s.data.stats.changes = (s.data.stats.changes ?? 0) + 1;
+    releasePlayer(p.id);
+    if (isUnique(race))
+        claim(p, race, worldDay());
     race.init(p, s, true);
     ensureFocus(p, race);
     const shown = showForm(p, race, s, race.variant(p, s));
@@ -99,6 +122,7 @@ export function assignRace(p, code, ceremony = true) {
 export function removeRace(p) {
     const s = get(p);
     stripRace(p, s);
+    releasePlayer(p.id);
     s.data.race = "";
     s.data.veiled = false;
     s.dirty = true;
@@ -160,8 +184,12 @@ export function restore(p, s) {
         if (it && isCrest(it))
             hideForm(p);
         purgeFoci(p);
+        releasePlayer(p.id);
         return;
     }
+    releasePlayer(p.id, isUnique(race) ? race.code : undefined);
+    if (isUnique(race))
+        claim(p, race, worldDay());
     race.init(p, s, false);
     purgeFoci(p, race.focusItem);
     purgeStrayCrests(p);

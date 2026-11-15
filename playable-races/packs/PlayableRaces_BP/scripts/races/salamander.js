@@ -105,6 +105,7 @@ const embrace = {
     short: "Embrace",
     cooldown: 22,
     range: 3.5,
+    cone: 70,
     needsTarget: true,
     original: "Cooldown 25 s, close-range bite that restores some health.",
     desc: "The trap-lobes on your forearms snap shut on a creature within 3.5 blocks: 6 damage (9 if Ensnared), it is held in place for a second, and you absorb 40% of the damage dealt as health (min 1 heart).",
@@ -290,6 +291,8 @@ export const salamander = {
     ],
     abilities: [snare, embrace, root, jet],
     focusItem: "plrace:focus_salamander",
+    focusName: "Dewheart Focus",
+    controls: ["Salamander: §fJUMP§7 uproots Root Metamorphosis early."],
     variant(_p, s) {
         if (s.channel?.ability === "root_metamorphosis")
             return "rooted";
