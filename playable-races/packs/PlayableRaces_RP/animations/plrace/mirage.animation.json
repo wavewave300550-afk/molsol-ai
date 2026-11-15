@@ -1,0 +1,82 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.plrace.mirage.run": {
+   "loop": true,
+   "bones": {
+    "rightLeg": {
+     "rotation": [
+      "math.cos(q.modified_distance_moved * 38.17) * q.modified_move_speed * 57.3 * 1.2",
+      0.0,
+      0.0
+     ]
+    },
+    "leftLeg": {
+     "rotation": [
+      "-math.cos(q.modified_distance_moved * 38.17) * q.modified_move_speed * 57.3 * 1.2",
+      0.0,
+      0.0
+     ]
+    },
+    "rightArm": {
+     "rotation": [
+      "-math.cos(q.modified_distance_moved * 38.17) * q.modified_move_speed * 57.3 * 0.8",
+      0.0,
+      0.0
+     ]
+    },
+    "leftArm": {
+     "rotation": [
+      "math.cos(q.modified_distance_moved * 38.17) * q.modified_move_speed * 57.3 * 0.8",
+      0.0,
+      0.0
+     ]
+    },
+    "body": {
+     "rotation": [
+      8.0,
+      0.0,
+      0.0
+     ],
+     "position": [
+      0.0,
+      "math.abs(math.sin(q.life_time * 540)) * 0.8",
+      0.0
+     ]
+    },
+    "r_ear": {
+     "rotation": [
+      -20.0,
+      0.0,
+      "math.sin(q.life_time * 504 + 0) * 6"
+     ]
+    },
+    "l_ear": {
+     "rotation": [
+      -20.0,
+      0.0,
+      "math.sin(q.life_time * 468 + 50) * -6"
+     ]
+    },
+    "r_arm_fp": {
+     "scale": 0.0
+    },
+    "l_arm_fp": {
+     "scale": 0.0
+    }
+   }
+  },
+  "animation.plrace.mirage.look": {
+   "loop": true,
+   "bones": {
+    "head": {
+     "rotation": [
+      "q.target_x_rotation",
+      "q.target_y_rotation",
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

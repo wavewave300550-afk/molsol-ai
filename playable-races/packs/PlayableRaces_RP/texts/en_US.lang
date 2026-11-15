@@ -1,0 +1,23 @@
+## Playable Races - Foundation Release (Races 001-003)
+pack.name=Playable Races: Foundation (Resources)
+pack.description=Races 001-003: Flora Salamander, Runic Titan Golem, Blood Moon Jackalope
+item.plrace:form_salamander=Aberrant Flora Salamander Form (Stable)
+item.plrace:form_salamander_bloom=Aberrant Flora Salamander Form (Blooming)
+item.plrace:form_salamander_dormant=Aberrant Flora Salamander Form (Dormant)
+item.plrace:form_salamander_predatory=Aberrant Flora Salamander Form (Predatory)
+item.plrace:form_salamander_rooted=Aberrant Flora Salamander Form (Rooted)
+item.plrace:form_golem=Runic Titan Golem Form (Aligned)
+item.plrace:form_golem_siege=Runic Titan Golem Form (Siege Configuration)
+item.plrace:form_golem_bastion=Runic Titan Golem Form (Bastion Configuration)
+item.plrace:form_golem_arcane=Runic Titan Golem Form (Arcane Configuration)
+item.plrace:form_golem_scattered=Runic Titan Golem Form (Reassembling)
+item.plrace:form_golem_disrupted=Runic Titan Golem Form (Disrupted)
+item.plrace:form_jackalope=Blood Moon Jackalope Form (Ordinary Lunar)
+item.plrace:form_jackalope_hunt=Blood Moon Jackalope Form (Hunting)
+item.plrace:form_jackalope_awakened=Blood Moon Jackalope Form (Blood Moon Awakened)
+item.plrace:form_jackalope_awakened_hunt=Blood Moon Jackalope Form (Blood Moon Hunt)
+entity.plrace:velvet_mirage.name=Velvet Mirage
+item.plrace:focus_salamander=Dewheart Focus
+item.plrace:focus_golem=Rune Keystone Focus
+item.plrace:focus_jackalope=Moonbone Focus
+item.plrace:codex=Lineage Codex

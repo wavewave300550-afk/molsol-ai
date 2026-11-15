@@ -1,0 +1,983 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.plrace.jackalope.first_person": {
+   "loop": true,
+   "bones": {
+    "head_g": {
+     "scale": 0.0
+    },
+    "torso_g": {
+     "scale": 0.0
+    },
+    "r_leg_g": {
+     "scale": 0.0
+    },
+    "l_leg_g": {
+     "scale": 0.0
+    },
+    "tail_g": {
+     "scale": 0.0
+    }
+   }
+  },
+  "animation.plrace.jackalope.third_person": {
+   "loop": true,
+   "bones": {
+    "r_arm_fp": {
+     "scale": 0.0
+    },
+    "l_arm_fp": {
+     "scale": 0.0
+    }
+   }
+  },
+  "animation.plrace.jackalope.ambient": {
+   "loop": true,
+   "bones": {
+    "r_ear": {
+     "rotation": [
+      "math.sin(q.life_time * 82.8 + 0) * 3",
+      0.0,
+      "math.sin(q.life_time * 111.6 + 0) * 2.5 + (math.mod(q.life_time, 4.3) < 0.2 ? math.sin(math.mod(q.life_time, 4.3) * 1800) * 11 : 0)"
+     ]
+    },
+    "l_ear": {
+     "rotation": [
+      "math.sin(q.life_time * 97.2 + 70) * 3",
+      0.0,
+      "math.sin(q.life_time * 104.4 + 40) * -2.5 - (math.mod(q.life_time + 1.7, 3.1) < 0.2 ? math.sin(math.mod(q.life_time + 1.7, 3.1) * 1800) * 11 : 0)"
+     ]
+    },
+    "r_ear_tip": {
+     "rotation": [
+      "math.sin(q.life_time * 147.6 + 30) * 5",
+      0.0,
+      0.0
+     ]
+    },
+    "l_ear_tip": {
+     "rotation": [
+      "math.sin(q.life_time * 133.2 + 110) * 5",
+      0.0,
+      0.0
+     ]
+    },
+    "nose": {
+     "position": [
+      0.0,
+      0.0,
+      "math.mod(q.life_time, 2.6) < 0.6 ? math.sin(q.life_time * 2400) * 0.12 : 0"
+     ]
+    },
+    "scut": {
+     "rotation": [
+      "math.sin(q.life_time * 216 + 0) * 4 + (math.mod(q.life_time + 0.8, 3.7) < 0.15 ? 14 : 0)",
+      0.0,
+      0.0
+     ]
+    },
+    "skull": {
+     "rotation": [
+      "math.sin(q.life_time * 61.2 + 0) * 1.5",
+      "math.sin(q.life_time * 39.6 + 0) * 2",
+      0.0
+     ]
+    },
+    "dorsal0": {
+     "rotation": [
+      "math.sin(q.life_time * 180 + 0) * 3",
+      0.0,
+      0.0
+     ]
+    },
+    "dorsal1": {
+     "rotation": [
+      "math.sin(q.life_time * 180 + 30) * 3",
+      0.0,
+      0.0
+     ]
+    },
+    "dorsal2": {
+     "rotation": [
+      "math.sin(q.life_time * 180 + 60) * 3",
+      0.0,
+      0.0
+     ]
+    },
+    "dorsal3": {
+     "rotation": [
+      "math.sin(q.life_time * 180 + 90) * 3",
+      0.0,
+      0.0
+     ]
+    },
+    "dorsal4": {
+     "rotation": [
+      "math.sin(q.life_time * 180 + 120) * 3",
+      0.0,
+      0.0
+     ]
+    },
+    "dorsal5": {
+     "rotation": [
+      "math.sin(q.life_time * 180 + 150) * 3",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.plrace.jackalope.listen": {
+   "loop": true,
+   "bones": {
+    "r_ear": {
+     "rotation": [
+      16.0,
+      28.0,
+      6.0
+     ]
+    },
+    "l_ear": {
+     "rotation": [
+      12.0,
+      -8.0,
+      0.0
+     ]
+    },
+    "skull": {
+     "rotation": [
+      -4.0,
+      0.0,
+      9.0
+     ]
+    },
+    "scut": {
+     "rotation": [
+      10.0,
+      0.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.plrace.jackalope.locomotion": {
+   "loop": true,
+   "bones": {
+    "r_thigh": {
+     "rotation": [
+      "-(math.cos(q.modified_distance_moved * 38.17) * q.modified_move_speed * 57.3) * 1.4 * (q.is_sprinting ? 1.0 : 0.55) + (q.is_sprinting ? 1 : 0) * math.sin(((q.modified_distance_moved * 38.17) * 0.5)) * 40 * math.clamp(q.modified_move_speed, 0, 1)",
+      0.0,
+      0.0
+     ]
+    },
+    "l_thigh": {
+     "rotation": [
+      "(math.cos(q.modified_distance_moved * 38.17) * q.modified_move_speed * 57.3) * 1.4 * (q.is_sprinting ? 1.0 : 0.55) + (q.is_sprinting ? 1 : 0) * math.sin(((q.modified_distance_moved * 38.17) * 0.5)) * 40 * math.clamp(q.modified_move_speed, 0, 1)",
+      0.0,
+      0.0
+     ]
+    },
+    "r_shin": {
+     "rotation": [
+      "(q.is_sprinting ? 1 : 0) * math.max(0, math.sin(((q.modified_distance_moved * 38.17) * 0.5) + 40)) * 30 * math.clamp(q.modified_move_speed, 0, 1)",
+      0.0,
+      0.0
+     ]
+    },
+    "r_foot": {
+     "rotation": [
+      "(q.is_sprinting ? 1 : 0) * math.cos(((q.modified_distance_moved * 38.17) * 0.5)) * 22 * math.clamp(q.modified_move_speed, 0, 1)",
+      0.0,
+      0.0
+     ]
+    },
+    "r_ear": {
+     "rotation": [
+      "-math.clamp(q.modified_move_speed, 0, 1) * 12 - (q.is_sprinting ? 1 : 0) * 16",
+      0.0,
+      0.0
+     ]
+    },
+    "l_shin": {
+     "rotation": [
+      "(q.is_sprinting ? 1 : 0) * math.max(0, math.sin(((q.modified_distance_moved * 38.17) * 0.5) + 40)) * 30 * math.clamp(q.modified_move_speed, 0, 1)",
+      0.0,
+      0.0
+     ]
+    },
+    "l_foot": {
+     "rotation": [
+      "(q.is_sprinting ? 1 : 0) * math.cos(((q.modified_distance_moved * 38.17) * 0.5)) * 22 * math.clamp(q.modified_move_speed, 0, 1)",
+      0.0,
+      0.0
+     ]
+    },
+    "l_ear": {
+     "rotation": [
+      "-math.clamp(q.modified_move_speed, 0, 1) * 12 - (q.is_sprinting ? 1 : 0) * 16",
+      0.0,
+      0.0
+     ]
+    },
+    "torso": {
+     "rotation": [
+      "math.clamp(q.modified_move_speed, 0, 1) * 6 + (q.is_sprinting ? 1 : 0) * math.sin(((q.modified_distance_moved * 38.17) * 0.5) + 90) * 6",
+      0.0,
+      0.0
+     ],
+     "position": [
+      0.0,
+      "(q.is_sprinting ? 1 : 0) * math.abs(math.sin(((q.modified_distance_moved * 38.17) * 0.5))) * 0.9",
+      0.0
+     ]
+    },
+    "scut": {
+     "rotation": [
+      "(q.is_sprinting ? 1 : 0) * math.sin(((q.modified_distance_moved * 38.17) * 0.5)) * 14",
+      0.0,
+      0.0
+     ]
+    },
+    "skull": {
+     "rotation": [
+      "(q.is_sprinting ? 1 : 0) * math.sin(((q.modified_distance_moved * 38.17) * 0.5) - 60) * 4",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.plrace.jackalope.airborne": {
+   "loop": true,
+   "bones": {
+    "r_thigh": {
+     "rotation": [
+      "(q.vertical_speed > 0 ? 1 : 0) * 30 - (1 - (q.vertical_speed > 0 ? 1 : 0)) * 14",
+      0.0,
+      0.0
+     ]
+    },
+    "r_shin": {
+     "rotation": [
+      "-(q.vertical_speed > 0 ? 1 : 0) * 22 + (1 - (q.vertical_speed > 0 ? 1 : 0)) * 10",
+      0.0,
+      0.0
+     ]
+    },
+    "r_foot": {
+     "rotation": [
+      "(q.vertical_speed > 0 ? 1 : 0) * 26",
+      0.0,
+      0.0
+     ]
+    },
+    "r_ear": {
+     "rotation": [
+      -22.0,
+      0.0,
+      0.0
+     ]
+    },
+    "l_thigh": {
+     "rotation": [
+      "(q.vertical_speed > 0 ? 1 : 0) * 30 - (1 - (q.vertical_speed > 0 ? 1 : 0)) * 14",
+      0.0,
+      0.0
+     ]
+    },
+    "l_shin": {
+     "rotation": [
+      "-(q.vertical_speed > 0 ? 1 : 0) * 22 + (1 - (q.vertical_speed > 0 ? 1 : 0)) * 10",
+      0.0,
+      0.0
+     ]
+    },
+    "l_foot": {
+     "rotation": [
+      "(q.vertical_speed > 0 ? 1 : 0) * 26",
+      0.0,
+      0.0
+     ]
+    },
+    "l_ear": {
+     "rotation": [
+      -22.0,
+      0.0,
+      0.0
+     ]
+    },
+    "scut": {
+     "rotation": [
+      16.0,
+      0.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.plrace.jackalope.land": {
+   "animation_length": 0.35,
+   "bones": {
+    "r_thigh": {
+     "rotation": {
+      "0": [
+       -24.0,
+       0.0,
+       0.0
+      ],
+      "0.1": [
+       -28.0,
+       0.0,
+       0.0
+      ],
+      "0.35": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "r_shin": {
+     "rotation": {
+      "0": [
+       34.0,
+       0.0,
+       0.0
+      ],
+      "0.1": [
+       38.0,
+       0.0,
+       0.0
+      ],
+      "0.35": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "r_foot": {
+     "rotation": {
+      "0": [
+       -10.0,
+       0.0,
+       0.0
+      ],
+      "0.35": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "r_ear": {
+     "rotation": {
+      "0": [
+       14.0,
+       0.0,
+       0.0
+      ],
+      "0.15": [
+       -6.0,
+       0.0,
+       0.0
+      ],
+      "0.35": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "l_thigh": {
+     "rotation": {
+      "0": [
+       -24.0,
+       0.0,
+       0.0
+      ],
+      "0.1": [
+       -28.0,
+       0.0,
+       0.0
+      ],
+      "0.35": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "l_shin": {
+     "rotation": {
+      "0": [
+       34.0,
+       0.0,
+       0.0
+      ],
+      "0.1": [
+       38.0,
+       0.0,
+       0.0
+      ],
+      "0.35": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "l_foot": {
+     "rotation": {
+      "0": [
+       -10.0,
+       0.0,
+       0.0
+      ],
+      "0.35": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "l_ear": {
+     "rotation": {
+      "0": [
+       14.0,
+       0.0,
+       0.0
+      ],
+      "0.15": [
+       -6.0,
+       0.0,
+       0.0
+      ],
+      "0.35": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "scut": {
+     "rotation": {
+      "0": [
+       -14.0,
+       0.0,
+       0.0
+      ],
+      "0.18": [
+       10.0,
+       0.0,
+       0.0
+      ],
+      "0.35": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "torso": {
+     "position": {
+      "0": [
+       0.0,
+       -0.9,
+       0.0
+      ],
+      "0.35": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.plrace.jackalope.hurt": {
+   "loop": true,
+   "bones": {
+    "r_ear": {
+     "rotation": [
+      -34.0,
+      0.0,
+      8.0
+     ]
+    },
+    "l_ear": {
+     "rotation": [
+      -34.0,
+      0.0,
+      -8.0
+     ]
+    },
+    "scut": {
+     "rotation": [
+      -12.0,
+      0.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.plrace.jackalope.hunt_loop": {
+   "loop": true,
+   "bones": {
+    "r_ear": {
+     "rotation": [
+      "math.sin(q.life_time * 3240 + 0) * 1.4",
+      0.0,
+      0.0
+     ]
+    },
+    "l_ear": {
+     "rotation": [
+      "math.sin(q.life_time * 3240 + 90) * 1.4",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "animation.plrace.jackalope.intro_base": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.4,
+   "bones": {
+    "r_ear": {
+     "rotation": {
+      "0": [
+       -14.0,
+       0.0,
+       0.0
+      ],
+      "0.2": [
+       6.0,
+       0.0,
+       0.0
+      ],
+      "0.4": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "l_ear": {
+     "rotation": {
+      "0": [
+       -14.0,
+       0.0,
+       0.0
+      ],
+      "0.25": [
+       6.0,
+       0.0,
+       0.0
+      ],
+      "0.4": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.plrace.jackalope.intro_hunt": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.25,
+   "bones": {
+    "skull": {
+     "rotation": {
+      "0": [
+       -14.0,
+       0.0,
+       0.0
+      ],
+      "0.15": [
+       -2.1,
+       0.0,
+       0.0
+      ],
+      "0.25": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "r_ear": {
+     "rotation": {
+      "0": [
+       46.0,
+       0.0,
+       5.0
+      ],
+      "0.15": [
+       6.9,
+       0.0,
+       0.75
+      ],
+      "0.25": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "l_ear": {
+     "rotation": {
+      "0": [
+       46.0,
+       0.0,
+       -5.0
+      ],
+      "0.15": [
+       6.9,
+       0.0,
+       -0.75
+      ],
+      "0.25": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   },
+   "particle_effects": {
+    "0.00": {
+     "effect": "embers",
+     "locator": "antlers"
+    }
+   }
+  },
+  "animation.plrace.jackalope.intro_awakened": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 1.8,
+   "bones": {
+    "dorsal0": {
+     "rotation": {
+      "0": [
+       -54.0,
+       0.0,
+       0.0
+      ],
+      "1.08": [
+       -8.1,
+       0.0,
+       0.0
+      ],
+      "1.8": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "dorsal1": {
+     "rotation": {
+      "0": [
+       -54.0,
+       0.0,
+       0.0
+      ],
+      "1.08": [
+       -8.1,
+       0.0,
+       0.0
+      ],
+      "1.8": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "dorsal2": {
+     "rotation": {
+      "0": [
+       -54.0,
+       0.0,
+       0.0
+      ],
+      "1.08": [
+       -8.1,
+       0.0,
+       0.0
+      ],
+      "1.8": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "dorsal3": {
+     "rotation": {
+      "0": [
+       -54.0,
+       0.0,
+       0.0
+      ],
+      "1.08": [
+       -8.1,
+       0.0,
+       0.0
+      ],
+      "1.8": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "dorsal4": {
+     "rotation": {
+      "0": [
+       -54.0,
+       0.0,
+       0.0
+      ],
+      "1.08": [
+       -8.1,
+       0.0,
+       0.0
+      ],
+      "1.8": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "dorsal5": {
+     "rotation": {
+      "0": [
+       -54.0,
+       0.0,
+       0.0
+      ],
+      "1.08": [
+       -8.1,
+       0.0,
+       0.0
+      ],
+      "1.8": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "r_tine_back": {
+     "scale": {
+      "0": 0.02,
+      "0.35": 0.02,
+      "0.95": 1.12,
+      "1.1": 1.0
+     }
+    },
+    "r_tine_low": {
+     "scale": {
+      "0": 0.02,
+      "0.55": 0.02,
+      "1.15": 1.12,
+      "1.3": 1.0
+     }
+    },
+    "r_tine_crown": {
+     "scale": {
+      "0": 0.02,
+      "0.8": 0.02,
+      "1.4": 1.12,
+      "1.55": 1.0
+     }
+    },
+    "r_tine_crown2": {
+     "scale": {
+      "0": 0.02,
+      "0.95": 0.02,
+      "1.6": 1.12,
+      "1.75": 1.0
+     }
+    },
+    "l_tine_back": {
+     "scale": {
+      "0": 0.02,
+      "0.35": 0.02,
+      "0.95": 1.12,
+      "1.1": 1.0
+     }
+    },
+    "l_tine_low": {
+     "scale": {
+      "0": 0.02,
+      "0.55": 0.02,
+      "1.15": 1.12,
+      "1.3": 1.0
+     }
+    },
+    "l_tine_crown": {
+     "scale": {
+      "0": 0.02,
+      "0.8": 0.02,
+      "1.4": 1.12,
+      "1.55": 1.0
+     }
+    },
+    "l_tine_crown2": {
+     "scale": {
+      "0": 0.02,
+      "0.95": 0.02,
+      "1.6": 1.12,
+      "1.75": 1.0
+     }
+    },
+    "skull": {
+     "rotation": {
+      "0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.45": [
+       -30.0,
+       0.0,
+       0.0
+      ],
+      "1.3": [
+       -30.0,
+       0.0,
+       0.0
+      ],
+      "1.8": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   },
+   "particle_effects": {
+    "0.00": {
+     "effect": "awaken",
+     "locator": "antlers"
+    },
+    "0.90": {
+     "effect": "embers",
+     "locator": "antlers"
+    }
+   }
+  },
+  "animation.plrace.jackalope.intro_awakened_hunt": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.25,
+   "bones": {
+    "skull": {
+     "rotation": {
+      "0": [
+       -14.0,
+       0.0,
+       0.0
+      ],
+      "0.15": [
+       -2.1,
+       0.0,
+       0.0
+      ],
+      "0.25": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "r_ear": {
+     "rotation": {
+      "0": [
+       46.0,
+       0.0,
+       5.0
+      ],
+      "0.15": [
+       6.9,
+       0.0,
+       0.75
+      ],
+      "0.25": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "l_ear": {
+     "rotation": {
+      "0": [
+       46.0,
+       0.0,
+       -5.0
+      ],
+      "0.15": [
+       6.9,
+       0.0,
+       -0.75
+      ],
+      "0.25": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
+  "animation.plrace.jackalope.fx_base": {
+   "loop": true,
+   "animation_length": 3.2,
+   "particle_effects": {
+    "0.00": {
+     "effect": "moonmotes",
+     "locator": "antlers"
+    }
+   }
+  },
+  "animation.plrace.jackalope.fx_hunt": {
+   "loop": true,
+   "animation_length": 0.5,
+   "particle_effects": {
+    "0.00": {
+     "effect": "embers",
+     "locator": "antlers"
+    }
+   }
+  },
+  "animation.plrace.jackalope.fx_awakened": {
+   "loop": true,
+   "animation_length": 0.9,
+   "particle_effects": {
+    "0.00": {
+     "effect": "embers",
+     "locator": "antlers"
+    },
+    "0.45": {
+     "effect": "bloodmist",
+     "locator": "tail"
+    }
+   }
+  },
+  "animation.plrace.jackalope.fx_awakened_hunt": {
+   "loop": true,
+   "animation_length": 0.45,
+   "particle_effects": {
+    "0.00": {
+     "effect": "embers",
+     "locator": "antlers"
+    }
+   }
+  }
+ }
+}

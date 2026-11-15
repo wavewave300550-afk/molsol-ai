@@ -1,0 +1,75 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "plrace:form_jackalope",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "cutout": "entity_alphatest",
+    "accent": "entity_alphatest"
+   },
+   "textures": {
+    "default": "textures/plrace/races/jackalope/jackalope_base"
+   },
+   "geometry": {
+    "default": "geometry.plrace.jackalope.base",
+    "cutout": "geometry.plrace.jackalope.base.cutout",
+    "accent": "geometry.plrace.jackalope.base.accent"
+   },
+   "animations": {
+    "first_person": "animation.plrace.jackalope.first_person",
+    "third_person": "animation.plrace.jackalope.third_person",
+    "ambient": "animation.plrace.jackalope.ambient",
+    "listen": "animation.plrace.jackalope.listen",
+    "locomotion": "animation.plrace.jackalope.locomotion",
+    "airborne": "animation.plrace.jackalope.airborne",
+    "landing": "controller.animation.plrace.jackalope.landing",
+    "hurt": "animation.plrace.jackalope.hurt",
+    "intro_base": "animation.plrace.jackalope.intro_base",
+    "fx_base": "animation.plrace.jackalope.fx_base",
+    "land": "animation.plrace.jackalope.land"
+   },
+   "particle_effects": {
+    "moonmotes": "plrace:moon_mote",
+    "embers": "plrace:blood_ember",
+    "awaken": "plrace:awaken_spiral",
+    "bloodmist": "plrace:blood_mist"
+   },
+   "scripts": {
+    "animate": [
+     {
+      "first_person": "c.is_first_person"
+     },
+     {
+      "third_person": "!c.is_first_person"
+     },
+     "ambient",
+     {
+      "listen": "q.is_sneaking && q.modified_move_speed < 0.02"
+     },
+     {
+      "locomotion": "!q.is_swimming"
+     },
+     {
+      "airborne": "!q.is_on_ground && !q.is_in_water"
+     },
+     "landing",
+     {
+      "hurt": "q.hurt_time > 0"
+     },
+     "intro_base",
+     {
+      "fx_base": "!c.is_first_person && (q.time_of_day < 0.23 || q.time_of_day > 0.77)"
+     }
+    ]
+   },
+   "render_controllers": [
+    "controller.render.plrace.form",
+    "controller.render.plrace.form_cutout",
+    "controller.render.plrace.jackalope_accent_c",
+    "controller.render.plrace.jackalope_accent_l",
+    "controller.render.plrace.jackalope_accent_f"
+   ]
+  }
+ }
+}

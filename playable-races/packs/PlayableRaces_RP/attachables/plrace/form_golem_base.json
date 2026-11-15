@@ -1,0 +1,63 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "plrace:form_golem",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "accent": "entity_alphatest"
+   },
+   "textures": {
+    "default": "textures/plrace/races/golem/golem_base"
+   },
+   "geometry": {
+    "default": "geometry.plrace.golem.base",
+    "accent": "geometry.plrace.golem.base.accent"
+   },
+   "animations": {
+    "first_person": "animation.plrace.golem.first_person",
+    "third_person": "animation.plrace.golem.third_person",
+    "ambient": "animation.plrace.golem.ambient",
+    "locomotion": "animation.plrace.golem.locomotion",
+    "airborne": "animation.plrace.golem.airborne",
+    "hurt": "animation.plrace.golem.hurt",
+    "intro_base": "animation.plrace.golem.intro_base",
+    "fx_base": "animation.plrace.golem.fx_base"
+   },
+   "particle_effects": {
+    "motes": "plrace:rune_mote",
+    "burst": "plrace:rune_burst",
+    "pulse": "plrace:rune_pulse",
+    "sparks": "plrace:rune_spark"
+   },
+   "scripts": {
+    "animate": [
+     {
+      "first_person": "c.is_first_person"
+     },
+     {
+      "third_person": "!c.is_first_person"
+     },
+     "ambient",
+     "locomotion",
+     {
+      "airborne": "!q.is_on_ground && !q.is_in_water"
+     },
+     {
+      "hurt": "q.hurt_time > 0"
+     },
+     "intro_base",
+     {
+      "fx_base": "!c.is_first_person"
+     }
+    ]
+   },
+   "render_controllers": [
+    "controller.render.plrace.form",
+    "controller.render.plrace.golem_accent_c",
+    "controller.render.plrace.golem_accent_l",
+    "controller.render.plrace.golem_accent_f"
+   ]
+  }
+ }
+}

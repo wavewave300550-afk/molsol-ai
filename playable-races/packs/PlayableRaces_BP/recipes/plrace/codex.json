@@ -1,0 +1,30 @@
+{
+ "format_version": "1.20.10",
+ "minecraft:recipe_shapeless": {
+  "description": {
+   "identifier": "plrace:codex"
+  },
+  "tags": [
+   "crafting_table"
+  ],
+  "ingredients": [
+   {
+    "item": "minecraft:book"
+   },
+   {
+    "item": "minecraft:lapis_lazuli"
+   },
+   {
+    "item": "minecraft:bone_meal"
+   }
+  ],
+  "unlock": [
+   {
+    "item": "minecraft:book"
+   }
+  ],
+  "result": {
+   "item": "plrace:codex"
+  }
+ }
+}

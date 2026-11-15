@@ -1,0 +1,37 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "plrace:velvet_mirage",
+   "materials": {
+    "default": "entity_alphablend",
+    "cutout": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/plrace/races/jackalope/jackalope_mirage"
+   },
+   "geometry": {
+    "default": "geometry.plrace.jackalope.base",
+    "cutout": "geometry.plrace.jackalope.base.cutout"
+   },
+   "animations": {
+    "run": "animation.plrace.mirage.run",
+    "look": "animation.plrace.mirage.look"
+   },
+   "scripts": {
+    "animate": [
+     "run",
+     "look"
+    ]
+   },
+   "particle_effects": {
+    "shimmer": "plrace:velvet_shimmer"
+   },
+   "render_controllers": [
+    "controller.render.plrace.mirage",
+    "controller.render.plrace.mirage_cutout"
+   ],
+   "enable_attachables": false
+  }
+ }
+}

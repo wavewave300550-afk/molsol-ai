@@ -1,0 +1,40 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.plrace.jackalope.landing": {
+   "initial_state": "ground",
+   "states": {
+    "ground": {
+     "transitions": [
+      {
+       "air": "!q.is_on_ground && !q.is_in_water"
+      }
+     ]
+    },
+    "air": {
+     "transitions": [
+      {
+       "landing": "q.is_on_ground"
+      },
+      {
+       "ground": "q.is_in_water"
+      }
+     ]
+    },
+    "landing": {
+     "animations": [
+      "land"
+     ],
+     "transitions": [
+      {
+       "air": "!q.is_on_ground && !q.is_in_water"
+      },
+      {
+       "ground": "q.all_animations_finished"
+      }
+     ]
+    }
+   }
+  }
+ }
+}

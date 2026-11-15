@@ -1,0 +1,75 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "plrace:form_salamander",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "cutout": "entity_alphatest",
+    "accent": "entity_alphatest"
+   },
+   "textures": {
+    "default": "textures/plrace/races/salamander/salamander_base"
+   },
+   "geometry": {
+    "default": "geometry.plrace.salamander.base",
+    "cutout": "geometry.plrace.salamander.base.cutout",
+    "accent": "geometry.plrace.salamander.base.accent"
+   },
+   "animations": {
+    "first_person": "animation.plrace.salamander.first_person",
+    "third_person": "animation.plrace.salamander.third_person",
+    "ambient": "animation.plrace.salamander.ambient",
+    "locomotion": "animation.plrace.salamander.locomotion",
+    "swim": "animation.plrace.salamander.swim",
+    "airborne": "animation.plrace.salamander.airborne",
+    "hurt": "animation.plrace.salamander.hurt",
+    "intro_base": "animation.plrace.salamander.intro_base",
+    "fx_base": "animation.plrace.salamander.fx_base"
+   },
+   "particle_effects": {
+    "spores": "plrace:spore_drift",
+    "pollen": "plrace:pollen",
+    "dew": "plrace:dew_burst",
+    "flakes": "plrace:dry_flake",
+    "drip": "plrace:sticky_drip",
+    "rootburst": "plrace:root_burst",
+    "bubbles": "plrace:bubble_trail"
+   },
+   "scripts": {
+    "animate": [
+     {
+      "first_person": "c.is_first_person"
+     },
+     {
+      "third_person": "!c.is_first_person"
+     },
+     "ambient",
+     {
+      "locomotion": "!q.is_swimming"
+     },
+     {
+      "swim": "q.is_swimming || (q.is_in_water && !q.is_on_ground)"
+     },
+     {
+      "airborne": "!q.is_on_ground && !q.is_in_water"
+     },
+     {
+      "hurt": "q.hurt_time > 0"
+     },
+     "intro_base",
+     {
+      "fx_base": "!c.is_first_person"
+     }
+    ]
+   },
+   "render_controllers": [
+    "controller.render.plrace.form",
+    "controller.render.plrace.form_cutout",
+    "controller.render.plrace.salamander_accent_c",
+    "controller.render.plrace.salamander_accent_l",
+    "controller.render.plrace.salamander_accent_f"
+   ]
+  }
+ }
+}

@@ -1,0 +1,27 @@
+{
+ "resource_pack_name": "PlayableRaces_RP",
+ "texture_name": "atlas.items",
+ "texture_data": {
+  "plrace:crest_salamander": {
+   "textures": "textures/plrace/races/items/crest_salamander"
+  },
+  "plrace:crest_golem": {
+   "textures": "textures/plrace/races/items/crest_golem"
+  },
+  "plrace:crest_jackalope": {
+   "textures": "textures/plrace/races/items/crest_jackalope"
+  },
+  "plrace:focus_salamander": {
+   "textures": "textures/plrace/races/items/focus_salamander"
+  },
+  "plrace:focus_golem": {
+   "textures": "textures/plrace/races/items/focus_golem"
+  },
+  "plrace:focus_jackalope": {
+   "textures": "textures/plrace/races/items/focus_jackalope"
+  },
+  "plrace:codex": {
+   "textures": "textures/plrace/races/items/codex"
+  }
+ }
+}
