@@ -40,6 +40,7 @@ for (const f of walk(path.join(BP, "entities"))) {
 }
 for (const f of walk(path.join(RP, "particles"))) defs.particles.add(readJson(f).particle_effect.description.identifier);
 for (const f of walk(path.join(RP, "animations"))) for (const k of Object.keys(readJson(f).animations)) defs.anims.add(k);
+defs.fogs = new Set(walk(path.join(RP, "fogs")).map((f) => readJson(f)["minecraft:fog_settings"].description.identifier));
 const EFFECTS = new Set(["speed", "slowness", "haste", "mining_fatigue", "strength", "instant_health", "instant_damage", "jump_boost", "nausea", "regeneration", "resistance", "fire_resistance", "water_breathing", "invisibility", "blindness", "night_vision", "hunger", "weakness", "poison", "wither", "health_boost", "absorption", "saturation", "levitation", "fatal_poison", "conduit_power", "slow_falling", "bad_omen", "village_hero", "darkness", "wind_charged", "weaving", "oozing", "infested", "trial_omen", "raid_omen"]);
 
 // ------------------------------------------------------------------ enums
@@ -207,8 +208,8 @@ export class Dimension {
       return true;
     });
   }
-  getPlayers() {
-    return this.getEntities({ type: "minecraft:player" });
+  getPlayers(o = {}) {
+    return this.getEntities({ ...o, type: "minecraft:player" }).filter((e) => !e._offline);
   }
   getBlock(loc) {
     return blockAt(this, loc);
@@ -476,7 +477,9 @@ export class Entity {
     if (!EFFECTS.has(id)) throw new Error(`unknown effect ${id}`);
     if (!(duration > 0)) throw new Error("bad duration");
     const cur = this._effects.get(id);
-    if (!cur || cur.amplifier < (o.amplifier ?? 0) || cur.duration < duration) this._effects.set(id, { typeId: id, duration, amplifier: o.amplifier ?? 0 });
+    // like Bedrock: a weaker effect never replaces a stronger one; the same strength refreshes the duration
+    const amp = o.amplifier ?? 0;
+    if (!cur || cur.amplifier < amp || (cur.amplifier === amp && cur.duration < duration)) this._effects.set(id, { typeId: id, duration, amplifier: amp });
   }
   getEffect(id) {
     this._check();
@@ -597,7 +600,7 @@ export class Player extends Entity {
     const m = /^fog @s (push|remove) ([a-z_:]+)(?: ([a-z_]+))?$/.exec(cmd);
     if (!m) throw new Error(`unexpected command ${cmd}`);
     if (m[1] === "push") {
-      if (m[2] !== "plrace:blood_moon") throw new Error(`unknown fog ${m[2]}`);
+      if (!defs.fogs.has(m[2])) throw new Error(`unknown fog ${m[2]}`);
       this._fog.push(m[3]);
     } else {
       const i = this._fog.indexOf(m[2]);

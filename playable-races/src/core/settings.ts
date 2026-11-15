@@ -14,10 +14,11 @@ export interface Settings {
   autoOpen: boolean; // open the selection menu automatically for new players
   hudAlways: boolean; // show the ability HUD even when the focus is not held
   uniqueExclusive: boolean; // a Unique lineage can be held by only one player at a time
+  heavenFx: boolean; // golden haze + one soft fade for witnesses of HYAKUTEN CHUKO (accessibility toggle)
 }
 
 const DEFAULTS: Settings = { pvp: true, change: "cooldown", changeDays: 3, bloodChance: 34, bloodFog: true, autoOpen: true, hudAlways: false,
-  uniqueExclusive: true };
+  uniqueExclusive: true, heavenFx: true };
 
 let cache: Settings | undefined;
 

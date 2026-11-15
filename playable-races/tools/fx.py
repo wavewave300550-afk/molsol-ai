@@ -13,7 +13,8 @@ W = H = 128
 CELL = 16
 SPRITES = ["dot", "spore", "drop", "leaf", "flake", "bubble", "root", "strand",
            "shard", "glyph_a", "glyph_b", "glyph_c", "glyph_d", "spark", "ring", "crescent",
-           "ember", "sigil", "dust", "ping", "reticle", "petal", "smoke", "rune_ring"]
+           "ember", "sigil", "dust", "ping", "reticle", "petal", "smoke", "rune_ring",
+           "seal", "decree", "fracture", "procession", "gate"]
 BIG = {"slash": (0, 64, 64, 64), "circle": (64, 64, 64, 64)}
 
 
@@ -135,6 +136,40 @@ def atlas() -> Image.Image:
                 ang = a * math.pi / 3
                 d.line([cx + math.cos(ang) * w * 0.3, cy + math.sin(ang) * h * 0.3, cx + math.cos(ang) * w * 0.44,
                         cy + math.sin(ang) * h * 0.44], fill=W_, width=S)
+    # ---- celestial sprites (race 006)
+    x, y, w, h = box("seal")
+    cx, cy = x + w / 2, y + h / 2
+    circ(cx, cy, w * 0.44, W_, width=int(S * 1.4))
+    d.rectangle([cx - w * 0.22, cy - h * 0.22, cx + w * 0.22, cy + h * 0.22], outline=W_, width=int(S * 1.2))
+    d.line([cx - w * 0.14, cy - h * 0.06, cx + w * 0.14, cy - h * 0.06], fill=W_, width=S)
+    d.line([cx, cy - h * 0.16, cx, cy + h * 0.16], fill=W_, width=S)
+    d.line([cx - w * 0.12, cy + h * 0.12, cx + w * 0.12, cy + h * 0.12], fill=W_, width=S)
+    x, y, w, h = box("decree")
+    for (a, b2, c2, e) in ((0.25, 0.22, 0.75, 0.22), (0.5, 0.12, 0.5, 0.88), (0.2, 0.5, 0.8, 0.5), (0.3, 0.88, 0.7, 0.7), (0.32, 0.32, 0.22, 0.62)):
+        d.line([x + w * a, y + h * b2, x + w * c2, y + h * e], fill=W_, width=int(S * 1.3))
+    x, y, w, h = box("fracture")
+    cx, cy = x + w / 2, y + h / 2
+    for a in range(5):
+        ang = a * 2 * math.pi / 5 + 0.3
+        px, py = cx, cy
+        for k in range(3):
+            nx = px + math.cos(ang + (k % 2) * 0.5 - 0.25) * w * 0.15
+            ny = py + math.sin(ang + (k % 2) * 0.5 - 0.25) * h * 0.15
+            d.line([px, py, nx, ny], fill=W_, width=int(S * (1.4 - k * 0.3)))
+            px, py = nx, ny
+    x, y, w, h = box("procession")
+    for k in range(5):
+        fx_ = x + w * (0.12 + k * 0.19)
+        d.rectangle([fx_ - w * 0.05, y + h * 0.42, fx_ + w * 0.05, y + h * 0.86], fill=W_)
+        circ(fx_, y + h * 0.36, w * 0.045, W_)
+        if k % 2 == 0:
+            d.line([fx_ + w * 0.07, y + h * 0.12, fx_ + w * 0.07, y + h * 0.86], fill=W_, width=S)
+            d.rectangle([fx_ + w * 0.07, y + h * 0.12, fx_ + w * 0.15, y + h * 0.32], fill=W_)
+    x, y, w, h = box("gate")
+    d.rectangle([x + w * 0.22, y + h * 0.25, x + w * 0.3, y + h * 0.92], fill=W_)
+    d.rectangle([x + w * 0.7, y + h * 0.25, x + w * 0.78, y + h * 0.92], fill=W_)
+    d.rectangle([x + w * 0.08, y + h * 0.12, x + w * 0.92, y + h * 0.2], fill=W_)
+    d.rectangle([x + w * 0.16, y + h * 0.32, x + w * 0.84, y + h * 0.37], fill=W_)
     # big crescent slash
     x, y, w, h = [v * S for v in BIG["slash"]]
     cx, cy = x + w / 2, y + h / 2
@@ -408,6 +443,64 @@ def particles() -> Dict[str, dict]:
             "v.dz * (v.particle_random_1) * math.sin(math.min(v.particle_age / 0.35, 1) * 90) * (v.particle_age < 0.35 ? 1 : (1 - (v.particle_age - 0.35) / 0.35))"]},
         **bb(["0.07", "0.07"], _uv("dot")), "minecraft:particle_appearance_tinting": {"color": "#fff3dc98"},
         "minecraft:particle_appearance_lighting": {}})
+    # ---- nurariten (attachable + script) ----
+    add("royal_mote", "particles_add", {**burst(3), "minecraft:emitter_shape_sphere": {"radius": 0.5},
+        "minecraft:particle_initial_speed": 0.05, "minecraft:particle_lifetime_expression": {"max_lifetime": "1.6 + variable.particle_random_1"},
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, 0.15, 0], "linear_drag_coefficient": 1.0},
+        **bb(["0.05 * " + fade, "0.05 * " + fade], _uv("spark")), "minecraft:particle_appearance_tinting": {"color": "#fff6d47a"}})
+    add("decree_burst", "particles_add", {**burst(10), "minecraft:emitter_shape_sphere": {"radius": 0.3, "direction": "outwards"},
+        "minecraft:particle_initial_speed": 1.2, "minecraft:particle_lifetime_expression": {"max_lifetime": 0.9},
+        "minecraft:particle_motion_dynamic": {"linear_drag_coefficient": 2.5},
+        **bb(["0.16 * " + fade, "0.16 * " + fade], _uv("decree")), "minecraft:particle_appearance_tinting": {"color": "#ffffdc8a"}})
+    add("procession_shadow", "particles_alpha", {**burst(1), "minecraft:emitter_shape_point": {},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": 3.2},
+        "minecraft:particle_motion_parametric": {"relative_position": ["v.particle_age * 0.45 - 0.7", 0, 0]},
+        **bb(["1.3", "0.5"], _uv("procession"), "emitter_transform_xz"),
+        "minecraft:particle_appearance_tinting": {"color": grad([(0.0, "#00000000"), (0.2, "#5a000000"), (0.8, "#5a000000"), (1.0, "#00000000")])}})
+    add("court_pillar", "particles_add", {**burst(1), "minecraft:emitter_shape_point": {},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": 1.0},
+        "minecraft:particle_motion_parametric": {"relative_position": [0, "v.particle_age * 0.6", 0]},
+        **bb(["0.12", "1.4 * " + fade], _uv("dot"), "lookat_y"),
+        "minecraft:particle_appearance_tinting": {"color": "#ffffd67a"}})
+    add("court_ring", "particles_add", {**burst(1), "minecraft:emitter_shape_point": {},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": 1.2},
+        **bb(["v.size * 0.5", "v.size * 0.5"], _uv("rune_ring"), "emitter_transform_xz"),
+        "minecraft:particle_appearance_tinting": {"color": grad([(0.0, "#00ffe08a"), (0.3, "#b0ffe08a"), (1.0, "#00ffd070")])}})
+    add("judgment_seal", "particles_add", {**burst(1), "minecraft:emitter_shape_point": {},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": 0.5},
+        **bb(["0.25 + v.stacks * 0.12", "0.25 + v.stacks * 0.12"], _uv("seal")),
+        "minecraft:particle_appearance_tinting": {"color": "#ffffc24a"}})
+    add("arrival_gate", "particles_add", {**burst(1), "minecraft:emitter_shape_point": {},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": 0.9},
+        **bb(["2.4", "2.4"], _uv("gate")),
+        "minecraft:particle_appearance_tinting": {"color": grad([(0.0, "#00ffe8a0"), (0.25, "#ffffe8a0"), (1.0, "#00ffd060")])}})
+    add("gate_shadow", "particles_alpha", {**burst(1), "minecraft:emitter_shape_point": {},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": 2.4},
+        **bb(["3.2", "3.2"], _uv("gate"), "emitter_transform_xz"),
+        "minecraft:particle_appearance_tinting": {"color": grad([(0.0, "#00a07818"), (0.3, "#80a07818"), (1.0, "#00a07818")])}})
+    add("sky_fracture", "particles_add", {**burst(12), "minecraft:emitter_shape_disc": {"radius": 7.0, "plane_normal": "y"},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "1.2 + variable.particle_random_1"},
+        "minecraft:particle_initial_spin": {"rotation": "variable.particle_random_2 * 360", "rotation_rate": 6},
+        **bb(["1.0 + v.particle_random_3 * 1.4", "1.0 + v.particle_random_3 * 1.4"], _uv("fracture")),
+        "minecraft:particle_appearance_tinting": {"color": grad([(0.0, "#00fff8e0"), (0.2, "#fffff8e0"), (1.0, "#00ffe0a0")])}})
+    add("heaven_ring", "particles_add", {**burst(1), "minecraft:emitter_shape_point": {},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": 1.8},
+        **bb(["2 + v.particle_age * 9", "2 + v.particle_age * 9"], _uv("rune_ring"), "emitter_transform_xz"),
+        "minecraft:particle_appearance_tinting": {"color": grad([(0.0, "#fffff2c0"), (1.0, "#00ffd070")])}})
+    add("seal_converge", "particles_add", {
+        "minecraft:emitter_rate_instant": {"num_particles": 16}, "minecraft:emitter_lifetime_once": {"active_time": 0.05},
+        "minecraft:emitter_shape_point": {},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": 0.8},
+        "minecraft:particle_initial_speed": 0,
+        "minecraft:particle_motion_parametric": {"relative_position": [
+            "v.dx * math.clamp(v.particle_age / 0.6 - v.particle_random_1 * 0.4, 0, 1)",
+            "v.dy * math.clamp(v.particle_age / 0.6 - v.particle_random_1 * 0.4, 0, 1)",
+            "v.dz * math.clamp(v.particle_age / 0.6 - v.particle_random_1 * 0.4, 0, 1)"]},
+        **bb(["0.18", "0.18"], _uv("seal")), "minecraft:particle_appearance_tinting": {"color": "#ffffd24a"}})
+    add("dissolve_light", "particles_add", {**burst(20), "minecraft:emitter_shape_box": {"half_dimensions": [1.4, 1.0, 1.4]},
+        "minecraft:particle_initial_speed": 0.2, "minecraft:particle_lifetime_expression": {"max_lifetime": "1.0 + variable.particle_random_1"},
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, 1.4, 0], "linear_drag_coefficient": 1.0},
+        **bb(["0.08 * " + fade, "0.08 * " + fade], _uv("spark")), "minecraft:particle_appearance_tinting": {"color": "#ffffefb0"}})
     # ---- golem (script) ----
     add("shock_rupture", "particles_alpha", {**burst(9), "minecraft:emitter_shape_disc": {"radius": 0.7, "plane_normal": "y", "direction": [0, 1, 0]},
         "minecraft:particle_initial_speed": "3.2 + variable.particle_random_1 * 2", "minecraft:particle_lifetime_expression": {"max_lifetime": 0.8},
@@ -510,6 +603,16 @@ def particles() -> Dict[str, dict]:
         **bb(["0.1", "0.1"], _uv_flip(["glyph_a", "glyph_b", "glyph_c", "glyph_d"])),
         "minecraft:particle_appearance_tinting": {"color": ["v.red", "v.green", "v.blue", "1 - v.particle_age / 1.4"]}})
     return P
+
+
+def heaven_fog() -> dict:
+    """Nurariten's ultimate: a golden haze pushed only on players near it (never the sky)."""
+    return {"format_version": "1.16.100", "minecraft:fog_settings": {
+        "description": {"identifier": f"{NS}:heaven_light"},
+        "distance": {
+            "air": {"fog_start": 0.55, "fog_end": 1.0, "fog_color": "#f6e2a2", "render_distance_type": "render"},
+            "weather": {"fog_start": 0.4, "fog_end": 0.9, "fog_color": "#efd894", "render_distance_type": "render"},
+        }}}
 
 
 def fog() -> dict:

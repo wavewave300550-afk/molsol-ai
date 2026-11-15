@@ -350,8 +350,16 @@ for f in glob.glob(os.path.join(RP, "entity", "**", "*.json"), recursive=True):
 js = ""
 for f in glob.glob(os.path.join(BP, "scripts", "**", "*.js"), recursive=True):
     js += open(f, encoding="utf-8").read() + "\n"
+entity_events = {ev for d in entities.values() for ev in d.get("events", {})}
+fog_ids = set()
+for f in glob.glob(os.path.join(RP, "fogs", "*.json")):
+    fog_ids.add(load(f)["minecraft:fog_settings"]["description"]["identifier"])
+for m in re.finditer(r'event:\s*sky \? "(plrace:[a-z_]+)"', js):
+    check(m.group(1) in entities.get("plrace:celestial_gate", {}).get("events", {}), f"gate event {m.group(1)}")
+for m in re.finditer(r'FOG_ID = "(plrace:[a-z_]+)"', js):
+    check(m.group(1) in fog_ids, f"fog {m.group(1)} defined")
 for pid in set(re.findall(r'"(plrace:[a-z_]+)"', js)):
-    known = pid in particles or pid in items or pid in entities or pid in atts or pid in {
+    known = pid in particles or pid in items or pid in entities or pid in atts or pid in entity_events or pid in fog_ids or pid in {
         "plrace:focus", "plrace:codex", "plrace:form", "plrace:data", "plrace:settings", "plrace:bloodmoon", "plrace:weather",
         "plrace:race", "plrace:moon_action", "plrace:blood_moon", "plrace:setrace", "plrace:resetcooldowns",
         "plrace:unique", "plrace:unique_action"}
@@ -370,6 +378,7 @@ for m in re.finditer(r"q\.is_item_name_any\('slot\.armor\.head', 0, ([^)]+)\)", 
     for iid in re.findall(r"'([a-z_:]+)'", m.group(1)):
         check(iid in items, f"stop expression references unknown item {iid}")
 check(os.path.exists(os.path.join(RP, "fogs", "plrace_blood_moon.json")), "blood moon fog file")
+check("plrace:heaven_light" in fog_ids, "heaven light fog file")
 
 # ----------------------------------------------------------------------------- textures
 for f in glob.glob(os.path.join(RP, "textures", "**", "*.png"), recursive=True):

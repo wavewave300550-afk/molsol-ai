@@ -21,6 +21,7 @@ import { golemLightning, inWard } from "./races/golem.js";
 import { moonhunt } from "./races/jackalope.js";
 import { cleanupEnsnared, salamanderDrink } from "./races/salamander.js";
 import { applyFog, bloodMoonTick, onBloodMoonChange } from "./systems/bloodmoon.js";
+import { clearHeavenFog } from "./races/nurariten.js";
 import { consume, markedBy, tickMarks } from "./systems/marks.js";
 import { isMirage, pop, removeMiragesOf, tickMirages } from "./systems/mirage.js";
 import { isProxy, proxyDied, proxyHurt, purgeOrphans, removeProxiesOf, tickProxies } from "./systems/proxies.js";
@@ -136,7 +137,10 @@ function onJoin(p: Player, first: boolean): void {
     }, 60);
   }
   save(p, s, true);
-  if (first) applyFog(p);
+  if (first) {
+    clearHeavenFog(p); // a haze left over from a HYAKUTEN CHUKO interrupted by a logout or reload
+    applyFog(p);
+  }
 }
 
 function giveCodex(p: Player): void {
@@ -411,7 +415,10 @@ function startLoops(): void {
     }
   }, SAVE_INTERVAL);
   // helper entities left over from a reload or crash (each also despawns itself on a timer)
-  system.runTimeout(() => purgeOrphans(), 40);
+  system.runTimeout(() => {
+    purgeOrphans();
+    for (const p of players()) clearHeavenFog(p); // after a /reload nothing is marching any more
+  }, 40);
   system.runInterval(() => purgeOrphans(), 1200);
 }
 

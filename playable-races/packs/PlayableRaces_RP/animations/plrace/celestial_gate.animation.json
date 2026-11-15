@@ -1,0 +1,24 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.plrace.celestial_gate.idle": {
+   "loop": true,
+   "bones": {
+    "ring": {
+     "rotation": [
+      0.0,
+      0.0,
+      "q.life_time * 24"
+     ]
+    },
+    "ring_inner": {
+     "rotation": [
+      0.0,
+      0.0,
+      "-q.life_time * 40"
+     ]
+    }
+   }
+  }
+ }
+}

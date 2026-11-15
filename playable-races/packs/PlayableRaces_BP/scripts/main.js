@@ -16,6 +16,7 @@ import { golemLightning, inWard } from "./races/golem.js";
 import { moonhunt } from "./races/jackalope.js";
 import { cleanupEnsnared, salamanderDrink } from "./races/salamander.js";
 import { applyFog, bloodMoonTick, onBloodMoonChange } from "./systems/bloodmoon.js";
+import { clearHeavenFog } from "./races/nurariten.js";
 import { consume, markedBy, tickMarks } from "./systems/marks.js";
 import { isMirage, pop, removeMiragesOf, tickMirages } from "./systems/mirage.js";
 import { isProxy, proxyDied, proxyHurt, purgeOrphans, removeProxiesOf, tickProxies } from "./systems/proxies.js";
@@ -124,8 +125,10 @@ function onJoin(p, first) {
             }, 60);
     }
     save(p, s, true);
-    if (first)
+    if (first) {
+        clearHeavenFog(p);
         applyFog(p);
+    }
 }
 function giveCodex(p) {
     const codex = new ItemStack(ITEM_CODEX, 1);
@@ -425,7 +428,11 @@ function startLoops() {
                 save(p, s);
         }
     }, SAVE_INTERVAL);
-    system.runTimeout(() => purgeOrphans(), 40);
+    system.runTimeout(() => {
+        purgeOrphans();
+        for (const p of players())
+            clearHeavenFog(p);
+    }, 40);
     system.runInterval(() => purgeOrphans(), 1200);
 }
 world.afterEvents.worldLoad.subscribe(() => {

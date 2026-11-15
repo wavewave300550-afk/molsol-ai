@@ -17,6 +17,9 @@
   "plrace:crest_spaghetti": {
    "textures": "textures/plrace/races/items/crest_spaghetti"
   },
+  "plrace:crest_nurariten": {
+   "textures": "textures/plrace/races/items/crest_nurariten"
+  },
   "plrace:focus_salamander": {
    "textures": "textures/plrace/races/items/focus_salamander"
   },
@@ -31,6 +34,9 @@
   },
   "plrace:focus_spaghetti": {
    "textures": "textures/plrace/races/items/focus_spaghetti"
+  },
+  "plrace:focus_nurariten": {
+   "textures": "textures/plrace/races/items/focus_nurariten"
   },
   "plrace:codex": {
    "textures": "textures/plrace/races/items/codex"

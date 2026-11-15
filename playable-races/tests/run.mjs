@@ -855,6 +855,273 @@ pasta.isSneaking = false;
 pasta._vel = { x: 0, y: 0, z: 0 };
 pasta._health = 20;
 
+// ======================================================================== race 006 Nurariten (Unique)
+const J = await import(path.join(RUN, "scripts/systems/jurisdiction.js")); // the add-on's own module instance
+async function select(p, idx) {
+  for (let k = 0; k < 6 && data(p).sel !== idx; k++) await use(p, true);
+}
+begin("nurariten: assignment & unique claim");
+sim.time = 6000; // midday
+const sov = harness.join("Sovereign", { x: 600.5, y: 64, z: 0.5 });
+await settle(12);
+tickN(60);
+await settle(10);
+const n_msgBefore = sim.log.messages.length;
+commands.get("plrace:setrace").cb({ sourceEntity: sov }, "nurariten", [sov]);
+await settle(4);
+eq(data(sov).race, "006", "race 006 persisted");
+eq(head(sov)?.typeId, "plrace:form_nurariten", "Nurariten crest worn");
+ok(inv(sov).slots.some((x) => x?.typeId === "plrace:focus_nurariten"), "Mandate Shaku Focus given");
+ok(sim.log.messages.slice(n_msgBefore).some((m) => m.p === "*" && String(m.m).includes("Uninvited Sovereign")), "the arrival of a Unique is announced to the world");
+eq(JSON.parse(world.getDynamicProperty("plrace:unique") ?? "{}")["006"]?.id, sov.id, "the Unique claim is stored with the world");
+hold(sov, "plrace:focus_nurariten");
+tickN(25);
+ok(String(sim.log.actionbar.get(sov.id)).includes("Midday Mandate"), "HUD shows the sun's mandate (midday)");
+const n_rival = harness.join("Rival", { x: 640.5, y: 64, z: 40.5 });
+await settle(12);
+tickN(60);
+await settle(10);
+commands.get("plrace:setrace").cb({ sourceEntity: n_rival }, "nurariten", [n_rival]);
+await settle(4);
+ok(data(n_rival).race !== "006", "a second player cannot take a Unique lineage that is already held");
+ok(sim.log.messages.some((m) => m.p === n_rival.id && String(m.m).includes("Could not assign")), "the refusal is explained");
+
+begin("nurariten: Unannounced Arrival");
+sov.setRotation({ x: 0, y: 0 });
+const n_az = mob("minecraft:zombie", 600.5, 11.8);
+for (let x = 598; x <= 603; x++) for (let z = 9; z <= 15; z++) sim.solids.add(`${x},67,${z}`); // a roof over the arrival
+await use(sov);
+ok(Math.abs(sov.location.z - 12.5) < 0.6, "the Sovereign steps 12 blocks along its gaze");
+ok(particles("plrace:arrival_gate") >= 2, "gates of light mark departure and arrival");
+tickN(2);
+ok(!!n_az.getEffect("slowness"), "creatures at the arrival are pushed aside and slowed");
+ok(!!sov.getEffect("absorption"), "arriving under a roof it is received as the master of the house");
+for (let x = 598; x <= 603; x++) for (let z = 9; z <= 15; z++) sim.solids.delete(`${x},67,${z}`);
+n_az.remove();
+commands.get("plrace:resetcooldowns").cb({}, [sov]);
+await settle(2);
+sov.teleport({ x: 600.5, y: 64, z: 0.5 });
+for (let x = 596; x <= 605; x++) for (let y = 64; y <= 67; y++) sim.solids.add(`${x},${y},5`); // a wall
+await use(sov);
+ok(sov.location.z < 5, "never through walls");
+for (let x = 596; x <= 605; x++) for (let y = 64; y <= 67; y++) sim.solids.delete(`${x},${y},5`);
+sov.teleport({ x: 600.5, y: 64, z: 0.5 });
+sov.setRotation({ x: 0, y: 0 });
+
+begin("nurariten: Edict of the Lowered Gaze");
+await select(sov, 1); // -> Lowered Gaze
+const n_gz = mob("minecraft:zombie", 600.5, 5.5);
+const n_gBehind = mob("minecraft:zombie", 600.5, -4.5);
+await use(sov);
+eq(n_gz.getEffect("weakness")?.amplifier, 1, "enemies in the cone are weakened (II)");
+eq(n_gz.getEffect("slowness")?.amplifier, 1, "and staggered (Slowness II)");
+ok(n_gz.getRotation().x >= 50, "the creature bows its head");
+ok(!n_gBehind.getEffect("weakness"), "nothing behind the Sovereign is affected");
+ok(particles("plrace:judgment_seal") > 0, "a judgment seal appears above the judged");
+n_gBehind.remove();
+const n_gHead = (sov.getRotation().x);
+sov.setRotation({ x: 0, y: 180 });
+commands.get("plrace:resetcooldowns").cb({}, [sov]);
+await settle(2);
+await use(sov);
+ok(String(sim.log.actionbar.get(sov.id)).includes("No one stands before you"), "no one in front -> clear failure, no cooldown");
+sov.setRotation({ x: n_gHead, y: 0 });
+
+begin("nurariten: Imperial Expulsion (marks)");
+await select(sov, 3); // -> Expulsion
+const n_exHp = hp(n_gz);
+const n_exZ = n_gz.location.z;
+await use(sov);
+ok(n_exHp - hp(n_gz) >= 8 - 0.01, "5 damage +3 for its judgment mark");
+ok(n_gz.location.z > n_exZ + 3, "thrown out of the Sovereign's presence");
+n_gz.remove();
+commands.get("plrace:resetcooldowns").cb({}, [sov]);
+await settle(2);
+sov.setRotation({ x: 0, y: 180 });
+await use(sov);
+ok(String(sim.log.actionbar.get(sov.id)).includes("No one here to expel"), "no target -> clear failure");
+sov.setRotation({ x: 0, y: 0 });
+
+begin("nurariten: The Uninvited Temple");
+await select(sov, 2); // -> Temple
+commands.get("plrace:resetcooldowns").cb({}, [sov]);
+await settle(2);
+const n_tz = mob("minecraft:zombie", 600.5, 3.5);
+n_tz._maxHealth = 60;
+n_tz._health = 60;
+await use(sov);
+tickN(2);
+eq(head(sov)?.typeId, "plrace:form_nurariten_court", "the architecture on its back unfolds");
+sov.applyDamage(5, { cause: "entityAttack", damagingEntity: n_tz });
+tickN(4);
+ok(String(sim.log.actionbar.get(sov.id)).includes("interrupted"), "a heavy blow interrupts the declaration (Judicial Weakness)");
+const n_half = cdLeft(sov, "uninvited_temple");
+forceSave();
+ok(cdLeft(sov, "uninvited_temple") > 0 && cdLeft(sov, "uninvited_temple") < 35 * 20 * 0.6, "half of the cooldown is returned");
+eq(OW.getEntities({ type: "plrace:celestial_gate" }).length, 0, "no court was declared");
+sov._health = 20;
+commands.get("plrace:resetcooldowns").cb({}, [sov]);
+await settle(2);
+await use(sov);
+tickN(24);
+eq(OW.getEntities({ type: "plrace:celestial_gate" }).length, 1, "the court's gate stands at its edge");
+eq(head(sov)?.typeId, "plrace:form_nurariten_court", "inside its court it keeps the court form");
+ok(String(sim.log.actionbar.get(sov.id)).includes("Court"), "HUD shows the court timer");
+ok(!!n_tz.getEffect("slowness"), "enemies inside the court are slowed");
+const n_tzHp = hp(n_tz);
+n_tz.applyDamage(5, { cause: "entityAttack", damagingEntity: sov });
+ok(Math.abs(n_tzHp - hp(n_tz) - 6) < 0.01, "+20% damage dealt inside its own court");
+const n_before = sov._health;
+sov.applyDamage(10, { cause: "entityAttack", damagingEntity: n_tz });
+ok(Math.abs(n_before - sov._health - 8.5) < 0.01, "-15% damage taken inside its own court");
+sov._health = 20;
+tickN(70);
+ok(particles("plrace:court_pillar") > 0 && particles("plrace:court_ring") > 0, "pillars of light and a ring mark the boundary");
+ok(OW.getEntities({ type: "minecraft:zombie" }).length >= 1, "the court changes no blocks and summons nothing hostile");
+// expel from inside the court: the creature is barred from returning
+await select(sov, 3); // -> Expulsion
+faceTo(sov, n_tz);
+await use(sov);
+const n_exiled = { ...n_tz.location };
+ok(n_exiled.z > 7, "expelled out of the court");
+n_tz.teleport({ x: 600.5, y: 64, z: 4.5 });
+tickN(8);
+ok(n_tz.location.z > 4.6, "an exiled creature is turned back at the threshold");
+sov.setRotation({ x: 0, y: 0 });
+// Broken Mandate: leaving your own court
+sov.teleport({ x: 600.5, y: 64, z: -12.5 });
+tickN(8);
+eq(OW.getEntities({ type: "plrace:celestial_gate" }).length, 0, "leaving the court breaks it (gate dissolves)");
+ok(!!sov.getEffect("weakness"), "Broken Mandate: the Sovereign is weakened");
+tickN(5);
+eq(head(sov)?.typeId, "plrace:form_nurariten", "the back architecture folds away");
+n_tz.remove();
+sov.teleport({ x: 600.5, y: 64, z: 0.5 });
+sov.removeEffect("weakness");
+
+begin("nurariten: HYAKUTEN CHUKO - interruption");
+await select(sov, 4); // -> Hyakuten Chuko
+commands.get("plrace:resetcooldowns").cb({}, [sov]);
+await settle(2);
+tickN(110);
+const n_witness = harness.join("Witness", { x: 606.5, y: 64, z: 2.5 });
+await settle(12);
+tickN(60);
+await settle(10);
+sov.setRotation({ x: 0, y: 0 });
+const n_fadesBefore = sim.log.fades.length;
+await use(sov);
+ok(sim.log.titles.some((t) => t.p === sov.id && String(t.t).includes("百天昼行")), "the title 百天昼行 is shown");
+ok(sim.log.fades.length > n_fadesBefore, "one soft golden fade for those near");
+ok(sov._fog.includes("plrace_hh") && n_witness._fog.includes("plrace_hh"), "a golden haze for the caster and witnesses only (no world sky change)");
+ok(!sim.log.commands.some((c) => /time|weather|gamerule/.test(c.cmd)), "the world's time, weather and rules are untouched");
+const n_skyGate = OW.getEntities({ type: "plrace:celestial_gate" });
+eq(n_skyGate.length, 1, "a gate opens in the sky");
+eq(n_skyGate[0]?._spawnEvent, "plrace:huge", "the sky gate is the vast form");
+eq(sov.inputPermissions.isPermissionCategoryEnabled(InputPermissionCategory.LateralMovement), false, "the Sovereign stands still");
+const n_iz = mob("minecraft:zombie", 600.5, 3.5);
+sov.applyDamage(7, { cause: "entityAttack", damagingEntity: n_iz });
+tickN(4);
+ok(String(sim.log.actionbar.get(sov.id)).includes("interrupted"), "a heavy blow during Stage I interrupts it");
+eq(OW.getEntities({ type: "plrace:celestial_gate" }).length, 0, "the sky closes");
+ok(!sov._fog.includes("plrace_hh") && !n_witness._fog.includes("plrace_hh"), "every haze is removed");
+eq(sov.inputPermissions.isPermissionCategoryEnabled(InputPermissionCategory.LateralMovement), true, "movement restored");
+forceSave();
+const n_ucd = cdLeft(sov, "hyakuten_chuko");
+ok(n_ucd > 50 * 20 && n_ucd < 100 * 20, `half of the 180 s cooldown is returned (${(n_ucd / 20).toFixed(0)} s left)`);
+sov._health = 20;
+n_iz.remove();
+
+begin("nurariten: HYAKUTEN CHUKO - five stages");
+commands.get("plrace:resetcooldowns").cb({}, [sov]);
+await settle(2);
+sov.removeEffect("weakness");
+tickN(110);
+const n_foes = [mob("minecraft:zombie", 606.5, 3.5), mob("minecraft:zombie", 594.5, 4.5), mob("minecraft:skeleton", 600.5, 8.5), mob("minecraft:zombie", 603.5, -5.5)];
+let n_foeHp;
+for (const f of n_foes) {
+  f._maxHealth = 80; // sturdy enough to live through all five stages
+  f._health = 80;
+}
+await use(sov);
+tickN(60);
+eq(OW.getEntities({ type: "plrace:herald" }).length, 1, "II: two heralds descend with the decree");
+ok(n_foes.every((f) => J.marksOn(f, sov.id) >= 1), "II: every enemy within 16 is judged (judgment mark)");
+ok(n_foes.every((f) => (f.getEffect("slowness")?.amplifier ?? -1) >= 1), "II: and bows (Slowness II)");
+tickN(20);
+eq(OW.getEntities({ type: "plrace:procession" }).length, 8, "III: eight columns (96 attendants) march - one entity per column, no AI");
+ok(OW.getEntities({ type: "plrace:procession" }).every((e) => Math.abs(Math.hypot(e.location.x - 600.5, e.location.z - 0.5) - 11.6) < 1.6), "III: the columns circle the Sovereign");
+n_foeHp = n_foes.map(hp);
+for (const f of n_foes) if (f.isValid) f.teleport({ x: 600.5 + (f.location.x - 600.5) * 0.1, y: 64, z: 0.5 + 11 });
+tickN(40);
+ok(n_foes.some((f, i) => hp(f) < n_foeHp[i]), "III: the procession tramples whoever stands in its way");
+for (const [i, f] of n_foes.entries()) if (f.isValid) f.teleport({ x: 600.5 + [3, -3, 0, 2][i], y: 64, z: 0.5 + [2, 3, 5, -4][i] });
+tickN(15);
+eq(head(sov)?.typeId, "plrace:form_nurariten_throne", "IV: the throne without permission");
+ok(!!sov.getEffect("resistance"), "IV: the enthroned Sovereign is protected");
+ok(n_foes.every((f) => !!f.getEffect("weakness")), "IV: all within 12 are weakened");
+const n_preStrike = n_foes.map(hp);
+tickN(45);
+ok(n_foes.every((f, i) => n_preStrike[i] - hp(f) >= 12 - 0.01 || hp(f) <= 0), "V: the Final Edict strikes 4 +4 per judgment mark");
+ok(particles("plrace:seal_converge") > 0, "V: the seals converge on the judged");
+tickN(40);
+eq(OW.getEntities({ type: "plrace:procession" }).length + OW.getEntities({ type: "plrace:herald" }).length + OW.getEntities({ type: "plrace:celestial_gate" }).length, 0, "everything dissolves afterwards");
+ok(!sov._fog.includes("plrace_hh") && !n_witness._fog.includes("plrace_hh"), "the haze is lifted for everyone");
+eq(sov.inputPermissions.isPermissionCategoryEnabled(InputPermissionCategory.LateralMovement), true, "movement restored");
+eq(head(sov)?.typeId, "plrace:form_nurariten", "the Sovereign returns to its usual form");
+for (const f of n_foes) if (f.isValid) f.remove();
+
+begin("nurariten: logout during the procession");
+commands.get("plrace:resetcooldowns").cb({}, [sov]);
+await settle(2);
+tickN(110);
+await use(sov);
+tickN(90);
+ok(OW.getEntities({ type: "plrace:procession" }).length === 8, "procession under way");
+harness.leave(sov);
+await settle(2);
+tickN(4);
+eq(OW.getEntities({ type: "plrace:procession" }).length + OW.getEntities({ type: "plrace:celestial_gate" }).length + OW.getEntities({ type: "plrace:herald" }).length, 0, "the caster's helpers are removed when it leaves");
+ok(!n_witness._fog.includes("plrace_hh"), "the witness' haze is lifted");
+harness.rejoin(sov);
+await settle(14);
+eq(sov.inputPermissions.isPermissionCategoryEnabled(InputPermissionCategory.LateralMovement), true, "movement restored on rejoin");
+ok(!sov._fog.includes("plrace_hh"), "no haze left on rejoin");
+eq(data(sov).race, "006", "the lineage and its Unique claim survive the relog");
+
+begin("nurariten: the sun");
+sim.time = 18000;
+tickN(8);
+eq(head(sov)?.typeId, "plrace:form_nurariten_nocturne", "at night it shines (Nocturne Radiance)");
+hold(sov, "plrace:focus_nurariten");
+tickN(30);
+ok(String(sim.log.actionbar.get(sov.id) ?? "").includes("Nocturne"), "HUD shows the night (Nocturne)");
+sim.time = 12500;
+tickN(8);
+hold(sov, "plrace:focus_nurariten");
+await select(sov, 0);
+commands.get("plrace:resetcooldowns").cb({}, [sov]);
+await settle(2);
+sov.teleport({ x: 600.5, y: 64, z: 0.5 });
+sov.setRotation({ x: 0, y: 0 });
+await use(sov);
+const n_z1 = sov.location.z;
+sov.setRotation({ x: 0, y: 180 });
+await use(sov);
+ok(n_z1 > 8 && sov.location.z < n_z1 - 8, "dusk is the hour of visiting: two arrivals in a row");
+sim.time = 6000;
+tickN(8);
+commands.get("plrace:setrace").cb({ sourceEntity: sov }, "none", [sov]);
+await settle(4);
+ok(!JSON.parse(world.getDynamicProperty("plrace:unique") ?? "{}")["006"], "taking the Rite of Unbecoming releases the Unique claim");
+commands.get("plrace:setrace").cb({ sourceEntity: n_rival }, "nurariten", [n_rival]);
+await settle(4);
+eq(data(n_rival).race, "006", "then another player may become Nurariten");
+commands.get("plrace:setrace").cb({ sourceEntity: n_rival }, "none", [n_rival]);
+await settle(4);
+harness.leave(n_witness);
+harness.leave(n_rival);
+
 // ======================================================================== summary
 const warns = sim.log.warns.concat();
 begin("script health");

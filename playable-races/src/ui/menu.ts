@@ -315,6 +315,7 @@ async function worldSettings(p: Player): Promise<void> {
     .toggle("Open lineage selection for new players", { defaultValue: cur.autoOpen })
     .toggle("Show the ability HUD without holding the focus", { defaultValue: cur.hudAlways })
     .toggle(`Unique lineages: one holder per world (${uniqueStatus()})`, { defaultValue: cur.uniqueExclusive })
+    .toggle("HYAKUTEN CHUKO screen effects (golden haze + one soft fade)", { defaultValue: cur.heavenFx })
     .submitButton("Save");
   const s = get(p);
   s.menuOpen = true;
@@ -337,6 +338,7 @@ async function worldSettings(p: Player): Promise<void> {
     autoOpen: !!v[5],
     hudAlways: !!v[6],
     uniqueExclusive: !!v[7],
+    heavenFx: !!v[8],
   });
   p.sendMessage(`§6Settings saved. ${bloodMoonStatus()}`);
 }

@@ -27,7 +27,8 @@ from kit.render import render  # noqa: E402
 from anims import core as acore  # noqa: E402
 from anims import races as aset  # noqa: E402
 from anims import life  # noqa: E402
-from models import salamander, golem, jackalope, xenentoma, spaghetti, common  # noqa: E402
+from models import salamander, golem, jackalope, xenentoma, spaghetti, nurariten, common  # noqa: E402
+from anims import nurariten as anim_nurariten  # noqa: E402
 from anims import xenentoma as anim_xenentoma  # noqa: E402
 from anims import spaghetti as anim_spaghetti  # noqa: E402
 import fx  # noqa: E402
@@ -89,6 +90,13 @@ RACES = {
                      "brittle": "Overcooked"},
         "icon": {"variant": "base", "tex": "base", "head": ((0, 21, 0), 2.4), "body": ((0, 15, 0), 4.3)},
         "portrait_bg": (70, 50, 18)},
+    "nurariten": {
+        "code": "006", "mod": nurariten, "anims": anim_nurariten.anims, "bounds": (4.0, 4.0, (0, 1.6, 0.5)),
+        "display": "Nurariten", "protection": 2, "hover": "gold", "focus": ("Mandate Shaku Focus", "gold"),
+        "variants": {"base": "Uninvited Sovereign", "nocturne": "Nocturne Radiance", "edict": "Celestial Edict",
+                     "court": "Uninvited Court", "throne": "The Throne Without Permission"},
+        "icon": {"variant": "court", "tex": "radiant", "head": ((0, 29.5, 0), 3.2), "body": ((0, 20, 2), 3.7)},
+        "portrait_bg": (60, 46, 22)},
 }
 DISPLAY = {race: info["display"] for race, info in RACES.items()}
 VARIANT_NAMES = {race: info["variants"] for race, info in RACES.items()}
@@ -483,6 +491,38 @@ def race_entities(lang):
                  f"{TEXROOT}/spaghetti/meatball", {"spin": f"animation.{NS}.meatball.spin"}, ["inanimate"],
                  health=1, size=(0.5, 0.5), timer=14, physics=False, gravity=False,
                  particles={"trail": f"{NS}:meatball_trail"})
+    # Nurariten: the celestial gate, the heralds and the processions of the Hundred Heavens
+    for ident, name, builder, geo_id, bounds, anims, families, extra in (
+        (f"{NS}:celestial_gate", "Celestial Gate", nurariten.build_gate, "celestial_gate", (12, 14, (0, 6, 0)), "gate", ["inanimate"], {"huge": 3.6}),
+        (f"{NS}:herald", "Celestial Herald", nurariten.build_heralds, "herald", (3, 2, (0, 0.6, 0)), "herald", ["inanimate"], None),
+        (f"{NS}:procession", "Procession of the Hundred Heavens", nurariten.build_procession, "procession", (3, 3, (0, 0.8, 0)), "procession", ["inanimate"], None),
+    ):
+        mm = builder()
+        tex = paint(mm, nurariten.materials(), nurariten.TEXTURES["radiant"])
+        tex.save(_mk(os.path.join(RP, f"{TEXROOT}/nurariten/{geo_id}.png")))
+        wjson(os.path.join(RP, f"models/entity/plrace/{geo_id}.geo.json"), {"format_version": "1.16.0", "minecraft:geometry": [
+            mm.geometry_json(f"geometry.{NS}.{geo_id}", variant=None, cutout=False, bounds=bounds)]})
+        an = acore.Anim(f"animation.{NS}.{geo_id}.idle", loop=True)
+        if anims == "gate":
+            an.bone("ring", rot=[0, 0, "q.life_time * 24"]).bone("ring_inner", rot=[0, 0, "-q.life_time * 40"])
+        elif anims == "herald":
+            an.bone("pair", pos=[0, aset.osc(0.5, 0.6), 0]).bone("decree", rot=[aset.osc(0.7, 3), 0, aset.osc(0.4, 2)])
+            for sd in ("r", "l"):
+                an.bone(f"herald_{sd}", rot=[aset.osc(0.6, 3, 0 if sd == "r" else 90), 0, 0])
+        else:
+            for row in range(6):
+                for sd, ph in (("r", 0), ("l", 180)):
+                    an.bone(f"fig_{row}_{sd}", pos=[0, f"math.abs(math.sin(q.life_time * 220 + {row * 60 + ph})) * 0.7", 0],
+                            rot=[aset.osc(1.2, 3, row * 60 + ph), 0, aset.osc(0.6, 2, row * 40)])
+            an.bone("palanquin", pos=[0, "math.abs(math.sin(q.life_time * 220 + 240)) * 0.5", 0])
+            for sd, ph in (("r", 0), ("l", 70)):
+                an.bone(f"fig_0_{sd}_banner", rot=[0, aset.osc(0.8, 18, ph), aset.osc(1.1, 4, ph)])
+        wjson(os.path.join(RP, f"animations/plrace/{geo_id}.animation.json"), acore.file([an]))
+        base_scale = {"herald": 2.2, "procession": 2.0}.get(anims)
+        proxy_entity(lang, ident, name, {"default": f"geometry.{NS}.{geo_id}"}, f"{TEXROOT}/nurariten/{geo_id}",
+                     {"idle": f"animation.{NS}.{geo_id}.idle"}, families, health=1, size=(0.6, 0.6), timer=20,
+                     physics=False, gravity=False, scale_events=extra,
+                     extra={"minecraft:scale": {"value": base_scale}} if base_scale else None)
 
 
 def mirage_render_controllers(rc):
@@ -622,6 +662,15 @@ def _focus_icons():
     d.ellipse([12 * S, 6 * S, 21 * S, 15 * S], fill=(140, 72, 40, 255))
     d.ellipse([14 * S, 7 * S, 18 * S, 10 * S], fill=(200, 50, 30, 255))
     out["spaghetti"] = _finish(img)
+    # Mandate Shaku: an ivory court baton banded in gold, with a vermilion tassel
+    img, d, S = _pix()
+    d.polygon([(13 * S, 3 * S), (19 * S, 3 * S), (18 * S, 27 * S), (14 * S, 27 * S)], fill=(238, 232, 214, 255))
+    for yy in (6, 14, 22):
+        d.rectangle([13 * S, yy * S, 19 * S, (yy + 1.4) * S], fill=(214, 168, 70, 255))
+    d.line([16 * S, 27 * S, 16 * S, 30 * S], fill=(190, 40, 30, 255), width=int(1.4 * S))
+    d.ellipse([14.6 * S, 28.6 * S, 17.4 * S, 31.4 * S], fill=(200, 46, 32, 255))
+    d.ellipse([14.8 * S, 9 * S, 17.2 * S, 11.4 * S], fill=(255, 220, 110, 255))
+    out["nurariten"] = _finish(img)
     return out
 
 
@@ -662,6 +711,7 @@ def particles():
     for name, data in fx.particles().items():
         wjson(os.path.join(RP, f"particles/plrace/{name}.json"), data)
     wjson(os.path.join(RP, "fogs/plrace_blood_moon.json"), fx.fog())
+    wjson(os.path.join(RP, "fogs/plrace_heaven_light.json"), fx.heaven_fog())
 
 
 def _mk(path):

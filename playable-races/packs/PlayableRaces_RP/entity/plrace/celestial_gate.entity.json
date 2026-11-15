@@ -1,0 +1,31 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "plrace:celestial_gate",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "cutout": "entity_alphatest"
+   },
+   "textures": {
+    "default": "textures/plrace/races/nurariten/celestial_gate"
+   },
+   "geometry": {
+    "default": "geometry.plrace.celestial_gate"
+   },
+   "animations": {
+    "idle": "animation.plrace.celestial_gate.idle"
+   },
+   "scripts": {
+    "animate": [
+     "idle"
+    ]
+   },
+   "particle_effects": {},
+   "render_controllers": [
+    "controller.render.plrace.form"
+   ],
+   "enable_attachables": false
+  }
+ }
+}

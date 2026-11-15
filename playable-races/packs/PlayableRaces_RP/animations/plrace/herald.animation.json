@@ -1,0 +1,38 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.plrace.herald.idle": {
+   "loop": true,
+   "bones": {
+    "pair": {
+     "position": [
+      0.0,
+      "math.sin(q.life_time * 180 + 0) * 0.6",
+      0.0
+     ]
+    },
+    "decree": {
+     "rotation": [
+      "math.sin(q.life_time * 252 + 0) * 3",
+      0.0,
+      "math.sin(q.life_time * 144 + 0) * 2"
+     ]
+    },
+    "herald_r": {
+     "rotation": [
+      "math.sin(q.life_time * 216 + 0) * 3",
+      0.0,
+      0.0
+     ]
+    },
+    "herald_l": {
+     "rotation": [
+      "math.sin(q.life_time * 216 + 90) * 3",
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}
