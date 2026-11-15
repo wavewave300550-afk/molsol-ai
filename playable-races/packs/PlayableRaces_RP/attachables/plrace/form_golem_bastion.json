@@ -17,21 +17,47 @@
    "animations": {
     "first_person": "animation.plrace.golem.first_person",
     "third_person": "animation.plrace.golem.third_person",
-    "ambient": "animation.plrace.golem.ambient",
+    "life": "animation.plrace.golem.life",
+    "detail": "animation.plrace.golem.detail",
+    "fidget": "controller.animation.plrace.golem.fidget",
     "locomotion": "animation.plrace.golem.locomotion",
+    "steps": "controller.animation.plrace.golem.steps",
     "airborne": "animation.plrace.golem.airborne",
+    "landing": "controller.animation.plrace.golem.landing",
+    "attack": "animation.plrace.golem.attack",
     "hurt": "animation.plrace.golem.hurt",
     "intro_bastion": "animation.plrace.golem.intro_bastion",
     "fx_bastion": "animation.plrace.golem.fx_bastion",
-    "bastion_loop": "animation.plrace.golem.bastion_loop"
+    "bastion_loop": "animation.plrace.golem.bastion_loop",
+    "fidget_wait": "animation.plrace.golem.fidget_wait",
+    "fidget_rest": "animation.plrace.golem.fidget_rest",
+    "fidget_settle": "animation.plrace.golem.fidget_settle",
+    "fidget_crack": "animation.plrace.golem.fidget_crack",
+    "fidget_core": "animation.plrace.golem.fidget_core",
+    "fidget_inspect": "animation.plrace.golem.fidget_inspect",
+    "step_r": "animation.plrace.golem.step_r",
+    "step_l": "animation.plrace.golem.step_l",
+    "land": "animation.plrace.golem.land",
+    "land_hard": "animation.plrace.golem.land_hard"
    },
    "particle_effects": {
     "motes": "plrace:rune_mote",
     "burst": "plrace:rune_burst",
     "pulse": "plrace:rune_pulse",
-    "sparks": "plrace:rune_spark"
+    "sparks": "plrace:rune_spark",
+    "stepdust": "plrace:step_dust",
+    "landdust": "plrace:land_dust"
    },
    "scripts": {
+    "pre_animation": [
+     "v.plr_ph = q.modified_distance_moved * 38.17;",
+     "v.plr_tc = math.cos(v.plr_ph) * q.modified_move_speed * 57.3;",
+     "v.plr_mv = math.clamp(q.modified_move_speed, 0, 1);",
+     "v.plr_still = 1 - math.clamp(q.modified_move_speed * 5, 0, 1);",
+     "v.plr_spr = q.is_sprinting ? 1 : 0;",
+     "v.plr_walk = 1 - v.plr_spr;",
+     "v.plr_bob = ((v.plr_walk) * (math.clamp(q.modified_move_speed / 0.8, 0, 1.25)) * ((-0.1724 + -0.6789 * math.cos(v.plr_ph * 2) + 0.1233 * math.sin(v.plr_ph * 2) + -0.02197 * math.cos(v.plr_ph * 4)) - (0.002))) + ((v.plr_spr) * (v.plr_mv) * ((-0.4172 + -1.036 * math.cos(v.plr_ph * 2) + 0.1665 * math.sin(v.plr_ph * 2)) - (0.002)));"
+    ],
     "animate": [
      {
       "first_person": "c.is_first_person"
@@ -39,13 +65,30 @@
      {
       "third_person": "!c.is_first_person"
      },
-     "ambient",
-     "locomotion",
      {
-      "airborne": "!q.is_on_ground && !q.is_in_water"
+      "life": "!c.is_first_person"
+     },
+     "detail",
+     {
+      "fidget": "!c.is_first_person"
      },
      {
-      "hurt": "q.hurt_time > 0"
+      "locomotion": "!c.is_first_person && !q.is_riding && !q.is_gliding"
+     },
+     {
+      "steps": "!c.is_first_person && !q.is_riding && !q.is_gliding"
+     },
+     {
+      "airborne": "!c.is_first_person && !q.is_on_ground && !q.is_in_water && !q.is_riding && !q.is_gliding"
+     },
+     {
+      "landing": "!c.is_first_person && !q.is_riding"
+     },
+     {
+      "attack": "!c.is_first_person"
+     },
+     {
+      "hurt": "!c.is_first_person && q.hurt_time > 0"
      },
      "intro_bastion",
      {

@@ -68,6 +68,7 @@ def _legs(m: Model) -> None:
         m.box(knee.name, (hx_ + 0.6 * side, 4.1, 0.1), (3.5, 5.2, 3.6), "skin")
         m.box(knee.name, (hx_ + 0.6 * side, 5.6, 1.6), (2.4, 1.6, 1.0), "gland")       # calf gland
         foot = m.bone(f"{prefix}_foot", knee.name, (hx_ + 0.6 * side, 1.6, 0.2), side_rot((4, 0, 2), side))
+        foot.locators[f"{prefix}_step"] = (hx_ + 0.7 * side, 0.2, -1.6)
         m.box(foot.name, (hx_ + 0.7 * side, 0.75, -0.9), (5.0, 1.5, 5.6), "skin")
         # broad splayed toes with adhesive pads
         for k, (dx, ang, ln) in enumerate(((-1.8, 26, 2.7), (-0.6, 9, 3.2), (0.6, -9, 3.2), (1.8, -26, 2.6))):
@@ -100,11 +101,13 @@ def _torso(m: Model) -> None:
     m.cube(t.name, (3.2, 14.6, -2.2), (1.4, 6.4, 0.01), "skin", faces={"north"})
     # abdominal cavity: dark wall, fluid sacs and vascular channels behind a membrane
     m.cube(t.name, (-3.2, 14.6, -0.6), (6.4, 6.4, 0.5), "inner", faces={"north"})
+    # the fluid sacs and channels sit on their own bone so they can pulse (visible through the membrane)
+    v = m.bone("viscera", t.name, (0, 17.4, -1.25))
     for (cx, cy, w, h) in ((-1.5, 18.6, 2.6, 2.4), (1.5, 18.8, 2.4, 2.2), (0.0, 16.2, 3.0, 2.0),
                            (-1.9, 15.6, 1.4, 1.4), (1.9, 15.8, 1.3, 1.6)):
-        m.box(t.name, (cx, cy, -1.25), (w, h, 1.1), "sac")
+        m.box(v.name, (cx, cy, -1.25), (w, h, 1.1), "sac")
     for (cx, cy, w, h) in ((0, 17.7, 0.5, 5.4), (-0.9, 17.6, 2.4, 0.45), (0.9, 17.0, 2.4, 0.45)):
-        m.box(t.name, (cx, cy, -0.95), (w, h, 0.5), "channel")
+        m.box(v.name, (cx, cy, -0.95), (w, h, 0.5), "channel")
     m.cube(t.name, (-3.2, 14.6, -2.05), (6.4, 6.4, 0.0), "membrane", faces={"north"}, cutout=True)
     # shoulders / hunch, throat, spine ridge
     m.box(t.name, (0, 23.6, 0.9), (10.2, 2.4, 5.0), "skin")
@@ -192,13 +195,21 @@ def _head(m: Model) -> None:
         # bulging dorsolateral eyes, set wide like a salamander's
         m.box(h.name, (4.7 * side, 29.3, -5.0), (3.2, 3.0, 3.2), "eye")
         m.box(h.name, (4.7 * side, 27.9, -5.0), (3.6, 0.8, 3.6), "skin")           # lower lid
+        # upper eyelid: a thin rim at rest, scaled down over the eye to blink (scale y ~8.4 closes it)
+        lid = m.bone(f"{'r' if side < 0 else 'l'}_lid", h.name, (4.7 * side, 30.95, -5.0))
+        m.cube(lid.name, (4.7 * side - 1.8, 30.63, -6.8), (3.6, 0.32, 3.6), "skin")
         m.box(h.name, (1.3 * side, 28.0, -9.35), (0.9, 0.6, 0.5), "nostril")
         m.box(h.name, (5.4 * side, 27.2, -1.0), (0.7, 1.4, 3.0), "gland")           # parotoid ridge
     # lower jaw: hinged at the back, gapes in the predatory form
     j = m.bone("jaw", "skull", (0, 25.6, 1.4), (0, 0, 0))
     j.variant.update({"predatory": ((0, 0, 0), (16, 0, 0))})
     m.cube(j.name, (-5.6, 23.7, -8.3), (11.2, 1.7, 9.8), "skin")
-    m.cube(j.name, (-4.6, 23.2, -7.6), (9.2, 0.6, 8.2), "belly")                 # gular pouch
+    g = m.bone("gular", j.name, (0, 23.8, -3.5))                                  # throat pouch (buccal pumping)
+    m.cube(g.name, (-4.6, 23.2, -7.6), (9.2, 0.6, 8.2), "belly")
+    # sticky tongue, retracted inside the jaw at rest; fidgets / the snare flick it out
+    tg = m.bone("tongue", j.name, (0, 25.0, -2.0))
+    m.cube(tg.name, (-0.7, 24.75, -7.5), (1.4, 0.45, 5.5), "tongue")
+    m.box(tg.name, (0, 24.98, -7.6), (1.9, 0.6, 1.2), "dew")
     m.cube(j.name, (-5.0, 25.35, -8.0), (10.0, 0.1, 9.0), "mouth", faces={"up"})
     m.cube(h.name, (-5.0, 25.25, -8.2), (10.0, 0.1, 9.2), "mouth", faces={"down"})
     for side in (-1, 1):
@@ -253,6 +264,7 @@ def materials():
         "channel": mat_channel, "membrane": mat_membrane, "leaf": mat_leaf, "fringe": mat_fringe,
         "gill": mat_gill, "frond": mat_frond, "lobe": mat_lobe, "tendril": mat_tendril, "dew": mat_dew,
         "fin": mat_fin, "calyx": mat_calyx, "tooth": mat_tooth, "accent": mat_accent, "petal": mat_petal, "stamen": mat_stamen, "root": mat_root,
+        "tongue": mat_tongue,
     }
 
 
@@ -491,6 +503,14 @@ def mat_tendril(ctx):
 
 def mat_tooth(ctx):
     return mix3(hx("#e8e2c8"), hx("#fffbe8"), ctx.local[:, 1]), ctx.ones(), ctx.zeros()
+
+
+def mat_tongue(ctx):
+    vivid, dry, pred = _P(ctx)
+    n = nz.fbm(ctx.p, 1.6, 2, seed=12)
+    c = mix3(hx("#a8344e"), hx("#e0708a"), n * 0.8 + 0.1 * vivid)
+    c = mix3(c, hx("#b81834"), 0.4 * pred)
+    return face_light(ctx, c), ctx.ones(), ctx.zeros()
 
 
 def mat_dew(ctx):

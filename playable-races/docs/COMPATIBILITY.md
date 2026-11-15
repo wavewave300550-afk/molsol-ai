@@ -51,12 +51,13 @@ Mojang's *Guidelines for Building Cooperative Add-Ons* say add-ons should **not 
 * One 1-tick loop only does work while a channel (multi-stage ability) is active; a 4-tick loop drives HUD/temporary forms; a 20-tick loop runs passives (a handful of block probes per player, one entity query for jackalope senses); Blood Moon checks every 2 s; persistence every 5 s and on important changes.
 * Ambient creature effects (spores, rune motes, embers, bubbles) are emitted **client-side by the attachables**, costing no server work or network packets; burst limits are small (2–4 particles per emission).
 * Ability VFX use one `spawnParticle` call per visual event (the snare strand, shard stream and rune circle are single emitters driven by Molang variables).
-* Geometry: Salamander 82 bones / 175 cubes, Golem 68 / 108, Jackalope 56 / 91; textures 256×256 or 256×128 RGBA.
+* Geometry: Salamander 87 bones / 179 cubes, Golem 70 / 110, Jackalope 61 / 93 (base forms); textures 256×256 or 256×128 RGBA.
+* Animation (v1.0.2): each form runs ~10 layers. Values shared by every layer — stride phase, the vanilla swing, speed, sprint and the fitted body bob — are computed **once per frame** in the attachable's `pre_animation` script and read as variables (`v.plr_*`), which halves the Molang work; the longest single channel expression is ~650 characters. Layers that only matter in third person are switched off in first person, idle behaviours and landings are short keyframed clips run by tiny controllers, and footfall dust is a 6-particle client-side burst.
 * Mobile/iOS: no shader changes, no custom materials, only vanilla entity materials (`entity_emissive_alpha` for glowing runes/veins, `entity_alphatest` for leaves and fur fringes, `entity_alphablend` for the mirage).
 
 ## Known limitations (engine level)
 
 * **First-person arms:** the attachable also binds in first person; a slightly larger first-person-only sleeve encloses the vanilla arm. If a future version stops drawing armour attachables in first person you will simply see your normal arm.
-* Molang owner queries inside attachables (`q.target_x_rotation`, `q.hurt_time`, `q.modified_move_speed`, …) are used for the Golem's head look, flinches and gait details. If a platform does not resolve an owner query in attachable context, that detail is static; nothing breaks.
+* Molang owner queries inside attachables (`q.target_x_rotation`, `q.hurt_time`, `q.modified_move_speed`, `q.vertical_speed`, `q.is_item_equipped`, `q.yaw_speed`, …) and the player's public `v.attack_time` drive gaits, look-follow, flinches and attack reactions. If a platform does not resolve one of them in attachable context, that detail is static; nothing breaks (`q.yaw_speed` units are not documented, so its effect is clamped).
 * `query.is_item_name_any('slot.armor.head', …)` (client-side) controls skin hiding; it is documented for all equipment slots.
 * Input permission categories (`LateralMovement`) are used for rooting; they are restored on uproot, death, dimension change, and on the next join if the player disconnects while rooted.

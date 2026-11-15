@@ -183,8 +183,12 @@ for f in glob.glob(os.path.join(RP, "attachables", "**", "*.json"), recursive=Tr
             continue
         if not check(full in anims, f"{iid}: animation {full} missing"):
             continue
+        race_key = d["geometry"]["default"].rsplit(".", 1)[0] + "."
+        race_bones = {b["name"].lower() for g, gd in geos.items() if g.startswith(race_key) for b in gd["bones"]}
         for bn in anims[full].get("bones", {}):
-            check(bn.lower() in geo_bones, f"{iid}: animation {full} targets missing bone {bn}")
+            # layers are shared by a race's forms: a part that only exists in some forms is skipped
+            # by the client in the others, but every bone must exist in at least one form (typos)
+            check(bn.lower() in geo_bones or bn.lower() in race_bones, f"{iid}: animation {full} targets missing bone {bn}")
         for t, pe in anims[full].get("particle_effects", {}).items():
             for e in (pe if isinstance(pe, list) else [pe]):
                 check(e["effect"] in d.get("particle_effects", {}), f"{iid}: particle key {e['effect']} not declared")
@@ -195,6 +199,78 @@ for f in glob.glob(os.path.join(RP, "attachables", "**", "*.json"), recursive=Tr
         check(nm in short, f"{iid}: animate entry {nm} not mapped")
     for key, pid in d.get("particle_effects", {}).items():
         check(pid in particles or pid in VANILLA_PARTICLES, f"{iid}: particle {pid} missing")
+
+# ----------------------------------------------------------------------------- Molang
+import molang as _molang  # noqa: E402
+
+KNOWN_QUERIES = {
+    "life_time", "modified_distance_moved", "modified_move_speed", "is_on_ground", "is_in_water", "is_swimming",
+    "vertical_speed", "is_sprinting", "is_sneaking", "target_x_rotation", "target_y_rotation", "yaw_speed",
+    "hurt_time", "time_of_day", "anim_time", "all_animations_finished", "any_animation_finished",
+    "is_item_equipped", "is_using_item", "is_first_person", "ground_speed", "is_moving", "delta_time",
+    "is_riding", "is_gliding", "is_sleeping",
+}
+PLAYER_PUBLIC = {"attack_time", "is_first_person"}   # variables the player exposes to attachables / poses
+
+
+def molang_strings(obj, path=""):
+    if isinstance(obj, str):
+        yield path, obj
+    elif isinstance(obj, list):
+        for i, x in enumerate(obj):
+            yield from molang_strings(x, f"{path}[{i}]")
+    elif isinstance(obj, dict):
+        for k, v in obj.items():
+            if k in ("effect", "locator", "lerp_mode", "pre_effect_script"):
+                continue
+            yield from molang_strings(v, f"{path}.{k}")
+
+
+def check_expr(where, expr, defined):
+    try:
+        _molang.check(expr)
+    except SyntaxError as e:
+        check(False, f"{where}: Molang does not parse: {e}")
+        return
+    for name in re.findall(r"\b(?:q|query)\.([a-z_0-9]+)", expr):
+        check(name in KNOWN_QUERIES, f"{where}: unknown query q.{name}")
+    for name in re.findall(r"\b(?:v|variable)\.([a-z_0-9]+)", expr):
+        check(name in defined or name in PLAYER_PUBLIC, f"{where}: variable v.{name} is never set")
+    check(not re.search(r"\bv\.[a-z_0-9]+\s*=", expr) or where.endswith("pre_animation"), f"{where}: assignment outside pre_animation")
+
+
+race_vars = {}
+for f in glob.glob(os.path.join(RP, "attachables", "**", "*.json"), recursive=True):
+    d = load(f)["minecraft:attachable"]["description"]
+    pre = d.get("scripts", {}).get("pre_animation", [])
+    defined = set()
+    for stmt in pre:
+        defined |= set(re.findall(r"\bv\.([a-z_0-9]+)\s*=", stmt))
+        check_expr(f"{d['identifier']} pre_animation", stmt, defined)
+    race_vars[d["identifier"]] = defined
+    for entry in d.get("scripts", {}).get("animate", []):
+        if isinstance(entry, dict):
+            for k, v in entry.items():
+                check_expr(f"{d['identifier']} animate {k}", v, defined)
+all_defined = set().union(*race_vars.values()) if race_vars else set()
+for f in glob.glob(os.path.join(RP, "animations", "**", "*.json"), recursive=True):
+    for name, a in load(f).get("animations", {}).items():
+        for where, expr in molang_strings(a.get("bones", {})):
+            check_expr(f"{name}{where}", expr, all_defined)
+        if "anim_time_update" in a:
+            check_expr(f"{name}.anim_time_update", a["anim_time_update"], all_defined)
+for f in glob.glob(os.path.join(RP, "animation_controllers", "**", "*.json"), recursive=True):
+    for name, c in load(f).get("animation_controllers", {}).items():
+        for st_name, st in c.get("states", {}).items():
+            for tr in st.get("transitions", []):
+                for target, cond in tr.items():
+                    check(target in c["states"], f"{name}: transition to unknown state {target}")
+                    check_expr(f"{name}.{st_name}->{target}", cond, all_defined)
+            for a in st.get("animations", []):
+                if isinstance(a, dict):
+                    for k, v in a.items():
+                        check_expr(f"{name}.{st_name}.{k}", v, all_defined)
+        check(c.get("initial_state", "default") in c.get("states", {}), f"{name}: initial state missing")
 
 # ----------------------------------------------------------------------------- items & icons
 item_tex = load(os.path.join(RP, "textures", "item_texture.json"))["texture_data"]

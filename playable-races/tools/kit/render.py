@@ -96,7 +96,9 @@ def render(model: Model, texture: Image.Image, *, variant: Optional[str] = None,
            size: Tuple[int, int] = (512, 640), scale: Optional[float] = None,
            center: Optional[Sequence[float]] = None, ss: int = 2, bg=(232, 230, 226),
            bloom: bool = True, hide: Sequence[str] = (), ground: bool = True, accents: bool = False,
-           light_dir=(-0.45, 0.75, -0.55)) -> Image.Image:
+           light_dir=(-0.45, 0.75, -0.55), backdrop=None) -> Image.Image:
+    """backdrop(img: PIL.Image, ss) may draw into the (supersampled) background
+    before the model is composited over it (ground lines, shadows)."""
     tex = np.asarray(texture.convert("RGBA"), dtype=np.float64) / 255.0
     TH, TW = tex.shape[:2]
     quads = collect_quads(model, variant, pose, hide, accents)
@@ -143,6 +145,10 @@ def render(model: Model, texture: Image.Image, *, variant: Optional[str] = None,
     bgimg = _background(W, H, bg)
     if ground:
         bgimg = _shadow(bgimg, covered)
+    if backdrop is not None:
+        bimg = Image.fromarray((np.clip(bgimg, 0, 1) * 255).astype(np.uint8))
+        backdrop(bimg, ss)
+        bgimg = np.asarray(bimg, dtype=np.float64) / 255.0
     out = np.where(covered[..., None], color, bgimg)
     if bloom:
         g = Image.fromarray((np.clip(glowbuf, 0, 1) * 255).astype(np.uint8))

@@ -62,6 +62,7 @@ def _legs(m: Model) -> None:
         sh = m.bone(f"{p}_shin", th.name, (x, 6.3, 0.2), (SHIN_RX, 0, 0))
         m.cube(sh.name, (x - 1.3, -0.1, -1.1), (2.6, 6.4, 2.6), "fur")
         ft = m.bone(f"{p}_foot", sh.name, (x, -0.1, 0.2), (FOOT_RX, 0, 0))
+        ft.locators[f"{p}_step"] = (x, -1.4, -3.0)
         m.cube(ft.name, (x - 1.5, -1.6, -6.6), (3.0, 1.5, 7.4), "fur")
         m.cube(ft.name, (x - 1.3, -1.7, -6.4), (2.6, 0.1, 6.8), "pad", faces={"down"})
         for k, dx in enumerate((-0.9, 0.0, 0.9)):
@@ -96,12 +97,18 @@ def _head(m: Model) -> None:
     nb = m.bone("nose", s.name, (0, 25.4, -6.9))
     m.box(nb.name, (0, 25.4, -7.0), (1.4, 0.9, 0.3), "nose")
     for side in (-1, 1):
+        p = "r" if side < 0 else "l"
         m.box(s.name, (0.38 * side, 23.25, -6.55), (0.6, 1.3, 0.35), "tooth")
         m.box(s.name, (2.55 * side, 25.5, -1.8), (0.5, 1.9, 2.3), "eye")
+        # eyelid: thin brow at rest, scale y ~6.9 closes it over the eye
+        lid = m.bone(f"{p}_lid", s.name, (2.6 * side, 26.55, -1.8))
+        m.cube(lid.name, (2.6 * side - 0.33, 26.25, -3.05), (0.66, 0.3, 2.5), "fur")
         m.box(s.name, (2.35 * side, 23.6, -1.4), (1.2, 2.2, 2.8), "fur")          # cheek
-        m.cube(s.name, (1.6 * side - (2.6 if side < 0 else 0), 24.2, -6.2), (2.6, 0.0, 1.4), "whisker",
+        wb = m.bone(f"{p}_whisker", s.name, (1.6 * side, 24.2, -5.5))
+        m.cube(wb.name, (1.6 * side - (2.6 if side < 0 else 0), 24.2, -6.2), (2.6, 0.0, 1.4), "whisker",
                cutout=True, faces={"up", "down"})
-    m.box(s.name, (0, 22.7, -3.9), (2.8, 0.7, 3.4), "muzzle")                    # lower jaw
+    jb = m.bone("jaw", s.name, (0, 23.0, -2.3))                                  # chewing lower jaw
+    m.box(jb.name, (0, 22.7, -3.9), (2.8, 0.7, 3.4), "muzzle")
     # long, independently animated ears (inner surface faces forward)
     for side, p in ((-1, "r"), (1, "l")):
         ex = 1.25 * side

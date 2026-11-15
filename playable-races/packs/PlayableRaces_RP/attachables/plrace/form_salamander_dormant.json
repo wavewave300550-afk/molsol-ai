@@ -19,14 +19,26 @@
    "animations": {
     "first_person": "animation.plrace.salamander.first_person",
     "third_person": "animation.plrace.salamander.third_person",
-    "ambient": "animation.plrace.salamander.ambient",
+    "life": "animation.plrace.salamander.life",
+    "detail": "animation.plrace.salamander.detail",
+    "fidget": "controller.animation.plrace.salamander.fidget",
     "locomotion": "animation.plrace.salamander.locomotion",
-    "swim": "animation.plrace.salamander.swim",
     "airborne": "animation.plrace.salamander.airborne",
+    "landing": "controller.animation.plrace.salamander.landing",
+    "attack": "animation.plrace.salamander.attack",
+    "swim": "animation.plrace.salamander.swim",
     "hurt": "animation.plrace.salamander.hurt",
     "intro_dormant": "animation.plrace.salamander.intro_dormant",
     "fx_dormant": "animation.plrace.salamander.fx_dormant",
-    "dormant_loop": "animation.plrace.salamander.dormant_loop"
+    "dormant_loop": "animation.plrace.salamander.dormant_loop",
+    "fidget_wait": "animation.plrace.salamander.fidget_wait",
+    "fidget_rest": "animation.plrace.salamander.fidget_rest",
+    "fidget_taste": "animation.plrace.salamander.fidget_taste",
+    "fidget_shake": "animation.plrace.salamander.fidget_shake",
+    "fidget_tail": "animation.plrace.salamander.fidget_tail",
+    "fidget_stretch": "animation.plrace.salamander.fidget_stretch",
+    "land": "animation.plrace.salamander.land",
+    "land_hard": "animation.plrace.salamander.land_hard"
    },
    "particle_effects": {
     "spores": "plrace:spore_drift",
@@ -35,9 +47,20 @@
     "flakes": "plrace:dry_flake",
     "drip": "plrace:sticky_drip",
     "rootburst": "plrace:root_burst",
-    "bubbles": "plrace:bubble_trail"
+    "bubbles": "plrace:bubble_trail",
+    "stepdust": "plrace:step_dust",
+    "landdust": "plrace:land_dust"
    },
    "scripts": {
+    "pre_animation": [
+     "v.plr_ph = q.modified_distance_moved * 38.17;",
+     "v.plr_tc = math.cos(v.plr_ph) * q.modified_move_speed * 57.3;",
+     "v.plr_mv = math.clamp(q.modified_move_speed, 0, 1);",
+     "v.plr_still = 1 - math.clamp(q.modified_move_speed * 5, 0, 1);",
+     "v.plr_spr = q.is_sprinting ? 1 : 0;",
+     "v.plr_walk = 1 - v.plr_spr;",
+     "v.plr_bob = ((v.plr_walk) * (math.clamp(q.modified_move_speed / 0.8, 0, 1.25)) * ((0.08635 * math.cos(v.plr_ph * 2) + -0.2755 * math.sin(v.plr_ph * 2) + 0.0264 * math.cos(v.plr_ph * 4)) - (-0.089))) + ((v.plr_spr) * (v.plr_mv) * ((-0.2641 + -0.07889 * math.cos(v.plr_ph * 2) + -0.5552 * math.sin(v.plr_ph * 2) + 0.1277 * math.cos(v.plr_ph * 4)) - (-0.089)));"
+    ],
     "animate": [
      {
       "first_person": "c.is_first_person"
@@ -45,24 +68,38 @@
      {
       "third_person": "!c.is_first_person"
      },
-     "ambient",
      {
-      "locomotion": "!q.is_swimming"
+      "life": "!c.is_first_person"
+     },
+     "detail",
+     {
+      "fidget": "!c.is_first_person"
      },
      {
-      "swim": "q.is_swimming || (q.is_in_water && !q.is_on_ground)"
+      "locomotion": "!c.is_first_person && !q.is_riding && !q.is_gliding && !q.is_swimming"
      },
      {
-      "airborne": "!q.is_on_ground && !q.is_in_water"
+      "airborne": "!c.is_first_person && !q.is_on_ground && !q.is_in_water && !q.is_riding && !q.is_gliding"
      },
      {
-      "hurt": "q.hurt_time > 0"
+      "landing": "!c.is_first_person && !q.is_riding"
+     },
+     {
+      "attack": "!c.is_first_person"
+     },
+     {
+      "swim": "!c.is_first_person && (q.is_swimming || (q.is_in_water && !q.is_on_ground))"
+     },
+     {
+      "hurt": "!c.is_first_person && q.hurt_time > 0"
      },
      "intro_dormant",
      {
       "fx_dormant": "!c.is_first_person"
      },
-     "dormant_loop"
+     {
+      "dormant_loop": "!c.is_first_person"
+     }
     ]
    },
    "render_controllers": [

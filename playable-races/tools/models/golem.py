@@ -43,6 +43,8 @@ def build() -> Model:
     MOVABLE.clear()
     m = Model(ID, ppu=2.0, atlas_width=512)
     humanoid(m)
+    # the stone trunk leans / rolls about the hips, not the neck (torso_g holds no cubes itself)
+    m.bones["torso_g"].pivot = (0.0, 13.0, 0.0)
     _legs(m)
     _torso(m)
     _core(m)
@@ -79,6 +81,7 @@ def _legs(m: Model) -> None:
         _stone(m, f"{p}_foot", g, (x, 0.7, -0.7), (7.0, 1.4, 8.6))
         for k, dx in enumerate((-2.0, 0.0, 2.0)):
             m.box(f"{p}_foot", (x + dx, 1.0, -5.6), (1.8, 2.0, 1.8), "basalt")
+        m.bones[f"{p}_foot"].locators[f"{p}_step"] = (x, 0.2, -1.5)
         fr = m.bone(f"{p}_foot_rune", g, (x, 0.0, -0.7))
         m.box(fr.name, (x, -0.25, -0.7), (6.4, 0.3, 7.8), "seam")
 
@@ -146,6 +149,10 @@ def _head(m: Model) -> None:
     m.box("crown", (0, 42.2, 0.6), (4.2, 1.4, 5.2), "basalt")          # crest stones
     m.box("crown", (0, 43.3, 1.2), (2.2, 0.9, 3.2), "seam")
     h.locators["eyes"] = (0, 38.6, -4.4)
+    # stone eye shutters hidden under the brow ridge; scale y ~7.8 slides them over the glowing slits
+    for side, p in ((-1, "r"), (1, "l")):
+        lid = m.bone(f"{p}_eyelid", "crown", (1.9 * side, 39.75, -4.2))
+        m.cube(lid.name, (1.9 * side - 1.4, 39.45, -4.45), (2.8, 0.3, 0.4), "basalt")
 
 
 # ----------------------------------------------------------------------------- arms

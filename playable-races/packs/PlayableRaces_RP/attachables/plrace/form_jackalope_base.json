@@ -19,23 +19,43 @@
    "animations": {
     "first_person": "animation.plrace.jackalope.first_person",
     "third_person": "animation.plrace.jackalope.third_person",
-    "ambient": "animation.plrace.jackalope.ambient",
+    "life": "animation.plrace.jackalope.life",
     "listen": "animation.plrace.jackalope.listen",
+    "fidget": "controller.animation.plrace.jackalope.fidget",
     "locomotion": "animation.plrace.jackalope.locomotion",
     "airborne": "animation.plrace.jackalope.airborne",
     "landing": "controller.animation.plrace.jackalope.landing",
+    "attack": "animation.plrace.jackalope.attack",
     "hurt": "animation.plrace.jackalope.hurt",
     "intro_base": "animation.plrace.jackalope.intro_base",
     "fx_base": "animation.plrace.jackalope.fx_base",
-    "land": "animation.plrace.jackalope.land"
+    "fidget_wait": "animation.plrace.jackalope.fidget_wait",
+    "fidget_rest": "animation.plrace.jackalope.fidget_rest",
+    "fidget_groom": "animation.plrace.jackalope.fidget_groom",
+    "fidget_sentinel": "animation.plrace.jackalope.fidget_sentinel",
+    "fidget_thump": "animation.plrace.jackalope.fidget_thump",
+    "fidget_stretch": "animation.plrace.jackalope.fidget_stretch",
+    "land": "animation.plrace.jackalope.land",
+    "land_hard": "animation.plrace.jackalope.land_hard"
    },
    "particle_effects": {
     "moonmotes": "plrace:moon_mote",
     "embers": "plrace:blood_ember",
     "awaken": "plrace:awaken_spiral",
-    "bloodmist": "plrace:blood_mist"
+    "bloodmist": "plrace:blood_mist",
+    "stepdust": "plrace:step_dust",
+    "landdust": "plrace:land_dust"
    },
    "scripts": {
+    "pre_animation": [
+     "v.plr_ph = q.modified_distance_moved * 38.17;",
+     "v.plr_tc = math.cos(v.plr_ph) * q.modified_move_speed * 57.3;",
+     "v.plr_mv = math.clamp(q.modified_move_speed, 0, 1);",
+     "v.plr_still = 1 - math.clamp(q.modified_move_speed * 5, 0, 1);",
+     "v.plr_spr = q.is_sprinting ? 1 : 0;",
+     "v.plr_walk = 1 - v.plr_spr;",
+     "v.plr_bob = ((v.plr_walk) * (math.clamp(q.modified_move_speed / 0.8, 0, 1.25)) * ((-0.5245 + -0.5343 * math.cos(v.plr_ph * 2) + 0.2529 * math.sin(v.plr_ph * 2) + 0.08689 * math.cos(v.plr_ph * 4) + 0.04048 * math.sin(v.plr_ph * 4)) - (0.065))) + ((v.plr_spr) * (v.plr_mv) * ((1.373 + -0.7513 * math.cos(v.plr_ph) + 2.242 * math.sin(v.plr_ph) + -0.1229 * math.cos(v.plr_ph * 2) + 0.6822 * math.sin(v.plr_ph * 2) + 0.1955 * math.cos(v.plr_ph * 3) + 0.09812 * math.sin(v.plr_ph * 3) + 0.08106 * math.cos(v.plr_ph * 4) + 0.06795 * math.sin(v.plr_ph * 4)) - (0.065)));"
+    ],
     "animate": [
      {
       "first_person": "c.is_first_person"
@@ -43,19 +63,29 @@
      {
       "third_person": "!c.is_first_person"
      },
-     "ambient",
      {
-      "listen": "q.is_sneaking && q.modified_move_speed < 0.02"
+      "life": "!c.is_first_person"
      },
      {
-      "locomotion": "!q.is_swimming"
+      "listen": "!c.is_first_person && q.is_sneaking && q.modified_move_speed < 0.02"
      },
      {
-      "airborne": "!q.is_on_ground && !q.is_in_water"
+      "fidget": "!c.is_first_person"
      },
-     "landing",
      {
-      "hurt": "q.hurt_time > 0"
+      "locomotion": "!c.is_first_person && !q.is_riding && !q.is_gliding && !q.is_swimming"
+     },
+     {
+      "airborne": "!c.is_first_person && !q.is_on_ground && !q.is_in_water && !q.is_riding && !q.is_gliding"
+     },
+     {
+      "landing": "!c.is_first_person && !q.is_riding"
+     },
+     {
+      "attack": "!c.is_first_person"
+     },
+     {
+      "hurt": "!c.is_first_person && q.hurt_time > 0"
      },
      "intro_base",
      {

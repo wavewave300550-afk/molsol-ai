@@ -301,6 +301,23 @@ def particles() -> Dict[str, dict]:
         "minecraft:particle_initial_speed": 2.0, "minecraft:particle_lifetime_expression": {"max_lifetime": 0.45},
         "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, -4, 0], "linear_drag_coefficient": 1},
         **bb(["0.07", "0.07"], _uv("spark")), "minecraft:particle_appearance_tinting": {"color": "#ffff5a2a"}})
+    # footfall / landing dust (attachable animations: golem stomps, heavy landings, jackalope thump)
+    add("step_dust", "particles_alpha", {**burst(6), "minecraft:emitter_shape_disc": {"radius": 0.3, "plane_normal": "y", "direction": "outwards"},
+        "minecraft:particle_initial_speed": "0.8 + variable.particle_random_1 * 0.6",
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "0.55 + variable.particle_random_2 * 0.4"},
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, 0.5, 0], "linear_drag_coefficient": 3.2},
+        "minecraft:particle_initial_spin": {"rotation": "variable.particle_random_3 * 360", "rotation_rate": 30},
+        **bb(["(0.08 + v.particle_age * 0.16) * " + fade, "(0.08 + v.particle_age * 0.16) * " + fade], _uv("smoke")),
+        "minecraft:particle_appearance_tinting": {"color": "#c09a9088"},
+        "minecraft:particle_appearance_lighting": {}})
+    add("land_dust", "particles_alpha", {**burst(14), "minecraft:emitter_shape_disc": {"radius": 0.5, "plane_normal": "y", "direction": "outwards"},
+        "minecraft:particle_initial_speed": "1.6 + variable.particle_random_1 * 1.2",
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "0.7 + variable.particle_random_2 * 0.5"},
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, 0.6, 0], "linear_drag_coefficient": 3.0},
+        "minecraft:particle_initial_spin": {"rotation": "variable.particle_random_3 * 360", "rotation_rate": 40},
+        **bb(["(0.1 + v.particle_age * 0.22) * " + fade, "(0.1 + v.particle_age * 0.22) * " + fade], _uv("smoke")),
+        "minecraft:particle_appearance_tinting": {"color": "#c09a9088"},
+        "minecraft:particle_appearance_lighting": {}})
     # ---- golem (script) ----
     add("shock_rupture", "particles_alpha", {**burst(9), "minecraft:emitter_shape_disc": {"radius": 0.7, "plane_normal": "y", "direction": [0, 1, 0]},
         "minecraft:particle_initial_speed": "3.2 + variable.particle_random_1 * 2", "minecraft:particle_lifetime_expression": {"max_lifetime": 0.8},

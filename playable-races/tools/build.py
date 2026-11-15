@@ -26,11 +26,12 @@ from kit.tex import paint  # noqa: E402
 from kit.render import render  # noqa: E402
 from anims import core as acore  # noqa: E402
 from anims import races as aset  # noqa: E402
+from anims import life  # noqa: E402
 from models import salamander, golem, jackalope, common  # noqa: E402
 import fx  # noqa: E402
 
 NS = "plrace"
-VERSION = [1, 0, 1]
+VERSION = [1, 0, 2]
 MIN_ENGINE = [1, 26, 60]
 SERVER_API = "2.11.0"
 UI_API = "2.3.0"
@@ -120,9 +121,11 @@ def build_races(report):
             A = aset.golem(model, list(golem.MOVABLE))
         else:
             A = aset.jackalope(model)
-        wjson(os.path.join(RP, f"animations/plrace/{race}.animation.json"), acore.file(A["anims"]))
+        wjson(os.path.join(RP, f"animations/plrace/{race}.animation.json"), life.compact(acore.file(A["anims"])))
         if A["controllers"]:
-            wjson(os.path.join(RP, f"animation_controllers/plrace/{race}.ac.json"), acore.controller_file(A["controllers"]))
+            wjson(os.path.join(RP, f"animation_controllers/plrace/{race}.ac.json"),
+                  life.compact(acore.controller_file(A["controllers"])))
+        report.extend(f"  {line}" for line in aset.FIT_REPORT if line.startswith(race))
         short = {a.name.split(f"animation.{NS}.{race}.")[1]: a.name for a in A["anims"]}
         for cid in A["controllers"]:
             short[cid.split(".")[-1]] = cid
@@ -148,8 +151,14 @@ def build_races(report):
                     raise KeyError(f"{race}/{v}: animation {nm} missing")
                 used[nm] = short[nm]
                 animate.append(nm if cond is None else {nm: cond})
-            if race == "jackalope":
-                used["land"] = short["land"]
+            # animations played by controller states must be declared on the attachable too
+            for cid in [used[k] for k in list(used) if used[k].startswith("controller.")]:
+                for st in A["controllers"][cid]["states"].values():
+                    for e in st.get("animations", []):
+                        nm = e if isinstance(e, str) else next(iter(e))
+                        if nm not in short:
+                            raise KeyError(f"{race}/{v}: controller animation {nm} missing")
+                        used[nm] = short[nm]
             att = {"format_version": "1.10.0", "minecraft:attachable": {"description": {
                 "identifier": iid,
                 "materials": materials,
@@ -157,7 +166,7 @@ def build_races(report):
                 "geometry": geometry,
                 "animations": used,
                 "particle_effects": A["particles"],
-                "scripts": {"animate": animate},
+                "scripts": {"pre_animation": A["pre"], "animate": [life.compact(e) for e in animate]},
                 "render_controllers": rcs,
             }}}
             wjson(os.path.join(RP, f"attachables/plrace/form_{race}_{v}.json"), att)

@@ -8,8 +8,10 @@
 |---|---|---|
 | TypeScript strict typecheck against the official **@minecraft/server 2.11.0** and **@minecraft/server-ui 2.3.0** typings | `npx tsc --noEmit` | **0 errors** |
 | Minecraft Creator Tools 0.21.0 validation (the "Add-On Best Practices" suite Mojang points creators to) | `mct validate` via the debug-addon skill | **0 errors**, 3 warnings, 7 noise, 23 recommendations (below) |
-| Project static validator: manifests, every geometry/texture/animation/render-controller/particle/locator link, animation bone names, UV bounds, attachable skeleton pivots = vanilla player skeleton, player/armour render-controller overrides = vanilla + one condition, items/icons/lang, every identifier string in the compiled scripts (particles, vanilla sound events, effect ids, items, entities, pose animations), texture memory budget | `python3 tools/validate.py` | **16,935 checks, 0 errors** |
+| Project static validator: manifests, every geometry/texture/animation/render-controller/particle/locator link, animation bone names, UV bounds, attachable skeleton pivots = vanilla player skeleton, player/armour render-controller overrides = vanilla + one condition, items/icons/lang, every identifier string in the compiled scripts (particles, vanilla sound events, effect ids, items, entities, pose animations), texture memory budget; **since v1.0.2 also every Molang expression** in animations, controllers and attachable scripts parses, uses only known queries, and every variable it reads is set in `pre_animation` or exposed by the player; controller transitions point at existing states | `python3 tools/validate.py` | **24,283 checks, 0 errors** |
 | Runtime smoke test: the **compiled behavior-pack scripts** run on a strict mock of the Script API, driven through real gameplay scenarios (table below) | `node tests/run.mjs` | **136 / 136 assertions** |
+| **Animation runtime (v1.0.2):** the shipped attachables (animate lists, blend conditions, `pre_animation`, Molang, Catmull-Rom keyframes, animation controllers) are executed by an offline interpreter on top of the vanilla player skeleton (walk swing, arm bob, head look, attack swing from Mojang's `player.animation.json`) through idle, walk, sprint, jump/landing, attack and hurt scenarios; idle-behaviour controllers cycle through all their behaviours; no query used by the packs is left unsimulated | `python3 tools/anim_gifs.py` (+ `--fidgets`) | GIFs in `docs/images` |
+| **Feet on the ground (v1.0.2):** lowest leg point sampled every tick through walk and sprint cycles of the final packs | runtime above | Salamander −0.04…+0.26, Golem −0.04…+0.11, Jackalope walk −0.08…+0.07 model px from the ground; Jackalope sprint −0.12 at contact, up to +1.57 in the deliberate flight phase |
 | Visual previews rendered from the exact shipped geometry and textures, including posed states | `python3 tools/previews.py` | images in `docs/images` |
 
 The mock is deliberately strict: unknown particle, sound, effect, item, entity or animation ids **throw**, using a removed or dead entity throws (like `InvalidEntityError`), world-modifying calls inside before-events throw (restricted execution), and any exception inside an event listener or scheduled job fails the run. It simulates time of day, days and moon phases, biomes, water, a flat world with block ray-casts, damage events (before/after), deaths and respawns, logout/login, dimension changes, inventories, equipment, item lock modes, enchantments, input permissions and forms with scripted answers.
@@ -68,6 +70,10 @@ The mock is deliberately strict: unknown particle, sound, effect, item, entity o
   - Titan's Edict no longer blocks other casts after its slam ("Busy" now names the ability).
   - Reassembly finds footing when you aim at the sky or at your feet.
   The *held use button* scenarios above reproduce the report and now pass.
+* **Reported (v1.0.1): the creatures looked stiff and lifeless** → v1.0.2 animation rebuild ([CREATIVE.md](CREATIVE.md#living-motion-v102)). The new previews caught three problems in the new code before release:
+  - The Salamander's long feet pitched with the leg swing and sank up to 3.5 px into the ground → soles are counter-rotated to stay flat, then the body bob is fitted to the measured foot height.
+  - Offsets applied to parts that hang from the player's swinging limbs (legs, arms) or turning head were rotated with that limb, so a vertical bob partly became a forward slide → offsets are now counter-rotated by the parent's swing / look pitch.
+  - The Golem's bob was fitted before its flat-foot correction was added (body floated up to 1.6 px) and measured its sole runes, which are hidden on the ground → fit runs after every leg contribution and ignores the runes.
 
 ## Not tested — needs a real game (please check these)
 
@@ -81,6 +87,11 @@ The sandbox has no Minecraft client. A **Bedrock Dedicated Server** test was att
 6. **Feel and balance:** dash/leap distances (knockback values), shockwave reach, Blood Moon fog density, swim speed.
 7. **Multiplayer:** other players see your form and VFX; PvP setting respected.
 8. **Blood Moon:** `/plrace:bloodmoon start` at night; fog + awakening; dawn or `stop` cleans up; reload the world during it.
+9. **Living motion (v1.0.2)** — what the offline runtime cannot prove about the real client:
+   * the attachable reads the player's swing variable (`v.attack_time`) and owner queries such as `q.is_item_equipped`, `q.vertical_speed` and `q.yaw_speed` (if one is not resolved, that one reaction is simply absent — the expressions fall back to 0);
+   * `pre_animation` variables, controller `blend_transition` cross-fades and `q.all_animations_finished` on the idle-behaviour timer behave as in the interpreter (idle behaviours should start after ~6–8 s of standing still and stop instantly when you move);
+   * feet stay on the ground in game for walk and sprint, including with Speed/Slowness effects (the fit assumes the vanilla limb-swing model, `modified_move_speed` 0…1);
+   * held items stay in the hands during walking, attacking and idle behaviours.
 
 ## Reproduce
 ```bash
@@ -88,5 +99,6 @@ cd playable-races
 npm install          # official typings + TypeScript (no game files)
 npm test             # typecheck -> build -> validate -> smoke
 python3 tools/previews.py
+python3 tools/anim_gifs.py && python3 tools/anim_gifs.py --fidgets   # animated previews
 npx -y @minecraft/creator-tools@0.21.0 validate -i packs
 ```

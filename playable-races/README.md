@@ -23,11 +23,18 @@ Full ability tables, passives, the Blood Moon schedule, commands and operator se
 |---|---|---|
 | ![Salamander](docs/images/race_001_salamander.png) | ![Golem](docs/images/race_002_golem.png) | ![Jackalope](docs/images/race_003_jackalope.png) |
 
+**Living motion (v1.0.2)** — rendered from the shipped animation files: breathing, blinking, race-specific gaits with grounded feet, jumps and landings, and idle behaviours the creatures perform on their own ([details](docs/CREATIVE.md#living-motion-v102)).
+
+| | | |
+|---|---|---|
+| ![Salamander motion](docs/images/anim_salamander.gif) | ![Golem motion](docs/images/anim_golem.gif) | ![Jackalope motion](docs/images/anim_jackalope.gif) |
+| ![Salamander idle behaviours](docs/images/fidgets_salamander.gif) | ![Golem idle behaviours](docs/images/fidgets_golem.gif) | ![Jackalope idle behaviours](docs/images/fidgets_jackalope.gif) |
+
 ## Documents
 * [Installation guide (iOS, Android, Windows, consoles, servers)](docs/INSTALL.md)
 * [Ability & control reference](docs/ABILITIES.md)
 * [Technical compatibility report](docs/COMPATIBILITY.md) — target version, APIs, how bodies are rendered without overriding the player, limitations
-* [Testing report](docs/TESTING.md) — what was verified (typecheck, Creator Tools, 16,935 static checks, 136 runtime assertions) and what still needs an in-game check
+* [Testing report](docs/TESTING.md) — what was verified (typecheck, Creator Tools, 24,283 static checks incl. every Molang expression, 136 runtime assertions, an offline run of every animation) and what still needs an in-game check
 * [Creative development report](docs/CREATIVE.md) — brief → implementation mapping, additions and changes
 
 ## Project layout
@@ -45,11 +52,12 @@ playable-races/
 │  ├─ systems/                 Blood Moon, lunar sigils, mirage decoys
 │  └─ ui/menu.ts               the Lineage Codex
 ├─ tools/                      build pipeline (Python)
-│  ├─ kit/                     geometry/atlas toolkit, procedural textures, software renderer
+│  ├─ kit/                     geometry/atlas toolkit, procedural textures, software renderer,
+│  │                           Molang interpreter + animation runtime (animrt.py), player simulation
 │  ├─ models/                  salamander.py, golem.py, jackalope.py (anatomy + materials)
-│  ├─ anims/                   attachable animations + player cast poses
-│  ├─ fx.py                    particle atlas, 30 particle effects, Blood Moon fog
-│  ├─ build.py / validate.py / previews.py
+│  ├─ anims/                   layered attachable animations (life.py, races.py), gait ground-fit (fit.py), cast poses
+│  ├─ fx.py                    particle atlas, 39 particle effects, Blood Moon fog
+│  ├─ build.py / validate.py / previews.py / anim_gifs.py
 │  └─ vanilla/                 1.26.60 reference data used by the validator
 ├─ tests/                      strict Script API mock + gameplay scenario tests
 └─ docs/                       reports and preview images
@@ -62,12 +70,13 @@ cd playable-races
 npm install       # official @minecraft/server typings + TypeScript
 npm test          # typecheck -> tools/build.py -> tools/validate.py -> tests/run.mjs
 python3 tools/previews.py
+python3 tools/anim_gifs.py && python3 tools/anim_gifs.py --fidgets   # animated previews
 ```
 Models, textures and animations are generated from code: edit `tools/models/*.py` or `tools/anims/races.py`, run the build, and the packs, previews and package are regenerated together (and cross-checked).
 
 ## Adding races 004–006
 1. `tools/models/<race>.py` — a `build()` using `humanoid()` (binds to the player skeleton), `VARIANTS`, `TEXTURES`, `materials()`.
-2. `tools/anims/races.py` — the race's attachable animations; register it in `RACES` in `tools/build.py` with its permanent code.
+2. `tools/anims/races.py` — the race's attachable animations, built from the layers in `tools/anims/life.py` (a `Rig`, `body()`, `grounded()` for the gait, `fidget_controller()` / `landing_controller()`); register it in `RACES` in `tools/build.py` with its permanent code. Check it with `python3 tools/anim_gifs.py --races <race>`.
 3. `src/races/<race>.ts` — a `RaceDef` (passives, `variant()`, four `AbilityDef`s) and add it to `src/races/registry.ts`.
 4. Add the race's focus item entry in `tools/build.py`. Crest items, attachables, render controllers, the skin-hiding condition, lang, icons and portraits are generated automatically.
 
