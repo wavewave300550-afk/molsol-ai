@@ -24,11 +24,14 @@ def osc(freq: float, amp: float, phase: float = 0.0, t: str = T) -> str:
 
 
 class Anim:
-    def __init__(self, name: str, loop=True, length: Optional[float] = None, override=False):
+    def __init__(self, name: str, loop=True, length: Optional[float] = None, override=False,
+                 time_update: Optional[str] = None, blend: Optional[str] = None):
         self.name = name
         self.loop = loop
         self.length = length
         self.override = override
+        self.time_update = time_update      # e.g. a stride-driven clock for keyframed gait cycles
+        self.blend = blend
         self.bones: Dict[str, dict] = {}
         self.particles: Dict[str, list] = {}
         self.sounds: Dict[str, list] = {}
@@ -62,6 +65,10 @@ class Anim:
             out["animation_length"] = self.length
         if self.override:
             out["override_previous_animation"] = True
+        if self.time_update:
+            out["anim_time_update"] = self.time_update
+        if self.blend:
+            out["blend_weight"] = self.blend
         if self.bones:
             out["bones"] = self.bones
         if self.particles:

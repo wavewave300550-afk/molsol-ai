@@ -168,3 +168,103 @@ def mat_accent(ctx: Ctx):
     rivet = (np.mod(ctx.s, 2.0) < 0.5) & (ctx.t < 0.6) & (ctx.t > 0.15)
     c = np.where((rivet & (ctx.fh > 1.0))[:, None], np.array([1.0, 1.0, 1.0]), c)
     return bevel(ctx, c, 0.2, 0.4), ctx.ones(), ctx.zeros()
+
+
+# ----------------------------------------------------------------------------- shape builders (Expansion 01 visual overhaul)
+
+def q(v: float, step: float = 0.5) -> float:
+    """Snap a size to whole texels (2 texels per unit) so textures never stretch."""
+    return max(step, round(v / step) * step)
+
+
+def dir_rot(d):
+    """Bedrock cube rotation that points a cube's +Z axis along d."""
+    d = np.asarray(d, float)
+    d = d / max(np.linalg.norm(d), 1e-9)
+    rx = math.degrees(math.asin(max(-1.0, min(1.0, d[1]))))
+    ry = math.degrees(math.atan2(d[0], d[2]))
+    return (rx, ry, 0.0)
+
+
+def segment(m: Model, bone: str, a, b, w: float, h: float, mat: str, overlap: float = 0.25, **kw):
+    """A box of cross-section w x h running from point a to point b (rotated about a)."""
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    ln = q(float(np.linalg.norm(b - a)) + overlap)
+    return m.cube(bone, (a[0] - w / 2, a[1] - h / 2, a[2]), (w, h, ln), mat, pivot=tuple(a), rot=dir_rot(b - a), **kw)
+
+
+def chain(m: Model, parent: str, prefix: str, pts, widths, mat, heights=None, mats=None, **kw):
+    """A tapered limb / strand / segmented body along a polyline.  Every span is its own
+    bone (pivot at its start, parented to the previous span) so animations can bend it
+    joint by joint.  Returns the bone names, root first."""
+    names = []
+    par = parent
+    pts = [np.asarray(p, float) for p in pts]
+    for k in range(len(pts) - 1):
+        name = f"{prefix}{k}"
+        m.bone(name, par, tuple(pts[k]))
+        w = widths[k] if isinstance(widths, (list, tuple)) else widths
+        h = (heights[k] if isinstance(heights, (list, tuple)) else heights) if heights is not None else w
+        mt = mats[k] if mats else mat
+        segment(m, name, pts[k], pts[k + 1], w, h, mt, **kw)
+        names.append(name)
+        par = name
+    return names
+
+
+def ellipsoid(m: Model, bone: str, center, dims, mat: str, a: float = 0.64, b: float = 0.86, **kw):
+    """A rounded voxel ellipsoid from four overlapping boxes (cross + core): reads as round
+    from every side, no coplanar overlaps (no z-fighting)."""
+    cx, cy, cz = center
+    dx, dy, dz = dims
+    out = []
+    for s in ((dx, q(dy * a), q(dz * a)), (q(dx * a), dy, q(dz * a)), (q(dx * a), q(dy * a), dz), (q(dx * b), q(dy * b), q(dz * b))):
+        out.append(m.box(bone, (cx, cy, cz), s, mat, **kw))
+    return out
+
+
+def voxel_ball(m: Model, bone: str, center, d: float, mat: str, **kw):
+    return ellipsoid(m, bone, center, (d, d, d), mat, **kw)
+
+
+def drape(m: Model, parent: str, prefix: str, n: int, center, radii, top: float, length: float, thick: float,
+          mat: str, flare: float = 8.0, arc_deg=(0.0, 360.0), widths=None, lengths=None, **kw):
+    """Cloth around a body: n thin panels hanging from an ellipse (radii x, z) at height
+    `top`, each tilted outward by `flare` degrees and each its own bone (to sway).
+    Angles are measured from the front (-Z) toward the creature's right (-X)."""
+    cx, _, cz = center
+    rx_, rz_ = radii
+    a0, a1 = arc_deg
+    full = abs((a1 - a0) % 360.0) < 1e-6
+    names = []
+    for k in range(n):
+        f = (k + 0.5) / n if full else (k / max(n - 1, 1))
+        phi = math.radians(a0 + (a1 - a0) * f)
+        px, pz = cx - math.sin(phi) * rx_, cz - math.cos(phi) * rz_
+        # panel width = arc length between neighbours on the ellipse (+ a little overlap)
+        if widths is not None:
+            w = widths[k]
+        else:
+            dphi = math.radians((a1 - a0) / (n if full else max(n - 1, 1)))
+            w = q(math.hypot(rx_ * math.cos(phi), rz_ * math.sin(phi)) * dphi + 0.6)
+        ln = lengths[k] if lengths is not None else length
+        name = f"{prefix}{k}"
+        m.bone(name, parent, (px, top, pz), (-flare, math.degrees(phi), 0.0))
+        m.cube(name, (px - w / 2, top - ln, pz - thick / 2), (w, ln, thick), mat, **kw)
+        names.append(name)
+    return names
+
+
+def arc(m: Model, bone: str, center, radius: float, a0: float, a1: float, segments: int, thick: float,
+        depth: float, mat: str, **kw):
+    """Part of a ring facing forward (in the XY plane): angles in degrees, 0 = top, clockwise
+    seen from the front.  Returns the cubes."""
+    cx, cy, cz = center
+    span = (a1 - a0) / segments
+    seg_len = q(2 * radius * math.tan(math.radians(abs(span)) / 2) + thick * 0.4)
+    out = []
+    for k in range(segments):
+        ang = a0 + span * (k + 0.5)
+        o = (cx - seg_len / 2, cy + radius - thick / 2, cz - depth / 2)
+        out.append(m.cube(bone, o, (seg_len, thick, depth), mat, pivot=(cx, cy, cz), rot=(0, 0, ang), **kw))
+    return out

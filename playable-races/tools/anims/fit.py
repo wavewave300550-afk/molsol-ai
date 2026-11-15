@@ -23,7 +23,8 @@ from kit.playersim import Sim, vanilla_skeleton
 from kit.render import collect_quads
 
 UPPER_GROUPS = ("torso_g", "head_g", "r_arm_g", "l_arm_g", "tail_g", "r_arm_fp", "l_arm_fp",
-                "r_foot_rune", "l_foot_rune")   # golem sole runes only show while airborne
+                "r_foot_rune", "l_foot_rune",   # golem sole runes only show while airborne
+                "r_hem_f", "r_hem_b", "r_hem_s", "l_hem_f", "l_hem_b", "l_hem_s")   # robe hems are cloth, not feet
 
 
 def foot_floor(model, anims: Sequence[Anim], speed: float, sprint: bool, samples: int = 48,

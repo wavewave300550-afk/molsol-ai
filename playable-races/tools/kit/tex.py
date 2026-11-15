@@ -46,6 +46,10 @@ class Ctx:
     size: np.ndarray
     seed: int
     params: dict
+    pw: int = 0            # face width / height in texels (for pixel-exact painting, kit/pixel.py)
+    ph: int = 0
+    wp: Optional[np.ndarray] = None   # (N,3) texel positions in the rest pose (cube + bone rotations applied)
+    wn: Optional[np.ndarray] = None   # (3,) the face's real normal in the rest pose
 
     @property
     def N(self) -> int:
@@ -76,6 +80,9 @@ def paint(model: Model, materials: Dict[str, Material], params: Optional[dict] =
     """Paint the full atlas for `model` (after model.pack())."""
     params = params or {}
     W, H = model.tex_w, model.tex_h
+    from .render import bone_matrices          # local import: render does not depend on tex
+    from .geo import rot_matrix
+    rest = bone_matrices(model, None)
     img = np.zeros((H, W, 4), dtype=np.float64)
     filled = np.zeros((H, W), dtype=bool)
     for bn in model.order:
@@ -93,9 +100,17 @@ def paint(model: Model, materials: Dict[str, Material], params: Optional[dict] =
                 p = corner[None, :] + a[:, None] * du[None, :] + b[:, None] * dv[None, :]
                 size = np.maximum(np.array(c.size, dtype=float), 1e-6)
                 local = (p - np.array(c.origin)) / size
+                # where this texel really is once the cube's and its bones' rest rotations apply
+                Rc = rot_matrix(c.rot) if c.rot is not None else np.eye(3)
+                pc = np.array(c.pivot if c.pivot is not None else c.origin, dtype=float)
+                pr = (p - pc) @ Rc.T + pc
+                M = rest[bn]
+                wp = pr @ M[:3, :3].T + M[:3, 3]
+                wn = M[:3, :3] @ (Rc @ np.array(NORMALS[f]))
+                wn = wn / max(np.linalg.norm(wn), 1e-9)
                 ctx = Ctx(p=p, n=np.array(NORMALS[f]), face=f, s=a * fw, t=b * fh, fw=fw, fh=fh,
                           local=np.clip(local, 0, 1), origin=np.array(c.origin), size=np.array(c.size),
-                          seed=c.seed, params=params)
+                          seed=c.seed, params=params, pw=pw * ss, ph=ph * ss, wp=wp, wn=wn)
                 rgb, alpha, glow = mat(ctx)
                 rgb = np.clip(np.broadcast_to(np.asarray(rgb, dtype=float), (ctx.N, 3)), 0, 1).reshape(ph * ss, pw * ss, 3)
                 alpha = np.clip(np.broadcast_to(alpha, (ctx.N,)), 0, 1).reshape(ph * ss, pw * ss)

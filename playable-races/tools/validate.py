@@ -227,6 +227,7 @@ def molang_strings(obj, path=""):
 
 
 def check_expr(where, expr, defined):
+    check(not re.search(r"(?<![a-z_.])\d+(?:\.\d+)?[eE][-+]?\d", expr), f"{where}: number in scientific notation (Bedrock Molang cannot parse it)")
     try:
         _molang.check(expr)
     except SyntaxError as e:

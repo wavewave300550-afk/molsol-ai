@@ -474,3 +474,48 @@ def wait_anim(race: str, name: str, length: float) -> Anim:
     a = Anim(f"animation.{NS}.{race}.{name}", loop=False, length=length)
     a.bone("head_g", rot=[0, 0, 0])
     return a
+
+
+# ----------------------------------------------------------------------------- motion helpers (v1.2 visual overhaul)
+
+def chain_wave(ly: "Layer", bones: Sequence[str], axis: str, amp: float, freq: float, lag: float = 40.0,
+               falloff: float = 1.0, phase: float = 0.0, gain: Expr = None, base: float = 0.0) -> None:
+    """A wave travelling down a chain of nested bones: each joint lags the previous one by
+    `lag` degrees of phase; amplitude scales by `falloff` per joint (>1 = whips harder at the tip)."""
+    for k, b in enumerate(bones):
+        a = amp * (falloff ** k)
+        e: Expr = f"math.sin({T} * {n(freq * 360)} - {n(lag * k - phase)}) * {n(a)}"
+        if gain is not None:
+            e = prod(e, gain)
+        if base:
+            e = lin([(1.0, e), (base, 1.0)])
+        vals: List[Expr] = [None, None, None]
+        vals["xyz".index(axis)] = e
+        ly.rot(b, *vals)
+
+
+def hash_expr(n_expr: str, seed: float) -> str:
+    """Deterministic pseudo-random value in [-1, 1] for an integer-valued Molang expression."""
+    return f"(math.mod(math.abs(math.sin(({n_expr}) * 311.7 + {n(seed)}) * 4375.85), 1) * 2 - 1)"
+
+
+def saccade(freq: float, amp: float, seed: float = 0.0, move: float = 0.18, t: str = T) -> str:
+    """Quick move, then hold: a new pseudo-random target every 1/freq seconds, reached in
+    `move` of the interval with a smoothstep (insect heads, eyeballs, glances). Stateless."""
+    tt = f"({t} * {n(freq)})"
+    k = f"math.floor({tt})"
+    f = f"({tt} - {k})"
+    s = f"math.clamp({f} / {n(move)}, 0, 1)"
+    ease = f"({s} * {s} * (3 - 2 * {s}))"
+    prev, cur = hash_expr(f"{k} - 1", seed), hash_expr(k, seed)
+    return f"(({prev} + ({cur} - {prev}) * {ease}) * {n(amp)})"
+
+
+def smooth_pulse(period: float, rise: float, hold: float, fall: float, offset: float = 0.0, t: str = T) -> str:
+    """0 -> 1 -> 0 envelope repeating every `period` s: eased rise, hold, eased fall (Molang)."""
+    ph = f"math.mod({t} + {n(offset)}, {n(period)})"
+    up = f"math.clamp({ph} / {n(rise)}, 0, 1)"
+    dn = f"math.clamp(({ph} - {n(rise + hold)}) / {n(fall)}, 0, 1)"
+    e_up = f"({up} * {up} * (3 - 2 * {up}))"
+    e_dn = f"({dn} * {dn} * (3 - 2 * {dn}))"
+    return f"({e_up} - {e_dn})"
