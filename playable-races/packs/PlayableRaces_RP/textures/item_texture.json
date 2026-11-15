@@ -14,6 +14,9 @@
   "plrace:crest_xenentoma": {
    "textures": "textures/plrace/races/items/crest_xenentoma"
   },
+  "plrace:crest_spaghetti": {
+   "textures": "textures/plrace/races/items/crest_spaghetti"
+  },
   "plrace:focus_salamander": {
    "textures": "textures/plrace/races/items/focus_salamander"
   },
@@ -25,6 +28,9 @@
   },
   "plrace:focus_xenentoma": {
    "textures": "textures/plrace/races/items/focus_xenentoma"
+  },
+  "plrace:focus_spaghetti": {
+   "textures": "textures/plrace/races/items/focus_spaghetti"
   },
   "plrace:codex": {
    "textures": "textures/plrace/races/items/codex"

@@ -1,0 +1,33 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "plrace:meatball",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "cutout": "entity_alphatest"
+   },
+   "textures": {
+    "default": "textures/plrace/races/spaghetti/meatball"
+   },
+   "geometry": {
+    "default": "geometry.plrace.meatball"
+   },
+   "animations": {
+    "spin": "animation.plrace.meatball.spin"
+   },
+   "scripts": {
+    "animate": [
+     "spin"
+    ]
+   },
+   "particle_effects": {
+    "trail": "plrace:meatball_trail"
+   },
+   "render_controllers": [
+    "controller.render.plrace.form"
+   ],
+   "enable_attachables": false
+  }
+ }
+}

@@ -351,6 +351,63 @@ def particles() -> Dict[str, dict]:
         "minecraft:particle_initial_speed": 2.2, "minecraft:particle_lifetime_expression": {"max_lifetime": 0.35},
         "minecraft:particle_motion_dynamic": {"linear_drag_coefficient": 4},
         **bb(["0.09", "0.09"], _uv("spark")), "minecraft:particle_appearance_tinting": {"color": "#ffd2b4ff"}})
+    # ---- flying spaghetti monster (attachable + script) ----
+    add("sauce_drip", "particles_alpha", {**burst(2), "minecraft:emitter_shape_point": {},
+        "minecraft:particle_initial_speed": 0.0, "minecraft:particle_lifetime_expression": {"max_lifetime": 1.0},
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, -6, 0]},
+        **bb(["0.06", "0.09"], _uv("drop")), "minecraft:particle_appearance_tinting": {"color": "#ffc22a1c"},
+        "minecraft:particle_appearance_lighting": {}})
+    add("sauce_splash", "particles_alpha", {**burst(14), "minecraft:emitter_shape_sphere": {"radius": 0.5, "direction": "outwards"},
+        "minecraft:particle_initial_speed": "1.5 + variable.particle_random_1 * 1.5", "minecraft:particle_lifetime_expression": {"max_lifetime": 0.8},
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, -9, 0], "linear_drag_coefficient": 0.8},
+        **bb(["0.07", "0.07"], _uv("drop")), "minecraft:particle_appearance_tinting": {"color": "#ffd23620"},
+        "minecraft:particle_appearance_lighting": {}})
+    add("sauce_spiral", "particles_alpha", {"minecraft:emitter_rate_steady": {"spawn_rate": 30, "max_particles": 30},
+        "minecraft:emitter_lifetime_once": {"active_time": 0.6}, "minecraft:emitter_shape_point": {},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": 1.0},
+        "minecraft:particle_initial_speed": 0.0,
+        "minecraft:particle_motion_parametric": {"relative_position": [
+            "math.cos(v.particle_age * 540 + v.particle_random_1 * 360) * (0.4 + v.particle_age * 0.5)",
+            "v.particle_age * 1.6",
+            "math.sin(v.particle_age * 540 + v.particle_random_1 * 360) * (0.4 + v.particle_age * 0.5)"]},
+        **bb(["0.08 * " + fade, "0.08 * " + fade], _uv("drop")), "minecraft:particle_appearance_tinting": {"color": "#ffd8402a"}})
+    add("dente_crack", "particles_alpha", {**burst(10), "minecraft:emitter_shape_sphere": {"radius": 0.6, "direction": "outwards"},
+        "minecraft:particle_initial_speed": 1.4, "minecraft:particle_lifetime_expression": {"max_lifetime": 0.7},
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, -8, 0]},
+        "minecraft:particle_initial_spin": {"rotation": "variable.particle_random_1 * 360", "rotation_rate": 300},
+        **bb(["0.08", "0.08"], _uv("shard")), "minecraft:particle_appearance_tinting": {"color": "#fff0d070"},
+        "minecraft:particle_appearance_lighting": {}})
+    add("pasta_steam", "particles_alpha", {**burst(3), "minecraft:emitter_shape_sphere": {"radius": 0.4},
+        "minecraft:particle_initial_speed": 0.2, "minecraft:particle_lifetime_expression": {"max_lifetime": 1.6},
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, 0.6, 0], "linear_drag_coefficient": 1.5},
+        **bb(["(0.12 + v.particle_age * 0.2) * " + fade, "(0.12 + v.particle_age * 0.2) * " + fade], _uv("smoke")),
+        "minecraft:particle_appearance_tinting": {"color": "#90706864"}})
+    add("pasta_vortex", "particles_alpha", {**burst(1), "minecraft:emitter_shape_point": {},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": 0.6},
+        "minecraft:particle_initial_spin": {"rotation": 0, "rotation_rate": 400},
+        **bb(["1.0 + v.particle_age * 5", "1.0 + v.particle_age * 5"], _uv("ring"), "emitter_transform_xz"),
+        "minecraft:particle_appearance_tinting": {"color": grad([(0.0, "#e0ffd060"), (0.5, "#c0e04a30"), (1.0, "#00c0302a")])}})
+    add("sauce_wave", "particles_alpha", {**burst(1), "minecraft:emitter_shape_point": {},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": 0.7},
+        **bb(["0.6 + v.particle_age * 11", "0.6 + v.particle_age * 11"], _uv("ring"), "emitter_transform_xz"),
+        "minecraft:particle_appearance_tinting": {"color": grad([(0.0, "#ffe0402a"), (1.0, "#00b0201a")])}})
+    add("meatball_trail", "particles_alpha", {"minecraft:emitter_rate_steady": {"spawn_rate": 18, "max_particles": 20},
+        "minecraft:emitter_lifetime_looping": {"active_time": 1}, "minecraft:emitter_shape_point": {},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": 0.5},
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, -4, 0]},
+        **bb(["0.06", "0.06"], _uv("drop")), "minecraft:particle_appearance_tinting": {"color": "#ffb82418"},
+        "minecraft:particle_appearance_lighting": {}})
+    add("noodle_strand", "particles_alpha", {
+        "minecraft:emitter_rate_instant": {"num_particles": 22}, "minecraft:emitter_lifetime_once": {"active_time": 0.05},
+        "minecraft:emitter_shape_point": {},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": 0.7},
+        "minecraft:particle_initial_speed": 0,
+        "minecraft:particle_motion_parametric": {"relative_position": [
+            "v.dx * (v.particle_random_1) * math.sin(math.min(v.particle_age / 0.35, 1) * 90) * (v.particle_age < 0.35 ? 1 : (1 - (v.particle_age - 0.35) / 0.35))",
+            "v.dy * (v.particle_random_1) * (v.particle_age < 0.35 ? 1 : (1 - (v.particle_age - 0.35) / 0.35)) + math.sin(v.particle_random_1 * 900) * 0.12",
+            "v.dz * (v.particle_random_1) * math.sin(math.min(v.particle_age / 0.35, 1) * 90) * (v.particle_age < 0.35 ? 1 : (1 - (v.particle_age - 0.35) / 0.35))"]},
+        **bb(["0.07", "0.07"], _uv("dot")), "minecraft:particle_appearance_tinting": {"color": "#fff3dc98"},
+        "minecraft:particle_appearance_lighting": {}})
     # ---- golem (script) ----
     add("shock_rupture", "particles_alpha", {**burst(9), "minecraft:emitter_shape_disc": {"radius": 0.7, "plane_normal": "y", "direction": [0, 1, 0]},
         "minecraft:particle_initial_speed": "3.2 + variable.particle_random_1 * 2", "minecraft:particle_lifetime_expression": {"max_lifetime": 0.8},

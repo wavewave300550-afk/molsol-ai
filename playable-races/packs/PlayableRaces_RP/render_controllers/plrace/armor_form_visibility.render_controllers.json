@@ -14,7 +14,7 @@
    ],
    "part_visibility": [
     {
-     "*": "!query.is_item_name_any('slot.armor.head', 0, 'plrace:form_salamander', 'plrace:form_salamander_bloom', 'plrace:form_salamander_dormant', 'plrace:form_salamander_predatory', 'plrace:form_salamander_rooted', 'plrace:form_golem', 'plrace:form_golem_siege', 'plrace:form_golem_bastion', 'plrace:form_golem_arcane', 'plrace:form_golem_scattered', 'plrace:form_golem_disrupted', 'plrace:form_jackalope', 'plrace:form_jackalope_hunt', 'plrace:form_jackalope_awakened', 'plrace:form_jackalope_awakened_hunt', 'plrace:form_xenentoma', 'plrace:form_xenentoma_survey', 'plrace:form_xenentoma_glide', 'plrace:form_xenentoma_surge', 'plrace:form_xenentoma_teneral')"
+     "*": "!query.is_item_name_any('slot.armor.head', 0, 'plrace:form_salamander', 'plrace:form_salamander_bloom', 'plrace:form_salamander_dormant', 'plrace:form_salamander_predatory', 'plrace:form_salamander_rooted', 'plrace:form_golem', 'plrace:form_golem_siege', 'plrace:form_golem_bastion', 'plrace:form_golem_arcane', 'plrace:form_golem_scattered', 'plrace:form_golem_disrupted', 'plrace:form_jackalope', 'plrace:form_jackalope_hunt', 'plrace:form_jackalope_awakened', 'plrace:form_jackalope_awakened_hunt', 'plrace:form_xenentoma', 'plrace:form_xenentoma_survey', 'plrace:form_xenentoma_glide', 'plrace:form_xenentoma_surge', 'plrace:form_xenentoma_teneral', 'plrace:form_spaghetti', 'plrace:form_spaghetti_rigid', 'plrace:form_spaghetti_detached', 'plrace:form_spaghetti_revelation', 'plrace:form_spaghetti_brittle')"
     }
    ]
   }

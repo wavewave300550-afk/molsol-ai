@@ -1,0 +1,94 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "plrace:form_spaghetti_revelation",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "accent": "entity_alphatest"
+   },
+   "textures": {
+    "default": "textures/plrace/races/spaghetti/spaghetti_holy"
+   },
+   "geometry": {
+    "default": "geometry.plrace.spaghetti.revelation",
+    "accent": "geometry.plrace.spaghetti.revelation.accent"
+   },
+   "animations": {
+    "first_person": "animation.plrace.spaghetti.first_person",
+    "third_person": "animation.plrace.spaghetti.third_person",
+    "life": "animation.plrace.spaghetti.life",
+    "appendages": "animation.plrace.spaghetti.appendages",
+    "locomotion": "animation.plrace.spaghetti.locomotion",
+    "airborne": "animation.plrace.spaghetti.airborne",
+    "landing": "controller.animation.plrace.spaghetti.landing",
+    "attack": "animation.plrace.spaghetti.attack",
+    "hurt": "animation.plrace.spaghetti.hurt",
+    "intro_revelation": "animation.plrace.spaghetti.intro_revelation",
+    "fx_revelation": "animation.plrace.spaghetti.fx_revelation",
+    "revelation_loop": "animation.plrace.spaghetti.revelation_loop",
+    "land": "animation.plrace.spaghetti.land",
+    "land_hard": "animation.plrace.spaghetti.land_hard"
+   },
+   "particle_effects": {
+    "drip": "plrace:sauce_drip",
+    "splash": "plrace:sauce_splash",
+    "crack": "plrace:dente_crack",
+    "vortex": "plrace:pasta_vortex",
+    "saucespiral": "plrace:sauce_spiral",
+    "steam": "plrace:pasta_steam"
+   },
+   "scripts": {
+    "pre_animation": [
+     "v.plr_ph = q.modified_distance_moved * 38.17;",
+     "v.plr_tc = math.cos(v.plr_ph) * q.modified_move_speed * 57.3;",
+     "v.plr_mv = math.clamp(q.modified_move_speed, 0, 1);",
+     "v.plr_still = 1 - math.clamp(q.modified_move_speed * 5, 0, 1);",
+     "v.plr_spr = q.is_sprinting ? 1 : 0;",
+     "v.plr_walk = 1 - v.plr_spr;",
+     "v.plr_bob = 0;"
+    ],
+    "animate": [
+     {
+      "first_person": "c.is_first_person"
+     },
+     {
+      "third_person": "!c.is_first_person"
+     },
+     {
+      "life": "!c.is_first_person"
+     },
+     "appendages",
+     {
+      "locomotion": "!c.is_first_person && !q.is_riding && !q.is_gliding && !q.is_swimming"
+     },
+     {
+      "airborne": "!c.is_first_person && !q.is_on_ground && !q.is_in_water && !q.is_riding && !q.is_gliding"
+     },
+     {
+      "landing": "!c.is_first_person && !q.is_riding"
+     },
+     {
+      "attack": "!c.is_first_person"
+     },
+     {
+      "hurt": "!c.is_first_person && q.hurt_time > 0"
+     },
+     "intro_revelation",
+     {
+      "fx_revelation": "!c.is_first_person"
+     },
+     {
+      "revelation_loop": "!c.is_first_person"
+     }
+    ]
+   },
+   "render_controllers": [
+    "controller.render.plrace.form",
+    "controller.render.plrace.spaghetti_accent_c",
+    "controller.render.plrace.spaghetti_accent_l",
+    "controller.render.plrace.spaghetti_accent_f"
+   ]
+  }
+ }
+}

@@ -737,6 +737,124 @@ eq(OW.getEntities({ type: "plrace:exuvia" }).length, 0, "the exuvia is removed w
 harness.respawn(xia);
 await settle(15);
 
+// ======================================================================== race 005 Flying Spaghetti Monster
+begin("spaghetti: assignment & form");
+const pasta = harness.join("Pasta", { x: 400.5, y: 64, z: 0.5 });
+await settle(12);
+tickN(60);
+await settle(10);
+commands.get("plrace:setrace").cb({ sourceEntity: pasta }, "spaghetti", [pasta]);
+await settle(4);
+eq(data(pasta).race, "005", "race 005 persisted");
+eq(head(pasta)?.typeId, "plrace:form_spaghetti", "spaghetti crest worn");
+ok(inv(pasta).slots.some((s) => s?.typeId === "plrace:focus_spaghetti"), "Holy Colander Focus given");
+hold(pasta, "plrace:focus_spaghetti");
+tickN(25);
+ok(String(sim.log.actionbar.get(pasta.id)).includes("Sauce"), "HUD shows Sauce");
+
+begin("spaghetti: His Noodly Touch");
+const nz1 = mob("minecraft:zombie", 400.5, 5.5);
+faceTo(pasta, nz1);
+const nzHp = hp(nz1);
+const nzZ = nz1.location.z;
+await use(pasta);
+ok(hp(nz1) <= nzHp - 3, "the noodles wrap the target (3 damage)");
+eq(nz1.getEffect("slowness")?.amplifier, 3, "the target is held (Slowness IV)");
+ok(nz1.location.z < nzZ, "the target is pulled toward the monster");
+ok(particles("plrace:noodle_strand") > 0, "a noodle strand extends to the target");
+nz1.remove();
+commands.get("plrace:resetcooldowns").cb({}, [pasta]);
+await settle(2);
+const drop = OW.spawnItem(new ItemStack("minecraft:apple", 1), { x: 400.5, y: 64, z: 4.5 });
+pasta.setRotation({ x: 10, y: 0 });
+await use(pasta);
+ok(Math.abs(drop.location.z - pasta.location.z) < 1, "with no creature in reach the noodles gather dropped items");
+commands.get("plrace:resetcooldowns").cb({}, [pasta]);
+await settle(2);
+drop.remove();
+pasta.setRotation({ x: 0, y: 180 });
+await use(pasta);
+ok(String(sim.log.actionbar.get(pasta.id)).includes("Nothing within reach"), "nothing to touch -> clear failure, no cooldown");
+
+begin("spaghetti: Al Dente Reversal");
+await use(pasta, true); // -> Al Dente
+await use(pasta);
+tickN(2);
+eq(head(pasta)?.typeId, "plrace:form_spaghetti_rigid", "the strands lock into the al dente lattice");
+const sk = mob("minecraft:skeleton", 400.5, 3.5);
+const pBefore = pasta._health;
+pasta.applyDamage(6, { cause: "projectile", damagingEntity: sk });
+eq(pasta._health, pBefore, "projectiles are stopped outright");
+const brute = mob("minecraft:zombie", 400.5, 2.0);
+const bruteHp = hp(brute);
+pasta.applyDamage(10, { cause: "entityAttack", damagingEntity: brute });
+ok(pBefore - pasta._health <= 4.01, "melee damage reduced by 60%");
+ok(hp(brute) <= bruteHp - 4, "the first melee attacker is countered");
+pasta._health = 20;
+sk.remove();
+brute.remove();
+tickN(60);
+eq(head(pasta)?.typeId, "plrace:form_spaghetti", "the lattice relaxes afterwards");
+
+begin("spaghetti: Meatball Ricochet");
+await use(pasta, true); // -> Meatballs
+const mz1 = mob("minecraft:zombie", 403.5, 3.5);
+const mz2 = mob("minecraft:zombie", 397.5, 4.5);
+const h1 = hp(mz1);
+const h2 = hp(mz2);
+await use(pasta);
+const balls = OW.getEntities({ type: "plrace:meatball" });
+eq(balls.length, 2, "both meatballs detach");
+tickN(2);
+eq(head(pasta)?.typeId, "plrace:form_spaghetti_detached", "the body shows its empty meatball sockets");
+const hb = pasta._health;
+pasta.applyDamage(5, { cause: "entityAttack", damagingEntity: mz1 });
+ok(hb - pasta._health >= 6 - 0.01, "softer while the meatballs are away (+20%)");
+pasta._health = 20;
+tickN(120);
+ok(h1 - hp(mz1) + (h2 - hp(mz2)) >= 12, "the meatballs ricochet between targets (several 4-damage hits)");
+ok(particles("plrace:sauce_splash") > 0, "sauce splashes on impact");
+tickN(50);
+eq(OW.getEntities({ type: "plrace:meatball" }).length, 0, "the meatballs return and are removed");
+tickN(2);
+eq(head(pasta)?.typeId, "plrace:form_spaghetti", "meatballs back in place");
+mz1.remove();
+mz2.remove();
+
+begin("spaghetti: The Great Pasta Revelation");
+await use(pasta, true); // -> Revelation
+const rz = mob("minecraft:zombie", 400.5, 7.5);
+const rzHp = hp(rz);
+await use(pasta);
+tickN(2);
+eq(head(pasta)?.typeId, "plrace:form_spaghetti_revelation", "the body unfolds into the spiral vortex");
+tickN(30);
+ok(rz.location.z < 7.4, "enemies are dragged toward the vortex");
+tickN(40);
+ok(rzHp - hp(rz) >= 8, "the sauce shockwave lands");
+ok(particles("plrace:sauce_wave") > 0, "sauce shockwave ring");
+tickN(10);
+ok(head(pasta)?.typeId !== "plrace:form_spaghetti_revelation", "the vortex folds back up");
+rz.remove();
+
+begin("spaghetti: sauce, fire and falling");
+world.afterEvents.itemCompleteUse.fire({ source: pasta, itemStack: new ItemStack("minecraft:mushroom_stew", 1), useDuration: 0 });
+world.afterEvents.itemCompleteUse.fire({ source: pasta, itemStack: new ItemStack("minecraft:mushroom_stew", 1), useDuration: 0 });
+tickN(5);
+ok(String(sim.log.actionbar.get(pasta.id)).includes("SAUCY"), "stews fill the sauce to SAUCY");
+pasta.applyDamage(2, { cause: "fire" });
+tickN(5);
+eq(head(pasta)?.typeId, "plrace:form_spaghetti_brittle", "fire makes the pasta brittle");
+pasta.isOnGround = false;
+pasta.isSneaking = true;
+pasta._vel = { x: 0, y: -0.6, z: 0 };
+tickN(5);
+ok(!!pasta.getEffect("slow_falling"), "sneaking in the air opens the noodle parachute");
+pasta.isOnGround = true;
+pasta.isSneaking = false;
+pasta._vel = { x: 0, y: 0, z: 0 };
+pasta._health = 20;
+
 // ======================================================================== summary
 const warns = sim.log.warns.concat();
 begin("script health");

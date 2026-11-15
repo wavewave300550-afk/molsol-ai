@@ -27,8 +27,9 @@ from kit.render import render  # noqa: E402
 from anims import core as acore  # noqa: E402
 from anims import races as aset  # noqa: E402
 from anims import life  # noqa: E402
-from models import salamander, golem, jackalope, xenentoma, common  # noqa: E402
+from models import salamander, golem, jackalope, xenentoma, spaghetti, common  # noqa: E402
 from anims import xenentoma as anim_xenentoma  # noqa: E402
+from anims import spaghetti as anim_spaghetti  # noqa: E402
 import fx  # noqa: E402
 
 NS = "plrace"
@@ -81,6 +82,13 @@ RACES = {
                      "surge": "Anamorphic Surge", "teneral": "Freshly Moulted"},
         "icon": {"variant": "survey", "tex": "sense", "head": ((0, 27.5, -3), 3.6), "body": ((0, 18, 3), 4.6)},
         "portrait_bg": (40, 30, 58)},
+    "spaghetti": {
+        "code": "005", "mod": spaghetti, "anims": anim_spaghetti.anims, "bounds": (4.0, 3.2, (0, 1.0, 0)),
+        "display": "Flying Spaghetti Monster", "protection": 1, "hover": "yellow", "focus": ("Holy Colander Focus", "yellow"),
+        "variants": {"base": "Noodly", "rigid": "Al Dente", "detached": "Meatballs Away", "revelation": "Great Pasta Revelation",
+                     "brittle": "Overcooked"},
+        "icon": {"variant": "base", "tex": "base", "head": ((0, 21, 0), 2.4), "body": ((0, 15, 0), 4.3)},
+        "portrait_bg": (70, 50, 18)},
 }
 DISPLAY = {race: info["display"] for race, info in RACES.items()}
 VARIANT_NAMES = {race: info["variants"] for race, info in RACES.items()}
@@ -460,6 +468,21 @@ def race_entities(lang):
                  {"default": f"geometry.{NS}.xenentoma.exuvia", "cutout": f"geometry.{NS}.xenentoma.exuvia.cutout"},
                  f"{TEXROOT}/xenentoma/xenentoma_exuvia", {"settle": f"animation.{NS}.exuvia.settle"},
                  [f"{NS}_decoy", "player", "mob"], health=16, size=(0.6, 1.6), timer=16, physics=True)
+    # Flying Spaghetti Monster: a detached meatball (script-steered, no physics)
+    mm = spaghetti.build_meatball()
+    tex = paint(mm, spaghetti.materials(), spaghetti.TEXTURES["base"])
+    tex.save(_mk(os.path.join(RP, f"{TEXROOT}/spaghetti/meatball.png")))
+    wjson(os.path.join(RP, "models/entity/plrace/meatball.geo.json"), {"format_version": "1.16.0", "minecraft:geometry": [
+        mm.geometry_json(f"geometry.{NS}.meatball", variant=None, cutout=False, bounds=(1.5, 1.5, (0, 0.25, 0)))]})
+    spin = acore.Anim(f"animation.{NS}.meatball.spin", loop=True)
+    spin.bone("ball", rot=["q.life_time * 720", 0, "math.sin(q.life_time * 400) * 10"])
+    for k in range(2):
+        spin.bone(f"tether{k}", rot=[aset.osc(3.0, 14, k * 90), aset.osc(2.4, 20, k * 60), 0])
+    wjson(os.path.join(RP, "animations/plrace/meatball.animation.json"), acore.file([spin]))
+    proxy_entity(lang, f"{NS}:meatball", "Meatball", {"default": f"geometry.{NS}.meatball"},
+                 f"{TEXROOT}/spaghetti/meatball", {"spin": f"animation.{NS}.meatball.spin"}, ["inanimate"],
+                 health=1, size=(0.5, 0.5), timer=14, physics=False, gravity=False,
+                 particles={"trail": f"{NS}:meatball_trail"})
 
 
 def mirage_render_controllers(rc):
@@ -586,6 +609,19 @@ def _focus_icons():
         d.line([18 * S, 11 * S, x2, y2], fill=(222, 204, 255, 255), width=int(0.9 * S))
         d.ellipse([x2 - S, y2 - S, x2 + S, y2 + S], fill=(250, 238, 255, 255))
     out["xenentoma"] = _finish(img)
+    # Holy Colander: a steel colander full of spaghetti with a meatball on top
+    img, d, S = _pix()
+    d.pieslice([4 * S, 6 * S, 28 * S, 30 * S], 0, 180, fill=(170, 176, 186, 255))
+    d.rectangle([3 * S, 17 * S, 29 * S, 19 * S], fill=(200, 206, 214, 255))
+    for k in range(5):
+        x = 8 * S + k * 4 * S
+        d.ellipse([x - S, 22 * S, x + S, 24 * S], fill=(90, 94, 104, 255))
+    for k in range(6):
+        x0 = 6 * S + k * 3.6 * S
+        d.arc([x0, 9 * S, x0 + 7 * S, 21 * S], 180, 360, fill=(246, 226, 158, 255), width=int(1.2 * S))
+    d.ellipse([12 * S, 6 * S, 21 * S, 15 * S], fill=(140, 72, 40, 255))
+    d.ellipse([14 * S, 7 * S, 18 * S, 10 * S], fill=(200, 50, 30, 255))
+    out["spaghetti"] = _finish(img)
     return out
 
 

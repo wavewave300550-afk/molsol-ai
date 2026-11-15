@@ -951,6 +951,54 @@
     }
    }
   },
+  "animation.plrace.pose.fsm_touch": {
+   "animation_length": 0.6,
+   "bones": {
+    "rightarm": {
+     "rotation": {
+      "0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.12": [
+       "-95 * (1 - variable.is_first_person * 0.7)",
+       "-8 * (1 - variable.is_first_person * 0.7)",
+       0.0
+      ],
+      "0.32": [
+       "-88 * (1 - variable.is_first_person * 0.7)",
+       0.0,
+       0.0
+      ],
+      "0.6": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "body": {
+     "rotation": {
+      "0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "0.12": [
+       0.0,
+       "-12 * (1 - variable.is_first_person)",
+       0.0
+      ],
+      "0.6": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    }
+   }
+  },
   "animation.plrace.pose.rite": {
    "animation_length": 1.8,
    "bones": {

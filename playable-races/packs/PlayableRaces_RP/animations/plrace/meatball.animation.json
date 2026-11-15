@@ -1,0 +1,31 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.plrace.meatball.spin": {
+   "loop": true,
+   "bones": {
+    "ball": {
+     "rotation": [
+      "q.life_time * 720",
+      0.0,
+      "math.sin(q.life_time * 400) * 10"
+     ]
+    },
+    "tether0": {
+     "rotation": [
+      "math.sin(q.life_time * 1080 + 0) * 14",
+      "math.sin(q.life_time * 864 + 0) * 20",
+      0.0
+     ]
+    },
+    "tether1": {
+     "rotation": [
+      "math.sin(q.life_time * 1080 + 90) * 14",
+      "math.sin(q.life_time * 864 + 60) * 20",
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}
