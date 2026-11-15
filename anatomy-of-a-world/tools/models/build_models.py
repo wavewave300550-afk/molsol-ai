@@ -28,6 +28,12 @@ def sample_poses() -> dict:
         lift = max(0.0, math.sin(ph))
         swing = math.cos(ph)
         leg[name] = mm.leg_pose({"upper": -12 * lift + 3 * swing, "knee": 10 * lift - 2 * swing, "lower": 6 * lift, "foot": -8 * lift}, toe_curl=10 * lift - 3, yaw=7 * swing)
+    # Phase 3A march (3 s loop): lifted at 0.75 s, planted at 2.25 s
+    for name, t in (("march_lift", 0.75), ("march_plant", 2.25)):
+        ph = (t / 3.0) * 2 * math.pi
+        lift = max(0.0, math.sin(ph)) ** 0.8
+        swing = math.cos(ph)
+        leg[name] = mm.leg_pose({"upper": -22 * lift + 6 * swing, "knee": 17 * lift - 4 * swing, "lower": 9 * lift, "foot": -13 * lift}, toe_curl=16 * lift - 5, yaw=11 * swing)
     leg["stomp_top"] = mm.leg_pose({"upper": -26, "knee": 22, "lower": 10, "foot": -14}, toe_curl=18)
     leg["splay"] = mm.leg_pose({"upper": -18, "knee": -14, "lower": -6, "foot": 34}, toe_curl=-6)
     leg["rest"] = {}
@@ -37,10 +43,29 @@ def sample_poses() -> dict:
         "open": mm.petal_pose(mm.PETAL_OPEN),
         "folded": mm.petal_pose(mm.PETAL_FOLDED),
         "half": mm.petal_pose(mm.lerp_pose(mm.PETAL_CLOSED, mm.PETAL_OPEN, 0.5)),
+        "raised": mm.petal_pose(mm.PETAL_RAISED),
     }
     poses["mm_lithic_heart"] = {
         "closed": {f"plate{k}_leaf": {"rotation": [0, 0, 0]} for k in range(8)},
         "open": {f"plate{k}_leaf": {"rotation": [62, 0, 0], "position": [0, -4, -6]} for k in range(8)},
+        # Phase 3B (animation "unbound" at t = 0.5 s): iris open, gyroscope rings swung wide
+        "unbound": {
+            **{f"plate{k}_leaf": {"rotation": [62, 0, 0], "position": [0, -4, -6]} for k in range(8)},
+            "ring_h": {"rotation": [24 + 6 * math.sin(math.pi / 4), 90, 0], "scale": [1.32] * 3},
+            "ring_v": {"rotation": [0, -135, 0], "scale": [1.26] * 3},
+            "ring_v2": {"rotation": [90, 0, 18], "scale": [1.2] * 3},
+            "wheel": {"rotation": [8 * math.sin(math.pi / 4), 45, 0], "scale": [1.12] * 3},
+            "crystal": {"scale": [1.08] * 3},
+        },
+    }
+    poses["mm_anchor_root"] = {
+        "grip": {},
+        # "snap" at 1.2 s: the knot has burst, the fingers let go, the root is tearing away
+        "snap": {
+            "knot": {"scale": [0.001] * 3},
+            "trunk0": {"rotation": [-40 * 0.12, 0, 1], "position": [0, -36, 5]},
+            **{f"finger{i}": {"rotation": [-60, 0, 0], "position": [0, -36, 5]} for i in range(3)},
+        },
     }
     poses["mm_resonance_node"] = {"rest": {}, "hang": {"root": {"rotation": [180, 0, 0], "position": [0, 56, 0]}}}
     poses["mm_strata_slab"] = {"rest": {}}

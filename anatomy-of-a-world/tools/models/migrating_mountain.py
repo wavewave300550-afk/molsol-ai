@@ -7,6 +7,7 @@ Boss 001 - THE MIGRATING MOUNTAIN: entity models and animations.
   anatomy:mm_strata_slab     Geological Shedding projectile (a slab of living strata)
   anatomy:mm_petal           shell petal of The Great Unfolding (Phase 2 crown)
   anatomy:mm_strata_plate    Inverted Strata flipping plate (terrain plate / rib plate variants)
+  anatomy:mm_anchor_root     Phase 3: an Anchorage Root bursting up through the disk, with its sinew knot
 
 Colours follow the concept sheet: pale stratified grey rock, maroon lithic
 musculature with red-orange mineral circulation, amethyst-purple heart.
@@ -175,6 +176,23 @@ def leg_animations() -> dict:
         "anim_time_update": "q.life_time + v.phase",
         "sound_effects": {"3.0": {"effect": "step"}},
         "particle_effects": {"3.0": {"effect": "mist", "locator": "foot"}},
+    }))
+
+    # Phase 3A: the Last Migration - a heavy, faster march (loop 3 s, per-leg offsets as for the walk)
+    def march(t: float) -> dict:
+        ph = (t / 3.0) * 2 * math.pi
+        lift = max(0.0, math.sin(ph)) ** 0.8
+        swing = math.cos(ph)
+        return leg_pose({
+            "upper": -22 * lift + 6 * swing,
+            "knee": 17 * lift - 4 * swing,
+            "lower": 9 * lift,
+            "foot": -13 * lift,
+        }, toe_curl=16 * lift - 5, yaw=11 * swing)
+    anims.update(bake_animation("animation.anatomy.mm_root_leg.march", march, 3.0, True, fps=10, extra={
+        "anim_time_update": "q.life_time + v.phase * 0.5",
+        "sound_effects": {"1.5": {"effect": "step"}},
+        "particle_effects": {"1.5": {"effect": "mist", "locator": "foot"}},
     }))
 
     def idle(t: float) -> dict:
@@ -373,6 +391,21 @@ def heart_animations() -> dict:
         pose.update({f"plate{k}_leaf": {"rotation": [90 * ease_in(seg(t, 0.5 + k * 0.1, 2.5 + k * 0.1)), 0, 0], "position": [0, -30 * ease_in(seg(t, 1.0, 3.0)), -10]} for k in range(8)})
         return pose
     anims.update(bake_animation("animation.anatomy.mm_lithic_heart.death", death, 4.2, "hold_on_last_frame", fps=15))
+
+    # Phase 3B, The Heart Unbound: torn free of the body - the iris stays open, the gyroscope rings
+    # swing wide and spin hard (added on top of "rings"), the crystal flares with each beat.
+    def unbound(t: float) -> dict:
+        ph = t / 4.0 * 2 * math.pi
+        pose = plates(1.0)
+        pose.update({
+            "ring_h": {"rotation": [24 + 6 * math.sin(ph), t / 4.0 * 720, 0], "scale": [1.32] * 3},
+            "ring_v": {"rotation": [0, -t / 4.0 * 1080, 0], "scale": [1.26] * 3},
+            "ring_v2": {"rotation": [t / 4.0 * 720, 0, 18], "scale": [1.2] * 3},
+            "wheel": {"rotation": [8 * math.sin(ph), t / 4.0 * 360, 0], "scale": [1.12] * 3},
+            "crystal": {"scale": [1.08 + 0.05 * math.sin(ph * 4)] * 3},
+        })
+        return pose
+    anims.update(bake_animation("animation.anatomy.mm_lithic_heart.unbound", unbound, 4.0, True, fps=12))
     return anims
 
 
@@ -405,6 +438,8 @@ PETAL_SEG_LEN = 90.0
 PETAL_CLOSED = {"root": 0.0, "segs": [6, 10, 11, 12, 12, 12, 12, 12]}
 PETAL_OPEN = {"root": -36.0, "segs": [-2, -1, 1, 3, 4, 5, 6, 8]}
 PETAL_FOLDED = {"root": 64.0, "segs": [8, 10, 12, 12, 12, 12, 12, 14]}
+# Phase 3A: the shell rises back into a crown of walls around the disk (tips curling in), sky open above
+PETAL_RAISED = {"root": -18.0, "segs": [2, 3, 5, 6, 7, 8, 9, 10]}
 
 
 def build_petal() -> Model:
@@ -465,6 +500,12 @@ def petal_animations() -> dict:
     anims.update(bake_animation("animation.anatomy.mm_petal.open", open_idle, 6.0, True, fps=6))
     anims.update(bake_animation("animation.anatomy.mm_petal.folded", lambda t: petal_pose(PETAL_FOLDED), 1.0, True, fps=2))
 
+    def raised(t: float) -> dict:
+        # swaying with the march (3 s)
+        ph = t / 3.0 * 2 * math.pi
+        return petal_pose({"root": PETAL_RAISED["root"] + 2.5 * math.sin(ph), "segs": [s + 0.8 * math.sin(ph + i * 0.4) for i, s in enumerate(PETAL_RAISED["segs"])]})
+    anims.update(bake_animation("animation.anatomy.mm_petal.raised", raised, 3.0, True, fps=8))
+
     def unfold(t: float) -> dict:
         # peel: the tip unrolls first, then the whole petal swings out and overshoots
         k = ease_out_back(seg(t, 0.3, 3.2), 1.2)
@@ -478,6 +519,106 @@ def petal_animations() -> dict:
         pose["root"]["position"] = [0, -160 * ease_in(seg(t, 1.5, 4.0)), 0]
         return pose
     anims.update(bake_animation("animation.anatomy.mm_petal.collapse", collapse, 4.0, "hold_on_last_frame", fps=12))
+    return anims
+
+
+# ============================================================================ ANCHOR ROOT (Phase 3A)
+SINEW = m_muscle("#9b3a3a", "#5a1a1e", "#d86a5a", axis="v", glow_veins=1.0, vein="#ffb070")
+SINEW_CORE = m_glow("#ff6a2a", "#ffe0a0", 25)
+
+
+def build_anchor_root() -> Model:
+    """An Anchorage Root bursting up out of the mantle beside the ring to grip the walking body.
+
+    The entity stands on the ring walkway (anchor in open air, on the walkway's top face); front (-Z)
+    faces the heart. The trunk climbs out of the mantle just outside the ring (+Z), curls over it and
+    ends in the sinew knot - the weak point and the collision box (2.6 x 3.6 blocks). Three fingers
+    clamp the ring, the middle one hooking over its inner edge. Every bone rests unrotated except the
+    fingers' yaw, so the animations are plain offsets.
+    """
+    m = Model("geometry.anatomy.mm_anchor_root", seed=71, visible_bounds=(16, 30, (0, -8, 2)))
+    m.bone("root", (0, 0, 0))
+    # trunk: deep base (hidden in the mantle; it is what falls away when the root snaps)
+    t0 = m.bone("trunk0", (0, -136, 64), "root")
+    t0.cube((-44, -264, 20), (88, 136, 88), MUSCLE_VEINS, 0.375)
+    t0.cube((-50, -250, 74), (100, 110, 30), ROCK_DARK, 0.375)
+    t0.cube((-3, -258, 16), (6, 120, 4), VEIN, 0.375)
+    # middle: out of the mantle floor (9 blocks under the walkway) up to the ring
+    t1 = m.bone("trunk1", (0, -16, 52), "trunk0")
+    t1.cube((-38, -136, 18), (76, 124, 76), MUSCLE_VEINS, 0.375)
+    t1.cube((-44, -120, 70), (88, 96, 26), ROCK_MOSS, 0.375, faces={"up": ROCK_MOSSY})
+    t1.cube((30, -128, 26), (14, 100, 40), ROCK, 0.375, rotation=(0, 0, 6), pivot=(36, -78, 46))
+    t1.cube((-3, -132, 14), (6, 116, 4), VEIN, 0.375)
+    t1.cube((-46, -60, 30), (12, 46, 36), MUSCLE, 0.375, rotation=(0, 0, -14), pivot=(-40, -37, 48))
+    # upper: rises above the ring and leans in over it
+    t2 = m.bone("trunk2", (0, 40, 34), "trunk1")
+    t2.cube((-34, -14, 10), (68, 74, 66), MUSCLE_VEINS, 0.375, rotation=(-10, 0, 0), pivot=(0, -14, 43))
+    t2.cube((-38, 6, 54), (76, 52, 22), ROCK_MOSS, 0.375, rotation=(-10, 0, 0), pivot=(0, -14, 43), faces={"up": ROCK_MOSSY})
+    t2.cube((-3, -10, 6), (6, 62, 4), VEIN, 0.375, rotation=(-10, 0, 0), pivot=(0, -14, 43))
+    # rootlets wrapping the outer edge of the ring on both sides, clawing into it
+    for side in (-1, 1):
+        x0 = 30 if side > 0 else -70
+        t2.cube((x0, -8, 6), (40, 16, 16), MUSCLE, 0.5, rotation=(0, -22 * side, -10 * side), pivot=(30 * side, 0, 14))
+        t2.cube((x0 + (28 if side > 0 else 0), -20, 0), (12, 14, 14), ROCK_DARK, 0.5, rotation=(0, -22 * side, -10 * side), pivot=(30 * side, 0, 14))
+        t2.cube((x0 + 10, 7, 11), (20, 2, 3), VEIN, 0.5, rotation=(0, -22 * side, -10 * side), pivot=(30 * side, 0, 14))
+    # a collar of torn rock where it bursts out beside the ring
+    t1.cube((-48, -22, 12), (96, 14, 18), ROCK_MOSS, 0.375, faces={"up": ROCK_MOSSY})
+    # neck: curls over the top of the knot
+    neck = m.bone("neck", (0, 64, 12), "trunk2")
+    neck.cube((-30, 44, -20), (60, 38, 70), MUSCLE_VEINS, 0.375)
+    neck.cube((-34, 74, -12), (68, 12, 60), ROCK_MOSS, 0.375, faces={"up": ROCK_MOSSY})
+    neck.cube((-2.5, 40, -22), (5, 6, 56), VEIN, 0.375)
+    # the sinew knot: the weak point (collision box sits here)
+    knot = m.bone("knot", (0, 26, 0), "root")
+    knot.locators["knot"] = (0.0, 26.0, 0.0)
+    knot.cube((-22, 4, -22), (44, 46, 44), SINEW, 0.5)
+    knot.cube((-15, 12, -26), (30, 30, 5), SINEW_CORE, 0.5)
+    knot.cube((-26, 16, -9), (5, 22, 18), SINEW_CORE, 0.5)
+    knot.cube((21, 14, -8), (5, 24, 18), SINEW_CORE, 0.5)
+    for (x, z, ln, r) in [(-12, -12, 18, (-18, 0, 20)), (11, -8, 22, (-22, 0, -16)), (0, -20, 16, (20, 0, 0))]:
+        knot.cube((x - 2.5, 44, z - 2.5), (5, ln, 5), VEIN, 0.5, rotation=r, pivot=(x, 44, z))
+    # fingers clamping the ring: two along it, one toward the heart hooking over its inner edge
+    for i, (yaw, length, hook) in enumerate([(-58, 60, False), (0, 40, True), (58, 60, False)]):
+        f = m.bone(f"finger{i}", (0, 8, -14), "root", (0, yaw, 0))
+        f.cube((-9, 0, -14 - length), (18, 16, length), MUSCLE, 0.5)
+        f.cube((-6.5, 15, -10 - length), (13, 3, length - 6), VEIN, 0.5)
+        f.cube((-8, -2, -24 - length), (16, 14, 12), ROCK_DARK, 0.5)
+        if hook:
+            f.cube((-7, -30, -26 - length), (14, 30, 12), ROCK_DARK, 0.5)
+    m.build()
+    return m
+
+
+def anchor_animations() -> dict:
+    anims = {}
+
+    def idle(t: float) -> dict:
+        # the knot throbs; the fingers flex and the trunk sways with the march (3 s)
+        beat = max(0.0, math.sin(t / 1.5 * 2 * math.pi)) ** 3
+        flex = math.sin(t / 3.0 * 2 * math.pi)
+        pose = {"knot": {"scale": [1 + 0.07 * beat] * 3}, "trunk2": {"rotation": [2.5 * flex, 0, 0]}, "neck": {"rotation": [-1.5 * flex, 0, 0]}}
+        for i in range(3):
+            pose[f"finger{i}"] = {"rotation": [5 * flex, 0, 0]}
+        return pose
+    anims.update(bake_animation("animation.anatomy.mm_anchor_root.idle", idle, 3.0, True, fps=12))
+
+    def charge(t: float) -> dict:
+        k = math.sin(seg(t, 0, 1.0) * math.pi)
+        return {"knot": {"scale": [1 + 0.22 * k] * 3}}
+    anims.update(bake_animation("animation.anatomy.mm_anchor_root.charge", charge, 1.0, True, fps=20))
+
+    def snap(t: float) -> dict:
+        # the sinew bursts, the fingers let go and the root tears away down into the clouds
+        a = ease_in_out(seg(t, 0.0, 0.5))
+        b = ease_in(seg(t, 0.4, 2.6))
+        pose = {
+            "knot": {"scale": [max(0.001, (1 + 0.5 * a) * (1 - ease_in(seg(t, 0.35, 0.7))))] * 3},
+            "trunk0": {"rotation": [-40 * b, 0, 8 * b], "position": [0, -300 * b, 40 * b]},
+        }
+        for i in range(3):
+            pose[f"finger{i}"] = {"rotation": [-60 * a, 0, 0], "position": [0, -300 * b, 40 * b]}
+        return pose
+    anims.update(bake_animation("animation.anatomy.mm_anchor_root.snap", snap, 2.8, "hold_on_last_frame", fps=20))
     return anims
 
 
@@ -541,6 +682,7 @@ def build_all():
         ("mm_petal", build_petal()),
         ("mm_strata_plate", build_plate("geometry.anatomy.mm_strata_plate", 5, 3, 11, False)),
         ("mm_rib_plate", build_plate("geometry.anatomy.mm_rib_plate", 3, 3, 9, True)),
+        ("mm_anchor_root", build_anchor_root()),
     ]
     anims = {
         "mm_root_leg": leg_animations(),
@@ -549,5 +691,6 @@ def build_all():
         "mm_strata_slab": slab_animations(),
         "mm_petal": petal_animations(),
         "mm_strata_plate": plate_animations(),
+        "mm_anchor_root": anchor_animations(),
     }
     return models, anims

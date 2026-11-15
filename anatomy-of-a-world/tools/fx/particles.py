@@ -357,6 +357,28 @@ def effects() -> dict:
         "minecraft:particle_appearance_billboard": {"size": ["math.max(v.radius, 0.5)", 3.0], "facing_camera_mode": "lookat_y", "uv": uv("pillar")},
         "minecraft:particle_appearance_tinting": fade([0.4, 1.0, 0.7, 0.0], [0.4, 1.0, 0.8, 0.0], [0.45, 1.0, 0.75, 0.75]),
     })
+    # Phase 3B: a sweeping beam of molten mineral (emitted along the beam line; v.dir = beam direction)
+    E["mm_mineral_beam"] = effect("anatomy:mm_mineral_beam", "particles_add", {
+        "minecraft:emitter_rate_instant": {"num_particles": 5},
+        "minecraft:emitter_lifetime_once": {"active_time": 0.05},
+        "minecraft:emitter_shape_sphere": {"radius": 0.35, "direction": ["v.dir.direction_x", "v.dir.direction_y", "v.dir.direction_z"]},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "math.random(0.35, 0.6)"},
+        "minecraft:particle_initial_speed": "v.dir.speed * math.random(0.6, 1.2)",
+        "minecraft:particle_motion_dynamic": {"linear_drag_coefficient": 2.5},
+        "minecraft:particle_appearance_billboard": {"size": ["0.55 - v.particle_age * 0.5", "0.55 - v.particle_age * 0.5"], "facing_camera_mode": "lookat_xyz", "uv": uv("ember")},
+        "minecraft:particle_appearance_tinting": fade([1.0, 0.9, 0.55, 1.0], [0.85, 0.15, 0.05, 0.0], [1.0, 0.45, 0.1, 1.0]),
+    })
+    # Phase 3A: the cloud sea streaming past the walking mountain (v.dir = wind direction and speed)
+    E["mm_cloud_stream"] = effect("anatomy:mm_cloud_stream", "particles_blend", {
+        "minecraft:emitter_rate_instant": {"num_particles": 6},
+        "minecraft:emitter_lifetime_once": {"active_time": 0.05},
+        "minecraft:emitter_shape_box": {"half_dimensions": [9, 2.5, 9], "direction": ["v.dir.direction_x", "v.dir.direction_y", "v.dir.direction_z"]},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "math.random(1.4, 2.4)"},
+        "minecraft:particle_initial_speed": "v.dir.speed * math.random(0.8, 1.2)",
+        "minecraft:particle_motion_dynamic": {},
+        "minecraft:particle_appearance_billboard": {"size": ["2.2 + v.particle_random_1 * 2", "1.2 + v.particle_random_2"], "facing_camera_mode": "lookat_xyz", "uv": uv("mist")},
+        "minecraft:particle_appearance_tinting": fade([1.0, 1.0, 1.0, 0.0], [1.0, 1.0, 1.0, 0.0], [0.96, 0.97, 1.0, 0.55]),
+    })
     # a tall soft light pillar over each remaining Resonance Node (downwards for the hanging one)
     E["mm_node_beacon"] = effect("anatomy:mm_node_beacon", "particles_add", {
         "minecraft:emitter_rate_instant": {"num_particles": 1},

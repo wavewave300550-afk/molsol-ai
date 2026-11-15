@@ -6,6 +6,14 @@ export const ENT = {
   slab: "anatomy:mm_strata_slab",
   petal: "anatomy:mm_petal",
   plate: "anatomy:mm_strata_plate",
+  anchor: "anatomy:mm_anchor_root",
+} as const;
+
+/** Boss reward items. */
+export const ITEM = {
+  shard: "anatomy:lithic_heart_shard",
+  breaker: "anatomy:strata_breaker",
+  greaves: "anatomy:anchorage_greaves",
 } as const;
 
 export const PROP = {
@@ -47,6 +55,8 @@ export const PX = {
   guide: "anatomy:mm_guide",
   pillar: "anatomy:mm_pillar",
   nodeBeacon: "anatomy:mm_node_beacon",
+  mineralBeam: "anatomy:mm_mineral_beam",
+  cloudStream: "anatomy:mm_cloud_stream",
 } as const;
 
 export const SND = {
@@ -69,12 +79,19 @@ export const SND = {
   warn: "anatomy.mm.warn",
   deflect: "anatomy.mm.deflect",
   vent: "anatomy.mm.vent",
+  rootTear: "anatomy.mm.root_tear",
+  sinewSnap: "anatomy.mm.sinew_snap",
+  beamCharge: "anatomy.mm.beam_charge",
+  beamFire: "anatomy.mm.beam_fire",
+  heartRise: "anatomy.mm.heart_rise",
+  islandBreak: "anatomy.mm.island_break",
 } as const;
 
 export const MUSIC = {
   phase1: "anatomy.music.mm_phase1",
   phase2: "anatomy.music.mm_phase2",
   victory: "anatomy.music.mm_victory",
+  phase3: "anatomy.music.mm_phase3",
 } as const;
 
 export const FOG = "anatomy:migration_mist";

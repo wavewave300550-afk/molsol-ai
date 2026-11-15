@@ -44,10 +44,11 @@ for (const f of walk(path.join(RP, "entity"))) {
 }
 const fogs = new Set(walk(path.join(RP, "fogs")).map((f) => J(f)["minecraft:fog_settings"].description.identifier));
 const items = new Set(walk(path.join(BP, "items")).map((f) => J(f)["minecraft:item"].description.identifier));
+const itemDefs = Object.fromEntries(walk(path.join(BP, "items")).map((f) => [J(f)["minecraft:item"].description.identifier, J(f)["minecraft:item"].components]));
 const dimensions = new Set(walk(path.join(BP, "dimensions")).map((f) => J(f)["minecraft:dimension"].description.identifier));
 globalThis.__SIM_DATA = {
-  blocks, effects, vanillaItems, cameraPresets, entities, particles, sounds, music, animations, animUsers, fogs, items, dimensions,
-  vanillaParticles: new Set(ref.particles), vanillaEntities: new Set(["minecraft:item", "minecraft:xp_orb", "minecraft:player"]),
+  blocks, effects, vanillaItems, cameraPresets, entities, particles, sounds, music, animations, animUsers, fogs, items, itemDefs, dimensions,
+  vanillaParticles: new Set(ref.particles), vanillaEntities: new Set(["minecraft:item", "minecraft:xp_orb", "minecraft:player", "minecraft:zombie"]),
 };
 
 // ------------------------------------------------------------------ load scripts against the mocks
@@ -157,6 +158,16 @@ check(ents("anatomy:mm_resonance_node").filter((e) => e.getProperty("anatomy:han
 check(new Set(ents("anatomy:mm_root_leg").map((e) => e.getProperty("anatomy:leg_index"))).size === 14, "legs have distinct gait indices");
 // an entity is lit by the light level at its anchor: an anchor inside rock renders the whole model black
 const buried = (types) => mock.allEntities().filter((e) => e.dimension === arena() && types.includes(e.typeId) && arena().isSolidAt(e.location.x, e.location.y, e.location.z));
+// SIM_SNAPSHOT=1: dump the arena and the boss parts for the previews (tools/preview/shots_p3.mjs)
+async function snapshot(name) {
+  if (!process.env.SIM_SNAPSHOT) return;
+  await until(() => enc().writer.pending === 0, 400, `${name} edits flushed`);
+  const { writeSnapshot } = await import("./snapshot.mjs");
+  const R = 72;
+  const parts = mock.allEntities().filter((e) => e.dimension === arena() && e.typeId.startsWith("anatomy:mm_"));
+  const meta = writeSnapshot(arena(), { x0: MM.heart.x - R, x1: MM.heart.x + R, z0: MM.heart.z - R, z1: MM.heart.z + R, y0: 96, y1: 200 }, path.join(ROOT, "tools", "preview", "out", name), parts);
+  log(`snapshot ${name}: ${meta.visible} visible blocks, ${parts.length} parts`);
+}
 check(buried(["anatomy:mm_root_leg", "anatomy:mm_resonance_node", "anatomy:mm_lithic_heart"]).length === 0, `every Phase 1 part is anchored in open air (buried: ${buried(["anatomy:mm_root_leg", "anatomy:mm_resonance_node", "anatomy:mm_lithic_heart"]).map((e) => e.typeId.slice(11) + "@" + Math.floor(e.location.y)).join(" ")})`);
 check(ents("anatomy:mm_lithic_heart")[0]?.nameTag === "The Migrating Mountain", "the heart carries its boss bar name");
 check(alex.fogStack.some((f) => f.id === "anatomy:migration_mist"), "migration mist fog pushed");
@@ -180,7 +191,7 @@ async function runAbility(id, label, max = 2400) {
   const ok = enc().forceAbility(id);
   check(ok, `${label}: ${id} can be forced`);
   await mock.advance(1);
-  await until(() => abilityTasks() === 0 || !["phase1", "phase2"].includes(enc()?.state), max, `${label} ${id} to finish`);
+  await until(() => abilityTasks() === 0 || !["phase1", "phase2", "phase3a", "phase3b"].includes(enc()?.state), max, `${label} ${id} to finish`);
   void before;
 }
 // keep the director from interfering while abilities are exercised one at a time
@@ -335,10 +346,119 @@ while (enc()?.state === "phase2" && cycles < 40) {
 }
 log(`phase 2 ended after ${cycles} cycles; state ${enc()?.state}`);
 check(rebloomSeen, "the world refolds (re-bloom to the rotated rib layout) at low health");
+check(Math.abs(heart.health.currentValue - 350) < 1.5, `phase 2 ends at its 35% floor (${heart.health.currentValue.toFixed(1)})`);
+
+// ------------------------------------------------------------------ D2. phase 3A - The Last Migration
+log("D2. phase 3A");
+await until(() => enc()?.state === "phase3a", 1500, "phase 3A (the refold)");
+await mock.advance(25);
+const ANCHOR = "anatomy:mm_anchor_root";
+check(ents(ANCHOR).length === 4, "four Anchorage Roots grip the disk");
+{
+  const b3 = buried([ANCHOR, "anatomy:mm_petal", "anatomy:mm_root_leg", "anatomy:mm_lithic_heart"]);
+  check(b3.length === 0, `every Phase 3A part is anchored in open air (buried: ${b3.map((e) => `${e.typeId.slice(11)}@${e.location.x.toFixed(1)},${e.location.y.toFixed(1)},${e.location.z.toFixed(1)}:${arena().getBlock(e.location)?.typeId}`).join(" ")})`);
+}
+check(ents(ANCHOR).every((e) => enc().isWalkway(Math.floor(e.location.x), Math.floor(e.location.z))), "the roots grip a walkway of the disk");
+check(ents("anatomy:mm_petal").every((e) => e.getProperty("anatomy:petal_state") === 4), "the shell rises into a crown of walls");
+check(ents("anatomy:mm_root_leg").every((e) => e.getProperty("anatomy:pose") === 3), "the legs march");
+check(alex.music === "anatomy.music.mm_phase3", "phase 3 music");
+check(alex.locatorBar.list.size === 4, `a locator marker on each root (${alex.locatorBar.list.size})`);
+check(/Anchorage Roots severed §f0\/4/.test(alex.actionbar ?? ""), `HUD counts the roots (${alex.actionbar})`);
+check(alex.inputs[2] !== false && alex.cameraState === "default", "controls restored after the refold");
+await snapshot("p3a");
+quiet();
+for (const id of ["continental_fold", "lithic_peristalsis", "inverted_strata", "geological_shedding", "resonance_network", "mantle_contraction"]) {
+  alex.teleport(ringPos(0.3, 24), { dimension: arena() });
+  sam.teleport(ringPos(2.2, 28), { dimension: arena() });
+  await runAbility(id, "P3A");
+  log(`P3A ${id} done; Alex ${alex.health.currentValue.toFixed(1)} Sam ${sam.health.currentValue.toFixed(1)}`);
+}
+const hpRoots = heart.health.currentValue;
+mock.playerAttack(alex, heart, 30);
+check(heart.health.currentValue === hpRoots, "the heart is sealed while the roots hold");
+let opened = 0;
+for (let k = 0; k < 4; k++) {
+  const a = ents(ANCHOR).find((e) => !e.getProperty("anatomy:dying"));
+  if (!a) break;
+  alex.teleport({ x: a.location.x, y: D.y + 1.02, z: a.location.z }, { dimension: arena() });
+  sam.teleport({ x: a.location.x, y: D.y + 1.02, z: a.location.z }, { dimension: arena() });
+  let hits = 0;
+  while (a.isValid && !a.getProperty("anatomy:dying") && hits < 200) {
+    mock.playerAttack(alex, a, 12);
+    alex.health.currentValue = 20;
+    sam.health.currentValue = 20;
+    hits++;
+    await mock.advance(6);
+  }
+  await until(() => heart.getProperty("anatomy:open") === true, 40, "the heart to open after a severed root");
+  if (heart.getProperty("anatomy:open")) opened++;
+  let strikes = 0;
+  while (heart.getProperty("anatomy:open") && enc()?.state === "phase3a" && strikes < 40) {
+    mock.playerAttack(alex, heart, 30);
+    mock.playerAttack(sam, heart, 30);
+    alex.health.currentValue = 20;
+    sam.health.currentValue = 20;
+    strikes++;
+    await mock.advance(8);
+  }
+  log(`root ${k + 1}: ${hits} hits; heart ${heart.health.currentValue.toFixed(0)} after ${strikes} strikes`);
+}
+check(opened === 4, `every severed root opens the heart (${opened}/4)`);
+check(heart.health.currentValue >= 199.5, `the heart holds at its 20% floor until the mountain falls (${heart.health.currentValue.toFixed(1)})`);
+
+// ------------------------------------------------------------------ D3. phase 3B - The Heart Unbound
+log("D3. phase 3B");
+await until(() => enc()?.state === "phase3b", 2000, "phase 3B (the fall)");
+await mock.advance(20);
+const isl = runtime.islandLayout();
+check(isl.length === 9 && isl.every((q) => arena().isSolidAt(q.cx, q.top, q.cz)), "the disk has broken into nine floating islands");
+let gapAir = true;
+for (let y = MM.baseY - 1; y <= D.y + 2; y++) if (arena().isSolidAt(MM.heart.x + 11.6, y, MM.heart.z + 0.3)) gapAir = false;
+check(gapAir, "between the islands the mountain is gone down to the clouds");
+check(Math.abs(heart.location.y - (D.y + 11)) < 1.5 && heart.getProperty("anatomy:phase") === 3, `the heart tears free and hovers (y ${heart.location.y.toFixed(1)})`);
+check(ents("anatomy:mm_petal").length === 0 && ents(ANCHOR).length === 0, "petals and roots are gone");
+check(ents("anatomy:mm_root_leg").every((e) => e.getProperty("anatomy:pose") === 2), "the legs collapse");
+check(enc().zoneOf(alex) === "disk" && alex.suffocatingTicks === 0, "players land on the islands");
+check(alex.inputs[2] !== false && alex.cameraState === "default", "controls restored after the fall");
+await snapshot("p3b");
+quiet();
+const onIsland = (k) => ({ x: isl[k].cx, y: isl[k].top + 1.02, z: isl[k].cz });
+for (const id of ["continental_fold", "lithic_peristalsis", "inverted_strata", "geological_shedding", "resonance_network", "mantle_contraction"]) {
+  alex.teleport(onIsland(1), { dimension: arena() });
+  sam.teleport(onIsland(5), { dimension: arena() });
+  await runAbility(id, "P3B");
+  log(`P3B ${id} done; Alex ${alex.health.currentValue.toFixed(1)} Sam ${sam.health.currentValue.toFixed(1)}`);
+}
+await until(() => enc().writer.pending === 0, 400, "islands restored");
+let hoverHit = false;
+let downHit = false;
+let guard = 0;
+while (enc()?.state === "phase3b" && guard < 600) {
+  guard++;
+  const before = heart.health.currentValue;
+  if (enc().heartSlamming()) {
+    alex.teleport({ x: isl[0].cx + 3, y: isl[0].top + 1.02, z: isl[0].cz }, { dimension: arena() });
+    mock.playerAttack(alex, heart, 20);
+    if (heart.health.currentValue < before) downHit = true;
+  } else {
+    alex.teleport(onIsland(2), { dimension: arena() });
+    mock.playerAttack(sam, heart, 20);
+    if (heart.health.currentValue < before) hoverHit = true;
+  }
+  alex.health.currentValue = 20;
+  sam.health.currentValue = 20;
+  await mock.advance(10);
+}
+check(hoverHit && downHit, `the unbound heart can be hit while it hovers and when it slams down (hover ${hoverHit}, down ${downHit})`);
 check(["victory", "aftermath", "ending", "finished"].includes(enc()?.state ?? "finished"), "the heart can be defeated");
 await until(() => enc()?.state === "aftermath" || !enc(), 600, "aftermath");
+const inv = (p, id) => p.inventory.container.slots.filter((st) => st?.typeId === id).reduce((n, st) => n + st.amount, 0);
+check(inv(alex, "anatomy:strata_breaker") === 1 && inv(alex, "anatomy:anchorage_greaves") === 1 && inv(sam, "anatomy:strata_breaker") === 1, "first victory: every player gets the Strata Breaker and the Anchorage Greaves");
+check(inv(alex, "minecraft:diamond") >= 8 && inv(alex, "minecraft:emerald") >= 16 && inv(alex, "minecraft:netherite_scrap") >= 2 && inv(alex, "anatomy:lithic_heart_shard") >= 3, "every player gets a bundle of spoils");
+const books = alex.inventory.container.slots.filter((st) => st?.typeId === "minecraft:enchanted_book");
+check(books.length === 2 && books.every((b) => b.enchantments.length === 1), "two enchanted books");
 const loot = mock.allEntities().filter((e) => e.typeId === "minecraft:item");
-check(loot.some((e) => e.item?.typeId === "anatomy:lithic_heart_shard"), "loot includes Lithic Heart Shards");
+check(loot.some((e) => e.item?.typeId === "minecraft:netherite_ingot") && loot.some((e) => e.item?.typeId === "minecraft:amethyst_shard"), "the shared pile lies at the heart");
 check(ents("anatomy:mm_root_leg").every((e) => e.getProperty("anatomy:pose") === 2), "legs collapse on victory");
 await until(() => !enc(), 1400, "encounter cleanup");
 check(alex.dimension.id === "minecraft:overworld" && Math.hypot(alex.location.x - 0.5, alex.location.z - 0.5) < 2, "players are returned home");
@@ -352,7 +472,7 @@ for (const k of arena().blocks.keys()) {
 check(left === 0, `arena cleared (${left} blocks left)`);
 check(mock.tickingAreaIds().length === 0, "ticking area released");
 check(mock.world.getDynamicProperty("anatomy:active") === undefined, "saved encounter cleared");
-check(mock.allEntities().filter((e) => e.typeId === "minecraft:item" && e.dimension.id === "minecraft:overworld").some((e) => e.item?.typeId === "anatomy:lithic_heart_shard"), "uncollected loot is carried home with the players");
+check(mock.allEntities().filter((e) => e.typeId === "minecraft:item" && e.dimension.id === "minecraft:overworld").some((e) => e.item?.typeId === "minecraft:netherite_ingot"), "uncollected loot is carried home with the players");
 const st = JSON.parse(mock.world.getDynamicProperty("anatomy:stats") ?? "{}");
 check(st.migrating_mountain?.victories === 1, "victory recorded in the Atlas");
 
@@ -384,6 +504,33 @@ manager.restore();
 await until(() => enc()?.state === "phase2", 4000, "resumed phase 2");
 check(ents("anatomy:mm_petal").length === 12, "resume in phase 2 rebuilds the crown (no duplicate petals)");
 check(ents("anatomy:mm_lithic_heart").length === 1, "single heart after resume");
+enc().forcePhase(0);
+await until(() => enc()?.state === "phase3a", 2000, "phase 3A (second run)");
+quiet();
+const r1 = ents("anatomy:mm_anchor_root")[0];
+while (r1.isValid && !r1.getProperty("anatomy:dying")) {
+  mock.playerAttack(alex, r1, 40);
+  await mock.advance(2);
+}
+await mock.advance(70);
+manager.save();
+manager.active = undefined;
+manager.restore();
+await until(() => enc()?.state === "phase3a", 4000, "resumed phase 3A");
+await mock.advance(10);
+check(ents("anatomy:mm_anchor_root").length === 3, "resume in phase 3A keeps severed roots severed");
+check(ents("anatomy:mm_petal").length === 12 && ents("anatomy:mm_petal").every((e) => e.getProperty("anatomy:petal_state") === 4), "resume in phase 3A rebuilds the raised crown");
+check(ents("anatomy:mm_root_leg").every((e) => e.getProperty("anatomy:pose") === 3), "resume in phase 3A: the legs march");
+enc().forcePhase(0);
+await until(() => enc()?.state === "phase3b", 3000, "phase 3B (second run)");
+manager.save();
+manager.active = undefined;
+manager.restore();
+await until(() => enc()?.state === "phase3b", 4000, "resumed phase 3B");
+await mock.advance(10);
+check(runtime.islandLayout().every((q) => arena().isSolidAt(q.cx, q.top, q.cz)), "resume in phase 3B rebuilds the islands");
+check(ents("anatomy:mm_lithic_heart").length === 1 && Math.abs(ents("anatomy:mm_lithic_heart")[0].location.y - (D.y + 11)) < 1.5, "resume in phase 3B: a single heart, hovering");
+check(ents("anatomy:mm_petal").length === 0 && ents("anatomy:mm_anchor_root").length === 0, "resume in phase 3B: no petals or roots");
 
 // ------------------------------------------------------------------ F. respawn pull-back, then defeat
 log("F. respawn and defeat");
@@ -421,6 +568,71 @@ reg.items["anatomy:heart_shard"].onUse({ source: alex, itemStack: alex.inventory
 await mock.advance(2);
 check(alex.inventory.container.slots[0]?.amount === 1, "using a Lithic Heart Shard consumes one");
 
+// ------------------------------------------------------------------ G3. the boss gear
+log("G3. gear");
+{
+  for (const p of [alex, sam]) {
+    p.gameMode = "Survival";
+    p.health.currentValue = 20;
+    p.isSneaking = false;
+  }
+  check(!!reg.items["anatomy:fold_slam"]?.onUse, "the Strata Breaker's Fold Slam is registered");
+  const owd = mock.dimensionFor("minecraft:overworld");
+  const stone = mock.BlockPermutation.resolve("minecraft:stone");
+  for (let x = -2; x <= 14; x++) for (let z = -3; z <= 3; z++) owd.setBlockPermutation({ x, y: 64, z }, stone);
+  alex.teleport({ x: 0.5, y: 65, z: 0.5 }, { dimension: owd });
+  alex.setRotation({ x: 0, y: -90 }); // facing +X
+  sam.teleport({ x: 3.5, y: 65, z: 0.5 }, { dimension: owd });
+  const zombie = owd.spawnEntity("minecraft:zombie", { x: 4.5, y: 65, z: 0.5 });
+  const hammer = new mock.ItemStack("anatomy:strata_breaker", 1);
+  alex.inventory.container.slots[0] = hammer;
+  alex.selectedSlotIndex = 0;
+  check(!!reg.items["anatomy:fold_slam"]?.onUseOn, "Fold Slam also works when used on the ground");
+  const slam = async () => {
+    zombie.teleport({ x: 4.5, y: 65, z: 0.5 });
+    // a right-click on the ground can raise both events: still one slam
+    reg.items["anatomy:fold_slam"].onUse({ source: alex, itemStack: alex.inventory.container.slots[0] }, { params: {} });
+    reg.items["anatomy:fold_slam"].onUseOn({ source: alex, itemStack: alex.inventory.container.slots[0], block: owd.getBlock({ x: 1, y: 64, z: 0 }) }, { params: {} });
+    await mock.advance(20);
+  };
+  const wear = () => hammer.getComponent("minecraft:durability").damage;
+  await slam();
+  check(zombie.health.currentValue === 12, `Fold Slam: a mob on the ridge takes 8 (${zombie.health.currentValue})`);
+  check(sam.health.currentValue === 20, "Fold Slam never hurts other players");
+  check(wear() === 2, `Fold Slam costs 2 durability (${wear()})`);
+  check(owd.getBlockId(4, 64, 0) === "minecraft:stone" && owd.getBlockId(4, 65, 0) === "minecraft:air", "Fold Slam never breaks or places blocks");
+  await slam();
+  check(zombie.health.currentValue === 12 && wear() === 2, "Fold Slam has a cooldown");
+  await mock.advance(130);
+  await slam();
+  check(zombie.health.currentValue === 4 && wear() === 4, `Fold Slam is ready again after 8 seconds (${zombie.health.currentValue})`);
+  alex.gameMode = "Creative";
+  await mock.advance(170);
+  await slam();
+  check(wear() === 4, "Fold Slam costs no durability in creative");
+  alex.gameMode = "Survival";
+  if (zombie.isValid) zombie.remove();
+  // Anchorage Greaves
+  alex.equippable.setEquipment("Feet", new mock.ItemStack("anatomy:anchorage_greaves", 1));
+  const hp0 = alex.health.currentValue;
+  alex.applyDamage(6, { cause: "fall" });
+  check(alex.health.currentValue === hp0, "Anchorage Greaves: no fall damage");
+  alex.applyDamage(2, { cause: "entityAttack" });
+  check(alex.health.currentValue === hp0 - 2, "Anchorage Greaves do not stop other damage");
+  sam.applyDamage(3, { cause: "fall" });
+  check(sam.health.currentValue === 17, "without the greaves a fall still hurts");
+  alex.removeEffect("resistance"); // left over from the arena's cutscenes
+  await mock.advance(12);
+  check(!alex.getEffect("resistance"), "no Resistance while standing");
+  alex.isSneaking = true;
+  await mock.advance(12);
+  check(alex.getEffect("resistance")?.amplifier === 0, "Anchorage Greaves root the sneaking wearer (Resistance I)");
+  alex.isSneaking = false;
+  await mock.advance(30);
+  check(!alex.getEffect("resistance"), "the rooting fades when the wearer stands up");
+  alex.equippable.setEquipment("Feet", undefined);
+}
+
 // ------------------------------------------------------------------ H. the Anatomical Atlas flow
 log("H. atlas");
 const ui = await import(uiUrl);
@@ -442,6 +654,19 @@ await mock.advance(4);
 check(sam.dimension.id === MM.dimensionId, "the Atlas lets a player rejoin the fight");
 manager.stop("abort");
 await until(() => !enc(), 1600, "abort after the Atlas test");
+// the specimen page, in both languages
+const pageText = async () => {
+  ui.answers.push(0); // specimen 001
+  useItem(sam, "anatomy:anatomical_atlas");
+  await mock.advance(4);
+  return globalThis.__SIM_LAST_FORM?.bodyText ?? "";
+};
+sam.setDynamicProperty("anatomy:lang", "th");
+const thPage = await pageText();
+check(/เฟส 1/.test(thPage) && /เฟส 2/.test(thPage) && /เฟส 3A/.test(thPage) && /เฟส 3B/.test(thPage) && /ของรางวัล/.test(thPage) && /ค้อนชั้นหิน/.test(thPage), "the Atlas page reads in Thai: four phases and the rewards");
+sam.setDynamicProperty("anatomy:lang", undefined);
+const enPage = await pageText();
+check(/Phase 3A · The Last Migration/.test(enPage) && /Phase 3B · The Heart Unbound/.test(enPage) && /Rewards/.test(enPage) && /Anchorage Greaves/.test(enPage), "the Atlas page in English: four phases and the rewards");
 
 // ------------------------------------------------------------------ I. a small chunk budget
 // Parts wait for their chunks, survive unload/reload with new handles, stale parts are removed,
@@ -568,6 +793,28 @@ check(enc().parts.summary("petal:").spawned === 12, `all 12 petals spawn once th
 check(enc().petals.every((e) => e.getProperty("anatomy:petal_state") === 1), "late petals spawn already unfolded");
 alex.gameMode = "Survival";
 check(alex.locatorBar.list.size === 0, "node markers cleared in phase 2");
+// on into Phase 3 with the same budget: the roots wait for their chunks, the islands for the writer
+check(enc().forcePhase(0), "skip to Phase 3A (small budget)");
+await until(() => enc()?.state === "phase3a", 3000, "phase 3A with a small chunk budget");
+quiet();
+alex.gameMode = "Creative";
+for (const a of enc().anchors()) {
+  alex.teleport({ x: a.pos.x, y: a.pos.y + 3, z: a.pos.z }, { dimension: arena() });
+  await mock.advance(8);
+}
+check(enc().parts.summary("anchor:").spawned === 4, `all 4 Anchorage Roots spawn once their chunks load (${enc().parts.summary("anchor:").spawned})`);
+check(buried([ANCHOR]).length === 0, "the roots stand in open air (small budget)");
+check(enc().forcePhase(0), "skip to Phase 3B (small budget)");
+await until(() => enc()?.state === "phase3b", 4000, "phase 3B with a small chunk budget");
+quiet();
+alex.gameMode = "Survival";
+await until(() => enc().writer.deferredOps === 0 && enc().writer.pending === 0, 8000, "the islands' backlog swept");
+const isl2 = runtime.islandLayout();
+check(isl2.length === 9 && isl2.every((q) => arena().isSolidAt(q.cx, q.top, q.cz)), "nine islands built with a small budget");
+let gap2 = true;
+for (let y = MM.baseY - 1; y <= D.y + 2; y++) if (arena().isSolidAt(MM.heart.x + 11.6, y, MM.heart.z + 0.3)) gap2 = false;
+check(gap2, "the disk between the islands is gone (small budget)");
+check(alex.suffocatingTicks === 0 && sam.suffocatingTicks === 0 && enc().zoneOf(sam) === "disk", "players land on the islands (small budget)");
 log(`small budget stats: refused writes ${mock.stats.refusedWrites}, refused spawns ${mock.stats.refusedSpawns}, unloads ${mock.stats.unloads}, reloads ${mock.stats.reloads}, queued structure cells ${mock.stats.queuedStructureCells}`);
 manager.stop("abort");
 await until(() => !enc(), 8000, "clean-up with a small chunk budget");

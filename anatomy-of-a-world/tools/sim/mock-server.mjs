@@ -212,12 +212,48 @@ export class MolangVariableMap {
     this.vars[n] = c;
   }
 }
+const ENCHANTS = new Set(["mending", "unbreaking", "protection", "sharpness", "efficiency", "fortune", "feather_falling", "power", "looting", "smite"]);
+export class EnchantmentType {
+  constructor(id) {
+    if (!ENCHANTS.has(String(id).replace("minecraft:", ""))) issue(`EnchantmentType: unknown ${id}`);
+    this.id = id;
+  }
+}
+export const EquipmentSlot = { Head: "Head", Chest: "Chest", Legs: "Legs", Feet: "Feet", Mainhand: "Mainhand", Offhand: "Offhand" };
 export class ItemStack {
   constructor(typeId, amount = 1) {
     if (!DATA.items.has(typeId) && !typeId.startsWith("minecraft:")) issue(`ItemStack: unknown item ${typeId}`);
     if (typeId.startsWith("minecraft:") && !DATA.vanillaItems.has(typeId)) issue(`ItemStack: unknown vanilla item ${typeId}`);
+    if (!(amount >= 1 && amount <= 64)) issue(`ItemStack ${typeId}: amount ${amount} outside 1..64`);
     this.typeId = typeId;
     this.amount = amount;
+    this.enchantments = [];
+    const self = this;
+    const def = DATA.itemDefs?.[typeId];
+    this.components = {};
+    if (typeId === "minecraft:enchanted_book" || def?.["minecraft:enchantable"])
+      this.components["minecraft:enchantable"] = {
+        addEnchantment(en) {
+          if (!(en?.type instanceof EnchantmentType)) issue("addEnchantment: type must be an EnchantmentType");
+          if (!(en.level >= 1 && en.level <= 5)) issue(`addEnchantment: level ${en?.level}`);
+          self.enchantments.push({ id: en.type.id, level: en.level });
+        },
+        getEnchantments: () => [...self.enchantments],
+      };
+    if (def?.["minecraft:cooldown"])
+      this.components["minecraft:cooldown"] = {
+        cooldownCategory: def["minecraft:cooldown"].category,
+        cooldownTicks: def["minecraft:cooldown"].duration * 20,
+        getCooldownTicksRemaining: (pl) => Math.max(0, (pl.cooldowns?.[def["minecraft:cooldown"].category] ?? 0) - tick),
+        startCooldown: (pl) => {
+          pl.cooldowns = pl.cooldowns ?? {};
+          pl.cooldowns[def["minecraft:cooldown"].category] = tick + def["minecraft:cooldown"].duration * 20;
+        },
+      };
+    if (def?.["minecraft:durability"]) this.components["minecraft:durability"] = { damage: 0, maxDurability: def["minecraft:durability"].max_durability };
+  }
+  getComponent(id) {
+    return this.components[id.startsWith("minecraft:") ? id : `minecraft:${id}`];
   }
 }
 
@@ -270,6 +306,8 @@ class MockDimension {
     }
     stats.blockWrites++;
     stats.writesThisTick++;
+    if (WATCH && loc.x === WATCH[0] && loc.z === WATCH[1] && loc.y >= WATCH[2] && loc.y <= WATCH[3])
+      console.log(`[watch t${tick}] ${loc.x},${loc.y},${loc.z} <- ${perm.typeId} :: ${new Error().stack.split("\n").slice(2, 7).map((l) => l.trim().replace(/\(?file:\/\/\S*\//, "").replace(/\)$/, "")).join(" < ")}`);
     if (perm.typeId === "minecraft:air") this.blocks.delete(kb(loc.x, loc.y, loc.z));
     else this.blocks.set(kb(loc.x, loc.y, loc.z), perm);
   }
@@ -292,6 +330,8 @@ class MockDimension {
       throw new LocationInUnloadedChunkError("UnloadedChunksError");
     }
     stats.fills++;
+    if (WATCH && WATCH[0] >= Math.min(a.x, b.x) && WATCH[0] <= Math.max(a.x, b.x) && WATCH[1] >= Math.min(a.z, b.z) && WATCH[1] <= Math.max(a.z, b.z) && Math.max(a.y, b.y) >= WATCH[2] && Math.min(a.y, b.y) <= WATCH[3])
+      console.log(`[watch t${tick}] fill y${Math.min(a.y, b.y)}..${Math.max(a.y, b.y)} <- ${perm.typeId} :: ${new Error().stack.split("\n").slice(2, 6).map((l) => l.trim().replace(/\(?file:\/\/\S*\//, "").replace(/\)$/, "")).join(" < ")}`);
     for (let x = Math.min(a.x, b.x); x <= Math.max(a.x, b.x); x++)
       for (let z = Math.min(a.z, b.z); z <= Math.max(a.z, b.z); z++) {
         if (unloaded && !this.chunkLoadedAt(x, z)) continue; // ignoreChunkBoundErrors: unloaded parts are skipped
@@ -363,7 +403,18 @@ class MockDimension {
   }
   getEntities(opts = {}) {
     const near = (e) => !opts.location || opts.maxDistance === undefined || Math.hypot(e.location.x - opts.location.x, e.location.y - opts.location.y, e.location.z - opts.location.z) <= opts.maxDistance;
-    return [...entities].filter((e) => e.isValid && e.dimension === this && (!opts.type || e.typeId === opts.type) && (!opts.families || opts.families.every((f) => e.families().includes(f))) && (!opts.tags || opts.tags.every((t) => e.tags.has(t))) && near(e));
+    const pool = [...entities, ...players];
+    return pool.filter(
+      (e) =>
+        e.isValid &&
+        e.dimension === this &&
+        (!opts.type || e.typeId === opts.type) &&
+        (!opts.excludeTypes || !opts.excludeTypes.includes(e.typeId)) &&
+        (!opts.families || opts.families.every((f) => e.families().includes(f))) &&
+        (!opts.excludeFamilies || !opts.excludeFamilies.some((f) => e.families().includes(f))) &&
+        (!opts.tags || opts.tags.every((t) => e.tags.has(t))) &&
+        near(e),
+    );
   }
   getPlayers() {
     return players.filter((p) => p.dimension === this);
@@ -416,6 +467,8 @@ class HealthComponent {
     this.currentValue = this.effectiveMax;
   }
 }
+/** Vanilla mobs the tests spawn (health and families as in the vanilla behavior pack). */
+const VANILLA_MOBS = { "minecraft:zombie": { health: 20, families: ["zombie", "undead", "monster", "mob"] } };
 export class Entity {
   constructor(typeId, location, dim) {
     this.id = String(entityCounter++);
@@ -431,18 +484,29 @@ export class Entity {
     this.props = {};
     this.propDefs = def?.properties ?? {};
     for (const [k, p] of Object.entries(this.propDefs)) this.props[k] = p.default;
-    this.health = def?.health !== undefined ? new HealthComponent(this, def.health) : typeId === "minecraft:player" ? new HealthComponent(this, 20) : undefined;
+    const hp = def?.health ?? VANILLA_MOBS[typeId]?.health ?? (typeId === "minecraft:player" ? 20 : undefined);
+    this.health = hp !== undefined ? new HealthComponent(this, hp) : undefined;
+    this.effects = new Map();
     this.projectile = def?.projectile ? { owner: undefined, gravity: def.gravity ?? 0.05, shoot: (v) => this.shoot(v) } : undefined;
     this.flying = false;
   }
   families() {
-    return DATA.entities[this.typeId]?.families ?? (this.typeId === "minecraft:player" ? ["player", "mob"] : []);
+    return DATA.entities[this.typeId]?.families ?? VANILLA_MOBS[this.typeId]?.families ?? (this.typeId === "minecraft:player" ? ["player", "mob"] : []);
   }
   get isOnGround() {
     return this.dimension.isSolidAt(this.location.x, this.location.y - 0.05, this.location.z);
   }
   get isSneaking() {
-    return false;
+    return this._sneaking ?? false;
+  }
+  set isSneaking(v) {
+    this._sneaking = !!v;
+  }
+  setOnFire(seconds) {
+    mutating("setOnFire");
+    if (!(seconds > 0)) issue("setOnFire seconds");
+    this.onFireUntil = tick + seconds * 20;
+    return true;
   }
   setProperty(name, value) {
     mutating("setProperty");
@@ -464,6 +528,7 @@ export class Entity {
     if (name === "minecraft:health" || name === "health") return this.health;
     if (name === "minecraft:projectile") return this.projectile;
     if (name === "minecraft:inventory") return this.inventory;
+    if (name === "minecraft:equippable") return this.equippable;
     return undefined;
   }
   hasComponent(name) {
@@ -491,6 +556,7 @@ export class Entity {
     if (![loc.x, loc.y, loc.z].every(Number.isFinite)) issue(`teleport ${this.typeId} to non-finite location`);
     if (opts.dimension) this.dimension = opts.dimension;
     if (this instanceof Player) {
+      this.groundY = undefined;
       this.lastTeleport = { tick, to: { ...loc }, stack: new Error().stack.split("\n").slice(2, 6).map((l) => l.trim().replace(/file:\/\/\S*\//, "")).join(" < ") };
       chunkEpoch++;
     }
@@ -505,6 +571,7 @@ export class Entity {
     mutating("applyKnockback");
     if (!Number.isFinite(h.x + h.z + v)) issue("applyKnockback non-finite");
     this.vel = { x: h.x, y: v, z: h.z };
+    if (TRACE_FALL) this.lastKnock = { tick, h, v, at: { ...this.location }, stack: new Error().stack.split("\n").slice(2, 6).map((l) => l.trim().replace(/\(?file:\/\/\S*\//, "").replace(/\)$/, "")).join(" < ") };
   }
   applyImpulse(v) {
     mutating("applyImpulse");
@@ -533,11 +600,16 @@ export class Entity {
     mutating("addEffect");
     if (!DATA.effects.has(id.replace("minecraft:", ""))) issue(`addEffect unknown ${id}`);
     if (!(dur > 0)) issue(`addEffect ${id} bad duration`);
-    void opts;
+    const k = id.replace("minecraft:", "");
+    this.effects.set(k, { until: tick + dur, amplifier: opts?.amplifier ?? 0 });
     return {};
   }
-  removeEffect() {
-    return true;
+  getEffect(id) {
+    const e = this.effects.get(id.replace("minecraft:", ""));
+    return e && e.until > tick ? { typeId: id, duration: e.until - tick, amplifier: e.amplifier } : undefined;
+  }
+  removeEffect(id) {
+    return this.effects.delete(String(id).replace("minecraft:", ""));
   }
   playAnimation(name, opts) {
     mutating("playAnimation");
@@ -620,7 +692,8 @@ class Container {
   }
   addItem(it) {
     const i = this.slots.findIndex((s) => !s);
-    if (i >= 0) this.slots[i] = it;
+    if (i < 0) return it; // full: the caller gets the stack back
+    this.slots[i] = it;
     return undefined;
   }
 }
@@ -630,6 +703,15 @@ export class Player extends Entity {
     this.name = name;
     this.gameMode = GameMode.Survival;
     this.inventory = { container: new Container(36) };
+    this.equipment = {};
+    const me = this;
+    this.equippable = {
+      getEquipment: (slot) => me.equipment[slot],
+      setEquipment: (slot, item) => {
+        me.equipment[slot] = item;
+        return true;
+      },
+    };
     this.fogStack = [];
     this.music = undefined;
     this.cameraState = "default";
@@ -756,6 +838,8 @@ export class Player extends Entity {
   }
 }
 
+const TRACE_FALL = !!process.env.MOCK_TRACE_FALL;
+const WATCH = process.env.MOCK_WATCH ? process.env.MOCK_WATCH.split(",").map(Number) : undefined;
 /** Simple player/projectile physics: gravity, ground collision. */
 function physics() {
   for (const p of players) {
@@ -765,13 +849,20 @@ function physics() {
     // suffocation check: feet/head inside a solid block
     if (d.isSolidAt(l.x, l.y + 0.1, l.z) && d.isSolidAt(l.x, l.y + 1.2, l.z)) p.suffocatingTicks = (p.suffocatingTicks ?? 0) + 1;
     else p.suffocatingTicks = 0;
+    if (TRACE_FALL && p.suffocatingTicks === 1)
+      console.log(`[trace t${tick}] ${p.name} inside blocks at ${l.x.toFixed(2)},${l.y.toFixed(2)},${l.z.toFixed(2)} vel ${JSON.stringify(p.vel)}; last knock ${p.lastKnock ? `t${p.lastKnock.tick} h=${JSON.stringify(p.lastKnock.h)} v=${p.lastKnock.v} from ${JSON.stringify(p.lastKnock.at)} :: ${p.lastKnock.stack}` : "none"}`);
     if (p.suffocatingTicks === 20) issue(`${p.name} stuck inside blocks at ${l.x.toFixed(1)},${l.y.toFixed(1)},${l.z.toFixed(1)} (${d.getBlockId(Math.floor(l.x), Math.floor(l.y), Math.floor(l.z))}); last teleport t${p.lastTeleport?.tick}: ${p.lastTeleport?.stack}`);
     p.vel.y -= 0.08;
     p.vel.y *= 0.98;
+    // a rising player bumps their head on a ceiling (1.8 blocks tall)
+    if (p.vel.y > 0 && d.isSolidAt(l.x, l.y + p.vel.y + 1.8, l.z) && !d.isSolidAt(l.x, l.y + 1.2, l.z)) p.vel.y = 0;
     const ny = l.y + p.vel.y;
     if (p.vel.y < 0 && d.isSolidAt(l.x, ny, l.z)) {
       p.location = { x: l.x, y: Math.floor(ny) + 1, z: l.z };
       p.vel.y = 0;
+      if (TRACE_FALL && p.groundY !== undefined && p.location.y < p.groundY - 1.5 && p.lastTeleport?.tick !== tick)
+        console.log(`[trace t${tick}] ${p.name} fell ${p.groundY} -> ${p.location.y} at ${l.x.toFixed(1)},${l.z.toFixed(1)} (teleport t${p.lastTeleport?.tick}); column ${[0, 1, 2, 3, 4].map((k) => d.getBlockId(Math.floor(l.x), Math.floor(p.groundY) - k, Math.floor(l.z))).join(" ")}`);
+      p.groundY = p.location.y;
     } else p.location = { x: l.x, y: ny, z: l.z };
     const nx = p.location.x + p.vel.x;
     const nz = p.location.z + p.vel.z;
@@ -865,6 +956,7 @@ const structureManager = {
         stats.queuedStructureCells++;
         continue;
       }
+      if (WATCH && wx === WATCH[0] && wz === WATCH[1] && wy >= WATCH[2] && wy <= WATCH[3]) console.log(`[watch t${tick}] structure ${wx},${wy},${wz} <- ${perm.typeId}`);
       if (perm.typeId === "minecraft:air") dim.blocks.delete(kb(wx, wy, wz));
       else dim.blocks.set(kb(wx, wy, wz), perm);
     }
@@ -974,6 +1066,7 @@ function chunkStep() {
     if (!dim || !dim.chunkLoadedAt(cx * 16, cz * 16)) continue;
     queuedCells.delete(ck);
     for (const [x, y, z, perm] of cells) {
+      if (WATCH && x === WATCH[0] && z === WATCH[1] && y >= WATCH[2] && y <= WATCH[3]) console.log(`[watch t${tick}] queued structure cell ${x},${y},${z} <- ${perm.typeId}`);
       if (perm.typeId === "minecraft:air") dim.blocks.delete(kb(x, y, z));
       else dim.blocks.set(kb(x, y, z), perm);
     }

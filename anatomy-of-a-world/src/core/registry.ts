@@ -5,17 +5,24 @@
 import { Entity, EntityHurtAfterEvent, EntityHurtBeforeEvent, Player, ProjectileHitBlockAfterEvent, ProjectileHitEntityAfterEvent } from "@minecraft/server";
 import { V3 } from "./vec.js";
 
-export interface AtlasPage {
-  number: string;
-  title: string;
+/** Atlas text in one language. */
+export interface AtlasText {
   subtitle: string;
   overview: string;
   anatomy: string[];
   abilities: { name: string; text: string }[];
   phases: { name: string; text: string }[];
+  rewards: string[];
   scale: string;
   arena: string;
   summon: string;
+}
+
+export interface AtlasPage extends AtlasText {
+  number: string;
+  title: string;
+  /** Thai text (shown to players who picked Thai in the Atlas). */
+  th?: AtlasText;
 }
 
 export interface SavedEncounter {

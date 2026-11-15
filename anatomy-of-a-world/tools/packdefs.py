@@ -40,25 +40,35 @@ SOUNDS = {
     "anatomy.mm.warn": ("mm/warn", "hostile", 0.8, 8, 128),
     "anatomy.mm.deflect": ("mm/deflect", "hostile", 0.8, 4, 48),
     "anatomy.mm.vent": ("mm/vent", "hostile", 0.8, 6, 64),
+    "anatomy.mm.root_tear": ("mm/root_tear", "hostile", 1.0, 10, 160),
+    "anatomy.mm.sinew_snap": ("mm/sinew_snap", "hostile", 1.0, 8, 128),
+    "anatomy.mm.beam_charge": ("mm/beam_charge", "hostile", 1.0, 8, 128),
+    "anatomy.mm.beam_fire": ("mm/beam_fire", "hostile", 1.0, 8, 128),
+    "anatomy.mm.heart_rise": ("mm/heart_rise", "hostile", 1.0, 16, 256),
+    "anatomy.mm.island_break": ("mm/island_break", "hostile", 1.0, 16, 256),
 }
 MUSIC = {
     "anatomy.music.mm_phase1": ("music/mm_phase1", 0.55),
     "anatomy.music.mm_phase2": ("music/mm_phase2", 0.6),
     "anatomy.music.mm_victory": ("music/mm_victory", 0.6),
+    "anatomy.music.mm_phase3": ("music/mm_phase3", 0.6),
 }
 
 ENTITY_NAMES = {
     "anatomy:mm_lithic_heart": ("The Migrating Mountain", "เทือกเขาอพยพ"),
-    "anatomy:mm_resonance_node": ("Resonance Node", "ไหนดประสานงาน"),
-    "anatomy:mm_root_leg": ("Anchorage Root", "รากยึดสมดุล"),
+    "anatomy:mm_resonance_node": ("Resonance Node", "ผลึกสั่นพ้อง"),
+    "anatomy:mm_root_leg": ("Anchorage Root", "ขารากยึดเกาะ"),
     "anatomy:mm_petal": ("Unfolded Strata", "ชั้นหินที่คลี่ออก"),
     "anatomy:mm_strata_slab": ("Shed Strata", "แผ่นหินที่ผลัดลอก"),
     "anatomy:mm_strata_plate": ("Inverted Strata", "ชั้นหินพลิกกลับ"),
+    "anatomy:mm_anchor_root": ("Anchorage Root Sinew", "ปมเอ็นรากยึดเกาะ"),
 }
 ITEM_NAMES = {
     "anatomy:anatomical_atlas": ("Anatomical Atlas", "สมุดกายวิภาคแห่งโลก"),
-    "anatomy:restless_lodestone": ("Restless Lodestone", "หินแม่เหล็กไร้สงบ"),
+    "anatomy:restless_lodestone": ("Restless Lodestone", "หินแม่เหล็กไม่หยุดนิ่ง"),
     "anatomy:lithic_heart_shard": ("Lithic Heart Shard", "เศษหัวใจศิลา"),
+    "anatomy:strata_breaker": ("Strata Breaker", "ค้อนชั้นหิน"),
+    "anatomy:anchorage_greaves": ("Anchorage Greaves", "รองเท้ารากยึด"),
 }
 
 
@@ -130,7 +140,14 @@ def behaviour_entities() -> Dict[str, dict]:
         "minecraft:conditional_bandwidth_optimization": {"default_values": {"max_optimized_distance": 160.0, "max_dropped_ticks": 0, "use_motion_prediction_hints": True}},
     }, None, ("anatomy_part", "migrating_mountain", "projectile"), True)
     E["mm_petal"] = entity("anatomy:mm_petal", {**immovable(1.0, 1.0), **invuln},
-                           {"anatomy:petal_state": prop_int(0, 3), "anatomy:petal_index": prop_int(0, 15)}, ("anatomy_part", "migrating_mountain"))
+                           {"anatomy:petal_state": prop_int(0, 4), "anatomy:petal_index": prop_int(0, 15)}, ("anatomy_part", "migrating_mountain"))
+    # Phase 3A: an Anchorage Root gripping the disk; the collision box is its sinew knot (the weak point)
+    E["mm_anchor_root"] = entity("anatomy:mm_anchor_root", {
+        **immovable(2.6, 3.6),
+        "minecraft:health": {"value": 240, "max": 240},
+        "minecraft:damage_sensor": damage_sensor_env_only(),
+        "minecraft:nameable": {"always_show": False, "allow_name_tag_renaming": False},
+    }, {"anatomy:dying": prop_bool(), "anatomy:charging": prop_bool()}, ("anatomy_part", "migrating_mountain", "anatomy_target"))
     E["mm_strata_plate"] = entity("anatomy:mm_strata_plate", {**immovable(1.0, 1.0), **invuln},
                                   {"anatomy:variant": prop_int(0, 1), "anatomy:flip": prop_int(0, 4)}, ("anatomy_part", "migrating_mountain"))
     return E
@@ -167,7 +184,7 @@ def client_entities() -> Dict[str, dict]:
     C = {}
     A = "animation.anatomy."
     C["mm_root_leg"] = client_entity("anatomy:mm_root_leg", "mm_root_leg", {
-        "walk": A + "mm_root_leg.walk", "splay": A + "mm_root_leg.splay", "collapse": A + "mm_root_leg.collapse",
+        "walk": A + "mm_root_leg.walk", "march": A + "mm_root_leg.march", "splay": A + "mm_root_leg.splay", "collapse": A + "mm_root_leg.collapse",
         "stomp": A + "mm_root_leg.stomp", "flinch": A + "mm_root_leg.flinch", "gait": "controller.animation.anatomy.mm_root_leg.gait",
     }, ["gait"], ["v.phase = q.property('anatomy:leg_index') * 0.4286;"], particles={"mist": "anatomy:mm_mist"}, sounds={"step": "anatomy.mm.step"})
     C["mm_resonance_node"] = client_entity("anatomy:mm_resonance_node", "mm_resonance_node", {
@@ -177,13 +194,17 @@ def client_entities() -> Dict[str, dict]:
     C["mm_lithic_heart"] = client_entity("anatomy:mm_lithic_heart", "mm_lithic_heart", {
         "closed": A + "mm_lithic_heart.closed", "opened": A + "mm_lithic_heart.opened", "beat": A + "mm_lithic_heart.beat",
         "rings": A + "mm_lithic_heart.rings", "charge": A + "mm_lithic_heart.charge", "hurt": A + "mm_lithic_heart.hurt",
-        "death": A + "mm_lithic_heart.death", "iris": "controller.animation.anatomy.mm_lithic_heart.iris",
+        "death": A + "mm_lithic_heart.death", "unbound": A + "mm_lithic_heart.unbound", "iris": "controller.animation.anatomy.mm_lithic_heart.iris",
     }, ["rings", {"beat": "!q.property('anatomy:dying')"}, "iris"], rc="controller.render.anatomy.mm_lithic_heart")
     C["mm_strata_slab"] = client_entity("anatomy:mm_strata_slab", "mm_strata_slab", {"tumble": A + "mm_strata_slab.tumble"}, ["tumble"])
     C["mm_petal"] = client_entity("anatomy:mm_petal", "mm_petal", {
         "closed": A + "mm_petal.closed", "unfold": A + "mm_petal.unfold", "open": A + "mm_petal.open", "folded": A + "mm_petal.folded",
-        "collapse": A + "mm_petal.collapse", "state": "controller.animation.anatomy.mm_petal.state",
+        "collapse": A + "mm_petal.collapse", "raised": A + "mm_petal.raised", "state": "controller.animation.anatomy.mm_petal.state",
     }, ["state"])
+    C["mm_anchor_root"] = client_entity("anatomy:mm_anchor_root", "mm_anchor_root", {
+        "idle": A + "mm_anchor_root.idle", "charge": A + "mm_anchor_root.charge", "snap": A + "mm_anchor_root.snap",
+        "state": "controller.animation.anatomy.mm_anchor_root.state",
+    }, ["state"], particles={"sinew": "anatomy:mm_shard"})
     C["mm_strata_plate"] = client_entity("anatomy:mm_strata_plate", "mm_strata_plate", {
         "flip_wall": A + "mm_strata_plate.flip_wall", "flip_ceiling": A + "mm_strata_plate.flip_ceiling",
         "unflip_wall": A + "mm_strata_plate.unflip_wall", "unflip_ceiling": A + "mm_strata_plate.unflip_ceiling",
@@ -199,9 +220,10 @@ def animation_controllers() -> dict:
     ctrl["controller.animation.anatomy.mm_root_leg.gait"] = {
         "initial_state": "walk",
         "states": {
-            "walk": {"animations": ["walk"], "transitions": [{"splay": f"{P}('anatomy:pose') == 1"}, {"collapse": f"{P}('anatomy:pose') == 2"}], "blend_transition": 1.5},
-            "splay": {"animations": ["splay"], "transitions": [{"walk": f"{P}('anatomy:pose') == 0"}, {"collapse": f"{P}('anatomy:pose') == 2"}], "blend_transition": 3.0},
-            "collapse": {"animations": ["collapse"], "transitions": [{"walk": f"{P}('anatomy:pose') == 0"}], "blend_transition": 0.6},
+            "walk": {"animations": ["walk"], "transitions": [{"splay": f"{P}('anatomy:pose') == 1"}, {"collapse": f"{P}('anatomy:pose') == 2"}, {"march": f"{P}('anatomy:pose') == 3"}], "blend_transition": 1.5},
+            "splay": {"animations": ["splay"], "transitions": [{"walk": f"{P}('anatomy:pose') == 0"}, {"collapse": f"{P}('anatomy:pose') == 2"}, {"march": f"{P}('anatomy:pose') == 3"}], "blend_transition": 3.0},
+            "march": {"animations": ["march"], "transitions": [{"walk": f"{P}('anatomy:pose') == 0"}, {"splay": f"{P}('anatomy:pose') == 1"}, {"collapse": f"{P}('anatomy:pose') == 2"}], "blend_transition": 2.0},
+            "collapse": {"animations": ["collapse"], "transitions": [{"walk": f"{P}('anatomy:pose') == 0"}, {"march": f"{P}('anatomy:pose') == 3"}], "blend_transition": 0.6},
         },
     }
     ctrl["controller.animation.anatomy.mm_resonance_node.state"] = {
@@ -215,20 +237,32 @@ def animation_controllers() -> dict:
     ctrl["controller.animation.anatomy.mm_lithic_heart.iris"] = {
         "initial_state": "closed",
         "states": {
-            "closed": {"animations": ["closed"], "transitions": [{"dying": f"{P}('anatomy:dying')"}, {"opened": f"{P}('anatomy:open')"}, {"charging": f"{P}('anatomy:charging')"}], "blend_transition": 0.7},
+            "closed": {"animations": ["closed"], "transitions": [{"dying": f"{P}('anatomy:dying')"}, {"unbound": f"{P}('anatomy:phase') == 3"}, {"opened": f"{P}('anatomy:open')"}, {"charging": f"{P}('anatomy:charging')"}], "blend_transition": 0.7},
             "charging": {"animations": ["closed", "charge"], "transitions": [{"dying": f"{P}('anatomy:dying')"}, {"opened": f"{P}('anatomy:open')"}, {"closed": f"!{P}('anatomy:charging')"}], "blend_transition": 0.4},
-            "opened": {"animations": ["opened"], "transitions": [{"dying": f"{P}('anatomy:dying')"}, {"closed": f"!{P}('anatomy:open')"}], "blend_transition": 0.7},
+            "opened": {"animations": ["opened"], "transitions": [{"dying": f"{P}('anatomy:dying')"}, {"unbound": f"{P}('anatomy:phase') == 3"}, {"closed": f"!{P}('anatomy:open')"}], "blend_transition": 0.7},
+            # Phase 3B: torn free - the iris stays open, the rings swing wide (charging flares on top)
+            "unbound": {"animations": ["unbound", {"charge": f"{P}('anatomy:charging')"}], "transitions": [{"dying": f"{P}('anatomy:dying')"}, {"closed": f"{P}('anatomy:phase') != 3"}], "blend_transition": 1.2},
             "dying": {"animations": ["opened", "death"], "blend_transition": 0.3},
         },
     }
     ctrl["controller.animation.anatomy.mm_petal.state"] = {
         "initial_state": "closed",
         "states": {
-            "closed": {"animations": ["closed"], "transitions": [{"unfolding": f"{P}('anatomy:petal_state') == 1"}, {"folded": f"{P}('anatomy:petal_state') == 2"}]},
+            "closed": {"animations": ["closed"], "transitions": [{"unfolding": f"{P}('anatomy:petal_state') == 1"}, {"folded": f"{P}('anatomy:petal_state') == 2"}, {"raised": f"{P}('anatomy:petal_state') == 4"}]},
             "unfolding": {"animations": ["unfold"], "transitions": [{"open": "q.all_animations_finished"}, {"folded": f"{P}('anatomy:petal_state') == 2"}, {"collapse": f"{P}('anatomy:petal_state') == 3"}]},
-            "open": {"animations": ["open"], "transitions": [{"folded": f"{P}('anatomy:petal_state') == 2"}, {"collapse": f"{P}('anatomy:petal_state') == 3"}, {"closed": f"{P}('anatomy:petal_state') == 0"}], "blend_transition": 0.4},
-            "folded": {"animations": ["folded"], "transitions": [{"open": f"{P}('anatomy:petal_state') == 1"}, {"collapse": f"{P}('anatomy:petal_state') == 3"}, {"closed": f"{P}('anatomy:petal_state') == 0"}], "blend_transition": 1.1},
+            "open": {"animations": ["open"], "transitions": [{"folded": f"{P}('anatomy:petal_state') == 2"}, {"collapse": f"{P}('anatomy:petal_state') == 3"}, {"closed": f"{P}('anatomy:petal_state') == 0"}, {"raised": f"{P}('anatomy:petal_state') == 4"}], "blend_transition": 0.4},
+            "folded": {"animations": ["folded"], "transitions": [{"open": f"{P}('anatomy:petal_state') == 1"}, {"collapse": f"{P}('anatomy:petal_state') == 3"}, {"closed": f"{P}('anatomy:petal_state') == 0"}, {"raised": f"{P}('anatomy:petal_state') == 4"}], "blend_transition": 1.1},
+            # Phase 3A: the shell rises back into a crown of walls (a slow, heavy swing)
+            "raised": {"animations": ["raised"], "transitions": [{"open": f"{P}('anatomy:petal_state') == 1"}, {"folded": f"{P}('anatomy:petal_state') == 2"}, {"collapse": f"{P}('anatomy:petal_state') == 3"}], "blend_transition": 2.5},
             "collapse": {"animations": ["collapse"], "blend_transition": 0.5},
+        },
+    }
+    ctrl["controller.animation.anatomy.mm_anchor_root.state"] = {
+        "initial_state": "idle",
+        "states": {
+            "idle": {"animations": ["idle"], "transitions": [{"dying": f"{P}('anatomy:dying')"}, {"charging": f"{P}('anatomy:charging')"}], "blend_transition": 0.3},
+            "charging": {"animations": ["idle", "charge"], "transitions": [{"dying": f"{P}('anatomy:dying')"}, {"idle": f"!{P}('anatomy:charging')"}], "blend_transition": 0.3},
+            "dying": {"animations": ["snap"], "particle_effects": [{"effect": "sinew", "locator": "knot"}]},
         },
     }
     flip = f"{P}('anatomy:flip')"
@@ -277,6 +311,7 @@ def entity_sounds() -> dict:
     return {"entity_sounds": {"entities": {
         "anatomy:mm_lithic_heart": {"volume": 1.0, "pitch": [0.9, 1.1], "events": {"hurt": "anatomy.mm.heart_hurt"}},
         "anatomy:mm_resonance_node": {"volume": 1.0, "pitch": [0.9, 1.15], "events": {"hurt": "anatomy.mm.node_hurt"}},
+        "anatomy:mm_anchor_root": {"volume": 1.0, "pitch": [0.7, 0.9], "events": {"hurt": "anatomy.mm.node_hurt"}},
     }}}
 
 
@@ -325,6 +360,38 @@ def items() -> Dict[str, dict]:
         "restless_lodestone": item("restless_lodestone", "anatomy_restless_lodestone", "items", 16,
                                    {"anatomy:summoner": {"boss": "migrating_mountain"}}, glint=True),
         "lithic_heart_shard": item("lithic_heart_shard", "anatomy_lithic_heart_shard", "items", 64, {"anatomy:heart_shard": {}}, glint=True),
+        # boss rewards (components as Creator Tools generates them for a sword / boots, plus repair and the scripted use)
+        "strata_breaker": item("strata_breaker", "anatomy_strata_breaker", "equipment", 1, {
+            "minecraft:damage": 10,
+            "minecraft:durability": {"max_durability": 2500},
+            "minecraft:hand_equipped": True,
+            "minecraft:enchantable": {"value": 15, "slot": "sword"},
+            "minecraft:can_destroy_in_creative": False,
+            "minecraft:repairable": {"repair_items": [{"items": ["anatomy:lithic_heart_shard"], "repair_amount": 600}]},
+            "minecraft:cooldown": {"category": "anatomy:fold_slam", "duration": 8},
+            "anatomy:fold_slam": {},
+        }),
+        "anchorage_greaves": item("anchorage_greaves", "anatomy_anchorage_greaves", "equipment", 1, {
+            "minecraft:wearable": {"slot": "slot.armor.feet"},
+            "minecraft:armor": {"protection": 3},
+            "minecraft:durability": {"max_durability": 550},
+            "minecraft:enchantable": {"slot": "armor_feet", "value": 15},
+            "minecraft:repairable": {"repair_items": [{"items": ["anatomy:lithic_heart_shard"], "repair_amount": 150}]},
+        }),
+    }
+
+
+def attachables() -> Dict[str, dict]:
+    """Armor drawn on the player (vanilla boots geometry and armor render controller)."""
+    return {
+        "anchorage_greaves": {"format_version": "1.10.0", "minecraft:attachable": {"description": {
+            "identifier": "anatomy:anchorage_greaves",
+            "materials": {"default": "armor", "enchanted": "armor_enchanted"},
+            "textures": {"default": "textures/models/armor/anatomy_anchorage_1", "enchanted": "textures/misc/enchanted_actor_glint"},
+            "geometry": {"default": "geometry.humanoid.armor.boots"},
+            "scripts": {"parent_setup": "variable.boot_layer_visible = 0.0;"},
+            "render_controllers": ["controller.render.armor"],
+        }}},
     }
 
 
@@ -377,6 +444,8 @@ def emit(bp: str, rp: str) -> None:
     write(os.path.join(bp, "dimensions", "migration_path.json"), dimension())
     for key, data in items().items():
         write(os.path.join(bp, "items", f"{key}.json"), data)
+    for key, data in attachables().items():
+        write(os.path.join(rp, "attachables", f"{key}.json"), data)
     for key, data in recipes().items():
         write(os.path.join(bp, "recipes", f"{key}.json"), data)
     # Bedrock only loads its supported locales from packs; Thai names ship as docs/th_TH.reference.lang
@@ -392,4 +461,6 @@ def emit(bp: str, rp: str) -> None:
             "anatomy_atlas": {"textures": ["textures/items/anatomy/anatomical_atlas"]},
             "anatomy_restless_lodestone": {"textures": ["textures/items/anatomy/restless_lodestone"]},
             "anatomy_lithic_heart_shard": {"textures": ["textures/items/anatomy/lithic_heart_shard"]},
+            "anatomy_strata_breaker": {"textures": ["textures/items/anatomy/strata_breaker"]},
+            "anatomy_anchorage_greaves": {"textures": ["textures/items/anatomy/anchorage_greaves"]},
         }})

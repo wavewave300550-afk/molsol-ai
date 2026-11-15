@@ -4,9 +4,20 @@ import { BlockWriter } from "../../core/blocks.js";
 import { Co, TaskRunner } from "../../core/tasks.js";
 import { V3 } from "../../core/vec.js";
 import { MountainModel, NodeSite } from "../../gen/mountain.js";
+import { Island } from "./runtime.js";
 import { DorsalTerrain } from "./terrain.js";
 
 export type Zone = "dorsal" | "cavern" | "under" | "arrival" | "disk" | "mantle" | "shelf" | "other";
+
+/** What the players stand on: the mountain (Phase 1), the unfolded disk (Phase 2 and 3A), the floating islands (3B). */
+export type ArenaKind = "body" | "disk" | "islands";
+
+/** A remaining Anchorage Root of Phase 3A. */
+export interface AnchorInfo {
+  k: number;
+  pos: V3;
+  entity?: Entity;
+}
 
 export interface LivingNode {
   site: NodeSite;
@@ -19,7 +30,16 @@ export interface MMContext {
   readonly terrain: DorsalTerrain;
   readonly writer: BlockWriter;
   readonly tasks: TaskRunner;
-  readonly phase: 1 | 2;
+  readonly phase: 1 | 2 | 3;
+  arena(): ArenaKind;
+  /** Anchorage Roots still standing (Phase 3A). */
+  anchors(): AnchorInfo[];
+  /** The floating islands (Phase 3B; empty before). */
+  islands(): Island[];
+  /** Phase 3B: the heart is down on the centre island (melee window). */
+  heartSlamming(): boolean;
+  /** Direction the mountain walks in Phase 3A (unit vector in x/z). */
+  readonly walkDir: { x: number; z: number };
   /** Encounter-relative tick counter. */
   readonly now: number;
   readonly heart: Entity | undefined;

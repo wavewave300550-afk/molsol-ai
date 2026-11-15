@@ -382,12 +382,84 @@ def sfx_vent():
     return normalize(x)
 
 
+# Phase 3 (The Last Migration / The Heart Unbound)
+def sfx_root_tear():
+    """A root ripping up through the disk: fibrous tearing over a deep strain."""
+    d = 3.0
+    t = t_axis(d)
+    n = len(t)
+    fibres = impulses(d, 700, 0.0025, 41, (300, 3500)) * (0.4 + 0.6 * np.sin(np.linspace(0, np.pi, n)))
+    tear = sweep_bp(noise(d, "pink", 42), 140, 900, 3.0) * 1.3
+    strain_f = 52 * (1 + 0.35 * t / d)
+    ph = 2 * np.pi * np.cumsum(strain_f) / SR
+    strain = lp(np.sin(ph) + 0.4 * np.sin(2 * ph + 0.5), 380) * 0.7
+    e = env_adsr(n, 0.15, 0.5, 0.85, 1.0)
+    return reverb(normalize((fibres * 1.8 + tear + strain) * e), 2.2, 0.3)
+
+
+def sfx_sinew_snap():
+    """The sinew knot bursting: a hard snap, a twanging release, debris."""
+    d = 2.2
+    n = int(d * SR)
+    snap = hp(noise(0.05, "white", 43), 1200) * 3
+    twang_t = t_axis(1.2)
+    tw_f = 140 * np.exp(-twang_t / 0.5) + 60
+    twang = np.sin(2 * np.pi * np.cumsum(tw_f) / SR) * env_exp(len(twang_t), 0.35) * 0.9
+    boom = kick(1.6, 70, 30, 0.4)
+    debris = impulses(d, 260, 0.004, 44, (400, 5000)) * np.linspace(1, 0, n) * 2
+    return reverb(normalize(mix(snap, at(twang, 0.02, d), boom * 0.9, debris)), 2.0, 0.3)
+
+
+def sfx_beam_charge():
+    """Molten mineral gathering in the heart's veins: a rising whine with crackle."""
+    d = 2.0
+    t = t_axis(d)
+    f = 180 * (1 + 3.5 * (t / d) ** 2)
+    whine = np.sin(2 * np.pi * np.cumsum(f) / SR) * 0.4 + 0.25 * np.sin(4 * np.pi * np.cumsum(f) / SR)
+    sizzle = hp(noise(d, "white", 45), 2500) * (t / d) * 0.5
+    crackle = impulses(d, 350, 0.002, 46, (1500, 7000)) * (t / d) * 2
+    return reverb(normalize((whine + sizzle + crackle) * env_adsr(len(t), 0.4, 0.2, 0.9, 0.1)), 1.2, 0.2)
+
+
+def sfx_beam_fire():
+    """A sweeping beam of molten mineral: roaring, hissing, with a low body."""
+    d = 2.6
+    t = t_axis(d)
+    roar = bp(noise(d, "pink", 47), 120, 1600) * (0.8 + 0.2 * np.sin(2 * np.pi * 9 * t))
+    hiss = hp(noise(d, "white", 48), 3000) * 0.35
+    body = lp(noise(d, "brown", 49), 120) * 0.9
+    return reverb(normalize((roar + hiss + body) * env_adsr(len(t), 0.05, 0.3, 0.9, 0.7)), 1.6, 0.25)
+
+
+def sfx_heart_rise():
+    """The Lithic Heart tearing free and rising: a deep swell with a crystal choir."""
+    d = 5.0
+    t = t_axis(d)
+    swell = pad(d, [note("D2"), note("A2"), note("D3"), note("F3")], 0.004, 900, 0.2) * env_adsr(len(t), 1.8, 1.0, 0.9, 1.6)
+    choir = formant_choir(d, [note("D4"), note("A4"), note("F5")], "ah") * env_adsr(len(t), 2.2, 0.8, 0.8, 1.4) * 0.6
+    rum = lp(noise(d, "brown", 50), 140) * env_adsr(len(t), 0.2, 1.5, 0.6, 2.0)
+    shards = impulses(d, 80, 0.01, 51, (2500, 9000)) * 1.2
+    return reverb(normalize(mix(swell, choir, rum, shards)), 3.0, 0.4)
+
+
+def sfx_island_break():
+    """The disk breaking into islands: cracking, a heavy drop, debris falling away."""
+    d = 4.0
+    n = int(d * SR)
+    cracks = mix(*[at(sfx_crack() * 0.6, o, d) for o in (0.0, 0.35, 0.9, 1.4)])
+    drop = at(kick(2.2, 60, 24, 0.7) * 1.2, 0.2, d)
+    fall = sweep_bp(noise(d, "pink", 52), 900, 120, 2.0) * np.linspace(0.2, 1, n) * np.linspace(1, 0, n) * 1.4
+    return reverb(normalize(mix(cracks, drop, fall)), 2.8, 0.35)
+
+
 SFX = {
     "groan": sfx_groan, "rumble": sfx_rumble, "quake": sfx_quake, "crack": sfx_crack, "grind": sfx_grind, "wave": sfx_wave,
     "resonance": sfx_resonance, "chime": sfx_chime, "heartbeat": sfx_heartbeat, "heart_open": sfx_heart_open,
     "heart_close": sfx_heart_close, "shatter": sfx_shatter, "unfold": sfx_unfold, "step": sfx_step, "contract": sfx_contract,
     "whoosh": sfx_whoosh, "node_hurt": sfx_node_hurt, "heart_hurt": sfx_heart_hurt, "warn": sfx_warn, "deflect": sfx_deflect,
     "vent": sfx_vent,
+    "root_tear": sfx_root_tear, "sinew_snap": sfx_sinew_snap, "beam_charge": sfx_beam_charge, "beam_fire": sfx_beam_fire,
+    "heart_rise": sfx_heart_rise, "island_break": sfx_island_break,
 }
 
 
@@ -484,6 +556,40 @@ def music_phase2(bars=32, bpm=96):
     return buf
 
 
+def music_phase3(bars=32, bpm=112):
+    """The Last Migration / The Heart Unbound: a driving march in D minor, footfalls on every beat."""
+    beat = 60 / bpm
+    bar = beat * 4
+    dur = bars * bar
+    buf = np.zeros((int(dur * SR), 2))
+    # pulsing low ostinato: the gait
+    bass_pat = ["D2", "D2", "D2", "F2", "A#1", "A#1", "C2", "C2"]
+    for b in range(bars):
+        for k in range(8):
+            n = bass_pat[k] if b % 8 < 4 else ["G1", "G1", "A#1", "G1", "A1", "A1", "C#2", "A1"][k]
+            x = lp(saw(t_axis(beat * 0.5), note(n)) + 0.6 * saw(t_axis(beat * 0.5), note(n) * 1.004), 600) * env_adsr(int(beat * 0.5 * SR), 0.004, 0.08, 0.6, 0.1) * 0.33
+            place(buf, stereo(x, 0.0), b * bar + k * beat * 0.5)
+    # march: heavy footfalls on every beat, accents on 1 and 3, rolls into each 4th bar
+    for b in range(bars):
+        for k in range(4):
+            amp = 0.95 if k in (0, 2) else 0.55
+            place(buf, stereo(taiko(50 if k in (0, 2) else 66, 0.35, b * 7 + k) * amp, (k - 1.5) * 0.12), b * bar + k * beat)
+        if b % 4 == 3:
+            for r in range(6):
+                place(buf, stereo(taiko(88, 0.1, b * 13 + r) * 0.38, 0.4 - r * 0.15), b * bar + (2.5 + r * 0.25) * beat)
+    # choir: Dm - Gm - Bb - A (darker, urgent)
+    prog = [["D3", "A3", "F4"], ["G2", "D3", "A#3"], ["A#2", "F3", "D4"], ["A2", "E3", "C#4"]]
+    for i in range(bars // 2):
+        ch = prog[i % 4]
+        c = formant_choir(bar * 2 + 0.4, [note(x) for x in ch], "ah" if i % 2 else "oo") * env_adsr(int((bar * 2 + 0.4) * SR), 0.4, 0.5, 0.85, 0.6) * 0.48
+        place(buf, stereo(c, 0.25 if i % 2 else -0.25), i * bar * 2)
+    # molten crystal: falling bell figure every 2 bars
+    for b in range(1, bars, 2):
+        for k, n in enumerate(["F6", "D6", "A5", "F5", "D5"]):
+            place(buf, stereo(bell(1.2, note(n), decay=0.5) * 0.09, 0.6 - k * 0.3), b * bar + beat * (2 + k * 0.33))
+    return buf
+
+
 def music_victory():
     dur = 22.0
     buf = np.zeros((int(dur * SR), 2))
@@ -529,7 +635,8 @@ def main(out_rp: str, only_sfx: bool = False) -> None:
         write_ogg(os.path.join(mb, "mm_phase1.ogg"), music_phase1(), 3)
         write_ogg(os.path.join(mb, "mm_phase2.ogg"), music_phase2(), 3)
         write_ogg(os.path.join(mb, "mm_victory.ogg"), music_victory(), 3)
-        print("music: 3 tracks")
+        write_ogg(os.path.join(mb, "mm_phase3.ogg"), music_phase3(), 3)
+        print("music: 4 tracks")
 
 
 if __name__ == "__main__":

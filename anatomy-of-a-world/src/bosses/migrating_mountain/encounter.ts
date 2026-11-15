@@ -10,6 +10,7 @@ import {
   Dimension,
   EasingType,
   Entity,
+  EnchantmentType,
   EntityDamageCause,
   EntityHurtAfterEvent,
   EntityHurtBeforeEvent,
@@ -39,28 +40,59 @@ import { ColFlag, MM, MountainModel, NodeSite } from "../../gen/mountain.js";
 import { Rng } from "../../gen/noise.js";
 import * as P from "../../gen/palette.js";
 import { ABILITY_IDS, AbilityId, slabImpact } from "./abilities.js";
-import { LivingNode, MMContext, Zone } from "./context.js";
+import { AnchorInfo, ArenaKind, LivingNode, MMContext, Zone } from "./context.js";
 import { Director } from "./director.js";
-import { ANIM, DIMENSION, ENT, FOG, MUSIC, PROP, PX, SND, TAG } from "./ids.js";
-import { arenaChunks, clearArena, cutColumns, mountain, placeBody, placeDisk, pristineBlock, sectorColumns } from "./runtime.js";
+import { ANIM, DIMENSION, ENT, FOG, ITEM, MUSIC, PROP, PX, SND, TAG } from "./ids.js";
+import { ANCHORS, anchorSite, HOVER_Y, marchWave, mountainFalls, Phase3Hooks, refoldToMigration, SLAM_Y, slamRings } from "./phase3.js";
+import { arenaChunks, clearArena, cutColumns, Island, islandAt, islandLayout, mountain, placeBody, placeDisk, pristineBlock, restoreDisk, sectorColumns, shatterDisk } from "./runtime.js";
 import { DorsalTerrain } from "./terrain.js";
 import { greatUnfolding, PETALS, petalSite, rebloom, ringSpot, victorySequence } from "./unfolding.js";
 
-type State = "loading" | "intro" | "phase1" | "unfolding" | "phase2" | "victory" | "aftermath" | "ending" | "finished";
+type State =
+  | "loading"
+  | "intro"
+  | "phase1"
+  | "unfolding"
+  | "phase2"
+  | "refolding"
+  | "phase3a"
+  | "falling"
+  | "phase3b"
+  | "victory"
+  | "aftermath"
+  | "ending"
+  | "finished";
+
+/** States in which the boss fights back. */
+const FIGHTING: State[] = ["phase1", "phase2", "phase3a", "phase3b"];
 
 const D = MM.disk;
 /** Health attribute of the heart (kept at 1000; incoming damage is halved for a 2000-point fight). */
 const HEART_MAX = 1000;
 const HEART_DAMAGE = 0.5;
 const NODE_SHARE = 0.1333;
-const REBLOOM_AT = 0.3;
+/** Phase 2 mid-fight re-bloom, and the health floors that end Phase 2 and Phase 3A. */
+const REBLOOM_AT = 0.47;
+const FLOOR_P2 = 0.35;
+const FLOOR_P3A = 0.2;
+/** Heart window after a severed Anchorage Root (ticks). */
+const ANCHOR_WINDOW = 160;
+/** Phase 3A soft enrage: the mountain marches faster after this long (ticks). */
+const P3A_ENRAGE = 4800;
+/** Phase 3B: hover between slams, then down on the centre island (ticks). */
+const SLAM_EVERY = 440;
+const SLAM_DOWN = 120;
 const AREA_PREFIX = "anatomy_mm_area";
 const SWEEP_ID = "anatomy_mm_sweep";
+const ANCHOR_SITES = Array.from({ length: ANCHORS }, (_, k) => anchorSite(k).pos);
 /** Thai names of the Resonance Nodes. */
 const NODE_TH: Record<string, string> = { dorsal: "ผลึกยอดเขา", cavern: "ผลึกในถ้ำ", root: "ผลึกใต้ราก" };
 const NODE_COLOR = { red: 0.78, green: 0.38, blue: 1 };
+const ANCHOR_COLOR = { red: 1, green: 0.55, blue: 0.2 };
 /** Shown on the boss bar. */
 const HEART_NAME = "The Migrating Mountain";
+/** Player dynamic property: has this player had the mountain's gear (first victory guarantees it)? */
+const GEAR_KEY = "anatomy:gear_migrating_mountain";
 
 export class MigratingMountainEncounter implements BossEncounter, MMContext {
   readonly dim: Dimension;
@@ -70,7 +102,20 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
   readonly tasks = new TaskRunner();
   readonly director: Director;
   state: State = "loading";
-  phase: 1 | 2 = 1;
+  phase: 1 | 2 | 3 = 1;
+  /** The mountain walks this way in Phase 3A (and the wind comes from it). */
+  readonly walkDir = { x: 1, z: 0 };
+  private anchorsCut = new Set<number>();
+  private anchorsDying = new Set<number>();
+  private islandsBuilt = false;
+  private p3aStart = 0;
+  private nextStep = 0;
+  private steps = 0;
+  /** Phase 3B heart cycle. */
+  private slam: "hover" | "warn" | "falling" | "down" | "rising" = "hover";
+  private slamAt = 0;
+  private slamUntil = 0;
+  private fallAfter = -1;
   now = 0;
   layout = 0;
   /** Every boss part entity (legs, nodes, heart, petals): spawned when loaded, re-bound after reloads. */
@@ -104,6 +149,7 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     this.dim = world.getDimension(DIMENSION);
     this.m = mountain();
     this.writer = new BlockWriter(this.dim, 1500);
+    this.writer.guard = (x, y, z, b) => this.writeAllowed(x, y, z, b);
     this.terrain = new DorsalTerrain(this.m, this.dim, this.writer, pristineBlock);
     this.random = new Rng((Date.now() & 0xffff) ^ 0x5eed);
     this.rng = () => this.random.next();
@@ -137,7 +183,7 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     return (
       `${this.def.id}: state=${this.state} phase=${this.phase} nodes=${3 - this.nodeDead.size}/3 heart=${hp.toFixed(0)}/${HEART_MAX} layout=${this.layout}\n` +
       `parts: nodes ${n.loaded}/${n.spawned}/${n.total} legs ${l.loaded}/${l.spawned}/${l.total} heart ${h.loaded}/${h.spawned}/${h.total} (loaded/spawned/wanted) respawns=${this.parts.respawns}\n` +
-      `remaining: ${sites || "-"}\n` +
+      `remaining: ${sites || "-"}${this.phase === 3 ? ` · anchors ${ANCHORS - this.anchorsCut.size}/${ANCHORS} · islands ${this.islandsBuilt ? "yes" : "no"} · heart ${this.slam}` : ""}\n` +
       `chunks: kept ${this.keeper.kept}/${this.keeper.wanted} ticking, budget ${b.used}/${b.max ?? "?"}; writer queued=${this.writer.pending} deferred=${this.writer.deferredOps} failed=${this.writer.failures}; tasks=${this.tasks.count()}`
     );
   }
@@ -154,7 +200,8 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
   }
 
   entryPoint(): { pos: V3; facing: V3 } {
-    if (this.phase === 2) return this.safeRingSpot();
+    if (this.arena() === "islands") return this.islandSpot();
+    if (this.phase >= 2) return this.safeRingSpot();
     const ar = MM.arrival;
     return { pos: { x: ar.x + 0.5, y: ar.y + 1.05, z: ar.z + 0.5 }, facing: { x: 0, y: 150, z: 0 } };
   }
@@ -163,32 +210,104 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     return {
       boss: this.def.id,
       phase: this.phase,
-      data: { nodeDead: [...this.nodeDead], heartHp: this.heartHp(), layout: this.layout, rebloomed: this.rebloomed },
+      data: {
+        nodeDead: [...this.nodeDead],
+        heartHp: this.heartHp(),
+        layout: this.layout,
+        rebloomed: this.rebloomed,
+        stage: this.phase === 3 ? (this.arena() === "islands" ? "3b" : "3a") : undefined,
+        anchorsCut: [...this.anchorsCut, ...this.anchorsDying],
+      },
     };
   }
 
+  /**
+   * Skip ahead (test command / Atlas): 2 = destroy the nodes, 3 = end Phase 2 (the refold),
+   * 4 = sever every Anchorage Root (the fall). 0 = whatever comes next.
+   */
   forcePhase(phase: number): boolean {
-    if (phase === 2 && this.state === "phase1") {
+    const next = phase === 0 ? ({ phase1: 2, phase2: 3, phase3a: 4 } as Record<string, number>)[this.state] : phase;
+    if (next === 2 && this.state === "phase1") {
       for (const site of this.remainingSites()) this.destroyNode(site.id, this.parts.get(`node:${site.id}`), true);
+      return true;
+    }
+    if (next === 3 && this.state === "phase2") {
+      const h = this.heart?.getComponent("minecraft:health");
+      if (h && h.currentValue > HEART_MAX * FLOOR_P2) h.setCurrentValue(HEART_MAX * FLOOR_P2);
+      this.heartHpCache = Math.min(this.heartHpCache, HEART_MAX * FLOOR_P2);
+      this.startRefold();
+      return true;
+    }
+    if (next === 4 && this.state === "phase3a") {
+      for (let k = 0; k < ANCHORS; k++) if (!this.anchorsCut.has(k) && !this.anchorsDying.has(k)) this.severAnchor(k, this.parts.get(`anchor:${k}`), true);
       return true;
     }
     return false;
   }
 
   forceAbility(id: string): boolean {
-    if (this.state !== "phase1" && this.state !== "phase2") return false;
+    if (!["phase1", "phase2", "phase3a", "phase3b"].includes(this.state)) return false;
     if (!ABILITY_IDS.includes(id as AbilityId)) return false;
-    if (id === "great_unfolding") return this.state === "phase1" ? this.forcePhase(2) : this.startRebloom();
+    if (id === "great_unfolding") {
+      if (this.state === "phase1") return this.forcePhase(2);
+      if (this.state === "phase2") return this.startRebloom() || this.forcePhase(3);
+      if (this.state === "phase3a") return this.forcePhase(4);
+      return false;
+    }
     return this.director.force(id as AbilityId, undefined);
   }
 
   killBoss(): boolean {
     if (this.state === "phase1") this.forcePhase(2);
-    if (this.state === "phase2") {
+    if (this.state === "phase2" || this.state === "phase3a" || this.state === "phase3b") {
       this.startVictory();
       return true;
     }
     return false;
+  }
+
+  // ------------------------------------------------------------------ Phase 3 queries (MMContext)
+  arena(): ArenaKind {
+    if (this.islandsBuilt) return "islands";
+    return this.phase >= 2 ? "disk" : "body";
+  }
+
+  anchors(): AnchorInfo[] {
+    const out: AnchorInfo[] = [];
+    if (this.phase !== 3) return out;
+    for (let k = 0; k < ANCHORS; k++) {
+      if (this.anchorsCut.has(k) || this.anchorsDying.has(k)) continue;
+      out.push({ k, pos: anchorSite(k).pos, entity: this.parts.get(`anchor:${k}`) });
+    }
+    return out;
+  }
+
+  islands(): Island[] {
+    return this.islandsBuilt ? islandLayout() : [];
+  }
+
+  heartSlamming(): boolean {
+    return this.state === "phase3b" && (this.slam === "falling" || this.slam === "down");
+  }
+
+  /** A spot on a ring island whose cells are free (Phase 3B rescue / rejoin). */
+  private islandSpot(): { pos: V3; facing: V3 } {
+    const ring = islandLayout().filter((s) => s.i > 0);
+    const start = Math.floor(this.rng() * ring.length);
+    const facing = { x: MM.heart.x, y: HOVER_Y + 3, z: MM.heart.z };
+    for (let k = 0; k < ring.length; k++) {
+      const s = ring[(start + k) % ring.length];
+      if (this.writer.hasDeferredIn(Math.floor(s.cx), Math.floor(s.cz), Math.floor(s.cx), Math.floor(s.cz))) continue;
+      try {
+        const feet = this.dim.getBlock({ x: s.cx, y: s.top + 1, z: s.cz });
+        const below = this.dim.getBlock({ x: s.cx, y: s.top, z: s.cz });
+        if (feet?.isAir && below && !below.isAir) return { pos: { x: s.cx, y: s.top + 1.05, z: s.cz }, facing };
+      } catch {
+        /* unloaded */
+      }
+    }
+    const c = islandLayout()[0];
+    return { pos: { x: c.cx + 4, y: c.top + 1.05, z: c.cz }, facing };
   }
 
   stop(reason: "victory" | "defeat" | "abort"): void {
@@ -255,7 +374,11 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
 
   zoneOf(p: Player): Zone {
     const { x, y, z } = p.location;
-    if (this.phase === 2) {
+    if (this.arena() === "islands") {
+      const s = islandAt(x, z, this.islands());
+      return s && y >= s.top - 2 ? "disk" : "other";
+    }
+    if (this.phase >= 2) {
       const r = Math.hypot(x - MM.heart.x, z - MM.heart.z);
       if (r <= D.outerR + 0.5) return y >= D.y - 0.5 ? "disk" : "mantle";
       return "shelf";
@@ -281,11 +404,14 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
   }
 
   enraged(): boolean {
-    return this.phase === 2 && this.heartHp() < HEART_MAX * 0.2;
+    const hp = this.heartHp();
+    if (this.phase === 2) return this.rebloomed && hp < HEART_MAX * 0.42;
+    if (this.phase === 3) return (this.state === "phase3a" && this.now - this.p3aStart > P3A_ENRAGE) || hp < HEART_MAX * 0.1;
+    return false;
   }
 
   exposeHeart(ticks: number): void {
-    if (this.state !== "phase2") return;
+    if (this.state !== "phase2" && this.state !== "phase3a") return;
     this.exposedUntil = this.now + ticks;
     this.director.lastExposure = this.now;
     this.heartProp(PROP.open, true);
@@ -461,35 +587,62 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     }
     this.wantHeart(saved);
     this.wantNodes(saved);
-    if (saved && saved.phase === 2) {
+    if (saved && saved.phase >= 2) {
       this.layout = Number(saved.data.layout ?? 0);
       this.rebloomed = Boolean(saved.data.rebloomed);
+      const stage = saved.phase === 3 ? String(saved.data.stage ?? "3a") : "2";
+      for (const k of (saved.data.anchorsCut as number[] | undefined) ?? []) this.anchorsCut.add(Number(k));
       const all = sectorColumns(1, 0)[0];
       for (let i = 0; i < all.length; i += 400) {
         cutColumns(this.writer, all.slice(i, i + 400));
         yield 1;
       }
       while (this.writer.pending > 0) yield 1;
-      placeDisk(this.dim, this.writer, this.layout, 0);
-      for (let k = 0; k < PETALS; k++) this.petal(k, 1);
-      this.setLegPose(1);
       this.terrain.enabled = false;
       const inside = this.audience();
-      for (let i = 0; i < inside.length; i++) {
-        const at = ringSpot(i, inside.length).pos;
-        yield* this.settleArea(Math.floor(at.x) - 2, Math.floor(at.z) - 2, Math.floor(at.x) + 2, Math.floor(at.z) + 2, 200);
-      }
-      inside.forEach((p, i) => {
-        const r = ringSpot(i, inside.length);
-        try {
-          p.teleport(r.pos, { facingLocation: r.facing });
-          p.removeEffect("slow_falling");
-          p.removeEffect("resistance");
-        } catch {
-          /* ignore */
+      if (stage === "3b") {
+        // the fall already happened: islands, collapsed roots, the heart hovering
+        this.phase = 3;
+        yield* shatterDisk(this.writer);
+        this.islandsBuilt = true;
+        this.setLegPose(2);
+        this.heartProp(PROP.phase, 3);
+        this.moveHeart(HOVER_Y);
+        for (const s of islandLayout().filter((q) => q.i > 0).slice(0, Math.max(1, inside.length)))
+          yield* this.settleArea(Math.floor(s.cx - s.r), Math.floor(s.cz - s.r), Math.ceil(s.cx + s.r), Math.ceil(s.cz + s.r), 200);
+        inside.forEach((p) => {
+          const spot = this.islandSpot();
+          try {
+            p.teleport(spot.pos, { facingLocation: spot.facing });
+            p.removeEffect("slow_falling");
+            p.removeEffect("resistance");
+          } catch {
+            /* ignore */
+          }
+        });
+        this.enterPhase3b();
+      } else {
+        placeDisk(this.dim, this.writer, this.layout, 0);
+        for (let k = 0; k < PETALS; k++) this.petal(k, stage === "3a" ? 4 : 1);
+        this.setLegPose(stage === "3a" ? 3 : 1);
+        if (stage === "3a") this.spawnAnchors();
+        for (let i = 0; i < inside.length; i++) {
+          const at = ringSpot(i, inside.length).pos;
+          yield* this.settleArea(Math.floor(at.x) - 2, Math.floor(at.z) - 2, Math.floor(at.x) + 2, Math.floor(at.z) + 2, 200);
         }
-      });
-      this.enterPhase2(false);
+        inside.forEach((p, i) => {
+          const r = ringSpot(i, inside.length);
+          try {
+            p.teleport(r.pos, { facingLocation: r.facing });
+            p.removeEffect("slow_falling");
+            p.removeEffect("resistance");
+          } catch {
+            /* ignore */
+          }
+        });
+        if (stage === "3a") this.enterPhase3a();
+        else this.enterPhase2(false);
+      }
     } else {
       if (!saved) {
         this.camTo({ x: -30, y: 150, z: -96 }, { x: -4, y: 140, z: -50 }, 3);
@@ -579,7 +732,7 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
   private wantNodes(saved?: SavedEncounter): void {
     const dead = new Set<string>(((saved?.data.nodeDead as string[] | undefined) ?? []).map(String));
     for (const id of dead) this.nodeDead.add(id);
-    if (saved && saved.phase === 2) return;
+    if (saved && saved.phase >= 2) return;
     for (const site of this.m.nodes) {
       if (dead.has(site.id)) continue;
       this.parts.want(`node:${site.id}`, { type: ENT.node, pos: site.pos, props: site.id === "root" ? { [PROP.hanging]: true } : {} });
@@ -649,7 +802,37 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
 
   /** Chat briefing: where the remaining nodes are (once per player per fight). */
   private brief(p: Player): void {
-    if (this.state !== "phase1" || this.briefed.has(p.id)) return;
+    if (this.briefed.has(p.id)) return;
+    if (this.state === "phase3a" || this.state === "phase3b") {
+      this.briefed.add(p.id);
+      const lines =
+        this.state === "phase3a"
+          ? [
+              tr(p, "§6◆ §ePhase 3 — The Last Migration", "§6◆ §eเฟส 3 — การอพยพครั้งสุดท้าย"),
+              tr(
+                p,
+                "§7The mountain walks away across the cloud sea. §fFour Anchorage Roots§7 grip the disk (§6★§7 on the locator bar): break each root's glowing sinew knot — every severed root opens the heart for a few seconds.",
+                "§7ภูเขากำลังเดินหนีไปบนทะเลเมฆ §fรากยึดเกาะ 4 ราก§7 จับลานไว้ (§6★§7 บนแถบระบุตำแหน่ง) ตีปมเอ็นเรืองแสงของแต่ละรากให้ขาด ทุกรากที่ขาด หัวใจจะเปิดให้ตีสักพัก",
+              ),
+              tr(p, "§7Jump the rolling ridges of its march.", "§7กระโดดข้ามคลื่นหินจากการก้าวเดิน"),
+            ]
+          : [
+              tr(p, "§5◆ §dThe Heart Unbound", "§5◆ §dหัวใจหลุดจากร่าง"),
+              tr(
+                p,
+                "§7The heart hovers over the centre island: §fbows and crossbows§7 hurt it (half damage). Every ~20 s it §fslams down§7 — get clear of the centre, then strike it while it is down.",
+                "§7หัวใจลอยอยู่เหนือเกาะกลาง §fธนูและหน้าไม้§7 ทำดาเมจได้ (ครึ่งเดียว) ทุก ~20 วินาทีมันจะ§fกระแทกลงมา§7 — หลบออกจากเกาะกลางก่อน แล้วตีตอนมันอยู่บนพื้น",
+              ),
+              tr(p, "§7Jump between the islands; a fall into the clouds throws you back with a little damage.", "§7กระโดดข้ามเกาะไปมาได้ ตกลงไปในเมฆจะถูกเหวี่ยงกลับมาพร้อมเสียเลือดนิดหน่อย"),
+            ];
+      try {
+        p.sendMessage(lines.join("\n"));
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
+    if (this.state !== "phase1") return;
     const left = this.remainingSites();
     if (!left.length) return;
     this.briefed.add(p.id);
@@ -753,7 +936,7 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
       this.writer.retryDeferred(urgent ? 2500 : this.writer.pending > 0 ? 300 : 1200, here);
     }
     if (this.now % 10 === 0) this.syncHeartHp();
-    const fighting = this.state === "phase1" || this.state === "phase2";
+    const fighting = FIGHTING.includes(this.state);
     const everyone = this.audience();
     if (this.state === "phase1" && this.terrain.enabled) {
       const lifts = this.terrain.tick(everyone);
@@ -768,6 +951,8 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     if (this.now % 4 === 0) this.rescue(everyone);
     if (this.state === "phase2") this.phase2Upkeep(everyone);
     if (this.state === "phase1") this.phase1Upkeep(everyone);
+    if (this.state === "phase3a") this.phase3aUpkeep(everyone);
+    if (this.state === "phase3b") this.phase3bUpkeep(everyone);
     if (fighting) this.checkDefeat();
   }
 
@@ -813,6 +998,29 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
           left > 0
             ? tr(p, `§5◆ §dLithic Heart §aEXPOSED §f${Math.ceil(left / 20)}s`, `§5◆ §dหัวใจศิลา §aเปิดออกแล้ว §f${Math.ceil(left / 20)} วิ`) + zoneHint(p)
             : tr(p, "§5◆ §dLithic Heart §7sealed — survive its attacks to make it open", "§5◆ §dหัวใจศิลา §7ปิดอยู่ — เอาตัวรอดจากการโจมตีจนกว่ามันจะเปิด") + zoneHint(p),
+        );
+    } else if (this.state === "phase3a") {
+      const left = Math.max(0, this.exposedUntil - this.now);
+      const anchors = this.anchors();
+      for (const p of everyone) {
+        let line = tr(p, `§6◆ §eAnchorage Roots severed §f${ANCHORS - anchors.length}/${ANCHORS}`, `§6◆ §eตัดรากยึดเกาะแล้ว §f${ANCHORS - anchors.length}/${ANCHORS}`);
+        if (left > 0) line += tr(p, ` §8| §aHEART EXPOSED §f${Math.ceil(left / 20)}s`, ` §8| §aหัวใจเปิด §f${Math.ceil(left / 20)} วิ`);
+        else if (anchors.length) {
+          const n = anchors.reduce((a, b) => (dist3(a.pos, p.location) < dist3(b.pos, p.location) ? a : b));
+          const d = Math.round(dist3(n.pos, p.location));
+          line += tr(p, ` §8| §7nearest root §f${d}m ${arrow(p, n.pos, "en")}`, ` §8| §7รากใกล้สุด §f${d} ม. ${arrow(p, n.pos, "th")}`);
+        }
+        actionbar([p], line);
+      }
+    } else if (this.state === "phase3b") {
+      const down = this.heartSlamming();
+      const left = Math.max(0, this.slamUntil - this.now);
+      for (const p of everyone)
+        actionbar(
+          [p],
+          down
+            ? tr(p, `§5◆ §dThe Heart Unbound §aDOWN — strike it! §f${Math.ceil(left / 20)}s`, `§5◆ §dหัวใจหลุดจากร่าง §aตกลงมาแล้ว — ตีเลย! §f${Math.ceil(left / 20)} วิ`)
+            : tr(p, "§5◆ §dThe Heart Unbound §7hovering — shoot it, or wait for it to slam down", "§5◆ §dหัวใจหลุดจากร่าง §7กำลังลอย — ยิงมัน หรือรอให้มันกระแทกลงมา"),
         );
     } else if (this.state === "aftermath") {
       const left = Math.max(0, this.aftermathEnd - this.now);
@@ -891,6 +1099,8 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
       }
     }
     if (!this.rebloomed && this.heartHp() < HEART_MAX * REBLOOM_AT && !this.director.busy) this.startRebloom();
+    // at the Phase 2 floor the heart can take no more: the mountain refolds and starts to walk
+    if (this.heartHp() <= HEART_MAX * FLOOR_P2 + 1 && this.now >= this.exposedUntil && !this.tasks.count("mm:ability:great_unfolding")) this.startRefold();
   }
 
   private trackSlabs(): void {
@@ -913,7 +1123,8 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     for (const p of everyone) {
       if (p.location.y > 108) continue;
       let to: V3;
-      if (this.phase === 2) to = this.safeRingSpot().pos;
+      if (this.arena() === "islands") to = this.islandSpot().pos;
+      else if (this.phase >= 2) to = this.safeRingSpot().pos;
       else {
         const pts = this.m.pathPoints;
         let best = pts[0];
@@ -956,17 +1167,43 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     const e = ev.hurtEntity;
     if (!e.typeId.startsWith("anatomy:mm_")) return;
     if (e.typeId === ENT.heart) {
-      if (this.state !== "phase2" || this.now >= this.exposedUntil) {
+      const open = this.state === "phase3b" || ((this.state === "phase2" || this.state === "phase3a") && this.now < this.exposedUntil);
+      if (!open) {
         ev.cancel = true;
         const src = ev.damageSource.damagingEntity;
         system.run(() => this.deflect(e, src));
         return;
       }
-      ev.damage *= this.partyScale(0.55) * HEART_DAMAGE;
+      let dmg = ev.damage * this.partyScale(0.55) * HEART_DAMAGE;
+      // Phase 3B: half damage while it hovers (bows and crossbows), full when it is down on the centre island
+      if (this.state === "phase3b" && !this.heartSlamming()) dmg *= 0.5;
       const hp = e.getComponent("minecraft:health")?.currentValue ?? HEART_MAX;
-      if (hp - ev.damage <= 1) {
+      const floor = this.state === "phase2" ? HEART_MAX * FLOOR_P2 : this.state === "phase3a" ? HEART_MAX * FLOOR_P3A : 0;
+      if (floor > 0 && hp - dmg <= floor) {
+        // a phase ends at its floor: the heart can take no more until the next one
+        ev.damage = Math.max(0, hp - floor);
+        if (ev.damage <= 0) ev.cancel = true;
+        return;
+      }
+      ev.damage = dmg;
+      if (floor === 0 && hp - dmg <= 1) {
         ev.cancel = true;
         system.run(() => this.startVictory());
+      }
+      return;
+    }
+    if (e.typeId === ENT.anchor) {
+      const key = this.parts.keyOf(e);
+      const k = key?.startsWith("anchor:") ? Number(key.slice(7)) : NaN;
+      if (this.state !== "phase3a" || !Number.isFinite(k) || this.anchorsDying.has(k) || this.anchorsCut.has(k)) {
+        ev.cancel = true;
+        return;
+      }
+      ev.damage *= this.partyScale(0.45);
+      const hp = e.getComponent("minecraft:health")?.currentValue ?? 0;
+      if (hp - ev.damage <= 0.5) {
+        ev.cancel = true;
+        system.run(() => this.severAnchor(k, e, false));
       }
       return;
     }
@@ -999,7 +1236,7 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
         /* ignore */
       }
       particle(this.dim, PX.shard, this.heartCentre(), { size: 0.8 });
-    } else if (e.typeId === ENT.node) {
+    } else if (e.typeId === ENT.node || e.typeId === ENT.anchor) {
       particle(this.dim, PX.shard, { x: e.location.x, y: e.location.y + 1.6, z: e.location.z }, { size: 0.5 });
     }
   }
@@ -1204,11 +1441,282 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     return true;
   }
 
+  // ------------------------------------------------------------------ Phase 3
+  private phase3Hooks(): Phase3Hooks {
+    return {
+      spawnAnchors: () => this.spawnAnchors(),
+      enterPhase3a: () => this.enterPhase3a(),
+      shatter: () => this.shatter(),
+      moveHeart: (y) => this.moveHeart(y),
+      removePetals: () => this.parts.propAll("petal:", PROP.petalState, 3),
+      enterPhase3b: () => this.enterPhase3b(),
+    };
+  }
+
+  /** Phase 2 -> 3A: The Last Migration. */
+  private startRefold(): void {
+    if (this.state !== "phase2") return;
+    this.state = "refolding";
+    this.exposedUntil = 0;
+    this.heartProp(PROP.open, false);
+    this.director.reset(this.now, 9999);
+    this.tasks.cancelAll("mm:ability");
+    for (const sl of this.slabs) if (sl.e.isValid) sl.e.remove();
+    this.slabs = [];
+    try {
+      for (const e of this.dim.getEntities({ type: ENT.plate })) e.remove();
+    } catch {
+      /* ignore */
+    }
+    // cancelled abilities leave ridges, walls and carved ribs behind: the disk the roots seize is pristine
+    restoreDisk(this.writer, this.layout);
+    this.tasks.start("mm:refold", refoldToMigration(this, this.phase3Hooks()), (err) => {
+      console.error(`[anatomy] refold failed: ${String(err)}`);
+      this.spawnAnchors();
+      this.enterPhase3a();
+    });
+  }
+
+  private spawnAnchors(): void {
+    for (let k = 0; k < ANCHORS; k++) {
+      if (this.anchorsCut.has(k) || this.parts.has(`anchor:${k}`)) continue;
+      const s = anchorSite(k);
+      this.parts.want(`anchor:${k}`, { type: ENT.anchor, pos: s.pos, yaw: s.yaw });
+    }
+  }
+
+  private enterPhase3a(): void {
+    this.phase = 3;
+    this.state = "phase3a";
+    this.p3aStart = this.now;
+    this.nextStep = this.now + 40;
+    this.terrain.enabled = false;
+    this.heartProp(PROP.phase, 2);
+    for (const p of this.audience())
+      try {
+        p.playMusic(MUSIC.phase3, { fade: 2, loop: true, volume: 0.9 });
+      } catch {
+        /* ignore */
+      }
+    this.director.reset(this.now, 100);
+    this.briefed.clear();
+    for (const p of this.audience()) this.brief(p);
+    manager.save();
+  }
+
+  /**
+   * Phase 3A: nothing solid grows over a live Anchorage Root's foot (waves, ridges and rubble pass around
+   * it) - an entity is lit by the block at its anchor, and a root inside a block renders black.
+   */
+  private writeAllowed(x: number, y: number, z: number, b: number): boolean {
+    if (b === P.AIR || this.phase !== 3 || this.islandsBuilt || y < D.y + 1 || y > D.y + 4) return true;
+    for (let k = 0; k < ANCHORS; k++) {
+      if (this.anchorsCut.has(k)) continue;
+      const a = ANCHOR_SITES[k];
+      if (Math.abs(x + 0.5 - a.x) <= 1.6 && Math.abs(z + 0.5 - a.z) <= 1.6) return false;
+    }
+    return true;
+  }
+
+  /** An Anchorage Root's sinew snaps: the mountain staggers and the heart opens. */
+  private severAnchor(k: number, e: Entity | undefined, silent: boolean): void {
+    if (this.anchorsDying.has(k) || this.anchorsCut.has(k)) return;
+    this.anchorsDying.add(k);
+    const ent = this.parts.release(`anchor:${k}`) ?? (e?.isValid ? e : undefined);
+    const at = anchorSite(k).pos;
+    try {
+      ent?.setProperty(PROP.dying, true);
+    } catch {
+      /* ignore */
+    }
+    this.removeWaypoint(`anchor:${k}`);
+    sound(this.dim, SND.sinewSnap, at, 1, 1);
+    sound(this.dim, SND.rootTear, at, 1, 0.7);
+    particle(this.dim, PX.shard, { x: at.x, y: at.y + 2, z: at.z }, { size: 2.2 });
+    particle(this.dim, PX.debris, at, { size: 2.5 });
+    quake(this.audience(), at, 1.8, 1.2, 80);
+    sound(this.dim, SND.groan, this.heartCentre(), 1, 0.75);
+    // the mountain staggers toward the lost root
+    for (const p of this.combatants()) knock(p, at.x - MM.heart.x, at.z - MM.heart.z, 0.35, 0.3);
+    if (!silent) this.exposeHeart(ANCHOR_WINDOW);
+    this.tasks.start(`mm:anchor:${k}`, this.anchorDeath(k, ent, silent));
+  }
+
+  private *anchorDeath(k: number, e: Entity | undefined, silent: boolean): Co {
+    yield 56;
+    try {
+      if (e?.isValid) e.remove();
+    } catch {
+      /* ignore */
+    }
+    this.anchorsDying.delete(k);
+    this.anchorsCut.add(k);
+    const n = this.anchorsCut.size;
+    if (!silent) titleFor(this.audience(), (p) => ["", tr(p, `§6Anchorage Root severed §f(${n}/${ANCHORS})`, `§6ตัดรากยึดเกาะแล้ว §f(${n}/${ANCHORS})`)], 40, 5, 15);
+    manager.save();
+    if (n >= ANCHORS && this.state === "phase3a") this.fallAfter = Math.max(this.now, this.exposedUntil);
+  }
+
+  private phase3aUpkeep(everyone: Player[]): void {
+    const heartC = this.heartCentre();
+    if (this.exposedUntil > 0 && this.now >= this.exposedUntil) {
+      this.exposedUntil = 0;
+      this.heartProp(PROP.open, false);
+      sound(this.dim, SND.heartClose, heartC, 1, 1);
+    }
+    if (this.now % 10 === 0) particle(this.dim, PX.heartGlow, heartC, { intensity: this.exposedUntil > this.now ? 1 : 0 });
+    // the march: a heavy footfall every few seconds, a rolling ridge every third one
+    if (this.now >= this.nextStep) {
+      this.steps++;
+      this.nextStep = this.now + (this.enraged() ? 40 : 60);
+      sound(this.dim, SND.step, { x: MM.heart.x - this.walkDir.x * 30, y: D.y - 8, z: MM.heart.z - this.walkDir.z * 30 }, 1, 0.7);
+      quake(everyone, heartC, 0.45, 0.35, 90);
+      if (this.steps % 3 === 0 && !this.tasks.count("mm:gait")) this.tasks.start("mm:gait", marchWave(this, this.enraged() ? 2 : 1, 3, false));
+    }
+    // the cloud sea streams past the walking body
+    if (this.now % 8 === 0)
+      for (const p of everyone)
+        particle(
+          this.dim,
+          PX.cloudStream,
+          { x: p.location.x + this.walkDir.x * 14, y: p.location.y + 1, z: p.location.z + this.walkDir.z * 14 },
+          { dir: { x: -this.walkDir.x, y: 0, z: -this.walkDir.z }, speed: 16 },
+        );
+    if (this.now % 64 === 0) sound(this.dim, SND.heartbeat, heartC, 0.9, this.enraged() ? 1.3 : 1.1);
+    if (this.now - this.p3aStart === P3A_ENRAGE) for (const p of everyone) p.sendMessage(tr(p, "§c⚠ The mountain gathers speed — it is escaping!", "§c⚠ ภูเขาเร่งฝีเท้า — มันกำลังหนี!"));
+    if (this.fallAfter >= 0 && this.now >= this.fallAfter) {
+      this.fallAfter = -1;
+      this.startFall();
+    }
+  }
+
+  /** 3A -> 3B: The Mountain Falls. */
+  private startFall(): void {
+    if (this.state !== "phase3a") return;
+    this.state = "falling";
+    this.exposedUntil = 0;
+    this.director.reset(this.now, 9999);
+    this.tasks.cancelAll("mm:ability");
+    this.tasks.cancelAll("mm:gait");
+    for (const sl of this.slabs) if (sl.e.isValid) sl.e.remove();
+    this.slabs = [];
+    this.clearWaypoints();
+    this.tasks.start("mm:fall", mountainFalls(this, this.phase3Hooks()), (err) => {
+      console.error(`[anatomy] fall failed: ${String(err)}`);
+      if (!this.islandsBuilt) this.tasks.start("mm:shatter", this.shatter());
+      this.heartProp(PROP.phase, 3);
+      this.moveHeart(HOVER_Y);
+      this.enterPhase3b();
+    });
+  }
+
+  private *shatter(): Co {
+    // plates and rubble of the last abilities go with the disk
+    try {
+      for (const e of this.dim.getEntities({ type: ENT.plate })) e.remove();
+    } catch {
+      /* ignore */
+    }
+    this.islandsBuilt = true;
+    yield* shatterDisk(this.writer);
+  }
+
+  private moveHeart(y: number): void {
+    const h = this.heart;
+    if (!h) return;
+    try {
+      h.teleport({ x: MM.heart.x, y, z: MM.heart.z });
+    } catch {
+      /* stale */
+    }
+  }
+
+  private enterPhase3b(): void {
+    this.phase = 3;
+    this.state = "phase3b";
+    this.islandsBuilt = true;
+    this.heartProp(PROP.phase, 3);
+    this.heartProp(PROP.open, true);
+    this.slam = "hover";
+    this.slamAt = this.now + 260;
+    for (let k = 0; k < PETALS; k++) this.parts.drop(`petal:${k}`);
+    for (let k = 0; k < ANCHORS; k++) this.parts.drop(`anchor:${k}`);
+    this.director.reset(this.now, 80);
+    this.briefed.clear();
+    for (const p of this.audience()) this.brief(p);
+    manager.save();
+  }
+
+  /** The heart hovers, warns, slams down on the centre island, stays down for a melee window, rises. */
+  private phase3bUpkeep(everyone: Player[]): void {
+    const c = { x: MM.heart.x, y: D.y + 1, z: MM.heart.z };
+    const h = this.heart;
+    const hy = h?.location.y ?? HOVER_Y;
+    if (this.now % 10 === 0) particle(this.dim, PX.heartGlow, { x: c.x, y: hy + 3, z: c.z }, { intensity: this.heartSlamming() ? 1 : 0.4 });
+    if (this.now % 48 === 0) sound(this.dim, SND.heartbeat, { x: c.x, y: hy + 3, z: c.z }, 1, this.enraged() ? 1.35 : 1.15);
+    switch (this.slam) {
+      case "hover":
+        if (this.now % 4 === 0) this.moveHeart(HOVER_Y + Math.sin(this.now / 18) * 0.6);
+        if (this.now >= this.slamAt - 40 && !this.director.busy) {
+          this.slam = "warn";
+          titleFor(everyone, (p) => ["", tr(p, "§c⚠ The heart is about to slam down — clear the centre!", "§c⚠ หัวใจกำลังจะกระแทกลงมา — ออกจากเกาะกลาง!")], 30, 4, 8);
+          sound(this.dim, SND.warn, c, 1, 0.8);
+        }
+        break;
+      case "warn":
+        if (this.now % 4 === 0) particle(this.dim, PX.target, c, { radius: 4.5, life: 0.4 });
+        if (this.now >= this.slamAt) {
+          this.slam = "falling";
+          this.slamUntil = this.now + 8;
+        }
+        break;
+      case "falling": {
+        const k = 1 - (this.slamUntil - this.now) / 8;
+        this.moveHeart(HOVER_Y + (SLAM_Y - HOVER_Y) * Math.min(1, k * k));
+        if (this.now >= this.slamUntil) {
+          this.moveHeart(SLAM_Y);
+          this.slam = "down";
+          this.slamUntil = this.now + SLAM_DOWN;
+          sound(this.dim, SND.quake, c, 1, 0.7);
+          sound(this.dim, SND.heartOpen, c, 1, 0.9);
+          quake(everyone, c, 2.2, 0.9, 60);
+          particle(this.dim, PX.debris, c, { size: 3 });
+          for (const p of this.combatants()) {
+            const r = Math.hypot(p.location.x - c.x, p.location.z - c.z);
+            if (r < 4.5 && Math.abs(p.location.y - c.y) < 4) {
+              this.hurt(p, 9, EntityDamageCause.entityAttack);
+              knock(p, p.location.x - c.x || 1, p.location.z - c.z, 1.1, 0.5);
+            }
+          }
+          this.tasks.start("mm:slam", slamRings(this, this.enraged() ? 3 : 2));
+          titleFor(everyone, (p) => ["", tr(p, "§a◆ The heart is DOWN — strike it now!", "§a◆ หัวใจตกลงมาแล้ว — ตีเลย!")], 40, 4, 10);
+        }
+        break;
+      }
+      case "down":
+        if (this.now >= this.slamUntil) {
+          this.slam = "rising";
+          this.slamUntil = this.now + 30;
+          sound(this.dim, SND.heartRise, c, 0.8, 1.3);
+        }
+        break;
+      case "rising": {
+        const k = 1 - (this.slamUntil - this.now) / 30;
+        this.moveHeart(SLAM_Y + (HOVER_Y - SLAM_Y) * Math.min(1, k));
+        if (this.now >= this.slamUntil) {
+          this.slam = "hover";
+          this.slamAt = this.now + (this.enraged() ? SLAM_EVERY - 100 : SLAM_EVERY);
+        }
+        break;
+      }
+    }
+  }
+
   // ------------------------------------------------------------------ victory & cleanup
   private aftermathEnd = 0;
 
   private startVictory(): void {
-    if (this.state !== "phase2") return;
+    if (this.state !== "phase2" && this.state !== "phase3a" && this.state !== "phase3b") return;
     this.state = "victory";
     this.director.reset(this.now, 999999);
     this.tasks.cancelAll("mm:ability");
@@ -1228,18 +1736,19 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
     );
   }
 
+  /** Rewards: a bundle into every player's inventory, a shared pile at the heart, and the mountain's gear. */
   private dropLoot(): void {
     const n = Math.max(1, this.combatants().length);
-    const at = { x: MM.heart.x, y: D.y + 1.5, z: MM.heart.z + 6 };
+    const at = { x: MM.heart.x, y: D.y + 1.5, z: MM.heart.z + 5 };
     this.lootSpot = at;
-    const drops: [string, number][] = [
-      ["anatomy:lithic_heart_shard", 1 + n],
-      ["minecraft:amethyst_shard", 16 + Math.floor(this.rng() * 9)],
-      ["minecraft:diamond", 2 + Math.floor(this.rng() * 3)],
-      ["minecraft:emerald", 4 + Math.floor(this.rng() * 5)],
-      ["minecraft:moss_block", 8],
+    for (const p of this.audience()) this.givePersonalLoot(p);
+    const shared: [string, number][] = [
+      ["minecraft:amethyst_shard", 64],
+      ["minecraft:diamond", 6 + 2 * n],
+      ["minecraft:emerald", 12 + 4 * n],
+      ["minecraft:netherite_ingot", 1 + Math.floor(n / 2)],
     ];
-    for (const [id, count] of drops) {
+    for (const [id, count] of shared) {
       try {
         this.dim.spawnItem(new ItemStack(id, count), at);
       } catch (e) {
@@ -1247,12 +1756,92 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
       }
     }
     try {
-      this.dim.spawnXp(at, 600);
+      this.dim.spawnXp(at, 1500);
     } catch {
       /* ignore */
     }
     particle(this.dim, PX.pillar, at, { radius: 1.5, life: 20 });
     sound(this.dim, SND.chime, at, 1, 1.2);
+  }
+
+  private givePersonalLoot(p: Player): void {
+    const r = (a: number, b: number) => a + Math.floor(this.rng() * (b - a + 1));
+    const stacks: ItemStack[] = [
+      new ItemStack(ITEM.shard, 3),
+      new ItemStack("minecraft:diamond", r(8, 12)),
+      new ItemStack("minecraft:emerald", r(16, 24)),
+      new ItemStack("minecraft:netherite_scrap", r(2, 3)),
+      new ItemStack("minecraft:gold_ingot", 16),
+      new ItemStack("minecraft:golden_apple", 4),
+      new ItemStack("minecraft:experience_bottle", 32),
+      this.enchantedBook(),
+      this.enchantedBook(),
+    ];
+    // the mountain's own gear: certain on a player's first victory, then 40% each
+    let first = true;
+    try {
+      first = p.getDynamicProperty(GEAR_KEY) !== true;
+    } catch {
+      /* ignore */
+    }
+    const gear: string[] = [];
+    for (const id of [ITEM.breaker, ITEM.greaves])
+      if (first || this.rng() < 0.4) {
+        stacks.push(new ItemStack(id, 1));
+        gear.push(id);
+      }
+    try {
+      if (first) p.setDynamicProperty(GEAR_KEY, true);
+    } catch {
+      /* ignore */
+    }
+    const inv = p.getComponent("minecraft:inventory")?.container;
+    for (const st of stacks) {
+      let left: ItemStack | undefined = st;
+      try {
+        if (inv) left = inv.addItem(st);
+      } catch {
+        left = st;
+      }
+      // a full inventory: the rest lands at their feet (and is carried home if left behind)
+      if (left)
+        try {
+          this.dim.spawnItem(left, p.location);
+        } catch {
+          /* ignore */
+        }
+    }
+    const names: Record<string, [string, string]> = { [ITEM.breaker]: ["Strata Breaker", "ค้อนชั้นหิน"], [ITEM.greaves]: ["Anchorage Greaves", "รองเท้ารากยึด"] };
+    const gearText = gear.map((g) => tr(p, names[g][0], names[g][1])).join(", ");
+    try {
+      p.sendMessage(
+        tr(p, "§d◆ The mountain's spoils are in your inventory", "§d◆ ของจากภูเขาเข้ากระเป๋าแล้ว") +
+          (gear.length ? tr(p, ` §7— and §6${gearText}§7!`, ` §7— และ §6${gearText}§7!`) : ""),
+      );
+    } catch {
+      /* ignore */
+    }
+  }
+
+  private enchantedBook(): ItemStack {
+    const options: [string, number][] = [
+      ["mending", 1],
+      ["unbreaking", 3],
+      ["protection", 4],
+      ["sharpness", 5],
+      ["efficiency", 5],
+      ["fortune", 3],
+      ["feather_falling", 4],
+      ["power", 5],
+    ];
+    const [id, level] = options[Math.floor(this.rng() * options.length)];
+    const book = new ItemStack("minecraft:enchanted_book", 1);
+    try {
+      book.getComponent("minecraft:enchantable")?.addEnchantment({ type: new EnchantmentType(id), level });
+    } catch (e) {
+      console.warn(`[anatomy] enchanted book ${id} failed: ${String(e)}`);
+    }
+    return book;
   }
 
   private *ending(reason: "victory" | "defeat" | "abort"): Co {
@@ -1315,19 +1904,22 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
   // ------------------------------------------------------------------ locator bar
   /** Purple ★ markers on every player's locator bar, one per remaining node (Phase 1 only). */
   private syncWaypoints(everyone: Player[]): void {
-    if (this.state !== "phase1") {
-      if (this.waypoints.size) this.clearWaypoints();
-      return;
-    }
-    if (this.waypointsBroken) return;
-    for (const site of this.remainingSites()) {
+    const targets: { id: string; pos: V3; color: { red: number; green: number; blue: number } }[] =
+      this.state === "phase1"
+        ? this.remainingSites().map((s) => ({ id: s.id, pos: { x: s.pos.x, y: s.pos.y + (s.id === "root" ? 0 : 1.7), z: s.pos.z }, color: NODE_COLOR }))
+        : this.state === "phase3a"
+          ? this.anchors().map((a) => ({ id: `anchor:${a.k}`, pos: { x: a.pos.x, y: a.pos.y + 2, z: a.pos.z }, color: ANCHOR_COLOR }))
+          : [];
+    for (const id of [...this.waypoints.keys()]) if (!targets.some((t) => t.id === id)) this.removeWaypoint(id);
+    if (!targets.length || this.waypointsBroken) return;
+    for (const site of targets) {
       let wp = this.waypoints.get(site.id);
       if (!wp) {
         try {
           wp = new LocationWaypoint(
-            { dimension: this.dim, x: site.pos.x, y: site.pos.y + (site.id === "root" ? 0 : 1.7), z: site.pos.z },
+            { dimension: this.dim, x: site.pos.x, y: site.pos.y, z: site.pos.z },
             { textureBoundsList: [{ lowerBound: 0, texture: WaypointTexture.SmallStar }] },
-            NODE_COLOR,
+            site.color,
           );
         } catch (e) {
           this.waypointsBroken = true;

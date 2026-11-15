@@ -42,6 +42,8 @@ export class BlockWriter {
   written = 0;
   /** Edits currently waiting for their chunk. */
   deferredOps = 0;
+  /** Optional veto for queued writes (e.g. keep a boss part's anchor cell clear). Return false to drop the write. */
+  guard?: (x: number, y: number, z: number, b: number) => boolean;
 
   constructor(
     readonly dim: Dimension,
@@ -55,6 +57,7 @@ export class BlockWriter {
   /** Queue a write (palette index). KEEP is ignored. */
   set(x: number, y: number, z: number, b: number): void {
     if (b === KEEP) return;
+    if (this.guard && !this.guard(x, y, z, b)) return;
     const k = key(x, y, z);
     if (!this.queue.has(k)) this.order.push(k);
     this.queue.set(k, b);

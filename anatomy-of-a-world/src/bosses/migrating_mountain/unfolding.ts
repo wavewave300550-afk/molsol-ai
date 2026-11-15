@@ -42,7 +42,7 @@ interface Hooks {
   onFinished(): void;
 }
 
-function lockPlayers(players: Player[], locked: boolean): void {
+export function lockPlayers(players: Player[], locked: boolean): void {
   for (const p of players) {
     try {
       p.inputPermissions.setPermissionCategory(InputPermissionCategory.Movement, !locked);
@@ -55,7 +55,7 @@ function lockPlayers(players: Player[], locked: boolean): void {
   }
 }
 
-function cam(players: Player[], at: V3, look: V3, ease: number): void {
+export function cam(players: Player[], at: V3, look: V3, ease: number): void {
   for (const p of players) {
     try {
       p.camera.setCamera("minecraft:free", ease > 0 ? { location: at, facingLocation: look, easeOptions: { easeTime: ease, easeType: EasingType.InOutSine } } : { location: at, facingLocation: look });

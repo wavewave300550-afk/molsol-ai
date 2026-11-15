@@ -17,6 +17,7 @@ import {
 import "./bosses/migrating_mountain/index.js";
 import { leaveArena } from "./core/arena.js";
 import { openAtlas, startFor } from "./core/atlas.js";
+import { foldSlam, greavesHurtBefore, greavesTick } from "./core/gear.js";
 import { tr } from "./core/lang.js";
 import { missingEntityTypes } from "./core/parts.js";
 import { manager } from "./core/manager.js";
@@ -54,6 +55,17 @@ system.beforeEvents.startup.subscribe((ev) => {
     onUse: (e) => {
       const p = e.source;
       system.run(() => consumeShard(p));
+    },
+  });
+  ev.itemComponentRegistry.registerCustomComponent("anatomy:fold_slam", {
+    onUse: (e) => {
+      const p = e.source;
+      system.run(() => foldSlam(p));
+    },
+    // used while looking at the ground
+    onUseOn: (e) => {
+      const p = e.source;
+      if (p instanceof Player) system.run(() => foldSlam(p));
     },
   });
   ev.itemComponentRegistry.registerCustomComponent("anatomy:summoner", {
@@ -134,7 +146,7 @@ function bossAction(p: Player | undefined, action: string, specimen?: string): s
       manager.stop("abort");
       return "stopping";
     case "skip":
-      return a?.forcePhase(2) ? "skipping to Phase 2" : "cannot skip now";
+      return a?.forcePhase(0) ? "skipping to the next phase" : "cannot skip now";
     case "kill":
       return a?.killBoss() ? "boss defeated" : "cannot kill now";
     case "status":
@@ -193,6 +205,7 @@ function giveAtlas(p: Player, force: boolean): void {
 world.afterEvents.worldLoad.subscribe(() => {
   manager.restore();
   system.runInterval(() => manager.tick(), 1);
+  system.runInterval(() => greavesTick(world.getAllPlayers()), 10);
 });
 
 /** Boss entity types the game did not register (their behaviour file was rejected), checked once. */
@@ -231,6 +244,7 @@ world.afterEvents.itemUse.subscribe((ev) => {
 });
 
 world.beforeEvents.entityHurt.subscribe((ev) => manager.onHurtBefore(ev));
+world.beforeEvents.entityHurt.subscribe((ev) => greavesHurtBefore(ev));
 world.afterEvents.entityHurt.subscribe((ev) => manager.onHurt(ev));
 world.afterEvents.projectileHitBlock.subscribe((ev) => manager.onProjectileHitBlock(ev));
 world.afterEvents.projectileHitEntity.subscribe((ev) => manager.onProjectileHitEntity(ev));

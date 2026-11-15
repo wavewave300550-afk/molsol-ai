@@ -15,8 +15,9 @@ import { Co } from "../../core/tasks.js";
 import { angleDiffDeg, clamp, distXZ, V3 } from "../../core/vec.js";
 import { ColFlag, MM } from "../../gen/mountain.js";
 import * as P from "../../gen/palette.js";
-import { MMContext } from "./context.js";
+import { AnchorInfo, MMContext } from "./context.js";
 import { ENT, PROP, PX, SND } from "./ids.js";
+import { islandAt } from "./runtime.js";
 import { foldField, patchField, updateWaveBounds, waveField } from "./terrain.js";
 
 export const ABILITY_IDS = [
@@ -70,7 +71,7 @@ function warn(players: Player[], name: string, hint: string): void {
 }
 
 function surface(ctx: MMContext, x: number, z: number): number {
-  return ctx.phase === 2 ? D.y : ctx.terrain.topAt(Math.floor(x), Math.floor(z));
+  return ctx.arena() !== "body" ? D.y : ctx.terrain.topAt(Math.floor(x), Math.floor(z));
 }
 
 function diskRadius(p: V3): number {
@@ -83,7 +84,7 @@ function diskAngle(p: V3): number {
 
 // ============================================================================ 01 CONTINENTAL FOLD
 export function* continentalFold(ctx: MMContext, target: Player): Co {
-  if (ctx.phase === 2) {
+  if (ctx.phase >= 2) {
     yield* petalFold(ctx, target);
     return;
   }
@@ -232,7 +233,7 @@ function* petalFold(ctx: MMContext, target: Player): Co {
 
 // ============================================================================ 02 LITHIC PERISTALSIS
 export function* lithicPeristalsis(ctx: MMContext, target: Player): Co {
-  if (ctx.phase === 2) {
+  if (ctx.phase >= 2) {
     yield* ribPeristalsis(ctx);
     return;
   }
@@ -394,7 +395,7 @@ function* ribPeristalsis(ctx: MMContext): Co {
 export function* geologicalShedding(ctx: MMContext, targets: Player[]): Co {
   const shots: { from: V3; to: V3 }[] = [];
   const extra = ctx.enraged() ? 2 : 1;
-  for (const pl of targets.slice(0, ctx.phase === 2 ? 4 : 3)) {
+  for (const pl of targets.slice(0, ctx.phase >= 2 ? 4 : 3)) {
     const vel = pl.getVelocity();
     for (let i = 0; i < 1 + (ctx.rng() < 0.5 ? extra : 0); i++) {
       const tx = pl.location.x + vel.x * 16 + (ctx.rng() - 0.5) * (i ? 6 : 2.5);
@@ -435,7 +436,11 @@ export function* geologicalShedding(ctx: MMContext, targets: Player[]): Co {
 }
 
 function groundBelow(ctx: MMContext, x: number, y: number, z: number): number {
-  if (ctx.phase === 2) {
+  if (ctx.arena() === "islands") {
+    const s = islandAt(x, z, ctx.islands());
+    return s ? s.top : Math.floor(y) - 30;
+  }
+  if (ctx.arena() === "disk") {
     const r = diskRadius({ x, y, z });
     if (r <= D.outerR + 0.5) return ctx.isWalkway(Math.floor(x), Math.floor(z)) ? D.y : D.mantleY;
   }
@@ -446,7 +451,7 @@ function groundBelow(ctx: MMContext, x: number, y: number, z: number): number {
 }
 
 function sheddingSource(ctx: MMContext, to: V3, pl: Player): V3 | undefined {
-  if (ctx.phase === 2) {
+  if (ctx.phase >= 2) {
     const valid = ctx.petals.filter((e) => e.isValid);
     if (!valid.length) return { x: to.x, y: to.y + 28, z: to.z };
     valid.sort((a, b) => distXZ(a.location, to) - distXZ(b.location, to));
@@ -506,14 +511,18 @@ function launchSlab(ctx: MMContext, from: V3, to: V3): void {
       /* ignore */
     }
   }
-  ctx.trackSlab(slab, to, ctx.now + T + 24, ctx.phase === 2 ? 11 : 9);
+  ctx.trackSlab(slab, to, ctx.now + T + 24, ctx.phase >= 2 ? 11 : 9);
 }
 
 // ============================================================================ 04 RESONANCE NETWORK
-export function* resonanceNetwork(ctx: MMContext, target: Player): Co {
+export function* resonanceNetwork(ctx: MMContext, target: Player, from?: AnchorInfo): Co {
   let src: V3;
   let srcEnt: Entity | undefined;
-  if (ctx.phase === 2) {
+  if (from) {
+    // Phase 3A: the rings come from an Anchorage Root
+    srcEnt = from.entity;
+    src = { x: from.pos.x, y: D.y + 1, z: from.pos.z };
+  } else if (ctx.phase >= 2) {
     srcEnt = ctx.heart;
     src = { x: HX, y: D.y + 1, z: HZ };
   } else {
@@ -525,7 +534,7 @@ export function* resonanceNetwork(ctx: MMContext, target: Player): Co {
     src = site.id === "root" ? { x: site.pos.x, y: MM.gallery.y + 1, z: site.pos.z } : { x: site.pos.x, y: site.pos.y, z: site.pos.z };
   }
   const charge = (on: boolean) => {
-    if (ctx.phase === 2) ctx.heartProp(PROP.charging, on);
+    if (!from && ctx.phase >= 2) ctx.heartProp(PROP.charging, on);
     else if (srcEnt) ctx.partProp(srcEnt, PROP.charging, on);
   };
   // phase 2 rings come from the heart's position whether or not its chunk is loaded right now
@@ -547,11 +556,11 @@ export function* resonanceNetwork(ctx: MMContext, target: Player): Co {
     particle(ctx.dim, PX.wave, src, { radius: 6, life: 0.6 });
     yield 5;
   }
-  const rings = (ctx.phase === 2 ? 4 : 3) + (ctx.enraged() ? 1 : 0);
-  const gap = ctx.phase === 2 ? 38 : 48;
-  const speed = ctx.phase === 2 ? 0.46 : 0.4;
-  const maxR = ctx.phase === 2 ? D.outerR + 1 : 27;
-  const interval = ctx.phase === 2 ? 24 : 28;
+  const rings = (ctx.phase >= 2 ? 4 : 3) + (ctx.enraged() ? 1 : 0);
+  const gap = ctx.phase >= 2 ? 38 : 48;
+  const speed = ctx.phase >= 2 ? 0.46 : 0.4;
+  const maxR = ctx.phase >= 2 ? D.outerR + 1 : 27;
+  const interval = ctx.phase >= 2 ? 24 : 28;
   const base = ctx.rng() * 360;
   const active: { r: number; dir: number; hit: Set<string> }[] = [];
   let tick = 0;
@@ -577,7 +586,7 @@ export function* resonanceNetwork(ctx: MMContext, target: Player): Co {
         const inGap = Math.abs(angleDiffDeg(ang, a.dir)) < gap / 2 - 3 || Math.abs(angleDiffDeg(ang, a.dir + 180)) < gap / 2 - 3;
         a.hit.add(pl.id);
         if (inGap) continue;
-        ctx.hurt(pl, ctx.phase === 2 ? 8 : 6, EntityDamageCause.magic);
+        ctx.hurt(pl, ctx.phase >= 2 ? 8 : 6, EntityDamageCause.magic);
         try {
           pl.addEffect("slowness", 50, { amplifier: 1, showParticles: false });
         } catch {
@@ -596,7 +605,7 @@ export function* resonanceNetwork(ctx: MMContext, target: Player): Co {
 
 // ============================================================================ 05 INVERTED STRATA
 export function* invertedStrata(ctx: MMContext, target: Player): Co {
-  if (ctx.phase === 2) {
+  if (ctx.arena() === "disk") {
     yield* ribFlip(ctx, target);
     return;
   }
@@ -779,6 +788,8 @@ function* ribFlip(ctx: MMContext, target: Player): Co {
   for (const c of cells) for (let y = D.y - 3; y <= D.y; y++) ctx.writer.set(c.x, y, c.z, P.AIR);
   ctx.writer.flushAll();
   for (const pl of ctx.combatants()) {
+    // only those standing on the segment (not players down on the mantle floor beneath it)
+    if (pl.location.y < D.y - 0.5 || pl.location.y > D.y + 4) continue;
     if (!cells.some((c) => Math.floor(pl.location.x) === c.x && Math.floor(pl.location.z) === c.z)) continue;
     ctx.hurt(pl, 7, EntityDamageCause.entityAttack);
     knock(pl, -Math.sin(ribAng), Math.cos(ribAng), 0.7, 1.0);
@@ -813,7 +824,7 @@ function* ribFlip(ctx: MMContext, target: Player): Co {
 
 // ============================================================================ 06 MANTLE CONTRACTION
 export function* mantleContraction(ctx: MMContext, pockets: V3[]): Co {
-  if (ctx.phase === 2) {
+  if (ctx.arena() === "disk") {
     yield* diskContraction(ctx);
     return;
   }
@@ -948,8 +959,8 @@ function* diskContraction(ctx: MMContext): Co {
     if (t % 10 === 0) quake(ctx.audience(), centre, 0.8, 0.5, 50);
     yield 1;
   }
-  // everyone is pressed against the heart: it opens
-  ctx.exposeHeart(180);
+  // everyone is pressed against the heart: it opens (in Phase 3A only a severed root opens it)
+  if (ctx.phase === 2) ctx.exposeHeart(180);
   yield 50;
   sound(ctx.dim, SND.contract, centre, 0.9, 1.3);
   for (let i = placed.length - 1; i >= 0; i--) {

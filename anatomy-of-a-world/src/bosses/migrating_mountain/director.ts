@@ -10,6 +10,7 @@ import { Co, Task } from "../../core/tasks.js";
 import { V3 } from "../../core/vec.js";
 import { AbilityId, continentalFold, geologicalShedding, invertedStrata, lithicPeristalsis, mantleContraction, resonanceNetwork } from "./abilities.js";
 import { MMContext, Zone } from "./context.js";
+import { foldStep, heartPull, islandCrack, islandFlip, marchWave, mineralBeams, slamRings } from "./phase3.js";
 
 interface Option {
   id: AbilityId;
@@ -63,10 +64,11 @@ export class Director {
     if (!players.length) return;
     if (this.main && this.main.done) {
       this.main = undefined;
-      const gap = ctx.phase === 2 ? (ctx.enraged() ? 26 : 46) : 78;
+      const gap = ctx.phase >= 2 ? (ctx.enraged() ? 26 : 46) : 78;
       this.nextMain = now + Math.round((gap + ctx.rng() * gap * 0.6) / this.aggression);
     }
-    if (!this.main && now >= this.nextMain) this.startMain(players);
+    // Phase 3B: no new attack while the heart is down on the centre island (that is the players' window)
+    if (!this.main && now >= this.nextMain && !ctx.heartSlamming()) this.startMain(players);
     if ((!this.secondary || this.secondary.done) && now >= this.nextSecondary && (this.ready.get("geological_shedding") ?? 0) <= now) {
       const targets = players.filter((p) => {
         const z = ctx.zoneOf(p);
@@ -77,7 +79,7 @@ export class Director {
         this.ready.set("geological_shedding", now + Math.round(COOLDOWN.geological_shedding! / this.aggression));
         this.history.push("geological_shedding");
       }
-      this.nextSecondary = now + Math.round((ctx.phase === 2 ? 180 : 260) / this.aggression);
+      this.nextSecondary = now + Math.round((ctx.phase >= 2 ? 180 : 260) / this.aggression);
     }
   }
 
@@ -139,6 +141,7 @@ export class Director {
 
   private options(target: Player, zone: Zone, any = false): Option[] {
     const ctx = this.ctx;
+    if (ctx.phase === 3) return this.phase3Options(target, any);
     const nodes = ctx.livingNodes();
     const near = (id: string, r: number) => nodes.some((n) => n.site.id === id && Math.hypot(n.entity.location.x - target.location.x, n.entity.location.z - target.location.z) < r);
     const all: Option[] = [
@@ -178,6 +181,37 @@ export class Director {
       w("mantle_contraction", 2);
       if (zone === "mantle") w("geological_shedding", 2);
     }
+    return all;
+  }
+
+  /** Phase 3 forms of the abilities: 3A on the walking disk, 3B on the floating islands. */
+  private phase3Options(target: Player, any: boolean): Option[] {
+    const ctx = this.ctx;
+    const others = () => [target, ...ctx.combatants().filter((p) => p !== target)];
+    let all: Option[];
+    if (ctx.arena() === "islands") {
+      all = [
+        { id: "continental_fold", weight: 2, run: () => islandCrack(ctx, target) },
+        { id: "lithic_peristalsis", weight: 1.5, run: () => slamRings(ctx, 2, true) },
+        { id: "geological_shedding", weight: 0, run: () => geologicalShedding(ctx, others()) },
+        { id: "resonance_network", weight: 3, run: () => mineralBeams(ctx, target) },
+        { id: "inverted_strata", weight: 2, run: () => islandFlip(ctx, target) },
+        { id: "mantle_contraction", weight: 1.5, run: () => heartPull(ctx) },
+      ];
+    } else {
+      const anchors = ctx.anchors();
+      const dist = (a: { pos: V3 }) => Math.hypot(a.pos.x - target.location.x, a.pos.z - target.location.z);
+      const nearest = anchors.length ? anchors.reduce((a, b) => (dist(a) < dist(b) ? a : b)) : undefined;
+      all = [
+        { id: "continental_fold", weight: 2.5, run: () => foldStep(ctx, target) },
+        { id: "lithic_peristalsis", weight: 2.5, run: () => marchWave(ctx, 3, 6) },
+        { id: "geological_shedding", weight: 0, run: () => geologicalShedding(ctx, others()) },
+        { id: "resonance_network", weight: nearest ? 2.5 : 0, run: () => resonanceNetwork(ctx, target, nearest) },
+        { id: "inverted_strata", weight: 2, run: () => invertedStrata(ctx, target) },
+        { id: "mantle_contraction", weight: 1.5, run: () => mantleContraction(ctx, []) },
+      ];
+    }
+    if (any) for (const o of all) o.weight = 1;
     return all;
   }
 }

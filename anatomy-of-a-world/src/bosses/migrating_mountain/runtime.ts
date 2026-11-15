@@ -9,6 +9,7 @@ import { Co } from "../../core/tasks.js";
 import { forEachRun, unpack } from "../../gen/codec.js";
 import { ColFlag, MM, MountainModel } from "../../gen/mountain.js";
 import { AIR } from "../../gen/palette.js";
+import * as P from "../../gen/palette.js";
 import { MM_DATA } from "./mm_data.js";
 
 let model: MountainModel | undefined;
@@ -239,6 +240,26 @@ export function writeDisk(writer: BlockWriter, layout: number, filter?: (x: numb
 }
 
 /**
+ * Reset the disk to its pristine rib layout: ribs and gaps re-cut from D.y-3 up and everything above the
+ * walkway cleared (ridges, rubble and walls that cancelled abilities left behind).
+ */
+export function restoreDisk(writer: BlockWriter, layout: number, clearAbove = 8): void {
+  const D = MM.disk;
+  // edits still queued by the cancelled abilities land first, then the clear (fills are immediate)
+  writer.flushAll();
+  const hx = MM.heart.x - 0.5;
+  const hz = MM.heart.z - 0.5;
+  const R = D.outerR + 0.5;
+  for (let x = Math.ceil(hx - R); x <= Math.floor(hx + R); x++) {
+    const half = Math.sqrt(Math.max(0, R * R - (x - hx) * (x - hx)));
+    const z0 = Math.ceil(hz - half);
+    const z1 = Math.floor(hz + half);
+    if (z1 >= z0) writer.fill(x, D.y + 1, z0, x, D.y + clearAbove, z1, AIR);
+  }
+  writeDisk(writer, layout, (_x, y) => y >= D.y - 3);
+}
+
+/**
  * Phase 2 disk as animated structures (it rises layer by layer); falls back to the writer.
  * The disk box is split into tiles no wider than 48 blocks to stay well inside structure limits.
  */
@@ -348,4 +369,91 @@ export function writeColumns(writer: BlockWriter, filter: (x: number, z: number)
     if (!filter(x, z)) return;
     for (let k = 0; k < len; k++) writer.set(x, g.y0 + y0 + k, z, b);
   });
+}
+
+// ----------------------------------------------------------------------------- Phase 3B: floating islands
+/** A floating island of the shattered disk (Phase 3B). Island 0 is the centre, under the heart. */
+export interface Island {
+  i: number;
+  cx: number;
+  cz: number;
+  r: number;
+  /** y of the walkable top layer */
+  top: number;
+}
+
+/**
+ * The centre island (radius 8) under the heart and a ring of eight (radius 5) at 16 blocks: gaps of
+ * about 2 blocks between ring islands and 3 to the centre, neighbours differ by at most one block.
+ */
+export function islandLayout(): Island[] {
+  const D = MM.disk;
+  const out: Island[] = [{ i: 0, cx: MM.heart.x, cz: MM.heart.z, r: 8, top: D.y }];
+  const rise = [0, 1, 1, 0, -1, 0, 1, 0];
+  for (let k = 0; k < 8; k++) {
+    const a = ((22.5 + 45 * k) * Math.PI) / 180;
+    out.push({ i: k + 1, cx: MM.heart.x + Math.cos(a) * 16, cz: MM.heart.z + Math.sin(a) * 16, r: 5, top: D.y + rise[k] });
+  }
+  return out;
+}
+
+export function islandAt(x: number, z: number, islands: Island[] = islandLayout()): Island | undefined {
+  return islands.find((s) => Math.hypot(x - s.cx, z - s.cz) <= s.r + 0.5);
+}
+
+/** Columns of an island as [x, z, depth] (an inverted cone: deep in the middle, thin at the rim). */
+export function islandColumns(s: Island): [number, number, number][] {
+  const out: [number, number, number][] = [];
+  for (let x = Math.floor(s.cx - s.r); x <= Math.ceil(s.cx + s.r); x++)
+    for (let z = Math.floor(s.cz - s.r); z <= Math.ceil(s.cz + s.r); z++) {
+      const d = Math.hypot(x + 0.5 - s.cx, z + 0.5 - s.cz);
+      if (d > s.r) continue;
+      out.push([x, z, Math.max(2, Math.round((1 - (d / s.r) ** 2) * 8))]);
+    }
+  return out;
+}
+
+/** Queue an island's blocks (optionally only the columns `filter` accepts). */
+export function writeIsland(writer: BlockWriter, s: Island, filter?: (x: number, z: number) => boolean): void {
+  const m = mountain();
+  for (const [x, z, depth] of islandColumns(s)) {
+    if (filter && !filter(x, z)) continue;
+    for (let y = s.top - depth + 1; y <= s.top; y++) {
+      let v = m.strata(x, y, z);
+      if (y === s.top) v = (x * 7 + z * 13) % 9 === 0 ? P.MOSSY_COBBLE : P.MOSS;
+      else if (y === s.top - depth + 1 && (x + z) % 3 === 0) v = P.MUSCLE;
+      writer.set(x, y, z, v);
+    }
+  }
+}
+
+/** Remove an island's blocks (optionally only the columns `filter` accepts). */
+export function clearIsland(writer: BlockWriter, s: Island, filter?: (x: number, z: number) => boolean): void {
+  for (const [x, z, depth] of islandColumns(s)) {
+    if (filter && !filter(x, z)) continue;
+    writer.fill(x, s.top - depth - 1, z, x, s.top + 2, z, AIR);
+  }
+}
+
+/**
+ * The disk breaks apart: a cylinder through the whole body around the heart is emptied (down to the
+ * underside, so a fall goes to the cloud sea) and the islands are written. Time-sliced.
+ */
+export function* shatterDisk(writer: BlockWriter): Co {
+  const D = MM.disk;
+  const R = D.outerR + 2;
+  const y0 = MM.baseY - 2;
+  const y1 = D.y + 8;
+  let n = 0;
+  for (let x = Math.floor(MM.heart.x - R); x <= Math.ceil(MM.heart.x + R); x++) {
+    const dx = x + 0.5 - MM.heart.x;
+    const h = Math.sqrt(Math.max(0, R * R - dx * dx));
+    if (h <= 0) continue;
+    writer.fill(x, y0, Math.floor(MM.heart.z - h), x, y1, Math.ceil(MM.heart.z + h), AIR);
+    if (++n % 6 === 0) yield 1;
+  }
+  for (const s of islandLayout()) {
+    writeIsland(writer, s);
+    yield 1;
+  }
 }

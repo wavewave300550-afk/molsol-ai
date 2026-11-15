@@ -1,7 +1,7 @@
 {
   "name": "the-anatomy-of-a-world",
   "private": true,
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "Minecraft Bedrock add-on: THE ANATOMY OF A WORLD - experimental colossal bosses",
   "type": "module",
   "scripts": {
