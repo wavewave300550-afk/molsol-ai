@@ -59,14 +59,14 @@ All players in the world use the same packs; joining players download the resour
 1. Unzip the two `.mcpack` files into `behavior_packs/PlayableRaces_BP` and `resource_packs/PlayableRaces_RP`.
 2. Add them to the world's `world_behavior_packs.json` and `world_resource_packs.json`:
    ```json
-   [{ "pack_id": "6a3f2c1e-8d4b-4f7a-9c2e-1b5d7e9f0a21", "version": [1, 0, 0] }]
+   [{ "pack_id": "6a3f2c1e-8d4b-4f7a-9c2e-1b5d7e9f0a21", "version": [1, 0, 1] }]
    ```
    ```json
-   [{ "pack_id": "9d6a5f4b-b07e-4cad-8f5b-4e8a0b2c3d54", "version": [1, 0, 0] }]
+   [{ "pack_id": "9d6a5f4b-b07e-4cad-8f5b-4e8a0b2c3d54", "version": [1, 0, 1] }]
    ```
 3. Set `texturepack-required=true` in `server.properties` so clients receive the resource pack.
 
 ## Updating and uninstalling
 
-* A newer version with a higher pack version replaces the old one on import. Lineages, cooldowns, hydration and other progress are stored on the players and the world and survive updates.
+* A newer version with a higher pack version replaces the old one on import (current: **1.0.1**). If Minecraft reports a duplicate pack, delete the old *Playable Races* packs from Settings > Storage first. Lineages, cooldowns, hydration and other progress are stored on the players and the world and survive updates.
 * To uninstall, deactivate both packs in the world. Racial effects are short, continuously refreshed effects, so they run out on their own (Health Boost within 2 minutes, everything else within seconds) and players return to normal. The crest and focus items belong to the add-on; once its item types are gone the game removes them (or shows them as unknown items, depending on version). The Salamander's swim-speed attribute returns to normal when the player next leaves water while the add-on is active, or on death. The player's own skin is shown again immediately.

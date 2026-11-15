@@ -345,6 +345,72 @@ tickN(25);
 ok(bob.location.z > startZ + 4, `teleported toward the view (${bob.location.z.toFixed(1)})`);
 ok(nearDest._hits.some((h) => h.by === bob.id), "reconstruction burst hits nearby enemies");
 
+// ======================================================================== held use button (repeats)
+begin("held use button does not cancel channels");
+async function holdUse(p, ticks, every = 5) {
+  for (let t = 0; t < ticks; t += every) {
+    components.get("plrace:focus").onUse({ source: p, itemStack: inv(p).getItem(p.selectedSlotIndex) });
+    tickN(every);
+    await settle(1);
+  }
+}
+commands.get("plrace:resetcooldowns").cb({ sourceEntity: bob }, [bob]);
+await settle(2);
+bob.location = { x: 100.5, y: 64, z: 0.5 };
+hold(bob, "plrace:focus_golem");
+while (data(bob).sel !== 1) await use(bob, true);
+components.get("plrace:focus").onUse({ source: bob, itemStack: inv(bob).getItem(bob.selectedSlotIndex) });
+await settle(1);
+await holdUse(bob, 40);
+eq(head(bob)?.typeId, "plrace:form_golem_bastion", "Runic Bastion survives a held use button (2 s of repeats)");
+const held1 = mob("minecraft:zombie", 100.5, 2);
+bob._health = 40;
+const hb0 = bob._health;
+bob.applyDamage(10, { cause: "entityAttack", damagingEntity: held1 });
+ok(hb0 - bob._health <= 3.01, "bastion still reduces frontal damage while the button is held");
+tickN(10);
+await use(bob); // a deliberate new press after the grace period drops the wall
+tickN(2);
+ok(!String(head(bob)?.typeId).includes("bastion"), "a deliberate second press drops the bastion (toggle)");
+tickN(70);
+commands.get("plrace:resetcooldowns").cb({ sourceEntity: bob }, [bob]);
+await settle(2);
+while (data(bob).sel !== 0) await use(bob, true);
+await use(bob); // Titan's Edict
+tickN(12);
+await use(bob, true); // select Bastion right after the slam
+await use(bob);
+tickN(2);
+eq(head(bob)?.typeId, "plrace:form_golem_bastion", "Bastion can be cast right after Titan's Edict (no lingering Busy)");
+tickN(110);
+commands.get("plrace:resetcooldowns").cb({ sourceEntity: bob }, [bob]);
+await settle(2);
+while (data(bob).sel !== 3) await use(bob, true);
+bob.location = { x: 100.5, y: 64, z: 0.5 };
+bob.setRotation({ x: 10, y: 0 });
+const hz = bob.location.z;
+components.get("plrace:focus").onUse({ source: bob, itemStack: inv(bob).getItem(bob.selectedSlotIndex) });
+await settle(1);
+await holdUse(bob, 30);
+ok(bob.location.z > hz + 4, `Colossus Reassembly completes with a held use button (z ${hz} -> ${bob.location.z.toFixed(1)})`);
+tickN(20);
+commands.get("plrace:resetcooldowns").cb({ sourceEntity: bob }, [bob]);
+await settle(2);
+bob.location = { x: 100.5, y: 64, z: 0.5 };
+bob.setRotation({ x: -60, y: 0 }); // looking at the sky
+const sz = bob.location.z;
+await use(bob);
+tickN(25);
+ok(bob.location.z > sz + 4, `Reassembly still works when looking at the sky (z ${sz} -> ${bob.location.z.toFixed(1)})`);
+commands.get("plrace:resetcooldowns").cb({ sourceEntity: bob }, [bob]);
+await settle(2);
+bob.setRotation({ x: 85, y: 0 }); // looking at the feet
+const fz = bob.location.z;
+await use(bob);
+tickN(25);
+ok(bob.location.z > fz + 2, `Reassembly still works when looking down (z ${fz.toFixed(1)} -> ${bob.location.z.toFixed(1)})`);
+bob.setRotation({ x: 0, y: 0 });
+
 // ======================================================================== jackalope + blood moon
 begin("jackalope: selection & passives");
 const cat = harness.join("Cat", { x: -100.5, y: 64, z: 0.5 });
@@ -371,8 +437,9 @@ await use(cat, true);
 cat.location = { x: -100.5, y: 64, z: 0.5 };
 cat.setRotation({ x: 0, y: 0 });
 const prey = mob("minecraft:zombie", -100.5, 3.5);
-await use(cat);
-tickN(16);
+components.get("plrace:focus").onUse({ source: cat, itemStack: inv(cat).getItem(cat.selectedSlotIndex) });
+await settle(1);
+await holdUse(cat, 20); // held through the charge
 ok(prey._hits.some((h) => h.by === cat.id && h.amount >= 5), "brand charge strikes for 5");
 const b4 = prey._hits.length;
 prey.applyDamage(2, { cause: "entityAttack", damagingEntity: cat });
@@ -405,8 +472,9 @@ const dancer = mob("minecraft:ravager", -100.5, 5.5);
 dancer._maxHealth = 100;
 dancer._health = 100;
 faceTo(cat, dancer);
-await use(cat);
-tickN(40);
+components.get("plrace:focus").onUse({ source: cat, itemStack: inv(cat).getItem(cat.selectedSlotIndex) });
+await settle(1);
+await holdUse(cat, 40); // button held for the whole dance
 const waltzHits = dancer._hits.filter((h) => h.by === cat.id).length;
 ok(waltzHits >= 5, `waltz: 4 leaps + finale (${waltzHits} hits)`);
 ok(particles("plrace:crimson_slash") >= 5, "crimson crescent slashes");
@@ -459,8 +527,10 @@ hold(alice, "plrace:focus_salamander");
 commands.get("plrace:resetcooldowns").cb({ sourceEntity: alice }, [alice]);
 await settle(2);
 while (data(alice).sel !== 2) await use(alice, true);
-await use(alice);
-eq(alice.inputPermissions.isPermissionCategoryEnabled(InputPermissionCategory.LateralMovement), false, "rooted before death");
+components.get("plrace:focus").onUse({ source: alice, itemStack: inv(alice).getItem(alice.selectedSlotIndex) });
+await settle(1);
+await holdUse(alice, 40);
+eq(alice.inputPermissions.isPermissionCategoryEnabled(InputPermissionCategory.LateralMovement), false, "still rooted after holding the button for 2 s");
 alice.kill();
 tickN(2);
 eq(alice.inputPermissions.isPermissionCategoryEnabled(InputPermissionCategory.LateralMovement), true, "death ends rooting and restores movement");

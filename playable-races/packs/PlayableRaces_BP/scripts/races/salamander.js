@@ -172,6 +172,7 @@ const root = {
         startChannel(p, s, {
             ability: "root_metamorphosis",
             mode: "keep",
+            cancelable: true,
             until: system.currentTick + ROOT_TICKS,
             tick: (s2, p2, t) => {
                 if (!p2.isValid)

@@ -3,7 +3,7 @@
  * visual-form state machine.  Races only describe *what* their abilities do.
  */
 import { Player, system } from "@minecraft/server";
-import { GLOBAL_CAST_LOCK } from "../config.js";
+import { CANCEL_GRACE, GLOBAL_CAST_LOCK } from "../config.js";
 import { raceByCode } from "../races/registry.js";
 import { AbilityDef, CastContext, RaceDef } from "../races/types.js";
 import { privateSound } from "./fx.js";
@@ -123,14 +123,18 @@ export function cast(p: Player, s: Session): void {
   const a = selected(s, race);
   const now = system.currentTick;
   if (s.channel) {
-    if (s.channel.ability === a.id) {
-      endChannel(p, s, "cancel");
+    const ch = s.channel;
+    if (ch.ability === a.id) {
+      // the same ability again: a deliberate toggle for cancelable channels, otherwise a
+      // repeated/held input that must never interrupt the ability in progress
+      if (ch.cancelable && now - ch.started >= CANCEL_GRACE) endChannel(p, s, "cancel");
       return;
     }
-    const mode = s.channel.mode ?? "block";
+    const mode = ch.mode ?? "block";
     if (mode === "interrupt") endChannel(p, s, "interrupt");
     else if (mode === "block") {
-      fail(p, s, "Busy");
+      const busy = race.abilities.find((x) => x.id === ch.ability);
+      fail(p, s, `Busy: ${busy ? busy.name : "ability in progress"}`);
       return;
     }
   }

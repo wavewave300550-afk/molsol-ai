@@ -19,7 +19,7 @@ export function load(p) {
     }
     s = {
         id: p.id, name: p.name, data, dirty: false, readyAt: new Map(), chargeAt: new Map(), lastCast: -999,
-        lastInput: -999, hudUntil: 0, shownVariant: "", flags: new Map(), num: new Map(), menuOpen: false,
+        lastInput: -999, lastRawInput: -999, hudUntil: 0, shownVariant: "", flags: new Map(), num: new Map(), menuOpen: false,
     };
     const t = system.currentTick;
     for (const [id, rem] of Object.entries(data.cd))

@@ -1,4 +1,4 @@
-import { MolangVariableMap } from "@minecraft/server";
+import { MolangVariableMap, system } from "@minecraft/server";
 function molang(vars) {
     if (!vars)
         return undefined;
@@ -46,9 +46,16 @@ export function rgb(c) {
     return { red: c.red, green: c.green, blue: c.blue };
 }
 export function pose(p, anim, stopExpression) {
-    try {
-        p.playAnimation(`animation.plrace.pose.${anim}`, stopExpression ? { stopExpression, blendOutTime: 0.15 } : { blendOutTime: 0.15 });
-    }
-    catch {
-    }
+    const play = () => {
+        try {
+            if (p.isValid)
+                p.playAnimation(`animation.plrace.pose.${anim}`, stopExpression ? { stopExpression, blendOutTime: 0.15 } : { blendOutTime: 0.15 });
+        }
+        catch {
+        }
+    };
+    if (stopExpression)
+        system.runTimeout(play, 3);
+    else
+        play();
 }

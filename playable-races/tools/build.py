@@ -30,7 +30,7 @@ from models import salamander, golem, jackalope, common  # noqa: E402
 import fx  # noqa: E402
 
 NS = "plrace"
-VERSION = [1, 0, 0]
+VERSION = [1, 0, 1]
 MIN_ENGINE = [1, 26, 60]
 SERVER_API = "2.11.0"
 UI_API = "2.3.0"
@@ -278,7 +278,7 @@ def items(lang):
                 "minecraft:hand_equipped": True,
                 "minecraft:glint": False,
                 "minecraft:hover_text_color": col,
-                "minecraft:use_modifiers": {"use_duration": 0.05, "movement_modifier": 1.0},
+                "minecraft:use_modifiers": {"use_duration": 1000, "movement_modifier": 1.0},
                 "minecraft:tags": {"tags": [f"{NS}:focus"]},
                 f"{NS}:focus": {},
             }}}
@@ -289,7 +289,7 @@ def items(lang):
             "minecraft:icon": f"{NS}:codex",
             "minecraft:display_name": {"value": f"item.{NS}:codex"},
             "minecraft:max_stack_size": 64,
-            "minecraft:use_modifiers": {"use_duration": 0.05, "movement_modifier": 1.0},
+            "minecraft:use_modifiers": {"use_duration": 1000, "movement_modifier": 1.0},
             f"{NS}:codex": {},
         }}}
     lang.append((f"item.{NS}:codex", "Lineage Codex"))

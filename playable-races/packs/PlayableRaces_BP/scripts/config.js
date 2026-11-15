@@ -13,7 +13,9 @@ export const FOG_USER = `${NS}_bm`;
 export const TPS = 20;
 export const SAVE_INTERVAL = 100;
 export const GLOBAL_CAST_LOCK = 8;
-export const INPUT_DEBOUNCE = 5;
+export const INPUT_DEBOUNCE = 8;
+export const FRESH_PRESS_GAP = 8;
+export const CANCEL_GRACE = 12;
 export const PROTECTED_TYPES = [
     "minecraft:villager_v2",
     "minecraft:villager",

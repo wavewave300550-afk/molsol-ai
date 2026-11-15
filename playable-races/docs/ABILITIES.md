@@ -9,8 +9,9 @@
 | Open the **Lineage Codex** | Use the Codex item | Right-click the Codex | Left trigger |
 | Uproot early (Salamander) | Jump | Space | A / Cross |
 | Thump & Listen (Jackalope) | Sneak and stand still 1 s | Hold Shift, don't move | Sneak, don't move |
-| Cancel a channel (Root, Bastion) | Use the same ability again | | |
+| End Root / Bastion early | Press use again (after 0.6 s) | | |
 
+* **One action per press.** Holding the button does nothing extra; it never re-casts and never interrupts an ability in progress.
 * The Focus is locked to your inventory (cannot be dropped or stored) and kept on death. Lost it anyway? Codex > **Recall Focus**.
 * Using the Focus on a block casts too, except on interactive blocks (doors, chests, crafting tables, levers ...), which open normally.
 * `/plrace:codex` opens the Codex anywhere.
@@ -54,9 +55,9 @@ Cooldowns are **20% faster while Blooming** and **40% slower while Dormant**.
 | Ability | Cooldown | Effect | Original brief |
 |---|---|---|---|
 | **Titan's Edict** | 18 s | Arm-stones fuse into a hammer (**Siege**), slam at 0.6 s: a shockwave travels **~8 blocks forward**, 9 damage near → 5 far, launches and pushes, Slowness II 2 s. Rune strain 12. | 20 s, hammer, directional shockwave |
-| **Runic Bastion** | 28 s | Slabs lock in front (**Bastion**) for **5 s**: hits from the front 150° **-70%**, frontal **projectiles blocked**; other hits -30%; no knockback; slowed while braced. Use again to drop it. Strain 8. | 30 s, frontal defence |
+| **Runic Bastion** | 28 s | Slabs lock in front (**Bastion**) for **5 s**: hits from the front 150° **-70%**, frontal **projectiles blocked**; other hits -30%; no knockback; slowed while braced. Press again (after 0.6 s) to drop it. Strain 8. | 30 s, frontal defence |
 | **Glyph Dominion** | 34 s | Stones form an **Arcane** formation and inscribe a **6-block rune circle** for **8 s**: enemies inside Slowness III + 1 damage/s; enemies crossing the rim from outside are hurled back (2 damage); you (and friendly players when PvP is off) are **Warded** (-15% damage). Needs aligned runes. Strain 15. | 35 s, slow inside, repel approach |
-| **Colossus Reassembly** | 38 s | Burst into fragments (**untouchable**), stream up to **12 blocks** toward your aim, reform on solid footing; the reconstruction blast hits within 4 blocks for 6 + knockback. Needs aligned runes. Strain 18. | 40 s, separate + reconstruct + burst |
+| **Colossus Reassembly** | 38 s | Burst into fragments (**untouchable**), stream up to **12 blocks** toward your aim (straight ahead along the ground if you aim at the sky or at your feet), reform on solid footing; the reconstruction blast hits within 4 blocks for 6 + knockback. Needs aligned runes. Strain 18. | 40 s, separate + reconstruct + burst |
 
 **Passives**
 * **Basalt Body:** +4 hearts (Health Boost II); melee, projectile, contact, falling-block damage **-25%**; explosions -15%; falls -50%.

@@ -1,5 +1,5 @@
 /** Particle and sound helpers. All calls are guarded: VFX must never break gameplay. */
-import { Dimension, MolangVariableMap, Player, Vector3 } from "@minecraft/server";
+import { Dimension, MolangVariableMap, Player, Vector3, system } from "@minecraft/server";
 
 export type Vars = Record<string, number>;
 
@@ -57,9 +57,14 @@ export function rgb(c: { red: number; green: number; blue: number }): Vars {
 
 /** Play a skeleton pose animation on a player (visible to everyone). */
 export function pose(p: Player, anim: string, stopExpression?: string): void {
-  try {
-    p.playAnimation(`animation.plrace.pose.${anim}`, stopExpression ? { stopExpression, blendOutTime: 0.15 } : { blendOutTime: 0.15 });
-  } catch {
-    /* ignore */
-  }
+  const play = () => {
+    try {
+      if (p.isValid) p.playAnimation(`animation.plrace.pose.${anim}`, stopExpression ? { stopExpression, blendOutTime: 0.15 } : { blendOutTime: 0.15 });
+    } catch {
+      /* ignore */
+    }
+  };
+  // a stop expression tests the worn form: give the client a moment to receive the new crest
+  if (stopExpression) system.runTimeout(play, 3);
+  else play();
 }

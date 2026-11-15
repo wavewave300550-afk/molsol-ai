@@ -27,7 +27,7 @@ Full ability tables, passives, the Blood Moon schedule, commands and operator se
 * [Installation guide (iOS, Android, Windows, consoles, servers)](docs/INSTALL.md)
 * [Ability & control reference](docs/ABILITIES.md)
 * [Technical compatibility report](docs/COMPATIBILITY.md) — target version, APIs, how bodies are rendered without overriding the player, limitations
-* [Testing report](docs/TESTING.md) — what was verified (typecheck, Creator Tools, 16,935 static checks, 129 runtime assertions) and what still needs an in-game check
+* [Testing report](docs/TESTING.md) — what was verified (typecheck, Creator Tools, 16,935 static checks, 136 runtime assertions) and what still needs an in-game check
 * [Creative development report](docs/CREATIVE.md) — brief → implementation mapping, additions and changes
 
 ## Project layout

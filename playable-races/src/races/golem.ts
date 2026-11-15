@@ -12,7 +12,7 @@ import { headInWater, isOverworld, isMoving, skyExposed, weather } from "../core
 import { particle, pose, privateSound, sound } from "../core/fx.js";
 import { pvpAllowed } from "../core/settings.js";
 import { Session, clearFlag, flag, hasFlag } from "../core/session.js";
-import { enemiesNear, eye, groundSpot, rayPoint } from "../core/targets.js";
+import { enemiesNear, eye, groundSpot, lineOfSight } from "../core/targets.js";
 import { after, repeat } from "../core/tasks.js";
 import { add, angleBetween, clamp, dist, flat, hdist, len, meter, mul, norm, rotY, sub, v3 } from "../core/util.js";
 import { AbilityDef, RaceDef } from "./types.js";
@@ -78,7 +78,7 @@ const edict: AbilityDef = {
     startChannel(p, s, {
       ability: "titans_edict",
       mode: "block",
-      until: system.currentTick + 24,
+      until: system.currentTick + 14, // wind-up + slam; the shockwave then travels on its own
       tick: (_s, p2, t) => {
         if (t === 12) slam(p2);
       },
@@ -126,6 +126,7 @@ const bastion: AbilityDef = {
     startChannel(p, s, {
       ability: "runic_bastion",
       mode: "interrupt",
+      cancelable: true,
       until: system.currentTick + 100,
       tick: () => undefined,
       end: (s2, p2, reason) => {
@@ -236,6 +237,12 @@ const reassembly: AbilityDef = {
           let ok = false;
           try {
             ok = p2.tryTeleport(dest, { checkForBlocks: true, keepVelocity: false });
+            if (!ok) {
+              // the spot was already checked for 2 open blocks; tryTeleport can refuse thin
+              // obstacles such as snow layers, so place the golem there directly
+              p2.teleport(dest, { keepVelocity: false });
+              ok = true;
+            }
           } catch {
             ok = false;
           }
@@ -262,16 +269,34 @@ const reassembly: AbilityDef = {
   },
 };
 
+/**
+ * Where the fragments reform.  Aiming at terrain: the farthest footing along the aim
+ * (up to 12 blocks).  Aiming at the sky, or too close to your own feet: the farthest
+ * footing straight ahead along the ground.
+ */
 function destination(p: Player): Vector3 | undefined {
   const dim = p.dimension;
-  const target = rayPoint(p, 12);
-  let spot = groundSpot(dim, target, 6, 2, 1);
-  if (spot && dist(spot, p.location) >= 2.5) return spot;
   const from = eye(p);
   const dir = p.getViewDirection();
-  for (let k = 11; k >= 3; k--) {
-    spot = groundSpot(dim, add(from, mul(dir, k)), 6, 2, 1);
-    if (spot && dist(spot, p.location) >= 2.5) return spot;
+  const usable = (s: Vector3 | undefined): s is Vector3 =>
+    !!s && dist(s, p.location) >= 2.5 && lineOfSight(dim, from, add(s, v3(0, 1.2, 0)));
+  let hitDist = -1;
+  try {
+    const hit = dim.getBlockFromRay(from, dir, { maxDistance: 12, includeLiquidBlocks: false, includePassableBlocks: false });
+    if (hit) hitDist = dist(from, add(hit.block.location, hit.faceLocation));
+  } catch {
+    hitDist = -1;
+  }
+  if (hitDist > 0) {
+    for (let k = Math.min(12, hitDist - 0.3); k >= 2.5; k -= 0.5) {
+      const spot = groundSpot(dim, add(from, mul(dir, k)), 8, 2, 1);
+      if (usable(spot)) return spot;
+    }
+  }
+  const f = flat(dir);
+  for (let k = 12; k >= 3; k--) {
+    const spot = groundSpot(dim, add(p.location, add(mul(f, k), v3(0, 3, 0))), 10, 2, 0);
+    if (usable(spot)) return spot;
   }
   return undefined;
 }

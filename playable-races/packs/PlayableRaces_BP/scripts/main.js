@@ -1,5 +1,5 @@
 import { ButtonState, InputButton, ItemStack, system, world } from "@minecraft/server";
-import { ENTITY_MIRAGE, ITEM_CODEX, SAVE_INTERVAL } from "./config.js";
+import { ENTITY_MIRAGE, FRESH_PRESS_GAP, INPUT_DEBOUNCE, ITEM_CODEX, SAVE_INTERVAL } from "./config.js";
 import { cast, cycle, endChannel, raceOf, refreshForm, selected, tickChannel } from "./core/abilities.js";
 import { setWeather } from "./core/env.js";
 import { holdingFocus } from "./core/forms.js";
@@ -34,7 +34,11 @@ function playerById(id) {
 function useFocus(p) {
     const s = get(p);
     const now = system.currentTick;
-    if (now - s.lastInput < 5)
+    const fresh = now - s.lastRawInput >= FRESH_PRESS_GAP;
+    s.lastRawInput = now;
+    if (!fresh)
+        return;
+    if (now - s.lastInput < INPUT_DEBOUNCE)
         return;
     s.lastInput = now;
     if (!raceOf(s)) {

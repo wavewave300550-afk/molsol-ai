@@ -6,7 +6,7 @@ import { headInWater, isOverworld, isMoving, skyExposed, weather } from "../core
 import { particle, pose, privateSound, sound } from "../core/fx.js";
 import { pvpAllowed } from "../core/settings.js";
 import { clearFlag, flag, hasFlag } from "../core/session.js";
-import { enemiesNear, eye, groundSpot, rayPoint } from "../core/targets.js";
+import { enemiesNear, eye, groundSpot, lineOfSight } from "../core/targets.js";
 import { after, repeat } from "../core/tasks.js";
 import { add, angleBetween, clamp, dist, flat, hdist, len, meter, mul, norm, rotY, sub, v3 } from "../core/util.js";
 const stab = (s) => s.data.res.rune ?? 100;
@@ -55,7 +55,7 @@ const edict = {
         startChannel(p, s, {
             ability: "titans_edict",
             mode: "block",
-            until: system.currentTick + 24,
+            until: system.currentTick + 14,
             tick: (_s, p2, t) => {
                 if (t === 12)
                     slam(p2);
@@ -105,6 +105,7 @@ const bastion = {
         startChannel(p, s, {
             ability: "runic_bastion",
             mode: "interrupt",
+            cancelable: true,
             until: system.currentTick + 100,
             tick: () => undefined,
             end: (s2, p2, reason) => {
@@ -217,6 +218,10 @@ const reassembly = {
                     let ok = false;
                     try {
                         ok = p2.tryTeleport(dest, { checkForBlocks: true, keepVelocity: false });
+                        if (!ok) {
+                            p2.teleport(dest, { keepVelocity: false });
+                            ok = true;
+                        }
                     }
                     catch {
                         ok = false;
@@ -247,15 +252,29 @@ const reassembly = {
 };
 function destination(p) {
     const dim = p.dimension;
-    const target = rayPoint(p, 12);
-    let spot = groundSpot(dim, target, 6, 2, 1);
-    if (spot && dist(spot, p.location) >= 2.5)
-        return spot;
     const from = eye(p);
     const dir = p.getViewDirection();
-    for (let k = 11; k >= 3; k--) {
-        spot = groundSpot(dim, add(from, mul(dir, k)), 6, 2, 1);
-        if (spot && dist(spot, p.location) >= 2.5)
+    const usable = (s) => !!s && dist(s, p.location) >= 2.5 && lineOfSight(dim, from, add(s, v3(0, 1.2, 0)));
+    let hitDist = -1;
+    try {
+        const hit = dim.getBlockFromRay(from, dir, { maxDistance: 12, includeLiquidBlocks: false, includePassableBlocks: false });
+        if (hit)
+            hitDist = dist(from, add(hit.block.location, hit.faceLocation));
+    }
+    catch {
+        hitDist = -1;
+    }
+    if (hitDist > 0) {
+        for (let k = Math.min(12, hitDist - 0.3); k >= 2.5; k -= 0.5) {
+            const spot = groundSpot(dim, add(from, mul(dir, k)), 8, 2, 1);
+            if (usable(spot))
+                return spot;
+        }
+    }
+    const f = flat(dir);
+    for (let k = 12; k >= 3; k--) {
+        const spot = groundSpot(dim, add(p.location, add(mul(f, k), v3(0, 3, 0))), 10, 2, 0);
+        if (usable(spot))
             return spot;
     }
     return undefined;

@@ -9,7 +9,7 @@
 | TypeScript strict typecheck against the official **@minecraft/server 2.11.0** and **@minecraft/server-ui 2.3.0** typings | `npx tsc --noEmit` | **0 errors** |
 | Minecraft Creator Tools 0.21.0 validation (the "Add-On Best Practices" suite Mojang points creators to) | `mct validate` via the debug-addon skill | **0 errors**, 3 warnings, 7 noise, 23 recommendations (below) |
 | Project static validator: manifests, every geometry/texture/animation/render-controller/particle/locator link, animation bone names, UV bounds, attachable skeleton pivots = vanilla player skeleton, player/armour render-controller overrides = vanilla + one condition, items/icons/lang, every identifier string in the compiled scripts (particles, vanilla sound events, effect ids, items, entities, pose animations), texture memory budget | `python3 tools/validate.py` | **16,935 checks, 0 errors** |
-| Runtime smoke test: the **compiled behavior-pack scripts** run on a strict mock of the Script API, driven through real gameplay scenarios (table below) | `node tests/run.mjs` | **129 / 129 assertions** |
+| Runtime smoke test: the **compiled behavior-pack scripts** run on a strict mock of the Script API, driven through real gameplay scenarios (table below) | `node tests/run.mjs` | **136 / 136 assertions** |
 | Visual previews rendered from the exact shipped geometry and textures, including posed states | `python3 tools/previews.py` | images in `docs/images` |
 
 The mock is deliberately strict: unknown particle, sound, effect, item, entity or animation ids **throw**, using a removed or dead entity throws (like `InvalidEntityError`), world-modifying calls inside before-events throw (restricted execution), and any exception inside an event listener or scheduled job fails the run. It simulates time of day, days and moon phases, biomes, water, a flat world with block ray-casts, damage events (before/after), deaths and respawns, logout/login, dimension changes, inventories, equipment, item lock modes, enchantments, input permissions and forms with scripted answers.
@@ -32,13 +32,14 @@ The mock is deliberately strict: unknown particle, sound, effect, item, entity o
 | golem: Glyph Dominion | 4/4 | rune circle inscribed; enemy inside is slowed (Slowness III); approaching enemy is repelled; golem inside its own circle is Warded (-15%, x0.9 if in Monolith Stance): took 7.65 |
 | golem: rune disruption | 5/5 | disrupted form shown; Glyph Dominion blocked while disrupted; disruption explained on the HUD; magic damage disrupts runes (persisted); runes realign over time |
 | golem: Colossus Reassembly | 5/5 | selection on Reassembly; scattered configuration; untouchable while scattered; teleported toward the view (9.5); reconstruction burst hits nearby enemies |
+| held use button does not cancel channels | 7/7 | Runic Bastion survives a held use button (2 s of repeats); bastion still reduces frontal damage while the button is held; a deliberate second press drops the bastion (toggle); Bastion can be cast right after Titan's Edict (no lingering Busy); Colossus Reassembly completes with a held use button (z 0.5 -> 9.5); Reassembly still works when looking at the sky (z 0.5 -> 12.5); Reassembly still works when looking down (z 12.5 -> 24.5) |
 | jackalope: selection & passives | 2/2 | jackalope form; speed and jump boost |
 | jackalope: Lunar Bound | 3/3 | leap moves the jackalope; crescent trail; no fall damage right after a leap |
 | jackalope: Antler Brand & sigil | 3/3 | brand charge strikes for 5; branded target takes +3 melee damage; lunar sigil shown over the target |
 | jackalope: Velvet Mirage | 5/5 | illusion spawned; nearby hostiles are provoked by the illusion; Velvet Step evades the next blow; struck illusion bursts; attacker dazzled (blindness) |
 | jackalope: Crimson Waltz | 3/3 | waltz: 4 leaps + finale (5 hits); crimson crescent slashes; the jackalope ends the waltz beside its target |
 | blood moon: lifecycle | 13/13 | full moon dusk rolls the forced Blood Moon (omen); Blood Moon rises at moonrise; crimson fog pushed for overworld players; jackalope awakens; awakening camera fade; Speed II while awakened; two Lunar Bound charges under the Blood Moon; fog removed in the Nether; awakening suspended away from the moon; fog restored back in the overworld; Blood Moon ends at dawn; fog removed for everyone at dawn; jackalope returns to the ordinary lunar form |
-| death during a channel | 3/3 | rooted before death; death ends rooting and restores movement; form restored after respawn |
+| death during a channel | 3/3 | still rooted after holding the button for 2 s; death ends rooting and restores movement; form restored after respawn |
 | disconnect mid-ability & relog persistence | 4/4 | rooted before logout; movement restored on rejoin; race restored after relog; cooldowns survive relog |
 | multiplayer independence | 2/2 | three players keep three different races; each wears their own form |
 | pvp rules | 1/1 | abilities do not hurt players when pvp is off |
@@ -61,6 +62,12 @@ The mock is deliberately strict: unknown particle, sound, effect, item, entity o
 * Glyph Dominion's "Warded" bonus was defined but not applied → now applied.
 * Rune Stability regenerated so fast that disruption lasted ~3 s → rebalanced (2%/s, 4%/s in Monolith Stance).
 * Swimming put the Salamander's tail straight up in the vanilla horizontal swim pose (seen in a preview render) → the swim animation swings it back along the body.
+* **Reported in game (v1.0.0): Runic Bastion and Colossus Reassembly "did not work."** Cause: the Focus had a 0.05 s use duration, so a held button or a touch long-press re-sent "use" every few ticks, and the engine treated a repeated use of a running ability as "cancel". Bastion ended a few ticks after starting; Reassembly was cancelled before its teleport. Root, Antler Brand, Crimson Waltz and Titan's Edict were exposed to the same flaw. Fixed in v1.0.1:
+  - One action per press (the Focus/Codex use lasts while the button is held, and use events without a release gap are ignored).
+  - Only Root and Bastion can be ended by a deliberate second press, and only after 0.6 s.
+  - Titan's Edict no longer blocks other casts after its slam ("Busy" now names the ability).
+  - Reassembly finds footing when you aim at the sky or at your feet.
+  The *held use button* scenarios above reproduce the report and now pass.
 
 ## Not tested — needs a real game (please check these)
 

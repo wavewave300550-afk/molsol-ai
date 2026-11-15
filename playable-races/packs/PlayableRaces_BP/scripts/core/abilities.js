@@ -1,5 +1,5 @@
 import { system } from "@minecraft/server";
-import { GLOBAL_CAST_LOCK } from "../config.js";
+import { CANCEL_GRACE, GLOBAL_CAST_LOCK } from "../config.js";
 import { raceByCode } from "../races/registry.js";
 import { privateSound } from "./fx.js";
 import { showForm } from "./forms.js";
@@ -113,15 +113,18 @@ export function cast(p, s) {
     const a = selected(s, race);
     const now = system.currentTick;
     if (s.channel) {
-        if (s.channel.ability === a.id) {
-            endChannel(p, s, "cancel");
+        const ch = s.channel;
+        if (ch.ability === a.id) {
+            if (ch.cancelable && now - ch.started >= CANCEL_GRACE)
+                endChannel(p, s, "cancel");
             return;
         }
-        const mode = s.channel.mode ?? "block";
+        const mode = ch.mode ?? "block";
         if (mode === "interrupt")
             endChannel(p, s, "interrupt");
         else if (mode === "block") {
-            fail(p, s, "Busy");
+            const busy = race.abilities.find((x) => x.id === ch.ability);
+            fail(p, s, `Busy: ${busy ? busy.name : "ability in progress"}`);
             return;
         }
     }

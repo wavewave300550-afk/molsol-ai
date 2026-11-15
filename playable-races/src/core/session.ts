@@ -36,6 +36,8 @@ export interface Channel {
   until: number;
   /** keep: other abilities may be cast meanwhile; interrupt: casting another ends it; block: busy */
   mode?: "keep" | "interrupt" | "block";
+  /** Using the same ability again ends it early (only after CANCEL_GRACE ticks). */
+  cancelable?: boolean;
   tick?: (s: Session, p: Player, t: number) => void;
   end: (s: Session, p: Player, reason: EndReason) => void;
 }
@@ -50,6 +52,7 @@ export interface Session {
   chargeAt: Map<string, number>; // ability id -> system tick when next charge returns
   lastCast: number;
   lastInput: number;
+  lastRawInput: number; // every use event, including ignored repeats
   hudUntil: number;
   hudMsg?: { text: string; until: number };
   channel?: Channel;
@@ -73,7 +76,7 @@ export function load(p: Player): Session {
   }
   s = {
     id: p.id, name: p.name, data, dirty: false, readyAt: new Map(), chargeAt: new Map(), lastCast: -999,
-    lastInput: -999, hudUntil: 0, shownVariant: "", flags: new Map(), num: new Map(), menuOpen: false,
+    lastInput: -999, lastRawInput: -999, hudUntil: 0, shownVariant: "", flags: new Map(), num: new Map(), menuOpen: false,
   };
   const t = system.currentTick;
   for (const [id, rem] of Object.entries(data.cd)) if (rem > 0) s.readyAt.set(id, t + rem);
