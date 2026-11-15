@@ -25,7 +25,7 @@ RP = os.path.join(BUILD, "packs", "RP")
 DIST = os.path.join(ROOT, "dist")
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 
-VERSION = [1, 0, 0]
+VERSION = [1, 0, 1]
 MIN_ENGINE = [1, 26, 60]
 SERVER_VERSION = "2.11.0"
 SERVER_UI_VERSION = "2.3.0"
