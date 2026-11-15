@@ -31,7 +31,7 @@ import { AreaKeeper, awaitPromise, chunkBudget, ChunkRect, rectOf, sweepDeferred
 import { actionbar, particle, quake, shake, sound, titleFor } from "../../core/fx.js";
 import { tr } from "../../core/lang.js";
 import { manager } from "../../core/manager.js";
-import { Parts } from "../../core/parts.js";
+import { missingEntityTypes, PartReport, Parts } from "../../core/parts.js";
 import { BossDefinition, BossEncounter, SavedEncounter } from "../../core/registry.js";
 import { Co, TaskRunner } from "../../core/tasks.js";
 import { angleDiffDeg, V3 } from "../../core/vec.js";
@@ -513,6 +513,7 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
       this.phase = 1;
       this.director.reset(this.now, saved ? 100 : 240);
       for (const p of this.audience()) this.brief(p);
+      this.tasks.start("mm:selfcheck", this.selfCheck());
     }
   }
 
@@ -579,6 +580,67 @@ export class MigratingMountainEncounter implements BossEncounter, MMContext {
       if (dead.has(site.id)) continue;
       this.parts.want(`node:${site.id}`, { type: ENT.node, pos: site.pos, props: site.id === "root" ? { [PROP.hanging]: true } : {} });
     }
+  }
+
+  // ------------------------------------------------------------------ self-check
+  /** Problems worth telling players about (empty when the fight is healthy). */
+  private problems(): { missing: string[]; bad: PartReport[]; legsFailed: number } {
+    const missing = missingEntityTypes(Object.values(ENT));
+    const bad = this.parts.report().filter((r) => (r.key === "heart" || r.key.startsWith("node:")) && (r.state === "failed" || r.offsite));
+    const legsFailed = this.parts.report("leg:").filter((r) => r.state === "failed").length;
+    return { missing, bad, legsFailed };
+  }
+
+  /** 10 s into Phase 1 (and twice more while it lasts): report in chat if boss parts could not be created. */
+  private *selfCheck(): Co {
+    yield 200;
+    for (let round = 0; round < 3 && this.state === "phase1"; round++) {
+      const pr = this.problems();
+      if (!pr.missing.length && !pr.bad.length && !pr.legsFailed) return;
+      console.warn(`[anatomy] self-check: missing types [${pr.missing.join(", ")}]; ${pr.bad.map((r) => `${r.key}: ${r.state} ${r.error ?? ""}${r.offsite ? ` offsite ${r.offsite}` : ""}`).join("; ")}; legs failed ${pr.legsFailed}`);
+      for (const p of this.audience())
+        try {
+          p.sendMessage(this.checkReport(p, true));
+        } catch {
+          /* ignore */
+        }
+      yield 1200;
+    }
+  }
+
+  /** Full state of the boss parts, entity types and chunks, in the player's language. */
+  checkReport(p: Player, problem = false): string {
+    const L = (en: string, th: string) => tr(p, en, th);
+    const fmt = (v?: V3) => (v ? `(${Math.floor(v.x)}, ${Math.floor(v.y)}, ${Math.floor(v.z)})` : "");
+    const name = (key: string) => {
+      if (key === "heart") return L("Lithic Heart", "หัวใจศิลา");
+      const id = key.slice(5);
+      return L(this.m.nodes.find((n) => n.id === id)?.name ?? id, NODE_TH[id] ?? id);
+    };
+    const line = (r: PartReport) => {
+      const site = r.key === "heart" ? MM.heart : this.m.nodes.find((n) => `node:${n.id}` === r.key)?.pos;
+      let st: string;
+      if (r.state === "ok") st = `§a✔ §7${L("at", "อยู่ที่")} ${fmt(r.at)}`;
+      else if (r.state === "unloaded") st = `§e● §7${L("created; its area is not loaded (no one nearby)", "สร้างแล้ว แต่บริเวณนั้นยังไม่โหลด (ไม่มีใครอยู่ใกล้)")}`;
+      else if (r.state === "waiting") st = `§e… §7${L("waits for its area to load", "รอให้บริเวณนั้นโหลด")} ${fmt(site)}`;
+      else st = `§c✘ ${L("could not be created", "สร้างไม่ได้")}: §f${r.error ?? "?"}`;
+      const extra = r.offsite ? ` §e(${L(`appeared ${r.offsite} blocks away, moved back`, `ไปเกิดห่าง ${r.offsite} บล็อก ย้ายกลับแล้ว`)})` : r.via === "command" ? ` §8(/summon)` : "";
+      return `§7• §f${name(r.key)}: ${st}${extra}`;
+    };
+    const missing = missingEntityTypes(Object.values(ENT));
+    const legs = this.parts.report("leg:");
+    const b = chunkBudget();
+    const out: string[] = [];
+    out.push(problem ? L("§6[Anatomy] Problem found — please screenshot this message for the developer:", "§6[Anatomy] พบปัญหา — กรุณาแคปหน้าจอข้อความนี้ส่งให้ผู้พัฒนา:") : L("§6[Anatomy] Fight check:", "§6[Anatomy] ตรวจสอบการต่อสู้:"));
+    out.push(`§7${L("state", "สถานะ")}: §f${this.state} §7· ${L("nodes destroyed", "ทำลายผลึกแล้ว")} §f${this.nodeDead.size}/3`);
+    for (const r of this.parts.report()) if (r.key === "heart" || r.key.startsWith("node:")) out.push(line(r));
+    const legOk = legs.filter((r) => r.state === "ok" || r.state === "unloaded").length;
+    const legFail = legs.find((r) => r.state === "failed");
+    out.push(`§7• §f${L("Anchorage Roots", "รากยึดเกาะ")}: §f${legOk}/${legs.length}${legFail ? ` §c✘ ${legFail.error}` : ""}`);
+    out.push(missing.length ? `§c✘ ${L("entity types the game did not load", "ชนิดเอนทิตีที่เกมไม่ได้โหลด")}: §f${missing.join(", ")}` : `§a✔ §7${L("entity types loaded", "โหลดชนิดเอนทิตีครบ")}`);
+    out.push(`§8${L("chunks kept loaded", "ชังก์ที่โหลดค้าง")} ${this.keeper.kept}/${this.keeper.wanted} · ${L("budget", "โควต้า")} ${b.used}/${b.max ?? "?"} · ${L("waiting edits", "งานแก้บล็อกที่รอ")} ${this.writer.deferredOps}`);
+    if (problem) out.push(`§8${L("The game's own error text: Settings → Creator → Content Log.", "ข้อความผิดพลาดของเกมเอง: ตั้งค่า → Creator → Content Log")}`);
+    return out.join("\n");
   }
 
   /** Chat briefing: where the remaining nodes are (once per player per fight). */

@@ -29,6 +29,10 @@ export function openAtlas(p: Player): void {
         manager.cancelReturn(p);
         leaveArena(p);
       });
+      if (active.checkReport) {
+        form.button(langOf(p) === "th" ? "§eตรวจสอบการต่อสู้\n§8บอสครบไหม / มีปัญหาอะไร" : "§eCheck the fight\n§8are all boss parts there?");
+        actions.push(() => p.sendMessage(active.checkReport!(p)));
+      }
     } else {
       form.button("§aJoin the encounter\n§8" + active.def.atlas.title);
       actions.push(() => manager.rejoin(p));

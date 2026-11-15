@@ -9,6 +9,12 @@ export const stats = { blockWrites: 0, fills: 0, particles: 0, sounds: 0, maxWri
 /** Chunk loading emulation for custom dimensions: ticking areas + a circle of `radius` chunks around players. */
 export const chunkSim = { enabled: process.env.SIM_CHUNKS !== "0", radius: Number(process.env.SIM_SIM_DISTANCE ?? 4) };
 let chunkEpoch = 0;
+/** Faults the simulation can inject: types spawnEntity refuses, types the game did not register, a wrong spawn position. */
+export const spawnFaults = { refuse: new Set(), missing: new Set(), offset: null };
+export const EntityTypes = {
+  get: (id) => ((DATA.entities[id] && !spawnFaults.missing.has(id)) || DATA.vanillaEntities.has(id) ? { id } : undefined),
+  getAll: () => Object.keys(DATA.entities).filter((id) => !spawnFaults.missing.has(id)).map((id) => ({ id })),
+};
 function issue(msg) {
   if (issues.length < 400) issues.push(`[t${tick}] ${msg}`);
 }
@@ -315,6 +321,12 @@ class MockDimension {
       stats.refusedSpawns++;
       throw new LocationInUnloadedChunkError();
     }
+    if (spawnFaults.missing.has(id)) throw new Error(`InvalidArgumentError: Invalid entity identifier '${id}'`);
+    if (spawnFaults.refuse.has(id)) throw new Error("EntitySpawnError: the entity could not be spawned");
+    return this.createEntity(id, loc, opts);
+  }
+  createEntity(id, loc, opts) {
+    if (spawnFaults.offset) loc = { x: loc.x + spawnFaults.offset.x, y: loc.y + spawnFaults.offset.y, z: loc.z + spawnFaults.offset.z };
     const e = new MockEntity(id, { ...loc }, this);
     if (opts?.initialRotation !== undefined) e.rot.y = opts.initialRotation;
     stats.spawned[id] = (stats.spawned[id] ?? 0) + 1;
@@ -350,13 +362,23 @@ class MockDimension {
     return {};
   }
   getEntities(opts = {}) {
-    return [...entities].filter((e) => e.isValid && e.dimension === this && (!opts.type || e.typeId === opts.type) && (!opts.families || opts.families.every((f) => e.families().includes(f))) && (!opts.tags || opts.tags.every((t) => e.tags.has(t))));
+    const near = (e) => !opts.location || opts.maxDistance === undefined || Math.hypot(e.location.x - opts.location.x, e.location.y - opts.location.y, e.location.z - opts.location.z) <= opts.maxDistance;
+    return [...entities].filter((e) => e.isValid && e.dimension === this && (!opts.type || e.typeId === opts.type) && (!opts.families || opts.families.every((f) => e.families().includes(f))) && (!opts.tags || opts.tags.every((t) => e.tags.has(t))) && near(e));
   }
   getPlayers() {
     return players.filter((p) => p.dimension === this);
   }
-  runCommand() {
+  runCommand(cmd) {
     mutating("runCommand");
+    const m = /^summon (\S+) (-?[\d.]+) (-?[\d.]+) (-?[\d.]+)$/.exec(String(cmd).trim());
+    if (m) {
+      const [, id, x, y, z] = m;
+      if (spawnFaults.missing.has(id) || (!DATA.entities[id] && !DATA.vanillaEntities.has(id))) throw new Error(`CommandError: Unknown entity type ${id}`);
+      if (!this.chunkLoadedAt(+x, +z)) return { successCount: 0 };
+      stats.summons = (stats.summons ?? 0) + 1;
+      this.createEntity(id, { x: +x, y: +y, z: +z }, {});
+      return { successCount: 1 };
+    }
     return { successCount: 1 };
   }
 }

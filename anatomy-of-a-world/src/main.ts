@@ -17,6 +17,8 @@ import {
 import "./bosses/migrating_mountain/index.js";
 import { leaveArena } from "./core/arena.js";
 import { openAtlas, startFor } from "./core/atlas.js";
+import { tr } from "./core/lang.js";
+import { missingEntityTypes } from "./core/parts.js";
 import { manager } from "./core/manager.js";
 import { allBosses, bossForItem, getBoss } from "./core/registry.js";
 
@@ -193,11 +195,30 @@ world.afterEvents.worldLoad.subscribe(() => {
   system.runInterval(() => manager.tick(), 1);
 });
 
+/** Boss entity types the game did not register (their behaviour file was rejected), checked once. */
+let missingTypes: string[] | undefined;
+function checkEntityTypes(): string[] {
+  if (!missingTypes) {
+    missingTypes = missingEntityTypes(allBosses().flatMap((b) => [...b.entities]));
+    if (missingTypes.length) console.error(`[anatomy] the game did not load these entities: ${missingTypes.join(", ")} — their behaviour files were rejected; the bosses cannot appear`);
+  }
+  return missingTypes;
+}
+
 world.afterEvents.playerSpawn.subscribe((ev) => {
   const p = ev.player;
   if (ev.initialSpawn) {
     system.runTimeout(() => {
       if (!p.isValid) return;
+      const missing = checkEntityTypes();
+      if (missing.length)
+        p.sendMessage(
+          tr(
+            p,
+            `§c[Anatomy] The game did not load these add-on entities: §f${missing.join(", ")}§c. The bosses cannot appear. Please send a screenshot of this message and of the Content Log (Settings → Creator → Content Log) to the developer.`,
+            `§c[Anatomy] เกมไม่ได้โหลดเอนทิตีของแอดออน: §f${missing.join(", ")}§c บอสจะไม่ปรากฏ กรุณาแคปหน้าจอข้อความนี้และ Content Log (ตั้งค่า → Creator → Content Log) ส่งให้ผู้พัฒนา`,
+          ),
+        );
       giveAtlas(p, false);
       if (p.dimension.id.startsWith("anatomy:") && (!manager.active || manager.active.def.dimensionId !== p.dimension.id)) leaveArena(p);
     }, 40);

@@ -47,6 +47,8 @@ export interface BossEncounter {
   onPlayerJoin?(p: Player): void;
   /** An entity was loaded from a chunk (re-bind boss parts, remove stale ones). */
   onEntityLoad?(e: Entity): void;
+  /** Player-facing health check of the fight (parts, entity types, chunks), in the player's language. */
+  checkReport?(p: Player): string;
 }
 
 export interface BossDefinition {
@@ -55,6 +57,8 @@ export interface BossDefinition {
   summonItem: string;
   /** Ability ids accepted by the test command. */
   abilities: readonly string[];
+  /** Entity types the boss needs (checked on world load). */
+  entities: readonly string[];
   atlas: AtlasPage;
   create(party: Player[]): BossEncounter;
 }

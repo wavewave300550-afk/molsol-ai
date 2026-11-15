@@ -140,6 +140,11 @@ diamonds, emeralds, experience. Victories and best time are recorded in the Atla
   are deferred per chunk, in order, and replayed when the chunk loads; short-lived ticking areas sweep the rest, and
   structure tiles are only placed over loaded chunks. The Content Log reports `[anatomy] arena: N/100 chunks kept
   ticking` when the budget is smaller than the arena.
+* **Self-check.** If the engine refuses to create a boss part although its chunk is loaded, the `/summon` command is
+  tried, a part created in the wrong place is moved back, and 10 s into Phase 1 the players get a chat report with the
+  engine's own error text (English or Thai). The Atlas has **Check the fight** for the same report at any time, and on
+  joining a world the add-on says if the game did not load one of its entity types. Behaviour entity files use format
+  1.21.90 on purpose: from 1.26.40 on, an entity whose data the engine considers invalid fails to load as a whole.
 * **Robustness.** The fight is saved every 5 s and rebuilt deterministically at its phase after a reload; arena blocks
   can't be broken (player-placed blocks excepted), explosions don't damage the arena, natural mob spawns are removed,
   falls into the cloud sea are caught.
@@ -175,7 +180,7 @@ Pillow, numpy and scipy, and ffmpeg with libvorbis.
 | TypeScript `strict` against the official `@minecraft/server` 2.11.0 / `server-ui` 2.3.0 typings | 0 errors |
 | Minecraft Creator Tools 0.21 validation (both packs) | 0 errors, 0 warnings |
 | `tools/validate.py` — geometry ↔ animations ↔ controllers ↔ client entities ↔ scripts, block ids + states vs vanilla 1.26.60, sounds, particles, fog, items, lang | 2 827 checks, 0 errors |
-| `tools/sim/run.mjs` — the compiled scripts run against a strict API mock with a voxel world: summoning, intro, all 7 abilities in both phases, node destruction, the Great Unfolding, heart windows, re-bloom, victory, loot, cleanup, resume after reload (both phases), respawn pull-back, defeat, commands, Atlas UI | 112 checks, 0 failures, 0 API issues (repeated runs with random seeds) |
+| `tools/sim/run.mjs` — the compiled scripts run against a strict API mock with a voxel world: summoning, intro, all 7 abilities in both phases, node destruction, the Great Unfolding, heart windows, re-bloom, victory, loot, cleanup, resume after reload (both phases), respawn pull-back, defeat, commands, Atlas UI, injected engine faults (spawnEntity refusing a part, an entity type that never loaded, parts created in the wrong place) | 122 checks, 0 failures, 0 API issues (repeated runs with random seeds) |
 | Chunk loading in the same simulation — chunks load only inside ticking areas and around players; spawns, block edits and lookups fail in unloaded chunks, entities unload/reload with new handles, structure placements queue. A whole fight with a pack budget of 1–40 chunks and a simulation distance of 2–10: parts wait and appear, nodes stay destroyable after reloading, markers/HUD point to unloaded nodes, the whole shell is cut, the arena is fully cleared | passes for every budget/distance combination tried |
 | Visual review | models, the assembled creature, cavern cutaway and the Phase 2 crown rendered from the real geometry/textures (images above) |
 

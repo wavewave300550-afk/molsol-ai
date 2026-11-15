@@ -11,7 +11,10 @@ import os
 from typing import Dict
 
 NS = "anatomy"
-ENTITY_FORMAT = "1.26.50"
+# Behaviour entity files use a format version from before 1.26.40: from 1.26.40 on, an entity whose
+# components carry data the engine considers invalid fails to load as a whole (silently, for the
+# player); older format versions only warn. Every component used here exists at 1.21.90.
+ENTITY_FORMAT = "1.21.90"
 CLIENT_FORMAT = "1.10.0"
 
 SOUNDS = {

@@ -3,13 +3,14 @@ import { Player } from "@minecraft/server";
 import { BossDefinition, registerBoss } from "../../core/registry.js";
 import { ABILITY_IDS } from "./abilities.js";
 import { MigratingMountainEncounter } from "./encounter.js";
-import { DIMENSION } from "./ids.js";
+import { DIMENSION, ENT } from "./ids.js";
 
 export const MIGRATING_MOUNTAIN: BossDefinition = {
   id: "migrating_mountain",
   dimensionId: DIMENSION,
   summonItem: "anatomy:restless_lodestone",
   abilities: ABILITY_IDS,
+  entities: Object.values(ENT),
   atlas: {
     number: "001",
     title: "THE MIGRATING MOUNTAIN",

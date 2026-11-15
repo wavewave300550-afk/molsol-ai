@@ -579,6 +579,60 @@ check(mock.stats.queuedStructureCells === 0, `no structure placement ever left t
 tam.maxChunkCount = fullBudget;
 })();
 
+// ------------------------------------------------------------------ J. the engine refuses or misplaces boss parts
+log("J. spawn faults");
+await (async () => {
+  const F = mock.spawnFaults;
+  const ui = await import(uiUrl);
+  for (const p of [alex, sam]) {
+    p.gameMode = "Survival";
+    p.health.currentValue = 20;
+  }
+  // spawnEntity refuses the nodes but /summon works: they are created with the command
+  F.refuse = new Set(["anatomy:mm_resonance_node"]);
+  check(run("anatomy:boss", "start", "migrating_mountain")?.status === 0, "start while spawnEntity refuses the nodes");
+  await mock.advance(2);
+  await until(() => enc()?.state === "phase1", 4000, "phase 1 (spawnEntity refuses nodes)");
+  check(ents("anatomy:mm_resonance_node").length === 3, "nodes are created with /summon when spawnEntity refuses them");
+  check(enc().parts.report("node:").every((r) => r.via === "command" && r.state === "ok"), "the part report records the /summon fallback");
+  const m0 = mock.stats.messages.length;
+  ui.answers.push(1); // Atlas in a fight: Leave, Check the fight, ...
+  useItem(alex, "anatomy:anatomical_atlas");
+  await mock.advance(4);
+  check(mock.stats.messages.slice(m0).some((t) => t.includes("[Anatomy] Fight check") && t.includes("Lithic Heart") && t.includes("✔")), "the Atlas 'Check the fight' button prints the part report");
+  manager.stop("abort");
+  await until(() => !enc(), 3000, "abort (summon fallback)");
+  // the node type was never registered (its behaviour file rejected): the self-check says so in chat
+  F.refuse = new Set();
+  F.missing = new Set(["anatomy:mm_resonance_node"]);
+  const m1 = mock.stats.messages.length;
+  run("anatomy:boss", "start", "migrating_mountain");
+  await mock.advance(2);
+  await until(() => enc()?.state === "phase1", 4000, "phase 1 (node type missing)");
+  await mock.advance(260);
+  const said = mock.stats.messages.slice(m1).join("\n");
+  check(/Problem found/.test(said) && /did not load: §fanatomy:mm_resonance_node/.test(said), "the self-check reports an entity type the game did not load");
+  check(/could not be created: §fspawnEntity: InvalidArgumentError: Invalid entity identifier/.test(said), "the self-check quotes the engine's error");
+  check(ents("anatomy:mm_resonance_node").length === 0 && ents("anatomy:mm_lithic_heart").length === 1 && ents("anatomy:mm_root_leg").length === 14, "other parts are not affected");
+  alex.setDynamicProperty("anatomy:lang", "th");
+  check(/ชนิดเอนทิตีที่เกมไม่ได้โหลด/.test(enc().checkReport(alex)) && /สร้างไม่ได้/.test(enc().checkReport(alex)), "the check report is available in Thai");
+  alex.setDynamicProperty("anatomy:lang", undefined);
+  manager.stop("abort");
+  await until(() => !enc(), 3000, "abort (missing type)");
+  F.missing = new Set();
+  // the engine creates parts away from where they were asked for: they are moved back
+  F.offset = { x: 0, y: -40, z: 0 };
+  run("anatomy:boss", "start", "migrating_mountain");
+  await mock.advance(2);
+  await until(() => enc()?.state === "phase1", 4000, "phase 1 (misplaced spawns)");
+  F.offset = null;
+  const h = ents("anatomy:mm_lithic_heart")[0];
+  check(!!h && Math.hypot(h.location.x - MM.heart.x, h.location.y - MM.heart.y, h.location.z - MM.heart.z) < 0.5, "a heart created away from its place is moved back");
+  check(enc().parts.report("heart")[0]?.offsite === 40 && ents("anatomy:mm_resonance_node").every((e) => m.nodes.some((n) => Math.hypot(e.location.x - n.pos.x, e.location.y - n.pos.y, e.location.z - n.pos.z) < 0.5)), "misplaced parts are reported and every node is back on its site");
+  manager.stop("abort");
+  await until(() => !enc(), 3000, "abort (misplaced spawns)");
+})();
+
 // ------------------------------------------------------------------ report
 console.log("");
 console.log(`simulation: ${passed} checks passed, ${failures.length} failed, ${mock.issues.length} API issues, ${((Date.now() - t0) / 1000).toFixed(1)} s wall`);
