@@ -444,12 +444,30 @@ def check_scripts(particles, sounds, bp_entities):
     events = set()
     for d in bp_entities.values():
         events |= set(d.get("events", {}))
+    # keys that legitimately exist only in scripts
+    script_only = {
+        "sab:arena", "sab:flags", "sab:owner", "sab:cinematics", "sab:halo_awarded",   # dynamic properties
+        "sab:vesper", "sab:vesper_cinematics", "sab:vesper_action", "sab:toggle",      # custom commands / enums
+    }
+    # custom item components and cooldown categories must exist on an item definition
+    item_components, cooldowns = set(), set()
+    for path in glob.glob(os.path.join(BP, "items", "**", "*.json"), recursive=True):
+        comps = load(path)["minecraft:item"]["components"]
+        item_components |= {k for k in comps if not k.startswith("minecraft:")}
+        if "minecraft:cooldown" in comps:
+            cooldowns.add(comps["minecraft:cooldown"]["category"])
+    all_src = ""
     for path in js_files:
         src = open(path, encoding="utf-8").read()
+        all_src += src
         for m in re.finditer(r'"(sab:[a-z0-9_]+)"', src):
             s = m.group(1)
-            ok(s in known or s in props or s in events or s in ("sab:orison", "sab:psalter", "sab:vesper"),
+            ok(s in known or s in props or s in events or s in script_only or s in item_components or s in cooldowns,
                f"{rel(path)}: unknown identifier {s}")
+    for comp in item_components:
+        ok(f'registerCustomComponent("{comp}"' in all_src, f"item custom component {comp} is never registered by a script")
+    for cat in cooldowns:
+        ok(f'"{cat}"' in all_src, f"cooldown category {cat} unused by scripts")
         for m in re.finditer(r'"(sab\.(?:vesper|music)\.[a-z0-9_]+)"', src):
             ok(m.group(1) in sounds, f"{rel(path)}: unknown sound {m.group(1)}")
 

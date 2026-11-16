@@ -170,7 +170,7 @@ def bp_entities() -> Dict[str, dict]:
                                             "sab:len": prop("float", 0.0, [0.0, 64.0]),
                                             "sab:power": prop("float", 0.0, [0.0, 1.0])})
     # ---- thrown Orison Halo (player weapon projectile, script driven)
-    c = base_components(1000, 0.6, 0.4, ["sab_player_halo", "inanimate"])
+    c = base_components(1000, 0.6, 0.4, FAMILY + ["sab_player_halo", "inanimate"])
     out["orison_halo"] = entity(ENT["halo"], c)
     return out
 
