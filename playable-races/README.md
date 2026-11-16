@@ -1,6 +1,6 @@
-# Playable Races — v1.1.0 (Races 001–006)
+# Playable Races — v1.2.0 (Races 001–006)
 
-A Minecraft **Bedrock Edition** add-on that lets every player become one of six nonhuman species — each with its own animated body, biology, abilities, passive traits and relationship with the world. **Expansion 01** (v1.1.0) adds races 004–006, including the first **Unique** lineage, to the foundation release without changing anything players already have.
+A Minecraft **Bedrock Edition** add-on that lets every player become one of six nonhuman species — each with its own animated body, biology, abilities, passive traits and relationship with the world. **Expansion 01** (v1.1.0) adds races 004–006, including the first **Unique** lineage, to the foundation release without changing anything players already have. **v1.2.0** redraws races 004–006 from the ground up — new models, pixel-art textures, animations and effects — while keeping all of their gameplay and every saved choice ([what changed and why](docs/CREATIVE.md#visual-overhaul-v120-races-004006-redrawn)).
 
 | Code | Race | Thai name | Identity |
 |---|---|---|---|
@@ -31,7 +31,7 @@ Full ability tables, passives, the Blood Moon schedule, Divine Jurisdiction, com
 
 ![HYAKUTEN CHUKO](docs/images/hyakuten_chuko.png)
 
-**Living motion (v1.0.2)** — rendered from the shipped animation files: breathing, blinking, race-specific gaits with grounded feet, jumps and landings, and idle behaviours the creatures perform on their own ([details](docs/CREATIVE.md#living-motion-v102)).
+**Living motion** — rendered from the shipped animation files (races 004–006 as redrawn in v1.2.0): breathing, blinking, race-specific gaits with grounded feet, jumps and landings, and idle behaviours the creatures perform on their own ([details](docs/CREATIVE.md#living-motion-v102)).
 
 | | | |
 |---|---|---|
@@ -44,8 +44,8 @@ Full ability tables, passives, the Blood Moon schedule, Divine Jurisdiction, com
 * [Installation guide (iOS, Android, Windows, consoles, servers)](docs/INSTALL.md)
 * [Ability & control reference](docs/ABILITIES.md)
 * [Technical compatibility report](docs/COMPATIBILITY.md) — target version, APIs, how bodies are rendered without overriding the player, limitations
-* [Testing report](docs/TESTING.md) — what was verified (typecheck, Creator Tools 0 errors, 63,151 static checks incl. every Molang expression, 276 runtime assertions, an offline run of every animation) and what still needs an in-game check (proposed tests, clearly separated)
-* [Creative development report](docs/CREATIVE.md) — brief → implementation mapping, research, additions and every significant change, for 001–003 and Expansion 01
+* [Testing report](docs/TESTING.md) — what was verified (typecheck, Creator Tools 0 errors, 48,774 static checks incl. every Molang expression, 276 runtime assertions, an offline run of every animation, races 001–003 byte-identical to v1.1.0) and what still needs an in-game check (proposed tests, clearly separated)
+* [Creative development report](docs/CREATIVE.md) — brief → implementation mapping, research, additions and every significant change, for 001–003, Expansion 01 and the v1.2.0 redraw
 
 ## Project layout
 ```

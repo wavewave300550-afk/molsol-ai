@@ -1,6 +1,6 @@
 # Technical Compatibility Report
 
-*Version 1.1.0 — foundation races 001–003 plus Expansion 01 (races 004–006). Nothing about how races 001–003 are stored or rendered changed: same pack ids, item ids, race codes, saved player data and world settings.*
+*Version 1.2.0 — foundation races 001–003 plus Expansion 01 (races 004–006), with the bodies, animations and effects of races 004–006 redrawn in 1.2.0. Nothing about how any race is stored changed, and races 001–003 are rendered from byte-identical files: same pack ids, item ids, race codes, form names, saved player data and world settings.*
 
 ## Target
 
@@ -78,16 +78,17 @@ All carry the family `plrace_proxy`. They are removed when their owner dies, lea
 | No dimension/biome files; no vanilla sound/lang overrides | ✅ |
 | Guide book given once per player (Lineage Codex), short chat message, recipe uses vanilla items (book + lapis + bone meal) | ✅ |
 | No terrain destruction; no ticking areas | ✅ |
-| Size budget (< 25 MB, < 3,500 files): 2.3 MB packaged, ~12 MB unpacked, 266 files; every texture ≤ 256 KB memory | ✅ |
+| Size budget (< 25 MB, < 3,500 files): 1.6 MB packaged, ~7.5 MB unpacked, 267 files (v1.2.0); every texture ≤ 256 KB memory | ✅ |
 
 ## Performance
 
 * One 1-tick loop only does work while a channel (multi-stage ability) is active; a 4-tick loop drives HUD/temporary forms; a 20-tick loop runs passives (a handful of block probes per player, one entity query for jackalope senses); Blood Moon checks every 2 s; persistence every 5 s and on important changes.
 * Ambient creature effects (spores, rune motes, embers, bubbles) are emitted **client-side by the attachables**, costing no server work or network packets; burst limits are small (2–4 particles per emission).
 * Ability VFX use one `spawnParticle` call per visual event (the snare strand, shard stream and rune circle are single emitters driven by Molang variables).
-* Geometry (base forms, bones / cubes incl. cut-out and accent layers): Salamander 87 / 179, Golem 70 / 110, Jackalope 61 / 93, Xenentoma 75 / 154, Flying Spaghetti Monster 74 / 593 (its ~40 noodle strands are what it is; still ~7k triangles), Nurariten 57 / 114 (court 137, throne 175); textures 256×256 or 256×128 RGBA.
+* Geometry (base forms, bones / cubes incl. cut-out and accent layers): Salamander 87 / 179, Golem 70 / 110, Jackalope 61 / 93, Xenentoma 74 / 103 (154 before 1.2.0), Flying Spaghetti Monster 68 / 136 (593 before 1.2.0), Nurariten 64 / 97 (court 96, throne 105); textures 256×256 or 256×128 RGBA.
 * HYAKUTEN CHŪKŌ adds ten entities for ≤ 10 s: ~1,050 cubes in total (eight 124-cube columns, a 36-cube gate, a 21-cube herald pair) and ~150 animated bones, driven by short looping client animations. Script cost per tick: one teleport per column, ground probes every 4 ticks per column, one small entity query per column every 4 ticks. Particle emitters are single bursts (seals, rings, fractures) — never per-figure.
 * New race ambient effects (sensilla motes, sauce drips, royal motes) are client-side attachable particles with 1–3 particles per emission, like the foundation races.
+* Since 1.2.0 the effects of races 004–006 use a second particle texture, `textures/plrace/races/particles/particles_ex.png` (256×256, full colour, 76 KB on disk), with the standard `particles_add`, `particles_blend` and `particles_alpha` materials; their identifiers are unchanged, so the scripts did not change. Races 001–003 keep the original 128×128 atlas.
 * Animation (v1.0.2): each form runs ~10 layers. Values shared by every layer — stride phase, the vanilla swing, speed, sprint and the fitted body bob — are computed **once per frame** in the attachable's `pre_animation` script and read as variables (`v.plr_*`), which halves the Molang work; the longest single channel expression is ~650 characters. Layers that only matter in third person are switched off in first person, idle behaviours and landings are short keyframed clips run by tiny controllers, and footfall dust is a 6-particle client-side burst.
 * Mobile/iOS: no shader changes, no custom materials, only vanilla entity materials (`entity_emissive_alpha` for glowing runes/veins, `entity_alphatest` for leaves and fur fringes, `entity_alphablend` for the mirage).
 

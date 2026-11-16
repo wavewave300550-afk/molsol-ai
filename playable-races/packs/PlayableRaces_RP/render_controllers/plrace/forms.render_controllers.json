@@ -461,13 +461,13 @@
      "*": false
     },
     {
+     "acc_c_chest": "query.has_armor_slot(1)"
+    },
+    {
      "acc_c_lsh": "query.has_armor_slot(1)"
     },
     {
      "acc_c_rsh": "query.has_armor_slot(1)"
-    },
-    {
-     "acc_c_sternum": "query.has_armor_slot(1)"
     },
     {
      "acc_f_l": false
@@ -510,13 +510,13 @@
      "acc_l_r": "query.has_armor_slot(2)"
     },
     {
+     "acc_c_chest": false
+    },
+    {
      "acc_c_lsh": false
     },
     {
      "acc_c_rsh": false
-    },
-    {
-     "acc_c_sternum": false
     },
     {
      "acc_f_l": false
@@ -553,13 +553,13 @@
      "acc_f_r": "query.has_armor_slot(3)"
     },
     {
+     "acc_c_chest": false
+    },
+    {
      "acc_c_lsh": false
     },
     {
      "acc_c_rsh": false
-    },
-    {
-     "acc_c_sternum": false
     },
     {
      "acc_l_l": false

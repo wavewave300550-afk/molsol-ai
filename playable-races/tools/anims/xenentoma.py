@@ -132,7 +132,7 @@ def anims(model) -> Dict[str, object]:
                  lin([(1.2 + 0.25 * k, prod(f"math.sin({PH} + {k * 20})", walk))]), None)
     loco.rot("tail_g", lin([(14, six)]))                          # the abdomen lifts in line with the tipped thorax
     loco.rot("skull", lin([(-4, walk), (8, six)]))               # the cone points ahead / down at the ground
-    grounded(model, loco, rig, r)
+    grounded(model, loco, rig, r, harmonics=12)          # six-legged gait: a richer foot floor
 
     air = Layer(r, "airborne", loop=True)        # legs fold, forelimbs spread, abdomen lifts
     for p, side in SIDES:

@@ -87,16 +87,16 @@
        "moving": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding"
       },
       {
-       "fidget_shape": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.7), 5) == 0)"
+       "fidget_shape": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.7), 4) == 0)"
       },
       {
-       "fidget_eyes": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.7), 5) == 1)"
+       "fidget_eyes": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.7), 4) == 1)"
       },
       {
-       "fidget_meatballs": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.7), 5) == 2)"
+       "fidget_meatballs": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.7), 4) == 2)"
       },
       {
-       "fidget_sauce": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.7), 5) == 3)"
+       "fidget_sauce": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.7), 4) == 3)"
       },
       {
        "rest": "q.all_animations_finished"

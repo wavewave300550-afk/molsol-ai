@@ -667,10 +667,10 @@ def build_gate() -> Model:
         m.cube(g.name, (x0, 42.25, -1.5), (5.0, 2.5, 3.0), "h_lacquer", pivot=(s * 17.0, 43.5, 0), rot=(0, 0, -14 * s))
     m.box(g.name, (0, 39.75, -0.75), (4.0, 4.0, 1.0), "h_scroll")                              # gakuzuka plaque
     ring = m.bone("ring", g.name, (0, 22, 0.5))
-    for k in range(8):                                                                         # drifting bands of golden mist
-        y = 8.0 + k * 3.5
-        w = 22.0 - abs(k - 3.5) * 2.0
-        m.box(ring.name, (0, y, 0.5), (w, 1.0, 0.5), "h_glow")
+    for (x, y, w) in ((-3.0, 9.0, 13.0), (4.0, 16.5, 11.0), (-2.5, 24.0, 15.0), (3.5, 31.0, 9.0)):   # suyari-gasumi:
+        m.box(ring.name, (x, y, 0.5), (w, 2.0, 0.5), "h_glow")                                    # staggered bands of
+        for e in (-1, 1):                                                                          # golden mist with
+            m.box(ring.name, (x + e * (w / 2 + 0.75), y + 0.25 * e, 0.5), (1.5, 1.0, 0.5), "h_glow")  # rounded ends
     inner = m.bone("ring_inner", g.name, (0, 22, 1.0))
     m.box(inner.name, (0, 22, 1.0), (1.0, 1.0, 1.0), "h_glow")
     m.bones["gate"].locators["center"] = (0, 24, 0)

@@ -4,13 +4,13 @@
   "description": {
    "identifier": "plrace:sauce_drip",
    "basic_render_parameters": {
-    "material": "particles_alpha",
-    "texture": "textures/plrace/races/particles/particles"
+    "material": "particles_blend",
+    "texture": "textures/plrace/races/particles/particles_ex"
    }
   },
   "components": {
    "minecraft:emitter_rate_instant": {
-    "num_particles": 2
+    "num_particles": 1
    },
    "minecraft:emitter_lifetime_once": {
     "active_time": "0.1"
@@ -23,31 +23,36 @@
    "minecraft:particle_motion_dynamic": {
     "linear_acceleration": [
      0,
-     -6,
+     "-7 * math.clamp((v.particle_age / v.particle_lifetime) * 4 - 0.6, 0, 1)",
      0
     ]
    },
    "minecraft:particle_appearance_billboard": {
     "size": [
-     "0.06",
-     "0.09"
+     "0.07",
+     "0.07 + math.clamp((v.particle_age / v.particle_lifetime) * 4 - 0.4, 0, 1) * 0.03"
     ],
     "facing_camera_mode": "lookat_xyz",
     "uv": {
-     "texture_width": 128,
-     "texture_height": 128,
+     "texture_width": 256,
+     "texture_height": 256,
      "uv": [
-      32,
-      0
+      0,
+      32
      ],
      "uv_size": [
-      16,
-      16
+      32,
+      32
      ]
     }
    },
    "minecraft:particle_appearance_tinting": {
-    "color": "#ffc22a1c"
+    "color": [
+     "1",
+     "1",
+     "1",
+     "math.clamp((1 - (v.particle_age / v.particle_lifetime)) * 3, 0, 1)"
+    ]
    },
    "minecraft:particle_appearance_lighting": {}
   }

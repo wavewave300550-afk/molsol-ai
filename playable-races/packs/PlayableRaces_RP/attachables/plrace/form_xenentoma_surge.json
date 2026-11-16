@@ -20,7 +20,7 @@
     "first_person": "animation.plrace.xenentoma.first_person",
     "third_person": "animation.plrace.xenentoma.third_person",
     "life": "animation.plrace.xenentoma.life",
-    "detail": "animation.plrace.xenentoma.detail",
+    "appendages": "animation.plrace.xenentoma.appendages",
     "locomotion": "animation.plrace.xenentoma.locomotion",
     "airborne": "animation.plrace.xenentoma.airborne",
     "landing": "controller.animation.plrace.xenentoma.landing",
@@ -47,7 +47,7 @@
      "v.plr_still = 1 - math.clamp(q.modified_move_speed * 5, 0, 1);",
      "v.plr_spr = q.is_sprinting ? 1 : 0;",
      "v.plr_walk = 1 - v.plr_spr;",
-     "v.plr_bob = ((v.plr_walk) * (math.clamp(q.modified_move_speed / 0.8, 0, 1.25)) * ((-0.8538 + -0.8006 * math.cos(v.plr_ph * 2) + -0.02655 * math.sin(v.plr_ph * 4)) - (-0.040))) + ((v.plr_spr) * (v.plr_mv) * ((-1.29 + -1.227 * math.cos(v.plr_ph * 2) + -0.0267 * math.sin(v.plr_ph * 4)) - (-0.040)));"
+     "v.plr_bob = ((v.plr_walk) * (math.clamp(q.modified_move_speed / 0.8, 0, 1.25)) * ((0.2468 + -0.3868 * math.cos(v.plr_ph * 2) + 0.5202 * math.sin(v.plr_ph * 2) + -0.4823 * math.cos(v.plr_ph * 4) + 0.3309 * math.sin(v.plr_ph * 4) + -0.06011 * math.cos(v.plr_ph * 6) + -0.1294 * math.sin(v.plr_ph * 6) + -0.02164 * math.cos(v.plr_ph * 8) + 0.06161 * math.sin(v.plr_ph * 8) + -0.06112 * math.cos(v.plr_ph * 10)) - (-0.008))) + ((v.plr_spr) * (v.plr_mv) * ((-1.727 + -3.215 * math.cos(v.plr_ph * 2) + 1.622 * math.sin(v.plr_ph * 2) + -1.133 * math.cos(v.plr_ph * 4) + 0.4197 * math.sin(v.plr_ph * 4) + 0.04611 * math.cos(v.plr_ph * 6) + -0.2845 * math.sin(v.plr_ph * 6) + -0.1314 * math.cos(v.plr_ph * 8) + 0.1566 * math.sin(v.plr_ph * 8) + -0.06838 * math.cos(v.plr_ph * 10) + -0.08623 * math.sin(v.plr_ph * 10) + -0.02013 * math.cos(v.plr_ph * 12) + 0.04369 * math.sin(v.plr_ph * 12)) - (-0.008)));"
     ],
     "animate": [
      {
@@ -59,7 +59,7 @@
      {
       "life": "!c.is_first_person"
      },
-     "detail",
+     "appendages",
      {
       "locomotion": "!c.is_first_person && !q.is_riding && !q.is_gliding && !q.is_swimming"
      },

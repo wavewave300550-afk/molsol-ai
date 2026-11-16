@@ -4,13 +4,13 @@
   "description": {
    "identifier": "plrace:seal_converge",
    "basic_render_parameters": {
-    "material": "particles_add",
-    "texture": "textures/plrace/races/particles/particles"
+    "material": "particles_blend",
+    "texture": "textures/plrace/races/particles/particles_ex"
    }
   },
   "components": {
    "minecraft:emitter_rate_instant": {
-    "num_particles": 16
+    "num_particles": 12
    },
    "minecraft:emitter_lifetime_once": {
     "active_time": 0.05
@@ -29,25 +29,30 @@
    },
    "minecraft:particle_appearance_billboard": {
     "size": [
-     "0.18",
-     "0.18"
+     "0.2",
+     "0.2"
     ],
     "facing_camera_mode": "lookat_xyz",
     "uv": {
-     "texture_width": 128,
-     "texture_height": 128,
+     "texture_width": 256,
+     "texture_height": 256,
      "uv": [
-      0,
-      48
+      64,
+      64
      ],
      "uv_size": [
-      16,
-      16
+      32,
+      32
      ]
     }
    },
    "minecraft:particle_appearance_tinting": {
-    "color": "#ffffd24a"
+    "color": [
+     "1",
+     "1",
+     "1",
+     "math.clamp((1 - (v.particle_age / v.particle_lifetime)) * 3, 0, 1)"
+    ]
    }
   }
  }

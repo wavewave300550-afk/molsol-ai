@@ -5,7 +5,7 @@
    "identifier": "plrace:gate_shadow",
    "basic_render_parameters": {
     "material": "particles_alpha",
-    "texture": "textures/plrace/races/particles/particles"
+    "texture": "textures/plrace/races/particles/particles_ex"
    }
   },
   "components": {
@@ -26,15 +26,15 @@
     ],
     "facing_camera_mode": "emitter_transform_xz",
     "uv": {
-     "texture_width": 128,
-     "texture_height": 128,
+     "texture_width": 256,
+     "texture_height": 256,
      "uv": [
       64,
-      48
+      96
      ],
      "uv_size": [
-      16,
-      16
+      64,
+      64
      ]
     }
    },

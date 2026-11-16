@@ -187,7 +187,7 @@ def _forelimbs(m: Model) -> None:
             "survey": ((0, 1.5, 0), side_rot((-14, 0, 12), s)),
             "glide": ((0, 0, 0), side_rot((8, 0, 22), s)),
             "surge": ((0, 0, 0), side_rot((-6, 0, 18), s)),
-            "exuvia": ((0, -2.0, 0), side_rot((30, 0, -10), s)),
+            "exuvia": ((0, -2.5, 0), side_rot((128, 0, -6), s)),    # the empty shell's limbs droop
         })
 
 

@@ -5,12 +5,12 @@
    "identifier": "plrace:sky_fracture",
    "basic_render_parameters": {
     "material": "particles_add",
-    "texture": "textures/plrace/races/particles/particles"
+    "texture": "textures/plrace/races/particles/particles_ex"
    }
   },
   "components": {
    "minecraft:emitter_rate_instant": {
-    "num_particles": 12
+    "num_particles": 10
    },
    "minecraft:emitter_lifetime_once": {
     "active_time": "0.1"
@@ -28,32 +28,30 @@
    },
    "minecraft:particle_appearance_billboard": {
     "size": [
-     "1.0 + v.particle_random_3 * 1.4",
-     "1.0 + v.particle_random_3 * 1.4"
+     "1.2 + v.particle_random_3 * 1.4",
+     "1.2 + v.particle_random_3 * 1.4"
     ],
     "facing_camera_mode": "lookat_xyz",
     "uv": {
-     "texture_width": 128,
-     "texture_height": 128,
+     "texture_width": 256,
+     "texture_height": 256,
      "uv": [
-      32,
-      48
+      128,
+      96
      ],
      "uv_size": [
-      16,
-      16
+      64,
+      64
      ]
     }
    },
    "minecraft:particle_appearance_tinting": {
-    "color": {
-     "gradient": {
-      "0.0": "#00fff8e0",
-      "0.2": "#fffff8e0",
-      "1.0": "#00ffe0a0"
-     },
-     "interpolant": "v.particle_age / v.particle_lifetime"
-    }
+    "color": [
+     "1",
+     "1",
+     "1",
+     "math.clamp(math.min((v.particle_age / v.particle_lifetime) * 6, (1 - (v.particle_age / v.particle_lifetime)) * 2.5), 0, 1)"
+    ]
    }
   }
  }

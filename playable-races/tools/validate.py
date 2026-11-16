@@ -260,6 +260,27 @@ for f in glob.glob(os.path.join(RP, "animations", "**", "*.json"), recursive=Tru
             check_expr(f"{name}{where}", expr, all_defined)
         if "anim_time_update" in a:
             check_expr(f"{name}.anim_time_update", a["anim_time_update"], all_defined)
+
+# particle effects: every Molang string parses (no scientific notation), and reads only the particle's
+# own built-ins or variables the scripts pass in with spawnParticle (see src/core/fx.ts: variable.<key>)
+PARTICLE_BUILTINS = {f"{w}_{k}" for w in ("particle", "emitter") for k in ("age", "lifetime", "random_1", "random_2", "random_3", "random_4")}
+_js_all = "".join(open(f, encoding="utf-8").read() for f in glob.glob(os.path.join(BP, "scripts", "**", "*.js"), recursive=True))
+_passed = {}
+for pid, d in particles.items():
+    for where, expr in molang_strings(d.get("components", {})):
+        if re.fullmatch(r"[a-z_]+|#[0-9a-fA-F]{6,8}", expr):
+            continue                                   # enum words (directions, facing modes) and hex colours
+        check(not re.search(r"(?<![a-z_.])\d+(?:\.\d+)?[eE][-+]?\d", expr), f"{pid}{where}: number in scientific notation")
+        try:
+            _molang.check(expr)
+        except SyntaxError as e:
+            check(False, f"{pid}{where}: Molang does not parse: {e}")
+            continue
+        for var in re.findall(r"\b(?:v|variable)\.([a-z_0-9]+)", expr):
+            if var not in PARTICLE_BUILTINS:
+                if var not in _passed:
+                    _passed[var] = re.search(rf"\b{var}\s*:", _js_all) is not None
+                check(_passed[var], f"{pid}{where}: particle variable v.{var} is never passed by a script")
 for f in glob.glob(os.path.join(RP, "animation_controllers", "**", "*.json"), recursive=True):
     for name, c in load(f).get("animation_controllers", {}).items():
         for st_name, st in c.get("states", {}).items():

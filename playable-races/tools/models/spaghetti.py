@@ -547,9 +547,7 @@ def build_meatball() -> Model:
     m = Model("meatball", ppu=2.0, atlas_width=128)
     m.bone("root", None, (0, 0, 0))
     ball = m.bone("ball", "root", (0, 4.0, 0))
-    ellipsoid(m, ball.name, (0, 4.0, 0), (4.0, 4.0, 4.0), "meatball_solo")
-    m.box(ball.name, (0, 6.0, 0), (3.0, 0.5, 3.0), "sauce")
-    m.box(ball.name, (0.75, 5.25, -2.0), (0.75, 1.5, 0.5), "sauce")
+    ellipsoid(m, ball.name, (0, 4.0, 0), (4.0, 4.0, 4.0), "meatball_solo", a=0.625, b=0.75)
     # two noodle tethers trailing behind it (they lead back to the body)
     for k, (dx, dy) in enumerate(((-1.0, 0.5), (0.75, -0.5))):
         tb = m.bone(f"tether{k}", ball.name, (dx, 4.0 + dy, 1.5))

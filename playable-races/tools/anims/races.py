@@ -80,10 +80,11 @@ BOB_EXPR: Dict[str, str] = {}
 WALK_REF = 0.8   # walking speed the walk fit is made at (modified_move_speed)
 
 
-def grounded(model, loco: Layer, rig: Rig, race: str, sprint_clearance=None, upper_only=None) -> None:
+def grounded(model, loco: Layer, rig: Rig, race: str, sprint_clearance=None, upper_only=None, harmonics: int = 4) -> None:
     """Add the fitted body bob that keeps the feet on the ground (walk + sprint)."""
-    walk = ground_bob(model, [loco.anim()], WALK_REF, False, report=FIT_REPORT, label=f"{race} walk")
-    run = ground_bob(model, [loco.anim()], 1.0, True, clearance=sprint_clearance, report=FIT_REPORT, label=f"{race} sprint")
+    walk = ground_bob(model, [loco.anim()], WALK_REF, False, harmonics=harmonics, report=FIT_REPORT, label=f"{race} walk")
+    run = ground_bob(model, [loco.anim()], 1.0, True, harmonics=harmonics, clearance=sprint_clearance, report=FIT_REPORT,
+                     label=f"{race} sprint")
     rest = float(foot_floor(model, [loco.anim()], 0.0, False, samples=1)[0])
     FIT_REPORT.append(f"{race} rest foot floor {rest:+.2f}")
     wscale = f"math.clamp(q.modified_move_speed / {WALK_REF}, 0, 1.25)"

@@ -602,6 +602,11 @@ def particles() -> Dict[str, dict]:
         "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, 1.8, 0]},
         **bb(["0.1", "0.1"], _uv_flip(["glyph_a", "glyph_b", "glyph_c", "glyph_d"])),
         "minecraft:particle_appearance_tinting": {"color": ["v.red", "v.green", "v.blue", "1 - v.particle_age / 1.4"]}})
+    # v1.2: races 004-006 are redrawn on their own full-colour atlas (fx_ex); same identifiers
+    import fx_ex
+    redrawn = fx_ex.particles()
+    assert set(redrawn) == set(fx_ex.RACE_PARTICLES) and set(redrawn) <= set(P), "fx_ex must only redraw existing effects"
+    P.update(redrawn)
     return P
 
 
