@@ -95,7 +95,7 @@ CAMERA = {  # race -> (scale, center y)
     "golem": (4.7, 20.0),
     "jackalope": (6.2, 17.0),
     "xenentoma": (5.0, 16.0),
-    "spaghetti": (5.6, 15.0),
+    "spaghetti": (6.4, 17.0),
     "nurariten": (5.0, 18.0),
 }
 
@@ -170,7 +170,7 @@ FIDGETS = {
                   ("fidget_stretch", "stretch & shake")],
     "xenentoma": [("fidget_probe", "stylet probe"), ("fidget_groom", "sensilla grooming"), ("fidget_listen", "listening"),
                   ("fidget_ripple", "anamorphic ripple")],
-    "spaghetti": [("fidget_shape", "noodle doodle"), ("fidget_eyes", "independent eyes"), ("fidget_meatballs", "meatball lap"),
+    "spaghetti": [("fidget_shape", "noodle twirl"), ("fidget_eyes", "independent eyes"), ("fidget_meatballs", "meatball lap"),
                   ("fidget_sauce", "sauce defies gravity")],
     "nurariten": [("fidget_survey", "surveys its court"), ("fidget_sleeves", "settles its sleeves"), ("fidget_glyph", "writes a glyph"),
                   ("fidget_procession", "its shadow becomes a procession")],

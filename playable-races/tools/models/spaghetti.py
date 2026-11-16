@@ -1,414 +1,559 @@
-"""Race 005 - Flying Spaghetti Monster.
+"""Race 005 - Flying Spaghetti Monster.  (v1.2 redesign: "the appetising deity")
 
 The deity of Pastafarianism (Bobby Henderson's 2005 open letter to the Kansas State
-Board of Education): a floating tangle of living spaghetti with two meatballs and
-two eyes on stalks.  Here it is a playable body:
+Board of Education): a floating mass of spaghetti with two meatballs and two eyes on
+stalks.  Drawn as absurd-but-premium food art - a plate of spaghetti and meatballs
+without the plate:
 
-  * a dense, asymmetrical mass of curved noodle strands (generated as chains of thin
-    rotated segments) split into twist groups that slowly circulate
-  * dangling strands underneath and trailing strands behind (they stream back like
-    a comet when it moves)
-  * exactly two meatballs on orbit pivots (they leave and return for Meatball Ricochet
-    and circle the vortex in the Great Pasta Revelation)
-  * two eyes on long noodle stalks, each with its own lid (independent looks/blinks)
-  * tomato sauce on the strands, a sauce crown and drips that can flow upward
-  * improvised noodle arms bound to the player's arms - they only form while that
-    hand holds something (or strikes), so tools sit in a "hand" of braided strands
-  * Al Dente: straight, dry spaghetti rods lock into a rigid lattice
-  * the Revelation: three spiral layers of noodles unfold around the body
+  * a round nest of glossy golden pasta floating over a clear gap; the nest is built from
+    twelve staggered slices and painted with strands wound around it (continuous across
+    every face), a few real loops lift off the surface and break the outline
+  * two seared meatballs sitting on its shoulders, glazed with marinara
+  * a ladle of sauce poured over the top that runs down the sides - one drip runs UP
+  * two big round eyes on noodle stalks, each with a sliding pupil and its own lid
+  * His Noodly Appendages: two curling noodles at the sides, a fringe of short curls below
+  * a golden perforated halo with two handles - the Holy Colander's rim
+  * noodle braids that form arms only while a hand holds something
+  * Al Dente: dry spaghetti rods lock into a lattice; the Revelation: three spiral
+    layers of pasta unfold around the body
 
 Variants: base | rigid | detached | revelation | brittle (singed by fire).
 """
 from __future__ import annotations
 
 import math
+from functools import lru_cache
 
 import numpy as np
 
 from kit.geo import Model
-from kit.tex import Ctx, hx
-from kit import noise as nz
-from models.common import humanoid, fp_sleeves, ramp, bevel, face_light, mix3, clamp01, accents, mat_accent
+from kit import pixel as px
+from models.common import accents, chain, ellipsoid, fp_sleeves, humanoid, mat_accent, q, segment
 
 ID = "spaghetti"
 VARIANTS = ["base", "rigid", "detached", "revelation", "brittle"]
 TEXTURES = {
-    "base": {"dente": 0.0, "burnt": 0.0, "glow": 0.0},
-    "dente": {"dente": 1.0, "burnt": 0.0, "glow": 0.0},
-    "burnt": {"dente": 0.3, "burnt": 1.0, "glow": 0.0},
-    "holy": {"dente": 0.0, "burnt": 0.0, "glow": 1.0},
+    "base": {"dente": 0.0, "burnt": 0.0, "holy": 0.0},
+    "dente": {"dente": 1.0, "burnt": 0.0, "holy": 0.0},
+    "burnt": {"dente": 0.0, "burnt": 1.0, "holy": 0.0},
+    "holy": {"dente": 0.0, "burnt": 0.0, "holy": 1.0},
 }
 VARIANT_TEXTURE = {"base": "base", "rigid": "dente", "detached": "base", "revelation": "holy", "brittle": "burnt"}
-CENTER = (0.0, 13.0, 0.4)
-GROUPS = 6
-HANG = 6
+CENTER = (0.0, 13.5, 0.5)            # centre of the pasta nest
+SEMI = (8.0, 6.0, 7.0)               # its semi-axes (16 x 12 x 14)
+GROUPS = 3                           # twist groups of loose loops
+HANG = 2                             # short hooked danglers below
+DRAPES = 3                           # U-loops drooping below
+APP = 4                              # segments of each noodly appendage
+EYES = {-1: (-4.25, 27.0, -1.0), 1: (4.25, 27.25, -0.75)}
+EYE_D = 5.0
+MEATBALLS = {-1: (-5.0, 19.25, -2.75), 1: (5.0, 19.25, -2.75)}
+MB_D = 5.5
+HALO_C = (0.0, 31.25, 0.25)
+HALO_R = 4.5
+STRAND_PITCH = 1.5                   # painted strand spacing on the nest (3 texels)
+
+PASTA = px.pal("#74440f", "#b47c26", "#dea843", "#f2ca68", "#fde296", "#fff3c9")
+DRY = px.pal("#7e6128", "#b08f47", "#d8bc75", "#ecd9a0", "#faf0cc")
+BURNT = px.pal("#24140a", "#4c2c13", "#7a4c1f", "#a8783c", "#cfa56a")
+HOLY = px.pal("#8a5a14", "#c08a2c", "#e6b74c", "#f8d978", "#fff0b0", "#fffbe6")
+SAUCE = px.pal("#3e0806", "#6e120e", "#a5221a", "#cf3a28", "#ec6248")
+GLOSS = px.col("#ffd6c2")
+MEAT = px.pal("#47220f", "#683319", "#8a4825", "#a65d31", "#c07745", "#d89662")
+MEAT_BURNT = px.pal("#140a06", "#2a160c", "#432414", "#5e3520", "#7a4a2e")
+GOLD = px.pal("#5b3b10", "#8c6420", "#c0902f", "#e6bb55", "#fbe39a")
+EYE = px.pal("#a29c92", "#d2cdc3", "#ebe7de", "#f7f5ef", "#ffffff")
+HERB = px.col("#4f7a3a")
 
 
-def _dir_rot(d):
-    """Bedrock cube rotation that points a cube's +Z axis along d."""
+# ============================================================================= the nest's shape
+
+@lru_cache(maxsize=None)
+def core_boxes():
+    """Twelve staggered slices: per 2-unit band one wide-in-x and one deep-in-z box (a plus-
+    shaped, nearly round cross-section), the z-boxes offset by half a unit so that no two
+    boxes ever share a face plane (no z-fighting).  Returns ((centre), (size)) pairs."""
+    cx, cy, cz = CENTER
+    sx, sy, sz = SEMI
+    out = []
+    for i in range(6):
+        for kind, y0 in (("x", 7.5 + 2 * i), ("z", 8.0 + 2 * i)):
+            y1 = y0 + 2.0
+            d = 0.0 if y0 <= cy <= y1 else min(abs(y0 - cy), abs(y1 - cy))
+            r = math.sqrt(max(0.0, 1.0 - (d / sy) ** 2))
+            if kind == "x":
+                size = (q(2 * sx * r, 1.0), 2.0, q(2 * sz * r * 0.72, 1.0))
+            else:
+                size = (q(2 * sx * r * 0.72, 1.0), 2.0, q(2 * sz * r, 1.0))
+            out.append(((cx, (y0 + y1) / 2, cz), size))
+    return tuple(out)
+
+
+def _inside(p) -> bool:
+    for c, s in core_boxes():
+        if all(abs(p[i] - c[i]) <= s[i] / 2 for i in range(3)):
+            return True
+    return False
+
+
+def surf(d, grow: float = 0.0) -> np.ndarray:
+    """Point on the voxel nest's surface along direction d from the centre (+ grow)."""
     d = np.asarray(d, float)
-    d = d / max(np.linalg.norm(d), 1e-9)
-    rx = math.degrees(math.asin(max(-1.0, min(1.0, d[1]))))
-    ry = math.degrees(math.atan2(d[0], d[2]))
-    return (rx, ry, 0.0)
+    d = d / np.linalg.norm(d)
+    c = np.array(CENTER)
+    t = 0.0
+    while _inside(c + d * (t + 0.05)) and t < 20:
+        t += 0.05
+    return c + d * (t + grow)
 
 
-def strand(m: Model, bone: str, pts, thick: float, mat: str, ppu: float = 1.0, **kw) -> None:
-    """A noodle along a polyline: one rotated segment per span (1 texel per unit: noodles
-    are plain, and hundreds of segments must fit one 256x256 atlas)."""
+def sphere_dir(phi: float, theta: float) -> np.ndarray:
+    """Direction for ellipsoidal polar angle phi (0 = top) and azimuth theta (atan2(z, x))."""
+    p, t = math.radians(phi), math.radians(theta)
+    v = np.array([math.sin(p) * math.cos(t) * SEMI[0], math.cos(p) * SEMI[1], math.sin(p) * math.sin(t) * SEMI[2]])
+    return v / np.linalg.norm(v)
+
+
+def strand(m: Model, bone: str, pts, thick: float, mat: str, **kw) -> None:
     for a, b in zip(pts[:-1], pts[1:]):
-        a, b = np.asarray(a, float), np.asarray(b, float)
-        ln = float(np.linalg.norm(b - a))
-        if ln < 0.2:
+        if np.linalg.norm(np.asarray(b) - np.asarray(a)) < 0.3:
             continue
-        m.cube(bone, (a[0] - thick / 2, a[1] - thick / 2, a[2]), (thick, thick, ln + thick * 0.35), mat,
-               pivot=tuple(a), rot=_dir_rot(b - a), ppu=ppu, **kw)
+        segment(m, bone, a, b, thick, thick, mat, overlap=0.3, **kw)
 
+
+# ============================================================================= build
 
 def build() -> Model:
-    m = Model(ID, ppu=2.0, atlas_width=512)
+    m = Model(ID, ppu=2.0, atlas_width=256)
     humanoid(m)
-    rng = np.random.default_rng(5)
     mass = m.bone("mass", "torso_g", CENTER)
     for g in range(GROUPS):
         m.bone(f"twist{g}", mass.name, CENTER)
-    _mass(m, rng)
-    _hanging(m, rng)
+    _nest(m)
+    _loops(m)
+    _curls(m)
+    _appendages(m)
     _meatballs(m)
     _eyes(m)
     _sauce(m)
+    _halo(m)
     _arms(m)
     _lattice(m)
     _spirals(m)
-    fp_sleeves(m, "braid", width=4.4)
+    fp_sleeves(m, "braid", width=4.5)
     accents(m, [
-        ("c", "band", "mass", (0, 14.5, -6.2), (8.0, 1.2, 0.5)),
-        ("c", "rsh", "r_arm_g", (-6.0, 19.0, 0.0), (2.6, 1.0, 2.6)),
-        ("c", "lsh", "l_arm_g", (6.0, 19.0, 0.0), (2.6, 1.0, 2.6)),
-        ("l", "skirt", "mass", (0, 7.6, -4.6), (7.0, 0.8, 0.5)),
-        ("f", "tip", "hang0", (0, 3.4, -1.0), (1.4, 0.8, 1.4)),
+        ("c", "band", "mass", (0, 13.5, -6.75), (8.0, 1.0, 0.5)),
+        ("c", "rsh", "r_arm_g", (-6.0, 19.0, 0.0), (2.5, 1.0, 2.5)),
+        ("c", "lsh", "l_arm_g", (6.0, 19.0, 0.0), (2.5, 1.0, 2.5)),
+        ("l", "skirt", "mass", (0, 8.25, -4.75), (7.0, 0.5, 0.5)),
+        ("f", "tip", "hang0_0", (0.0, 5.0, -1.25), (1.5, 0.5, 1.5)),
     ])
     m.pack()
     return m
 
 
-# ----------------------------------------------------------------------------- the noodle mass
-
-def _loop(c, r, normal, start, span, n, wobble, rng):
-    normal = np.asarray(normal, float)
-    normal /= np.linalg.norm(normal)
-    a = np.cross(normal, [0.0, 1.0, 0.0])
-    if np.linalg.norm(a) < 1e-3:
-        a = np.cross(normal, [1.0, 0.0, 0.0])
-    a /= np.linalg.norm(a)
-    b = np.cross(normal, a)
-    pts = []
-    for k in range(n + 1):
-        t = math.radians(start + span * k / n)
-        rr = r * (1 + wobble * math.sin(3 * t + rng.uniform(0, 6)))
-        pts.append(np.asarray(c) + a * math.cos(t) * rr + b * math.sin(t) * rr)
-    return pts
-
-
-def _mass(m: Model, rng) -> None:
-    cx, cy, cz = CENTER
-    # an ellipsoidal tangle: wide (1.1 blocks), a little flattened, lumpy
-    for k in range(40):
-        g = k % GROUPS
-        back = 2.4 if k >= 34 else 0.0          # extra strands over the back
-        c = (cx + rng.uniform(-3.6, 3.6), cy + rng.uniform(-2.6, 3.0), cz + rng.uniform(-1.8, 1.8) + back)
-        r = rng.uniform(3.6, 6.4)
-        normal = rng.normal(size=3)
-        span = rng.uniform(150, 300)
-        pts = _loop(c, r, normal, rng.uniform(0, 360), span, max(6, int(span / 20)), 0.1, rng)
-        # pull every strand onto an ellipsoidal shell (1.1 blocks wide) so the tangle reads as one mass
-        out = []
-        for q in pts:
-            d = (q - np.array(CENTER)) / np.array([8.6, 6.6, 6.0])
-            n = np.linalg.norm(d)
-            f = (0.78 + 0.22 * rng.uniform()) / max(n, 0.35) if n > 1.0 or n < 0.7 else 1.0
-            out.append(np.array(CENTER) + (q - np.array(CENTER)) * f)
-        strand(m, f"twist{g}", out, 0.95 if k % 5 else 1.2, "noodle")
-    # a dense core so the tangle never looks hollow
-    m.box("mass", (cx, cy, cz), (11.4, 8.8, 7.4), "noodle_core")
-    m.box("mass", (cx, cy + 4.4, cz), (9.4, 2.4, 6.4), "noodle_core")
-    m.box("mass", (cx, cy - 4.8, cz), (9.0, 2.2, 6.0), "noodle_core")
+def _nest(m: Model) -> None:
+    for c, s in core_boxes():
+        m.box("mass", c, s, "noodle_core")
     m.bones["mass"].locators["core"] = CENTER
-    m.bones["mass"].locators["top"] = (cx, cy + 6.5, cz)
+    m.bones["mass"].locators["top"] = (0.0, 21.5, CENTER[2])
 
 
-def _hanging(m: Model, rng) -> None:
-    """Strands dangling below and streaming behind (3-joint chains so they can sway)."""
-    cx, cy, cz = CENTER
-    spots = [(-3.4, 7.2, -2.4), (2.8, 7.0, -2.6), (-0.6, 6.6, 0.8), (4.6, 7.8, 1.6), (-5.0, 8.0, 1.2), (1.0, 7.0, 3.6)]
-    for k, (x, y, z) in enumerate(spots[:HANG]):
-        parent = "mass"
-        px, py, pz = x, y, z
-        for j in range(3):
-            name = f"hang{k}" if j == 0 else f"hang{k}_{j}"
-            b = m.bone(name, parent, (px, py, pz))
-            ln = 2.2 - j * 0.3
-            dx, dz = rng.uniform(-0.6, 0.6), rng.uniform(-0.3, 0.9)
-            end = (px + dx, py - ln, pz + dz)
-            strand(m, name, [(px, py, pz), end], 0.85, "noodle")
-            parent, (px, py, pz) = name, end
-        if k == 0:
-            m.bones[parent].locators["drip"] = (px, py - 0.4, pz)
-    # trailing strands behind: they stretch out in motion (scale z)
-    for k, (x, y) in enumerate(((-2.4, 14.6), (1.8, 11.4), (0.2, 16.8), (-0.8, 9.6))):
-        name = f"trail{k}"
-        b = m.bone(name, "mass", (x, y, cz + 3.2))
-        strand(m, name, [(x, y, cz + 3.2), (x + 0.6, y - 0.8, cz + 6.2), (x - 0.3, y - 1.8, cz + 8.6)], 0.8, "noodle")
+LOOPS = [  # (polar deg, azimuth from, azimuth to, lift, tilt) - azimuth: 0 = left side, -90 = front, 180 = right
+    (84.0, -172.0, -118.0, 1.0, 14.0),
+    (70.0, -58.0, 6.0, 1.0, -16.0),
+    (98.0, 24.0, 92.0, 1.0, 12.0),
+    (66.0, 112.0, 176.0, 1.0, -12.0),
+]
 
 
-def _ball(m: Model, bone: str, c, r: float, mat: str, round_more: bool = True, **kw) -> None:
-    x, y, z = c
-    m.box(bone, c, (2 * r, 2 * r * 0.74, 2 * r * 0.74), mat, **kw)
-    m.box(bone, c, (2 * r * 0.74, 2 * r, 2 * r * 0.74), mat, **kw)
-    m.box(bone, c, (2 * r * 0.74, 2 * r * 0.74, 2 * r), mat, **kw)
-    if round_more:
-        k = 2 * r * 0.86
-        for rot in ((0, 45, 0), (45, 0, 0), (0, 0, 45)):
-            m.cube(bone, (x - k / 2, y - k / 2, z - k / 2), (k, k, k), mat, pivot=c, rot=rot, **kw)
+def _loops(m: Model) -> None:
+    """Loose strands wound the same way as the painted ones, lifting off the surface in the
+    middle: they break the outline into something soft and noodly."""
+    for k, (phi, t0, t1, lift, tilt) in enumerate(LOOPS):
+        pts = []
+        n = 6
+        for j in range(n + 1):
+            f = j / n
+            d = sphere_dir(phi + tilt * (f - 0.5), t0 + (t1 - t0) * f)
+            pts.append(surf(d, 0.3 + lift * math.sin(math.pi * f)))
+        strand(m, f"twist{k % GROUPS}", pts, 1.0, "noodle")
+
+
+def _curls(m: Model) -> None:
+    """Under the floating nest: three noodles drooping in U-loops (both ends attached, so they
+    can only swing - never read as legs) and two short hooked danglers."""
+    for k, (a, b, sag) in enumerate((((-4.5, 7.75, -1.25), (-1.25, 7.75, -2.25), 2.25),
+                                     ((1.0, 7.75, -2.25), (4.5, 7.75, -0.75), 2.0),
+                                     ((-2.25, 7.75, 2.75), (2.5, 7.75, 3.25), 2.5))):
+        a, b = np.array(a), np.array(b)
+        mid = (a + b) / 2
+        dr = m.bone(f"drape{k}", "mass", tuple(mid))
+        pts = [a, a + (b - a) * 0.22 + (0, -sag * 0.85, 0), b + (a - b) * 0.22 + (0, -sag * 0.85, 0), b]
+        pts[1] = pts[1] + (0, -0.0, 0)
+        strand(m, dr.name, [tuple(p) for p in pts], 0.75, "noodle")
+    for k, (x, z, L) in enumerate(((0.0, -1.25, 1.0), (3.0, 2.25, 0.8))):
+        s = 1 if k == 0 else -1
+        y = 7.75
+        pts = [(x, y, z), (x + 0.5 * s, y - 1.75 * L, z - 0.25), (x - 0.25 * s, y - 3.0 * L, z),
+               (x - 1.25 * s, y - 3.25 * L, z + 0.25)]
+        chain(m, "mass", f"hang{k}_", pts, [0.75, 0.75, 0.5], "noodle")
+        m.bones[f"hang{k}_{2}"].locators[f"tip{k}"] = pts[-1]
+
+
+def _appendages(m: Model) -> None:
+    """His Noodly Appendages: a curling noodle at each side."""
+    for s, p in ((-1, "r"), (1, "l")):
+        pts = [(s * 7.5, 13.5, 0.0), (s * 9.5, 13.0, 1.25), (s * 10.75, 12.5, 3.0), (s * 11.25, 12.75, 5.0),
+               (s * 11.0, 13.5, 6.75)]
+        chain(m, "mass", f"{p}_app", pts, [1.0, 1.0, 0.75, 0.75], "noodle")
 
 
 def _meatballs(m: Model) -> None:
-    keep = set(VARIANTS) - {"detached"}
-    for side, p, c in ((-1, "r", (-5.8, 12.0, -2.2)), (1, "l", (5.4, 14.6, -1.6))):
-        orb = m.bone(f"orbit_{p}", "torso_g", CENTER)
-        mb = m.bone(f"meatball_{p}", orb.name, c, only=keep)
-        # the Revelation flings them out to orbit around the vortex
-        mb.variant.update({"revelation": ((side * 5.0, 1.0, -1.0), None)})
-        _ball(m, mb.name, c, 3.3, "meatball", only=keep)
-        m.box(mb.name, (c[0], c[1] + 2.9, c[2]), (3.6, 0.6, 3.4), "sauce", only=keep)      # sauce cap
+    for s, p in ((-1, "r"), (1, "l")):
+        c = MEATBALLS[s]
+        orb = m.bone(f"{p}_orbit", "mass", (0.0, c[1], CENTER[2]))
+        mb = m.bone(f"{p}_meatball", orb.name, c)
+        mb.variant["revelation"] = ((s * 4.0, 3.5, 1.5), None)
+        ellipsoid(m, mb.name, c, (MB_D, MB_D, MB_D), "meatball", a=0.667, b=0.75, skip={"detached"})
+        # the sauce-filled socket left behind while the meatballs ricochet (detached form)
+        m.box("mass", (c[0], 19.75, -2.25), (4.0, 0.5, 3.5), "socket", only={"detached"})
         mb.locators[f"{p}_meatball"] = c
 
 
 def _eyes(m: Model) -> None:
-    for side, p, base in ((-1, "r", (-3.0, 18.6, 0.6)), (1, "l", (3.2, 19.0, 0.2))):
-        parent = "mass"
-        x, y, z = base
-        for j in range(3):
-            name = f"stalk_{p}{j}"
-            b = m.bone(name, parent, (x, y, z), (6 * (j - 1), 0, side * 7 * (j + 1) * 0.6))
-            if j == 0:
-                b.variant.update({"revelation": ((side * 1.5, 4.5, 0.0), None)})
-            ln = 2.6
-            strand(m, name, [(x, y, z), (x, y + ln, z)], 1.0, "noodle")
-            parent, y = name, y + ln
-        eye = m.bone(f"eye_{p}", parent, (x, y + 1.6, z))
-        _ball(m, eye.name, (x, y + 1.6, z), 1.75, "eyeball", round_more=False)
-        lid = m.bone(f"lid_{p}", eye.name, (x, y + 3.45, z))
-        m.cube(lid.name, (x - 1.9, y + 3.15, z - 1.9), (3.8, 0.3, 3.8), "eyelid")              # scale y ~11 closes
-        eye.locators[f"{p}_eye"] = (x, y + 1.6, z - 1.8)
+    for s, p in ((-1, "r"), (1, "l")):
+        ex, ey, ez = EYES[s]
+        pts = [(s * 2.0, 19.75, 0.75), (s * 2.75, 22.25, 0.25), (s * 3.5, 24.25, -0.5), (ex, ey - 1.5, ez)]
+        names = chain(m, "mass", f"{p}_stalk", pts, [1.0, 1.0, 0.75], "noodle")
+        m.bones[names[0]].variant["revelation"] = ((0, 1.0, 0), (-8.0, 0, -s * 14.0))
+        eye = m.bone(f"{p}_eye", names[-1], (ex, ey, ez))
+        ellipsoid(m, eye.name, (ex, ey, ez), (EYE_D, EYE_D, EYE_D), "eyeball", a=0.6, b=0.7)
+        pupil = m.bone(f"{p}_pupil", eye.name, (ex, ey, ez - EYE_D / 2))
+        m.box(pupil.name, (ex, ey, ez - EYE_D / 2 - 0.25), (3.0, 3.0, 0.5), "pupil", ppu=4.0)
+        # the lid hangs in front of the eye when closed; at rest it is folded back over the top
+        lid = m.bone(f"{p}_lid", eye.name, (ex, ey + 2.5, ez - 3.0), (90.0, 0.0, 0.0))
+        m.box(lid.name, (ex, ey + 0.5, ez - 3.25), (3.5, 4.0, 0.5), "lid")
+        eye.locators[f"{p}_eye"] = (ex, ey, ez - 3.0)
 
 
 def _sauce(m: Model) -> None:
-    cx, cy, cz = CENTER
-    crown = m.bone("sauce", "mass", (cx, cy + 4.6, cz))
-    m.box(crown.name, (cx + 0.6, cy + 5.8, cz - 0.2), (6.6, 1.0, 5.0), "sauce")
-    m.box(crown.name, (cx + 0.2, cy + 6.5, cz + 0.2), (3.8, 0.8, 3.0), "sauce")
-    m.box(crown.name, (cx - 3.4, cy + 5.2, cz - 2.6), (2.6, 1.0, 2.2), "sauce")
-    m.box(crown.name, (cx + 4.0, cy + 4.9, cz + 1.8), (2.2, 1.0, 2.6), "sauce")
-    for k, (x, z, ln) in enumerate(((-3.8, -4.6, 2.8), (1.4, -4.9, 3.6), (4.6, -3.4, 2.2), (-1.6, -5.0, 1.6))):
-        d = m.bone(f"drip{k}", crown.name, (x, cy + 5.2, z))
-        m.box(d.name, (x, cy + 5.2 - ln / 2, z), (0.9, ln, 0.9), "sauce")
-        m.box(d.name, (x, cy + 5.2 - ln - 0.4, z), (1.3, 1.1, 1.3), "sauce")
+    sb = m.bone("sauce", "mass", (0.0, 20.5, 0.5))
+    m.box(sb.name, (0.0, 20.25, 0.5), (7.0, 0.75, 9.5), "sauce")                 # the ladleful
+    m.box(sb.name, (0.0, 20.875, 0.75), (4.5, 0.5, 5.5), "sauce")                # its rounded top
+    m.box(sb.name, (1.75, 21.375, -1.25), (2.5, 0.25, 1.5), "basil", rot=(0, 25, 0), pivot=(1.75, 21.375, -1.25))
+    drips = [  # (x, z, top, length, face normal) running down the outside of the nest
+        (0.25, -4.75, 20.25, 2.25, (0, 0, -1)),
+        (6.25, 1.75, 19.75, 2.0, (1, 0, 0)),
+        (-6.25, 0.75, 19.75, 2.5, (-1, 0, 0)),
+        (-1.5, 5.75, 20.0, 2.0, (0, 0, 1)),
+    ]
+    for k, (x, z, top, ln, nrm) in enumerate(drips):
+        d = m.bone(f"drip{k}", sb.name, (x, top, z))
+        thin = (0.5 if nrm[0] else 1.0, ln, 1.0 if nrm[0] else 0.5)
+        m.box(d.name, (x, top - ln / 2, z), thin, "sauce")
+        m.box(d.name, (x + nrm[0] * 0.25, top - ln - 0.25, z + nrm[2] * 0.25), (1.5, 1.0, 1.5), "sauce")   # the drop
+        if k == 0:
+            d.locators["drip"] = (x, top - ln - 0.75, z - 0.25)
+        if nrm[0]:   # a film of sauce over the rim and across the terrace to the drip
+            m.box(d.name, (x - nrm[0] * 1.25, 19.625, z), (2.5, 0.25, 1.0), "sauce")
+            m.box(d.name, (x - nrm[0] * 2.375, 20.0, z), (0.75, 0.75, 1.0), "sauce")
+    up = m.bone("drip_up", sb.name, (-1.5, 21.0, -1.75))                         # a bead that will run UP
+    m.box(up.name, (-1.5, 21.5, -1.75), (1.25, 1.0, 1.25), "sauce")
+    sb.locators["sauce_top"] = (-1.5, 22.5, -1.75)
+
+
+def _halo(m: Model) -> None:
+    """The Holy Colander's rim: a perforated golden band with two handles, worn as a halo."""
+    cx, cy, cz = HALO_C
+    h = m.bone("halo", "mass", HALO_C, (78.0, 0.0, 8.0))
+    n = 12
+    seg = q(2 * HALO_R * math.tan(math.pi / n) + 0.3)
+    for k in range(n):
+        ang = 360.0 / n * (k + 0.5)
+        m.cube(h.name, (cx - seg / 2, cy + HALO_R - 0.375, cz - 0.625), (seg, 0.75, 1.25), "halo",
+               pivot=(cx, cy, cz), rot=(0, 0, ang))
+    for s in (-1, 1):
+        m.box(h.name, (cx + s * (HALO_R + 0.75), cy, cz), (1.25, 1.5, 0.5), "halo")   # handles
+    h.locators["halo"] = (cx, cy, cz)
 
 
 def _arms(m: Model) -> None:
-    """Improvised arms: braided strands from the mass to the player's hand position."""
-    for side, g, p in ((-1, "r_arm_g", "r"), (1, "l_arm_g", "l")):
-        ax = 5.8 * side
-        app = m.bone(f"{p}_appendage", g, (5.0 * side, 22.0, 0.0))
-        for k in range(3):
-            ph = k * 2.1
-            pts = [(ax + 0.7 * math.cos(ph + t * 1.6), 21.0 - t * 1.25, 0.7 * math.sin(ph + t * 1.6)) for t in range(9)]
-            strand(m, app.name, pts, 0.75, "braid")
-        hand = m.bone(f"{p}_grip", app.name, (ax, 10.4, 0.0))
-        for k in range(5):
-            a = k * 72
-            dx, dz = math.cos(math.radians(a)) * 1.0, math.sin(math.radians(a)) * 1.0
-            strand(m, hand.name, [(ax + dx * 0.6, 10.6, dz * 0.6), (ax + dx * 1.3, 9.0, dz * 1.3), (ax + dx * 0.6, 7.8, dz * 0.6)], 0.6, "braid")
+    """Noodle braids that become arms only while that hand holds something (scaled in by the animation)."""
+    for s, g, p in ((-1, "r_arm_g", "r"), (1, "l_arm_g", "l")):
+        br = m.bone(f"{p}_braid", g, (s * 5.0, 21.0, 0.0))
+        for k, dz in enumerate((-0.5, 0.5)):
+            pts = [(s * 5.0, 21.0, dz), (s * (6.0 + 0.25 * k), 17.0, dz * 1.5), (s * 6.0, 13.0, dz), (s * 6.0, 10.5, -0.5)]
+            strand(m, br.name, pts, 0.75, "noodle")
+        m.box(br.name, (s * 6.0, 11.0, -0.75), (2.0, 1.5, 2.0), "noodle")                    # the "hand": a knot of noodles
 
 
 def _lattice(m: Model) -> None:
-    """Al Dente: dry spaghetti rods snap into a rigid lattice around the body."""
-    cx, cy, cz = CENTER
-    lat = m.bone("lattice", "torso_g", CENTER, only={"rigid"})
-    rng = np.random.default_rng(11)
-    for k in range(16):
-        ang = math.radians(k * 360 / 16)
-        r = 8.6
-        a = (cx + math.cos(ang) * r, cy - 6.5, cz + math.sin(ang) * r * 0.8)
-        ang2 = ang + math.radians(rng.choice([-50, 50]))
-        b = (cx + math.cos(ang2) * r, cy + 7.0, cz + math.sin(ang2) * r * 0.8)
-        strand(m, lat.name, [a, b], 0.55, "rod", only={"rigid"})
-    for y in (cy - 3.0, cy + 3.5):
-        pts = [(cx + math.cos(math.radians(t)) * 8.9, y, cz + math.sin(math.radians(t)) * 7.1) for t in range(0, 361, 30)]
-        strand(m, lat.name, pts, 0.5, "rod", only={"rigid"})
+    """Al Dente: straight dry rods lock into a crosshatched lattice around the body."""
+    lat = m.bone("lattice", "mass", CENTER, only={"rigid"})
+    for k in range(6):
+        phi = math.radians(k * 60.0 + 15.0)
+        d = np.array([math.sin(phi), 0.12, -math.cos(phi)])
+        c = surf(d, 0.9)
+        t = np.array([math.cos(phi), 0.0, math.sin(phi)])            # horizontal tangent
+        for tilt in (-38.0, 38.0):
+            v = t * math.cos(math.radians(tilt)) + np.array([0.0, 1.0, 0.0]) * math.sin(math.radians(tilt))
+            segment(m, lat.name, c - v * 6.5, c + v * 6.5, 0.75, 0.75, "dry_noodle", only={"rigid"}, overlap=0.0)
 
 
 def _spirals(m: Model) -> None:
-    """The Great Pasta Revelation: three spiral layers of living noodles."""
-    cx, cy, cz = CENTER
-    for k, (r0, r1, y, turns) in enumerate(((9.0, 15.0, cy - 1.0, 1.3), (14.0, 22.0, cy + 3.0, 1.1), (20.0, 28.0, cy - 4.0, 0.9))):
-        sp = m.bone(f"spiral{k}", "torso_g", CENTER, only={"revelation"})
+    """The Great Pasta Revelation: three spiral layers of pasta unfold around the body."""
+    for layer in range(3):
+        sp = m.bone(f"spiral{layer}", "mass", CENTER, only={"revelation"})
+        y = CENTER[1] - 2.0 + layer * 2.5
         pts = []
-        n = int(28 * turns)
-        for i in range(n + 1):
-            t = i / n
-            ang = t * 360 * turns + k * 120
-            r = r0 + (r1 - r0) * t
-            pts.append((cx + math.cos(math.radians(ang)) * r, y + math.sin(math.radians(ang * 2)) * 1.2, cz + math.sin(math.radians(ang)) * r))
-        strand(m, sp.name, pts, 1.1 - k * 0.15, "noodle", only={"revelation"})
-        strand(m, sp.name, [(p[0] * 0.97, p[1] + 1.2, p[2] * 0.97) for p in pts[::2]], 0.7, "sauce_strand", only={"revelation"})
+        for k in range(13):
+            t = k / 12.0
+            ang = math.radians(layer * 120 + t * 420)
+            r = 9.5 + 6.5 * t
+            pts.append((math.cos(ang) * r, y + math.sin(t * math.pi) * 1.5, CENTER[2] + math.sin(ang) * r))
+        strand(m, sp.name, pts, 1.0, "noodle_holy", only={"revelation"})
 
 
 # ============================================================================= materials
 
 def materials():
-    return {"noodle": mat_noodle, "noodle_core": mat_core, "braid": mat_braid, "meatball": mat_meatball, "eyelid": mat_eyelid,
-            "eyeball": mat_eyeball, "sauce": mat_sauce, "sauce_strand": mat_sauce_strand, "rod": mat_rod,
-            "accent": mat_accent}
+    return {"noodle": mat_noodle, "noodle_core": mat_core, "noodle_holy": mat_noodle_holy, "dry_noodle": mat_dry,
+            "braid": mat_noodle, "meatball": mat_meatball, "meatball_solo": mat_meatball_solo, "sauce": mat_sauce,
+            "socket": mat_socket, "eyeball": mat_eyeball, "pupil": mat_pupil, "lid": mat_lid, "halo": mat_halo,
+            "basil": mat_basil, "accent": mat_accent}
 
 
-def _P(ctx):
-    return ctx.params.get("dente", 0.0), ctx.params.get("burnt", 0.0), ctx.params.get("glow", 0.0)
+def _pasta(ctx):
+    if ctx.params.get("burnt", 0) > 0.5:
+        return BURNT
+    if ctx.params.get("dente", 0) > 0.5:
+        return DRY
+    if ctx.params.get("holy", 0) > 0.5:
+        return HOLY
+    return PASTA
 
 
-def _pasta(ctx: Ctx, light=0.0):
-    dente, burnt, glow = _P(ctx)
-    p = ctx.p
-    n = nz.fbm(p, 0.9, 2, seed=3)
-    c = ramp([(0, "#dcb866"), (0.45, "#efd894"), (0.8, "#f8e9b8"), (1, "#fff5d6")], n * 0.6 + 0.35 + light)
-    c = mix3(c, hx("#f2cf52"), 0.35 * dente)              # al dente: deeper, drier yellow
-    # sauce coating in patches (coherent across neighbouring strands)
-    sauce = nz.smoothstep(0.7, 0.78, nz.fbm(p * 0.7 + 11.0, 0.45, 2, seed=9))
-    red = ramp([(0, "#8e1a14"), (0.6, "#c4301f"), (1, "#e35a36")], nz.fbm(p, 1.6, 2, seed=4))
-    c = mix3(c, red, sauce * (1 - 0.6 * dente))
-    if burnt > 0:
-        scorch = nz.smoothstep(0.45, 0.8, nz.fbm(p * 1.4, 0.8, 2, seed=21))
-        c = mix3(c, hx("#7a4a1c"), scorch * 0.8 * burnt)
-        c = mix3(c, hx("#2c1a0c"), nz.smoothstep(0.82, 0.9, nz.fbm(p, 1.5, 2, seed=2)) * burnt)
-    g = ctx.zeros() + 0.0
-    if glow > 0:
-        g = g + 0.18 * glow
-        c = mix3(c, hx("#fff4c2"), 0.25 * glow)
-    return c, sauce, g
+def _holy(ctx):
+    return ctx.params.get("holy", 0.0)
+
+
+def _wp(ctx):
+    return ctx.wp if ctx.wp is not None else ctx.p
+
+
+def pillow(ctx, amount: float = 0.1):
+    """Level offset darkening a face toward its edges: small boxes read as domed, round."""
+    a = np.abs(ctx.s / max(ctx.fw, 1e-6) - 0.5) * 2
+    b = np.abs(ctx.t / max(ctx.fh, 1e-6) - 0.5) * 2
+    return -amount * np.maximum(a, b) ** 2
 
 
 def mat_noodle(ctx):
-    c, sauce, g = _pasta(ctx)
-    if ctx.face == "up":
-        c = c * 1.12
-    elif ctx.face == "down":
-        c = c * 0.78
-    # glossy highlight along the strand (wet pasta)
-    v = ctx.t / max(ctx.fh, 1e-6)
-    gloss = (np.abs(v - 0.3) < 0.12) & (ctx.face in ("east", "west", "up"))
-    c = np.where(gloss[:, None], mix3(c, hx("#ffffff"), 0.35), c)
-    return c, ctx.ones(), g
+    """A noodle lit as it actually lies, with a glossy streak along its upper side."""
+    ix, iy, W, H = px.texel(ctx)
+    lv = px.light(ctx, grad=0.0) + 0.08
+    pal = _pasta(ctx)
+    c = px.quant(ctx, pal, lv)
+    if ctx.wn is not None and ctx.wn[1] > 0.5 and ctx.params.get("burnt", 0) < 0.5:
+        streak = ((ix + 2 * iy) % 6) < 3 if W >= H else ((iy + 2 * ix) % 6) < 3
+        c = np.where(streak[:, None], pal[-1], c)
+    return c, ctx.ones(), np.full(ctx.N, 0.25 * _holy(ctx))
+
+
+def mat_noodle_holy(ctx):
+    c, a, g = mat_noodle(ctx)
+    return c, a, np.full(ctx.N, 0.55)
+
+
+def strand_field(p):
+    """The strands wound around the nest, as (phase, family): two families of waved helices
+    around the vertical axis (integer turns, so every strand is continuous) - one wound
+    shallow, one steep - and patches where the steep family lies on top: woven, tangled.
+    p: positions relative to CENTER.  Returns (fractional phase, on_top_of_other, edge)."""
+    u = p / np.array(SEMI)
+    rr = np.maximum(np.linalg.norm(u, axis=1), 1e-6)
+    phi = np.arccos(np.clip(u[:, 1] / rr, -1, 1))
+    th = np.arctan2(u[:, 2], u[:, 0])
+    k = 6.6 / STRAND_PITCH
+    a = phi * k - 4 * th / (2 * np.pi) + 0.42 * np.sin(3 * th + 2.0 * phi) + 0.16 * np.sin(7 * th - phi)
+    b = phi * k + 15 * th / (2 * np.pi) + 0.3 * np.sin(4 * th - 1.5 * phi + 1.0)
+    mask = np.sin(2 * th + 2.5 * phi + 0.6) + 0.6 * np.sin(5 * th - 3.0 * phi + 1.3)
+    top = mask > 1.05
+    edge = (mask > 0.9) & ~top
+    ph = np.where(top, b, a)
+    return ph - np.floor(ph), top, edge
 
 
 def mat_core(ctx):
-    """The tangle's interior: many tiny crossing strands and pooled sauce."""
-    c, sauce, g = _pasta(ctx, light=-0.12)
-    u = ctx.s
-    v = ctx.t
-    w = nz.value(ctx.p, 0.8, seed=31) * 6.28
-    lines = np.abs(np.mod(u * np.cos(w) + v * np.sin(w), 1.0) - 0.5) < 0.18
-    c = np.where(lines[:, None], c * 1.1, c * 0.82)
-    return c, ctx.ones(), g
+    """The nest: strands wound around it (dark groove under each, a glossy crest on top), lit
+    as one rounded mass."""
+    p = _wp(ctx) - np.array(CENTER)
+    f, top, edge = strand_field(p)
+    lv = px.proxy(ctx, CENTER, SEMI, 1.0) + 0.07
+    groove = (f > 0.7) | edge
+    crest = (f < 0.28) & ~edge
+    lv = lv + np.where(groove, -0.19, 0.0) + np.where(crest, 0.1, 0.0) + np.where(top & ~groove, 0.04, 0.0)
+    c = px.quant(ctx, _pasta(ctx), lv)
+    return c, ctx.ones(), np.full(ctx.N, 0.2 * _holy(ctx))
 
 
-def mat_braid(ctx):
-    c, sauce, g = _pasta(ctx, light=0.05)
-    twist = np.mod(ctx.t * 1.2 + ctx.s * 0.8, 1.0) < 0.5
-    return np.where(twist[:, None], c * 1.06, c * 0.88), ctx.ones(), g
+def mat_dry(ctx):
+    ix, iy, W, H = px.texel(ctx)
+    c = px.shade(ctx, DRY, up=0.15, down=0.1)
+    crack = px.hash01(ctx, 9) < 0.06
+    c = np.where(crack[:, None], DRY[1], c)
+    return c, ctx.ones(), ctx.zeros()
+
+
+@lru_cache(maxsize=None)
+def _cells():
+    rng = np.random.default_rng(11)
+    v = rng.normal(size=(24, 3))
+    return v / np.linalg.norm(v, axis=1, keepdims=True)
+
+
+LIGHT = np.array([-0.45, 0.78, -0.45]) / np.linalg.norm([-0.45, 0.78, -0.45])
+
+
+def _meat(ctx, c, r):
+    """Seared meatball: a sphere of lumps (crevices between them), glazed with marinara on
+    top (running down in drips), glossy where it faces the light, a few herb flecks."""
+    p = _wp(ctx) - np.asarray(c, float)
+    dn = p / np.maximum(np.linalg.norm(p, axis=1, keepdims=True), 1e-6)
+    sims = np.sort(dn @ _cells().T, axis=1)
+    d1, d2 = 1 - sims[:, -1], 1 - sims[:, -2]
+    crevice = (d2 - d1) < 0.045
+    lump = np.clip(1.0 - d1 / 0.35, 0, 1)
+    sphere = px.proxy(ctx, c, (r, r, r), 1.0) + pillow(ctx, 0.12)
+    lv = sphere + 0.08 + 0.07 * lump - np.where(crevice, 0.2, 0.0)
+    burnt = ctx.params.get("burnt", 0) > 0.5
+    col = px.quant(ctx, MEAT_BURNT if burnt else MEAT, lv)
+    gl = (dn @ LIGHT) > 0.9
+    az = np.arctan2(dn[:, 2], dn[:, 0])
+    glaze = dn[:, 1] > 0.66 + 0.16 * np.sin(5 * az + 1.0) + 0.08 * np.sin(9 * az)
+    if not burnt:
+        col = np.where((gl & ~crevice)[:, None], px.col("#ecb084"), col)
+        herb = (px.hash01(ctx, 11) < 0.035) & ~crevice & ~gl
+        col = np.where(herb[:, None], HERB, col)
+        sc = px.quant(ctx, SAUCE, sphere + 0.1 - np.where(crevice, 0.1, 0.0))
+        sc = np.where((gl | (px.hash01(ctx, 3) < 0.05))[:, None], GLOSS, sc)
+        col = np.where(glaze[:, None], sc, col)
+    return col, ctx.ones(), ctx.zeros()
 
 
 def mat_meatball(ctx):
-    dente, burnt, glow = _P(ctx)
-    p = ctx.p
-    n = nz.fbm(p, 1.1, 3, seed=14)
-    c = ramp([(0, "#4a2214"), (0.4, "#7a3a20"), (0.75, "#9c5530"), (1, "#bb7244")], n)
-    crust = nz.hash_points(p, 0.5, 7) < 0.18
-    c = np.where(crust[:, None], c * 0.62, c)
-    fat = nz.hash_points(p, 0.5, 23) < 0.05
-    c = np.where(fat[:, None], mix3(c, hx("#d9a27a"), 0.6), c)
-    herb = nz.hash_points(p, 0.5, 19) < 0.012
-    c = np.where(herb[:, None], hx("#4e7a2c"), c)
-    if ctx.face == "up":
-        c = np.where((nz.fbm(p, 0.8, 2, seed=8) > 0.5)[:, None], hx("#b02a1a"), c)
-    c = mix3(c, hx("#1e0f06"), 0.5 * burnt)
-    return bevel(ctx, face_light(ctx, c, 0.12, 0.25), 0.25, 0.9), ctx.ones(), ctx.zeros() + 0.12 * glow
+    s = 1 if _wp(ctx)[:, 0].mean() > 0 else -1
+    return _meat(ctx, MEATBALLS[s], MB_D / 2)
 
 
-def mat_eyeball(ctx):
-    dente, burnt, glow = _P(ctx)
-    c = np.broadcast_to(hx("#f7f5ee"), (ctx.N, 3)).copy()
-    vein = nz.smoothstep(0.86, 0.93, nz.ridged(ctx.p, 1.2, 2, seed=3))
-    c = mix3(c, hx("#d76b6b"), vein * 0.5)
-    g = ctx.zeros()
-    if ctx.face == "north":
-        u = ctx.s / ctx.fw - 0.5
-        v = ctx.t / ctx.fh - 0.5
-        r = np.sqrt(u * u + v * v)
-        iris = r < 0.36
-        c = np.where(iris[:, None], ramp([(0, "#2e2010"), (1, "#6b4a22")], r / 0.36), c)
-        pupil = r < 0.2
-        c = np.where(pupil[:, None], hx("#050403"), c)
-        hl = ((u + 0.1) ** 2 + (v + 0.12) ** 2) < 0.006
-        c = np.where(hl[:, None], hx("#ffffff"), c)
-        g = np.where(iris & ~pupil, 0.15 * glow, 0.0)
-    return face_light(ctx, c, 0.06, 0.12), ctx.ones(), g
-
-
-def mat_eyelid(ctx):
-    dente, burnt, glow = _P(ctx)
-    c = mix3(hx("#f1dca0"), hx("#fff1c8"), nz.fbm(ctx.p, 1.2, 2, seed=5))
-    return face_light(ctx, c, 0.1, 0.2), ctx.ones(), ctx.zeros()
+def mat_meatball_solo(ctx):
+    return _meat(ctx, (0.0, 4.0, 0.0), 1.9)
 
 
 def mat_sauce(ctx):
-    dente, burnt, glow = _P(ctx)
-    n = nz.fbm(ctx.p, 1.4, 3, seed=6)
-    c = ramp([(0, "#7a120c"), (0.5, "#b8261a"), (0.85, "#e04a2c"), (1, "#ff8a5c")], n)
-    chunk = nz.hash_points(ctx.p, 0.5, 12) < 0.08
-    c = np.where(chunk[:, None], hx("#9e2a18"), c)
-    shine = (nz.hash_points(ctx.p, 0.5, 2) < 0.05) & (ctx.face == "up")
-    c = np.where(shine[:, None], hx("#ffd0b8"), c)
-    c = mix3(c, hx("#3a0c06"), 0.5 * burnt)
-    return c, ctx.ones(), ctx.zeros() + 0.2 * glow
+    """Thick glossy marinara: shaded by its real normals, bright glints along upper edges,
+    a few parmesan flakes on top."""
+    ix, iy, W, H = px.texel(ctx)
+    lv = px.light(ctx, grad=0.1) + 0.06
+    c = px.quant(ctx, SAUCE, lv)
+    if ctx.face == "up":
+        gl = (px.hash01(ctx, 2) < 0.06)
+        c = np.where(gl[:, None], GLOSS, c)
+        if W >= 8:
+            cheese = (px.hash01(ctx, 5) > 0.955)
+            c = np.where(cheese[:, None], px.col("#fff2cf"), c)
+    elif px.side(ctx) and H > 1:
+        c = np.where(((iy == 0) & ((ix % 3) == 1))[:, None], GLOSS, c)
+    if ctx.params.get("burnt", 0) > 0.5:
+        c = c * 0.62
+    return c, ctx.ones(), np.full(ctx.N, 0.1 * _holy(ctx))
 
 
-def mat_sauce_strand(ctx):
-    c, a, g = mat_sauce(ctx)
-    return c, a, g + 0.35
+def mat_socket(ctx):
+    return px.shade(ctx, px.pal("#2a0806", "#4a0c08", "#6a140e", "#8a1c12")), ctx.ones(), ctx.zeros()
 
 
-def mat_rod(ctx):
-    n = nz.value(ctx.p * np.array([4, 0.4, 4]), 1.0, seed=2)
-    c = ramp([(0, "#d9b04a"), (1, "#f3d983")], n)
-    crack = nz.hash_points(ctx.p, 0.5, 4) < 0.06
-    c = np.where(crack[:, None], c * 0.7, c)
-    return face_light(ctx, c, 0.1, 0.2), ctx.ones(), ctx.zeros()
+def mat_eyeball(ctx):
+    """Glossy eyeball shaded as a sphere (the pupil is its own sliding piece)."""
+    p = _wp(ctx)
+    s = 1 if p[:, 0].mean() > 0 else -1
+    ex, ey, ez = EYES[s]
+    lv = px.proxy(ctx, (ex, ey, ez), (EYE_D / 2,) * 3, 1.0) + 0.16 + pillow(ctx, 0.1)
+    c = px.quant(ctx, EYE, lv)
+    if ctx.params.get("burnt", 0) > 0.5:
+        c = c * np.array([0.92, 0.86, 0.8])
+    return c, ctx.ones(), ctx.zeros()
 
 
-# ============================================================================= the meatball entity
+PUPIL = ["....oooo....",
+         "..ooOOOOoo..",
+         ".oOOaaaaOOo.",
+         ".oOaPPPPaOo.",
+         "oOaPPWWPPaOo",
+         "oOaPPWPPPaOo",
+         "oOaPPPPPPaOo",
+         "oOaPPPPPPaOo",
+         ".oOaPPPwaOo.",
+         ".oOOaaaaOOo.",
+         "..ooOOOOoo..",
+         "....oooo...."]
+
+
+def mat_pupil(ctx):
+    lv = px.light(ctx, grad=0.0) + 0.2
+    c = px.quant(ctx, EYE, lv)
+    if ctx.face == "north":
+        c, _ = px.decal(ctx, c, PUPIL, {"o": "#3a2412", "O": "#b8742a", "a": "#e7a64a", "P": "#140d0a",
+                                         "W": "#ffffff", "w": "#d8d2c8"}, "c", "c")
+    return c, ctx.ones(), ctx.zeros()
+
+
+def mat_lid(ctx):
+    """The lid is eyeball-white (folded back it disappears into the eye); a dark lash line
+    along its free edge shows when it closes."""
+    ix, iy, W, H = px.texel(ctx)
+    lv = px.light(ctx, grad=0.0) + 0.12
+    c = px.quant(ctx, EYE, lv)
+    if ctx.face == "north":
+        c = np.where((iy >= H - 1)[:, None], px.col("#5a4430"), c)
+    elif ctx.face == "down":
+        c = np.full_like(c, px.col("#5a4430"))
+    return c, ctx.ones(), ctx.zeros()
+
+
+def mat_halo(ctx):
+    """Gilded perforated band: a row of dark holes along its outer face, bright upper edge."""
+    ix, iy, W, H = px.texel(ctx)
+    c = px.shade(ctx, GOLD, up=0.2, down=0.12)
+    if W >= 4 and H >= 2 and px.side(ctx):
+        holes = ((ix % 2) == 1) & (iy == H // 2)
+        c = np.where(holes[:, None], px.col("#4a300c"), c)
+    return c, ctx.ones(), np.full(ctx.N, 0.45 + 0.3 * _holy(ctx))
+
+
+def mat_basil(ctx):
+    ix, iy, W, H = px.texel(ctx)
+    c = px.shade(ctx, px.pal("#1f3d14", "#2f5a1e", "#467a2c", "#6a9e42"))
+    if ctx.face == "up":
+        c = np.where(((iy == H // 2) & (ix > 0))[:, None], px.col("#8ab85a"), c)
+    return c, ctx.ones(), ctx.zeros()
+
+
+# ============================================================================= the detached meatball entity
 
 def build_meatball() -> Model:
     """The detached meatball (Meatball Ricochet): its own small entity model."""
     m = Model("meatball", ppu=2.0, atlas_width=128)
     m.bone("root", None, (0, 0, 0))
     ball = m.bone("ball", "root", (0, 4.0, 0))
-    _ball(m, ball.name, (0, 4.0, 0), 3.4, "meatball")
-    m.box(ball.name, (0, 6.9, 0), (3.6, 0.6, 3.4), "sauce")
+    ellipsoid(m, ball.name, (0, 4.0, 0), (4.0, 4.0, 4.0), "meatball_solo")
+    m.box(ball.name, (0, 6.0, 0), (3.0, 0.5, 3.0), "sauce")
+    m.box(ball.name, (0.75, 5.25, -2.0), (0.75, 1.5, 0.5), "sauce")
     # two noodle tethers trailing behind it (they lead back to the body)
-    for k, (dx, dy) in enumerate(((-1.2, 0.6), (1.0, -0.4))):
-        tb = m.bone(f"tether{k}", ball.name, (dx, 4.0 + dy, 3.0))
-        strand(m, tb.name, [(dx, 4.0 + dy, 3.0), (dx * 1.6, 4.0 + dy * 2, 6.4), (dx, 4.0 + dy, 9.6)], 0.7, "noodle")
-    ball.locators["trail"] = (0, 4.0, 2.5)
+    for k, (dx, dy) in enumerate(((-1.0, 0.5), (0.75, -0.5))):
+        tb = m.bone(f"tether{k}", ball.name, (dx, 4.0 + dy, 1.5))
+        strand(m, tb.name, [(dx, 4.0 + dy, 1.5), (dx * 1.5, 4.0 + dy * 2, 4.5), (dx, 4.0 + dy, 7.5)], 0.75, "noodle")
+    ball.locators["trail"] = (0, 4.0, 2.0)
     m.pack()
     return m
