@@ -187,7 +187,7 @@ def main():
         for label, spawns, cam in SCEN[race]:
             cols.append(scenario_frames(race, label, spawns, cam, effects, atlases, m, tex, seconds=args.seconds))
             print(f"{race}: {label}")
-        title = {"rite": "Rite of transformation"}.get(race, f"{race.title()} - ability effects (v1.3, rendered from the pack's particle files)")
+        title = {"rite": "Rite of transformation"}.get(race, f"{race.title()} - ability effects ({'v1.4' if race in ('dinosauroid', 'bathyas', 'octamyces') else 'v1.3'}, rendered from the pack's particle files)")
         frames = grid(cols, title)
         path = os.path.join(args.out, f"vfx_{race}.gif")
         frames[0].save(path, save_all=True, append_images=frames[1:], duration=50, loop=0, optimize=True)

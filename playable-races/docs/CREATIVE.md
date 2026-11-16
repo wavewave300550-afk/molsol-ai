@@ -335,6 +335,25 @@ The brief asked to keep three kinds of statement apart. Below, **A** = direct fo
 | Passives: Fossil Memory, Unreadable Posture, Display Organism, Primitive Intelligence | Speed I on rough ground (stone, gravel, sand, tuff, deepslate, basalt, terracotta...); 15% of creatures' melee blows miss; the display skin glows in low light (the *night* form) and displays reach farther; staring at a creature for 2 s studies it (health shown, counts as misclassified for the next Sickle Testament) |
 | Weaknesses | Light protection, no sprint bonus, Slowness I under low ceilings (2-block tunnels), Taxonomic Error exhaustion |
 
+**Body (model and animation).** A theropod silhouette — trunk pitched 30° forward, an S-neck carrying a large skull ahead of the chest, digitigrade legs and a long barred tail — about 31 px tall (33 to the crest), 86 bones and 171 cubes in the base form.
+
+| Required element | Built |
+|---|---|
+| Beak *and* teeth | a deep, hooked oviraptorosaur beak (slate fading to a pale horn tip) with small white teeth behind it along the jaw line and an irregular inner second row; a hinged lower jaw |
+| Asymmetric supraorbital horns | the right horn long and curving forward, the left a blunt stump |
+| Hollow crest | a tubular hadrosaur crest sweeping back from the brow — bone with growth rings and a line of display skin; its open end shows a dark lumen that glows in Overflow |
+| Throat pouch | a small tucked sac that fills and flutters with the breath and balloons in Display and Overflow |
+| Feather tufts | downy plumes behind the eyes, pale bristles down the nape, quills along the back that stand up in Display |
+| Nocturnal pupils | large amber eyes turned 28° forward; slit pupils (their own bones) that narrow and widen; sideways nictitating membranes |
+| Distinct integument materials | countershaded downy plumage with bold dark bars; iridescent black-teal flight feathers with a violet sheen; bone-pale bristles; olive coarse scales on shins, feet and hands; two rows of osteoderms; dusky-rose bare skin on face and throat; wine-red membranes on ivory rods; teal / amber / violet display skin |
+| Three-digit forelimbs, styliform digit, feather panels | two clawed fingers plus an elongated styliform digit — a pale spike from the wrist past the elbow carrying a membrane; covert and radial feather panels that fold as a wing and fan out in Display |
+| **Hindlimbs** | a raised sickle talon on digit II; *Microraptor*-like feathers on the shank and a metatarsal fan; membranes from hip to knee and knee to ankle on jointed rods — a folded strip at rest, wide sails swung out about 70° in Veer and Overflow, half open at a sprint, opening when falling; the fan folds up in each step |
+| Tail | five segments, stiff *Psittacosaurus*-like bristles at the base, embedded plates, side feather vanes and a seven-feather fan with eye spots that spreads in Fanned, rolls upright as a rudder in Veer and is preened by the beak |
+| Morphological Drift, visible | the attachable reads the same world clock as the script (`q.time_of_day`): **Plumed** fuller tufts and longer arm feathers, **Webbed** leg membranes 60 % wider, **Toothed** jaw dropped and pupils narrowed, **Fanned** tail fan spread 26° per side; ~4 s crossfades |
+| Calm, observant personality | the head follows your look through its own neck rig (it stays attached); pigeon-like head steadying when walking; darting glances only when standing still; idle behaviours: the long stare (pupils narrow to threads), slow throat pulses, preening the fan, a slow head tilt that snaps to the other side |
+
+![007 turnaround and forms on white](images/race_007_dinosauroid.png)
+
 ### 008 · Bathyas, the Sun-Impaled — บาธีอัส ผู้แบกสุริยะ (UNIQUE)
 
 **Identity kept:** an irritable, exhausted old abyssal chimera kept alive by the sword that torments it; quiet and terrifying once the sword is out. **Solar Impalement** is its system.
@@ -352,6 +371,24 @@ The brief asked to keep three kinds of statement apart. Below, **A** = direct fo
 | Passives: Sun-Impaled Core, Abyssal Constitution, Irritated Luminary, Harpoon Vitality | As above; water breathing always, Conduit Power in water, regeneration with the head under water; bright open sunlight gives Strength I but raises Photic Strain |
 | Weaknesses: Photic Misery, Unshackled Risk, Large Target | **Photic Strain** (Lure +30, Daybreak +60, sunlight +1/s): at 100, brief blindness and slowness; projectiles hit 15% harder; no sprint bonus |
 
+**Body (model and animation).** 71 bones and 145 cubes, about 30 px tall but hunched.
+
+| Required element | Built |
+|---|---|
+| Exhausted, irritable old man | the chest pitched 18° forward, the head hanging low between uneven shoulders, long webbed arms reaching the knee, bent knees; half-closed heavy lids, shaggy frowning brows and two scraggly barbels like a beard; a slow 5-second breath and a muttering jaw. Idle behaviours: shields his eyes from his own light, grumbling; a long sigh with bubbles; dozes off and jerks awake; pokes the wound and wiggles the hilt |
+| Anglerfish | the sun *is* his lure: no forehead illicium — instead an atrophied light organ (three cold light spots along the crown), glowing barbel tips and a needle-toothed underbite |
+| Goblin shark | a flat snout over a protrusible jaw with irregular needle teeth; in Maw the jaws shoot 5.5 px forward, the red sling showing; gill flaps flutter on each exhale |
+| Giant isopod | seven tergite plates with side flanges and keels down the back, plates on the shoulders, segmented shells on forearms and shins; in Bastion they slide together from the bottom up with seams of light between them |
+| Near-black but legible | near-black skin with wet rim highlights, a green-grey sheen, pits and bumps, and cold cyan light spots on the crown, flanks and middle back plates |
+| The sword through the chest | hilt and sunburst guard below the sternum, the blade climbing 30° and leaving through the third back plate (left of the spine, so it reads from behind); charred rings at entry and exit, glowing cracks along the ribs, the face lit warm from below. Light shells at both wounds pulse *lub-dub* at about 52 bpm and the hilt knocks once per beat: **life support** you can see; **light** and **lure** (the Lure form blazes); **torment** (he squints at it, flinches when it settles back, grimaces when he pokes it) |
+| Unshackled | no sword in the body: a blazing cross of light in a charred ring, the predator's crouch (chest pitched 26°, head low and forward, eyes open), only the breath and a faster heart |
+| Abyssal Daybreak | bronze-black skin with glowing veins, light under every back plate, gold eyes; he strains back with the jaw open, everything trembling |
+| The drawn sword | in the hand the game draws the item's icon like any sword — a white-gold blade with a sunburst guard, the same design as the embedded blade; a 3D model of that blade (`build_sword()`) is used for the previews only |
+
+![008 turnaround and forms on white](images/race_008_bathyas.png)
+
+![The Impaled Sun](images/race_008_sword.png)
+
 **Why not Golem, Nurariten or Jackalope again:** no permanent armour bonus (only the 6-second Bastion), no territory or judgement, no speed race — its identity is the decision of when to take the sun out and how long to keep it.
 
 ### 009 · Octamyces Undecimus — ออคทา-ไมซีส แห่งรอยแยกที่ 11
@@ -368,11 +405,52 @@ The brief asked to keep three kinds of statement apart. Below, **A** = direct fo
 | Weaknesses: fire, hazards, some senses not fooled, fragile | +50% fire damage, a scorched *unstable* form and no Offset while burning; +10% damage taken; the immune list above |
 | Accessibility: no strobing, full-screen flashes, forced camera, persistent distortion | Iridescence is painted in gradients and slow hue shifts; effects are local and short; no camera control, no screen effects |
 
+**Body (model and animation).** 89 bones and 214 cubes (the most detailed body in the add-on), about 31.5 px to the crown; nothing touches the ground — the stalk's bulb ends 6 px above it and the body hovers with a ±0.8 px bob.
+
+| Required element | Built |
+|---|---|
+| Asymmetric cap | a wide brim (27 × 24.5 px) lifted 6° on one side with a cyan margin, glowing spiral lamellae beneath it and a fringe of glowing threads; above it a lopsided seven-band dome swelling to one side, each band a layer of tissue with its own hue (blue-violet at the brim through violet and magenta to pink at the crown), gold spore pits on the crown terraces; two shelves at the back pass through each other in an impossible X |
+| The Undecimal Eye — 11 concentric polygons rotating independently | a void pupil (a starfield octagon with a black singularity) inside **eleven polygon rings with 3, 4, 5 … 13 sides** — 88 bars, each ring 0.25 px further forward, so the eye is a funnel into the void; pale and saturated rings alternate so each reads on its own; every ring turns at its own speed and direction (21, −15, 12, −9.5 … 2 °/s) |
+| Polygonal blink | eight trapezoid plates stand open round the eye as an eight-pointed crown and fold shut in sequence into a flat seamed octagon, then rebuild; the eye glances with quantised darts |
+| Gills | a three-vane rotor under the cap turning continuously, pore pads that open and close, spiral lamellae painted under the brim |
+| Twisted stalk | a glowing pink-cyan spiral core inside three translucent lattice tiers twisted 0°, 22.5° and 45°, on a bulb (volva) |
+| **Eight mycelial groups, eight functions** | **1–2 manipulators** — braided strands ending in three-finger grips that hold your items; **3–4 propulsion fans** — scalloped fin membranes on the back that fold into one propulsor beating at a sprint; **5 sensor** — three fine glowing feelers that probe the air; **6 spore emitter** — curls up into an earthstar (a puffball in a star of rays); **7 stabiliser** — a curtain of four luminous filaments trailing like a kite tail; **8 resonance antenna** — a floating triangle above the crown |
+| Iridescent "impossible" colour without strobing | limited hue-shifted palettes per material and glow fixed in the textures (rings, lamellae, filament tips, spore pits, core); no texture changes over time and nothing flashes |
+| Surveillance Idle | after 7 s of stillness the creature *settles*: the hover drops to almost nothing, the mycelia hang still, glances and blinks stop, the crown narrows and the pupil shrinks while the iris scans slowly and now and then fixes on an empty spot; any movement, hit, attack or item use wakes it |
+| Forms | **sporeveil** gill pads hang open, the brim flares, four glowing spore pearls, the mycelia vibrate; **record** the rings click into alignment one by one and stay aligned and tightened, the pupil shrinks, it follows your look harder; **offset** the upper cap layers slide off the lower ones and the mycelia stand out like fins; **frame** the eye stops and the eleven rings open outward one after another into a telescope, then collapse back; **unstable** (burning) an ash palette with ember edges, a sagging brim, drooping mycelia, ring stutter and an irregular hover |
+| Idle behaviours | the crown folds shut plate by plate and rebuilds; the rings click round one sector each, inside out; a wave lifts the brim and the pores breathe out spores; the sensor probes and the eye follows its tip |
+
+![009 turnaround and forms on white](images/race_009_octamyces.png)
+
+### Expansion 02 at a glance: retained, improved, replaced, new
+
+**Retained exactly as briefed:** every ability name and cooldown (007: 14 / 24 / 20 / 42 s; 008: 18 / 20 / 28 / 45 / 180 s; 009: 18 / 22 / 26 / 48 s, Parallax Sporeveil's radius 6, the Eye's 5-second observation), every passive and weakness by name, the three mechanics of Taxonomic Collapse and of Eleventh Parallax, the six named stages of Abyssal Daybreak, the Impaled / Unshackled states with Re-Impalement, a sword that never duplicates and always comes back, Bathyas as a Unique lineage, and each creature's personality.
+
+**Improved:**
+* Morphological Drift runs on the **world clock**, read identically by the animation and the script, so the configuration you *see* is always the one granting its bonus — and every player sees the same one.
+* Draw the Sun is a toggle whose cooldown starts on the **return**, so the risk is the decision of how long to keep the sun out.
+* Statuses (Misclassified, Sun-Marked, Observed, Parallax) are one shared system with owners, timers and sigils, so they interact across abilities (e.g. Maw Rush feeds on Sun-Marked prey, the Frame hits Observed creatures harder).
+* Hyphal Offset walks its path half a block at a time and refuses hazards, so it can never end inside a wall, lava or fire.
+
+**Replaced (and why):**
+* "Hesitation", "misreading", "influencing attention", "perceptual disturbance" → measurable effects (slowness, weakness, blows against the caster that miss), because the Script API cannot change a mob's target choice.
+* Glowing marked creatures → floating sigils (Bedrock has no Glowing effect).
+* Bathyas' anglerfish lure on the forehead → **the impaled sun is the lure**; the anglerfish shows in an atrophied crown light organ, glowing barbels and a needle underbite. Two lures would have competed for the same role.
+* The drawn sword in the hand is the item's icon, drawn by the game like any sword, rather than a 3D held-item attachable whose placement in the hand could not be verified without a client.
+* Abyssal Daybreak's darkness → a local dark haze for players within 24 blocks, never the world's lighting or time; the leviathans are particles, not mobs.
+* Octamyces' levitation is visual (a hovering body) plus slow falling while sneaking in the air — not free flight, which would undermine the balance of every other race.
+
+**New:** the Dinosauroid's neck rig (the skull follows your look without detaching); Bathyas' idle life — shielding his eyes from his own light, sighing, dozing off, poking the wound; the Octamyces' *Surveillance Idle* (after 7 s of stillness only the eye keeps working); the hyphal echo entity; Codex → Display Check, which now also offers a **still body** (the same body without animation) to a player whose own body was invisible only while animated — a workaround they can use at once while the cause is found.
+
+**Limitations:** nothing was tested in a real game (see [TESTING.md](TESTING.md)); alpha-tested parts (membranes, feathers, crown plates, fins) cannot glow; the Dinosauroid and the Octamyces use 86 and 89 of the 90 bones a form may have; Morphological Drift stops when the daylight cycle is off and jumps with `/time set`; poses that turn the whole body (e.g. the Sickle Testament's pivot) can open a small gap at the hips for a moment, as with the other races.
+
 ### Technical limits and how they were met
 * **Players' bodies:** like every race, the creatures are attachables worn in the head slot and following the player's skeleton; `minecraft:player` is not overridden, the hitbox is the player's.
 * **Mob perception:** the Script API has no hook into a mob's target choice, so "hesitation" and "misreading" are slowness, weakness and blows that miss *the player who caused it* — effects you can measure.
 * **"Glowing" marks:** Bedrock has no Glowing effect; statuses are shown by sigils over the creature's head.
 * **The drawn sword** is a real item (rendered like any held weapon); the embedded sword is part of the 3D body. A 3D held-item attachable was not used because its placement in the hand cannot be verified without a client.
+* **Heads on necks:** the Dinosauroid's skull and the Octamyces' cap sit on their own neck / stalk rigs that cancel the player's head look and re-apply part of it lower down, so the head never detaches when you look around. Player poses that would tilt the head bone (their ability poses, the rite of transformation) leave the head still for these two bodies.
+* **The hyphal echo** is a helper entity rendering the Octamyces body (with its alpha-tested crown plates, fins and lattice) translucent with `entity_alphablend`; glowing parts are fainter in it because the texture's alpha also encodes glow.
 
 ## Shared systems built for this release
 

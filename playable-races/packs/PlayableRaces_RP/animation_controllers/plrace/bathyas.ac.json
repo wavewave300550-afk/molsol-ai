@@ -1,0 +1,227 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.plrace.bathyas.landing": {
+   "initial_state": "ground",
+   "states": {
+    "ground": {
+     "transitions": [
+      {
+       "air": "!q.is_on_ground && !q.is_in_water"
+      }
+     ]
+    },
+    "air": {
+     "transitions": [
+      {
+       "falling_hard": "q.vertical_speed < -13"
+      },
+      {
+       "falling": "q.vertical_speed < -5.5"
+      },
+      {
+       "ground": "q.is_on_ground || q.is_in_water"
+      }
+     ]
+    },
+    "falling": {
+     "transitions": [
+      {
+       "falling_hard": "q.vertical_speed < -13"
+      },
+      {
+       "land": "q.is_on_ground"
+      },
+      {
+       "ground": "q.is_in_water"
+      }
+     ]
+    },
+    "falling_hard": {
+     "transitions": [
+      {
+       "land_hard": "q.is_on_ground"
+      },
+      {
+       "ground": "q.is_in_water"
+      }
+     ]
+    },
+    "land": {
+     "animations": [
+      "land"
+     ],
+     "transitions": [
+      {
+       "air": "!q.is_on_ground && !q.is_in_water"
+      },
+      {
+       "ground": "q.all_animations_finished"
+      }
+     ]
+    },
+    "land_hard": {
+     "animations": [
+      "land_hard"
+     ],
+     "transitions": [
+      {
+       "air": "!q.is_on_ground && !q.is_in_water"
+      },
+      {
+       "ground": "q.all_animations_finished"
+      }
+     ]
+    }
+   }
+  },
+  "controller.animation.plrace.bathyas.fidget": {
+   "initial_state": "wait",
+   "states": {
+    "wait": {
+     "animations": [
+      "fidget_wait"
+     ],
+     "transitions": [
+      {
+       "moving": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding"
+      },
+      {
+       "fidget_shield": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.3), 5) == 0 && !q.is_item_equipped(0))"
+      },
+      {
+       "fidget_sigh": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.3), 5) == 1)"
+      },
+      {
+       "fidget_doze": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.3), 5) == 2)"
+      },
+      {
+       "fidget_poke": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.3), 5) == 3 && !q.is_item_equipped(1))"
+      },
+      {
+       "rest": "q.all_animations_finished"
+      }
+     ]
+    },
+    "moving": {
+     "transitions": [
+      {
+       "wait": "!(q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding)"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "rest": {
+     "animations": [
+      "fidget_rest"
+     ],
+     "transitions": [
+      {
+       "moving": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding"
+      },
+      {
+       "wait": "q.all_animations_finished"
+      }
+     ]
+    },
+    "fidget_shield": {
+     "animations": [
+      "fidget_shield"
+     ],
+     "blend_transition": 0.3,
+     "transitions": [
+      {
+       "moving": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding"
+      },
+      {
+       "wait": "q.all_animations_finished"
+      }
+     ]
+    },
+    "fidget_sigh": {
+     "animations": [
+      "fidget_sigh"
+     ],
+     "blend_transition": 0.3,
+     "transitions": [
+      {
+       "moving": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding"
+      },
+      {
+       "wait": "q.all_animations_finished"
+      }
+     ]
+    },
+    "fidget_doze": {
+     "animations": [
+      "fidget_doze"
+     ],
+     "blend_transition": 0.3,
+     "transitions": [
+      {
+       "moving": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding"
+      },
+      {
+       "wait": "q.all_animations_finished"
+      }
+     ]
+    },
+    "fidget_poke": {
+     "animations": [
+      "fidget_poke"
+     ],
+     "blend_transition": 0.3,
+     "transitions": [
+      {
+       "moving": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding"
+      },
+      {
+       "wait": "q.all_animations_finished"
+      }
+     ]
+    }
+   }
+  },
+  "controller.animation.plrace.bathyas.steps": {
+   "initial_state": "idle",
+   "states": {
+    "idle": {
+     "transitions": [
+      {
+       "r": "q.modified_move_speed > 0.3 && q.is_on_ground && !q.is_in_water && !q.is_riding && math.cos(v.plr_ph) < -0.92"
+      },
+      {
+       "l": "q.modified_move_speed > 0.3 && q.is_on_ground && !q.is_in_water && !q.is_riding && math.cos(v.plr_ph) > 0.92"
+      }
+     ]
+    },
+    "r": {
+     "animations": [
+      "step_r"
+     ],
+     "transitions": [
+      {
+       "l": "q.modified_move_speed > 0.3 && q.is_on_ground && !q.is_in_water && !q.is_riding && math.cos(v.plr_ph) > 0.92"
+      },
+      {
+       "idle": "!(q.modified_move_speed > 0.3 && q.is_on_ground && !q.is_in_water && !q.is_riding)"
+      }
+     ]
+    },
+    "l": {
+     "animations": [
+      "step_l"
+     ],
+     "transitions": [
+      {
+       "r": "q.modified_move_speed > 0.3 && q.is_on_ground && !q.is_in_water && !q.is_riding && math.cos(v.plr_ph) < -0.92"
+      },
+      {
+       "idle": "!(q.modified_move_speed > 0.3 && q.is_on_ground && !q.is_in_water && !q.is_riding)"
+      }
+     ]
+    }
+   }
+  }
+ }
+}

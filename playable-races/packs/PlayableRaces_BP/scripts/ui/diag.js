@@ -1,8 +1,8 @@
 import { EquipmentSlot, InputPermissionCategory, ItemLockMode, ItemStack, system } from "@minecraft/server";
 import { ActionFormData, ModalFormData } from "@minecraft/server-ui";
 import { add, flat, mul, v3 } from "../core/util.js";
-import { refreshForm } from "../core/abilities.js";
-import { headItem, isCrest } from "../core/forms.js";
+import { headItem, isCrest, wantsStill } from "../core/forms.js";
+import { raceOf, refreshForm } from "../core/abilities.js";
 import { get, save } from "../core/session.js";
 import { NS, RP_VERSION_KEY, VERSION } from "../config.js";
 import { RACES } from "../races/registry.js";
@@ -98,7 +98,19 @@ export async function displayCheck(p) {
         ] })
         .button("§lStart")
         .button("Cancel");
+    const mine = raceOf(s);
+    const usingStill = !!mine && wantsStill(s, mine);
+    if (usingStill)
+        intro.button("Use the §lanimated§r body again");
     const go = await intro.show(p);
+    if (!go.canceled && go.selection === 2 && usingStill && mine) {
+        s.data.still = (s.data.still ?? []).filter((c) => c !== mine.code);
+        s.dirty = true;
+        refreshForm(p, s);
+        save(p, s, true);
+        p.sendMessage(`§7Your ${mine.color}${mine.name}§7 body is animated again.`);
+        return;
+    }
     if (go.canceled || go.selection !== 0)
         return;
     s.diag = true;
@@ -131,6 +143,22 @@ export async function displayCheck(p) {
         p.sendMessage("§aEvery body was visible.");
     else
         p.sendMessage("§7Send a screenshot of the line above to the add-on author - it says exactly which part fails.");
+    const own = raceOf(s);
+    if (p.isValid && own && hidden.includes(own) && still && !still.includes(own) && !wantsStill(s, own)) {
+        const offer = await new ActionFormData()
+            .title("§lDisplay Check")
+            .body(`§7Your ${own.color}${own.name}§7 body could not be seen while animated, but could be seen without animation.\n\n§fWear the still body for now?§7 It is the same body without any animation (forms and idle motion are not shown). You can switch back here at any time.`)
+            .button("§lWear the still body")
+            .button("Keep the animated body")
+            .show(p);
+        if (!offer.canceled && offer.selection === 0 && p.isValid) {
+            s.data.still = [...(s.data.still ?? []).filter((c) => c !== own.code), own.code];
+            s.dirty = true;
+            refreshForm(p, s);
+            save(p, s, true);
+            p.sendMessage(`§aYou now wear the still ${own.color}${own.name}§a body. §7Codex > Display Check > "Use the animated body again" switches back.`);
+        }
+    }
 }
 function endShow(p, s, before) {
     if (!s.diag)

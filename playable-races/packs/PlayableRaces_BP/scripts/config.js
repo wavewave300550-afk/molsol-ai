@@ -1,5 +1,5 @@
 export const NS = "plrace";
-export const VERSION = "1.3.1";
+export const VERSION = "1.4.0";
 export const RP_VERSION_KEY = `${NS}.rp_version`;
 export const PROP_DATA = `${NS}:data`;
 export const WORLD_SETTINGS = `${NS}:settings`;
@@ -17,6 +17,7 @@ export const ENTITY_MEATBALL = `${NS}:meatball`;
 export const ENTITY_GATE = `${NS}:celestial_gate`;
 export const ENTITY_HERALD = `${NS}:herald`;
 export const ENTITY_PROCESSION = `${NS}:procession`;
+export const ENTITY_ECHO = `${NS}:hyphal_echo`;
 export const FOG_BLOOD_MOON = `${NS}:blood_moon`;
 export const FOG_USER = `${NS}_bm`;
 export const TPS = 20;

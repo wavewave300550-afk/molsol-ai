@@ -1,0 +1,118 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "plrace:form_bathyas_maw",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "cutout": "entity_alphatest",
+    "accent": "entity_alphatest"
+   },
+   "textures": {
+    "default": "textures/plrace/races/bathyas/bathyas_base"
+   },
+   "geometry": {
+    "default": "geometry.plrace.bathyas.maw",
+    "cutout": "geometry.plrace.bathyas.maw.cutout",
+    "accent": "geometry.plrace.bathyas.maw.accent"
+   },
+   "animations": {
+    "first_person": "animation.plrace.bathyas.first_person",
+    "third_person": "animation.plrace.bathyas.third_person",
+    "appendages": "animation.plrace.bathyas.appendages",
+    "life": "animation.plrace.bathyas.life",
+    "locomotion": "animation.plrace.bathyas.locomotion",
+    "steps": "controller.animation.plrace.bathyas.steps",
+    "airborne": "animation.plrace.bathyas.airborne",
+    "landing": "controller.animation.plrace.bathyas.landing",
+    "attack": "animation.plrace.bathyas.attack",
+    "swim": "animation.plrace.bathyas.swim",
+    "hurt": "animation.plrace.bathyas.hurt",
+    "intro_maw": "animation.plrace.bathyas.intro_maw",
+    "fx_maw": "animation.plrace.bathyas.fx_maw",
+    "maw_loop": "animation.plrace.bathyas.maw_loop",
+    "step_r": "animation.plrace.bathyas.step_r",
+    "step_l": "animation.plrace.bathyas.step_l",
+    "land": "animation.plrace.bathyas.land",
+    "land_hard": "animation.plrace.bathyas.land_hard"
+   },
+   "particle_effects": {
+    "sunmotes": "plrace:sun_motes",
+    "bubbles": "plrace:abyss_bubbles",
+    "stepdust": "plrace:step_dust",
+    "glare": "plrace:sun_glare"
+   },
+   "scripts": {
+    "pre_animation": [
+     "v.plr_ph = q.modified_distance_moved * 38.17;",
+     "v.plr_tc = math.cos(v.plr_ph) * q.modified_move_speed * 57.3;",
+     "v.plr_mv = math.clamp(q.modified_move_speed, 0, 1);",
+     "v.plr_still = 1 - math.clamp(q.modified_move_speed * 5, 0, 1);",
+     "v.plr_spr = q.is_sprinting ? 1 : 0;",
+     "v.plr_walk = 1 - v.plr_spr;",
+     "v.plr_bw0 = -0.5607 - 0.4563 * math.cos(v.plr_ph * 2) - 0.2361 * math.sin(v.plr_ph * 2) + 0.04924 * math.cos(v.plr_ph * 4);",
+     "v.plr_bw1 = -0.02584 * math.sin(v.plr_ph * 4) + 0.04958 * math.cos(v.plr_ph * 6);",
+     "v.plr_br0 = -1.448 - 1.398 * math.cos(v.plr_ph * 2) - 0.5042 * math.sin(v.plr_ph * 2) - 0.06691 * math.cos(v.plr_ph * 4);",
+     "v.plr_br1 = -0.1895 * math.sin(v.plr_ph * 4) + 0.02007 * math.sin(v.plr_ph * 6) + 0.0553 * math.cos(v.plr_ph * 8);",
+     "v.plr_br2 = 0.03938 * math.sin(v.plr_ph * 8);",
+     "v.plr_bob = ((v.plr_walk) * (math.clamp(q.modified_move_speed / 0.8, 0, 1.25)) * ((v.plr_bw0 + v.plr_bw1) - (-0.133))) + ((v.plr_spr) * (v.plr_mv) * ((v.plr_br0 + v.plr_br1 + v.plr_br2) - (-0.133)));",
+     "v.plr_bl0 = math.clamp(math.sin(q.life_time * 32.73 + 100) * 3 - 2, 0, 1);",
+     "v.plr_bl1 = 2 * v.plr_bl0 * v.plr_still - 0.8 * math.sin(q.life_time * 68.4);",
+     "v.plr_bl2 = 1.6 + 0.6 * math.sin(q.life_time * 25.2);",
+     "v.plr_bl3 = 1.2 * math.sin(q.life_time * 18 + 40) * v.plr_still;",
+     "v.plr_bt0 = v.plr_mv * (math.pow(math.max(0, -math.cos(v.plr_ph)), 8) + 0.55 * math.pow(math.max(0, math.cos(v.plr_ph)), 8));",
+     "v.plr_bt1 = v.plr_mv * (4 + 8 * v.plr_spr);",
+     "v.plr_bt2 = v.plr_mv * (2.6 * math.sin(v.plr_ph) + math.max(0, math.sin(v.plr_ph)) + 3 * math.clamp(q.yaw_speed * 0.02, -1, 1));",
+     "v.plr_bt3 = 0.12 * math.clamp(q.target_y_rotation, -70, 70) - 4 * math.cos(v.plr_ph) * v.plr_mv;"
+    ],
+    "animate": [
+     {
+      "first_person": "c.is_first_person"
+     },
+     {
+      "third_person": "!c.is_first_person"
+     },
+     "appendages",
+     {
+      "life": "!c.is_first_person"
+     },
+     {
+      "locomotion": "!c.is_first_person && !q.is_riding && !q.is_gliding && !q.is_swimming"
+     },
+     {
+      "steps": "!c.is_first_person && !q.is_riding && !q.is_gliding"
+     },
+     {
+      "airborne": "!c.is_first_person && !q.is_on_ground && !q.is_in_water && !q.is_riding && !q.is_gliding"
+     },
+     {
+      "landing": "!c.is_first_person && !q.is_riding"
+     },
+     {
+      "attack": "!c.is_first_person"
+     },
+     {
+      "swim": "!c.is_first_person && (q.is_swimming || (q.is_in_water && !q.is_on_ground))"
+     },
+     {
+      "hurt": "!c.is_first_person && q.hurt_time > 0"
+     },
+     "intro_maw",
+     {
+      "fx_maw": "!c.is_first_person"
+     },
+     {
+      "maw_loop": "!c.is_first_person"
+     }
+    ]
+   },
+   "render_controllers": [
+    "controller.render.plrace.form",
+    "controller.render.plrace.form_cutout",
+    "controller.render.plrace.bathyas_accent_c",
+    "controller.render.plrace.bathyas_accent_l",
+    "controller.render.plrace.bathyas_accent_f"
+   ]
+  }
+ }
+}

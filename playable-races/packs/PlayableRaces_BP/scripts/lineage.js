@@ -1,4 +1,5 @@
 import { system, world } from "@minecraft/server";
+import { clearAbyssFog } from "./races/bathyas.js";
 import { endChannel, raceOf, refreshForm, resetCooldowns } from "./core/abilities.js";
 import { captureEnchantments, ensureFocus, headItem, hideForm, isCrest, purgeFoci, purgeStrayCrests, showForm } from "./core/forms.js";
 import { particle, pose, rgb, sound } from "./core/fx.js";
@@ -19,6 +20,9 @@ const RACE_RGB = {
     "004": { red: 0.78, green: 0.66, blue: 1 },
     "005": { red: 1, green: 0.86, blue: 0.45 },
     "006": { red: 1, green: 0.92, blue: 0.62 },
+    "007": { red: 0.3, green: 0.9, blue: 0.75 },
+    "008": { red: 1, green: 0.95, blue: 0.72 },
+    "009": { red: 0.72, green: 0.45, blue: 1 },
 };
 export function worldDay() {
     try {
@@ -128,12 +132,13 @@ export function removeRace(p) {
     s.dirty = true;
     save(p, s, true);
 }
+const NECK_RIGGED = new Set(["007", "009"]);
 function rite(p, race) {
     const c = RACE_RGB[race.code] ?? { red: 1, green: 1, blue: 1 };
     particle(p.dimension, "plrace:rite_aura", add(p.location, v3(0, 0.1, 0)), rgb(c));
     sound(p.dimension, "beacon.activate", p.location, 1, 1.2);
     sound(p.dimension, "random.levelup", p.location, 0.5, 0.7);
-    pose(p, "rite");
+    pose(p, NECK_RIGGED.has(race.code) ? "rite_still" : "rite");
     try {
         p.onScreenDisplay.setTitle(`${race.color}${race.name}`, { subtitle: `§7${race.title} - Race ${race.code}`, fadeInDuration: 10, stayDuration: 50, fadeOutDuration: 20 });
     }
@@ -183,6 +188,7 @@ export function restore(p, s) {
     }
     catch {
     }
+    clearAbyssFog(p);
     const race = raceOf(s);
     if (!race) {
         const it = headItem(p);

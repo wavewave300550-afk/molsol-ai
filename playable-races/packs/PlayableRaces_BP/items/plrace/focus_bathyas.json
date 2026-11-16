@@ -1,0 +1,32 @@
+{
+ "format_version": "1.21.90",
+ "minecraft:item": {
+  "description": {
+   "identifier": "plrace:focus_bathyas",
+   "menu_category": {
+    "category": "equipment",
+    "is_hidden_in_commands": false
+   }
+  },
+  "components": {
+   "minecraft:icon": "plrace:focus_bathyas",
+   "minecraft:display_name": {
+    "value": "item.plrace:focus_bathyas"
+   },
+   "minecraft:max_stack_size": 1,
+   "minecraft:hand_equipped": true,
+   "minecraft:glint": false,
+   "minecraft:hover_text_color": "white",
+   "minecraft:use_modifiers": {
+    "use_duration": 1000,
+    "movement_modifier": 1.0
+   },
+   "minecraft:tags": {
+    "tags": [
+     "plrace:focus"
+    ]
+   },
+   "plrace:focus": {}
+  }
+ }
+}

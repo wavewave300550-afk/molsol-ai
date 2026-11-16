@@ -1,0 +1,28 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "plrace:form_octamyces_static",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "cutout": "entity_alphatest",
+    "accent": "entity_alphatest"
+   },
+   "textures": {
+    "default": "textures/plrace/races/octamyces/octamyces_base"
+   },
+   "geometry": {
+    "default": "geometry.plrace.octamyces.base",
+    "cutout": "geometry.plrace.octamyces.base.cutout",
+    "accent": "geometry.plrace.octamyces.base.accent"
+   },
+   "render_controllers": [
+    "controller.render.plrace.form",
+    "controller.render.plrace.form_cutout",
+    "controller.render.plrace.octamyces_accent_c",
+    "controller.render.plrace.octamyces_accent_l",
+    "controller.render.plrace.octamyces_accent_f"
+   ]
+  }
+ }
+}

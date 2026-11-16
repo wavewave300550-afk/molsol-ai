@@ -135,12 +135,15 @@ export function removeRace(p: Player): void {
   save(p, s, true);
 }
 
+/** Bodies whose own neck rig carries the head (a tilted player head would part it from the neck). */
+const NECK_RIGGED = new Set(["007", "009"]);
+
 function rite(p: Player, race: RaceDef): void {
   const c = RACE_RGB[race.code] ?? { red: 1, green: 1, blue: 1 };
   particle(p.dimension, "plrace:rite_aura", add(p.location, v3(0, 0.1, 0)), rgb(c));
   sound(p.dimension, "beacon.activate", p.location, 1, 1.2);
   sound(p.dimension, "random.levelup", p.location, 0.5, 0.7);
-  pose(p, "rite");
+  pose(p, NECK_RIGGED.has(race.code) ? "rite_still" : "rite");
   try {
     p.onScreenDisplay.setTitle(`${race.color}${race.name}`, { subtitle: `§7${race.title} - Race ${race.code}`, fadeInDuration: 10, stayDuration: 50, fadeOutDuration: 20 });
   } catch {

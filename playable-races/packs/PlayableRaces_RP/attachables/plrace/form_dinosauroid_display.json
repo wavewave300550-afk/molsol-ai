@@ -1,0 +1,108 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "plrace:form_dinosauroid_display",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "cutout": "entity_alphatest",
+    "accent": "entity_alphatest"
+   },
+   "textures": {
+    "default": "textures/plrace/races/dinosauroid/dinosauroid_base"
+   },
+   "geometry": {
+    "default": "geometry.plrace.dinosauroid.display",
+    "cutout": "geometry.plrace.dinosauroid.display.cutout",
+    "accent": "geometry.plrace.dinosauroid.display.accent"
+   },
+   "animations": {
+    "first_person": "animation.plrace.dinosauroid.first_person",
+    "third_person": "animation.plrace.dinosauroid.third_person",
+    "look": "animation.plrace.dinosauroid.look",
+    "life": "animation.plrace.dinosauroid.life",
+    "locomotion": "animation.plrace.dinosauroid.locomotion",
+    "hindwing_run": "animation.plrace.dinosauroid.hindwing_run",
+    "airborne": "animation.plrace.dinosauroid.airborne",
+    "landing": "controller.animation.plrace.dinosauroid.landing",
+    "attack": "animation.plrace.dinosauroid.attack",
+    "swim": "animation.plrace.dinosauroid.swim",
+    "hurt": "animation.plrace.dinosauroid.hurt",
+    "intro_display": "animation.plrace.dinosauroid.intro_display",
+    "fx_display": "animation.plrace.dinosauroid.fx_display",
+    "display_loop": "animation.plrace.dinosauroid.display_loop",
+    "land": "animation.plrace.dinosauroid.land",
+    "land_hard": "animation.plrace.dinosauroid.land_hard"
+   },
+   "particle_effects": {
+    "stepdust": "plrace:step_dust",
+    "feathers": "plrace:dino_feathers",
+    "displaymotes": "plrace:dino_display"
+   },
+   "scripts": {
+    "pre_animation": [
+     "v.plr_ph = q.modified_distance_moved * 38.17;",
+     "v.plr_tc = math.cos(v.plr_ph) * q.modified_move_speed * 57.3;",
+     "v.plr_mv = math.clamp(q.modified_move_speed, 0, 1);",
+     "v.plr_still = 1 - math.clamp(q.modified_move_speed * 5, 0, 1);",
+     "v.plr_spr = q.is_sprinting ? 1 : 0;",
+     "v.plr_walk = 1 - v.plr_spr;",
+     "v.plr_bw0 = 0.5857 + 0.4474 * math.cos(v.plr_ph * 2) + 0.5302 * math.sin(v.plr_ph * 2) - 0.04868 * math.cos(v.plr_ph * 4);",
+     "v.plr_bw1 = 0.04135 * math.sin(v.plr_ph * 4) + 0.1447 * math.cos(v.plr_ph * 6) - 0.05157 * math.sin(v.plr_ph * 6);",
+     "v.plr_bw2 = -0.07815 * math.cos(v.plr_ph * 8) - 0.03016 * math.sin(v.plr_ph * 8);",
+     "v.plr_br0 = 0.5106 + 0.1828 * math.cos(v.plr_ph * 2) + 0.88 * math.sin(v.plr_ph * 2) - 0.02517 * math.cos(v.plr_ph * 4);",
+     "v.plr_br1 = -0.1446 * math.sin(v.plr_ph * 4) + 0.1175 * math.cos(v.plr_ph * 6) - 0.1661 * math.sin(v.plr_ph * 6);",
+     "v.plr_br2 = -0.174 * math.cos(v.plr_ph * 8);",
+     "v.plr_bob = ((v.plr_walk) * (math.clamp(q.modified_move_speed / 0.8, 0, 1.25)) * ((v.plr_bw0 + v.plr_bw1 + v.plr_bw2) - (-0.001))) + ((v.plr_spr) * (v.plr_mv) * ((v.plr_br0 + v.plr_br1 + v.plr_br2) - (-0.001)));"
+    ],
+    "animate": [
+     {
+      "first_person": "c.is_first_person"
+     },
+     {
+      "third_person": "!c.is_first_person"
+     },
+     "look",
+     {
+      "life": "!c.is_first_person"
+     },
+     {
+      "locomotion": "!c.is_first_person && !q.is_riding && !q.is_gliding && !q.is_swimming"
+     },
+     {
+      "hindwing_run": "!c.is_first_person && !q.is_riding && !q.is_gliding && !q.is_swimming"
+     },
+     {
+      "airborne": "!c.is_first_person && !q.is_on_ground && !q.is_in_water && !q.is_riding && !q.is_gliding"
+     },
+     {
+      "landing": "!c.is_first_person && !q.is_riding"
+     },
+     {
+      "attack": "!c.is_first_person"
+     },
+     {
+      "swim": "!c.is_first_person && (q.is_swimming || (q.is_in_water && !q.is_on_ground))"
+     },
+     {
+      "hurt": "!c.is_first_person && q.hurt_time > 0"
+     },
+     "intro_display",
+     {
+      "fx_display": "!c.is_first_person"
+     },
+     {
+      "display_loop": "!c.is_first_person"
+     }
+    ]
+   },
+   "render_controllers": [
+    "controller.render.plrace.form",
+    "controller.render.plrace.form_cutout",
+    "controller.render.plrace.dinosauroid_accent_c",
+    "controller.render.plrace.dinosauroid_accent_l",
+    "controller.render.plrace.dinosauroid_accent_f"
+   ]
+  }
+ }
+}

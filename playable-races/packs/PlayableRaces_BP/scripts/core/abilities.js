@@ -141,6 +141,7 @@ export function cast(p, s) {
         fail(p, s, reason);
         return;
     }
+    const free = a.freeCast?.(ctx) === true;
     let result;
     try {
         result = a.cast(ctx);
@@ -153,7 +154,8 @@ export function cast(p, s) {
         fail(p, s, result);
         return;
     }
-    spend(p, s, race, a);
+    if (!free)
+        spend(p, s, race, a);
     s.lastCast = now;
     s.data.stats.casts = (s.data.stats.casts ?? 0) + 1;
     s.dirty = true;

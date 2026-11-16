@@ -98,9 +98,9 @@ CAMERA = {  # race -> (scale, center y)
     "xenentoma": (5.0, 16.0),
     "spaghetti": (6.4, 17.0),
     "nurariten": (5.0, 18.0),
-    "dinosauroid": (5.6, 17.0),
-    "bathyas": (4.8, 19.0),
-    "octamyces": (6.5, 18.0),
+    "dinosauroid": (5.0, 17.0),
+    "bathyas": (5.0, 16.0),
+    "octamyces": (6.0, 17.5),
 }
 
 

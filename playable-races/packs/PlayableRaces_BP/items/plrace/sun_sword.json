@@ -1,0 +1,31 @@
+{
+ "format_version": "1.21.90",
+ "minecraft:item": {
+  "description": {
+   "identifier": "plrace:sun_sword",
+   "menu_category": {
+    "category": "none",
+    "is_hidden_in_commands": true
+   }
+  },
+  "components": {
+   "minecraft:icon": "plrace:sun_sword",
+   "minecraft:display_name": {
+    "value": "item.plrace:sun_sword"
+   },
+   "minecraft:max_stack_size": 1,
+   "minecraft:hand_equipped": true,
+   "minecraft:damage": {
+    "value": 7
+   },
+   "minecraft:can_destroy_in_creative": false,
+   "minecraft:glint": true,
+   "minecraft:hover_text_color": "gold",
+   "minecraft:tags": {
+    "tags": [
+     "plrace:sun_sword"
+    ]
+   }
+  }
+ }
+}

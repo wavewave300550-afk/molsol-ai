@@ -11,6 +11,7 @@ import { aimTarget, chest } from "./core/targets.js";
 import { cancel, startScheduler } from "./core/tasks.js";
 import { warn } from "./core/util.js";
 import { registerCommands } from "./commands.js";
+import { tickStatuses } from "./systems/status.js";
 import { integrity, restore } from "./lineage.js";
 import { golemLightning, inWard } from "./races/golem.js";
 import { moonhunt } from "./races/jackalope.js";
@@ -373,6 +374,8 @@ function startLoops() {
                     refreshForm(p, s);
                 else if (s.flags.size)
                     refreshForm(p, s);
+                else if (!s.tempVariant && !s.data.veiled && !s.diag && race.variant(p, s) !== s.shownVariant)
+                    refreshForm(p, s);
                 race.tick5?.(p, s);
                 updateHud(p, s);
                 if (phase % 2 === 0 && holdingFocus(p, race))
@@ -386,6 +389,7 @@ function startLoops() {
             tickMarks();
             tickMirages();
         }
+        tickStatuses();
         for (const r of RACES) {
             if (!r.worldTick4)
                 continue;

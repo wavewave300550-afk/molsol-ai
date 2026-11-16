@@ -109,21 +109,21 @@ RACES = {
         "display": "The Unknown Dinosauroid", "protection": 1, "hover": "dark_aqua", "focus": ("Fossil Quill Focus", "dark_aqua"),
         "variants": {"base": "Composed", "night": "Display Skin (night)", "display": "Crest of Misclassification",
                      "veer": "Hindwing Veer", "overflow": "Taxonomic Error"},
-        "icon": {"variant": "display", "tex": "base", "head": ((0, 28, -2), 3.6), "body": ((0, 18, 1), 5.0)},
+        "icon": {"variant": "display", "tex": "base", "head": ((0, 28.5, -4.5), 2.5), "body": ((0, 19, 2), 4.7)},
         "portrait_bg": (16, 52, 50)},
     "bathyas": {
-        "code": "008", "mod": bathyas, "anims": anim_bathyas.anims, "bounds": (4.0, 4.0, (0, 1.5, 0.3)),
+        "code": "008", "mod": bathyas, "anims": anim_bathyas.anims, "bounds": (4.2, 3.6, (0, 1.3, 0)),
         "display": "Bathyas, the Sun-Impaled", "protection": 2, "hover": "white", "focus": ("Abyssal Hilt Focus", "white"),
         "variants": {"base": "Impaled", "lure": "Lure of the Impaled Sun", "maw": "Goblin Maw Rush", "bastion": "Isopod Bastion",
                      "unshackled": "Unshackled", "daybreak": "Abyssal Daybreak"},
-        "icon": {"variant": "base", "tex": "base", "head": ((0, 27, -1), 3.4), "body": ((0, 18, 0), 5.0)},
+        "icon": {"variant": "lure", "tex": "blaze", "head": ((0, 21.0, -5.0), 2.4), "body": ((0, 16.0, 1.0), 6.0)},
         "portrait_bg": (14, 26, 40)},
     "octamyces": {
-        "code": "009", "mod": octamyces, "anims": anim_octamyces.anims, "bounds": (4.0, 3.6, (0, 1.3, 0)),
+        "code": "009", "mod": octamyces, "anims": anim_octamyces.anims, "bounds": (3.4, 3.2, (0, 1.2, 0)),
         "display": "Octamyces Undecimus", "protection": 1, "hover": "dark_purple", "focus": ("Undecimal Lens Focus", "dark_purple"),
         "variants": {"base": "Witnessing", "sporeveil": "Parallax Sporeveil", "record": "The Eye That Records",
                      "offset": "Hyphal Offset", "frame": "The Eleventh Frame", "unstable": "Destabilised (burning)"},
-        "icon": {"variant": "record", "tex": "record", "head": ((0, 25, -2), 3.8), "body": ((0, 17, 0), 5.0)},
+        "icon": {"variant": "base", "tex": "base", "head": ((0, 23, -4), 2.6), "body": ((0, 19, 0), 5.6)},
         "portrait_bg": (40, 18, 56)},
 }
 DISPLAY = {race: info["display"] for race, info in RACES.items()}
@@ -251,7 +251,7 @@ def build_races(report):
                     "identifier": static_id(race), "materials": desc["materials"], "textures": desc["textures"],
                     "geometry": desc["geometry"], "render_controllers": desc["render_controllers"]}}}
                 wjson(os.path.join(RP, f"attachables/plrace/form_{race}_{STATIC}.json"), still)
-                lang.append((f"item.{static_id(race)}", f"{DISPLAY[race]} Form (display check)"))
+                lang.append((f"item.{static_id(race)}", f"{DISPLAY[race]} Form (still body)"))
     # player-skeleton pose animations (scripts trigger these with playAnimation)
     wjson(os.path.join(RP, "animations/plrace/poses.animation.json"), acore.file(aset.poses()))
     return lang, geo_index
@@ -531,10 +531,12 @@ def echo_entity(lang):
         a.bone(f"ring{k}", rot=[0, 0, f"q.life_time * {(-1) ** k * (40 + 9 * k)}"])
     a.bone("root", pos=[0, "q.life_time * 0.8", 0])
     wjson(os.path.join(RP, "animations/plrace/hyphal_echo.animation.json"), acore.file([a]))
-    proxy_entity(lang, f"{NS}:hyphal_echo", "Hyphal Echo", {"default": f"geometry.{NS}.octamyces.base"},
+    proxy_entity(lang, f"{NS}:hyphal_echo", "Hyphal Echo",
+                 {"default": f"geometry.{NS}.octamyces.base", "cutout": f"geometry.{NS}.octamyces.base.cutout"},
                  f"{TEXROOT}/octamyces/octamyces_base", {"drift": f"animation.{NS}.hyphal_echo.drift"}, ["inanimate"],
                  health=1, size=(0.6, 1.8), timer=6, physics=False, gravity=False,
-                 materials={"default": "entity_alphablend"}, rcs=[f"controller.render.{NS}.echo"])
+                 materials={"default": "entity_alphablend"},
+                 rcs=[f"controller.render.{NS}.echo", f"controller.render.{NS}.echo_cutout"])
 
 
 def race_entities(lang):
@@ -604,9 +606,10 @@ def race_entities(lang):
 
 def echo_render_controllers(rc):
     """Octamyces' Hyphal Offset echo: the body, translucent and tinted toward its own iridescence, fading."""
-    rc["render_controllers"][f"controller.render.{NS}.echo"] = {
-        "geometry": "Geometry.default", "materials": [{"*": "Material.default"}], "textures": ["Texture.default"],
-        "color": {"r": 0.55, "g": 0.95, "b": 1.0, "a": "math.clamp(0.5 - q.life_time * 0.12, 0.08, 0.5)"}}
+    for suffix, geo in (("", "Geometry.default"), ("_cutout", "Geometry.cutout")):
+        rc["render_controllers"][f"controller.render.{NS}.echo{suffix}"] = {
+            "geometry": geo, "materials": [{"*": "Material.default"}], "textures": ["Texture.default"],
+            "color": {"r": 0.55, "g": 0.95, "b": 1.0, "a": "math.clamp(0.5 - q.life_time * 0.12, 0.08, 0.5)"}}
 
 
 def mirage_render_controllers(rc):

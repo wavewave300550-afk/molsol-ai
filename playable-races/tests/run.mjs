@@ -1464,6 +1464,33 @@ eq(dia.inputPermissions.isPermissionCategoryEnabled(InputPermissionCategory.Late
 const dcMsg = sim.log.messages.filter((x) => x.p === dia.id).map((x) => x.m).join("\n");
 ok(/hidden: §f005/.test(dcMsg) && /still hidden without animation: §fnone/.test(dcMsg), "the result names what was hidden, with and without animation");
 ok(dcMsg.includes("%plrace.rp_version%"), "the result names the resource-pack version the client resolves");
+
+// the fallback: hidden while animated, visible still -> the player may wear the still body
+begin("display check: still body fallback");
+ui.answers.length = 0;
+answer.action(7); // main codex: Display Check
+answer.action(0); // intro: Start
+answer.modal([false, false, false, false, true, false, false, false, false]); // could not see: 005
+answer.modal([false]); // ... but its still twin was visible
+answer.action(0); // offer: wear the still body
+commands.get("plrace:codex").cb({ sourceEntity: dia });
+await settle(2);
+for (let i = 0; i < 10 * 60 + 60; i++) {
+  tickN(1);
+  await new Promise((r) => setTimeout(r, 0));
+}
+await settle(4);
+eq(head(dia)?.typeId, "plrace:form_spaghetti_static", "the player now wears the still body");
+tickN(60);
+eq(head(dia)?.typeId, "plrace:form_spaghetti_static", "it stays on (no form refresh swaps it back)");
+forceSave();
+ok((data(dia).still ?? []).includes("005"), "the choice is saved with the player");
+ui.answers.length = 0;
+answer.action(7); // main codex: Display Check
+answer.action(2); // intro: use the animated body again
+commands.get("plrace:codex").cb({ sourceEntity: dia });
+await settle(6);
+eq(head(dia)?.typeId, "plrace:form_spaghetti", "and the animated body comes back on request");
 harness.leave(dia);
 
 // ======================================================================== summary

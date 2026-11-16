@@ -1,0 +1,100 @@
+{
+ "format_version": "1.10.0",
+ "animations": {
+  "animation.plrace.hyphal_echo.drift": {
+   "loop": true,
+   "bones": {
+    "r_arm_fp": {
+     "scale": 0.0
+    },
+    "l_arm_fp": {
+     "scale": 0.0
+    },
+    "ring0": {
+     "rotation": [
+      0.0,
+      0.0,
+      "q.life_time * 40"
+     ]
+    },
+    "ring1": {
+     "rotation": [
+      0.0,
+      0.0,
+      "q.life_time * -49"
+     ]
+    },
+    "ring2": {
+     "rotation": [
+      0.0,
+      0.0,
+      "q.life_time * 58"
+     ]
+    },
+    "ring3": {
+     "rotation": [
+      0.0,
+      0.0,
+      "q.life_time * -67"
+     ]
+    },
+    "ring4": {
+     "rotation": [
+      0.0,
+      0.0,
+      "q.life_time * 76"
+     ]
+    },
+    "ring5": {
+     "rotation": [
+      0.0,
+      0.0,
+      "q.life_time * -85"
+     ]
+    },
+    "ring6": {
+     "rotation": [
+      0.0,
+      0.0,
+      "q.life_time * 94"
+     ]
+    },
+    "ring7": {
+     "rotation": [
+      0.0,
+      0.0,
+      "q.life_time * -103"
+     ]
+    },
+    "ring8": {
+     "rotation": [
+      0.0,
+      0.0,
+      "q.life_time * 112"
+     ]
+    },
+    "ring9": {
+     "rotation": [
+      0.0,
+      0.0,
+      "q.life_time * -121"
+     ]
+    },
+    "ring10": {
+     "rotation": [
+      0.0,
+      0.0,
+      "q.life_time * 130"
+     ]
+    },
+    "root": {
+     "position": [
+      0.0,
+      "q.life_time * 0.8",
+      0.0
+     ]
+    }
+   }
+  }
+ }
+}

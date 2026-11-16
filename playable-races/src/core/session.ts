@@ -23,6 +23,8 @@ export interface PlayerData {
   lastChange: number; // world day of the last lineage change
   locks: number[]; // InputPermissionCategory values we disabled (restored on join)
   stats: Record<string, number>;
+  /** Race codes this player wears as the still (unanimated) body - the Display Check fallback. */
+  still?: string[];
 }
 
 export function defaultData(): PlayerData {

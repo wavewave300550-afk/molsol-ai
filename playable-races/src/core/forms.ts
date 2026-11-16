@@ -15,6 +15,16 @@ export function crestId(race: RaceDef, variant: string): string {
   return variant ? `${NS}:form_${race.key}_${variant}` : `${NS}:form_${race.key}`;
 }
 
+/** The still twin of the base form: the same body with no animation (Display Check). */
+export function staticId(race: RaceDef): string {
+  return `${NS}:form_${race.key}_static`;
+}
+
+/** The player chose the still body for this lineage (it was invisible while animated). */
+export function wantsStill(s: Session, race: RaceDef): boolean {
+  return !!s.data.still?.includes(race.code);
+}
+
 function equippable(p: Player) {
   try {
     return p.getComponent("minecraft:equippable");
@@ -35,8 +45,8 @@ export function isCrest(item: ItemStack | undefined): boolean {
   return !!item && item.hasTag(TAG_FORM);
 }
 
-function makeCrest(race: RaceDef, variant: string, s: Session): ItemStack {
-  const it = new ItemStack(crestId(race, variant), 1);
+function makeCrest(id: string, s: Session): ItemStack {
+  const it = new ItemStack(id, 1);
   it.lockMode = ItemLockMode.slot;
   it.keepOnDeath = true;
   if (s.data.ench.length > 0) {
@@ -80,7 +90,7 @@ export function showForm(p: Player, race: RaceDef, s: Session, variant: string):
   if (s.data.veiled) return true;
   const eq = equippable(p);
   if (!eq) return false;
-  const want = crestId(race, variant);
+  const want = wantsStill(s, race) ? staticId(race) : crestId(race, variant);
   const cur = headItem(p);
   if (cur && cur.typeId === want) {
     s.shownVariant = variant;
@@ -98,7 +108,7 @@ export function showForm(p: Player, race: RaceDef, s: Session, variant: string):
     }
   }
   try {
-    eq.setEquipment(EquipmentSlot.Head, makeCrest(race, variant, s));
+    eq.setEquipment(EquipmentSlot.Head, makeCrest(want, s));
     s.shownVariant = variant;
     return true;
   } catch (e) {

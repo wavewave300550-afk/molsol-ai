@@ -28,7 +28,7 @@ from typing import Dict
 
 import numpy as np
 
-from anims.core import NS, T, n
+from anims.core import NS, T, canon_tree, n
 from anims.life import (ATK, BUMP, FALL, MOVE, PH, RISE, S, SPR, TURN, WALKING, KeyLayer, Layer, Rig, arm_swing, body,
                         body_keys, chain_wave, dart, fidget_controller, landing_controller, lin, mul, prod, stride)
 from anims.races import A, AIR, GAIT_OK, SIDES, TP, blink, grounded, mirror, pre_animation, shake, view_anims
@@ -466,4 +466,7 @@ def anims(model) -> Dict[str, object]:
             lst.append((loops[v], TP))
         animate[v] = lst
     particles = {"stepdust": f"{NS}:step_dust", "feathers": f"{NS}:dino_feathers", "displaymotes": f"{NS}:dino_display"}
-    return {"anims": built, "animate": animate, "particles": particles, "controllers": controllers, "pre": pre_animation(r)}
+    for a in built:                               # fold "+ -" / "- -" here too (the build folds them again)
+        a.bones = canon_tree(a.bones)
+    return {"anims": built, "animate": animate, "particles": particles, "controllers": canon_tree(controllers),
+            "pre": canon_tree(pre_animation(r))}

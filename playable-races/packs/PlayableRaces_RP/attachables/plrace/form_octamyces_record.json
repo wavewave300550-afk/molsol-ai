@@ -1,0 +1,103 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "plrace:form_octamyces_record",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "cutout": "entity_alphatest",
+    "accent": "entity_alphatest"
+   },
+   "textures": {
+    "default": "textures/plrace/races/octamyces/octamyces_record"
+   },
+   "geometry": {
+    "default": "geometry.plrace.octamyces.record",
+    "cutout": "geometry.plrace.octamyces.record.cutout",
+    "accent": "geometry.plrace.octamyces.record.accent"
+   },
+   "animations": {
+    "first_person": "animation.plrace.octamyces.first_person",
+    "third_person": "animation.plrace.octamyces.third_person",
+    "steady": "animation.plrace.octamyces.steady",
+    "vigil": "controller.animation.plrace.octamyces.vigil",
+    "locomotion": "animation.plrace.octamyces.locomotion",
+    "airborne": "animation.plrace.octamyces.airborne",
+    "landing": "controller.animation.plrace.octamyces.landing",
+    "attack": "animation.plrace.octamyces.attack",
+    "swim": "animation.plrace.octamyces.swim",
+    "hurt": "animation.plrace.octamyces.hurt",
+    "intro_record": "animation.plrace.octamyces.intro_record",
+    "fx_record": "animation.plrace.octamyces.fx_record",
+    "record_loop": "animation.plrace.octamyces.record_loop",
+    "life": "animation.plrace.octamyces.life",
+    "vigil_wait": "animation.plrace.octamyces.vigil_wait",
+    "surveil": "animation.plrace.octamyces.surveil",
+    "land": "animation.plrace.octamyces.land",
+    "land_hard": "animation.plrace.octamyces.land_hard"
+   },
+   "particle_effects": {
+    "spores": "plrace:geo_spores",
+    "motes": "plrace:parallax_motes",
+    "echo": "plrace:parallax_echo"
+   },
+   "scripts": {
+    "pre_animation": [
+     "v.plr_ph = q.modified_distance_moved * 38.17;",
+     "v.plr_tc = math.cos(v.plr_ph) * q.modified_move_speed * 57.3;",
+     "v.plr_mv = math.clamp(q.modified_move_speed, 0, 1);",
+     "v.plr_still = 1 - math.clamp(q.modified_move_speed * 5, 0, 1);",
+     "v.plr_spr = q.is_sprinting ? 1 : 0;",
+     "v.plr_walk = 1 - v.plr_spr;",
+     "v.plr_bob = 0;"
+    ],
+    "animate": [
+     {
+      "first_person": "c.is_first_person"
+     },
+     {
+      "third_person": "!c.is_first_person"
+     },
+     {
+      "steady": "!c.is_first_person"
+     },
+     {
+      "vigil": "!c.is_first_person"
+     },
+     {
+      "locomotion": "!c.is_first_person && !q.is_riding && !q.is_gliding && !q.is_swimming"
+     },
+     {
+      "airborne": "!c.is_first_person && !q.is_on_ground && !q.is_in_water && !q.is_riding && !q.is_gliding"
+     },
+     {
+      "landing": "!c.is_first_person && !q.is_riding"
+     },
+     {
+      "attack": "!c.is_first_person"
+     },
+     {
+      "swim": "!c.is_first_person && (q.is_swimming || (q.is_in_water && !q.is_on_ground))"
+     },
+     {
+      "hurt": "!c.is_first_person && q.hurt_time > 0"
+     },
+     "intro_record",
+     {
+      "fx_record": "!c.is_first_person"
+     },
+     {
+      "record_loop": "!c.is_first_person"
+     }
+    ]
+   },
+   "render_controllers": [
+    "controller.render.plrace.form",
+    "controller.render.plrace.form_cutout",
+    "controller.render.plrace.octamyces_accent_c",
+    "controller.render.plrace.octamyces_accent_l",
+    "controller.render.plrace.octamyces_accent_f"
+   ]
+  }
+ }
+}

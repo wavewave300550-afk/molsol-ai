@@ -32,6 +32,21 @@
     "textures/plrace/races/items/crest_nurariten"
    ]
   },
+  "plrace:crest_dinosauroid": {
+   "textures": [
+    "textures/plrace/races/items/crest_dinosauroid"
+   ]
+  },
+  "plrace:crest_bathyas": {
+   "textures": [
+    "textures/plrace/races/items/crest_bathyas"
+   ]
+  },
+  "plrace:crest_octamyces": {
+   "textures": [
+    "textures/plrace/races/items/crest_octamyces"
+   ]
+  },
   "plrace:focus_salamander": {
    "textures": [
     "textures/plrace/races/items/focus_salamander"
@@ -62,9 +77,29 @@
     "textures/plrace/races/items/focus_nurariten"
    ]
   },
+  "plrace:focus_dinosauroid": {
+   "textures": [
+    "textures/plrace/races/items/focus_dinosauroid"
+   ]
+  },
+  "plrace:focus_bathyas": {
+   "textures": [
+    "textures/plrace/races/items/focus_bathyas"
+   ]
+  },
+  "plrace:focus_octamyces": {
+   "textures": [
+    "textures/plrace/races/items/focus_octamyces"
+   ]
+  },
   "plrace:codex": {
    "textures": [
     "textures/plrace/races/items/codex"
+   ]
+  },
+  "plrace:sun_sword": {
+   "textures": [
+    "textures/plrace/races/items/sun_sword"
    ]
   }
  }

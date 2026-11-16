@@ -4,6 +4,12 @@ import { warn } from "./util.js";
 export function crestId(race, variant) {
     return variant ? `${NS}:form_${race.key}_${variant}` : `${NS}:form_${race.key}`;
 }
+export function staticId(race) {
+    return `${NS}:form_${race.key}_static`;
+}
+export function wantsStill(s, race) {
+    return !!s.data.still?.includes(race.code);
+}
 function equippable(p) {
     try {
         return p.getComponent("minecraft:equippable");
@@ -23,8 +29,8 @@ export function headItem(p) {
 export function isCrest(item) {
     return !!item && item.hasTag(TAG_FORM);
 }
-function makeCrest(race, variant, s) {
-    const it = new ItemStack(crestId(race, variant), 1);
+function makeCrest(id, s) {
+    const it = new ItemStack(id, 1);
     it.lockMode = ItemLockMode.slot;
     it.keepOnDeath = true;
     if (s.data.ench.length > 0) {
@@ -66,7 +72,7 @@ export function showForm(p, race, s, variant) {
     const eq = equippable(p);
     if (!eq)
         return false;
-    const want = crestId(race, variant);
+    const want = wantsStill(s, race) ? staticId(race) : crestId(race, variant);
     const cur = headItem(p);
     if (cur && cur.typeId === want) {
         s.shownVariant = variant;
@@ -86,7 +92,7 @@ export function showForm(p, race, s, variant) {
         }
     }
     try {
-        eq.setEquipment(EquipmentSlot.Head, makeCrest(race, variant, s));
+        eq.setEquipment(EquipmentSlot.Head, makeCrest(want, s));
         s.shownVariant = variant;
         return true;
     }

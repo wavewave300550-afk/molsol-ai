@@ -100,14 +100,16 @@ def bathyas():
     L.motes("sun_motes", C["gold"], n=4, radius=0.25, rise=0.5, life=(0.8, 1.3), size=0.06, sprite=["dot", "star4"])
     L.motes("abyss_bubbles", "#cfe9ff", n=4, radius=0.3, rise=1.6, life=(0.8, 1.2), size=0.07, sprite="dot", material="particles_blend",
             alpha=0.7, drag=0.6)
-    L.flash("sun_glare", C["sun"], size=1.6, life=0.28)
-    # Lure of the Impaled Sun: a warped, uncomfortable ring of light (two rings out of step) + a dark undertow
-    L.flash("vx_lure_flash", C["white"], size=3.4, life=0.35)
-    L.ring("vx_lure_ring_a", C["gold"], size=20.0, life=0.9, ground=False, alpha=0.75)
-    L.ring("vx_lure_ring_b", C["sun"], size=16.0, life=0.8, ground=False, alpha=0.5, offset=(0.15, -0.1, 0))
-    L.ring("vx_lure_floor", C["sun"], size=20.0, life=0.9, offset=(0, -1.15, 0), alpha=0.6)
+    L.flash("sun_glare", C["sun"], size=0.9, life=0.28, alpha=0.75)   # the esca flares (small: it hangs near the camera)
+    # Lure of the Impaled Sun: a warped, uncomfortable ring of light rolling out 10 blocks along the ground (two rings out
+    # of step), a small warped halo round the chest and a dark undertow. Nothing camera-facing is larger than the body,
+    # so the pulse never washes over the screen of the caster or of a player standing next to him.
+    L.flash("vx_lure_flash", C["white"], size=1.8, life=0.3, alpha=0.8)
+    L.ring("vx_lure_warp", C["sun"], size=2.6, life=0.45, ground=False, alpha=0.6, offset=(0.08, -0.05, 0))
+    L.ring("vx_lure_ring_a", C["gold"], size=10.0, life=0.9, offset=(0, -1.15, 0), alpha=0.8)
+    L.ring("vx_lure_ring_b", C["sun"], size=8.5, life=0.8, offset=(0.25, -1.12, 0.15), alpha=0.5)
     L.smoke("vx_lure_undertow", C["abyss"], n=5, radius=1.4, size=(1.2, 2.0), life=(0.9, 1.3), rise=-0.2, alpha=0.45, speed=0.8)
-    L.compose("lure_pulse", [(0.0, "vx_lure_flash"), (0.0, "vx_lure_ring_a"), (0.07, "vx_lure_ring_b"), (0.05, "vx_lure_floor"),
+    L.compose("lure_pulse", [(0.0, "vx_lure_flash"), (0.0, "vx_lure_warp"), (0.03, "vx_lure_ring_a"), (0.1, "vx_lure_ring_b"),
                              (0.1, "vx_lure_undertow")])
     marker("sun_mark", "sunsigil", C["gold"], size=0.46, life=0.8, spin=25)
     # Goblin Maw Rush: a dark streak along the rush, then the bite: teeth, a flash, a dark splash
@@ -127,7 +129,7 @@ def bathyas():
     L.flash("vx_seam_flash", C["gold"], size=1.6, life=0.22)
     L.compose("bastion_seams", [(0.0, "vx_seam_flash"), (0.0, "vx_seam_lines")])
     # Draw the Sun: the chest bursts open with light; Return: light streams back in
-    L.flash("vx_draw_flash", C["white"], size=3.2, life=0.4)
+    L.flash("vx_draw_flash", C["white"], size=2.6, life=0.4, alpha=0.85)
     L.sparks("vx_draw_sparks", C["gold"], n=14, speed=(3.0, 6.0), hot="#ffffff", gravity=-3)
     L.ring("vx_draw_ring", C["sun"], size=4.0, life=0.4, ground=False, alpha=0.85)
     L.pillar("vx_draw_pillar", C["sun"], height=2.4, width=0.5, life=0.5, offset=(0, -1.2, 0))
@@ -146,7 +148,7 @@ def bathyas():
     L.smoke("abyss_dark", C["abyss"], n=3, radius=0.8, size=(1.4, 2.4), life=(1.4, 2.0), rise=0.25, alpha=0.6, speed=0.2)
     L.pillar("vx_rise_up", C["sun"], height=16.0, width=1.8, life=1.6, alpha=0.95)
     L.pillar("vx_rise_down", C["gold"], height=6.0, width=1.4, life=1.4, alpha=0.8, offset=(0, -6.0, 0))
-    L.flash("vx_rise_flash", C["white"], size=5.0, life=0.45, offset=(0, 1.2, 0))
+    L.flash("vx_rise_flash", C["sun"], size=3.6, life=0.45, alpha=0.85, offset=(0, 1.2, 0))
     L.ring("vx_rise_ring", C["sun"], size=14.0, life=0.9)
     L.compose("sunrise_pillar", [(0.0, "vx_rise_flash"), (0.0, "vx_rise_up"), (0.05, "vx_rise_down"), (0.1, "vx_rise_ring")])
     lev = {**own_once(1), "minecraft:particle_lifetime_expression": {"max_lifetime": 3.2},
@@ -162,7 +164,7 @@ def bathyas():
     L.compose("solar_execution", [(0.0, "vx_exec_a"), (0.06, "vx_exec_b"), (0.05, "vx_exec_ring"), (0.05, "vx_exec_sparks")])
     L.circle("vx_field_circle", C["gold"], size=12.0, life=1.6, draw=0.3, spin=12)
     L.ring("vx_field_ring", C["sun"], size=18.0, life=0.7)
-    L.flash("vx_field_flash", C["white"], size=4.0, life=0.35, offset=(0, 1.0, 0))
+    L.flash("vx_field_flash", C["sun"], size=3.4, life=0.35, alpha=0.9, offset=(0, 1.0, 0))
     L.motes("vx_field_motes", C["gold"], n=16, radius=5.0, rise=1.4, life=(1.0, 1.6), size=0.1, sprite=["dot", "star4"])
     L.smoke("vx_field_dark", C["abyss"], n=4, radius=4.0, size=(1.6, 2.6), life=(1.2, 1.8), rise=0.2, alpha=0.4, speed=0.2)
     L.compose("daybreak_field", [(0.0, "vx_field_flash"), (0.0, "vx_field_circle"), (0.0, "vx_field_ring"), (0.1, "vx_field_motes"),

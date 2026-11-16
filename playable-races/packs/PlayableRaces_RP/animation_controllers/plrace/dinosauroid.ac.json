@@ -1,0 +1,186 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.plrace.dinosauroid.landing": {
+   "initial_state": "ground",
+   "states": {
+    "ground": {
+     "transitions": [
+      {
+       "air": "!q.is_on_ground && !q.is_in_water"
+      }
+     ]
+    },
+    "air": {
+     "transitions": [
+      {
+       "falling_hard": "q.vertical_speed < -13"
+      },
+      {
+       "falling": "q.vertical_speed < -5.5"
+      },
+      {
+       "ground": "q.is_on_ground || q.is_in_water"
+      }
+     ]
+    },
+    "falling": {
+     "transitions": [
+      {
+       "falling_hard": "q.vertical_speed < -13"
+      },
+      {
+       "land": "q.is_on_ground"
+      },
+      {
+       "ground": "q.is_in_water"
+      }
+     ]
+    },
+    "falling_hard": {
+     "transitions": [
+      {
+       "land_hard": "q.is_on_ground"
+      },
+      {
+       "ground": "q.is_in_water"
+      }
+     ]
+    },
+    "land": {
+     "animations": [
+      "land"
+     ],
+     "transitions": [
+      {
+       "air": "!q.is_on_ground && !q.is_in_water"
+      },
+      {
+       "ground": "q.all_animations_finished"
+      }
+     ]
+    },
+    "land_hard": {
+     "animations": [
+      "land_hard"
+     ],
+     "transitions": [
+      {
+       "air": "!q.is_on_ground && !q.is_in_water"
+      },
+      {
+       "ground": "q.all_animations_finished"
+      }
+     ]
+    }
+   }
+  },
+  "controller.animation.plrace.dinosauroid.fidget": {
+   "initial_state": "wait",
+   "states": {
+    "wait": {
+     "animations": [
+      "fidget_wait"
+     ],
+     "transitions": [
+      {
+       "moving": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding"
+      },
+      {
+       "fidget_stare": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.3), 5) == 0)"
+      },
+      {
+       "fidget_pouch": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.3), 5) == 1)"
+      },
+      {
+       "fidget_preen": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.3), 5) == 2)"
+      },
+      {
+       "fidget_study": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.3), 5) == 3)"
+      },
+      {
+       "rest": "q.all_animations_finished"
+      }
+     ]
+    },
+    "moving": {
+     "transitions": [
+      {
+       "wait": "!(q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding)"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "rest": {
+     "animations": [
+      "fidget_rest"
+     ],
+     "transitions": [
+      {
+       "moving": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding"
+      },
+      {
+       "wait": "q.all_animations_finished"
+      }
+     ]
+    },
+    "fidget_stare": {
+     "animations": [
+      "fidget_stare"
+     ],
+     "blend_transition": 0.3,
+     "transitions": [
+      {
+       "moving": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding"
+      },
+      {
+       "wait": "q.all_animations_finished"
+      }
+     ]
+    },
+    "fidget_pouch": {
+     "animations": [
+      "fidget_pouch"
+     ],
+     "blend_transition": 0.3,
+     "transitions": [
+      {
+       "moving": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding"
+      },
+      {
+       "wait": "q.all_animations_finished"
+      }
+     ]
+    },
+    "fidget_preen": {
+     "animations": [
+      "fidget_preen"
+     ],
+     "blend_transition": 0.3,
+     "transitions": [
+      {
+       "moving": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding"
+      },
+      {
+       "wait": "q.all_animations_finished"
+      }
+     ]
+    },
+    "fidget_study": {
+     "animations": [
+      "fidget_study"
+     ],
+     "blend_transition": 0.3,
+     "transitions": [
+      {
+       "moving": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding"
+      },
+      {
+       "wait": "q.all_animations_finished"
+      }
+     ]
+    }
+   }
+  }
+ }
+}

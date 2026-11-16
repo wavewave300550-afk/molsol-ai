@@ -1,0 +1,28 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "plrace:form_bathyas_static",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "cutout": "entity_alphatest",
+    "accent": "entity_alphatest"
+   },
+   "textures": {
+    "default": "textures/plrace/races/bathyas/bathyas_base"
+   },
+   "geometry": {
+    "default": "geometry.plrace.bathyas.base",
+    "cutout": "geometry.plrace.bathyas.base.cutout",
+    "accent": "geometry.plrace.bathyas.base.accent"
+   },
+   "render_controllers": [
+    "controller.render.plrace.form",
+    "controller.render.plrace.form_cutout",
+    "controller.render.plrace.bathyas_accent_c",
+    "controller.render.plrace.bathyas_accent_l",
+    "controller.render.plrace.bathyas_accent_f"
+   ]
+  }
+ }
+}

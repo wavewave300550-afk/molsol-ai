@@ -1,0 +1,32 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "plrace:hyphal_echo",
+   "materials": {
+    "default": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/plrace/races/octamyces/octamyces_base"
+   },
+   "geometry": {
+    "default": "geometry.plrace.octamyces.base",
+    "cutout": "geometry.plrace.octamyces.base.cutout"
+   },
+   "animations": {
+    "drift": "animation.plrace.hyphal_echo.drift"
+   },
+   "scripts": {
+    "animate": [
+     "drift"
+    ]
+   },
+   "particle_effects": {},
+   "render_controllers": [
+    "controller.render.plrace.echo",
+    "controller.render.plrace.echo_cutout"
+   ],
+   "enable_attachables": false
+  }
+ }
+}
