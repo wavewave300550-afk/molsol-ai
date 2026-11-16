@@ -58,19 +58,22 @@ FAN = 9                               # tail-fan feathers fan0..fan8
 TRUNK_PIVOT = (0.0, 12.75, 2.25)      # the hips: the trunk pitches forward about them
 PITCH = 36.0                          # theropod posture (trunk axis from vertical)
 VEER_LEAN = 20.0                      # extra lean of the Hindwing Veer
-# the two beveled masses of the trunk, in the upright trunk frame (centre, dims x/y/z)
-CHEST = ((0.0, 18.75, 1.25), (8.5, 9.0, 9.5))
-PELVIS = ((0.0, 13.75, 2.5), (7.25, 6.5, 7.5))
+# the trunk: one rounded lathe mass in the upright trunk frame - (height above the pivot, radius)
+TRUNK_PROFILE = [(-2.25, 2.75), (0.25, 3.9), (3.0, 4.5), (6.0, 4.6), (8.5, 3.9), (10.25, 2.75)]
+TRUNK_SQUASH = (0.92, 1.06)           # x (width) and z (depth: the deep keeled chest)
+TRUNK_SKEW = (0.0, -1.25)             # the chest bulges forward
 NECK = [(0.0, 19.25, -2.0), (0.0, 22.5, -4.5), (0.0, 25.5, -5.25), (0.0, 28.0, -4.5)]
 NECK_BASE = NECK[0]
 RUFF_C = (0.0, 23.75, -4.25)          # the ruff ring round the neck, just above the shoulders
 SKULL_PIVOT = NECK[-1]
 HS = 1.15                             # the head is authored at a base size and scaled about the skull pivot
-CRANIUM_A = ((0.0, 30.75, -6.5), (5.5, 5.25, 6.5))             # centre, dims of the braincase (authored)
-EYE_A = (2.45, 30.5, -8.25)
+CRANIUM_A = ((0.0, 28.5, -6.5), [(0.0, 2.25), (1.25, 2.9), (2.75, 3.0), (3.75, 2.6), (4.75, 1.6)])   # dome (authored)
+CRANIUM_SQUASH = (0.9, 1.15)
+EYE_A = (2.2, 30.4, -8.25)
+BEAK_A = [(0.0, 30.25, -10.5), (0.0, 30.1, -12.25), (0.0, 29.1, -13.65), (0.0, 27.6, -14.1)]
 EYE_RY = 16.0
-CREST_A = [(0.0, 31.0, -10.75), (0.0, 32.75, -8.75), (0.0, 33.75, -5.75), (0.0, 34.5, -2.5), (0.0, 34.75, 0.75),
-           (0.0, 34.25, 3.25)]
+CREST_A = [(0.0, 31.0, -10.75), (0.0, 32.9, -8.75), (0.0, 33.9, -6.0), (0.0, 34.6, -2.75), (0.0, 34.8, 0.5),
+           (0.0, 34.4, 3.0)]
 SHOULDER = (3.75, 19.5, -2.5)
 ELBOW = (5.0, 16.25, -0.25)
 WRIST = (5.75, 13.0, -2.25)
@@ -139,6 +142,35 @@ def oell(m, bone, center, dims, along, normal, mat, a=0.7, b=0.88, **kw):
             s = (s[0] - 0.5, s[1], s[2])
         seen.add(s)
         out.append(m.cube(bone, tuple(c - _v(s) / 2), s, mat, pivot=tuple(c) if rot else None, rot=rot, **kw))
+    return out
+
+
+def olathe(m, bone, base, axis, profile, mat, sides=8, squash=(1.0, 1.0), front=(0, 0, -1), step=0.5, **kw):
+    """common.lathe() along an arbitrary `axis` from `base` (profile = [(distance along the axis,
+    radius), ...]); squash scales the cross-section along `front` (z) and across it (x).  Each
+    strip keeps the lathe's stagger (no coplanar faces).  Returns the cubes."""
+    from models.common import euler_for
+    yax = _unit(axis)
+    zax = _unit(_v(front) - yax * float(_v(front) @ yax))
+    xax = np.cross(yax, zax)
+    F = np.column_stack([xax, yax, zax])
+    out = []
+    for i in range(len(profile) - 1):
+        (y0, r0), (y1, r1) = profile[i], profile[i + 1]
+        r = (r0 + r1) / 2
+        h = q(y1 - y0, step / 2)
+        apo = r * math.cos(math.pi / sides)
+        edge = 2 * r * math.sin(math.pi / sides)
+        for k in range(sides // 2):
+            ang = 360.0 / sides * k
+            a_r = math.radians(ang)
+            sq = math.hypot(squash[0] * math.sin(a_r), squash[1] * math.cos(a_r))
+            sx, sz = q(edge * sq + 0.25, step / 2), q(2 * apo * sq, step / 2)
+            e = 0.02 * k
+            piv = _v(base) + yax * (y0 - e)
+            R = F @ rot_matrix((0.0, ang, 0.0))
+            out.append(m.cube(bone, tuple(piv - _v((sx / 2, 0.0, sz / 2))), (sx, h + 2 * e, sz), mat, pivot=tuple(piv),
+                              rot=tuple(_wrap(a) for a in euler_for(R)), **kw))
     return out
 
 
@@ -243,14 +275,14 @@ def build() -> Model:
 def _trunk(m: Model) -> None:
     t = m.bone("trunk", "torso_g", TRUNK_PIVOT, (PITCH, 0, 0))
     t.variant["veer"] = ((0, 0, 0), (PITCH + VEER_LEAN, 0, 0))
-    (cc, cd), (pc, pd) = CHEST, PELVIS
-    oell(m, t.name, cc, cd, None, None, "plume", a=0.72, b=0.9)
-    oell(m, t.name, pc, pd, None, None, "plume", a=0.72, b=0.9)
+    # one rounded mass from the pelvis to the shoulders (upright trunk frame), its deep chest
+    # bulging forward (skew): lit as one form in the texture (trunk_proxy)
+    lathe(m, t.name, TRUNK_PIVOT, TRUNK_PROFILE, "plume", sides=12, squash=TRUNK_SQUASH, skew=TRUNK_SKEW)
     # ankylosaur osteoderms down the spine (upright trunk frame: +Z is the back)
     px_, py, pz = TRUNK_PIVOT
-    plate_row(m, t.name, (0, py + 9.75, pz + 3.0), (0, py + 2.5, pz + 4.25), 4, 1.5, 2.25, 1.75, 0.5, "osteo",
+    plate_row(m, t.name, (0, py + 9.5, pz + 3.25), (0, py + 2.5, pz + 4.5), 4, 1.5, 2.25, 1.75, 0.5, "osteo",
               normal=(0, 0, 1), tilt=14, arch=0.4)
-    t.locators["chest"] = (0, py + 4.5, pz - 4.75)
+    t.locators["chest"] = (0, py + 4.5, pz - 5.0)
 
 
 # ----------------------------------------------------------------------------- neck and head
@@ -265,7 +297,7 @@ def HZ(size, step=0.5):
     return tuple(q(v * HS, step) if v > 0 else 0.0 for v in size)
 
 
-CRANIUM = (H(CRANIUM_A[0]), HZ(CRANIUM_A[1]))
+CRANIUM = (H(CRANIUM_A[0]), [(h * HS, r * HS) for h, r in CRANIUM_A[1]])
 EYE = tuple(np.round(H(EYE_A), 3))
 JAW_PIVOT = H((0.0, 28.5, -6.0))
 GULAR_PIVOT = H((0.0, 28.0, -7.0))
@@ -279,37 +311,42 @@ def _neck_head(m: Model) -> None:
     rc = _v(RUFF_C)
     na = m.bone("nape", "neck0", tuple(rc))
     na.variant.update({v: ((0, 0, 0), (22.0, 0, 0)) for v in OPEN})
-    for k, (ang, ln, w) in enumerate(((0.0, 7.0, 3.5), (-50.0, 7.0, 3.5), (50.0, 7.0, 3.5), (-100.0, 6.0, 3.25),
-                                      (100.0, 6.0, 3.25))):
+    for k, (ang, ln, w) in enumerate(((0.0, 7.5, 3.75), (-42.0, 7.5, 3.75), (42.0, 7.5, 3.75), (-84.0, 7.0, 3.5),
+                                      (84.0, 7.0, 3.5), (-124.0, 5.5, 3.0), (124.0, 5.5, 3.0))):
         a = math.radians(ang)
         out = _v((math.sin(a), 0.0, math.cos(a)))                  # 0 = straight back, + = toward +X
-        o = rc + out * (2.0 + 0.05 * k) + _v((0, 0.4 * (k % 2), 0))
-        d = _unit(out * 0.85 + _v((0, -0.52, 0)))
-        vane_cube(m, na.name, o, d, out + _v((0, 0.35, 0)), ln, w, "ruff", cutout=True)
+        o = rc + out * (2.0 + 0.04 * k) + _v((0, 0.3 * (k % 3), 0))
+        d = _unit(out * 0.9 + _v((0, -0.44, 0)))
+        vane_cube(m, na.name, o, d, out + _v((0, 0.45, 0)), ln, w, "ruff", cutout=True)
     sk = m.bone("skull", "neck1", SKULL_PIVOT)
     sk.variant.update({"display": ((0, 0, 0), (-14.0, 0, 0)), "overflow": ((0, 0, 0), (-8.0, 0, 6.0))})
-    c, d = CRANIUM_A
-    oell(m, sk.name, H(c), HZ(d), None, None, "skull", a=0.68, b=0.88)
-    m.box(sk.name, H((0, 30.25, -9.75)), HZ((3.75, 3.25, 2.5)), "face")                # snout between the eyes and the beak
-    m.box(sk.name, H((0, 29.0, -8.0)), HZ((4.5, 2.0, 3.5)), "face")                   # cheeks
-    m.box(sk.name, H((0, 32.25, -8.25)), HZ((5.5, 0.75, 2.25)), "brow")               # heavy supraorbital ridge
-    # the beak: deep, hooked, oviraptorosaur
-    sweep(m, sk.name, "beak", [H(p_) for p_ in ((0, 30.3, -10.4), (0, 30.0, -12.4), (0, 28.9, -13.8), (0, 27.75, -14.0))],
-          2.9 * HS, 1.25, "beak", h0=3.0 * HS, h1=1.25, n=2, bones=False, power=0.8)
+    # the braincase: a rounded dome (lathe), a tapering snout, cheeks; brow ridges overhang the eyes
+    cb, prof = CRANIUM_A
+    lathe(m, sk.name, H(cb), [(h * HS, r * HS) for h, r in prof], "skull", sides=12, squash=CRANIUM_SQUASH)
+    sweep(m, sk.name, "snout", [H((0, 30.25, -8.25)), H((0, 30.25, -10.75))], 3.25 * HS, 2.75 * HS, "face",
+          h0=3.25 * HS, h1=3.0 * HS, n=1, bones=False)
+    m.box(sk.name, H((0, 29.0, -8.0)), HZ((4.0, 2.0, 3.0)), "face")                    # cheeks under the eyes
+    for s in (-1, 1):
+        c_ = H((s * 2.1, 31.6, -8.1))
+        m.cube(sk.name, tuple(_v(c_) - _v(HZ((1.25, 0.75, 3.0))) / 2), HZ((1.25, 0.75, 3.0)), "brow", pivot=c_,
+               rot=side_rot((0, -EYE_RY, 8), s))
+    # the beak: deep at the base, tapering to a clearly hooked point (oviraptorosaur)
+    sweep(m, sk.name, "beak", [H(p_) for p_ in BEAK_A], 2.75 * HS, 0.5, "beak", h0=3.0 * HS, h1=0.5, n=2, bones=False,
+          power=0.85)
     # a row of teeth behind the beak (cutout planes hanging from the upper jaw line)
     for s in (-1, 1):
-        o = H((s * 1.55, 28.5, -11.25))
+        o = H((s * 1.45, 28.5, -11.25))
         m.cube(sk.name, (o[0], o[1] - 1.0, o[2]), (0.0, 1.0, q(3.75 * HS)), "teeth", cutout=True, faces={"east", "west"})
-    # ASYMMETRIC supraorbital horns: the right long and curving forward, the left a blunt stump
-    sweep(m, sk.name, "rhorn", [H(p_) for p_ in ((-1.75, 32.25, -8.5), (-2.25, 33.5, -9.0), (-2.5, 34.75, -10.25),
-                                                  (-2.25, 35.25, -11.75))], 1.75, 0.5, "horn", n=1, bones=False)
-    sweep(m, sk.name, "lhorn", [H(p_) for p_ in ((1.75, 32.25, -8.5), (2.0, 33.25, -9.0))], 1.75, 1.25, "horn", n=1,
+    # ASYMMETRIC supraorbital horns from the brow ridges: the right long and curving forward, the left a blunt stump
+    sweep(m, sk.name, "rhorn", [H(p_) for p_ in ((-1.9, 31.9, -8.4), (-2.3, 33.25, -9.0), (-2.5, 34.5, -10.25),
+                                                  (-2.25, 35.0, -11.75))], 1.75, 0.5, "horn", n=1, bones=False)
+    sweep(m, sk.name, "lhorn", [H(p_) for p_ in ((1.9, 31.9, -8.4), (2.1, 32.9, -8.9))], 1.75, 1.25, "horn", n=1,
           bones=False)
     # jaw
     jw = m.bone("jaw", sk.name, JAW_PIVOT)
     jw.variant.update({"display": ((0, 0, 0), (10.0, 0, 0)), "overflow": ((0, 0, 0), (14.0, 0, 0))})
-    sweep(m, jw.name, "jawb", [H(p_) for p_ in ((0, 28.25, -6.5), (0, 28.0, -10.25), (0, 27.75, -13.25))], 3.5 * HS, 1.5,
-          "jaw", h0=1.5 * HS, h1=0.75, n=1, bones=False)
+    sweep(m, jw.name, "jawb", [H(p_) for p_ in ((0, 28.25, -6.75), (0, 28.0, -10.0), (0, 27.55, -13.0))], 3.25 * HS, 0.75,
+          "jaw", h0=1.5 * HS, h1=0.6, n=1, bones=False)
     # eyes: big, amber, turned a little forward; slit pupils; a nictitating membrane
     ew, eh, ed = 0.5, q(2.0 * HS, 0.25), q(2.25 * HS, 0.25)
     for s, p in SIDES:
@@ -332,14 +369,15 @@ def _neck_head(m: Model) -> None:
           "gular_big", sides=8, squash=(0.92, 1.1), only=OPEN)
     gu.locators["throat"] = H((0, 25.5, -8.25))
     # the hollow tubular crest: from the snout over the skull roof, sweeping far behind
-    sweep(m, sk.name, "crest", CREST[:4], 2.75, 2.0, "crest", h0=2.75, h1=2.0, n=2, per_bone=6, power=0.7)
+    sweep(m, sk.name, "crest", CREST[:4], 3.0, 1.75, "crest", h0=3.0, h1=1.75, n=2, per_bone=6, power=0.7)
     c1 = m.bone("crest1", "crest0", CREST[3])
-    sweep(m, c1.name, "crestb", CREST[3:], 2.0, 2.25, "crest", h0=2.0, h1=2.25, n=2, bones=False, power=2.0)
+    sweep(m, c1.name, "crestb", CREST[3:], 1.75, 2.0, "crest", h0=1.75, h1=2.0, n=2, bones=False, power=2.0)
     m.bones["crest0"].variant.update({"display": ((0, 0, 0), (16.0, 0, 0)), "overflow": ((0, 0, 0), (11.0, 0, 0))})
     c1.variant.update({"display": ((0, 0, 0), (10.0, 0, 0)), "overflow": ((0, 0, 0), (7.0, 0, 0))})
     tip = _v(CREST[-1])
     d = _dir(CREST[-2], CREST[-1])
-    vane_cube(m, c1.name, tip - d * 0.75, d, (0, 1, 0), 1.5, 3.0, "crest_end", thick=3.0)          # the flared open end
+    vane_cube(m, c1.name, tip - d * 1.25, d, (0, 1, 0), 0.75, 2.5, "crest_end", thick=2.5)         # the flared open end:
+    vane_cube(m, c1.name, tip - d * 0.5, d, (0, 1, 0), 0.75, 3.25, "crest_end", thick=3.25)        # a two-step bell
     c1.locators["crest_tip"] = tuple(np.round(tip + d * 0.9, 3))
     # plume tufts behind the eyes: one long plume per side sweeping back
     for s, p in SIDES:

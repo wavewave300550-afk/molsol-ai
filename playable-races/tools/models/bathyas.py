@@ -144,8 +144,8 @@ ELBOW = (8.25, 20.5, 0.0)                   # world rest pose (|x|): a slight be
 WRIST = (7.5, 13.5, -1.75)                  # the hand stays here in every form: held items sit in the claws
 NECK_C = (0.0, 32.5, -1.0)                  # where the neck leaves the chest (chest frame)
 FIN_ROOT = (4.5, 28.75, 7.25)               # the dorsal fins rise from tergite 3 (chest frame, |x|)
-FIN_RAYS = ((5.0, 9.75), (28.0, 9.25), (50.0, 7.5))   # (angle from up toward the tail, length) in the fin plane
-FLAP_RAY = (68.0, 5.75)                     # the torn trailing flap
+FIN_RAYS = ((5.0, 8.75), (28.0, 8.5), (50.0, 7.0))   # (angle from up toward the tail, length) in the fin plane
+FLAP_RAY = (68.0, 5.5)                      # the torn trailing flap
 FIN_DIRS = {  # per form: world direction of the leading ray (x mirrored) and of the fin's trailing edge
     "base": ((0.42, 1.0, 0.42), (0.62, -0.1, 1.0)),
     "lure": ((0.42, 1.0, 0.45), (0.62, -0.05, 1.0)),
@@ -426,7 +426,7 @@ def _fins(m: Model) -> None:
             d = np.array([0.0, math.cos(math.radians(ang)), math.sin(math.radians(ang))])
             a0 = np.array([x, y, z]) + d * 0.25
             limb(m, f0.name, a0 + d * ln, a0, 0.5, 0.5, "ray", fwd=(0, -d[2], d[1]))
-        m.cube(f0.name, (x, y, z - 0.5), (0.0, 10.0, 8.0), "fin", cutout=True)                 # the membrane
+        m.cube(f0.name, (x, y, z - 0.5), (0.0, 9.0, 7.5), "fin", cutout=True)                  # the membrane
         f1 = m.bone(f"{p}_fin1", f0.name, (x, y, z))
         ang, ln = FLAP_RAY
         d = np.array([0.0, math.cos(math.radians(ang)), math.sin(math.radians(ang))])
