@@ -1,6 +1,6 @@
 # Installation Guide
 
-**File to install:** [`dist/PlayableRaces.mcaddon`](../dist/PlayableRaces.mcaddon) (about 1.9 MB) — **version 1.3.0**, six lineages (001–006); 1.2.0 redrew races 004–006, 1.2.1 fixed the Flying Spaghetti Monster being invisible and animations not playing on some forms, 1.3.0 gives every race new ability effects.
+**File to install:** [`dist/PlayableRaces.mcaddon`](../dist/PlayableRaces.mcaddon) (about 1.9 MB) — **version 1.3.1**, six lineages (001–006); 1.2.0 redrew races 004–006, 1.2.1 and 1.3.1 target the Flying Spaghetti Monster being invisible, 1.3.0 gives every race new ability effects, 1.3.1 adds *Lineage Codex → Display Check*.
 It contains the behavior pack *Playable Races* and the resource pack *Playable Races (Resources)*. (Before 1.1.0 they were called *Playable Races: Foundation*; the pack ids are the same, so 1.1.0 is an update, not a second add-on.)
 The two `.mcpack` files in `dist/` are the same packs, separated, for servers or manual installs.
 

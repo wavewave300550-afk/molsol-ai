@@ -1,16 +1,18 @@
 /** The Lineage Codex: race selection, details, controls, form, infusion and operator settings. */
-import { EnchantmentType, EquipmentSlot, Player, system } from "@minecraft/server";
+import { EnchantmentType, EquipmentSlot, Player, RawMessage, system } from "@minecraft/server";
 import { ActionFormData, FormCancelationReason, MessageFormData, ModalFormData } from "@minecraft/server-ui";
 import { raceOf, selected } from "../core/abilities.js";
 import { captureEnchantments, headItem, isCrest } from "../core/forms.js";
 import { get, save } from "../core/session.js";
 import { ChangePolicy, settings, updateSettings } from "../core/settings.js";
 import { warn } from "../core/util.js";
+import { RP_VERSION_KEY, VERSION } from "../config.js";
 import { assignRace, changeBlocked, giveFocus, isOperator, raceBlocked, removeRace, setVeiled } from "../lineage.js";
 import { RACES, raceByCode } from "../races/registry.js";
 import { RaceDef } from "../races/types.js";
 import { bloodMoonStatus } from "../systems/bloodmoon.js";
 import { holderOf, isUnique, uniqueStatus } from "../systems/unique.js";
+import { displayCheck } from "./diag.js";
 
 const UNIQUE_TAG = "§6§l✦ UNIQUE ✦§r";
 
@@ -20,6 +22,12 @@ function raceButton(r: RaceDef): string {
 }
 
 const PORTRAIT = (r: RaceDef) => `textures/plrace/races/ui/portrait_${r.code}`;
+
+/** Codex text plus the pack versions; the resource-pack one is resolved by the client from the
+ *  pack it really uses, so an old copy overriding this one shows up right here. */
+function withVersion(text: string): RawMessage {
+  return { rawtext: [{ text }, { text: "\n\n§8Resource pack " }, { translate: RP_VERSION_KEY }, { text: ` §8| behavior pack ${VERSION}` }] };
+}
 
 async function showAction(p: Player, form: ActionFormData, retries = 0): Promise<number | undefined> {
   const s = get(p);
@@ -55,11 +63,11 @@ export async function openCodex(p: Player, retries = 0): Promise<void> {
   const actions: (() => Promise<void> | void)[] = [];
   if (race) {
     const a = selected(s, race);
-    f.body(`${race.color}§l${race.name}§r §7(Race ${race.code})\n§o${race.title}§r\n\n§7Selected ability: §f${a.name}\n§7Form: ${s.data.veiled ? "§8veiled" : "§amanifest"}`);
+    f.body(withVersion(`${race.color}§l${race.name}§r §7(Race ${race.code})\n§o${race.title}§r\n\n§7Selected ability: §f${a.name}\n§7Form: ${s.data.veiled ? "§8veiled" : "§amanifest"}`));
     f.button(`${race.color}Your Lineage\n§8details, passives, lore`, PORTRAIT(race));
     actions.push(() => raceDetail(p, race, false));
   } else {
-    f.body("§7You have not chosen a lineage.\nEach lineage reshapes your body, grants four abilities and changes how the world treats you.\n\n§fChoose carefully - changing later requires the Rite of Unbecoming.");
+    f.body(withVersion("§7You have not chosen a lineage.\nEach lineage reshapes your body, grants four abilities and changes how the world treats you.\n\n§fChoose carefully - changing later requires the Rite of Unbecoming."));
     f.button(`§l§2Choose a Lineage\n§r§8${RACES.length} lineages await`, "textures/plrace/races/items/codex");
     actions.push(() => chooseRace(p));
   }
@@ -83,6 +91,8 @@ export async function openCodex(p: Player, retries = 0): Promise<void> {
   }
   f.button("§lLineage Archive\n§r§8all races", "textures/plrace/races/items/codex");
   actions.push(() => chooseRace(p, true));
+  f.button("§lDisplay Check\n§r§8is every body visible?", "textures/plrace/races/items/focus_xenentoma");
+  actions.push(() => displayCheck(p));
   if (isOperator(p)) {
     f.button("§l§6World Settings\n§r§8operators only", "textures/plrace/races/items/focus_golem");
     actions.push(() => worldSettings(p));

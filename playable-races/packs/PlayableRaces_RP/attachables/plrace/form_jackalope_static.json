@@ -1,0 +1,28 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "plrace:form_jackalope_static",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "cutout": "entity_alphatest",
+    "accent": "entity_alphatest"
+   },
+   "textures": {
+    "default": "textures/plrace/races/jackalope/jackalope_base"
+   },
+   "geometry": {
+    "default": "geometry.plrace.jackalope.base",
+    "cutout": "geometry.plrace.jackalope.base.cutout",
+    "accent": "geometry.plrace.jackalope.base.accent"
+   },
+   "render_controllers": [
+    "controller.render.plrace.form",
+    "controller.render.plrace.form_cutout",
+    "controller.render.plrace.jackalope_accent_c",
+    "controller.render.plrace.jackalope_accent_l",
+    "controller.render.plrace.jackalope_accent_f"
+   ]
+  }
+ }
+}

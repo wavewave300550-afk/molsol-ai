@@ -1,0 +1,25 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "plrace:form_golem_static",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "accent": "entity_alphatest"
+   },
+   "textures": {
+    "default": "textures/plrace/races/golem/golem_base"
+   },
+   "geometry": {
+    "default": "geometry.plrace.golem.base",
+    "accent": "geometry.plrace.golem.base.accent"
+   },
+   "render_controllers": [
+    "controller.render.plrace.form",
+    "controller.render.plrace.golem_accent_c",
+    "controller.render.plrace.golem_accent_l",
+    "controller.render.plrace.golem_accent_f"
+   ]
+  }
+ }
+}

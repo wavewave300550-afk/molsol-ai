@@ -178,6 +178,11 @@ export function restoreInput(p, s) {
 }
 export function restore(p, s) {
     restoreInput(p, s);
+    try {
+        p.camera.clear();
+    }
+    catch {
+    }
     const race = raceOf(s);
     if (!race) {
         const it = headItem(p);

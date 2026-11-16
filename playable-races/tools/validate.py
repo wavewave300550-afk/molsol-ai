@@ -173,6 +173,7 @@ for k, v in anims.items():
 
 # ----------------------------------------------------------------------------- attachables
 atts = {}
+twins = []
 for f in glob.glob(os.path.join(RP, "attachables", "**", "*.json"), recursive=True):
     d = load(f)["minecraft:attachable"]["description"]
     iid = d["identifier"]
@@ -200,6 +201,13 @@ for f in glob.glob(os.path.join(RP, "attachables", "**", "*.json"), recursive=Tr
     for gid in d["geometry"].values():
         for b in geos.get(gid, {}).get("bones", []):
             locators |= set(b.get("locators", {}).keys())
+    if iid.endswith("_static"):
+        # display-check twin: the base form's body with no animation, script or particle at all
+        base = iid[: -len("_static")]
+        check(set(d) == {"identifier", "materials", "textures", "geometry", "render_controllers"},
+              f"{iid}: a display-check twin carries only the body ({sorted(d)})")
+        twins.append((iid, base, d))
+        continue
     short = d["animations"]
     for sn, full in short.items():
         if full.startswith("controller."):
@@ -227,6 +235,12 @@ for f in glob.glob(os.path.join(RP, "attachables", "**", "*.json"), recursive=Tr
         check(nm in short, f"{iid}: animate entry {nm} not mapped")
     for key, pid in d.get("particle_effects", {}).items():
         check(pid in particles or pid in VANILLA_PARTICLES, f"{iid}: particle {pid} missing")
+
+for iid, base, d in twins:
+    check(base in atts, f"{iid}: no base form {base}")
+    if base in atts:
+        for k in ("materials", "textures", "geometry", "render_controllers"):
+            check(d[k] == atts[base][k], f"{iid}: {k} differs from {base}")
 
 # ----------------------------------------------------------------------------- Molang
 import molang as _molang  # noqa: E402

@@ -266,7 +266,9 @@ def _sauce(m: Model) -> None:
 def _halo(m: Model) -> None:
     """The Holy Colander's rim: a perforated golden band with two handles, worn as a halo."""
     cx, cy, cz = HALO_C
-    h = m.bone("halo", "mass", HALO_C, (78.0, 0.0, 8.0))
+    # v1.3.1: the halo rides the head group (it follows a fifth of the player's look) - the
+    # Spaghetti Monster was the only race with nothing under its head bone
+    h = m.bone("halo", "head_g", HALO_C, (78.0, 0.0, 8.0))
     n = 12
     seg = q(2 * HALO_R * math.tan(math.pi / n) + 0.3)
     for k in range(n):

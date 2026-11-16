@@ -1,8 +1,23 @@
 # Testing Report
 
-*Version 1.3.0 (races 001–006; races 004–006 redrawn in 1.2.0, the in-game hotfix 1.2.1 below, and new ability effects for every race in 1.3.0 — see [CREATIVE.md](CREATIVE.md#ability-effects-overhaul-v130-every-race)).*
+*Version 1.3.1 (races 001–006; races 004–006 redrawn in 1.2.0, the in-game hotfixes 1.2.1 and 1.3.1 below, and new ability effects for every race in 1.3.0 — see [CREATIVE.md](CREATIVE.md#ability-effects-overhaul-v130-every-race)).*
 
 **Bottom line:** everything that can be verified without a Minecraft client was verified and passes. What only a real client or server can show — visuals, timing, and "feel" — has **not** been verified in game, and is listed separately below as **proposed** in-game tests. Nothing in this report claims an in-game result that did not happen.
+
+## v1.3.1 hotfix — the Spaghetti Monster still invisible, plus a display check
+The player reported that **the Flying Spaghetti Monster was still invisible** on 1.3.0 (in the ready-made test world). Everything in the pack was compared again, file by file, with the races that do show up: attachable, items, render controllers, materials, geometry (bones, cubes, bounds, pivots, UVs, number formats, bone and locator names against the player skeleton), textures (PNG chunks, the alpha its faces sample), animations (every channel's structure and Molang syntax, values at extreme in-game states — days of play, long walks, creative-flight speeds — never NaN, never huge, never collapsing), controllers, particles, identifiers. Nothing invalid was found, and vanilla files show that a scale animation with weight 0 does not shrink a bone. What remains are three things only the Spaghetti Monster does:
+
+* it was the only race with **no geometry under its head bone** (everything hung from the body);
+* 115 of its 131 cubes hang from **one bone that eleven animations scaled** (landing, hurt, airborne, intro, idle behaviours...); every other race scales its large parts in at most two;
+* together with the Xenentoma it computed its eye **saccades in `pre_animation`** variables.
+
+**Changes:** the Holy Colander halo now rides the head group (it follows a fifth of the player's look — still above the eyes; `docs` renders unchanged otherwise); the body bone is scaled only by the breathing and the entry pop (the squash of landing, hurt, airborne and the forms became small dips); the eyes dart with a self-contained quantised-sine expression (`anims/life.py: dart`) instead of `pre_animation` saccades. Motion and look are otherwise the same.
+
+**A display check, so the next report is exact:** *Lineage Codex → Display Check* shows every lineage's body for 3 s with a camera in front of the player, asks which ones could not be seen, then shows those again as a **still twin** (`plrace:form_<race>_static`: the same geometry, texture, materials and render controllers, with no animation, script or particle — the validator checks the twin is identical otherwise). The chat line it prints says, per race, whether the body is missing *with* animation only (a script/animation problem) or *without* it too (the device cannot draw that model), and it names **the resource-pack version the client really uses**: that text comes from the pack's own lang file (`plrace.rp_version`), so an older copy of the pack active in *Settings → Global Resources* shows up as a wrong number (or the raw key). The Codex front page shows the same line.
+
+`npm test` **285/285** (8 new: the check shows every body in turn, re-shows a reported one as its twin, puts a camera in front and clears it, restores the player's own form and movement, and names the hidden races and the resource-pack version). Validator 59,243 checks, 0 errors.
+
+**Still to be confirmed in game:** that the Spaghetti Monster is visible. If it is not, the Display Check line (and *Settings → Creator → Content Log GUI*) say exactly where it fails.
 
 ## v1.3.0 — new ability effects for every race
 * **Validator, new checks for layered effects:** every child effect an event starts exists; every event a creation/expiration/timeline entry names is defined; flipbook frames stay inside their texture; particle Molang parses, has no sign pairs, and reads only built-in particle variables or variables the scripts pass in; particle atlases may use up to 1 MB of texture memory (the new 512×512 atlas), other textures keep the 256 KB budget.

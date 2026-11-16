@@ -1,6 +1,6 @@
 # Technical Compatibility Report
 
-*Version 1.3.0 — foundation races 001–003 plus Expansion 01 (races 004–006), with the bodies, animations and effects of races 004–006 redrawn in 1.2.0, the generated Molang rewritten into the forms vanilla files use in 1.2.1 (same motion), and new ability effects for every race in 1.3.0. Nothing about how any race is stored changed: same pack ids, item ids, race codes, form names, saved player data and world settings. Races 001–003 keep their models and textures; their animation text was only rewritten, with identical values (checked by `tools/molang_equiv.py`).*
+*Version 1.3.1 — foundation races 001–003 plus Expansion 01 (races 004–006), with the bodies, animations and effects of races 004–006 redrawn in 1.2.0, the generated Molang rewritten into the forms vanilla files use in 1.2.1 (same motion), new ability effects for every race in 1.3.0, and in 1.3.1 a restructured Spaghetti Monster body plus six display-check items (`plrace:form_<race>_static`, never given in play). Nothing about how any race is stored changed: same pack ids, item ids, race codes, form names, saved player data and world settings. Races 001–003 keep their models and textures; their animation text was only rewritten, with identical values (checked by `tools/molang_equiv.py`).*
 
 ## Target
 

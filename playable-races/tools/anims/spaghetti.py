@@ -14,7 +14,7 @@ from typing import Dict
 
 from anims.core import NS, T
 from anims.life import (ATK, C, FALL, LOOK, MOVE, PH, RISE, S, SPR, STILL, TURN, KeyLayer, Layer, chain_wave,
-                        drain_shared, fidget_controller, landing_controller, lin, mul, prod, saccade, shared_vars,
+                        dart, drain_shared, fidget_controller, landing_controller, lin, mul, prod, shared_vars,
                         smooth_pulse, wait_anim)
 from anims.races import A, AIR, GAIT_OK, SIDES, TP, blink, mirror, shake, view_anims
 from models.spaghetti import APP, DRAPES, GROUPS, HANG
@@ -68,12 +68,15 @@ def anims(model) -> Dict[str, object]:
         for j in range(3):
             life.rot(f"{p}_stalk{j}", mul(2.0 + j, S(HOVER, -80 - 40 * j)), None, mirror(side, mul(2.5 + j, S(0.19 * f, 40 + j * 60))))
         life.rot(f"{p}_eye", lin([(0.3, PITCH), (3, S(0.23 * f, 20))]), lin([(0.25, LOOK), (5, S(0.17 * f, 60))]), None)
-        px_ = f"math.clamp({saccade(0.55 * f, 0.55, seed=3 + side * 1.7)} - {LOOK} * 0.006, -0.75, 0.75)"
-        py_ = f"math.clamp({saccade(0.43 * f, 0.4, seed=7 + side * 2.3)} - {PITCH} * 0.01, -0.6, 0.6)"
+        px_ = f"math.clamp({dart(0.55 * f, 0.55, seed=3 + side * 1.7)} - {LOOK} * 0.006, -0.75, 0.75)"
+        py_ = f"math.clamp({dart(0.43 * f, 0.4, seed=7 + side * 2.3)} - {PITCH} * 0.01, -0.6, 0.6)"
         life.pos(f"{p}_pupil", px_, py_, None)
         life.rot(f"{p}_lid", f"-90 * math.max({blink(3.7 * f, 6.3 * f, 0.18, 1.1 + side)}, {SLEEP})", None, None)
+    # v1.3.1: the halo lives in the head group; it keeps a fifth of the player's look and
+    # still rides the nest's swell
+    life.rot("head_g", "q.target_x_rotation * -0.8", "q.target_y_rotation * -0.8", None)
     life.rot("halo", mul(3, S(0.21)), f"{T} * 22", mul(2, S(0.17, 50)))
-    life.pos("halo", None, mul(0.35, S(0.5, 30)), None)
+    life.pos("halo", None, lin([(0.8, S(HOVER)), (0.22, S(1.1, 40)), (0.35, S(0.5, 30))]), None)
     life.rot("sauce", None, None, mul(1.5, S(0.3)))
     for k in range(4):                        # the drips stretch and recover like thick sauce
         life.scale(f"drip{k}", 1, lin([(1, 1), (0.14, S(0.35 + 0.05 * k, k * 70))]), 1)
@@ -112,8 +115,6 @@ def anims(model) -> Dict[str, object]:
         loco.rot(f"drip{k}", lin([(10, s)]))
 
     air = Layer(r, "airborne", loop=True)
-    air.scale("mass", lin([(1, 1), (-0.04, RISE), (0.03, FALL)]), lin([(1, 1), (0.07, RISE), (-0.05, FALL)]),
-              lin([(1, 1), (-0.04, RISE), (0.03, FALL)]))
     for k in range(DRAPES):
         air.rot(f"drape{k}", lin([(20, FALL), (-10, RISE)]))
     for k in range(HANG):
@@ -129,8 +130,6 @@ def anims(model) -> Dict[str, object]:
     land_hard = KeyLayer(r, "land_hard", 0.75)
     for kl, g in ((land, 1.0), (land_hard, 1.5)):
         L = kl.length
-        kl.scale("mass", {0: (1 + 0.1 * g, 1 - 0.13 * g, 1 + 0.1 * g), 0.08: (1 + 0.12 * g, 1 - 0.16 * g, 1 + 0.12 * g),
-                          0.25: (0.96, 1.05, 0.96), 0.4: (1.01, 0.99, 1.01), L: 1})
         kl.pos("mass", {0: (0, -1.2 * g, 0), 0.1: (0, -1.6 * g, 0), 0.3: (0, 0.4, 0), L: (0, 0, 0)})
         for k in range(DRAPES):
             kl.rot(f"drape{k}", {0: (-25 * g, 0, 0), 0.2: (10 * g, 0, 0), 0.38: (-3, 0, 0), L: (0, 0, 0)})
@@ -153,7 +152,7 @@ def anims(model) -> Dict[str, object]:
         atk.pos(f"{p}_pupil", prod(-0.5, ATK), None, None)
 
     hurt = KeyLayer(r, "hurt", 0.55)
-    hurt.scale("mass", {0: 1, 0.05: (1.1, 0.9, 1.1), 0.2: (0.96, 1.05, 0.96), 0.4: 1, 0.55: 1})
+    hurt.pos("mass", {0: (0, 0, 0), 0.05: (0, -0.8, 0), 0.2: (0, 0.3, 0), 0.4: (0, 0, 0), 0.55: (0, 0, 0)})
     for k in range(GROUPS):
         hurt.rot(f"twist{k}", {**shake(0.0, 0.45, (6, 8 * (1 if k % 2 else -1), 5), freq=8, decay=6), 0.55: (0, 0, 0)})
     for p, side in SIDES:
@@ -201,7 +200,6 @@ def anims(model) -> Dict[str, object]:
     for p, side in SIDES:                     # the eyes follow them round
         lap.pos(f"{p}_pupil", {0: (0, 0, 0), 0.4: (0.6 * side, -0.2, 0), 1.0: (0, -0.2, 0), 1.4: (-0.6 * side, -0.2, 0),
                                2.2: (-0.6 * side, -0.2, 0), 2.6: (0, 0, 0), 2.8: (0, 0, 0)})
-    lap.scale("mass", {0: 1, 0.6: (1.04, 0.96, 1.04), 1.2: (0.97, 1.03, 0.97), 1.8: (1.03, 0.97, 1.03), 2.4: 1, 2.8: 1})
     fid.append(lap)
 
     swirl = KeyLayer(r, "fidget_sauce", 2.6)  # sauce defies gravity: a bead climbs into the air, the eyes watch
@@ -232,9 +230,8 @@ def anims(model) -> Dict[str, object]:
     }
     intro["base"].scale("mass", {0: (1.1, 0.88, 1.1), 0.18: (0.96, 1.05, 0.96), 0.35: (1.01, 0.99, 1.01), 0.5: 1})
     intro["rigid"].scale("lattice", {0: 0.4, 0.12: 1.1, 0.25: 0.97, 0.4: 1})
-    intro["rigid"].scale("mass", {0: (0.94, 1.06, 0.94), 0.15: (1.02, 0.98, 1.02), 0.4: 1})
     intro["rigid"].particle(0.0, "crack", "core")
-    intro["detached"].scale("mass", {0: (1.15, 0.88, 1.15), 0.2: (0.95, 1.05, 0.95), 0.45: 1})
+    intro["detached"].pos("mass", {0: (0, -0.8, 0), 0.2: (0, 0.3, 0), 0.45: (0, 0, 0)})
     intro["detached"].particle(0.0, "splash", "core")
     for k in range(3):
         t0 = 0.2 + k * 0.15
@@ -243,7 +240,7 @@ def anims(model) -> Dict[str, object]:
     for p in ("r", "l"):
         intro["revelation"].scale(f"{p}_pupil", {0: 0.6, 0.3: 1.2, 0.6: 1, 1.1: 1})
     intro["revelation"].particle(0.0, "vortex", "core")
-    intro["brittle"].scale("mass", {0: (1.03, 0.97, 1.03), 0.1: (0.98, 1.02, 0.98), 0.2: (1.01, 0.99, 1.01), 0.4: 1})
+    intro["brittle"].pos("mass", {0: (0, -0.3, 0), 0.1: (0, 0.2, 0), 0.4: (0, 0, 0)})
     intro["brittle"].particle(0.0, "steam", "top")
 
     rigid_loop = Layer(r, "rigid_loop", loop=True)       # tense: everything locked, a faint vibration
@@ -252,7 +249,7 @@ def anims(model) -> Dict[str, object]:
         rigid_loop.uscale(f"{p}_pupil", 0.8)
     detached_loop = Layer(r, "detached_loop", loop=True)  # the eyes search for the missing meatballs
     for p, side in SIDES:
-        detached_loop.pos(f"{p}_pupil", saccade(1.3, 0.6, seed=11 + side), saccade(1.1, 0.4, seed=17 + side), None)
+        detached_loop.pos(f"{p}_pupil", dart(1.3, 0.6, seed=11 + side), dart(1.1, 0.4, seed=17 + side), None)
         detached_loop.rot(f"{p}_stalk0", None, mul(14, S(0.5, 0 if side < 0 else 90)), None)
     rev_loop = Layer(r, "revelation_loop", loop=True)
     for k, sp in enumerate((80, -60, 45)):
@@ -260,7 +257,6 @@ def anims(model) -> Dict[str, object]:
     for p in ("r", "l"):
         rev_loop.rot(f"{p}_orbit", None, f"{T} * 110", None)
         rev_loop.pos(f"{p}_pupil", None, 0.5, None)
-    rev_loop.scale("mass", lin([(1, 1), (0.03, S(1.0))]), lin([(1, 1), (-0.02, S(1.0))]), lin([(1, 1), (0.03, S(1.0))]))
     rev_loop.particle(0.0, "vortex", "core")
     rev_loop.kw["length"] = 0.5
     brittle_loop = Layer(r, "brittle_loop", loop=True)   # crisp and creaky

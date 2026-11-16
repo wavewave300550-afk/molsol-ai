@@ -1126,6 +1126,41 @@ await settle(4);
 harness.leave(n_witness);
 harness.leave(n_rival);
 
+// ======================================================================== display check (v1.3.1)
+begin("display check");
+const dia = harness.join("Dia", { x: 900.5, y: 64, z: 0.5 });
+await settle(6);
+commands.get("plrace:setrace").cb({ sourceEntity: dia }, "spaghetti", [dia]);
+await settle(4);
+eq(head(dia)?.typeId, "plrace:form_spaghetti", "the Spaghetti Monster's crest is worn");
+ui.answers.length = 0;
+const camsBefore = sim.log.cameras.length;
+answer.action(7); // main codex: Display Check
+answer.action(0); // intro: Start
+answer.modal([false, false, false, false, true, false]); // could not see: 005
+answer.modal([false]); // the still twin of 005 was visible
+commands.get("plrace:codex").cb({ sourceEntity: dia });
+await settle(2);
+const dcSeen = [];
+for (let i = 0; i < 7 * 60 + 40; i++) {
+  tickN(1);
+  await new Promise((r) => setTimeout(r, 0));
+  const id = head(dia)?.typeId;
+  if (id && dcSeen[dcSeen.length - 1] !== id) dcSeen.push(id);
+}
+await settle(4);
+const dcOrder = ["salamander", "golem", "jackalope", "xenentoma", "spaghetti", "nurariten"].map((k) => `plrace:form_${k}`);
+ok(dcOrder.every((id, i) => dcSeen.indexOf(id) >= 0 && (i === 0 || dcSeen.indexOf(id) > dcSeen.indexOf(dcOrder[i - 1]))), `every lineage's body is shown in turn (${dcSeen.join(" > ")})`);
+ok(dcSeen.includes("plrace:form_spaghetti_static"), "a body reported missing is shown again as its still twin");
+const dcCams = sim.log.cameras.slice(camsBefore).filter((c) => c.p === dia.id);
+ok(dcCams.filter((c) => c.preset === "minecraft:free").length >= 7 && dcCams[dcCams.length - 1]?.clear, "a camera in front of the player, cleared afterwards");
+eq(head(dia)?.typeId, "plrace:form_spaghetti", "the player's own form is back");
+eq(dia.inputPermissions.isPermissionCategoryEnabled(InputPermissionCategory.LateralMovement), true, "movement restored after the check");
+const dcMsg = sim.log.messages.filter((x) => x.p === dia.id).map((x) => x.m).join("\n");
+ok(/hidden: §f005/.test(dcMsg) && /still hidden without animation: §fnone/.test(dcMsg), "the result names what was hidden, with and without animation");
+ok(dcMsg.includes("%plrace.rp_version%"), "the result names the resource-pack version the client resolves");
+harness.leave(dia);
+
 // ======================================================================== summary
 const warns = sim.log.warns.concat();
 begin("script health");

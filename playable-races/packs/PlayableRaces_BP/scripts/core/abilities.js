@@ -203,6 +203,8 @@ export function clearTempForm(p, s) {
     refreshForm(p, s);
 }
 export function refreshForm(p, s) {
+    if (s.diag)
+        return;
     const race = raceOf(s);
     if (!race || s.data.veiled)
         return;

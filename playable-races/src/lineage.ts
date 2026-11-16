@@ -185,6 +185,11 @@ export function restoreInput(p: Player, s: Session): void {
 /** Join / respawn / reload: make sure the player's lineage is fully in place. */
 export function restore(p: Player, s: Session): void {
   restoreInput(p, s);
+  try {
+    p.camera.clear(); // a display check interrupted by a logout
+  } catch {
+    /* ignore */
+  }
   const race = raceOf(s);
   if (!race) {
     // no lineage: remove anything left over from removed races

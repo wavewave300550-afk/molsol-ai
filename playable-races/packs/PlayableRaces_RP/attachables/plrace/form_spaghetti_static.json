@@ -1,0 +1,25 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "plrace:form_spaghetti_static",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "accent": "entity_alphatest"
+   },
+   "textures": {
+    "default": "textures/plrace/races/spaghetti/spaghetti_base"
+   },
+   "geometry": {
+    "default": "geometry.plrace.spaghetti.base",
+    "accent": "geometry.plrace.spaghetti.base.accent"
+   },
+   "render_controllers": [
+    "controller.render.plrace.form",
+    "controller.render.plrace.spaghetti_accent_c",
+    "controller.render.plrace.spaghetti_accent_l",
+    "controller.render.plrace.spaghetti_accent_f"
+   ]
+  }
+ }
+}

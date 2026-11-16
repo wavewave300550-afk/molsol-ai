@@ -1,0 +1,28 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "plrace:form_salamander_static",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "cutout": "entity_alphatest",
+    "accent": "entity_alphatest"
+   },
+   "textures": {
+    "default": "textures/plrace/races/salamander/salamander_base"
+   },
+   "geometry": {
+    "default": "geometry.plrace.salamander.base",
+    "cutout": "geometry.plrace.salamander.base.cutout",
+    "accent": "geometry.plrace.salamander.base.accent"
+   },
+   "render_controllers": [
+    "controller.render.plrace.form",
+    "controller.render.plrace.form_cutout",
+    "controller.render.plrace.salamander_accent_c",
+    "controller.render.plrace.salamander_accent_l",
+    "controller.render.plrace.salamander_accent_f"
+   ]
+  }
+ }
+}

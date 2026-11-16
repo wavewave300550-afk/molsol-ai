@@ -1,0 +1,28 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "plrace:form_xenentoma_static",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "cutout": "entity_alphatest",
+    "accent": "entity_alphatest"
+   },
+   "textures": {
+    "default": "textures/plrace/races/xenentoma/xenentoma_base"
+   },
+   "geometry": {
+    "default": "geometry.plrace.xenentoma.base",
+    "cutout": "geometry.plrace.xenentoma.base.cutout",
+    "accent": "geometry.plrace.xenentoma.base.accent"
+   },
+   "render_controllers": [
+    "controller.render.plrace.form",
+    "controller.render.plrace.form_cutout",
+    "controller.render.plrace.xenentoma_accent_c",
+    "controller.render.plrace.xenentoma_accent_l",
+    "controller.render.plrace.xenentoma_accent_f"
+   ]
+  }
+ }
+}

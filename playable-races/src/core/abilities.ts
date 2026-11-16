@@ -217,6 +217,7 @@ export function clearTempForm(p: Player, s: Session): void {
 }
 
 export function refreshForm(p: Player, s: Session): void {
+  if (s.diag) return; // the display check owns the head slot for a moment
   const race = raceOf(s);
   if (!race || s.data.veiled) return;
   let v = race.variant(p, s);

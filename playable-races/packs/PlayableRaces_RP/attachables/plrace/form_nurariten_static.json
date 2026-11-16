@@ -1,0 +1,25 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:attachable": {
+  "description": {
+   "identifier": "plrace:form_nurariten_static",
+   "materials": {
+    "default": "entity_emissive_alpha",
+    "accent": "entity_alphatest"
+   },
+   "textures": {
+    "default": "textures/plrace/races/nurariten/nurariten_base"
+   },
+   "geometry": {
+    "default": "geometry.plrace.nurariten.base",
+    "accent": "geometry.plrace.nurariten.base.accent"
+   },
+   "render_controllers": [
+    "controller.render.plrace.form",
+    "controller.render.plrace.nurariten_accent_c",
+    "controller.render.plrace.nurariten_accent_l",
+    "controller.render.plrace.nurariten_accent_f"
+   ]
+  }
+ }
+}

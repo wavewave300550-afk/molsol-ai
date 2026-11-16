@@ -62,7 +62,7 @@ export const CustomCommandStatus = { Success: 0, Failure: 1 };
 // ------------------------------------------------------------------ simulation state
 export const sim = {
   tick: 0, time: 6000, day: 0, moon: null, weather: "Clear", pvp: true,
-  log: { particles: [], privateParticles: [], sounds: [], commands: [], anims: [], titles: [], actionbar: new Map(), messages: [], warns: [], fades: [] },
+  log: { particles: [], privateParticles: [], sounds: [], commands: [], anims: [], titles: [], actionbar: new Map(), messages: [], warns: [], fades: [], cameras: [] },
   biomeAt: (_loc) => "minecraft:plains",
   waterAt: (_loc) => false,
   ground: 64,
@@ -571,7 +571,11 @@ export class Player extends Entity {
       setActionBar: (t) => sim.log.actionbar.set(p.id, String(t)),
       setTitle: (t, o) => sim.log.titles.push({ p: p.id, t, o }),
     };
-    this.camera = { fade: (o) => sim.log.fades.push({ p: p.id, o }) };
+    this.camera = {
+      fade: (o) => sim.log.fades.push({ p: p.id, o }),
+      setCamera: (preset, o) => sim.log.cameras.push({ p: p.id, preset, o }),
+      clear: () => sim.log.cameras.push({ p: p.id, clear: true }),
+    };
     this.inputPermissions = {
       setPermissionCategory: (c, en) => p._perms.set(c, en),
       isPermissionCategoryEnabled: (c) => p._perms.get(c) ?? true,
@@ -585,7 +589,9 @@ export class Player extends Entity {
     return this._gameMode;
   }
   sendMessage(m) {
-    sim.log.messages.push({ p: this.id, m: String(m) });
+    // RawMessage: text parts joined, translated keys shown as %key% (the client resolves them)
+    const flat = (x) => (typeof x === "string" ? x : x?.rawtext ? x.rawtext.map(flat).join("") : x?.translate ? `%${x.translate}%` : x?.text ?? String(x));
+    sim.log.messages.push({ p: this.id, m: flat(m) });
   }
   playSound(id, o) {
     if (!defs.sounds.has(id)) throw new Error(`unknown sound ${id}`);

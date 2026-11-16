@@ -36,7 +36,7 @@ import fx_ex  # noqa: E402
 from vfx import atlas as vfx_atlas  # noqa: E402
 
 NS = "plrace"
-VERSION = [1, 3, 0]
+VERSION = [1, 3, 1]
 MIN_ENGINE = [1, 26, 60]
 SERVER_API = "2.11.0"
 UI_API = "2.3.0"
@@ -127,6 +127,13 @@ def item_id(race, variant):
     return f"{NS}:form_{race}" if variant == "base" else f"{NS}:form_{race}_{variant}"
 
 
+STATIC = "static"   # display-check twin of each base form: same body, no animation or script at all
+
+
+def static_id(race):
+    return f"{NS}:form_{race}_{STATIC}"
+
+
 # ============================================================================= models & attachables
 
 def build_races(report):
@@ -212,6 +219,13 @@ def build_races(report):
             }}}
             wjson(os.path.join(RP, f"attachables/plrace/form_{race}_{v}.json"), att)
             lang.append((f"item.{iid}", f"{DISPLAY[race]} Form ({VARIANT_NAMES[race][v]})"))
+            if v == "base":   # the display check's still twin (Codex > Display Check)
+                desc = att["minecraft:attachable"]["description"]
+                still = {"format_version": "1.10.0", "minecraft:attachable": {"description": {
+                    "identifier": static_id(race), "materials": desc["materials"], "textures": desc["textures"],
+                    "geometry": desc["geometry"], "render_controllers": desc["render_controllers"]}}}
+                wjson(os.path.join(RP, f"attachables/plrace/form_{race}_{STATIC}.json"), still)
+                lang.append((f"item.{static_id(race)}", f"{DISPLAY[race]} Form (display check)"))
     # player-skeleton pose animations (scripts trigger these with playAnimation)
     wjson(os.path.join(RP, "animations/plrace/poses.animation.json"), acore.file(aset.poses()))
     return lang, geo_index
@@ -264,7 +278,7 @@ def _tint_expr(slot):
 def form_hidden_expr():
     """Client-side test 'a race form crest is worn'. Uses explicit item names (always known
     to clients); regenerated automatically when future races add crest items."""
-    names = [item_id(r, v) for r in RACES for v in crest_variants(r)]
+    names = [item_id(r, v) for r in RACES for v in crest_variants(r)] + [static_id(r) for r in RACES]
     return "query.is_item_name_any('slot.armor.head', 0, " + ", ".join(f"'{n}'" for n in names) + ")"
 
 
@@ -301,8 +315,8 @@ def player_overrides():
 def items(lang):
     out = {}
     for race, info in RACES.items():
-        for v in crest_variants(race):
-            iid = item_id(race, v)
+        for v in crest_variants(race) + [STATIC]:
+            iid = static_id(race) if v == STATIC else item_id(race, v)
             out[iid] = {"format_version": "1.21.90", "minecraft:item": {
                 "description": {"identifier": iid, "menu_category": {"category": "none", "is_hidden_in_commands": True}},
                 "components": {
@@ -758,14 +772,14 @@ def manifests():
             {"module_name": "@minecraft/server", "version": SERVER_API},
             {"module_name": "@minecraft/server-ui", "version": UI_API}],
         "metadata": {"authors": ["Playable Races project"], "product_type": "addon",
-                     "generated_with": {"plrace_build": ["1.3.0"]}}}
+                     "generated_with": {"plrace_build": ["1.3.1"]}}}
     rp = {"format_version": 2, "header": {
         "name": "pack.name", "description": "pack.description", "uuid": UUID["rp"], "pack_scope": "world",
         "version": VERSION, "min_engine_version": MIN_ENGINE},
         "modules": [{"type": "resources", "uuid": UUID["rp_res"], "version": VERSION}],
         "dependencies": [{"uuid": UUID["bp"], "version": VERSION}],
         "metadata": {"authors": ["Playable Races project"], "product_type": "addon",
-                     "generated_with": {"plrace_build": ["1.3.0"]}}}
+                     "generated_with": {"plrace_build": ["1.3.1"]}}}
     wjson(os.path.join(BP, "manifest.json"), bp)
     wjson(os.path.join(RP, "manifest.json"), rp)
 
@@ -826,7 +840,7 @@ def main():
     icons()
     particles()
     pack_icon(os.path.join(BP, "pack_icon.png"), os.path.join(RP, "pack_icon.png"))
-    lang_rp = [("pack.name", "Playable Races (Resources)"),
+    lang_rp = [("pack.name", "Playable Races (Resources)"), (f"{NS}.rp_version", ".".join(map(str, VERSION))),
                ("pack.description", "Races 001-006: Flora Salamander, Runic Titan Golem, Blood Moon Jackalope, Xenentoma, Flying Spaghetti Monster, Nurariten [Unique]")] + lang_rp
     lang_bp = [("pack.name", "Playable Races"),
                ("pack.description", "Six playable lineages: Salamander, Golem, Jackalope, Xenentoma, Flying Spaghetti Monster and the Unique Nurariten")]

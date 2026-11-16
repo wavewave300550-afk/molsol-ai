@@ -1,4 +1,6 @@
 export const NS = "plrace";
+export const VERSION = "1.3.1";
+export const RP_VERSION_KEY = `${NS}.rp_version`;
 export const PROP_DATA = `${NS}:data`;
 export const WORLD_SETTINGS = `${NS}:settings`;
 export const WORLD_BLOODMOON = `${NS}:bloodmoon`;

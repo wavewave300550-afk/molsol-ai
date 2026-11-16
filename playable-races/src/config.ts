@@ -1,5 +1,9 @@
 /** Shared identifiers and tuning constants. Identifiers are permanent: worlds depend on them. */
 export const NS = "plrace";
+/** Add-on version (behavior pack); the resource pack states its own in its lang file. */
+export const VERSION = "1.3.1";
+/** Lang key whose value is the resource-pack version - the client resolves it from the pack it actually uses. */
+export const RP_VERSION_KEY = `${NS}.rp_version`;
 
 export const PROP_DATA = `${NS}:data`;
 export const WORLD_SETTINGS = `${NS}:settings`;

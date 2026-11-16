@@ -61,6 +61,7 @@ export interface Session {
   flags: Map<string, number>; // named timed flags -> expiry tick
   num: Map<string, number>; // scratch numbers (still ticks, last warnings ...)
   menuOpen: boolean;
+  diag?: boolean; // the display check is borrowing the head slot and camera
 }
 
 const sessions = new Map<string, Session>();

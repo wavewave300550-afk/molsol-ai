@@ -533,6 +533,16 @@ def saccade(freq: float, amp: float, seed: float = 0.0, move: float = 0.18, t: s
     return f"({unit} * {n(amp)})"
 
 
+def dart(freq: float, amp: float, seed: float = 0.0, levels: int = 2, t: str = T) -> str:
+    """Dart-and-hold without any pre_animation variable (v1.3.1): two incommensurate sines
+    summed and quantised to a few levels jump between fixed targets and rest there, which
+    reads as a glance.  Result in [-amp, amp]; one short self-contained expression."""
+    w1, w2 = freq * 360 * 0.5, freq * 360 * 0.83
+    p1, p2 = (seed * 97.0) % 360, (seed * 151.0 + 40) % 360
+    raw = f"{n(0.62 * levels)} * math.sin({t} * {n(w1)} + {n(p1)}) + {n(0.38 * levels)} * math.sin({t} * {n(w2)} + {n(p2)})"
+    return f"({n(amp / levels)} * math.floor({raw} + 0.5))"
+
+
 def smooth_pulse(period: float, rise: float, hold: float, fall: float, offset: float = 0.0, t: str = T) -> str:
     """0 -> 1 -> 0 envelope repeating every `period` s: eased rise, hold, eased fall (Molang)."""
     ph = f"math.mod({t} + {n(offset)}, {n(period)})"
