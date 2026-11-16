@@ -1,7 +1,7 @@
 /** Shared identifiers and tuning constants. Identifiers are permanent: worlds depend on them. */
 export const NS = "plrace";
 /** Add-on version (behavior pack); the resource pack states its own in its lang file. */
-export const VERSION = "1.3.1";
+export const VERSION = "1.4.0";
 /** Lang key whose value is the resource-pack version - the client resolves it from the pack it actually uses. */
 export const RP_VERSION_KEY = `${NS}.rp_version`;
 
@@ -23,6 +23,7 @@ export const ENTITY_MEATBALL = `${NS}:meatball`;
 export const ENTITY_GATE = `${NS}:celestial_gate`;
 export const ENTITY_HERALD = `${NS}:herald`;
 export const ENTITY_PROCESSION = `${NS}:procession`;
+export const ENTITY_ECHO = `${NS}:hyphal_echo`;
 export const FOG_BLOOD_MOON = `${NS}:blood_moon`;
 export const FOG_USER = `${NS}_bm`;
 

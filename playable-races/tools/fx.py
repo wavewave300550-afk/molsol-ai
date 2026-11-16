@@ -624,6 +624,18 @@ def heaven_fog() -> dict:
         }}}
 
 
+def abyss_fog() -> dict:
+    """Bathyas' ultimate (Abyssal Extinction): the deep ocean closes in - a dark fog at a fixed short
+    distance, pushed only on players near it for the length of the ultimate (never the sky)."""
+    return {"format_version": "1.16.100", "minecraft:fog_settings": {
+        "description": {"identifier": f"{NS}:abyss"},
+        "distance": {
+            "air": {"fog_start": 3, "fog_end": 22, "fog_color": "#050d17", "render_distance_type": "fixed"},
+            "weather": {"fog_start": 3, "fog_end": 20, "fog_color": "#050d17", "render_distance_type": "fixed"},
+            "water": {"fog_start": 2, "fog_end": 16, "fog_color": "#03101c", "render_distance_type": "fixed"},
+        }}}
+
+
 def fog() -> dict:
     return {"format_version": "1.16.100", "minecraft:fog_settings": {
         "description": {"identifier": f"{NS}:blood_moon"},

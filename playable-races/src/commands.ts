@@ -32,7 +32,7 @@ export function registerCommands(ev: StartupEvent): void {
   reg.registerCommand(
     {
       name: "plrace:setrace",
-      description: "Set a player's lineage (001-006 or salamander, golem, jackalope, xenentoma, spaghetti, nurariten, none)",
+      description: "Set a player's lineage (001-009 or salamander, golem, jackalope, xenentoma, spaghetti, nurariten, dinosauroid, bathyas, octamyces, none)",
       permissionLevel: CommandPermissionLevel.GameDirectors,
       mandatoryParameters: [{ name: "plrace:race", type: CustomCommandParamType.Enum }],
       optionalParameters: [{ name: "players", type: CustomCommandParamType.PlayerSelector }],

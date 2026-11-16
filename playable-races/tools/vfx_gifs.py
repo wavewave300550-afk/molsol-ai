@@ -22,13 +22,14 @@ sys.path.insert(0, HERE)
 from PIL import Image, ImageDraw  # noqa: E402
 
 from kit.tex import paint  # noqa: E402
-from models import golem, jackalope, nurariten, salamander, spaghetti, xenentoma  # noqa: E402
+from models import bathyas, dinosauroid, golem, jackalope, nurariten, octamyces, salamander, spaghetti, xenentoma  # noqa: E402
 from vfx import preview  # noqa: E402
 
 RP = os.path.join(ROOT, "packs", "PlayableRaces_RP")
 MODS = {"salamander": salamander, "golem": golem, "jackalope": jackalope, "xenentoma": xenentoma, "spaghetti": spaghetti,
-        "nurariten": nurariten}
-TEXKEY = {"salamander": "bloom", "golem": "base", "jackalope": "base", "xenentoma": "base", "spaghetti": "base", "nurariten": "base"}
+        "nurariten": nurariten, "dinosauroid": dinosauroid, "bathyas": bathyas, "octamyces": octamyces}
+TEXKEY = {"salamander": "bloom", "golem": "base", "jackalope": "base", "xenentoma": "base", "spaghetti": "base", "nurariten": "base",
+          "dinosauroid": "base", "bathyas": "base", "octamyces": "base"}
 
 
 def load_effects():
@@ -53,6 +54,7 @@ def ring_pts(c, r, n, a0=0.0):
 
 
 SILVER = {"red": 0.85, "green": 0.88, "blue": 1.0}
+FRAME_PATH = [(math.sin(k / 2.2) * 2.5, 0, -4 - 0.5 * k) for k in range(8)]   # a recorded walk for the Eleventh Frame preview
 CRIMSON = {"red": 1.0, "green": 0.16, "blue": 0.24}
 
 # (label, spawns [(t, effect, origin, vars)], camera overrides)
@@ -103,6 +105,41 @@ SCEN = {
          + [(0.9 + 0.4 * j, "court_pillar", p, {}) for j in range(2) for p in ring_pts((0, 0, 0), 7, 8, 7 * j)], {"scale": 2.4, "center": (0, 12, 0)}),
         ("Imperial Expulsion", [(0.0, "arrival_gate", (0, 1.2, -4), {}), (0.0, "decree_burst", (0, 1.2, -4), {})], {"center": (0, 16, -32)}),
     ],
+    # ---- Expansion 02 (v1.4)
+    "dinosauroid": [
+        ("Hindwing Veer", [(0.0, "veer_burst", (0, 0.1, 0), {})] + [(0.15 + 0.09 * k, "veer_trail", (0, 0.6 + 0.2 * math.sin(k / 6 * math.pi), -1.0 * k), {})
+                                                                     for k in range(7)], {"center": (0, 16, -40)}),
+        ("Crest of Misclassification", [(0.0, "crest_wave", (0, 0.15, 0), {})]
+         + [(0.15, "misclass_mark", p, {}) for p in ((2, 2.4, -4), (-3, 2.4, -5))], {"scale": 3.4, "center": (0, 14, -10)}),
+        ("Sickle Testament", [(0.2, "sickle_arc", (0, 0.7, -1.4), {"spin": 0}), (0.25, "misclass_mark", (0, 2.4, -2.6), {})], {}),
+        ("Taxonomic Error", [(0.0, "overflow_aura", (0, 0.1, 0), {}), (0.9, "dino_display", (0, 1.6, 0), {}),
+                             (1.2, "dino_feathers", (0, 1.1, 0), {})], {}),
+    ],
+    "bathyas": [
+        ("Lure of the Impaled Sun", [(0.0, "lure_pulse", (0, 1.2, 0), {})] + [(0.3, "sun_mark", p, {}) for p in ((2, 2.4, -6), (-3, 2.4, -5))],
+         {"scale": 2.8, "center": (0, 14, -10)}),
+        ("Goblin Maw Rush", [(0.05 * k, "maw_streak", (0, 1.0, -0.9 * k), {"dx": 0, "dy": 0, "dz": -1.2}) for k in range(6)]
+         + [(0.35, "maw_bite", (0, 1.2, -6), {})], {"center": (0, 16, -40)}),
+        ("Draw the Sun", [(0.0, "daybreak_overload", (0, 1.25, 0), {}), (0.7, "sun_extract", (0, 1.25, 0), {}), (1.2, "sun_slash", (0.4, 1.2, -1.6), {}),
+                          (1.5, "sun_return", (0, 1.2, 0), {})], {}),
+        ("Abyssal Daybreak", [(0.1 * k, "daybreak_overload", (0, 1.25, 0), {}) for k in range(3)]
+         + [(0.35 + 0.05 * k, "abyss_dark", p, {}) for k, p in enumerate(ring_pts((0, 0.2, 0), 5.0, 6))]
+         + [(0.6, "sunrise_pillar", (0, 0, 0), {}), (0.9, "leviathan", (-8, 4, -4), {"dx": 1, "dy": 0, "dz": 0}),
+            (1.2, "solar_execution", (0, 1.0, 0), {}), (1.4, "daybreak_field", (0, 0.1, 0), {})], {"scale": 2.2, "center": (0, 14, 0)}),
+    ],
+    "octamyces": [
+        ("Parallax Sporeveil", [(0.0, "sporeveil_cloud", (0, 1.0, 0), {})] + [(0.3, "parallax_mark", p, {}) for p in ((2, 2.2, -4), (-3, 2.2, -3))]
+         + [(0.6 + 0.3 * k, "parallax_echo", (2 + 0.4 * k, 0.9, -4), {}) for k in range(3)], {"scale": 3.2, "center": (0, 14, -10)}),
+        ("The Eye That Records", [(0.0, "observed_mark", (0, 2.7, -6), {})] + [(0.15 + 0.08 * k, "record_point", (math.sin(k / 3) * 2, 0.9, -6 + 0.4 * k), {})
+                                                                              for k in range(8)], {"center": (0, 14, -40)}),
+        ("Hyphal Offset", [(0.0, "offset_rift", (0, 1.0, 0), {}), (0.05, "offset_rift", (0, 1.0, -5), {}), (0.1, "parallax_echo", (0, 1.0, 0), {}),
+                           (1.2, "geo_spores", (0, 1.0, 0), {})], {"center": (0, 16, -36)}),
+        ("The Eleventh Frame", [(0.0 + 0.3 * k, "frame_ring", (0, 1.7, -0.6), {}) for k in range(4)]
+         + [(0.3 + 0.1 * k, "record_point", p, {}) for k, p in enumerate(FRAME_PATH)]
+         + [(0.7, "frame_thread", (0, 1.7, 0), {"dx": p[0], "dy": p[1] + 0.9 - 1.7, "dz": p[2]}) for p in FRAME_PATH]
+         + [(1.0 + 0.1 * k, "frame_strike", (p[0], p[1] + 0.7, p[2]), {}) for k, p in enumerate(FRAME_PATH)]
+         + [(1.7, "frame_collapse", (0, 1.7, 0), {})], {"scale": 3.0, "center": (0, 14, -30)}),
+    ],
     "rite": [
         ("Rite of transformation", [(0.0, "rite_aura", (0, 0.1, 0), {"red": 1.0, "green": 0.78, "blue": 0.3})], {}),
     ],
@@ -135,7 +172,7 @@ def grid(cols, title):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--races", default="nurariten,spaghetti,xenentoma,salamander,golem,jackalope")
+    ap.add_argument("--races", default="nurariten,spaghetti,xenentoma,salamander,golem,jackalope,dinosauroid,bathyas,octamyces")
     ap.add_argument("--out", default=os.path.join(ROOT, "docs", "images"))
     ap.add_argument("--seconds", type=float, default=1.8)
     ap.add_argument("--sheets", action="store_true", help="also write a 4-frame contact sheet per race")

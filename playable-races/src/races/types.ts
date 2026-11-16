@@ -31,6 +31,8 @@ export interface AbilityDef {
   cast(c: CastContext): CastResult;
   /** Extra charges (e.g. Blood Moon). */
   maxCharges?(c: CastContext): number;
+  /** Checked right after a successful cast: true = this cast spends no cooldown (toggles that charge on the way back). */
+  freeCast?(c: CastContext): boolean;
 }
 
 export interface Passive {

@@ -1126,6 +1126,311 @@ await settle(4);
 harness.leave(n_witness);
 harness.leave(n_rival);
 
+// ======================================================================== 007 The Unknown Dinosauroid (v1.4)
+begin("dinosauroid: lineage");
+const dino = harness.join("Dino", { x: 1000.5, y: 64, z: 0.5 });
+await settle(12);
+tickN(60);
+await settle(10);
+commands.get("plrace:setrace").cb({ sourceEntity: dino }, "dinosauroid", [dino]);
+await settle(4);
+eq(data(dino).race, "007", "race 007 persisted");
+eq(head(dino)?.typeId, "plrace:form_dinosauroid", "dinosauroid crest worn");
+ok(inv(dino).slots.some((s) => s?.typeId === "plrace:focus_dinosauroid"), "Fossil Quill Focus given");
+hold(dino, "plrace:focus_dinosauroid");
+const driftAt = [[0, "Plumed"], [1500, "Webbed"], [3000, "Toothed"], [4500, "Fanned"]];
+for (const [t, name] of driftAt) {
+  sim.time = t;
+  tickN(25);
+  ok(String(sim.log.actionbar.get(dino.id)).includes(name), `drift follows world time: ${name} at ${t}`);
+}
+sim.time = 6000;
+sim.light = 3;
+tickN(25);
+eq(head(dino)?.typeId, "plrace:form_dinosauroid_night", "in the dark the display skin glows (night form)");
+sim.light = 15;
+tickN(25);
+
+begin("dinosauroid: Hindwing Veer");
+dino.setRotation({ x: 0, y: 0 });
+const dz0 = dino.location.z;
+await use(dino);
+tickN(4);
+ok(dino.location.z > dz0 + 2, "the hindwings throw the body forward");
+ok(particles("plrace:veer_burst") > 0, "feathers and dust burst at take-off");
+eq(dino.applyDamage(6, { cause: "fall" }), false, "no fall damage from the leap");
+
+begin("dinosauroid: Crest of Misclassification");
+dino.location = { x: 1000.5, y: 64, z: 0.5 };
+await use(dino, true); // -> Crest
+const dz1 = mob("minecraft:zombie", 1000.5, 4.5);
+await use(dino);
+tickN(2);
+eq(head(dino)?.typeId, "plrace:form_dinosauroid_display", "crest, pouch and fans open (display form)");
+eq(dz1.getEffect("slowness")?.amplifier, 1, "the witness is misclassified (Slowness II)");
+ok(dz1.getEffect("weakness"), "and weakened");
+ok(particles("plrace:crest_wave") > 0 && particles("plrace:misclass_mark") > 0, "display wave and the broken cladogram mark");
+const realRandom = Math.random;
+Math.random = () => 0;
+const dhp = dino._health;
+dino.applyDamage(5, { cause: "entityAttack", damagingEntity: dz1 });
+eq(dino._health, dhp, "a misclassified creature's blow can miss outright");
+Math.random = realRandom;
+
+begin("dinosauroid: Sickle Testament");
+await use(dino, true); // -> Sickle
+dino.setRotation({ x: 0, y: 0 });
+dz1.location = { x: 1000.5, y: 64, z: 2.6 };
+const dz2 = mob("minecraft:zombie", 1001.5, 2.2);
+const m1 = hp(dz1);
+const m2 = hp(dz2);
+await use(dino);
+tickN(6);
+ok(m1 - hp(dz1) >= 10 - 0.01, "the misclassified victim is opened up (10 damage)");
+eq(dz1.getEffect("slowness")?.amplifier, 3, "and pinned (Slowness IV)");
+ok(m2 - hp(dz2) >= 6 - 0.01 && m2 - hp(dz2) < 10, "an ordinary target takes the plain strike");
+dz1.remove();
+dz2.remove();
+
+begin("dinosauroid: Taxonomic Error");
+await use(dino, true); // -> Error
+await use(dino);
+tickN(2);
+eq(head(dino)?.typeId, "plrace:form_dinosauroid_overflow", "every structure activates (overflow form)");
+ok(dino.getEffect("speed") && dino.getEffect("jump_boost"), "enhanced mobility");
+const dz3 = mob("minecraft:zombie", 1000.5, 3.5);
+tickN(45);
+ok(dz3.getEffect("slowness"), "the aura misclassifies creatures that come close");
+tickN(220);
+eq(head(dino)?.typeId, "plrace:form_dinosauroid", "the body folds back afterwards");
+ok(dino.getEffect("slowness") && dino.getEffect("weakness"), "and is spent (Slowness, Weakness)");
+dz3.remove();
+dino._health = 20;
+
+// ======================================================================== 008 Bathyas, the Sun-Impaled [Unique] (v1.4)
+begin("bathyas: lineage");
+const bat = harness.join("Bat", { x: 1100.5, y: 64, z: 0.5 });
+await settle(12);
+tickN(60);
+await settle(10);
+commands.get("plrace:setrace").cb({ sourceEntity: bat }, "bathyas", [bat]);
+await settle(4);
+eq(data(bat).race, "008", "race 008 persisted");
+ok(JSON.parse(world.getDynamicProperty("plrace:unique") ?? "{}")["008"], "the Unique claim is recorded");
+eq(head(bat)?.typeId, "plrace:form_bathyas", "impaled form worn");
+hold(bat, "plrace:focus_bathyas");
+tickN(25);
+ok(String(sim.log.actionbar.get(bat.id)).includes("Stability"), "HUD shows Stability and Photic Strain");
+ok(bat.getEffect("health_boost") && bat.getEffect("water_breathing"), "the impaled core: Health Boost; breathes water");
+
+begin("bathyas: Lure of the Impaled Sun");
+bat.setRotation({ x: 0, y: 0 });
+const bz1 = mob("minecraft:zombie", 1100.5, 6.5);
+const bzZ = bz1.location.z;
+await use(bat);
+tickN(2);
+eq(head(bat)?.typeId, "plrace:form_bathyas_lure", "the sun blazes, a hand shields the eyes (lure form)");
+ok(bz1.getEffect("slowness") && bz1.getEffect("weakness"), "the lured creature is Sun-Marked (slowed, weakened)");
+ok(bz1.location.z < bzZ, "and drawn toward the light");
+ok(particles("plrace:lure_pulse") > 0, "a warped ring of light");
+
+begin("bathyas: Goblin Maw Rush");
+await use(bat, true); // -> Maw
+faceTo(bat, bz1);
+const bh = hp(bz1);
+bat._health = 12;
+await use(bat);
+tickN(14);
+ok(bh - hp(bz1) >= 11 - 0.01, "the jaw shoots out: a Sun-Marked victim takes 11");
+ok(bat._health > 12, "and the bite feeds Bathyas");
+ok(particles("plrace:maw_bite") > 0, "teeth and a dark splash");
+bat._health = 20;
+
+begin("bathyas: Isopod Bastion");
+await use(bat, true); // -> Bastion
+await use(bat);
+tickN(2);
+eq(head(bat)?.typeId, "plrace:form_bathyas_bastion", "the plates close (bastion form)");
+eq(bat.getEffect("resistance")?.amplifier, 1, "Resistance II");
+bz1.location = { x: 1100.5, y: 64, z: 2.0 };
+const bh2 = hp(bz1);
+bat.applyDamage(4, { cause: "entityAttack", damagingEntity: bz1 });
+tickN(2);
+ok(bh2 - hp(bz1) >= 3 - 0.01, "a blow on the plates answers with a counterpulse");
+tickN(130);
+bz1.remove();
+
+begin("bathyas: Draw the Sun");
+await use(bat, true); // -> Draw
+await use(bat);
+tickN(16);
+eq(inv(bat).getItem(bat.selectedSlotIndex)?.typeId, "plrace:sun_sword", "the sun is in the hand: a real weapon item");
+eq(inv(bat).getItem(bat.selectedSlotIndex)?.lockMode, "inventory", "it cannot be dropped");
+eq(inv(bat).slots.some((x) => x?.typeId === "plrace:focus_bathyas"), true, "the focus moved to a free slot");
+tickN(2);
+eq(head(bat)?.typeId, "plrace:form_bathyas_unshackled", "the open wound glows (unshackled form)");
+forceSave();
+eq(cdLeft(bat, "draw_the_sun"), 0, "drawing is free - the cooldown waits for the return");
+tickN(25);
+ok(bat.getEffect("strength") && bat.getEffect("speed"), "unshackled: Strength and Speed");
+const st0 = data(bat).res.stab;
+tickN(400);
+forceSave();
+ok(data(bat).res.stab < st0 - 10, "Stability drains while the sun is out");
+inv(bat).setItem(30, new ItemStack("plrace:sun_sword", 1));
+tickN(25);
+eq(inv(bat).slots.filter((x) => x?.typeId === "plrace:sun_sword").length, 1, "a second sun never survives");
+hold(bat, "plrace:focus_bathyas");
+await use(bat);
+tickN(2);
+eq(inv(bat).slots.some((x) => x?.typeId === "plrace:sun_sword"), false, "Return the Sun: the blade goes home");
+eq(head(bat)?.typeId, "plrace:form_bathyas", "the impaled form is back");
+forceSave();
+ok(cdLeft(bat, "draw_the_sun") > 0, "the cooldown starts on the return");
+
+begin("bathyas: recovery");
+commands.get("plrace:resetcooldowns").cb({}, [bat]);
+await settle(2);
+await use(bat);
+tickN(16);
+eq(data(bat).st.sun, "drawn", "drawn again");
+bat.kill();
+await settle(2);
+harness.respawn(bat);
+await settle(6);
+tickN(25);
+eq(inv(bat).slots.some((x) => x?.typeId === "plrace:sun_sword"), false, "death returns the sun to the chest (no sword left)");
+ok(data(bat).st.sun !== "drawn", "and the state is impaled again");
+bat._health = 20;
+commands.get("plrace:resetcooldowns").cb({}, [bat]);
+await settle(2);
+hold(bat, "plrace:focus_bathyas");
+await use(bat);
+tickN(16);
+harness.leave(bat);
+await settle(2);
+harness.rejoin(bat);
+await settle(10);
+tickN(25);
+eq(inv(bat).slots.some((x) => x?.typeId === "plrace:sun_sword"), false, "logout returns the sun as well");
+
+begin("bathyas: Abyssal Daybreak");
+hold(bat, "plrace:focus_bathyas");
+commands.get("plrace:resetcooldowns").cb({}, [bat]);
+await settle(2);
+await use(bat, true); // -> Daybreak (fifth)
+const bz3 = mob("minecraft:zombie", 1100.5, 5.5);
+const bz4 = mob("minecraft:zombie", 1104.5, 0.5);
+const b3 = hp(bz3);
+await use(bat);
+eq(bat.inputPermissions.isPermissionCategoryEnabled(InputPermissionCategory.LateralMovement), false, "Bathyas stands his ground");
+tickN(34);
+ok(bat._fog.includes("plrace_ab"), "Abyssal Extinction: the deep closes in (a local dark haze)");
+tickN(40);
+ok(particles("plrace:sunrise_pillar") > 0, "Impossible Sunrise: a pillar of daylight");
+tickN(40);
+ok(particles("plrace:leviathan") >= 3, "Leviathan silhouettes pass through the light");
+tickN(40);
+ok(particles("plrace:solar_execution") > 0, "Solar Execution");
+ok(b3 - hp(bz3) >= 10 - 0.01, "Abyssal Daybreak: 10+ damage to everything within 9 blocks");
+tickN(40);
+ok(!bat._fog.includes("plrace_ab"), "the haze lifts afterwards");
+eq(bat.inputPermissions.isPermissionCategoryEnabled(InputPermissionCategory.LateralMovement), true, "movement restored");
+ok(bat.getEffect("slowness") && bat.getEffect("weakness"), "and Bathyas is spent");
+tickN(60);
+bz3.remove();
+bz4.remove();
+commands.get("plrace:setrace").cb({ sourceEntity: bat }, "none", [bat]);
+await settle(4);
+ok(!JSON.parse(world.getDynamicProperty("plrace:unique") ?? "{}")["008"], "leaving the lineage releases the Unique claim");
+harness.leave(bat);
+
+// ======================================================================== 009 Octamyces Undecimus (v1.4)
+begin("octamyces: lineage");
+const octa = harness.join("Octa", { x: 1200.5, y: 64, z: 0.5 });
+await settle(12);
+tickN(60);
+await settle(10);
+commands.get("plrace:setrace").cb({ sourceEntity: octa }, "octamyces", [octa]);
+await settle(4);
+eq(data(octa).race, "009", "race 009 persisted");
+eq(head(octa)?.typeId, "plrace:form_octamyces", "octamyces crest worn");
+hold(octa, "plrace:focus_octamyces");
+
+begin("octamyces: Parallax Sporeveil");
+const oz1 = mob("minecraft:zombie", 1203.5, 2.5);
+const ogol = mob("minecraft:iron_golem", 1197.5, 2.5);
+await use(octa);
+tickN(2);
+eq(head(octa)?.typeId, "plrace:form_octamyces_sporeveil", "the gills unfold (sporeveil form)");
+ok(oz1.getEffect("slowness"), "the zombie is parallax-infected");
+ok(!ogol.getEffect("slowness"), "an iron golem's senses are not fooled");
+Math.random = () => 0;
+const oh = octa._health;
+octa.applyDamage(4, { cause: "entityAttack", damagingEntity: oz1 });
+eq(octa._health, oh, "an infected creature strikes a version of you that is not there");
+Math.random = realRandom;
+const echoes0 = particles("plrace:parallax_echo");
+for (let k = 0; k < 6; k++) {
+  oz1.location = { x: 1203.5, y: 64, z: 2.5 + k * 0.4 };
+  tickN(8);
+}
+ok(particles("plrace:parallax_echo") > echoes0, "the infected leave false afterimages where they stood");
+ogol.remove();
+
+begin("octamyces: The Eye That Records");
+await use(octa, true); // -> Record
+oz1.location = { x: 1200.5, y: 64, z: 8.5 };
+faceTo(octa, oz1);
+await use(octa);
+tickN(2);
+eq(head(octa)?.typeId, "plrace:form_octamyces_record", "the eye focuses (record form)");
+for (let k = 0; k < 20; k++) {
+  oz1.location = { x: 1200.5 + k * 0.3, y: 64, z: 8.5 - k * 0.2 };
+  tickN(4);
+}
+tickN(20);
+ok(/recorded §f(\d+)/.test(String(sim.log.actionbar.get(octa.id))) && Number(/recorded §f(\d+)/.exec(String(sim.log.actionbar.get(octa.id)))[1]) >= 10, "the path is recorded point by point");
+
+begin("octamyces: Hyphal Offset");
+await use(octa, true); // -> Offset
+octa.location = { x: 1200.5, y: 64, z: 0.5 };
+octa.setRotation({ x: 0, y: 180 });
+sim.solids.add("1200,64,-3");
+sim.solids.add("1200,65,-3");
+const oz0 = octa.location.z;
+await use(octa);
+ok(octa.location.z < oz0 - 1.4 && octa.location.z > -3, `the body is elsewhere, stopped short of the wall (z ${octa.location.z.toFixed(2)})`);
+ok(OW.getEntities({ type: "plrace:hyphal_echo" }).length === 1, "an echo lingers where it was");
+tickN(70);
+eq(OW.getEntities({ type: "plrace:hyphal_echo" }).length, 0, "the echo collapses after 3 s");
+sim.solids.delete("1200,64,-3");
+sim.solids.delete("1200,65,-3");
+commands.get("plrace:resetcooldowns").cb({}, [octa]);
+await settle(2);
+octa.setOnFire(5);
+await use(octa);
+ok(String(sim.log.actionbar.get(octa.id)).includes("cannot resonate"), "no offset while burning");
+octa.extinguishFire?.();
+octa._fire = 0;
+
+begin("octamyces: The Eleventh Frame");
+await use(octa, true); // -> Frame
+const before = particles("plrace:frame_strike");
+const of1 = hp(oz1);
+await use(octa);
+eq(octa.inputPermissions.isPermissionCategoryEnabled(InputPermissionCategory.LateralMovement), false, "the eye stops; the body is still");
+tickN(2);
+eq(head(octa)?.typeId, "plrace:form_octamyces_frame", "the eleven rings open (frame form)");
+tickN(72);
+ok(particles("plrace:frame_strike") - before >= 6, "the network strikes along the recorded path");
+ok(of1 - hp(oz1) >= 6 - 0.01, "the observed creature is struck where it walked");
+eq(octa.inputPermissions.isPermissionCategoryEnabled(InputPermissionCategory.LateralMovement), true, "movement restored");
+tickN(8);
+ok(String(sim.log.actionbar.get(octa.id)).includes("no recording"), "the recording is spent");
+oz1.remove();
+harness.leave(octa);
+
 // ======================================================================== display check (v1.3.1)
 begin("display check");
 const dia = harness.join("Dia", { x: 900.5, y: 64, z: 0.5 });
@@ -1137,23 +1442,23 @@ ui.answers.length = 0;
 const camsBefore = sim.log.cameras.length;
 answer.action(7); // main codex: Display Check
 answer.action(0); // intro: Start
-answer.modal([false, false, false, false, true, false]); // could not see: 005
+answer.modal([false, false, false, false, true, false, false, false, false]); // could not see: 005
 answer.modal([false]); // the still twin of 005 was visible
 commands.get("plrace:codex").cb({ sourceEntity: dia });
 await settle(2);
 const dcSeen = [];
-for (let i = 0; i < 7 * 60 + 40; i++) {
+for (let i = 0; i < 10 * 60 + 40; i++) {
   tickN(1);
   await new Promise((r) => setTimeout(r, 0));
   const id = head(dia)?.typeId;
   if (id && dcSeen[dcSeen.length - 1] !== id) dcSeen.push(id);
 }
 await settle(4);
-const dcOrder = ["salamander", "golem", "jackalope", "xenentoma", "spaghetti", "nurariten"].map((k) => `plrace:form_${k}`);
+const dcOrder = ["salamander", "golem", "jackalope", "xenentoma", "spaghetti", "nurariten", "dinosauroid", "bathyas", "octamyces"].map((k) => `plrace:form_${k}`);
 ok(dcOrder.every((id, i) => dcSeen.indexOf(id) >= 0 && (i === 0 || dcSeen.indexOf(id) > dcSeen.indexOf(dcOrder[i - 1]))), `every lineage's body is shown in turn (${dcSeen.join(" > ")})`);
 ok(dcSeen.includes("plrace:form_spaghetti_static"), "a body reported missing is shown again as its still twin");
 const dcCams = sim.log.cameras.slice(camsBefore).filter((c) => c.p === dia.id);
-ok(dcCams.filter((c) => c.preset === "minecraft:free").length >= 7 && dcCams[dcCams.length - 1]?.clear, "a camera in front of the player, cleared afterwards");
+ok(dcCams.filter((c) => c.preset === "minecraft:free").length >= 10 && dcCams[dcCams.length - 1]?.clear, "a camera in front of the player, cleared afterwards");
 eq(head(dia)?.typeId, "plrace:form_spaghetti", "the player's own form is back");
 eq(dia.inputPermissions.isPermissionCategoryEnabled(InputPermissionCategory.LateralMovement), true, "movement restored after the check");
 const dcMsg = sim.log.messages.filter((x) => x.p === dia.id).map((x) => x.m).join("\n");

@@ -28,15 +28,19 @@ from anims import core as acore  # noqa: E402
 from anims import races as aset  # noqa: E402
 from anims import life  # noqa: E402
 from models import salamander, golem, jackalope, xenentoma, spaghetti, nurariten, common  # noqa: E402
+from models import dinosauroid, bathyas, octamyces  # noqa: E402
 from anims import nurariten as anim_nurariten  # noqa: E402
 from anims import xenentoma as anim_xenentoma  # noqa: E402
 from anims import spaghetti as anim_spaghetti  # noqa: E402
+from anims import dinosauroid as anim_dinosauroid  # noqa: E402
+from anims import bathyas as anim_bathyas  # noqa: E402
+from anims import octamyces as anim_octamyces  # noqa: E402
 import fx  # noqa: E402
 import fx_ex  # noqa: E402
 from vfx import atlas as vfx_atlas  # noqa: E402
 
 NS = "plrace"
-VERSION = [1, 3, 1]
+VERSION = [1, 4, 0]
 MIN_ENGINE = [1, 26, 60]
 SERVER_API = "2.11.0"
 UI_API = "2.3.0"
@@ -99,6 +103,28 @@ RACES = {
                      "court": "Uninvited Court", "throne": "The Throne Without Permission"},
         "icon": {"variant": "court", "tex": "radiant", "head": ((0, 29.5, 0), 3.2), "body": ((0, 20, 2), 3.7)},
         "portrait_bg": (60, 46, 22)},
+    # ---- Expansion 02 (v1.4.0)
+    "dinosauroid": {
+        "code": "007", "mod": dinosauroid, "anims": anim_dinosauroid.anims, "bounds": (4.0, 3.6, (0, 1.4, 0.5)),
+        "display": "The Unknown Dinosauroid", "protection": 1, "hover": "dark_aqua", "focus": ("Fossil Quill Focus", "dark_aqua"),
+        "variants": {"base": "Composed", "night": "Display Skin (night)", "display": "Crest of Misclassification",
+                     "veer": "Hindwing Veer", "overflow": "Taxonomic Error"},
+        "icon": {"variant": "display", "tex": "base", "head": ((0, 28, -2), 3.6), "body": ((0, 18, 1), 5.0)},
+        "portrait_bg": (16, 52, 50)},
+    "bathyas": {
+        "code": "008", "mod": bathyas, "anims": anim_bathyas.anims, "bounds": (4.0, 4.0, (0, 1.5, 0.3)),
+        "display": "Bathyas, the Sun-Impaled", "protection": 2, "hover": "white", "focus": ("Abyssal Hilt Focus", "white"),
+        "variants": {"base": "Impaled", "lure": "Lure of the Impaled Sun", "maw": "Goblin Maw Rush", "bastion": "Isopod Bastion",
+                     "unshackled": "Unshackled", "daybreak": "Abyssal Daybreak"},
+        "icon": {"variant": "base", "tex": "base", "head": ((0, 27, -1), 3.4), "body": ((0, 18, 0), 5.0)},
+        "portrait_bg": (14, 26, 40)},
+    "octamyces": {
+        "code": "009", "mod": octamyces, "anims": anim_octamyces.anims, "bounds": (4.0, 3.6, (0, 1.3, 0)),
+        "display": "Octamyces Undecimus", "protection": 1, "hover": "dark_purple", "focus": ("Undecimal Lens Focus", "dark_purple"),
+        "variants": {"base": "Witnessing", "sporeveil": "Parallax Sporeveil", "record": "The Eye That Records",
+                     "offset": "Hyphal Offset", "frame": "The Eleventh Frame", "unstable": "Destabilised (burning)"},
+        "icon": {"variant": "record", "tex": "record", "head": ((0, 25, -2), 3.8), "body": ((0, 17, 0), 5.0)},
+        "portrait_bg": (40, 18, 56)},
 }
 DISPLAY = {race: info["display"] for race, info in RACES.items()}
 VARIANT_NAMES = {race: info["variants"] for race, info in RACES.items()}
@@ -355,6 +381,22 @@ def items(lang):
             f"{NS}:codex": {},
         }}}
     lang.append((f"item.{NS}:codex", "Lineage Codex"))
+    # Bathyas' drawn sun (v1.4): a real weapon that only exists while it is out of his chest.  The
+    # scripts lock it to the inventory, never duplicate it and take it back on death, logout or reload.
+    out[f"{NS}:sun_sword"] = {"format_version": "1.21.90", "minecraft:item": {
+        "description": {"identifier": f"{NS}:sun_sword", "menu_category": {"category": "none", "is_hidden_in_commands": True}},
+        "components": {
+            "minecraft:icon": f"{NS}:sun_sword",
+            "minecraft:display_name": {"value": f"item.{NS}:sun_sword"},
+            "minecraft:max_stack_size": 1,
+            "minecraft:hand_equipped": True,
+            "minecraft:damage": {"value": 7},
+            "minecraft:can_destroy_in_creative": False,
+            "minecraft:glint": True,
+            "minecraft:hover_text_color": "gold",
+            "minecraft:tags": {"tags": [f"{NS}:sun_sword"]},
+        }}}
+    lang.append((f"item.{NS}:sun_sword", "The Impaled Sun"))
     for iid, data in out.items():
         wjson(os.path.join(BP, f"items/plrace/{iid.split(':')[1]}.json"), data)
     recipe = {"format_version": "1.20.10", "minecraft:recipe_shapeless": {
@@ -435,7 +477,7 @@ def mirage_entity(lang):
 
 
 def proxy_entity(lang, ident, name, geometry, texture, anims, families, health=1, size=(0.6, 1.6), timer=30,
-                 physics=True, gravity=True, materials=None, scale_events=None, particles=None, extra=None):
+                 physics=True, gravity=True, materials=None, scale_events=None, particles=None, extra=None, rcs=None):
     """A script-owned helper entity: no AI, no drops, no XP, a behaviour-pack timer that
     despawns it on its own (safety net), visual only unless `health` > 1."""
     comps = {
@@ -465,7 +507,7 @@ def proxy_entity(lang, ident, name, geometry, texture, anims, families, health=1
         "component_groups": groups, "components": comps, "events": events}}
     short = ident.split(":")[1]
     wjson(os.path.join(BP, f"entities/plrace/{short}.json"), bp)
-    rcs = [f"controller.render.{NS}.form"] + ([f"controller.render.{NS}.form_cutout"] if "cutout" in geometry else [])
+    rcs = rcs or ([f"controller.render.{NS}.form"] + ([f"controller.render.{NS}.form_cutout"] if "cutout" in geometry else []))
     rp = {"format_version": "1.10.0", "minecraft:client_entity": {"description": {
         "identifier": ident,
         "materials": materials or {"default": "entity_emissive_alpha", "cutout": "entity_alphatest"},
@@ -478,6 +520,21 @@ def proxy_entity(lang, ident, name, geometry, texture, anims, families, health=1
         "enable_attachables": False}}}
     wjson(os.path.join(RP, f"entity/plrace/{short}.entity.json"), rp)
     lang.append((f"entity.{ident}.name", name))
+
+
+def echo_entity(lang):
+    """Octamyces' Hyphal Offset echo (v1.4): its own body left behind for 3 s - visual only."""
+    a = acore.Anim(f"animation.{NS}.hyphal_echo.drift", loop=True)
+    for b in common.FIRST_PERSON_ONLY:
+        a.bone(b, scale=0)
+    for k in range(11):
+        a.bone(f"ring{k}", rot=[0, 0, f"q.life_time * {(-1) ** k * (40 + 9 * k)}"])
+    a.bone("root", pos=[0, "q.life_time * 0.8", 0])
+    wjson(os.path.join(RP, "animations/plrace/hyphal_echo.animation.json"), acore.file([a]))
+    proxy_entity(lang, f"{NS}:hyphal_echo", "Hyphal Echo", {"default": f"geometry.{NS}.octamyces.base"},
+                 f"{TEXROOT}/octamyces/octamyces_base", {"drift": f"animation.{NS}.hyphal_echo.drift"}, ["inanimate"],
+                 health=1, size=(0.6, 1.8), timer=6, physics=False, gravity=False,
+                 materials={"default": "entity_alphablend"}, rcs=[f"controller.render.{NS}.echo"])
 
 
 def race_entities(lang):
@@ -543,6 +600,13 @@ def race_entities(lang):
                      {"idle": f"animation.{NS}.{geo_id}.idle"}, families, health=1, size=(0.6, 0.6), timer=20,
                      physics=False, gravity=False, scale_events=extra,
                      extra={"minecraft:scale": {"value": base_scale}} if base_scale else None)
+
+
+def echo_render_controllers(rc):
+    """Octamyces' Hyphal Offset echo: the body, translucent and tinted toward its own iridescence, fading."""
+    rc["render_controllers"][f"controller.render.{NS}.echo"] = {
+        "geometry": "Geometry.default", "materials": [{"*": "Material.default"}], "textures": ["Texture.default"],
+        "color": {"r": 0.55, "g": 0.95, "b": 1.0, "a": "math.clamp(0.5 - q.life_time * 0.12, 0.08, 0.5)"}}
 
 
 def mirage_render_controllers(rc):
@@ -611,6 +675,8 @@ def icons():
         tex_entries[f"{NS}:focus_{race}"] = {"textures": f"{TEXROOT}/items/focus_{race}"}
     _codex_icon().save(os.path.join(d, "codex.png"))
     tex_entries[f"{NS}:codex"] = {"textures": f"{TEXROOT}/items/codex"}
+    _sun_sword_icon().save(os.path.join(d, "sun_sword.png"))
+    tex_entries[f"{NS}:sun_sword"] = {"textures": f"{TEXROOT}/items/sun_sword"}
     # list form (one entry each): accepted by every client and preferred by the Creator Tools schema
     tex_entries = {k: {"textures": [v["textures"]] if isinstance(v["textures"], str) else v["textures"]} for k, v in tex_entries.items()}
     wjson(os.path.join(RP, "textures/item_texture.json"),
@@ -693,7 +759,62 @@ def _focus_icons():
     d.ellipse([14.6 * S, 28.6 * S, 17.4 * S, 31.4 * S], fill=(200, 46, 32, 255))
     d.ellipse([14.8 * S, 9 * S, 17.2 * S, 11.4 * S], fill=(255, 220, 110, 255))
     out["nurariten"] = _finish(img)
+    # Fossil Quill: a fossilised feather in amber-veined stone, a sickle claw for a nib
+    img, d, S = _pix()
+    d.line([8 * S, 27 * S, 23 * S, 5 * S], fill=(236, 224, 196, 255), width=int(1.3 * S))
+    for k in range(8):
+        t = 0.18 + k * 0.09
+        x, y = 8 * S + (23 - 8) * S * t, 27 * S + (5 - 27) * S * t
+        L = (3.5 + 3.2 * math.sin(t * math.pi)) * S
+        for side in (-1, 1):
+            d.line([x, y, x + side * L * 0.9 - 0.3 * L, y + side * L * 0.55 + 0.2 * L], fill=(62, 200, 170, 255) if k % 2 else (40, 150, 132, 255),
+                   width=int(0.9 * S))
+    d.polygon([(7 * S, 26 * S), (9.5 * S, 27.5 * S), (5 * S, 31 * S)], fill=(250, 244, 230, 255))
+    d.ellipse([18 * S, 8 * S, 21 * S, 11 * S], fill=(255, 176, 70, 255))
+    out["dinosauroid"] = _finish(img)
+    # Abyssal Hilt: a black, barnacled hilt whose pommel is a small trapped sun
+    img, d, S = _pix()
+    d.polygon([(14 * S, 10 * S), (18 * S, 10 * S), (19 * S, 25 * S), (13 * S, 25 * S)], fill=(18, 26, 34, 255))
+    for yy in (13, 16, 19, 22):
+        d.line([13.5 * S, yy * S, 18.5 * S, (yy + 0.8) * S], fill=(56, 92, 96, 255), width=int(0.8 * S))
+    d.polygon([(6 * S, 8 * S), (26 * S, 8 * S), (24 * S, 11 * S), (8 * S, 11 * S)], fill=(28, 40, 52, 255))
+    d.line([8 * S, 8.5 * S, 24 * S, 8.5 * S], fill=(255, 226, 140, 255), width=int(0.8 * S))
+    d.ellipse([11 * S, 24 * S, 21 * S, 31.5 * S], fill=(255, 240, 190, 255))
+    d.ellipse([13 * S, 25.5 * S, 19 * S, 30 * S], fill=(255, 255, 245, 255))
+    for k in range(8):
+        a = k * math.pi / 4
+        d.line([16 * S + math.cos(a) * 5.5 * S, 27.8 * S + math.sin(a) * 4.5 * S, 16 * S + math.cos(a) * 7.5 * S,
+                27.8 * S + math.sin(a) * 6 * S], fill=(255, 214, 110, 255), width=int(0.7 * S))
+    d.polygon([(15 * S, 2 * S), (17 * S, 2 * S), (17.5 * S, 8 * S), (14.5 * S, 8 * S)], fill=(240, 236, 220, 255))
+    out["bathyas"] = _finish(img)
+    # Undecimal Lens: concentric polygons (3..11 sides) in iridescent violet, cyan and pink, a void pupil
+    img, d, S = _pix()
+    cols = [(164, 107, 255), (95, 245, 210), (255, 122, 217)]
+    for k, sides in enumerate(range(11, 2, -1)):
+        r = (14.5 - k * 1.45) * S
+        rot = k * 0.37
+        pts = [(16 * S + math.cos(rot + i * 2 * math.pi / sides) * r, 16 * S + math.sin(rot + i * 2 * math.pi / sides) * r) for i in range(sides)]
+        d.polygon(pts, outline=cols[k % 3] + (255,), width=int(0.9 * S))
+    d.ellipse([12.5 * S, 12.5 * S, 19.5 * S, 19.5 * S], fill=(18, 8, 34, 255))
+    d.ellipse([14.2 * S, 13.6 * S, 15.6 * S, 15 * S], fill=(230, 220, 255, 255))
+    out["octamyces"] = _finish(img)
     return out
+
+
+def _sun_sword_icon():
+    """The Impaled Sun drawn out of the chest: a white-gold blade with a sunburst guard (32 px)."""
+    img, d, S = _pix()
+    d.polygon([(26.5 * S, 3.5 * S), (28.5 * S, 5.5 * S), (13 * S, 21 * S), (11 * S, 19 * S)], fill=(255, 250, 230, 255))
+    d.line([27.5 * S, 4.5 * S, 12 * S, 20 * S], fill=(255, 214, 110, 255), width=int(0.7 * S))
+    cx, cy = 11 * S, 21 * S
+    for k in range(12):
+        a = k * math.pi / 6
+        r2 = (5.5 if k % 2 == 0 else 4.0) * S
+        d.line([cx, cy, cx + math.cos(a) * r2, cy + math.sin(a) * r2], fill=(255, 206, 90, 255), width=int(0.9 * S))
+    d.ellipse([cx - 2.4 * S, cy - 2.4 * S, cx + 2.4 * S, cy + 2.4 * S], fill=(255, 246, 210, 255))
+    d.line([9 * S, 23 * S, 4 * S, 28 * S], fill=(30, 36, 44, 255), width=int(2.2 * S))
+    d.ellipse([2.5 * S, 26.5 * S, 5.5 * S, 29.5 * S], fill=(255, 226, 140, 255))
+    return _finish(img)
 
 
 def _codex_icon():
@@ -740,6 +861,7 @@ def particles():
         wjson(os.path.join(RP, f"particles/plrace/{name}.json"), data)
     wjson(os.path.join(RP, "fogs/plrace_blood_moon.json"), fx.fog())
     wjson(os.path.join(RP, "fogs/plrace_heaven_light.json"), fx.heaven_fog())
+    wjson(os.path.join(RP, "fogs/plrace_abyss.json"), fx.abyss_fog())
 
 
 def _mk(path):
@@ -772,14 +894,14 @@ def manifests():
             {"module_name": "@minecraft/server", "version": SERVER_API},
             {"module_name": "@minecraft/server-ui", "version": UI_API}],
         "metadata": {"authors": ["Playable Races project"], "product_type": "addon",
-                     "generated_with": {"plrace_build": ["1.3.1"]}}}
+                     "generated_with": {"plrace_build": ["1.4.0"]}}}
     rp = {"format_version": 2, "header": {
         "name": "pack.name", "description": "pack.description", "uuid": UUID["rp"], "pack_scope": "world",
         "version": VERSION, "min_engine_version": MIN_ENGINE},
         "modules": [{"type": "resources", "uuid": UUID["rp_res"], "version": VERSION}],
         "dependencies": [{"uuid": UUID["bp"], "version": VERSION}],
         "metadata": {"authors": ["Playable Races project"], "product_type": "addon",
-                     "generated_with": {"plrace_build": ["1.3.1"]}}}
+                     "generated_with": {"plrace_build": ["1.4.0"]}}}
     wjson(os.path.join(BP, "manifest.json"), bp)
     wjson(os.path.join(RP, "manifest.json"), rp)
 
@@ -831,7 +953,9 @@ def main():
     rc = render_controllers()
     mirage_entity(lang_rp)
     race_entities(lang_rp)
+    echo_entity(lang_rp)
     mirage_render_controllers(rc)
+    echo_render_controllers(rc)
     wjson(os.path.join(RP, "render_controllers/plrace/forms.render_controllers.json"), rc)
     prc, arc = player_overrides()
     wjson(os.path.join(RP, "render_controllers/plrace/player_form_visibility.render_controllers.json"), prc)
@@ -841,9 +965,9 @@ def main():
     particles()
     pack_icon(os.path.join(BP, "pack_icon.png"), os.path.join(RP, "pack_icon.png"))
     lang_rp = [("pack.name", "Playable Races (Resources)"), (f"{NS}.rp_version", ".".join(map(str, VERSION))),
-               ("pack.description", "Races 001-006: Flora Salamander, Runic Titan Golem, Blood Moon Jackalope, Xenentoma, Flying Spaghetti Monster, Nurariten [Unique]")] + lang_rp
+               ("pack.description", "Races 001-009: Flora Salamander, Runic Titan Golem, Blood Moon Jackalope, Xenentoma, Flying Spaghetti Monster, Nurariten [Unique], Unknown Dinosauroid, Bathyas [Unique], Octamyces Undecimus")] + lang_rp
     lang_bp = [("pack.name", "Playable Races"),
-               ("pack.description", "Six playable lineages: Salamander, Golem, Jackalope, Xenentoma, Flying Spaghetti Monster and the Unique Nurariten")]
+               ("pack.description", "Nine playable lineages: Salamander, Golem, Jackalope, Xenentoma, Flying Spaghetti Monster, the Unique Nurariten, the Unknown Dinosauroid, the Unique Bathyas and Octamyces Undecimus")]
     texts(lang_rp, lang_bp)
     manifests()
     compiled = False if no_tsc else compile_scripts()

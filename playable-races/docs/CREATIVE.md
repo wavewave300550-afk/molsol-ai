@@ -286,13 +286,101 @@ The three new bodies use the same layered, stateless animation system as v1.0.2 
 | ![006 effects](images/vfx_nurariten.gif) | ![005 effects](images/vfx_spaghetti.gif) | ![004 effects](images/vfx_xenentoma.gif) |
 | ![001 effects](images/vfx_salamander.gif) | ![002 effects](images/vfx_golem.gif) | ![003 effects](images/vfx_jackalope.gif) |
 
+## Expansion 02 (v1.4.0): races 007–009
+
+Built into the existing add-on like Expansion 01: same packs and pack ids, the same framework, races 001–006 kept (their files only change where the shared lists grow — the nine-race player/armour visibility lists, the Codex, the HUD), permanent codes **007**, **008** and **009** added, every saved race assignment untouched. Nothing here claims an in-game result: see [TESTING.md](TESTING.md) for what was run and what is left for a real client.
+
+### Research behind the designs
+
+The brief asked to keep three kinds of statement apart. Below, **A** = direct fossil / specimen evidence, **B** = scientific inference or uncertain reconstruction, **C** = this add-on's deliberate fiction.
+
+**007 – prehistoric anatomy**
+* *Microraptor* (Early Cretaceous, Jehol Biota): **A** long pennaceous flight feathers on the forelimbs **and** hindlimbs ("four wings"); **B** iridescent black plumage from fossil melanosomes; **B** how the hindwings were held in flight. ([NHM Dino Directory: Microraptor](https://www.nhm.ac.uk/discover/dino-directory/microraptor.html))
+* *Yi qi* (Late Jurassic scansoriopterygid): **A** a rod-like *styliform element* projecting from the wrist and patches of membranous tissue near the forelimb; **B** a bat-like membranous wing; **C** membranes along the *hindlimbs* — that is our synthesis, not a claim about any fossil.
+* *Psittacosaurus*: **A** a row of long bristle-like integumentary structures on the tail (Mayr et al. 2002, Naturwissenschaften — [PubMed 12435037](https://pubmed.ncbi.nlm.nih.gov/12435037/)); **A** the parrot-like beak.
+* *Therizinosaurus*: **A** enormous manual claw cores; **B** their length with the keratin sheath.
+* Oviraptorosaurs: **A** toothless beaks, cranial crests, feathered bodies (*Caudipteryx*), brooding postures (*Citipati*).
+* Hadrosaurs (*Parasaurolophus*): **A** a hollow tubular crest carrying the nasal passage; **B** its use as a resonator/display.
+* Ceratopsians: **A** horns and frills; **B** display / recognition.
+* Dromaeosaurids: **A** the enlarged, raised claw of pedal digit II; **B** its use (prey restraint is one hypothesis).
+* Ankylosaurs: **A** osteoderms; the nodosaur *Borealopelta* preserves keratin and pigment.
+* Further oddities we drew on: *Kulindadromeus* (**A** scales *and* filaments on one ornithischian — feathers and scales coexisting), *Epidexipteryx* (**A** an elongated third finger and ribbon tail feathers), *Balaur* (**A** paired enlarged foot claws), *Halszkaraptor* (**A** swan-like neck and flipper-like forelimbs, **B** amphibious habits — our swimming style).
+* The brief's second link (`PMC12020036`) could not be opened from the build environment (the host is blocked there), so nothing in this report is attributed to it.
+
+**008 – deep-sea anatomy**
+* Anglerfishes (Ceratioidei): **A** the illicium and luminous esca (a lure lit by symbiotic bacteria); **A** some deep-sea fishes have "ultra-black" skin that reflects under 0.5 % of light (Davis et al. 2020). Bathyas' skin, and his lure being a sun rather than a bacterium, follow from this (**C** for the sun).
+* Goblin shark (*Mitsukurina owstoni*): **A** "slingshot" jaws that shoot forward on elastic ligaments when it bites (Nakaya et al. 2016).
+* Giant isopods (*Bathynomus*): **A** a segmented dorsal armour of tergites that lets the body curl.
+* Also: needle teeth (viperfish, fangtooth), photophores, gills.
+* **C:** the humanoid chimera, the sword through the chest, its life-support role and everything solar.
+
+**009 – fungal biology**
+* **A** bioluminescent fungi (*Mycena*, *Armillaria*, *Omphalotus*; fungal luciferin), mycelial networks of branching hyphae and rhizomorphs, photoreceptors (the white-collar complex; *Phycomyces* sporangiophores bend toward light), spore dispersal (ballistospory, puffballs, *Pilobolus* aiming its spore capsules at light), labyrinthine and spiral gill/pore patterns (*Daedalea*, *Lenzites*).
+* **B** spiking electrical activity reported in mycelia — measured, its meaning disputed; claims about network "communication" between plants are contested.
+* **C:** the extradimensional consciousness, the geometric eye, floating, perception-altering spores.
+
+### 007 · The Unknown Dinosauroid
+
+**Identity kept:** a calm, quiet, disturbingly observant organism whose body is a list of things that should not coexist. **Taxonomic Collapse** is its system.
+
+| Brief element | Delivered |
+|---|---|
+| Morphological Drift (structures change subtly; intentional states, not geometry corruption) | Four configurations cycling every ~75 s on **world time** (PLUMED, WEBBED, TOOTHED, FANNED); the animation and the script read the same clock, so each visible configuration is a real bonus (Veer distance, gliding, +1 melee, display reach). Shown on the HUD |
+| Ancestral Misprint (hesitation, disrupted timing, misleading cues; never claim AI control the API lacks) | **MISCLASSIFIED** status: Slowness II, Weakness, and 50% of its blows on the Dinosauroid miss (cancelled). Bedrock scripts cannot rewrite a mob's target selection, so the "misreading" is expressed through these real effects; a broken-cladogram mark floats over the creature |
+| Evolutionary Overflow | Taxonomic Error's form: every display structure active at once, luminous eyes |
+| Hindwing Veer 14 s — leap/evade/glide, no sustained flight | 14 s: crouch-compress-launch ~7 blocks along your movement, hindwings and membranes unfold, the tail steers; sneak in the air for a short glide; no fall damage; a blow in the next 0.6 s is halved |
+| Crest of Misclassification 24 s | 24 s: crest raised, pouch swollen, fans spread; everything hostile within 7 (+3 FANNED, +2 Overflow) flinches and is MISCLASSIFIED for 7 s |
+| Sickle Testament 20 s, enhanced vs Misclassified | 20 s: a pivoting hindlimb strike (120° arc, 6 damage); a misclassified target takes 10, is pinned (Slowness IV) and the status is spent; full circle during Taxonomic Error |
+| Taxonomic Error 42 s | 42 s: 12 s of Speed I, Jump Boost II, 40% faster recovery of the other abilities, a misclassifying aura (every 2 s within 5 blocks), misclassifying melee; then 4 s of exhaustion |
+| Passives: Fossil Memory, Unreadable Posture, Display Organism, Primitive Intelligence | Speed I on rough ground (stone, gravel, sand, tuff, deepslate, basalt, terracotta...); 15% of creatures' melee blows miss; the display skin glows in low light (the *night* form) and displays reach farther; staring at a creature for 2 s studies it (health shown, counts as misclassified for the next Sickle Testament) |
+| Weaknesses | Light protection, no sprint bonus, Slowness I under low ceilings (2-block tunnels), Taxonomic Error exhaustion |
+
+### 008 · Bathyas, the Sun-Impaled — บาธีอัส ผู้แบกสุริยะ (UNIQUE)
+
+**Identity kept:** an irritable, exhausted old abyssal chimera kept alive by the sword that torments it; quiet and terrifying once the sword is out. **Solar Impalement** is its system.
+
+| Brief element | Delivered |
+|---|---|
+| Impaled State: life support, regeneration/resilience, solar energy, lure | Stability regenerates; +2 hearts (Health Boost); a regeneration pulse every 12 s; darkness and blindness are burned away; the Lure is only available impaled |
+| Unshackled State: sword combat, aggression, mobility; declining stability, a safe window, must return | **The Impaled Sun** becomes a real weapon item in your hand (7 attack damage, +3 against the Sun-Marked) with Strength I and Speed I; Stability drains slowly for 15 s, then fast; at 0 the body fails (Wither) until you return it; at 2 hearts with no Stability left the body forces the sword back (heavy penalty) |
+| Sword must not duplicate; death, interruption, reload must recover | The item is locked to the inventory (cannot be dropped or stored), checked every second (never two, never one while impaled), removed and the state reset on death, logout, reload, dimension change and lineage change |
+| Lure of the Impaled Sun 18 s | 18 s (impaled only): squint and shield the eyes while a warped ring of light rolls 10 blocks; hostile creatures are drawn a step closer and SUN-MARKED for 8 s (a sun sigil over the head, Slowness I, Weakness I) |
+| Goblin Maw Rush 20 s | 20 s: a low head-first surge up to 9 blocks, the jaw shoots out: 7 damage, 11 to the Sun-Marked (who lose the mark and feed you 4 health) |
+| Isopod Bastion 28 s | 28 s: plates close for 6 s: Resistance II, knockback absorbed, light leaking through the seams; each melee blow (once per second) answers with a counterpulse (3 damage, knockback, Sun-Marked when impaled) |
+| Draw the Sun 45 s + Re-Impalement | The fourth ability is a toggle: DRAW (grip, hesitate, tear it out — free) and RETURN (the blade slides home, Stability +20, a moment of misery — the 45 s cooldown starts here) |
+| ABYSSAL DAYBREAK 180 s, six stages, localised, not Nurariten's procession | 9 s, standing: **I** Solar Overload (a 6+ hit interrupts, half the cooldown back) · **II** Abyssal Extinction — a dark local haze for players within 24 blocks (never the world's sky or time; the same world setting as HYAKUTEN's haze turns it off) · **III** Impossible Sunrise — a pillar of light up and down · **IV** Leviathan Silhouettes — vast deep-sea shapes pass through the light (particles, no mobs) · **V** Solar Execution · **VI** the field erupts: 10 damage within 9 blocks (15 to the Sun-Marked), knockback, marks, then 6 s of burning deep-sea daylight (2/s within 6). Afterwards the sun is back in the chest and Bathyas is spent |
+| Passives: Sun-Impaled Core, Abyssal Constitution, Irritated Luminary, Harpoon Vitality | As above; water breathing always, Conduit Power in water, regeneration with the head under water; bright open sunlight gives Strength I but raises Photic Strain |
+| Weaknesses: Photic Misery, Unshackled Risk, Large Target | **Photic Strain** (Lure +30, Daybreak +60, sunlight +1/s): at 100, brief blindness and slowness; projectiles hit 15% harder; no sprint bonus |
+
+**Why not Golem, Nurariten or Jackalope again:** no permanent armour bonus (only the 6-second Bastion), no territory or judgement, no speed race — its identity is the decision of when to take the sun out and how long to keep it.
+
+### 009 · Octamyces Undecimus — ออคทา-ไมซีส แห่งรอยแยกที่ 11
+
+**Identity kept:** a fungal surveillance organism from elsewhere; the eye carries the personality. **Eleventh Parallax** is its system.
+
+| Brief element | Delivered |
+|---|---|
+| Observation (records positions and paths) | **The Eye That Records** (22 s, 16 blocks, line of sight): OBSERVED for 5 s (an eye sigil over it, +20% damage from you) and 25 points of its path kept for 30 s (HUD: points and seconds left) |
+| Parallax Infection (misleading positional information; real mechanics for mobs) | **Parallax Sporeveil** (18 s, radius 6): infected for 6 s — Slowness I, false afterimages where it stood a moment ago, and 40% of its blows against you miss (25% for players). Wardens, iron golems, withers, dragons, elder guardians and creakings are not fooled |
+| Rift Resonance (apparent position changes, positional echoes) | **Hyphal Offset** (26 s): up to 6 blocks along your movement, checked half a block at a time (never through walls, into lava, fire or other hazards); an **echo** entity — a translucent copy of the body — stays 3 s and bursts into spores; creatures near the old position are infected |
+| The Eleventh Frame 48 s — stop, eleven rings open, afterimages of recorded positions, filaments, a network, timed attacks along the trajectory, collapse; must use the recording | 3.5 s rooted: rings open, every recorded point appears, filaments reach out and knit the path, then the network strikes along it in order (4 damage per point, 6 to the observed creature, at most 4 strikes per creature) and a final hit as the images collapse; without a recording it strikes up to 5 creatures where they stand |
+| Passives: Resonant Levitation, Panoptic Witness, Spore Affinity, Dimensional Afterimage | Half fall damage and a sneaking drift; invisible creatures within 12 blocks are revealed to you, blindness and darkness are removed; a regeneration pulse in rain, water or low light; faint echoes behind you while sprinting |
+| Weaknesses: fire, hazards, some senses not fooled, fragile | +50% fire damage, a scorched *unstable* form and no Offset while burning; +10% damage taken; the immune list above |
+| Accessibility: no strobing, full-screen flashes, forced camera, persistent distortion | Iridescence is painted in gradients and slow hue shifts; effects are local and short; no camera control, no screen effects |
+
+### Technical limits and how they were met
+* **Players' bodies:** like every race, the creatures are attachables worn in the head slot and following the player's skeleton; `minecraft:player` is not overridden, the hitbox is the player's.
+* **Mob perception:** the Script API has no hook into a mob's target choice, so "hesitation" and "misreading" are slowness, weakness and blows that miss *the player who caused it* — effects you can measure.
+* **"Glowing" marks:** Bedrock has no Glowing effect; statuses are shown by sigils over the creature's head.
+* **The drawn sword** is a real item (rendered like any held weapon); the embedded sword is part of the 3D body. A 3D held-item attachable was not used because its placement in the hand cannot be verified without a client.
+
 ## Shared systems built for this release
 
 * **Lineage Codex** — selection with race portraits, detail pages (lore, strengths, weaknesses, passives, abilities with the original brief values), a confirmation step, the Rite of Unbecoming (policy-controlled race change), Veil/Manifest, Crest Infusion, Recall Focus, an archive of all races and operator settings. Opens once automatically for new players and never nags.
 * **Rite ceremony** on transformation (rune aura in the race colour, arms-raised pose, title).
 * **Ability engine** — cooldowns, charges, channels with explicit interruption rules, failure reasons that never waste a cooldown, a green aim reticle for targeted abilities, an action-bar HUD.
 * **Persistence & safety** — per-player data (race, selection, cooldowns as remaining time, resources, enchantments, input locks) and world data (settings, Blood Moon); clean-up on death, logout, dimension change and race change; villagers, golems, pets, armour stands and (unless PvP is enabled) players are never hit; no terrain is modified.
-* **Expansion-ready** — permanent race codes 001–006; a new race is one model module, one animation set and one `RaceDef` registered in `src/races/registry.ts` (see the README).
+* **Expansion-ready** — permanent race codes 001–009; a new race is one model module, one animation set and one `RaceDef` registered in `src/races/registry.ts` (see the README).
 * **Added for Expansion 01:** helper entities with owners, lifetimes and guaranteed cleanup (`src/systems/proxies.ts`); Unique lineages with world-level claims (`src/systems/unique.ts`); Divine Jurisdiction (`src/systems/jurisdiction.ts`); explosion and item-use hooks for races; a race-wide 4-tick world hook; five-ability support in the engine, HUD and Codex; the Codex shows six lineages with the Unique badge and who holds it.
 
 ## Lore summary

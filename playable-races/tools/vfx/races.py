@@ -365,4 +365,6 @@ def build():
     xenentoma()
     spaghetti()
     nurariten()
+    from vfx import expansion02      # races 007-009 (v1.4)
+    expansion02.build()
     return dict(L.REG)

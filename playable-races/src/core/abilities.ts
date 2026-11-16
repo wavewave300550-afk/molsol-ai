@@ -66,6 +66,7 @@ export function remaining(p: Player, s: Session, race: RaceDef, a: AbilityDef): 
 
 function spend(p: Player, s: Session, race: RaceDef, a: AbilityDef): void {
   const now = system.currentTick;
+  if (a.freeCast?.(ctxOf(p, s, race, a))) return; // e.g. the first half of a toggle (Draw the Sun)
   const max = maxCharges(p, s, race, a);
   if (max <= 1) {
     s.readyAt.set(a.id, now + cdTicks(p, s, race, a));

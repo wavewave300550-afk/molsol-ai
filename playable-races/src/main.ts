@@ -1,5 +1,5 @@
 /**
- * Playable Races (races 001-006).
+ * Playable Races (races 001-009).
  * Entry point: wires world events, the tick loops and the custom item components.
  * The vanilla player entity is NOT overridden; everything is driven from here.
  */
@@ -16,6 +16,7 @@ import { aimTarget, chest } from "./core/targets.js";
 import { cancel, startScheduler } from "./core/tasks.js";
 import { warn } from "./core/util.js";
 import { registerCommands } from "./commands.js";
+import { tickStatuses } from "./systems/status.js";
 import { integrity, restore } from "./lineage.js";
 import { golemLightning, inWard } from "./races/golem.js";
 import { moonhunt } from "./races/jackalope.js";
@@ -367,6 +368,7 @@ function startLoops(): void {
       try {
         if (s.tempVariant && s.tempVariant.until <= system.currentTick) refreshForm(p, s);
         else if (s.flags.size) refreshForm(p, s);
+        else if (!s.tempVariant && !s.data.veiled && !s.diag && race.variant(p, s) !== s.shownVariant) refreshForm(p, s); // surroundings changed the form (night skin, burning...)
         race.tick5?.(p, s);
         updateHud(p, s);
         if (phase % 2 === 0 && holdingFocus(p, race)) reticle(p, s);
@@ -378,6 +380,7 @@ function startLoops(): void {
       tickMarks();
       tickMirages();
     }
+    tickStatuses();
     for (const r of RACES) {
       if (!r.worldTick4) continue;
       try {

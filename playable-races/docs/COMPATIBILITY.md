@@ -1,6 +1,6 @@
 # Technical Compatibility Report
 
-*Version 1.3.1 — foundation races 001–003 plus Expansion 01 (races 004–006), with the bodies, animations and effects of races 004–006 redrawn in 1.2.0, the generated Molang rewritten into the forms vanilla files use in 1.2.1 (same motion), new ability effects for every race in 1.3.0, and in 1.3.1 a restructured Spaghetti Monster body plus six display-check items (`plrace:form_<race>_static`, never given in play). Nothing about how any race is stored changed: same pack ids, item ids, race codes, form names, saved player data and world settings. Races 001–003 keep their models and textures; their animation text was only rewritten, with identical values (checked by `tools/molang_equiv.py`).*
+*Version 1.4.0 — foundation races 001–003, Expansion 01 (races 004–006) and Expansion 02 (races 007–009), with the bodies, animations and effects of races 004–006 redrawn in 1.2.0, the generated Molang rewritten into the forms vanilla files use in 1.2.1 (same motion), new ability effects for every race in 1.3.0, and in 1.3.1 a restructured Spaghetti Monster body plus six display-check items (`plrace:form_<race>_static`, never given in play). Nothing about how any race is stored changed: same pack ids, item ids, race codes, form names, saved player data and world settings. Races 001–003 keep their models and textures; their animation text was only rewritten, with identical values (checked by `tools/molang_equiv.py`).*
 
 ## Target
 
@@ -36,7 +36,7 @@ Mojang's *Guidelines for Building Cooperative Add-Ons* say add-ons should **not 
 * Add-ons that override `player.entity.json` with a *different render controller name* still work; the creature is drawn, but that add-on decides whether the human skin is also drawn.
 * Not changed (by design, the engine does not support it safely): **hitbox** (0.6 × 1.8), **eye height/camera**, **name-tag height**. The Golem is drawn 2.4 blocks tall but is hit like a normal player; the Jackalope's ears and antlers, the Xenentoma's abdomen and the Nurariten's halo and gate are not hittable. The Spaghetti Monster's hover is visual (the body is drawn a little above the feet); it is not flight.
 
-## Helper entities (races 004–006)
+## Helper entities (races 004–009)
 
 Some abilities need a real object in the world. Every such object is a **script-owned helper entity** with no AI, no loot, no XP and no spawn egg (`is_spawnable: false`):
 
@@ -47,6 +47,7 @@ Some abilities need a real object in the world. Every such object is a **script-
 | `plrace:celestial_gate` | Nurariten, Uninvited Temple (normal) and HYAKUTEN CHŪKŌ (`plrace:huge` event, ×3.6 in the sky) | invulnerable, no physics | 10–13.5 s | 20 s |
 | `plrace:herald` | HYAKUTEN CHŪKŌ, stage II | invulnerable, no physics | ≤ 8.3 s | 20 s |
 | `plrace:procession` | HYAKUTEN CHŪKŌ, stage III–IV (one entity = one column of 12 attendants) | invulnerable, no physics | ≤ 6.8 s | 20 s |
+| `plrace:hyphal_echo` | Octamyces, Hyphal Offset (a translucent copy of the body, `entity_alphablend` + a fading tint) | invulnerable, no physics, no collision with players | 3 s | 6 s |
 
 All carry the family `plrace_proxy`. They are removed when their owner dies, leaves, changes dimension or lineage; anything left after a crash or `/reload` is purged on load and every minute; and the behavior-pack timer despawns them even if scripts stop. Abilities never target them, and `/kill @e` removes them like any entity.
 
@@ -59,6 +60,14 @@ All carry the family `plrace_proxy`. They are removed when their owner dies, lea
 * The ultimate's golden haze is a vanilla fog entry (`plrace:heaven_light`, user id `plrace_hh`) pushed on each nearby player's own fog stack and removed afterwards — also on logout (cleared on the next join), death, dimension change and `/reload` (cleared on load). One soft golden screen fade (`Camera.fade`, 1.5 s) plays for players within 18 blocks. Both can be disabled in World Settings (*HYAKUTEN CHUKO screen effects*).
 * Edict of the Lowered Gaze tilts a *mob's* head down once (`setRotation`); the mob's AI resumes immediately. Players' cameras are never moved.
 * Unannounced Arrival uses `tryTeleport` with block checks after a line-of-sight ray and a safe-floor search (no walls, no void, no lava/fire/cactus/powder snow/magma/campfire/dripstone/cobweb).
+
+## Expansion 02 (v1.4.0) — what it adds to the packs
+* **Items:** crest items `plrace:form_dinosauroid[_night|_display|_veer|_overflow]`, `plrace:form_bathyas[_lure|_maw|_bastion|_unshackled|_daybreak]`, `plrace:form_octamyces[_sporeveil|_record|_offset|_frame|_unstable]`; foci `plrace:focus_dinosauroid|bathyas|octamyces`; **`plrace:sun_sword`** (*The Impaled Sun*: `minecraft:damage` 7, `hand_equipped`, max stack 1, hidden from commands and the creative menu). The scripts give it with `ItemLockMode.inventory` and `keepOnDeath`, keep exactly one while Bathyas is unshackled and remove it on return, death (on respawn), logout (on the next join), reload, dimension change and lineage change.
+* **Display-check twins** (since 1.3.1): `plrace:form_<race>_static` for every race — never given in play.
+* **Entity:** `plrace:hyphal_echo` (above). **Fog:** `plrace:abyss` (fixed-distance dark fog, user id `plrace_ab`) for Abyssal Daybreak — pushed only on players within 24 blocks for the ultimate, removed at its end, on death/logout/reload (cleared on the next join), and off entirely with the *Unique ultimate screen effects* world setting.
+* **Particles:** 37 new identifiers (`plrace:veer_burst`, `crest_wave`, `sickle_arc`, `overflow_aura`, `misclass_mark`, `lure_pulse`, `sun_mark`, `maw_streak`, `maw_bite`, `bastion_seams`, `sun_extract`, `sun_return`, `sun_slash`, `daybreak_overload`, `abyss_dark`, `sunrise_pillar`, `leviathan`, `solar_execution`, `daybreak_field`, `sporeveil_cloud`, `parallax_mark`, `parallax_echo`, `observed_mark`, `record_point`, `frame_ring`, `frame_thread`, `frame_strike`, `frame_collapse`, `offset_rift`, the attachables' ambient effects...), drawn from the existing 512×512 effects atlas with seven new sprites (a broken cladogram, a geometric eye, a polygon spore, a needle tooth, a sun sigil, a feather fan, a leviathan silhouette).
+* **Script API (all stable 2.11.0):** `Player.camera.setCamera("minecraft:free", {location, facingLocation})` / `clear()` (Display Check), `inputPermissions` (rooted ultimates, Display Check), `ItemStack.lockMode`/`keepOnDeath`, `Container` slot moves, `Dimension.getLightLevel` (Display Organism, Spore Affinity), `World.getTimeOfDay` (Morphological Drift; the attachable reads the same clock through `q.time_of_day`), `Entity.teleport` (Hyphal Offset, after a half-block collision walk), `runCommand("fog ...")`. Statuses (Misclassified, Sun-Marked, Observed, Parallax) are in-memory script state shown by particles; Bedrock has no Glowing effect.
+* **Unique:** Bathyas uses the same claim system as Nurariten (`/plrace:unique status|release bathyas`).
 
 ## Unique lineages
 
@@ -99,5 +108,7 @@ All carry the family `plrace_proxy`. They are removed when their owner dies, lea
 * Molang owner queries inside attachables (`q.target_x_rotation`, `q.hurt_time`, `q.modified_move_speed`, `q.vertical_speed`, `q.is_item_equipped`, `q.yaw_speed`, …) and the player's public `v.attack_time` drive gaits, look-follow, flinches and attack reactions. If a platform does not resolve one of them in attachable context, that detail is static; nothing breaks (`q.yaw_speed` units are not documented, so its effect is clamped).
 * `query.is_item_name_any('slot.armor.head', …)` (client-side) controls skin hiding; it is documented for all equipment slots.
 * Input permission categories (`LateralMovement`) are used for rooting and for HYAKUTEN CHŪKŌ; they are restored on the end of the ability, death, dimension change, lineage change, and on the next join if the player disconnects during it.
-* If two Unique holders are allowed (operators turned exclusivity off) and both use the ultimate near the same witness, the first to finish lifts that witness' haze early (both use the same fog user id). Cosmetic only.
+* If two holders of the same Unique lineage are allowed (operators turned exclusivity off) and both use the ultimate near the same witness, the first to finish lifts that witness' haze early (they share a fog user id). Cosmetic only.
+* Mob AI target selection is not exposed to scripts: "hesitation", "misreading" and "perceptual disturbance" (races 007 and 009) are therefore slowness, weakness and blows against the caster that miss — measurable effects, not AI rewrites.
+* Bathyas' drawn sword renders like any held weapon (vanilla item rendering of its icon); the 3D sword is part of his body while embedded.
 * `q.time_of_day` drives one Nurariten idle behaviour; the gameplay day/night logic is server-side and does not depend on it.

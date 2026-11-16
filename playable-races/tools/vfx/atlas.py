@@ -24,10 +24,13 @@ FLIPBOOKS = ["flash", "ring", "circle", "slash", "smoke", "splash", "crack"]
 FLIP: Dict[str, Tuple[int, int]] = {name: (0, row * CELL) for row, name in enumerate(FLIPBOOKS)}   # base UV of frame 0
 SPRITES = ["streak", "dot", "star4", "star8", "petal", "leaf", "droplet", "shard",
            "rune1", "rune2", "rune3", "rune4", "ember", "crescent", "hexagon", "chunk",
-           "glyphring", "spiral", "heart", "feather"]
+           "glyphring", "spiral", "heart", "feather",
+           # v1.4 (Expansion 02)
+           "clade", "eye", "polyspore", "tooth", "sunsigil", "fan"]
 SPR: Dict[str, Tuple[int, int, int, int]] = {}
 for _i, _n in enumerate(SPRITES):
     SPR[_n] = ((_i % 16) * 32, 7 * CELL + (_i // 16) * 32, 32, 32)
+SPR["leviathan"] = (13 * 32, 7 * CELL + 32, 96, 32)    # a wide silhouette in the last three cells
 
 
 # ============================================================================= fields
@@ -326,7 +329,70 @@ def _sprite(name):
         shape = ((X / 0.25) ** 2 + (Y / 0.92) ** 2) < 1
         barbs = 0.75 + 0.25 * np.sin((Y - np.abs(X) * 0.8) * 40)
         return _img(shape * 1.0, barbs)
+    # ---- v1.4 (Expansion 02)
+    if name == "clade":
+        # a cladogram whose middle branch is broken and re-joined somewhere it should not be
+        for seg in ([(0.5, 0.92), (0.5, 0.62)], [(0.5, 0.62), (0.24, 0.36)], [(0.5, 0.62), (0.76, 0.36)],
+                    [(0.24, 0.36), (0.12, 0.1)], [(0.24, 0.36), (0.36, 0.1)], [(0.76, 0.36), (0.88, 0.1)],
+                    [(0.64, 0.1), (0.52, 0.3)], [(0.52, 0.3), (0.36, 0.1)]):
+            d.line(P(seg), fill=white, width=int(0.075 * n))
+        for x, y in P([(0.12, 0.1), (0.36, 0.1), (0.64, 0.1), (0.88, 0.1)]):
+            r = 0.06 * n
+            d.ellipse([x - r, y - r, x + r, y + r], fill=white)
+        g = im.filter(ImageFilter.GaussianBlur(0.05 * n))
+        return _img(np.maximum(np.asarray(im)[..., 3], np.asarray(g)[..., 3] * 0.7) / 255.0)
+    if name == "eye":
+        out = np.zeros_like(R)
+        for k, rr in enumerate((0.86, 0.66, 0.47)):
+            sides = (11, 7, 5)[k]
+            poly = R * np.cos(_angdiff(A, np.round(A / (2 * np.pi / sides)) * (2 * np.pi / sides))) / np.cos(np.pi / sides)
+            out = np.maximum(out, np.exp(-((poly - rr) / 0.035) ** 2) * (0.6 + 0.4 * (k == 0)))
+        out = np.maximum(out, (R < 0.22) * 1.0)
+        return _img(out, np.where(R < 0.22, 0.25, 1.0))
+    if name == "polyspore":
+        sides = 5
+        poly = R * np.cos(_angdiff(A, np.round(A / (2 * np.pi / sides)) * (2 * np.pi / sides))) / np.cos(np.pi / sides)
+        return _img(np.exp(-((poly - 0.62) / 0.07) ** 2) + 0.35 * (poly < 0.62) + 0.6 * np.exp(-(R / 0.14) ** 2))
+    if name == "tooth":
+        d.polygon(P([(0.5, 0.04), (0.64, 0.7), (0.5, 0.96), (0.36, 0.7)]), fill=white)
+        a = np.asarray(im)[..., 3] / 255.0
+        return _img(a, np.where(X < 0, 1.0, 0.75))
+    if name == "sunsigil":
+        out = np.exp(-((R - 0.52) / 0.05) ** 2)
+        for k in range(12):
+            dd = _angdiff(A, k * np.pi / 6)
+            out = np.maximum(out, np.exp(-((R * np.sin(dd)) / 0.03) ** 2) * (R > 0.62) * (R < (0.95 if k % 3 == 0 else 0.8)) * (np.cos(dd) > 0))
+        blade = (np.abs(X) < 0.06 - np.abs(Y) * 0.03) & (np.abs(Y) < 0.9)
+        return _img(np.maximum(out, blade * 1.0))
+    if name == "fan":
+        out = np.zeros_like(R)
+        for k in range(7):
+            a = -np.pi / 2 + (k - 3) * 0.32
+            dd = _angdiff(A, a)
+            out = np.maximum(out, np.exp(-((R * np.sin(dd)) / (0.05 + R * 0.05)) ** 2) * (R < 0.92) * (np.cos(dd) > 0))
+        return _img(out, 0.8 + 0.2 * (R > 0.6))
     raise KeyError(name)
+
+
+def _leviathan() -> Image.Image:
+    """A vast deep-sea silhouette (anglerfish-whale) with a lure, 3:1, soft-edged."""
+    w, h = 96 * 8, 32 * 8
+    im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    body = [(0.06, 0.55), (0.18, 0.3), (0.42, 0.18), (0.7, 0.22), (0.86, 0.36), (0.97, 0.3), (0.95, 0.5), (0.97, 0.72),
+            (0.86, 0.62), (0.7, 0.78), (0.42, 0.84), (0.2, 0.76), (0.1, 0.66)]
+    d.polygon([(x * w, y * h) for x, y in body], fill=(255, 255, 255, 255))
+    d.line([(0.16 * w, 0.32 * h), (0.1 * w, 0.06 * h), (0.03 * w, 0.12 * h)], fill=(255, 255, 255, 255), width=int(0.025 * h * 3))
+    for k in range(9):   # needle teeth along the jaw
+        x = 0.07 + k * 0.012
+        d.polygon([(x * w, 0.58 * h), ((x + 0.006) * w, 0.7 * h), ((x + 0.012) * w, 0.58 * h)], fill=(0, 0, 0, 0))
+    im = im.filter(ImageFilter.GaussianBlur(4))
+    lure = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    ImageDraw.Draw(lure).ellipse([0.015 * w, 0.05 * h, 0.05 * w, 0.17 * h], fill=(255, 255, 255, 255))
+    a = np.maximum(np.asarray(im)[..., 3] / 255.0 * 0.95, np.asarray(lure)[..., 3] / 255.0)
+    shade = np.where(np.asarray(lure)[..., 3] > 0, 1.0, 0.35)
+    out = np.dstack([np.repeat(shade[..., None], 3, axis=2) * 255, a * 255]).astype(np.uint8)
+    return Image.fromarray(out, "RGBA")
 
 
 def atlas() -> Image.Image:
@@ -335,5 +401,6 @@ def atlas() -> Image.Image:
         for f in range(FRAMES):
             img.alpha_composite(_down(DRAW[name](f / (FRAMES - 1))), (f * CELL, row * CELL))
     for name, (x, y, w, h) in SPR.items():
-        img.alpha_composite(_sprite(name).resize((w, h), Image.LANCZOS), (x, y))
+        src = _leviathan() if name == "leviathan" else _sprite(name)
+        img.alpha_composite(src.resize((w, h), Image.LANCZOS), (x, y))
     return img

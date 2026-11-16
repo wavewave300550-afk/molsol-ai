@@ -1,5 +1,6 @@
 /** Assigning, removing and restoring lineages (race) on players; manifest / veil of the form. */
 import { InputPermissionCategory, Player, system, world } from "@minecraft/server";
+import { clearAbyssFog } from "./races/bathyas.js";
 import { endChannel, raceOf, refreshForm, resetCooldowns } from "./core/abilities.js";
 import { captureEnchantments, ensureFocus, headItem, hideForm, isCrest, purgeFoci, purgeStrayCrests, showForm } from "./core/forms.js";
 import { particle, pose, rgb, sound } from "./core/fx.js";
@@ -22,6 +23,9 @@ const RACE_RGB: Record<string, { red: number; green: number; blue: number }> = {
   "004": { red: 0.78, green: 0.66, blue: 1 },
   "005": { red: 1, green: 0.86, blue: 0.45 },
   "006": { red: 1, green: 0.92, blue: 0.62 },
+  "007": { red: 0.3, green: 0.9, blue: 0.75 },
+  "008": { red: 1, green: 0.95, blue: 0.72 },
+  "009": { red: 0.72, green: 0.45, blue: 1 },
 };
 
 export function worldDay(): number {
@@ -190,6 +194,7 @@ export function restore(p: Player, s: Session): void {
   } catch {
     /* ignore */
   }
+  clearAbyssFog(p); // an Abyssal Daybreak interrupted by a logout or reload
   const race = raceOf(s);
   if (!race) {
     // no lineage: remove anything left over from removed races

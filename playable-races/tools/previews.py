@@ -17,7 +17,7 @@ from PIL import Image, ImageDraw  # noqa: E402
 from kit.geo import Model  # noqa: E402
 from kit.render import render, render_scene, sheet  # noqa: E402
 from kit.tex import hx  # noqa: E402
-from models import golem, jackalope, nurariten, salamander, spaghetti, xenentoma  # noqa: E402
+from models import bathyas, dinosauroid, golem, jackalope, nurariten, octamyces, salamander, spaghetti, xenentoma  # noqa: E402
 
 RP = os.path.join(ROOT, "packs", "PlayableRaces_RP")
 OUT = os.path.join(ROOT, "docs", "images")
@@ -178,6 +178,39 @@ def expansion(xen, fsm, nur):
     shot.save(os.path.join(OUT, "hyakuten_chuko.png"))
 
 
+WHITE = (255, 255, 255)
+EXP02 = {  # race -> (module, title, scale, centre y, texture per variant)
+    "dinosauroid": (dinosauroid, "007 The Unknown Dinosauroid - the taxonomic impossibility", 7.0, 18),
+    "bathyas": (bathyas, "008 Bathyas, the Sun-Impaled [UNIQUE] - impaled and unshackled", 6.6, 19),
+    "octamyces": (octamyces, "009 Octamyces Undecimus - the witness of eleven realities", 7.0, 18),
+}
+
+
+def expansion02():
+    """White-background turnarounds (front / three-quarter / side / back) and every form of races 007-009."""
+    for k, (race, (mod, title, sc, cy)) in enumerate(EXP02.items()):
+        m = mod.build()
+        imgs, labs = [], []
+        for yaw, lab in ((0, "front"), (35, "three-quarter"), (90, "side"), (180, "back")):
+            imgs.append(render(m, tex(race, mod.VARIANT_TEXTURE["base"]), variant="base", yaw=yaw, pitch=6, size=(300, 400), scale=sc,
+                               center=(0, cy, 1), hide=HIDE, bg=WHITE))
+            labs.append(f"base - {lab}")
+        for v in mod.VARIANTS:
+            if v == "base":
+                continue
+            imgs.append(render(m, tex(race, mod.VARIANT_TEXTURE[v]), variant=v, yaw=32, pitch=6, size=(300, 400), scale=sc,
+                               center=(0, cy, 1), hide=HIDE, bg=WHITE))
+            labs.append(f"{v}")
+        sheet(imgs, cols=4, labels=labs, title=title, bg=WHITE).save(os.path.join(OUT, f"race_00{7 + k}_{race}.png"))
+    sw = bathyas.build_sword()
+    from kit.tex import paint
+    stex = paint(sw, bathyas.sword_materials(), bathyas.TEXTURES["base"]) if hasattr(bathyas, "sword_materials") else None
+    if stex is not None:
+        imgs = [render(sw, stex, yaw=y, pitch=8, size=(300, 400), scale=8.0, center=(0, 15, 0), bg=WHITE) for y in (0, 40, 90)]
+        sheet(imgs, cols=3, labels=["the Impaled Sun - front", "three-quarter", "side"], title="008 Bathyas - the solar sword (embedded in the chest; drawn as THE IMPALED SUN)",
+              bg=WHITE).save(os.path.join(OUT, "race_008_sword.png"))
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     sal, gol, jak = salamander.build(), golem.build(), jackalope.build()
@@ -190,10 +223,13 @@ def main():
     for m, t, v, name in ((hm, htex, "base", "Vanilla player (scale)"), (sal, tex("salamander", "bloom"), "bloom", "001 Aberrant Flora Salamander"),
                           (gol, tex("golem", "base"), "base", "002 Runic Titan Golem"), (jak, tex("jackalope", "base"), "base", "003 Blood Moon Jackalope"),
                           (xen, tex("xenentoma", "base"), "base", "004 Xenentoma"), (fsm, tex("spaghetti", "base"), "base", "005 Flying Spaghetti Monster"),
-                          (nur, tex("nurariten", "base"), "base", "006 Nurariten [UNIQUE]")):
+                          (nur, tex("nurariten", "base"), "base", "006 Nurariten [UNIQUE]"),
+                          (dinosauroid.build(), tex("dinosauroid", "base"), "base", "007 The Unknown Dinosauroid"),
+                          (bathyas.build(), tex("bathyas", "base"), "base", "008 Bathyas [UNIQUE]"),
+                          (octamyces.build(), tex("octamyces", "base"), "base", "009 Octamyces Undecimus")):
         im = render(m, t, variant=v, yaw=28, pitch=6, size=(330, 440), scale=sc, center=(0, 22, 1), hide=HIDE, bg=BG)
         cells.append(label(im, name))
-    sheet(cells, cols=4, title="Playable Races - six lineages at the same scale (rendered from the shipped geometry and textures)").save(os.path.join(OUT, "lineup.png"))
+    sheet(cells, cols=4, title="Playable Races - nine lineages at the same scale (rendered from the shipped geometry and textures)").save(os.path.join(OUT, "lineup.png"))
 
     # ---------------------------------------------------------------- salamander
     imgs, labs = [], []
@@ -254,6 +290,7 @@ def main():
     sheet(imgs, cols=4, labels=labs, title="003 Blood Moon Jackalope - turnaround, hunt and Blood Moon awakening").save(os.path.join(OUT, "race_003_jackalope.png"))
 
     expansion(xen, fsm, nur)
+    expansion02()
 
     # ---------------------------------------------------------------- atlases + icons
     atl = []
@@ -270,14 +307,15 @@ def main():
     sheet(atl, cols=4, labels=[f"{r}_{n}" for r, ns in (("salamander", ("base", "bloom", "dormant", "predatory")), ("golem", ("base", "charged", "disrupted")), ("jackalope", ("base", "hunt", "awakened"))) for n in ns],
           title="Procedural texture atlases (per-face UV, 2 px per model unit)").save(os.path.join(OUT, "texture_atlases.png"))
     ic = []
-    keys = ("salamander", "golem", "jackalope", "xenentoma", "spaghetti", "nurariten")
-    for p in [f"ui/portrait_00{k}" for k in range(1, 7)] + [f"items/crest_{k}" for k in keys] + [f"items/focus_{k}" for k in keys] + ["items/codex"]:
+    keys = ("salamander", "golem", "jackalope", "xenentoma", "spaghetti", "nurariten", "dinosauroid", "bathyas", "octamyces")
+    for p in [f"ui/portrait_00{k}" for k in range(1, 10)] + [f"items/crest_{k}" for k in keys] + [f"items/focus_{k}" for k in keys] + ["items/codex", "items/sun_sword"]:
         im = Image.open(os.path.join(RP, TEX, p + ".png")).convert("RGBA").resize((160, 160), Image.NEAREST)
         bgim = Image.new("RGBA", (160, 160), (52, 52, 58, 255))
         bgim.alpha_composite(im)
         ic.append(bgim.convert("RGB"))
-    sheet(ic, cols=6, labels=[f"portrait 00{k}" for k in range(1, 7)] + [f"crest 00{k}" for k in range(1, 7)]
-          + ["Dewheart focus", "Rune Keystone focus", "Moonbone focus", "Sensillum focus", "Holy Colander focus", "Mandate Shaku focus", "Lineage Codex"],
+    sheet(ic, cols=9, labels=[f"portrait 00{k}" for k in range(1, 10)] + [f"crest 00{k}" for k in range(1, 10)]
+          + ["Dewheart focus", "Rune Keystone focus", "Moonbone focus", "Sensillum focus", "Holy Colander focus", "Mandate Shaku focus",
+             "Fossil Quill focus", "Abyssal Hilt focus", "Undecimal Lens focus", "Lineage Codex", "The Impaled Sun"],
           title="Selection portraits and item icons").save(os.path.join(OUT, "ui_and_items.png"))
     pk = Image.open(os.path.join(RP, "pack_icon.png"))
     pk.save(os.path.join(OUT, "pack_icon.png"))

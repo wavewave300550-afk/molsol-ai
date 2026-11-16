@@ -1,6 +1,6 @@
-# Playable Races — v1.3.1 (Races 001–006)
+# Playable Races — v1.4.0 (Races 001–009)
 
-A Minecraft **Bedrock Edition** add-on that lets every player become one of six nonhuman species — each with its own animated body, biology, abilities, passive traits and relationship with the world. **Expansion 01** (v1.1.0) adds races 004–006, including the first **Unique** lineage, to the foundation release without changing anything players already have. **v1.2.0** redraws races 004–006 from the ground up — new models, pixel-art textures, animations and effects — while keeping all of their gameplay and every saved choice ([what changed and why](docs/CREATIVE.md#visual-overhaul-v120-races-004006-redrawn)). **v1.3.0** redoes the ability effects of all six races — layered, glowing, animated ([details](docs/CREATIVE.md#ability-effects-overhaul-v130-every-race)). **v1.3.1** restructures the Flying Spaghetti Monster again for the in-game invisibility report and adds a *Display Check* to the Lineage Codex ([testing notes](docs/TESTING.md#v131-hotfix--the-spaghetti-monster-still-invisible-plus-a-display-check)).
+A Minecraft **Bedrock Edition** add-on that lets every player become one of nine nonhuman species — each with its own animated body, biology, abilities, passive traits and relationship with the world. **Expansion 01** (v1.1.0) adds races 004–006, including the first **Unique** lineage, to the foundation release without changing anything players already have. **v1.2.0** redraws races 004–006 from the ground up — new models, pixel-art textures, animations and effects — while keeping all of their gameplay and every saved choice ([what changed and why](docs/CREATIVE.md#visual-overhaul-v120-races-004006-redrawn)). **v1.3.0** redoes the ability effects of all six races — layered, glowing, animated ([details](docs/CREATIVE.md#ability-effects-overhaul-v130-every-race)). **v1.3.1** restructures the Flying Spaghetti Monster again for the in-game invisibility report and adds a *Display Check* to the Lineage Codex ([testing notes](docs/TESTING.md#v131-hotfix--the-spaghetti-monster-still-invisible-plus-a-display-check)). **Expansion 02** (v1.4.0) adds races 007–009 — the Unknown Dinosauroid, the second Unique lineage Bathyas, and Octamyces Undecimus ([design report](docs/CREATIVE.md#expansion-02-v140-races-007009)).
 
 | Code | Race | Thai name | Identity |
 |---|---|---|---|
@@ -10,6 +10,9 @@ A Minecraft **Bedrock Edition** add-on that lets every player become one of six 
 | **004** | **Xenentoma** | เซเนนโทมา | eyeless six-limbed arthropod: vibration sense (not a wallhack), moulting decoys, flattening glides, a twelve-segment telescoping strike |
 | **005** | **Flying Spaghetti Monster** | สปาเกตตีมอนสเตอร์บินได้ | hovering living pasta: noodle grabs and rescues, al dente counters, ricocheting meatballs, a spiral sauce vortex |
 | **006** | **Nurariten** ✦ UNIQUE ✦ | นูราริเทน | the Uninvited Sovereign: courts, judgment marks, safe arrivals, and **HYAKUTEN CHŪKŌ** 百天昼行 — the five-stage daytime procession of the Hundred Heavens. One holder per world |
+| **007** | **The Unknown Dinosauroid** | ไดโนซอรอยด์นิรนาม | a taxonomic impossibility: four-winged running legs with membranes and sickle claws, a hollow crest and throat pouch; displays that MISCLASSIFY enemies, a hindwing leap-glide, a sickle strike, a body that drifts between four configurations |
+| **008** | **Bathyas, the Sun-Impaled** ✦ UNIQUE ✦ | บาธีอัส ผู้แบกสุริยะ | an abyssal chimera kept alive by the sword through its chest: draw it as a real weapon at the cost of Stability, lure enemies into its light, bite like a goblin shark, curl like an isopod, and **ABYSSAL DAYBREAK** — a six-stage impossible sunrise. One holder per world |
+| **009** | **Octamyces Undecimus** | ออคทา-ไมซีส แห่งรอยแยกที่ 11 | a floating extradimensional fungus with an eleven-ring geometric eye: records an enemy's path, infects perception (blows that miss, false afterimages), offsets through a rift, and strikes along the recorded path with **The Eleventh Frame** |
 
 ![Lineup](docs/images/lineup.png)
 
@@ -18,7 +21,7 @@ A Minecraft **Bedrock Edition** add-on that lets every player become one of six 
 ## How to play
 1. Join the world: you receive the **Lineage Codex** and the selection screen opens once.
 2. Read a lineage, press **Embrace**, confirm. Your body transforms and you get your race's **Focus**.
-3. Hold the Focus: **use** = cast the selected ability, **sneak + use** = select the next one. The action bar shows your abilities (four, five for the Unique lineage), cooldowns and your race resource (hydration / rune stability / lunar resonance / sensory clarity / sauce / the sun's mandate).
+3. Hold the Focus: **use** = cast the selected ability, **sneak + use** = select the next one. The action bar shows your abilities (four, five for the Unique lineages), cooldowns and your race resource (hydration / rune stability / lunar resonance / sensory clarity / sauce / the sun's mandate / morphological drift / stability and photic strain / recorded path).
 
 Full ability tables, passives, the Blood Moon schedule, Divine Jurisdiction, commands and operator settings: **[docs/ABILITIES.md](docs/ABILITIES.md)**.
 
@@ -26,12 +29,13 @@ Full ability tables, passives, the Blood Moon schedule, Divine Jurisdiction, com
 |---|---|---|
 | ![Salamander](docs/images/race_001_salamander.png) | ![Golem](docs/images/race_002_golem.png) | ![Jackalope](docs/images/race_003_jackalope.png) |
 | ![Xenentoma](docs/images/race_004_xenentoma.png) | ![Flying Spaghetti Monster](docs/images/race_005_spaghetti.png) | ![Nurariten](docs/images/race_006_nurariten.png) |
+| ![Unknown Dinosauroid](docs/images/race_007_dinosauroid.png) | ![Bathyas](docs/images/race_008_bathyas.png) | ![Octamyces](docs/images/race_009_octamyces.png) |
 
 **HYAKUTEN CHŪKŌ** (Nurariten's unique ultimate) staged with the shipped models exactly where the script places them — a gate in the sky, two heralds, eight columns of attendants (96 figures; with the heralds, the gate and the Sovereign: one hundred) circling the throne, using ten script-owned entities instead of a hundred mobs:
 
 ![HYAKUTEN CHUKO](docs/images/hyakuten_chuko.png)
 
-**Living motion** — rendered from the shipped animation files (races 004–006 as redrawn in v1.2.0): breathing, blinking, race-specific gaits with grounded feet, jumps and landings, and idle behaviours the creatures perform on their own ([details](docs/CREATIVE.md#living-motion-v102)).
+**Living motion** — rendered from the shipped animation files (races 004–006 as redrawn in v1.2.0, races 007–009 new in v1.4.0): breathing, blinking, race-specific gaits with grounded feet, jumps and landings, and idle behaviours the creatures perform on their own ([details](docs/CREATIVE.md#living-motion-v102)).
 
 | | | |
 |---|---|---|
@@ -39,13 +43,16 @@ Full ability tables, passives, the Blood Moon schedule, Divine Jurisdiction, com
 | ![Salamander idle behaviours](docs/images/fidgets_salamander.gif) | ![Golem idle behaviours](docs/images/fidgets_golem.gif) | ![Jackalope idle behaviours](docs/images/fidgets_jackalope.gif) |
 | ![Xenentoma motion](docs/images/anim_xenentoma.gif) | ![Spaghetti motion](docs/images/anim_spaghetti.gif) | ![Nurariten motion](docs/images/anim_nurariten.gif) |
 | ![Xenentoma idle behaviours](docs/images/fidgets_xenentoma.gif) | ![Spaghetti idle behaviours](docs/images/fidgets_spaghetti.gif) | ![Nurariten idle behaviours](docs/images/fidgets_nurariten.gif) |
+| ![Dinosauroid motion](docs/images/anim_dinosauroid.gif) | ![Bathyas motion](docs/images/anim_bathyas.gif) | ![Octamyces motion](docs/images/anim_octamyces.gif) |
+| ![Dinosauroid idle behaviours](docs/images/fidgets_dinosauroid.gif) | ![Bathyas idle behaviours](docs/images/fidgets_bathyas.gif) | ![Octamyces idle behaviours](docs/images/fidgets_octamyces.gif) |
 
-**Ability effects (v1.3.0)** — every effect re-enacted exactly as the scripts spawn it, rendered from the pack's particle files:
+**Ability effects (v1.3.0; 007–009 in v1.4.0)** — every effect re-enacted exactly as the scripts spawn it, rendered from the pack's particle files:
 
 | | | |
 |---|---|---|
 | ![001 effects](docs/images/vfx_salamander.gif) | ![002 effects](docs/images/vfx_golem.gif) | ![003 effects](docs/images/vfx_jackalope.gif) |
 | ![004 effects](docs/images/vfx_xenentoma.gif) | ![005 effects](docs/images/vfx_spaghetti.gif) | ![006 effects](docs/images/vfx_nurariten.gif) |
+| ![007 effects](docs/images/vfx_dinosauroid.gif) | ![008 effects](docs/images/vfx_bathyas.gif) | ![009 effects](docs/images/vfx_octamyces.gif) |
 
 ## Documents
 * [Installation guide (iOS, Android, Windows, consoles, servers)](docs/INSTALL.md)
