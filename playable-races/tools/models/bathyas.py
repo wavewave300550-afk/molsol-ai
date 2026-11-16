@@ -39,7 +39,8 @@ import numpy as np
 
 from kit.geo import Model, rot_matrix
 from kit import pixel as px
-from models.common import accents, euler_for, fp_sleeves, frame_rot, humanoid, mat_accent, q, rays, side_rot, sweep
+from models.common import (accents, ellipsoid, euler_for, fp_sleeves, frame_rot, humanoid, mat_accent, q, rays, side_rot,
+                           sweep)
 
 ID = "bathyas"
 VARIANTS = ["base", "lure", "maw", "bastion", "unshackled", "daybreak"]
@@ -118,25 +119,26 @@ SWORD_ROT = euler_for(_sword_basis())
 # --------------------------------------------------------------------------- the back: overlapping tergites
 # (centre y, centre z, outward normal angle from +Z toward +Y in degrees, width, length), from the nape down;
 # the first seven ride on the chest (upright chest frame), the last two on the waist (world frame)
-TERGITES = [
-    (34.1, 1.6, 82.0, 9.5, 3.75),
-    (33.5, 4.6, 56.0, 13.5, 3.75),
-    (31.75, 6.3, 30.0, 15.5, 3.75),
-    (29.25, 6.55, 9.0, 16.0, 3.75),
-    (26.5, 6.3, -2.0, 15.5, 3.75),
-    (23.75, 6.2, -8.0, 14.25, 3.75),
-    (21.25, 6.05, -14.0, 12.75, 3.5),
+TERGITES = [  # (y, z, normal angle, centre width, flange width, length)
+    (34.1, 1.6, 82.0, 8.0, 2.5, 3.75),
+    (33.5, 4.6, 56.0, 9.0, 3.25, 3.75),
+    (31.75, 6.35, 30.0, 10.0, 3.5, 3.75),
+    (29.25, 6.6, 9.0, 10.0, 3.75, 3.75),
+    (26.5, 6.35, -2.0, 9.5, 3.75, 3.75),
+    (23.75, 6.25, -8.0, 9.0, 3.5, 3.75),
+    (21.25, 6.1, -14.0, 8.5, 3.25, 3.5),
 ]
-WAIST_PLATES = [(18.5, 5.4, -12.0, 11.0, 3.25), (16.0, 5.15, -18.0, 10.25, 3.0)]
+WAIST_PLATES = [(17.5, 5.6, -14.0, 8.0, 3.0, 4.0)]
 PLATES = TERGITES + WAIST_PLATES             # (the animation set lifts and jostles them in this order)
 PLATE_T = 1.25                              # armour thickness
-PLATE_LIFT = 15.0                           # the trailing edge of each plate lifts over the next one
+PLATE_LIFT = 17.0                           # the trailing edge of each plate lifts over the next one
+PLATE_BEND = 55.0                           # the flanges wrap forward round the flanks
 
 # bastion: the tergites slide together and down over the nape; daybreak: they lift apart (offset along normal, extra tilt)
 PLATE_CLOSE = [(-0.35, 10.0), (-0.3, 7.0), (-0.25, 5.0), (-0.2, 3.0), (-0.2, 2.0), (-0.15, 0.0), (-0.1, -2.0),
-               (-0.1, -3.0), (0.0, -4.0)]
+               (-0.05, -3.0)]
 PLATE_OPEN = [(0.5, -10.0), (0.6, -9.0), (0.7, -8.0), (0.7, -7.0), (0.65, -6.0), (0.6, -5.0), (0.5, -4.0),
-              (0.45, -4.0), (0.4, -4.0)]
+              (0.45, -4.0)]
 
 # --------------------------------------------------------------------------- shoulders, arms, neck
 SHOULDER_C = (7.5, 28.75, 1.25)             # shoulder joint (chest frame, right side mirrored with x < 0)
@@ -248,37 +250,33 @@ def _legs(m: Model) -> None:
         lg = m.bones[g]
         lg.variant.update({v: ((0, 0, 0), (LEG_POSE[v][0], 0.0, 0.0)) for v in VARIANTS if LEG_POSE[v][0]})
         # the thigh: a great muscle mass tapering to the knee
-        limb(m, g, (s * 3.25, 17.75, 1.0), (s * 3.5, 12.0, -0.75), 5.5, 6.5, "skin")
-        limb(m, g, (s * 3.5, 13.0, -0.5), knee + (0, -0.25, 0.25), 4.75, 5.25, "skin")
+        limb(m, g, (s * 3.25, 17.75, 1.0), (s * 3.5, 12.0, -0.75), 5.5, 6.5, "leg")
+        limb(m, g, (s * 3.5, 13.0, -0.5), knee + (0, -0.25, 0.25), 4.75, 5.25, "leg")
         sn = m.bone(f"{p}_shin", g, tuple(knee))
         sn.variant.update({v: ((0, 0, 0), (LEG_POSE[v][1], 0.0, 0.0)) for v in VARIANTS if LEG_POSE[v][1]})
-        slab(m, sn.name, knee + (0, 0.25, -2.6), (0, 0.3, -1), (0, 1, 0.3), 4.25, 3.5, 1.0, "plate")       # knee cop
-        limb(m, sn.name, knee + (0, 0.75, 0.25), ankle + (0, -0.25, 0), 4.0, 4.25, "skin")                  # the shin
-        limb(m, sn.name, knee + (0, -0.75, 2.0), ankle + (0, 1.5, 0.75), 3.25, 2.25, "skin")                # the calf
+        slab(m, sn.name, knee + (0, 0.25, -2.6), (0, 0.3, -1), (0, 1, 0.3), 4.25, 3.5, 1.0, "plate_limb")  # knee cop
+        limb(m, sn.name, knee + (0, 0.75, 0.25), ankle + (0, -0.25, 0), 4.0, 4.25, "leg")                   # the shin
+        limb(m, sn.name, knee + (0, -0.75, 2.0), ankle + (0, 1.5, 0.75), 3.25, 2.25, "leg")                 # the calf
         mid = (knee + ankle) / 2
         dn = (ankle - knee) / np.linalg.norm(ankle - knee)
         fw = np.array([0.0, dn[2], -dn[1]])                       # the shin's front normal
         fw = -fw if fw[2] > 0 else fw
-        for k, f in enumerate((-0.26, 0.14)):                     # two overlapping greave plates down the front
-            slab(m, sn.name, mid + dn * f * 5.5 + fw * (2.1 + 0.1 * k), fw, dn, 4.0, 3.0, 0.75, "plate")
+        slab(m, sn.name, mid + dn * -0.08 * 5.5 + fw * 2.1, fw, dn, 4.0, 4.25, 0.75, "plate_limb")    # the greave
         m.cube(sn.name, (s * 3.75, 4.75, 1.25), (0.0, 4.0, 3.0), "calf_fin", cutout=True)                       # calf fin
         fb = m.bone(f"{p}_foot", sn.name, tuple(ankle))
         fb.variant.update({v: ((0, 0, 0), (LEG_POSE[v][2], 0.0, 0.0)) for v in VARIANTS if LEG_POSE[v][2]})
-        limb(m, fb.name, ankle + (0, 0.25, 0.25), ball + (0, 0.25, -0.25), 3.25, 3.0, "skin", fwd=(0, 0.6, -1))  # raised heel
-        m.box(fb.name, (s * 3.75, 0.875, -1.75), (4.25, 1.75, 2.75), "skin")                                    # ball of the foot
+        limb(m, fb.name, ankle + (0, 0.25, 0.25), ball + (0, 0.25, -0.25), 3.25, 3.0, "foot", fwd=(0, 0.6, -1))  # raised heel
+        m.box(fb.name, (s * 3.75, 0.875, -1.75), (4.25, 1.75, 2.75), "foot")                                    # ball of the foot
         for k, (dx, ang) in enumerate(((-1.5, -12.0), (0.0, 0.0), (1.5, 12.0))):                              # three webbed toes
             x = s * 3.75 + s * dx
             a = math.radians(ang * s)
             d = np.array([math.sin(a) * 0.35, 0.0, -math.cos(a)])
             tip = np.array([x, 0.6, -2.75]) + d * 3.0
-            m.cube(fb.name, (x - 0.75, 0.0, -5.75), (1.5, 1.25, 3.25), "skin", pivot=(x, 0.6, -2.5),
+            m.cube(fb.name, (x - 0.75, 0.0, -5.75), (1.5, 1.25, 3.25), "foot", pivot=(x, 0.6, -2.5),
                    rot=(0.0, -ang * s, 0.0))
             cl = tip + d * 0.5
             m.cube(fb.name, (cl[0] - 0.375, 0.0, cl[2] - 1.0), (0.75, 1.0, 1.25), "claw", pivot=(cl[0], 0.5, cl[2]),
                    rot=(-10.0, -ang * s, 0.0))
-        m.cube(fb.name, (s * 3.75 - 1.5, 0.5, -5.5), (3.0, 0.0, 2.75), "web", cutout=True)
-        m.cube(fb.name, (s * 3.75 - 0.375, 1.5, 1.75), (0.75, 1.0, 1.75), "claw", pivot=(s * 3.75, 2.0, 1.75),
-               rot=(30.0, 0.0, 0.0))                                                                            # heel spur
         fb.locators[f"{p}_step"] = (s * 3.75, 0.2, -2.0)
 
 
@@ -320,12 +318,14 @@ def _trunk(m: Model, drop) -> None:
     for g in ("torso_g", "tail_g"):
         m.bones[g].variant.update({v: ((0.0, -d, 0.0), None) for v, d in drop.items() if d})
     t = m.bone("trunk", "torso_g", (0.0, 12.0, 0.0))
-    m.box(t.name, (0.0, 16.25, 1.0), (10.5, 4.0, 7.0), "skin")                       # pelvis
+    m.box(t.name, (0.0, 16.25, 1.0), (10.5, 4.0, 7.0), "pelvis")                     # pelvis
     m.box(t.name, (0.0, 19.25, 1.5), (9.5, 3.0, 6.5), "belly")                       # the waist
     c = m.bone("chest", t.name, CHEST_PIVOT, (POSE["base"], 0.0, 0.0))
     c.variant.update({v: ((0, 0, 0), (POSE[v], 0.0, 0.0)) for v in VARIANTS if v != "base"})
-    m.box(c.name, (0.0, 24.5, 1.25), (11.5, 7.5, 8.5), "belly", faces={"north", "east", "west", "down"})     # ribcage
-    m.box(c.name, (0.0, 29.75, 1.25), (14.0, 4.0, 9.0), "skin", faces={"north", "east", "west", "down", "up"})  # upper chest
+    m.box(c.name, (0.0, 24.5, -0.25), (11.5, 7.5, 5.5), "belly", faces={"north", "east", "west", "down"})    # ribcage
+    m.box(c.name, (0.0, 24.5, 3.75), (8.5, 7.5, 3.5), "skin", faces={"east", "west", "down"})                # (narrower
+    m.box(c.name, (0.0, 29.75, -0.25), (14.0, 4.0, 6.0), "skin", faces={"north", "east", "west", "down", "up"})  # behind,
+    m.box(c.name, (0.0, 29.75, 4.0), (10.0, 4.0, 3.5), "skin", faces={"east", "west", "up"})                 # so the plates arch)
     m.box(c.name, (0.0, 32.5, 1.5), (9.5, 2.0, 6.5), "skin", faces={"north", "up", "east", "west"})          # trapezius
     for s in (-1, 1):                                                                     # pectorals over the heart
         m.cube(c.name, (s * 3.25 - 2.875, 24.75, -4.125), (5.75, 4.0, 1.25), "skin", pivot=(s * 3.25, 26.75, -3.5),
@@ -337,7 +337,7 @@ def _trunk(m: Model, drop) -> None:
 
 # ----------------------------------------------------------------------------- isopod tergites over the back
 
-def _plate(m: Model, bone: str, y: float, z: float, ang: float, w: float, ln: float, k: int) -> None:
+def _plate(m: Model, bone: str, y: float, z: float, ang: float, core: float, flange: float, ln: float, k: int) -> None:
     n = _ang(ang)                                       # outward normal (YZ plane)
     tng = np.array([0.0, -n[2], n[1]])                  # along the back, pointing down toward the tail
     if tng[1] > 0:
@@ -347,24 +347,24 @@ def _plate(m: Model, bone: str, y: float, z: float, ang: float, w: float, ln: fl
     nn0 = np.cross(np.array([1.0, 0.0, 0.0]), tng)
     n = nn0 if nn0 @ n > 0 else -nn0
     c = np.array([0.0, y, z])
-    flange = 3.0
-    core = w - 2 * 2.0
+    w = core + 2 * flange
     slab(m, bone, c, n, tng, core, ln, PLATE_T, "plate")
-    for s in (-1, 1):                                   # the sides bend forward round the flanks
-        bend = math.radians(54.0)
+    for s in (-1, 1):                                   # the sides bend forward round the flanks: a real arch
+        bend = math.radians(PLATE_BEND)
         side = np.array([s * 1.0, 0.0, 0.0])
         nn = n * math.cos(bend) + side * math.sin(bend)
         across = np.cross(tng, nn)
         across = across if across[0] * s > 0 else -across
-        edge = c + side * (core / 2 - 0.3)
-        slab(m, bone, edge + across * (flange / 2) - nn * 0.15, nn, tng, flange, ln - 0.25, PLATE_T, "plate")
-    slab(m, bone, c + n * (PLATE_T / 2 + 0.3), n, tng, 1.5, ln - 0.75, 0.75, "keel")    # the raised spinal keel
+        edge = c + side * (core / 2 - 0.35)
+        slab(m, bone, edge + across * (flange / 2) - nn * 0.2, nn, tng, flange, ln - 0.25, PLATE_T, "plate")
+    if k < len(TERGITES):
+        slab(m, bone, c + n * (PLATE_T / 2 + 0.3), n, tng, 1.5, ln - 0.75, 0.75, "keel")    # the raised spinal keel
     # light in the seams (bastion, daybreak): a glowing band just under the trailing edge
     slab(m, bone, c - n * 0.45 + tng * (ln / 2 - 0.25), n, tng, w - 1.25, 1.5, 0.5, "seam", only=SEAMED)
 
 
 def _plates(m: Model) -> None:
-    for k, (y, z, ang, w, ln) in enumerate(PLATES):
+    for k, (y, z, ang, core, flange, ln) in enumerate(PLATES):
         par = "chest" if k < len(TERGITES) else "trunk"
         n = _ang(ang)
         b = m.bone(f"plate{k}", par, (0.0, y, z))
@@ -372,7 +372,7 @@ def _plates(m: Model) -> None:
         do, to = PLATE_OPEN[k]
         b.variant["bastion"] = (tuple(np.round(n * dc + np.array([0.0, -0.15 * k, 0.0]), 3)), (tc, 0.0, 0.0))
         b.variant["daybreak"] = (tuple(np.round(n * do, 3)), (to, 0.0, 0.0))
-        _plate(m, b.name, y, z, ang, w, ln, k)
+        _plate(m, b.name, y, z, ang, core, flange, ln, k)
 
 
 # ----------------------------------------------------------------------------- pauldrons: four lames over each shoulder
@@ -401,7 +401,8 @@ def _pauldrons(m: Model) -> None:
                 fz = c[2] - d / 2
                 fn = np.array([s * math.sin(a) * 0.4, math.cos(a) * 0.4, -1.0])
                 slab(m, pa.name, (c[0], c[1] - 0.65, fz + 0.15), fn, (0, -1, 0.2), w - 0.5, 1.75, 1.0, "plate")
-            slab(m, pa.name, c - n * 0.5, n, (0, 0, 1), w - 0.5, d - 1.0, 0.5, "seam", only=SEAMED)
+            if k < 3:
+                slab(m, pa.name, c - n * 0.5, n, (0, 0, 1), w - 0.5, d - 1.0, 0.5, "seam", only=SEAMED)
 
 
 # ----------------------------------------------------------------------------- torn dorsal fins
@@ -438,7 +439,7 @@ def _fins(m: Model) -> None:
 # ----------------------------------------------------------------------------- the sun through his heart
 
 def sword_parts(m: Model, bone: str, base, blade_from: float = BLADE_Y, tip: float = TIP_Y, hilt: bool = True,
-                short_rays: bool = True, **kw) -> None:
+                **kw) -> None:
     """The sword, shared by the embedded and the held sword.  Local frame: grip centre at
     `base`, blade along +Y, broad faces along +-Z (the width runs along X)."""
     bx, by, bz = base
@@ -460,8 +461,6 @@ def sword_parts(m: Model, bone: str, base, blade_from: float = BLADE_Y, tip: flo
         box(GUARD_Y, 2.0, 1.25, 2.0, "s_sun", rot=(0.0, 45.0, 0.0))
         g = (bx, by + GUARD_Y, bz)
         rays(m, bone, g, 8, 1.25, 4.0, 0.5, "s_ray", plane="flat", thick=0.5, phase=0.0, **kw)             # sunburst
-        if short_rays:
-            rays(m, bone, g, 8, 1.25, 2.75, 0.5, "s_ray", plane="flat", thick=0.5, phase=22.5, **kw)
     main = tip - 1.75 - blade_from
     box(blade_from + main / 2, 2.5, main, 0.5, "s_blade")
     box(blade_from + main / 2 - 0.25, 0.75, main - 0.5, 1.0, "s_fuller")      # the raised spine: the blade reads edge-on too
@@ -478,30 +477,60 @@ def _sword(m: Model) -> None:
     sw.locators["hilt"] = (ex, base[1], ez)
 
 
+def sunburst(m: Model, bone: str, center, plane: str, rays_, depth: float = 0.03, **kw):
+    """Tapered rays radiating from `center` in `plane` ("front": XY facing -Z, "back": XY facing +Z).
+    rays_: [(angle from up toward +X, r0, r_tip, widths)]: each ray is split into len(widths) segments of
+    falling width (a broad root to a thin tip); narrower segments sit a hair closer to the viewer."""
+    c = np.asarray(center, float)
+    nrm = np.array([0.0, 0.0, -1.0 if plane == "front" else 1.0])
+    out = []
+    for ang, r0, r1, widths in rays_:
+        a = math.radians(ang)
+        d = np.array([math.sin(a), math.cos(a), 0.0])
+        n_seg = len(widths)
+        L = (r1 - r0) / n_seg
+        for j, w in enumerate(widths):
+            ra = r0 + L * j
+            rb = r1 if j == n_seg - 1 else ra + L + 0.25
+            p0 = c + d * ra + nrm * (depth * j)
+            ln = q(rb - ra)
+            out.append(m.cube(bone, (p0[0] - q(w) / 2, p0[1] - 0.125, p0[2]), (q(w), 0.25, ln), "corona" if plane == "front"
+                              else "corona_b", pivot=tuple(p0), rot=frame_rot(d, nrm), **kw))
+    return out
+
+
+# the sunbursts: (angle, root radius, tip radius, segment widths) - long / short alternating, a little irregular
+CORONA_F = ([(a + j, 2.0, L, (1.5, 1.0, 0.5)) for a, j, L in ((0, 2, 9.5), (60, -3, 8.75), (120, 2, 9.25), (180, -2, 8.25),
+                                                            (240, 3, 9.75), (300, -2, 8.5))]
+            + [(a + j, 2.0, L, (1.0, 0.5)) for a, j, L in ((30, -2, 6.0), (90, 3, 6.75), (150, -3, 5.5), (210, 2, 6.25),
+                                                         (270, -2, 6.5), (330, 3, 5.75))])
+CORONA_BLAZE = [(a, 3.5, L, (0.75, 0.5)) for a, L in ((15, 14.0), (75, 12.75), (135, 13.5), (195, 12.5), (255, 14.5),
+                                                     (315, 13.0))]      # lure / the open sun: long spikes between
+CORONA_B = ([(a + j, 1.5, L, (1.0, 0.75, 0.5)) for a, j, L in ((0, 0, 6.25), (90, 4, 5.5), (180, -3, 5.75), (270, 2, 6.0))]
+            + [(a + j, 1.5, L, (0.75, 0.5)) for a, j, L in ((45, 3, 4.0), (135, -2, 4.5), (225, 2, 3.75), (315, -3, 4.25))])
+
+
 def _corona(m: Model) -> None:
-    """The light at both wounds: thin glowing rays radiating in a circle, fading outward."""
+    """The light at both wounds: thin glowing rays radiating in a circle, tapering and fading outward."""
     x, y, _ = ENTRY
     cz = -4.6                                                         # in front of the pectorals
     c = (x, y, cz)
     cf = m.bone("corona_f", "chest", c)
     hide = {"bastion"}                                                # bastion: the light is shut inside the plates
-    rays(m, cf.name, c, 8, 2.25, 5.5, 1.0, "corona", plane="front", phase=0.0, skip=hide)     # long rays: a broad root
-    rays(m, cf.name, (x, y, cz - 0.05), 8, 5.5, 9.25, 0.5, "corona", plane="front", phase=0.0, skip=hide)  # ... a thin tip
-    rays(m, cf.name, (x, y, cz - 0.1), 8, 2.25, 6.25, 0.5, "corona", plane="front", phase=22.5, skip=hide)
-    rays(m, cf.name, (x, y, cz - 0.15), 8, 3.0, 14.0, 0.75, "corona", plane="front", phase=11.25, only={"lure"})
-    rays(m, cf.name, (x, y, cz - 0.15), 8, 3.0, 12.0, 0.75, "corona", plane="front", phase=33.75,
-         only={"lure", "unshackled", "daybreak"})
+    sunburst(m, cf.name, c, "front", CORONA_F, skip=hide)
+    sunburst(m, cf.name, (x, y, cz - 0.1), "front", CORONA_BLAZE, only={"lure"})
+    sunburst(m, cf.name, (x, y, cz - 0.1), "front", [(a + 30, 3.5, L - 2.0, (0.5,)) for a, _, L, _ in CORONA_BLAZE],
+             only=DRAWN)                                             # the open sun: thin glints between the rays
     m.box(cf.name, (x, y, cz + 0.25), (3.0, 3.0, 0.5), "core", skip=hide | DRAWN)               # the glare at the wound
     m.box(cf.name, (x, y, cz + 0.05), (2.5, 4.5, 0.5), "core", only=DRAWN)                      # the open sun
     m.box(cf.name, (x, y, cz + 0.1), (4.5, 2.5, 0.5), "core", only=DRAWN)
     m.box(cf.name, (x, y, cz - 0.2), (2.5, 2.5, 0.5), "core_hot", only=DRAWN)
     cf.locators["wound"] = (x, y, cz - 0.5)
-    # the exit wound: a smaller corona in the plane of the back plates, above the keel
+    # the exit wound: a smaller sunburst in the plane of the back plates, above the keel
     ex, ey, ez = EXIT
     pz = 8.0
     cb = m.bone("corona_b", "chest", (ex, ey, pz), (12.0, 0.0, 0.0))
-    rays(m, cb.name, (ex, ey, pz), 6, 1.5, 6.25, 0.75, "corona_b", plane="back", phase=0.0)
-    rays(m, cb.name, (ex, ey, pz + 0.05), 6, 1.5, 4.0, 0.5, "corona_b", plane="back", phase=30.0)
+    sunburst(m, cb.name, (ex, ey, pz), "back", CORONA_B)
     m.box(cb.name, (ex, ey, pz - 0.2), (2.75, 2.75, 0.5), "core")
     cb.locators["wound_back"] = (ex, ey, pz + 0.5)
 
@@ -556,34 +585,33 @@ def _arms(m: Model, drop) -> None:
             fo.variant[v] = ((0.0, 0.0, 0.0), (b, 0.0, 0.0))
             hd.variant[v] = ((0.0, 0.0, 0.0), (round(-(a + b), 2), 0.0, 0.0))
         dl = m.bone(f"{p}_delt", up.name, tuple(S0))                   # (hidden in first person: it sits above the eye line)
-        m.box(dl.name, tuple(S0 + (s * 0.25, -0.75, 0.25)), (4.75, 4.75, 5.0), "skin")     # the deltoid under the pauldron
-        limb(m, dl.name, S0 + (0, -1.75, 0), E0 + (0, 0.25, 0), 4.0, 4.0, "skin")        # upper arm
+        m.box(dl.name, tuple(S0 + (s * 0.25, -0.75, 0.25)), (4.75, 4.75, 5.0), "arm")      # the deltoid under the pauldron
+        limb(m, dl.name, S0 + (0, -1.75, 0), E0 + (0, 0.25, 0), 4.0, 4.0, "arm")         # upper arm
         # the forearm: massive, shelled on the outside, a torn fin trailing behind
-        limb(m, fo.name, E0 + (0, 0.75, 0.25), W0 + (0, -0.25, 0), 5.0, 5.25, "skin")
+        limb(m, fo.name, E0 + (0, 0.75, 0.25), W0 + (0, -0.25, 0), 5.0, 5.25, "fore")
         ax = (E0 - W0) / np.linalg.norm(E0 - W0)
         mid = (E0 + W0) / 2
         out = np.array([s * 1.0, 0.0, 0.0])
         for k, f in enumerate((0.22, -0.16)):                                              # vambrace lames
-            slab(m, fo.name, mid + ax * f * 7.0 + out * (2.7 + 0.1 * k), out, -ax, 4.0, 3.25, 0.75, "plate")
-        slab(m, fo.name, E0 + (0, -0.5, 2.5), (0, -0.2, 1), (0, -1, 0), 3.25, 2.75, 0.75, "plate")      # elbow cop
+            slab(m, fo.name, mid + ax * f * 7.0 + out * (2.7 + 0.1 * k), out, -ax, 4.0, 3.25, 0.75, "plate_limb")
+        slab(m, fo.name, E0 + (0, -0.5, 2.5), (0, -0.2, 1), (0, -1, 0), 3.25, 2.75, 0.75, "plate_limb")  # elbow cop
         m.cube(fo.name, (s * 8.0, 14.25, 1.0), (0.0, 5.0, 3.5), "calf_fin", cutout=True)                    # forearm fin
         # the hand: palm, three long webbed fingers with hard white claws, a thumb
         hz = W0[2]
-        m.box(hd.name, (s * 7.5, 12.0, hz), (3.0, 3.0, 3.75), "skin")
+        m.box(hd.name, (s * 7.5, 12.0, hz), (3.0, 3.0, 3.75), "hand")
         m.cube(hd.name, (s * 7.5, 7.0, hz - 1.75), (0.0, 3.75, 3.5), "web", cutout=True)
         for k, (fz, fan) in enumerate(zip(FINGER_Z, FINGER_FAN)):
             f = m.bone(f"{p}_finger{k}", hd.name, (s * 7.5, 10.5, fz), (fan, 0.0, 0.0))
-            m.box(f.name, (s * 7.5, 8.875, fz), (1.25, 3.25, 1.25), "skin")
+            m.box(f.name, (s * 7.5, 8.875, fz), (1.25, 3.25, 1.25), "hand")
             m.cube(f.name, (s * 7.5 - 0.5, 5.75, fz - 0.6), (1.0, 2.0, 1.0), "claw", pivot=(s * 7.5, 7.25, fz),
                    rot=(-16.0, 0.0, 0.0))
         th = m.bone(f"{p}_thumb", hd.name, (s * 6.5, 11.75, hz - 1.75), side_rot((-24.0, 0.0, -14.0), s))
-        m.box(th.name, (s * 6.5, 10.25, hz - 1.75), (1.25, 2.75, 1.25), "skin")
-        m.cube(th.name, (s * 6.5 - 0.375, 8.25, hz - 2.25), (0.75, 1.25, 0.75), "claw")
+        m.box(th.name, (s * 6.5, 10.0, hz - 1.75), (1.25, 3.25, 1.25), "hand")
         hd.locators[f"{p}_claws"] = (s * 7.5, 6.0, hz)
-        if s < 0:                                # daybreak (the ultimate's Solar Execution): the sun torn out, in his fist
+        if s > 0:                                # daybreak (the ultimate's Solar Execution): the sun torn out, in his LEFT fist
             palm = (s * 7.5, 11.75, hz)
-            sun = m.bone("r_sun", hd.name, palm, orient((0.0, 0.42, -0.91), (0.0, 0.91, 0.42)), only={"daybreak"})
-            sword_parts(m, sun.name, palm, short_rays=False)
+            sun = m.bone("l_sun", hd.name, palm, orient((0.0, 0.42, -0.91), (0.0, 0.91, 0.42)), only={"daybreak"})
+            sword_parts(m, sun.name, palm)
             sun.locators["sun_tip"] = (palm[0], palm[1] + TIP_Y, palm[2])
 
 
@@ -615,29 +643,28 @@ def _head(m: Model, drop) -> None:
     def P(x, y, z):
         return (x, y + HEAD_DY, z)
 
-    limb(m, sk.name, (0, 31.25, -4.5), P(0, 27.5, -9.25), 5.5, 5.5, "skin", fwd=(0, -1, -0.3))
-    m.box(sk.name, P(0, 28.25, -10.5), (6.5, 5.0, 5.5), "head")                                 # the old bald skull
-    m.box(sk.name, P(0, 31.125, -10.25), (5.25, 0.75, 4.25), "head")                            # its dome
+    limb(m, sk.name, (0, 31.25, -4.5), P(0, 27.5, -9.25), 5.5, 5.5, "neck", fwd=(0, -1, -0.3))
+    ellipsoid(m, sk.name, P(0, 28.75, -10.5), (6.5, 5.5, 6.0), "head", a=0.7, b=0.88)          # the old bald dome
     m.box(sk.name, P(0, 25.75, -10.25), (6.75, 2.5, 4.5), "jowl")                              # sagging jowls
-    m.box(sk.name, P(0, 30.0, -13.25), (6.5, 1.5, 1.75), "brow")                               # the heavy brow ridge
-    m.box(sk.name, P(0, 27.75, -13.5), (5.0, 2.75, 1.0), "face", ppu=4.0)                      # the face under it
-    m.box(sk.name, P(0, 28.375, -15.0), (4.75, 2.75, 2.25), "snout")                            # the muzzle tapers into ...
-    # ... the rostrum: a long flat blade of a snout, slightly upturned
-    sweep(m, sk.name, "ros", [P(0, 29.75, -13.75), P(0, 29.9, -17.0), P(0, 30.4, -20.25)], 4.25, 1.5, "snout", h0=1.5,
-          h1=0.75, n=2, bones=False, normal=(0, 1, 0))
+    m.box(sk.name, P(0, 30.0, -13.25), (6.75, 1.5, 2.0), "brow")                               # the heavy brow ridge
+    # the rostrum: a long flattened blade tapering to a point, thick where it leaves the face
+    sweep(m, sk.name, "ros", [P(0, 28.75, -13.0), P(0, 29.0, -16.75), P(0, 29.75, -21.0)], 4.5, 0.5, "snout", h0=2.0,
+          h1=0.5, n=4, bones=False, normal=(0, 1, 0))
     for s, p in ((-1, "r"), (1, "l")):
         m.box(sk.name, P(s * 2.4, 28.75, -13.9), (1.0, 0.75, 0.75), "eye", ppu=4.0)            # small ice-blue eyes
         m.cube(sk.name, P(s * 3.3, 25.0, -9.0), (0.0, 4.0, 4.5), "wisp", cutout=True)            # an old man's last wisps
         lid = m.bone(f"lid_{p}", sk.name, P(s * 2.4, 29.2, -14.05))                              # (scale y to squint / blink)
         m.cube(lid.name, P(s * 2.4 - 0.55, 28.95, -14.4), (1.1, 0.25, 0.6), "lid")
         br = m.bone(f"brow_{p}", sk.name, P(s * 2.0, 30.25, -14.0), side_rot((0.0, 0.0, 8.0), s))
-        m.box(br.name, P(s * 2.0, 30.5, -13.75), (2.75, 0.75, 1.25), "hair")                   # the white tuft
-        m.cube(br.name, P(s * 3.0 - (2.25 if s < 0 else 0.0), 28.0, -14.25), (2.25, 2.75, 0.0), "brow_hair",
-               cutout=True, pivot=P(s * 3.0, 30.5, -14.25), rot=(0.0, -s * 42.0, s * 10.0))      # long brows drooping out
-        for k in range(3):                                                                       # gill flaps
-            gz = -6.75 - k * 1.0
+        m.box(br.name, P(s * 2.1, 30.6, -13.9), (2.5, 0.75, 1.0), "hair")                      # the white tuft on the brow
+        for k, (dy, dz) in enumerate(((0.0, 0.0), (-0.6, 0.9))):                                # long brows drooping out and
+            pts = [P(s * 3.0, 30.5 + dy, -14.0 + dz), P(s * 4.5, 29.6 + dy, -13.6 + dz),        # down past the cheeks
+                   P(s * 5.4, 27.75 + dy, -12.75 + dz)]
+            sweep(m, br.name, f"brow_{p}{k}", pts, 0.75, 0.5, "hair", h0=0.5, h1=0.5, n=1, bones=False)
+        for k in range(2):                                                                       # gill flaps
+            gz = -7.0 - k * 1.25
             gl = m.bone(f"gill_{p}{k}", sk.name, P(s * 2.75, 28.0, gz - 0.5))
-            m.cube(gl.name, P(s * 2.75 - 0.125, 25.0, gz - 0.5), (0.25, 3.0, 1.25), "gill")
+            m.cube(gl.name, P(s * 2.75 - 0.125, 25.0, gz - 0.5), (0.25, 3.0, 1.5), "gill")
     # the protrusible jaw apparatus
     jw = m.bone("jaws", sk.name, P(0, 26.5, -11.5))
     jw.variant["maw"] = ((0.0, -0.5, -4.5), (4.0, 0.0, 0.0))
@@ -650,36 +677,703 @@ def _head(m: Model, drop) -> None:
     m.box(lo.name, P(0, 24.25, -15.0), (4.75, 1.25, 6.25), "jaw")                              # the underbite
     m.box(lo.name, P(0, 25.375, -15.5), (3.75, 1.25, 4.75), "teeth", cutout=True)              # needle teeth (lower row)
     for s, p in ((-1, "r"), (1, "l")):                                                          # barbels with glowing tips
-        names = sweep(m, lo.name, f"barbel_{p}", [P(s * 2.0, 23.75, -15.25), P(s * 2.75, 21.5, -14.5),
-                                                  P(s * 3.25, 19.25, -13.5)], 0.75, 0.5, "barbel", n=1)
-        m.box(names[-1], P(s * 3.25, 19.1, -13.45), (0.75, 0.75, 0.75), "lamp")
+        sweep(m, lo.name, f"barbel_{p}", [P(s * 2.0, 23.75, -15.25), P(s * 2.75, 21.5, -14.5), P(s * 3.25, 19.0, -13.5)],
+              0.75, 0.75, "barbel", n=1)
     lo.locators["maw"] = P(0.0, 25.0, -18.0)
     sk.locators["eyes"] = P(0.0, 28.75, -14.25)
     sk.locators["gills"] = P(0.0, 26.5, -7.75)
 
 
-# ============================================================================= materials (Gate A: flat placeholders)
+# ============================================================================= materials
+#
+# Premium painting (kit/pixel.py v1.5): continuous ramps, light from the smooth form, soft rims and
+# occlusion, and light as DESIGNED patterns - golden cracks radiating from both wounds, rows of
+# ice-blue photophores, the white-gold sword and its coronas.  Midtones everywhere: the renderer
+# (and Bedrock) darken back faces to about half, so the ramps sit high.
 
-def _flat(base, glow=0.0, up=0.12, down=0.12):
-    c = px.col(base)
-    pal = px.pal(c * 0.55, c * 0.78, c, np.clip(c * 1.18 + 0.03, 0, 1))
+SKIN = px.pal("#0e1f2e", "#173444", "#1d3a4a", "#2a5262", "#3f6a78", "#5a8c99", "#86bcc4")
+BELLY = px.pal("#22404c", "#33596a", "#4a7482", "#66919b", "#8bb3b8", "#b4d4d4")
+DAYSKIN = px.pal("#1e0f06", "#36200e", "#553318", "#764822", "#98622f", "#bc8448", "#e2b06c")      # burnt bronze
+DAYBELLY = px.pal("#3a200e", "#5a3517", "#7c4c22", "#a0682f", "#c48a46", "#e6b46c")
+WET = px.col("#a6e6ea")                     # wet cyan highlight
+WARM = px.pal("#5e2f12", "#a65a1e", "#e09238", "#ffc867", "#ffe7a8")     # the sun's light on skin
+ARMOR = px.pal("#3a3e54", "#5b6178", "#7a8099", "#9aa0bb", "#b8bdd4", "#d2d6ea", "#eef0fa")
+LAVENDER = px.col("#c4b9ec")
+PEARL_CYAN = px.col("#cfeef2")
+SEAMLINE = px.col("#262a3e")
+SUN = px.pal("#8a3a0c", "#c8621a", "#f3982c", "#ffc75a", "#ffe8a4", "#fff8e2", "#ffffff")
+GOLD = px.pal("#4a2a0c", "#7a4e18", "#b07c2c", "#dcaa48", "#f6d47a", "#fff0bc")
+STEEL = px.pal("#a87f42", "#d3ae6e", "#eed69e", "#faedc9", "#fffbec")
+PHOTO_RIM, PHOTO_MID, PHOTO_CORE = px.col("#3aa6d6"), px.col("#8fe2fb"), px.col("#effcff")
+BONE = px.pal("#6c717d", "#a2a8b4", "#d0d4dc", "#eef0f4", "#ffffff")
+GILL = px.pal("#2c0a12", "#521624", "#7a2636", "#a2445a")
+HAIR = px.pal("#8f98a3", "#b9c1c9", "#dee3e8", "#f6f8fa", "#ffffff")
+LEATHER = px.pal("#1b110a", "#2e1d10", "#463019", "#664627")
+FIN = px.pal("#183442", "#24495a", "#346a7a", "#4f8a98", "#78b0ba", "#a6d2d6")
 
-    def mat(ctx):
-        return px.shade(ctx, pal, offset=0.12, up=up, down=down), ctx.ones(), np.full(ctx.N, glow)
-    return mat
+_RC = rot_matrix((HUNCH, 0.0, 0.0))
+_RH = rot_matrix((HEAD_PITCH, 0.0, 0.0))
+_N0 = None
 
 
-def _rayglow(base, center, r_max):
-    """Corona rays: white-gold at the root fading to amber and to a faint glow at the tip (by radius)."""
-    c = px.col(base)
+def _P(ctx):
+    p = ctx.params
+    return p.get("blaze", 0.0), p.get("open", 0.0), p.get("day", 0.0)
 
-    def mat(ctx):
-        r = np.linalg.norm(ctx.p[:, :2] - np.array(center[:2]), axis=1)
-        v = np.clip((r - 2.0) / (r_max - 2.0), 0, 1)
-        rgb = c[None, :] * (1 - 0.45 * v[:, None]) + np.array([1.0, 0.62, 0.22])[None, :] * 0.45 * v[:, None]
-        g = np.clip(0.95 * (1 - v) ** 1.3 + 0.06, 0, 1)
+
+def _wp(ctx):
+    return ctx.wp if ctx.wp is not None else ctx.p
+
+
+def _wn(ctx):
+    return ctx.wn if ctx.wn is not None else ctx.n
+
+
+def _cf(ctx):
+    """Texel positions in the upright chest frame (for everything that rides on the chest)."""
+    piv = np.array(CHEST_PIVOT)
+    return (_wp(ctx) - piv) @ _RC + piv
+
+
+def _cfn(ctx):
+    return _RC.T @ _wn(ctx)
+
+
+def _head_w(p):
+    """World rest position of a head point authored like the head geometry (before HEAD_DY)."""
+    n0 = _neck("base")
+    a = np.array([p[0], p[1] + HEAD_DY, p[2]])
+    return n0 + _RH @ (a - n0)
+
+
+def _mix(a, b, t):
+    t = np.clip(np.asarray(t, float), 0, 1)
+    if t.ndim == 1:
+        t = t[:, None]
+    return a * (1 - t) + b * t
+
+
+def _h(ix, iy, seed):
+    v = np.sin(ix * 12.9898 + iy * 78.233 + seed * 37.719) * 43758.5453
+    return v - np.floor(v)
+
+
+def _spots(P, centers, radius, core=0.35):
+    g = np.zeros(len(P))
+    for c in centers:
+        d = np.linalg.norm(P - np.asarray(c, float), axis=1) / radius
+        t = np.clip((1 - d) / (1 - core), 0, 1)
+        g = np.maximum(g, t * t * (3 - 2 * t))
+    return g
+
+
+def _seg2(q, a, b):
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    ab = b - a
+    t = np.clip(((q - a) @ ab) / max(float(ab @ ab), 1e-9), 0, 1)
+    return np.linalg.norm(q - (a + t[:, None] * ab), axis=1)
+
+
+def _pdist(q, lines):
+    d = np.full(len(q), 99.0)
+    for pl in lines:
+        for a, b in zip(pl[:-1], pl[1:]):
+            d = np.minimum(d, _seg2(q, a, b))
+    return d
+
+
+# ----------------------------------------------------------------------------- light: photophores and cracks
+
+def photophores(rgb, glow, g, gold=False):
+    """Paint ice-blue photophores (gold in daybreak) where g (0..1) is non-zero."""
+    rim, mid, core = ((px.col("#c8781e"), px.col("#ffc867"), px.col("#fff6d6")) if gold else
+                      (PHOTO_RIM, PHOTO_MID, PHOTO_CORE))
+    c = np.where((g > 0.85)[:, None], core, np.where((g > 0.45)[:, None], mid, rim))
+    on = g > 0.12
+    rgb = np.where(on[:, None], _mix(rgb, c, np.clip(g * 1.4, 0, 1)), rgb)
+    glow = np.where(on, np.maximum(glow, 0.35 + 0.6 * g), glow)
+    return rgb, glow
+
+
+# the designed crack pattern on the chest, in the chest frame unwrapped round the flanks (u, y): it radiates
+# from the heart wound up over the pectorals to both shoulders, along the ribs round the flanks, and down
+CRACKS_F = [
+    [(0.0, 23.0), (-1.25, 24.5), (-2.0, 26.0), (-3.5, 27.25), (-5.0, 28.0), (-6.5, 29.5), (-7.5, 31.0)],
+    [(-3.5, 27.25), (-4.0, 28.75), (-3.75, 30.5)],
+    [(0.0, 23.0), (1.0, 24.75), (2.25, 25.75), (3.25, 27.5), (4.75, 28.25), (6.25, 29.75), (7.25, 31.25)],
+    [(2.25, 25.75), (3.75, 25.5), (5.25, 26.25), (6.25, 25.75)],
+    [(0.0, 23.0), (-1.75, 22.5), (-3.25, 22.75), (-4.5, 22.0), (-5.75, 21.5), (-7.5, 21.25), (-9.0, 22.0), (-10.5, 21.5)],
+    [(-4.5, 22.0), (-5.25, 23.75), (-6.75, 24.5), (-8.25, 24.0)],
+    [(0.0, 23.0), (1.5, 22.25), (3.0, 22.5), (4.5, 21.75), (5.75, 22.25), (7.25, 21.75), (8.75, 22.5), (10.25, 22.0)],
+    [(0.0, 23.0), (-0.75, 21.5), (-1.5, 20.75), (-1.25, 19.5), (-2.25, 18.5)],
+    [(0.0, 23.0), (0.5, 21.25), (1.75, 20.5), (2.0, 19.25), (3.25, 18.75)],
+    [(0.0, 23.0), (-0.5, 24.25), (0.25, 25.25), (-0.25, 26.5)],
+]
+# ... and on the back round the exit wound, in the chest frame (x, y), seen from behind
+CRACKS_B = [
+    [(1.4, 27.6), (2.5, 29.0), (3.5, 30.75), (5.0, 31.75), (6.75, 33.0)],
+    [(1.4, 27.6), (0.25, 29.25), (-1.25, 30.5), (-2.75, 31.25), (-4.5, 32.5), (-6.25, 33.25)],
+    [(1.4, 27.6), (-0.5, 27.0), (-2.0, 27.5), (-3.75, 26.75), (-5.5, 27.25), (-7.0, 26.5)],
+    [(1.4, 27.6), (3.25, 27.0), (5.0, 27.5), (6.5, 26.75), (7.75, 27.25)],
+    [(1.4, 27.6), (1.0, 26.0), (1.75, 24.5), (0.75, 23.0), (1.5, 21.5), (0.5, 20.0)],
+    [(1.4, 27.6), (2.75, 26.0), (4.0, 24.75), (5.5, 23.75), (6.5, 22.25)],
+    [(1.4, 27.6), (0.0, 26.25), (-1.5, 25.0), (-3.0, 23.5), (-4.25, 22.75)],
+]
+# ... and over the tops of the shoulders (chest frame, seen from above: x, z)
+CRACKS_S = [
+    [(-4.0, 0.25), (-5.0, -0.75), (-6.25, 0.25), (-7.25, -0.5), (-8.5, 0.5), (-9.75, 0.0)],
+    [(-6.25, 0.25), (-6.75, 2.0), (-7.75, 3.0)],
+    [(4.0, 0.5), (5.25, -0.5), (6.25, 0.5), (7.5, -0.25), (8.75, 0.75), (9.75, 0.25)],
+    [(7.5, -0.25), (8.0, -2.0), (9.0, -2.75)],
+]
+
+
+def _reach(ctx):
+    """How far (px) the cracks reach from the wounds, and how hot they burn, per texture set."""
+    blaze, open_, day = _P(ctx)
+    if open_ or day:
+        return 40.0, 1.0
+    return (14.0, 0.95) if blaze else (11.5, 0.8)
+
+
+def crack(rgb, glow, d, r, reach, heat, width=0.3):
+    """Two-tone light-cracks: a white-gold core, an amber rim; they cool with distance r from the wound."""
+    fade = np.clip(1 - r / reach, 0, 1)
+    core = (d < width) & (fade > 0.02)
+    rim = (d < width + 0.34) & ~core & (fade > 0.1)
+    rgb = np.where(core[:, None], px.smooth_ramp(SUN, 0.62 + 0.38 * fade), rgb)
+    rgb = np.where(rim[:, None], _mix(rgb, SUN[2], 0.35 + 0.35 * fade), rgb)
+    glow = np.where(core, np.maximum(glow, (0.42 + 0.53 * fade) * heat), glow)
+    glow = np.where(rim, np.maximum(glow, 0.22 * fade * heat), glow)
+    return rgb, glow
+
+
+def chest_cracks(ctx, rgb, glow):
+    """The designed cracks on everything that rides on the chest (front, flanks, shoulders, back)."""
+    reach, heat = _reach(ctx)
+    P = _cf(ctx)
+    n = _cfn(ctx)
+    if n[1] > 0.6 and abs(n[2]) < 0.6:                        # facing up: the shoulder tops
+        d = _pdist(P[:, [0, 2]], CRACKS_S)
+        r = np.linalg.norm(P - np.array(ENTRY), axis=1)
+        return crack(rgb, glow, d, r, reach + 1.0, heat)
+    if n[2] < 0.35:                                           # front and flanks
+        u = np.where(abs(n[0]) > 0.5, np.sign(n[0]) * (np.abs(P[:, 0]) + (P[:, 2] + 3.0)), P[:, 0])
+        q = np.stack([u, P[:, 1]], axis=1)
+        d = _pdist(q, CRACKS_F)
+        r = np.hypot(q[:, 0] - ENTRY[0], q[:, 1] - ENTRY[1])
+        return crack(rgb, glow, d, r, reach, heat)
+    d = _pdist(P[:, :2], CRACKS_B)                          # the back, round the exit wound
+    r = np.hypot(P[:, 0] - EXIT[0], P[:, 1] - EXIT[1])
+    return crack(rgb, glow, d, r, reach * 0.8, heat)
+
+
+ZIG = (0, 0, 1, 1, 1, 0, 0, -1, -1, -1)       # a crack's walk down a face, one texel at a time
+
+
+def limb_cracks(ctx, rgb, glow, seed=0):
+    """Unshackled / daybreak: the cracks blaze across the whole body - a continuous zigzag split down
+    most limb faces with a branch, cooling with distance from the heart (designed, never speckle)."""
+    blaze, open_, day = _P(ctx)
+    if not (open_ or day) or not px.side(ctx):
+        return rgb, glow
+    ix, iy, W, H = px.texel(ctx)
+    if H < 5 or W < 3:
+        return rgb, glow
+    k = ctx.seed * 3 + len(ctx.face) * 7 + seed
+    if _h(np.array([k]), np.array([1]), 5)[0] > 0.7:                  # about two faces in three
+        return rgb, glow
+    x0 = 1 + int(_h(np.array([k]), np.array([2]), 9)[0] * max(W - 2, 1))
+    zz = np.array(ZIG)[(iy + k) % len(ZIG)]
+    x_line = np.clip(x0 + zz, 0, W - 1)
+    on = ix == x_line
+    b = H // 2 + (k % 3) - 1                                             # one branch splits off sideways
+    sgn = 1 if x0 < W / 2 else -1
+    on |= (iy > b) & (iy <= b + 3) & (ix == np.clip(x_line + sgn * (iy - b), 0, W - 1))
+    r = np.linalg.norm(_wp(ctx) - np.array(chest_world(ENTRY)), axis=1)
+    return crack(rgb, glow, np.where(on, 0.0, 9.0), r, 36.0, 0.95)
+
+
+def sun_spill(ctx, reach: float = 9.0):
+    """0..1: the warm light of the wound falling on nearby skin that faces it."""
+    blaze, open_, day = _P(ctx)
+    c = np.array(chest_world(ENTRY)) + np.array([0.0, 0.0, -1.0])
+    d = c[None, :] - _wp(ctx)
+    dist = np.maximum(np.linalg.norm(d, axis=1), 1e-6)
+    facing = np.clip((d @ _wn(ctx)) / dist + 0.25, 0, 1)
+    R = reach * (1.35 if blaze else 1.0) * (1.25 if open_ else 1.0)
+    return np.clip((1 - dist / R), 0, 1) ** 1.6 * facing * (1.2 if (blaze or open_) else 0.85)
+
+
+# ----------------------------------------------------------------------------- skin
+
+def pillow(ctx, edge=0.16, grad=0.12, rim=0.08):
+    """Light level of a limb box painted as a rounded form: real face direction, darker toward the
+    face's side edges, lighter toward the top, a soft rim along the top edge."""
+    ix, iy, W, H = px.texel(ctx)
+    lv = px.light(ctx, grad=0.0)
+    if px.side(ctx):
+        u = (ix + 0.5) / W * 2 - 1
+        lv = lv - edge * u ** 2 + grad * (0.5 - (iy + 0.5) / H)
+        if H >= 4:
+            lv = lv + rim * (iy == 0)
+    else:
+        u = (ix + 0.5) / W * 2 - 1
+        v = (iy + 0.5) / H * 2 - 1
+        lv = lv - edge * 0.5 * (u ** 2 + v ** 2)
+    return lv
+
+
+def skin_pal(ctx, belly=False):
+    blaze, open_, day = _P(ctx)
+    if day > 0.5:
+        return DAYBELLY if belly else DAYSKIN
+    return BELLY if belly else SKIN
+
+
+def skin(ctx, lv, belly=False, spill=1.0, wet=True, seed=0):
+    """Skin colour for light level lv: the navy-teal ramp (lighter belly), wet cyan highlights on the
+    brightest texels, sparse wet glints along upper edges, the warm light of the wound."""
+    ix, iy, W, H = px.texel(ctx)
+    pal = skin_pal(ctx, belly)
+    lv = 0.2 + 0.7 * lv                                       # faces land in the midtones; the top is for wet light
+    rgb = px.smooth_ramp(pal, lv)
+    blaze, open_, day = _P(ctx)
+    if wet and day < 0.5:
+        hi = np.clip((lv - 0.8) / 0.14, 0, 1)
+        rgb = _mix(rgb, WET, hi * 0.55)
+        if px.side(ctx) and H >= 4:
+            glint = (iy <= 1) & (_h(ix, iy, ctx.seed + seed) < 0.10)
+            rgb = np.where(glint[:, None], _mix(rgb, WET, 0.6), rgb)
+    glow = np.zeros(ctx.N)
+    if spill:
+        s = sun_spill(ctx) * spill
+        warm = px.smooth_ramp(WARM, np.clip(0.35 + 0.65 * s, 0, 1))
+        rgb = _mix(rgb, warm, np.clip(s * 1.1, 0, 0.85))
+        glow = np.where(s > 0.55, 0.12 + 0.2 * blaze, 0.0)
+    return rgb, glow
+
+
+def _torso_level(ctx, offset=0.08):
+    c = chest_world((0.0, 26.0, 1.0))
+    lv = px.proxy(ctx, tuple(c), (7.5, 9.0, 6.0), 0.75) + offset
+    if px.side(ctx):
+        ix, iy, W, H = px.texel(ctx)
+        lv = lv + 0.06 * (0.5 - (iy + 0.5) / H)
+    return lv
+
+
+def mat_skin(ctx):
+    """The upper body: pectorals, the upper chest and trapezius under the plates."""
+    lv = _torso_level(ctx) + px.ao_near(ctx, [chest_world((s * 7.5, 28.75, 1.25)) for s in (-1, 1)], 3.5, 0.12)
+    rgb, glow = skin(ctx, lv)
+    rgb, glow = chest_cracks(ctx, rgb, glow)
+    return rgb, ctx.ones(), glow
+
+
+def mat_belly(ctx):
+    """The pale underside: the ribcage front and the waist, with soft ventral grooves."""
+    ix, iy, W, H = px.texel(ctx)
+    lv = _torso_level(ctx, 0.12)
+    if ctx.face == "north" and H >= 6:
+        lv = lv - 0.06 * ((iy % 3) == 2) * (np.abs(ix + 0.5 - W / 2) < W / 2 - 1)
+    rgb, glow = skin(ctx, lv, belly=True)
+    rgb, glow = chest_cracks(ctx, rgb, glow)
+    return rgb, ctx.ones(), glow
+
+
+PHOTO_FLANK = [(s * 6.55, y, z) for s in (-1, 1) for y, z in ((21.6, 1.75), (22.9, 1.25), (24.2, 1.75), (25.5, 1.25),
+                                                              (26.8, 1.75))]
+
+
+def mat_ribs(ctx):
+    """The flanks: ribs under the skin and the lateral line of photophores."""
+    blaze, open_, day = _P(ctx)
+    ix, iy, W, H = px.texel(ctx)
+    lv = _torso_level(ctx, 0.05)
+    if px.side(ctx) and H >= 6:
+        lv = lv - 0.07 * ((iy % 3) == 1)
+    rgb, glow = skin(ctx, lv)
+    rgb, glow = chest_cracks(ctx, rgb, glow)
+    if px.side(ctx) and abs(_cfn(ctx)[0]) > 0.5:
+        rgb, glow = photophores(rgb, glow, _spots(_cf(ctx), PHOTO_FLANK, 0.85), gold=day > 0.5)
+    return rgb, ctx.ones(), glow
+
+
+def mat_pelvis(ctx):
+    lv = px.proxy(ctx, (0.0, 17.0, 1.0), (6.0, 3.5, 4.5), 0.7) + 0.06
+    rgb, glow = skin(ctx, lv, spill=0.6)
+    rgb, glow = limb_cracks(ctx, rgb, glow, 3)
+    return rgb, ctx.ones(), glow
+
+
+PHOTO_LIMB = []
+
+
+def _photo_limbs():
+    if PHOTO_LIMB:
+        return PHOTO_LIMB
+    for s in (-1, 1):
+        S0 = _shoulder("base", s)
+        E0 = np.array([s * ELBOW[0], ELBOW[1], ELBOW[2]])
+        W0 = np.array([s * WRIST[0], WRIST[1], WRIST[2]])
+        for t in (0.22, 0.46, 0.7):                                    # down the back of the forearm
+            PHOTO_LIMB.append(tuple(E0 + (W0 - E0) * t + np.array([0.0, 0.0, 2.6])))
+        for t in (0.5, 0.75):                                          # the outside of the upper arm
+            PHOTO_LIMB.append(tuple(S0 + (E0 - S0) * t + np.array([s * 2.05, 0.0, 0.0])))
+        PHOTO_LIMB.extend([(s * 6.15, 15.25, 0.5), (s * 6.0, 13.5, -0.25)])     # the outer thigh (lateral line)
+    return PHOTO_LIMB
+
+
+def mat_arm(ctx):
+    lv = pillow(ctx) + 0.06
+    rgb, glow = skin(ctx, lv, spill=0.5)
+    rgb, glow = limb_cracks(ctx, rgb, glow, 5)
+    rgb, glow = photophores(rgb, glow, px.glow_spot(ctx, _photo_limbs(), 0.62), gold=_P(ctx)[2] > 0.5)
+    return rgb, ctx.ones(), glow
+
+
+def mat_fore(ctx):
+    ix, iy, W, H = px.texel(ctx)
+    lv = pillow(ctx, edge=0.14) + 0.06
+    if px.side(ctx) and H >= 8:                                        # tendons along the forearm
+        lv = lv - 0.05 * ((ix % 3) == 1) * (iy > 1)
+    rgb, glow = skin(ctx, lv, spill=0.4)
+    rgb, glow = limb_cracks(ctx, rgb, glow, 7)
+    rgb, glow = photophores(rgb, glow, px.glow_spot(ctx, _photo_limbs(), 0.62), gold=_P(ctx)[2] > 0.5)
+    return rgb, ctx.ones(), glow
+
+
+def mat_hand(ctx):
+    ix, iy, W, H = px.texel(ctx)
+    lv = pillow(ctx, edge=0.12) + 0.05
+    if px.side(ctx) and H >= 5:                                        # knuckle creases
+        lv = lv - 0.08 * ((iy % 4) == 3)
+    rgb, glow = skin(ctx, lv, spill=0.3)
+    rgb, glow = limb_cracks(ctx, rgb, glow, 9)
+    return rgb, ctx.ones(), glow
+
+
+def mat_leg(ctx):
+    ix, iy, W, H = px.texel(ctx)
+    lv = pillow(ctx) + 0.05
+    rgb, glow = skin(ctx, lv, spill=0.25)
+    rgb, glow = limb_cracks(ctx, rgb, glow, 13)
+    rgb, glow = photophores(rgb, glow, px.glow_spot(ctx, _photo_limbs(), 0.62), gold=_P(ctx)[2] > 0.5)
+    return rgb, ctx.ones(), glow
+
+
+def mat_foot(ctx):
+    ix, iy, W, H = px.texel(ctx)
+    lv = pillow(ctx, edge=0.1) + 0.02
+    if ctx.face == "up" and W >= 4:                                    # scutes over the toes
+        lv = lv + 0.08 * ((iy % 3) == 0) - 0.04 * ((iy % 3) == 2)
+    rgb, glow = skin(ctx, lv, spill=0.0)
+    rgb, glow = limb_cracks(ctx, rgb, glow, 15)
+    return rgb, ctx.ones(), glow
+
+
+def mat_fp_arm(ctx):
+    lv = pillow(ctx) + 0.12
+    rgb, glow = skin(ctx, lv, spill=0.0)
+    ix, iy, W, H = px.texel(ctx)
+    if px.side(ctx) and H >= 12:                                        # a short row of photophores
+        g = np.zeros(ctx.N)
+        for k in (0.3, 0.5, 0.7):
+            g = np.maximum(g, np.clip(1 - np.hypot(ix + 0.5 - W / 2, iy + 0.5 - H * k) / 1.4, 0, 1))
+        rgb, glow = photophores(rgb, glow, g, gold=_P(ctx)[2] > 0.5)
+    return rgb, ctx.ones(), glow
+
+
+# ----------------------------------------------------------------------------- the head
+
+def _head_level(ctx, offset=0.0):
+    c = _head_w((0.0, 28.5, -10.75))
+    return px.proxy(ctx, tuple(c), (3.6, 3.2, 4.2), 0.75) + offset
+
+
+PHOTO_HEAD = None
+
+
+def _photo_head():
+    global PHOTO_HEAD
+    if PHOTO_HEAD is None:
+        PHOTO_HEAD = [_head_w((s * 3.45, y, z)) for s in (-1, 1) for y, z in ((27.25, -12.0), (26.5, -11.0), (25.9, -9.9))]
+    return PHOTO_HEAD
+
+
+def mat_head(ctx):
+    """The old bald dome: wrinkled sides, a few age spots, a row of cheek photophores."""
+    blaze, open_, day = _P(ctx)
+    ix, iy, W, H = px.texel(ctx)
+    lv = _head_level(ctx)
+    if px.side(ctx) and H >= 6:
+        lv = lv - 0.07 * (((iy + (ix // 4)) % 4) == 1) * (ix > 0) * (ix < W - 1)
+    if ctx.face == "up" and W >= 6:
+        spots = _h(ix, iy, ctx.seed + 4) < 0.06
+        lv = lv - 0.08 * spots
+    rgb, glow = skin(ctx, lv, spill=0.7)
+    rgb, glow = photophores(rgb, glow, px.glow_spot(ctx, _photo_head(), 0.7), gold=day > 0.5)
+    rgb, glow = limb_cracks(ctx, rgb, glow, 17)
+    return rgb, ctx.ones(), glow
+
+
+def mat_neck(ctx):
+    ix, iy, W, H = px.texel(ctx)
+    lv = pillow(ctx, edge=0.12) + 0.08
+    if px.side(ctx) and W >= 5:
+        lv = lv - 0.06 * ((ix % 3) == 1)                                  # sinews
+    rgb, glow = skin(ctx, lv, spill=0.9)
+    rgb, glow = limb_cracks(ctx, rgb, glow, 19)
+    return rgb, ctx.ones(), glow
+
+
+def mat_jowl(ctx):
+    ix, iy, W, H = px.texel(ctx)
+    lv = _head_level(ctx, 0.04)
+    if px.side(ctx) and H >= 4:
+        lv = lv - 0.08 * (iy == H - 2) - 0.04 * (iy == 1)                 # the folds of old jowls
+    rgb, glow = skin(ctx, lv, spill=1.0)
+    rgb, glow = photophores(rgb, glow, px.glow_spot(ctx, _photo_head(), 0.7), gold=_P(ctx)[2] > 0.5)
+    return rgb, ctx.ones(), glow
+
+
+def mat_brow(ctx):
+    ix, iy, W, H = px.texel(ctx)
+    lv = _head_level(ctx, 0.12)
+    if px.side(ctx) and H >= 3:
+        lv = lv + 0.1 * (iy == 0) - 0.12 * (iy == H - 1)
+    rgb, glow = skin(ctx, lv, spill=0.6)
+    return rgb, ctx.ones(), glow
+
+
+def mat_snout(ctx):
+    """The rostrum: a flat blade, slick on top and dotted with electro-sensing pores."""
+    ix, iy, W, H = px.texel(ctx)
+    lv = px.light(ctx, grad=0.0) + 0.14
+    if ctx.face == "up":
+        lv = lv + 0.06 * (1 - np.abs((ix + 0.5) / W * 2 - 1))
+        pores = (((ix + 2 * iy) % 4) == 1) & (ix > 0) & (ix < W - 1)
+        lv = lv - 0.1 * pores
+    elif ctx.face == "down":
+        lv = lv - 0.06
+    rgb, glow = skin(ctx, lv, spill=0.5)
+    if ctx.face == "up":
+        rim = (ix == 0) | (ix == W - 1)
+        rgb = np.where(rim[:, None], _mix(rgb, WET, 0.45), rgb)
+    return rgb, ctx.ones(), glow
+
+
+EYE = [".oo.", "oOWo", ".oo."]
+
+
+def mat_eye(ctx):
+    blaze, open_, day = _P(ctx)
+    ix, iy, W, H = px.texel(ctx)
+    socket = np.broadcast_to(SKIN[0], (ctx.N, 3)).copy()
+    if day > 0.5:
+        cols = {"o": "#e0902c", "O": "#ffd36e", "W": "#fff8e0"}
+    else:
+        cols = {"o": "#3aa6d6", "O": "#8fe2fb", "W": "#f2fdff"}
+    if ctx.face == "north":
+        rgb, g = px.decal(ctx, socket, EYE, cols, "c", "c", glow=ctx.zeros(), glow_chars="oOW", glow_level=0.9)
         return rgb, ctx.ones(), g
-    return mat
+    return px.smooth_ramp(SKIN, px.light(ctx) - 0.1), ctx.ones(), ctx.zeros()
+
+
+def mat_lid(ctx):
+    lv = px.light(ctx) - 0.02
+    rgb, _ = skin(ctx, lv, spill=0.0, wet=False)
+    return rgb, ctx.ones(), ctx.zeros()
+
+
+def mat_hair(ctx):
+    """An old man's white brows: pale strands, greyer underneath."""
+    ix, iy, W, H = px.texel(ctx)
+    lv = px.light(ctx, grad=0.1) + 0.12
+    if px.side(ctx):
+        lv = lv - 0.08 * ((ix % 2) == 1)
+    return px.smooth_ramp(HAIR, lv), ctx.ones(), ctx.zeros()
+
+
+def mat_wisp(ctx):
+    """The last long wisps behind the jowls (cutout): thin strands with gaps, ragged ends."""
+    q = np.floor(_wp(ctx) * 2.0 + 0.01)
+    col = (q[:, 2]).astype(int)
+    row = (q[:, 1] - q[:, 1].min()).astype(int)
+    length = 4 + (_h(col, 0, 7) * 5).astype(int)
+    strand = (col % 2 == 0) & (row >= (q[:, 1].max() - q[:, 1].min()) - length)
+    c = px.smooth_ramp(HAIR, 0.55 + 0.35 * (row % 3 == 0))
+    return c, strand.astype(float), ctx.zeros()
+
+
+def mat_gill(ctx):
+    """Outside: a skin flap with a pale trailing rim; inside (toward the neck): red filaments."""
+    ix, iy, W, H = px.texel(ctx)
+    n = _wn(ctx)
+    inner = abs(n[0]) > 0.5 and np.sign(n[0]) != np.sign(_wp(ctx)[:, 0].mean())
+    if inner:
+        return px.smooth_ramp(GILL, px.light(ctx) + 0.12 * ((iy % 2) == 0)), ctx.ones(), ctx.zeros()
+    rgb, glow = skin(ctx, px.light(ctx) + 0.04, spill=0.2)
+    edge = (ix == 0) | (ix == W - 1)
+    rgb = np.where(edge[:, None], GILL[2], rgb)
+    return rgb, ctx.ones(), glow
+
+
+def mat_lip(ctx):
+    if ctx.face == "down":                                                  # the roof of the mouth
+        return px.smooth_ramp(GILL, px.light(ctx) + 0.05), ctx.ones(), ctx.zeros()
+    rgb, glow = skin(ctx, px.light(ctx) + 0.1, spill=0.8)
+    return rgb, ctx.ones(), glow
+
+
+def mat_jaw(ctx):
+    ix, iy, W, H = px.texel(ctx)
+    if ctx.face == "up":                                                    # the tongue bed
+        return px.smooth_ramp(GILL, px.light(ctx) - 0.2), ctx.ones(), ctx.zeros()
+    lv = px.light(ctx) + 0.1
+    if px.side(ctx) and H >= 2:
+        lv = lv - 0.06 * (iy == H - 1)
+    rgb, glow = skin(ctx, lv, spill=1.0)
+    return rgb, ctx.ones(), glow
+
+
+def mat_gum(ctx):
+    ix, iy, W, H = px.texel(ctx)
+    lv = px.light(ctx) - 0.05 - 0.12 * ((ix % 2) == 0) * px.side(ctx)
+    return px.smooth_ramp(GILL, lv), ctx.ones(), ctx.zeros()
+
+
+def mat_teeth(ctx):
+    """Irregular rows of white needle teeth (cutout): the upper row hangs, the lower row stands."""
+    ix, iy, W, H = px.texel(ctx)
+    if not px.side(ctx):
+        return np.broadcast_to(BONE[2], (ctx.N, 3)).copy(), ctx.zeros(), ctx.zeros()
+    hang = ctx.size[2] < 4.6                                  # the upper row is the shorter box
+    q = np.floor(_wp(ctx) * 2.0 + 0.01)
+    col = (q[:, 0] + q[:, 2]).astype(int)
+    hv = _h(col, 0, 3 if hang else 7)
+    tooth = ((col % 2) == 0) & (hv < 0.8)
+    root = iy if hang else (H - 1 - iy)                       # 0 at the gum
+    a = tooth & ((root <= H - 2) | (hv < 0.45))
+    c = np.where((root == 0)[:, None], BONE[2], np.where((root >= H - 1)[:, None], BONE[4], BONE[3]))
+    return c, a.astype(float), ctx.zeros()
+
+
+def mat_barbel(ctx):
+    """Barbels: pale skin, lighter toward the tip; the very tip is a glowing ice-blue lure."""
+    blaze, open_, day = _P(ctx)
+    lv = px.light(ctx) + 0.16
+    rgb = px.smooth_ramp(BELLY if day < 0.5 else DAYBELLY, lv)
+    lower = ctx.origin[1] + ctx.size[1] / 2 < 24.5 + HEAD_DY      # the second (hanging) segment ...
+    tip = (ctx.local[:, 2] > 0.8) & lower                          # ... and its last texels
+    c = px.col("#ffd36e") if day > 0.5 else PHOTO_MID
+    rgb = np.where(tip[:, None], c, rgb)
+    return rgb, ctx.ones(), np.where(tip, 0.9, 0.0)
+
+
+# ----------------------------------------------------------------------------- pearl armour
+
+def plate_paint(ctx, crack_fn=chest_cracks, photo=True, rim_glow=0.0):
+    """Pearl-grey isopod armour with a lavender sheen: light from the plate's real direction, a soft
+    swell across it, a bright bevel round the outer face, dark seams on the thin edges, growth lines,
+    photophores on the flanges, cracks near the wounds; daybreak: light pours from every edge."""
+    blaze, open_, day = _P(ctx)
+    ix, iy, W, H = px.texel(ctx)
+    lv = 0.2 + 0.66 * px.light(ctx, grad=0.0)
+    glow = np.zeros(ctx.N)
+    if ctx.face == "up":                                                  # the outer face of a slab
+        u = (ix + 0.5) / W * 2 - 1
+        v = (iy + 0.5) / H * 2 - 1
+        lv = lv + 0.08 * (1 - u ** 2) - 0.05 * v ** 2
+        lv = lv - 0.035 * ((iy % 3) == 1) * (W >= 6)                      # growth lines
+        rgb = px.smooth_ramp(ARMOR, lv)
+        sheen = np.clip(np.sin((u * 0.9 + v * 0.35 + 0.3) * np.pi) * 0.5 + 0.2, 0, 1)
+        rgb = _mix(rgb, LAVENDER, 0.4 * sheen)
+        rgb = _mix(rgb, PEARL_CYAN, 0.16 * np.clip(-np.sin((u * 0.9 + v * 0.35) * np.pi), 0, 1))
+        bevel = (ix == 0) | (iy == 0) | (ix == W - 1) | (iy == H - 1)
+        inner = ((ix == 1) | (iy == 1) | (ix == W - 2) | (iy == H - 2)) & ~bevel & (min(W, H) >= 5)
+        rgb = np.where(bevel[:, None], _mix(rgb, ARMOR[5], 0.5), rgb)
+        rgb = np.where(inner[:, None], _mix(rgb, ARMOR[1], 0.22), rgb)
+        if day > 0.5:                                                     # light pours from the trailing edge
+            lip = iy == 0
+            glow = np.where(lip, 0.8, glow)
+            rgb = np.where(lip[:, None], SUN[4], rgb)
+    elif ctx.face == "down":                                              # the underside
+        rgb = px.smooth_ramp(ARMOR, lv - 0.25)
+    else:                                                                 # the thin edges: dark seams
+        rgb = px.smooth_ramp(ARMOR, lv - 0.18)
+        rgb = np.where((iy == 0)[:, None], _mix(rgb, ARMOR[5], 0.6), rgb)
+        rgb = np.where((iy == H - 1)[:, None] if H >= 2 else np.zeros((ctx.N, 1), bool), SEAMLINE, rgb)
+        if day > 0.5:                                                     # ... and from every seam
+            rgb = _mix(rgb, SUN[3], 0.8)
+            glow = np.full(ctx.N, 0.75)
+    if crack_fn is not None:
+        rgb, glow = crack_fn(ctx, rgb, glow)
+    if photo and ctx.face == "up" and W >= 4 and H >= 4:
+        n = _wn(ctx)
+        g = np.zeros(ctx.N)
+        if abs(n[0]) > 0.45:                                              # a photophore on every flange and lame:
+            g = np.clip(1 - np.hypot(ix - (W - 1) / 2, iy - (H - 1) / 2) / 1.3, 0, 1)   # rows down the back
+        rgb, glow = photophores(rgb, glow, g, gold=day > 0.5)
+    return rgb, glow
+
+
+def mat_plate(ctx):
+    rgb, glow = plate_paint(ctx)
+    return rgb, ctx.ones(), glow
+
+
+def mat_plate_limb(ctx):
+    rgb, glow = plate_paint(ctx, crack_fn=None, photo=False)
+    rgb, glow = limb_cracks(ctx, rgb, glow, 21)
+    return rgb, ctx.ones(), glow
+
+
+def mat_keel(ctx):
+    blaze, open_, day = _P(ctx)
+    ix, iy, W, H = px.texel(ctx)
+    lv = 0.26 + 0.66 * px.light(ctx, grad=0.0)
+    rgb = px.smooth_ramp(ARMOR, lv)
+    glow = np.zeros(ctx.N)
+    if ctx.face == "up":
+        ridge = np.abs(ix + 0.5 - W / 2) < 0.75
+        rgb = np.where(ridge[:, None], ARMOR[6], _mix(rgb, LAVENDER, 0.25))
+    else:
+        rgb = np.where((iy == H - 1)[:, None] if H >= 2 else np.zeros((ctx.N, 1), bool), SEAMLINE, rgb)
+    rgb, glow = chest_cracks(ctx, rgb, glow)
+    if day > 0.5:
+        rgb = np.where((iy == 0)[:, None], SUN[4], rgb)
+        glow = np.where(iy == 0, 0.7, glow)
+    return rgb, ctx.ones(), glow
+
+
+def mat_seam(ctx):
+    """Bastion / daybreak: light leaking between the plates."""
+    blaze, open_, day = _P(ctx)
+    ix, iy, W, H = px.texel(ctx)
+    lv = 0.6 + 0.2 * ((ix % 4) == 1) + 0.15 * day
+    return px.smooth_ramp(SUN, lv), ctx.ones(), np.full(ctx.N, 0.85)
+
+
+def mat_claw(ctx):
+    """Hard white claws and teeth-like nails: darker at the root."""
+    ix, iy, W, H = px.texel(ctx)
+    lv = px.light(ctx) + 0.1
+    if px.side(ctx) and H >= 2:
+        lv = lv + 0.18 * (iy / max(H - 1, 1)) - 0.08
+    return px.smooth_ramp(BONE, lv), ctx.ones(), ctx.zeros()
+
+
+def mat_ray(ctx):
+    """Fin rays: bony spines, lighter toward the tip, the tip a tiny glowing photophore."""
+    blaze, open_, day = _P(ctx)
+    lv = px.light(ctx) + 0.12 + 0.12 * ctx.local[:, 1]
+    rgb = px.smooth_ramp(FIN, lv)
+    tip = ctx.local[:, 1] > 0.88
+    c = px.col("#ffd36e") if day > 0.5 else PHOTO_MID
+    rgb = np.where(tip[:, None], c, rgb)
+    return rgb, ctx.ones(), np.where(tip, 0.75, 0.0)
 
 
 def fin_alpha(ctx, rays_, a0: float, a1: float):
@@ -700,44 +1394,101 @@ def fin_alpha(ctx, rays_, a0: float, a1: float):
     return keep
 
 
-def _cut(base, kind):
-    c = px.col(base)
+def _membrane(ctx, keep):
+    """Torn fin membrane colours: darker near the root, rays as darker lines, a pale ragged margin."""
+    ix, iy, W, H = px.texel(ctx)
+    p = ctx.p
+    s = np.sign(p[:, 0].mean()) or 1.0
+    root = np.array([s * FIN_ROOT[0], FIN_ROOT[1], FIN_ROOT[2]])
+    dy, dz = p[:, 1] - root[1], p[:, 2] - root[2]
+    r = np.hypot(dy, dz)
+    ang = np.degrees(np.arctan2(dz, dy))
+    angs = np.array([a for a, _ in FIN_RAYS + (FLAP_RAY,)])
+    on_ray = np.min(np.abs(ang[:, None] - angs[None, :]), axis=1) * np.pi / 180 * r < 0.45
+    lv = 0.38 + 0.05 * r - 0.12 * on_ray
+    rgb = px.smooth_ramp(FIN, lv)
+    a = keep.copy()
+    # the margin: a pale dithered rim makes the membrane read thin and translucent
+    edge = keep & ~(np.roll(keep, 1) & np.roll(keep, -1))
+    rgb = np.where(edge[:, None], FIN[5], rgb)
+    return rgb, a.astype(float), ctx.zeros()
 
-    def mat(ctx):
-        ix, iy, W, H = px.texel(ctx)
-        if kind == "fin":
-            a = fin_alpha(ctx, FIN_RAYS + (FLAP_RAY,), 0.0, 50.0)
-        elif kind == "fin_flap":
-            a = fin_alpha(ctx, FIN_RAYS[-1:] + (FLAP_RAY, (78.0, 3.0)), 46.0, 74.0)
-        elif kind == "plain_fin":
-            u = ix / max(W - 1, 1)
-            v = iy / max(H - 1, 1)
-            a = (v < 0.35 + 0.55 * u) if ctx.face == "east" else (v < 0.35 + 0.55 * (1 - u))
-        elif not px.side(ctx) and kind != "web":
-            return np.broadcast_to(c, (ctx.N, 3)).copy(), ctx.zeros(), ctx.zeros()
-        elif kind == "teeth":
-            a = (ix % 2 == 0) & (iy < H - (ix % 4 == 0))
-        elif kind == "hair":
-            a = (ix % 2 == 0) | (iy < 2)
-        else:
-            a = np.ones(ctx.N, bool)
-        return np.broadcast_to(c, (ctx.N, 3)).copy(), a.astype(float), ctx.zeros()
-    return mat
+
+def mat_fin(ctx):
+    return _membrane(ctx, fin_alpha(ctx, FIN_RAYS + (FLAP_RAY,), 0.0, 50.0))
+
+
+def mat_fin_flap(ctx):
+    return _membrane(ctx, fin_alpha(ctx, FIN_RAYS[-1:] + (FLAP_RAY, (78.0, 3.0)), 46.0, 74.0))
+
+
+def mat_small_fin(ctx):
+    """Calf and forearm fins (cutout): a swept-back sail with rays and a ragged trailing edge."""
+    ix, iy, W, H = px.texel(ctx)
+    u = (ix + 0.5) / W
+    if ctx.face == "west":
+        u = 1 - u
+    v = (iy + 0.5) / H
+    edge = 0.3 + 0.62 * u - 0.12 * (np.mod(iy, 4) == 3) * (u > 0.4)
+    keep = (v < edge) & px.side(ctx) & (ctx.face in ("east", "west"))
+    ray = (np.mod(ix + iy // 2, 3) == 0)
+    rgb = px.smooth_ramp(FIN, 0.45 + 0.25 * u - 0.12 * ray)
+    return rgb, keep.astype(float), ctx.zeros()
+
+
+def mat_web(ctx):
+    """Webbing between the fingers: a scalloped lower edge."""
+    q = np.floor(_wp(ctx) * 2.0 + 0.01)
+    qy, qz = q[:, 1], q[:, 2]
+    rel = qy - qy.min()
+    a = rel >= (np.mod(qz, 3) == 1) * 2 + 1
+    c = np.where((rel < 3)[:, None], FIN[4], FIN[2])
+    return c, a.astype(float), ctx.zeros()
+
+
+# ----------------------------------------------------------------------------- the light: coronas and wound cores
+
+def _corona_paint(ctx, center, r_max, plane_n):
+    blaze, open_, day = _P(ctx)
+    r = np.linalg.norm(_wp(ctx) - np.array(chest_world(center)), axis=1)
+    v = np.clip((r - 1.8) / (r_max - 1.8), 0, 1)
+    hot = 1.0 + 0.15 * blaze + 0.1 * open_
+    rgb = px.smooth_ramp(SUN[::-1], np.clip(v * 0.95, 0, 1))      # white -> gold -> amber -> deep orange
+    if day > 0.5:
+        rgb = _mix(rgb, SUN[6], 0.25)
+    g = np.clip((0.98 * (1 - v) ** 1.25 + 0.1) * hot, 0, 1)
+    return rgb, ctx.ones(), g
+
+
+def mat_corona(ctx):
+    return _corona_paint(ctx, (ENTRY[0], ENTRY[1], -4.6), 14.5, -1)
+
+
+def mat_corona_b(ctx):
+    return _corona_paint(ctx, (EXIT[0], EXIT[1], 8.0), 6.5, 1)
+
+
+def mat_core(ctx):
+    ix, iy, W, H = px.texel(ctx)
+    cx, cy = (W - 1) / 2, (H - 1) / 2
+    rr = np.hypot((ix - cx) / max(cx, 0.5), (iy - cy) / max(cy, 0.5))
+    return px.smooth_ramp(SUN, np.clip(1.0 - rr * 0.35, 0, 1)), ctx.ones(), np.clip(0.95 - 0.15 * rr, 0, 1)
+
+
+def mat_core_hot(ctx):
+    return np.broadcast_to(SUN[6], (ctx.N, 3)).copy(), ctx.ones(), np.full(ctx.N, 1.0)
 
 
 def materials():
     mats = {
-        "skin": _flat("#2f5868"), "belly": _flat("#557f8a"), "ribs": _flat("#3a6573"), "head": _flat("#356070"),
-        "jowl": _flat("#2f5868"), "face": _flat("#3f6a78"), "brow": _flat("#356070"), "snout": _flat("#4a7684"),
-        "lip": _flat("#2f5868"), "jaw": _flat("#2f5868"), "gum": _flat("#7a2a3a"), "gill": _flat("#9a4250"),
-        "lid": _flat("#3f6a78"), "eye": _flat("#9fe8ff", 0.9), "hair": _flat("#e8ecf2"), "barbel": _flat("#3f6a78"),
-        "lamp": _flat("#9fe8ff", 0.9), "plate": _flat("#9aa0bb"), "keel": _flat("#b9bdd4"),
-        "seam": _flat("#ffd98a", 0.95), "claw": _flat("#e4e7ee"), "ray": _flat("#6d98a6"), "fp_arm": _flat("#2f5868"),
-        "corona": _rayglow("#fff2c4", ENTRY, 14.0), "corona_b": _rayglow("#fff2c4", EXIT, 6.25),
-        "core": _flat("#ffe9a8", 0.95), "core_hot": _flat("#ffffff", 1.0),
-        "fin": _cut("#4f8796", "fin"), "fin_flap": _cut("#4f8796", "fin_flap"), "web": _cut("#4f8796", "web"),
-        "calf_fin": _cut("#4f8796", "plain_fin"), "teeth": _cut("#f4f6fa", "teeth"),
-        "brow_hair": _cut("#eef1f6", "hair"), "wisp": _cut("#e6eaf0", "hair"), "accent": mat_accent,
+        "skin": mat_skin, "belly": mat_belly, "ribs": mat_ribs, "pelvis": mat_pelvis, "arm": mat_arm, "fore": mat_fore,
+        "hand": mat_hand, "leg": mat_leg, "foot": mat_foot, "fp_arm": mat_fp_arm, "neck": mat_neck, "head": mat_head,
+        "jowl": mat_jowl, "brow": mat_brow, "snout": mat_snout, "eye": mat_eye, "lid": mat_lid, "hair": mat_hair,
+        "wisp": mat_wisp, "gill": mat_gill, "lip": mat_lip, "jaw": mat_jaw, "gum": mat_gum, "teeth": mat_teeth,
+        "barbel": mat_barbel, "plate": mat_plate, "plate_limb": mat_plate_limb, "keel": mat_keel, "seam": mat_seam,
+        "claw": mat_claw, "ray": mat_ray, "fin": mat_fin, "fin_flap": mat_fin_flap, "calf_fin": mat_small_fin,
+        "web": mat_web, "corona": mat_corona, "corona_b": mat_corona_b, "core": mat_core, "core_hot": mat_core_hot,
+        "accent": mat_accent,
     }
     mats.update(sword_materials())
     return mats
@@ -746,9 +1497,80 @@ def materials():
 # ============================================================================= the sword (embedded and held)
 
 def sword_materials():
-    return {"s_blade": _flat("#f7ecc8", 0.35), "s_fuller": _flat("#fffbea", 0.6), "s_hilt": _flat("#d8a446", 0.3),
-            "s_ray": _flat("#e6b450", 0.45), "s_sun": _flat("#ffe08a", 0.7), "s_grip": _flat("#3a2a1c"),
-            "s_pommel": _flat("#e8b85a", 0.5)}
+    return {"s_blade": mat_s_blade, "s_fuller": mat_s_fuller, "s_hilt": mat_s_hilt, "s_ray": mat_s_ray,
+            "s_sun": mat_s_sun, "s_grip": mat_s_grip, "s_pommel": mat_s_pommel}
+
+
+def _sblaze(ctx):
+    return max(ctx.params.get("blaze", 0.0), ctx.params.get("day", 0.0))
+
+
+def mat_s_blade(ctx):
+    """White-gold metal: bright bevelled edges, soft heat bands down the flat; the flat glows a little."""
+    ix, iy, W, H = px.texel(ctx)
+    b = _sblaze(ctx)
+    if px.side(ctx) and W >= 3 and H >= W:
+        edge = (ix == 0) | (ix == W - 1)
+        heat = ((iy // 3) % 4) == 1
+        lv = 0.6 + 0.26 * (1 - np.abs((ix + 0.5) / W * 2 - 1)) + 0.08 * heat
+        rgb = px.smooth_ramp(STEEL, lv)
+        rgb = np.where(edge[:, None], STEEL[4], rgb)
+        g = np.where(edge, 0.5, 0.3 + 0.1 * heat)
+    else:
+        rgb = px.smooth_ramp(STEEL, px.light(ctx) + 0.25)
+        g = np.full(ctx.N, 0.4)
+    return rgb, ctx.ones(), np.clip(g + 0.25 * b, 0, 1)
+
+
+def mat_s_fuller(ctx):
+    """The raised spine: a white-hot line of light down the blade."""
+    ix, iy, W, H = px.texel(ctx)
+    rgb = px.smooth_ramp(SUN, 0.86 + 0.12 * ((iy % 4) == 0))
+    return rgb, ctx.ones(), np.full(ctx.N, 0.92)
+
+
+def mat_s_hilt(ctx):
+    """Gold fittings: bright upper edges, darker undersides."""
+    rgb = px.smooth_ramp(GOLD, px.rim(ctx, px.light(ctx) + 0.12, 0.2, 0.15))
+    return rgb, ctx.ones(), np.full(ctx.N, 0.25 + 0.2 * _sblaze(ctx))
+
+
+def mat_s_ray(ctx):
+    """The sunburst guard: polished gold rays (metal in front of the light), a bright upper edge."""
+    ix, iy, W, H = px.texel(ctx)
+    v = np.clip(ctx.local[:, 2], 0, 1)
+    lv = 0.78 - 0.3 * v + (0.15 if ctx.face == "up" else 0.0) - (0.15 if ctx.face == "down" else 0.0)
+    rgb = px.smooth_ramp(GOLD, lv)
+    return rgb, ctx.ones(), np.clip(0.3 - 0.2 * v + 0.15 * _sblaze(ctx), 0, 1)
+
+
+def mat_s_sun(ctx):
+    """The sun disc at the heart of the guard: white core, gold rim."""
+    ix, iy, W, H = px.texel(ctx)
+    cx, cy = (W - 1) / 2, (H - 1) / 2
+    rr = np.hypot((ix - cx) / max(cx, 0.5), (iy - cy) / max(cy, 0.5))
+    rgb = px.smooth_ramp(SUN, np.clip(1.02 - 0.45 * rr, 0, 1))
+    return rgb, ctx.ones(), np.clip(0.95 - 0.3 * rr, 0, 1)
+
+
+def mat_s_grip(ctx):
+    """Dark leather wrapped with gold wire (diagonal turns)."""
+    ix, iy, W, H = px.texel(ctx)
+    rgb = px.smooth_ramp(LEATHER, px.light(ctx) + 0.1)
+    if px.side(ctx):
+        wire = ((iy + ix) % 3) == 0
+        rgb = np.where(wire[:, None], GOLD[3], rgb)
+        return rgb, ctx.ones(), np.where(wire, 0.3, 0.0)
+    return rgb, ctx.ones(), ctx.zeros()
+
+
+def mat_s_pommel(ctx):
+    """The pommel: a small sun, gold round a glowing core."""
+    ix, iy, W, H = px.texel(ctx)
+    rr = np.hypot(ix + 0.5 - W / 2, iy + 0.5 - H / 2) / max(W / 2, 0.5)
+    rgb = px.smooth_ramp(GOLD, np.clip(1.0 - 0.5 * rr + 0.05 * (ctx.face == "up"), 0, 1))
+    rgb = np.where((rr < 0.45)[:, None], SUN[5], rgb)
+    return rgb, ctx.ones(), np.where(rr < 0.45, 0.9, 0.35)
 
 
 def build_sword() -> Model:

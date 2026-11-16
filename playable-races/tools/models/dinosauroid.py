@@ -67,28 +67,29 @@ NECK_BASE = NECK[0]
 RUFF_C = (0.0, 23.75, -4.25)          # the ruff ring round the neck, just above the shoulders
 SKULL_PIVOT = NECK[-1]
 HS = 1.15                             # the head is authored at a base size and scaled about the skull pivot
-CRANIUM_A = ((0.0, 28.5, -6.5), [(0.0, 2.25), (1.25, 2.9), (2.75, 3.0), (3.75, 2.6), (4.75, 1.6)])   # dome (authored)
+CRANIUM_A = ((0.0, 28.5, -6.5), [(0.0, 2.3), (1.75, 2.95), (3.5, 2.75), (4.75, 1.5)])   # dome (authored)
 CRANIUM_SQUASH = (0.9, 1.15)
-EYE_A = (2.2, 30.4, -8.25)
-BEAK_A = [(0.0, 30.25, -10.5), (0.0, 30.1, -12.25), (0.0, 29.1, -13.65), (0.0, 27.6, -14.1)]
+EYE_A = (2.05, 30.4, -8.25)
+BEAK_A = [(0.0, 30.2, -10.25), (0.0, 30.0, -12.5), (0.0, 29.0, -13.9), (0.0, 27.5, -14.2)]
 EYE_RY = 16.0
 CREST_A = [(0.0, 31.0, -10.75), (0.0, 32.9, -8.75), (0.0, 33.9, -6.0), (0.0, 34.6, -2.75), (0.0, 34.8, 0.5),
            (0.0, 34.4, 3.0)]
 SHOULDER = (3.75, 19.5, -2.5)
 ELBOW = (5.0, 16.25, -0.25)
 WRIST = (5.75, 13.0, -2.25)
-SPUR = (6.5, 17.75, 4.75)             # tip of the styliform digit (the folded wing's upper spar)
+SPUR = (7.5, 17.75, 4.5)              # tip of the styliform digit (the folded wing's upper spar)
 HIP = (3.0, 13.0, 1.5)
+THIGH_PROFILE = [(0.0, 1.9), (1.0, 2.55), (4.5, 2.85), (7.75, 2.4), (8.75, 1.5)]   # along the femur, knee -> hip
 KNEE = (3.25, 7.75, -2.0)
 ANKLE = (3.25, 3.75, 3.0)
 BALL = (3.25, 0.75, 0.5)
-TAIL_PTS = [(0.0, 14.5, 4.25), (0.0, 15.0, 7.75), (0.0, 15.75, 11.25), (0.0, 16.25, 14.5), (0.0, 16.5, 17.5),
-            (0.0, 16.25, 20.25)]
+TAIL_PTS = [(0.0, 14.5, 4.25), (0.0, 15.5, 8.0), (0.0, 16.75, 11.5), (0.0, 18.25, 14.75), (0.0, 19.75, 17.5),
+            (0.0, 21.0, 19.75)]
 FAN_LEN = [9.5, 9.75, 10.0, 10.25, 10.5, 10.25, 10.0, 9.75, 9.5]
 FAN_W = 2.75
-FAN_DROOP = -14.0                     # the folded fan trails a little below the tail line
+FAN_REST = ((0.0, -0.57, 0.82), (0.0, 0.82, 0.57))   # rest fan: centre line 35 deg down, upper face toward the camera
 FAN_CUP = 22.0                        # the outer feathers droop this much (a shallow dome)
-FAN_FOLD = 56.0                       # folded fan: total spread (degrees)
+FAN_FOLD = 66.0                       # rest fan: total spread (degrees) - partly open
 FAN_OPEN = 176.0                      # display: total spread (a full half-wheel)
 
 
@@ -277,10 +278,10 @@ def _trunk(m: Model) -> None:
     t.variant["veer"] = ((0, 0, 0), (PITCH + VEER_LEAN, 0, 0))
     # one rounded mass from the pelvis to the shoulders (upright trunk frame), its deep chest
     # bulging forward (skew): lit as one form in the texture (trunk_proxy)
-    lathe(m, t.name, TRUNK_PIVOT, TRUNK_PROFILE, "plume", sides=12, squash=TRUNK_SQUASH, skew=TRUNK_SKEW)
+    lathe(m, t.name, TRUNK_PIVOT, TRUNK_PROFILE, "body", sides=12, squash=TRUNK_SQUASH, skew=TRUNK_SKEW)
     # ankylosaur osteoderms down the spine (upright trunk frame: +Z is the back)
     px_, py, pz = TRUNK_PIVOT
-    plate_row(m, t.name, (0, py + 9.5, pz + 3.25), (0, py + 2.5, pz + 4.5), 4, 1.5, 2.25, 1.75, 0.5, "osteo",
+    plate_row(m, t.name, (0, py + 9.0, pz + 3.5), (0, py + 3.0, pz + 4.5), 3, 1.75, 2.25, 2.25, 0.5, "osteo",
               normal=(0, 0, 1), tilt=14, arch=0.4)
     t.locators["chest"] = (0, py + 4.5, pz - 5.0)
 
@@ -331,8 +332,8 @@ def _neck_head(m: Model) -> None:
         m.cube(sk.name, tuple(_v(c_) - _v(HZ((1.25, 0.75, 3.0))) / 2), HZ((1.25, 0.75, 3.0)), "brow", pivot=c_,
                rot=side_rot((0, -EYE_RY, 8), s))
     # the beak: deep at the base, tapering to a clearly hooked point (oviraptorosaur)
-    sweep(m, sk.name, "beak", [H(p_) for p_ in BEAK_A], 2.75 * HS, 0.5, "beak", h0=3.0 * HS, h1=0.5, n=2, bones=False,
-          power=0.85)
+    sweep(m, sk.name, "beak", [H(p_) for p_ in BEAK_A], 2.75 * HS, 0.75, "beak", h0=3.25 * HS, h1=0.75, n=1, bones=False,
+          power=0.75)
     # a row of teeth behind the beak (cutout planes hanging from the upper jaw line)
     for s in (-1, 1):
         o = H((s * 1.45, 28.5, -11.25))
@@ -345,10 +346,10 @@ def _neck_head(m: Model) -> None:
     # jaw
     jw = m.bone("jaw", sk.name, JAW_PIVOT)
     jw.variant.update({"display": ((0, 0, 0), (10.0, 0, 0)), "overflow": ((0, 0, 0), (14.0, 0, 0))})
-    sweep(m, jw.name, "jawb", [H(p_) for p_ in ((0, 28.25, -6.75), (0, 28.0, -10.0), (0, 27.55, -13.0))], 3.25 * HS, 0.75,
-          "jaw", h0=1.5 * HS, h1=0.6, n=1, bones=False)
+    sweep(m, jw.name, "jawb", [H(p_) for p_ in ((0, 28.25, -6.75), (0, 27.9, -10.25), (0, 27.85, -13.1))], 3.25 * HS, 0.75,
+          "jaw", h0=1.5 * HS, h1=0.75, n=1, bones=False)
     # eyes: big, amber, turned a little forward; slit pupils; a nictitating membrane
-    ew, eh, ed = 0.5, q(2.0 * HS, 0.25), q(2.25 * HS, 0.25)
+    ew, eh, ed = 0.5, 2.5, 2.5                                                    # round iris painted at ppu 4
     for s, p in SIDES:
         ex, ey, ez = s * EYE[0], EYE[1], EYE[2]
         m.cube(sk.name, (ex - ew / 2, ey - eh / 2, ez - ed / 2), (ew, eh, ed), "eye", ppu=4.0,
@@ -358,26 +359,25 @@ def _neck_head(m: Model) -> None:
     for s, p in SIDES:
         ex, ey, ez = s * EYE[0], EYE[1], EYE[2]
         m.cube(pu.name, (ex + s * 0.27 - 0.05, ey - 0.875, ez - 0.25), (0.1, 1.75, 0.5), "pupil", ppu=4.0,
-               pivot=(ex, ey, ez), rot=side_rot((0, -EYE_RY, 0), s))
+               pivot=(ex, ey, ez), rot=side_rot((0, -EYE_RY, 0), s))                # the slit (narrows by scale)
         m.cube(nc.name, (ex + s * 0.31 - 0.025, ey - eh / 2, ez - ed / 2 + 0.1), (0.05, eh, 0.1), "nict",
                pivot=(ex, ey, ez), rot=side_rot((0, -EYE_RY, 0), s))
     sk.locators["eyes"] = (0, EYE[1], EYE[2] - 1.5)
     # throat pouch: tucked under the jaw at rest, a balloon in the display
     gu = m.bone("gular", sk.name, GULAR_PIVOT)
     oell(m, gu.name, H((0, 27.25, -8.0)), HZ((3.0, 2.0, 3.75)), None, None, "gular", a=0.66, b=0.86, skip=OPEN)
-    lathe(m, gu.name, H((0, 22.5, -8.25)), [(0.0, 0.9), (0.75, 2.25), (2.0, 3.0), (3.5, 3.0), (4.75, 2.25), (5.5, 1.0)],
+    lathe(m, gu.name, H((0, 22.5, -8.25)), [(0.0, 1.0), (1.0, 2.5), (2.75, 3.1), (4.5, 2.5), (5.5, 1.0)],
           "gular_big", sides=8, squash=(0.92, 1.1), only=OPEN)
     gu.locators["throat"] = H((0, 25.5, -8.25))
     # the hollow tubular crest: from the snout over the skull roof, sweeping far behind
     sweep(m, sk.name, "crest", CREST[:4], 3.0, 1.75, "crest", h0=3.0, h1=1.75, n=2, per_bone=6, power=0.7)
     c1 = m.bone("crest1", "crest0", CREST[3])
-    sweep(m, c1.name, "crestb", CREST[3:], 1.75, 2.0, "crest", h0=1.75, h1=2.0, n=2, bones=False, power=2.0)
+    sweep(m, c1.name, "crestb", CREST[3:], 1.75, 2.5, "crest", h0=1.75, h1=2.5, n=1, bones=False, power=2.0)
     m.bones["crest0"].variant.update({"display": ((0, 0, 0), (16.0, 0, 0)), "overflow": ((0, 0, 0), (11.0, 0, 0))})
     c1.variant.update({"display": ((0, 0, 0), (10.0, 0, 0)), "overflow": ((0, 0, 0), (7.0, 0, 0))})
     tip = _v(CREST[-1])
     d = _dir(CREST[-2], CREST[-1])
-    vane_cube(m, c1.name, tip - d * 1.25, d, (0, 1, 0), 0.75, 2.5, "crest_end", thick=2.5)         # the flared open end:
-    vane_cube(m, c1.name, tip - d * 0.5, d, (0, 1, 0), 0.75, 3.25, "crest_end", thick=3.25)        # a two-step bell
+    vane_cube(m, c1.name, tip - d * 0.25, d, (0, 1, 0), 1.0, 3.0, "crest_end", thick=3.0)          # the flared bell lip
     c1.locators["crest_tip"] = tuple(np.round(tip + d * 0.9, 3))
     # plume tufts behind the eyes: one long plume per side sweeping back
     for s, p in SIDES:
@@ -396,33 +396,32 @@ def _arms(m: Model) -> None:
         # the arm itself never leaves the player's arm (held items stay in the hand): only the
         # wing feathers and the styliform digit open in the display forms
         up = m.bone(f"{p}_upper", g, tuple(sh))
-        oell(m, up.name, (sh + el) / 2 + (0, 0.25, 0), (2.75, 2.75, 5.0), el - sh, (1, 0, 0), "plume", a=0.7, b=0.88)
+        oell(m, up.name, (sh + el) / 2 + (0, 0.25, 0), (2.75, 2.75, 5.0), el - sh, (1, 0, 0), "arm", a=0.7, b=0.88)
         fo = m.bone(f"{p}_fore", up.name, tuple(el))
-        sweep(m, fo.name, f"{p}_fa", [el, wr], 2.0, 1.5, "plume", n=1, bones=False)
+        sweep(m, fo.name, f"{p}_fa", [el, wr], 2.0, 1.5, "coverts", n=1, bones=False)
         ha = m.bone(f"{p}_hand", fo.name, tuple(wr))
         m.box(ha.name, tuple(wr + (0.1 * s, -1.0, -0.4)), (1.5, 2.0, 2.0), "scale")
         for dx, dz, ln in ((-0.4, -0.5, 2.25), (0.45, -0.25, 2.0)):
             a = wr + (dx * s, -1.75, dz - 0.4)
-            sweep(m, ha.name, f"{p}_cl", [a, a + (0, -ln * 0.7, -ln * 0.45), a + (0, -ln, -ln * 0.3)], 0.6, 0.35, "claw",
-                  n=1, bones=False)
+            sweep(m, ha.name, f"{p}_cl", [a, a + (0, -ln, -ln * 0.45)], 0.6, 0.4, "claw", n=1, bones=False)
         # the styliform digit: a long ivory spar from the wrist up and back over the hip; the primaries
         # hang from it (as the membrane of Yi qi hung from its styliform element)
         st = m.bone(f"{p}_stylus", ha.name, tuple(wr))
         spur = _v(_x(SPUR, s))
         sweep(m, st.name, f"{p}_st", [wr + (0.55 * s, 0.25, 0.25), (wr + spur) / 2 + (0.2 * s, 0.25, 0), spur], 0.9, 0.4,
               "spike", n=1, bones=False)
-        n_w = _unit((s * 0.86, 0.5, 0.0))                        # folded feathers face up-out (seen from behind too)
+        n_w = _unit((s * 0.72, 0.69, 0.0))                       # folded feathers face up-out (seen from behind too)
         # folded wing: three secondaries fanned along the forearm, three long primaries along the spar
         sec = m.bone(f"{p}_sec", fo.name, tuple(el))
-        sec_ref = _unit((0.05 * s, 0.0, 1.0))
+        sec_ref = _unit((0.16 * s, 0.0, 1.0))
         for k, (t, ln) in enumerate(((0.12, 6.75), (0.42, 7.25), (0.72, 7.75))):
             o = el + (wr - el) * t + (0.45 * s + 0.12 * k * s, 0, 0)
-            vane_cube(m, sec.name, o, _unit((0.05 * s, 0.25 * (1 - k), 1.0)), n_w, ln, 2.75, "flight", cutout=True)
+            vane_cube(m, sec.name, o, _unit((0.16 * s, 0.25 * (1 - k), 1.0)), n_w, ln, 2.75, "flight", cutout=True)
         pri_dir = []
         for k, (t, ln, drop) in enumerate(((0.35, 8.25, -0.2), (0.65, 9.25, -0.3), (0.95, 9.75, -0.38))):
             o = wr + (spur - wr) * t + (0.15 * s, -0.25, 0)
             pr = m.bone(f"{p}_pri{k}", st.name, tuple(o))
-            d = _unit((0.2 + 0.06 * k) * s * _v((1, 0, 0)) + _v((0, drop, 1.0)))
+            d = _unit((0.3 + 0.08 * k) * s * _v((1, 0, 0)) + _v((0, drop, 1.0)))
             pri_dir.append(d)
             vane_cube(m, pr.name, o + (0.1 * k * s, 0, 0), d, n_w, ln, 2.75, "flight", cutout=True)
         # display: each wing opens as a fan facing forward that rises from the wrist up the flank, so the
@@ -452,17 +451,22 @@ def _legs(m: Model) -> None:
         g = f"{p}_leg_g"
         hip, knee, ankle, ball = (_v(_x(c, s)) for c in (HIP, KNEE, ANKLE, BALL))
         th = m.bone(f"{p}_thigh", g, tuple(hip))
-        top = hip + (0.1 * s, 2.25, 1.25)
-        oell(m, th.name, (top + knee) / 2 + (0.15 * s, 0, 0.25), (4.5, 5.5, 8.5), knee - top, (0, 0, -1), "thigh",
-             a=0.7, b=0.88)
+        top = hip + (0.15 * s, 2.5, 1.5)
+        olathe(m, th.name, knee + (0.1 * s, 0.25, 0.0), top - knee, THIGH_PROFILE, "thigh", sides=8, squash=(0.9, 1.12),
+               front=(0, 0, -1))
+        # feathered trousers: plumes hanging from the thigh over the knee
+        for k, (off, ln) in enumerate((((0.6, 1.25, 0.9), 4.5), ((1.6, 1.0, -0.2), 4.0))):
+            o = knee + _v((off[0] * s, off[1], off[2]))
+            out = _unit((s * (0.35 + 0.5 * k), 0.0, 1.0 - 0.6 * k))
+            vane_cube(m, th.name, o, _unit(_v((0, -0.8, 0.45)) + out * 0.25), out, ln, 2.75, "trouser", cutout=True)
         sh = m.bone(f"{p}_shin", th.name, tuple(knee))
-        sweep(m, sh.name, f"{p}_sn", [knee + (0, 0.75, -0.25), ankle], 2.75, 1.75, "shin", h0=3.0, h1=1.75, n=1, bones=False)
+        sweep(m, sh.name, f"{p}_sn", [knee + (0, 0.5, -0.25), ankle], 2.0, 1.25, "shin", h0=2.25, h1=1.5, n=1, bones=False)
         mt = m.bone(f"{p}_meta", sh.name, tuple(ankle))
-        sweep(m, mt.name, f"{p}_mt", [ankle + (0, 0.25, 0.1), ball], 1.75, 1.5, "scale", n=1, bones=False)
+        sweep(m, mt.name, f"{p}_mt", [ankle + (0, 0.25, 0.1), ball], 1.5, 1.25, "scale", n=1, bones=False)
         ft = m.bone(f"{p}_foot", mt.name, tuple(ball))
         bx, by, bz = ball
-        sweep(m, ft.name, f"{p}_d3", [(bx, 0.6, bz), (bx, 0.5, bz - 2.0), (bx, 0.4, bz - 3.75)], 1.25, 0.75, "toe",
-              h0=1.0, h1=0.75, n=1, bones=False)
+        sweep(m, ft.name, f"{p}_d3", [(bx, 0.55, bz), (bx, 0.45, bz - 3.75)], 1.25, 1.0, "toe", h0=1.0, h1=0.9, n=1,
+              bones=False)
         sweep(m, ft.name, f"{p}_d4", [(bx + 0.4 * s, 0.6, bz), (bx + 1.3 * s, 0.45, bz - 2.5)], 1.0, 0.75, "toe",
               h0=0.9, h1=0.7, n=1, bones=False)
         m.box(ft.name, (bx - 0.4 * s, 0.5, bz + 1.0), (1.0, 1.0, 1.5), "toe")                    # hallux
@@ -546,10 +550,12 @@ def _hindwing(m, bone, hinge, ankle, s):
 
 def _tail(m: Model) -> None:
     names = sweep(m, "tail_g", "tail", TAIL_PTS, 5.75, 1.75, "tailp", h0=5.25, h1=1.75, n=2, per_bone=2, power=0.7)
-    for k, a in enumerate((4.0, 9.0, 12.0, 12.0, 10.0)):            # display: the tail lifts its fan high
+    for k, a in enumerate((3.0, 6.0, 8.0, 9.0, 8.0)):              # display: the tail lifts its fan high
         m.bones[names[k]].variant["display"] = ((0, 0, 0), (a, 0, 0))
         m.bones[names[k]].variant["overflow"] = ((0, 0, 0), (a * 0.7, 0, 0))
-    m.bones[names[0]].variant["veer"] = ((0, 0, 0), (4.0, 0, 0))
+    for k, a in enumerate((-14.0, -4.0, -5.0, -4.0, 0.0)):          # veer: straight out behind, a rudder
+        if a:
+            m.bones[names[k]].variant["veer"] = ((0, 0, 0), (a, 0, 0))
     # ankylosaur osteoderms along the top of the tail base
     plate_row(m, "tail0", (0, 17.25, 5.0), (0, 17.0, 9.75), 3, 2.0, 1.5, 1.75, 0.5, "osteo", tilt=12, arch=0.25)
     # Psittacosaurus bristles standing along the top
@@ -558,8 +564,9 @@ def _tail(m: Model) -> None:
                faces={"east", "west"}, pivot=(0, y, z), rot=(-22, 0, 0))
     # the fan: nine eyed feathers, each its own bone (it opens and closes)
     tip = _v(TAIL_PTS[-1])
-    fan = m.bone("fan", names[-1], tuple(tip), (FAN_DROOP, 0, 0))
+    fan = m.bone("fan", names[-1], tuple(tip))
     ez, ey = _v((0, 0, 1)), _v((0, 1, 0))
+    aim(m, fan.name, None, ez, ey, FAN_REST[0], FAN_REST[1])
     aim(m, fan.name, "display", ez, ey, (0, 1.0, 0.22), (0, 0.22, -1.0))          # raised: a vertical fan facing forward
     aim(m, fan.name, "overflow", ez, ey, (0, 0.72, 0.7), (0, 0.7, -0.72))
     aim(m, fan.name, "veer", ez, ey, (0, -0.05, 1.0), (1, 0, 0))                   # a rudder
@@ -584,72 +591,666 @@ def _tail(m: Model) -> None:
     fan.locators["tail_fan"] = tuple(tip + (0, 0.5, 5.0))
 
 
-# ============================================================================= materials (Gate A: flat placeholders)
+# ============================================================================= materials (Gate B: premium surface)
+#
+# Every solid part is lit from the smooth form its boxes approximate (a pitched ellipsoid for the
+# trunk, tubes along the neck / tail / thighs / crest / beak / horns, ellipsoids for the skull and
+# pouch), painted with continuous hue-shifted ramps (no dither, no noise), patterned in world space
+# so patterns run on across the lathe strips, and lit (glow) by designed lines and spots that fade.
+
+# palettes, dark -> light (shadows cool / saturated, highlights warm)
+PLUME = px.pal("#26150f", "#53301b", "#87552a", "#b3833f", "#d6ac63", "#ecd092", "#f8ebcc")    # cream-gold plumage
+CREAM = px.pal("#6a4a2c", "#a9824f", "#d6b680", "#eedbb0", "#fcf3dc")                          # breast / belly
+BAND = px.pal("#1c100c", "#3a2216", "#5e3a20", "#84582d")                                     # soft dark banding
+TEAL = px.pal("#04191d", "#08343a", "#0d5754", "#14806f", "#2fae8f", "#7fdcb6")                # flight feathers: base
+VIOLET = px.pal("#0b0a22", "#181843", "#272a6c", "#3b3f94", "#5d63bb", "#9aa0e0")              # .. middle (indigo-violet)
+GOLD = px.pal("#3a2205", "#73460c", "#ab7218", "#d9a537", "#f4d070", "#fff1bd")                # .. tips
+OLIVE = px.pal("#0f1408", "#1e270f", "#334019", "#4c5b27", "#6c7c3d", "#94a35d")               # leg scales
+KERAT = px.pal("#050407", "#0d0b12", "#1a1722", "#2f2b3a", "#4e4a5e", "#8f8aa3")               # glossy black keratin
+IVORY = px.pal("#58452c", "#8e7a55", "#bba680", "#dbc9a0", "#eee0bd", "#f8efd6")
+BRASS = px.pal("#2e1a05", "#5e3a0c", "#94611a", "#c4902f", "#e8bd58", "#fbe39a")
+WINE = px.pal("#14020a", "#2e0617", "#510c27", "#781739", "#a3294f", "#cf4f75", "#f08aa8")
+SKIN = px.pal("#17110f", "#2c221d", "#463630", "#634d43", "#86695a")                          # bare face skin
+TURQ = px.pal("#022422", "#05433f", "#0a6a62", "#139489", "#2fc2b0", "#7debd9", "#d2fff6")      # display skin
+LUMEN = px.col("#08282a")
+AMBER = px.pal("#3d1702", "#7a3304", "#bd610b", "#ec951c", "#ffc84a", "#fff0b0")
+RIMC = px.pal("#7a1c48", "#c73a7a", "#ff6fa8", "#ffc2dc")
+L_SPEC = _v((-0.35, 0.8, -0.5)) / np.linalg.norm((-0.35, 0.8, -0.5))
+
 
 def materials():
-    names = ["plume", "neck", "skull", "face", "brow", "beak", "jaw", "eye", "pupil", "nict", "horn", "crest",
-             "crest_end", "gular", "gular_big", "thigh", "shin", "scale", "toe", "claw", "sickle", "spike", "osteo",
-             "tailp", "rod", "rim", "ocellus", "sleeve"]
-    mats = {nm: _flat(nm) for nm in names}
-    for nm in ("flight", "fanf", "tuft", "ruff"):
-        mats[nm] = _flat_vane(nm)
-    mats["membrane"] = _flat_membrane
-    mats["teeth"] = _flat_teeth
-    mats["bristle"] = _flat_bristle
-    mats["accent"] = mat_accent
-    return mats
+    return {
+        "body": mat_body, "arm": mat_arm, "coverts": mat_coverts, "thigh": mat_thigh, "neck": mat_neck, "tailp": mat_tail,
+        "skull": mat_skull, "face": mat_face, "brow": mat_brow, "beak": mat_beak, "jaw": mat_jaw, "teeth": mat_teeth,
+        "eye": mat_eye, "pupil": mat_pupil, "nict": mat_nict, "horn": mat_horn, "crest": mat_crest,
+        "crest_end": mat_crest_end, "gular": mat_gular, "gular_big": mat_gular_big, "shin": mat_scale,
+        "scale": mat_scale, "toe": mat_scale, "claw": mat_claw, "sickle": mat_sickle, "spike": mat_spike,
+        "osteo": mat_osteo, "bristle": mat_bristle, "flight": mat_flight, "fanf": mat_fanf, "ocellus": mat_ocellus,
+        "tuft": mat_tuft, "ruff": mat_ruff, "trouser": mat_trouser, "membrane": mat_membrane, "rod": mat_rod,
+        "rim": mat_rim, "sleeve": mat_sleeve, "accent": mat_accent,
+    }
 
 
-FLAT = {
-    "plume": "#c9a46a", "neck": "#c9a46a", "skull": "#b8935e", "face": "#a5845a", "brow": "#9c7c52", "beak": "#1d1b22",
-    "jaw": "#2a2630", "eye": "#e0a020", "pupil": "#120a06", "nict": "#d6dcd6", "horn": "#e8dcc0", "crest": "#e4d6b2",
-    "crest_end": "#c8a050", "gular": "#2bb3a6", "gular_big": "#2bb3a6", "thigh": "#c39a62", "shin": "#4f5a2a",
-    "scale": "#4f5a2a", "toe": "#46512a", "claw": "#16141a", "sickle": "#1a171e", "spike": "#efe3c6", "osteo": "#d9c48f",
-    "tailp": "#c39a62", "membrane": "#7a1f3d", "rod": "#e8d8a8", "rim": "#ff7ab0", "ocellus": "#3ad6c8", "sleeve": "#c9a46a",
-    "flight": "#1f6f74", "fanf": "#2a5f86", "tuft": "#efe0bb", "ruff": "#dcc28c",
-}
+# ----------------------------------------------------------------------------- helpers
+
+def _ramp(pal, lv):
+    """px.smooth_ramp for an array of levels, or one colour for a scalar level."""
+    if np.ndim(lv) == 0:
+        return px.smooth_ramp(pal, np.array([float(lv)]))[0]
+    return px.smooth_ramp(pal, lv)
 
 
-def _flat(name):
-    base = px.col(FLAT[name])
-
-    def mat(ctx):
-        lv = px.light(ctx, grad=0.1)
-        rgb = base * (0.55 + 0.75 * lv)[:, None]
-        g = ctx.zeros()
-        if name in ("eye", "ocellus", "gular_big"):
-            g = np.full(ctx.N, 0.5)
-        return rgb, ctx.ones(), g
-    return mat
+def _night(ctx):
+    return float(ctx.params.get("night", 0.0))
 
 
-def _flat_vane(name):
-    base = px.col(FLAT[name])
-
-    def mat(ctx):
-        a, lvl = px.vane(ctx)
-        lv = px.light(ctx, grad=0.0) + lvl
-        return base * (0.6 + 0.6 * lv)[:, None], a, ctx.zeros()
-    return mat
+def _over(ctx):
+    return float(ctx.params.get("overflow", 0.0)) > 0.5
 
 
-def _flat_membrane(ctx):
-    base = px.col(FLAT["membrane"])
+def G(ctx, base, night, over):
+    """A glow level for this texture set: base / night / overflow."""
+    return over if _over(ctx) else base + (night - base) * _night(ctx)
+
+
+def _P(ctx):
+    return ctx.wp if ctx.wp is not None else ctx.p
+
+
+def _WN(ctx):
+    return _v(ctx.wn if ctx.wn is not None else ctx.n)
+
+
+def _ss(e0, e1, x):
+    t = np.clip((x - e0) / (e1 - e0), 0, 1)
+    return t * t * (3 - 2 * t)
+
+
+def _mixc(a, b, t):
+    t = np.clip(np.asarray(t, float), 0, 1)
+    if t.ndim == 1:
+        t = t[:, None]
+    return np.asarray(a, float) * (1 - t) + np.asarray(b, float) * t
+
+
+def _lvn(ctx, nn, k=0.85):
+    """Light level from smooth-form normals nn (N, 3), blended with the face's own level."""
+    face = float(px.level_of(_WN(ctx))[0])
+    return face + (px.level_of(nn) - face) * k
+
+
+def _ell(ctx, c, r, R=None, pivot=None):
+    """Ellipsoid normals (world) and local positions; R / pivot: an ellipsoid authored in a rotated frame."""
+    p = _P(ctx)
+    if R is not None:
+        p = (p - _v(pivot)) @ R + _v(pivot)
+    d = (p - _v(c)) / (_v(r) ** 2)
+    nl = d / np.maximum(np.linalg.norm(d, axis=1, keepdims=True), 1e-9)
+    nw = nl @ R.T if R is not None else nl
+    return nw, nl, p
+
+
+_TUBES = {}
+
+
+def _poly(key, pts, n=4):
+    if key not in _TUBES:
+        from models.common import spline
+        P = np.array(spline(pts, n) if len(pts) > 2 else [_v(a) for a in pts])
+        seg = np.linalg.norm(np.diff(P, axis=0), axis=1)
+        _TUBES[key] = (P, np.concatenate([[0.0], np.cumsum(seg)]))
+    return _TUBES[key]
+
+
+def _tube(ctx, key, pts, n=4):
+    """Nearest point on a polyline: (normals, parameter 0..1 along it, distance)."""
+    P, cum = _poly(key, pts, n)
+    p = _P(ctx)
+    best = np.full(len(p), np.inf)
+    foot = np.zeros_like(p)
+    tpar = np.zeros(len(p))
+    for i in range(len(P) - 1):
+        a, b = P[i], P[i + 1]
+        ab = b - a
+        L2 = max(float(ab @ ab), 1e-9)
+        t = np.clip(((p - a) @ ab) / L2, 0, 1)
+        f = a + t[:, None] * ab
+        d = np.linalg.norm(p - f, axis=1)
+        m = d < best
+        best[m], foot[m] = d[m], f[m]
+        tpar[m] = (cum[i] + t[m] * np.sqrt(L2)) / max(cum[-1], 1e-9)
+    off = p - foot
+    nn = off / np.maximum(np.linalg.norm(off, axis=1, keepdims=True), 1e-9)
+    _TUBES["_last_off"] = off
+    return nn, tpar, best
+
+
+def _scallop(s, t, w, h, depth=0.09):
+    """Rows of overlapping rounded feather tips in a (around, along) parameter space: a level offset
+    (each feather lighter toward its rounded tip, a soft shadow just past the tip)."""
+    row = np.floor(t / h)
+    fx = np.mod(s / w + 0.5 * row, 1.0) - 0.5
+    fy = np.mod(t / h, 1.0)
+    edge = 0.55 + 0.45 * np.sqrt(np.clip(1 - (2 * fx) ** 2, 0, 1))
+    inside = fy <= edge
+    body = np.where(inside, fy / np.maximum(edge, 1e-3), 0.0)          # 0 at the feather root .. 1 at its tip
+    shadow = np.where(inside, 0.0, np.clip(1 - (fy - edge) / 0.3, 0, 1))
+    return depth * (0.9 * body - 0.35 - 1.1 * shadow)
+
+
+def _spec(nn, power=10.0, amt=1.0):
+    return amt * np.clip(nn @ L_SPEC, 0, 1) ** power
+
+
+def _side_x(ctx):
+    return np.sign(np.mean(_P(ctx)[:, 0])) or 1.0
+
+
+# ----------------------------------------------------------------------------- body plumage
+
+TRUNK_ELL = ((0.0, 16.75, 1.65), (4.25, 6.4, 4.9))       # the trunk lathe as one ellipsoid (upright frame, absolute)
+
+
+def _plumage(lv, dorsal, ventral, band, scal):
+    """Countershaded cream-gold plumage: a warm banded back, a pale cream breast."""
+    lv = lv + scal - 0.2 * dorsal + 0.06 * ventral
+    rgb = _ramp(PLUME, lv)
+    rgb = _mixc(rgb, _ramp(CREAM, lv + 0.1), _ss(0.0, 0.7, ventral) * 0.9)
+    rgb = _mixc(rgb, _ramp(BAND, lv * 0.95 + 0.08), band * _ss(0.05, 0.6, dorsal) * 0.85)
+    return rgb
+
+
+def mat_body(ctx):
+    R = rot_matrix((PITCH, 0, 0))
+    c, r = TRUNK_ELL
+    nw, nl, u = _ell(ctx, c, r, R, TRUNK_PIVOT)
+    lv = _lvn(ctx, nw, 0.85) + 0.02
+    dorsal = np.clip(nl[:, 2] * 1.5 + 0.2, 0, 1)
+    ventral = np.clip(-nl[:, 2] * 1.6 - 0.15, 0, 1)
+    band = _ss(0.45, 0.9, 0.5 + 0.5 * np.cos((u[:, 1] - 0.5) * 2 * np.pi / 3.0))
+    ang = np.arctan2(u[:, 0], u[:, 2] - c[2]) * 4.3
+    scal = _scallop(ang, -u[:, 1], 3.0, 2.0, 0.12)
+    lv = lv + px.ao_near(ctx, [(s * 2.9, 13.4, 1.5) for s in (-1, 1)], 3.5, 0.14)
+    rgb = _plumage(lv, dorsal, ventral, band, scal)
+    g = ctx.zeros()
+    wid = 0.1 + 0.05 * _night(ctx) + (0.04 if _over(ctx) else 0.0)
+    flank = np.clip(1 - np.abs(np.abs(nl[:, 0]) - 0.8) / wid, 0, 1)
+    flank = flank * _ss(12.5, 15.0, u[:, 1]) * _ss(23.0, 20.5, u[:, 1])
+    if not _over(ctx):                               # a row of display spots on each flank (a continuous line in the overflow)
+        flank = flank * _ss(0.35, 0.75, 0.5 + 0.5 * np.cos(u[:, 1] * 2 * np.pi / 1.6))
+    rgb = _mixc(rgb, _ramp(TURQ, 0.72 + 0.2 * flank), flank)
+    g = flank * G(ctx, 0.25, 0.95, 0.95)
+    return rgb, ctx.ones(), g
+
+
+def mat_arm(ctx):
+    sx = _side_x(ctx)
+    sh, el = _v(_x(SHOULDER, sx)), _v(_x(ELBOW, sx))
+    nn, t, _ = _tube(ctx, f"arm{sx}", [sh, el])
+    lv = _lvn(ctx, nn, 0.85)
+    p = _P(ctx)
+    scal = _scallop(np.arctan2(nn[:, 0], nn[:, 2]) * 1.6, -p[:, 1], 2.5, 1.75, 0.11)
+    band = _ss(0.6, 0.95, 0.5 + 0.5 * np.cos(p[:, 1] * 2 * np.pi / 2.5))
+    dorsal = np.clip(nn[:, 2] * 1.2 + 0.4, 0, 1)
+    return _plumage(lv, dorsal, np.clip(-nn[:, 2], 0, 1) * 0.6, band, scal), ctx.ones(), ctx.zeros()
+
+
+def mat_coverts(ctx):
+    """The forearm: small iridescent covert feathers (the wing starts here)."""
+    sx = _side_x(ctx)
+    el, wr = _v(_x(ELBOW, sx)), _v(_x(WRIST, sx))
+    nn, t, _ = _tube(ctx, f"fore{sx}", [el, wr])
+    lv = _lvn(ctx, nn, 0.8)
+    sa, sb = np.arctan2(nn[:, 0], nn[:, 2]) * 1.4, t * 4.0
+    scal = _scallop(sa, sb, 1.5, 1.0, 0.1)
+    rgb = _mixc(_ramp(TEAL, lv + scal + 0.05), _ramp(VIOLET, lv + scal + 0.12), _ss(0.2, 0.9, t))
+    tip = np.clip(scal / 0.1 * 1.6 - 0.55, 0, 1)                            # the bright edge of each covert
+    rgb = _mixc(rgb, _ramp(TURQ, 0.8), tip * 0.7)
+    return rgb, ctx.ones(), tip * G(ctx, 0.2, 0.8, 1.0)
+
+
+def mat_sleeve(ctx):
+    lv = px.light(ctx, grad=0.1)
+    return _ramp(TEAL, lv + 0.05), ctx.ones(), ctx.zeros()
+
+
+def _thigh_axis(sx):
+    hip, knee = _v(_x(HIP, sx)), _v(_x(KNEE, sx))
+    return [knee + _v((0.1 * sx, 0.25, 0.0)), hip + _v((0.15 * sx, 2.5, 1.5))]
+
+
+def mat_thigh(ctx):
+    """Feathered trousers: banded drumstick, the scalloped fringe deepest toward the knee."""
+    sx = _side_x(ctx)
+    pts = _thigh_axis(sx)
+    nn, t, _ = _tube(ctx, f"thigh{sx}", pts)
+    lv = _lvn(ctx, nn, 0.85)
+    ang = np.arctan2(nn[:, 0] * sx, -nn[:, 2]) * 2.6
+    along = t * 8.75
+    scal = _scallop(ang, -along, 2.75, 1.75, 0.11 + 0.05 * (1 - t))
+    band = _ss(0.6, 0.95, 0.5 + 0.5 * np.cos(along * 2 * np.pi / 2.25))
+    dorsal = np.clip(0.55 + 0.45 * nn[:, 2], 0, 1)
+    lv = lv - 0.08 * _ss(0.3, 0.0, t)                                      # shade toward the knee
+    rgb = _plumage(lv, dorsal, np.clip(-nn[:, 2] - 0.2, 0, 1) * 0.5, band, scal)
+    return rgb, ctx.ones(), ctx.zeros()
+
+
+def mat_neck(ctx):
+    """Plumage behind, bare turquoise display skin down the throat with a glowing line."""
+    nn, t, _ = _tube(ctx, "neck", NECK)
+    lv = _lvn(ctx, nn, 0.85)
+    front = nn @ _unit((0, -0.3, -1.0))
+    p = _P(ctx)
+    skin = _ss(1.25, 0.8, np.abs(p[:, 0])) * _ss(0.15, 0.45, front)        # a strip of bare skin down the throat
+    scal = _scallop(np.arctan2(nn[:, 0], nn[:, 2]) * 2.2, -p[:, 1], 2.5, 1.6, 0.11)
+    band = _ss(0.6, 0.95, 0.5 + 0.5 * np.cos(p[:, 1] * 2 * np.pi / 2.6))
+    rgb = _plumage(lv, np.clip(nn[:, 2] + 0.3, 0, 1), 0.0, band, scal)
+    w = 0.35 + 0.25 * _night(ctx) + (0.3 if _over(ctx) else 0.0)          # half-width of the line, units
+    line = _ss(w, w * 0.35, np.abs(p[:, 0])) * _ss(0.2, 0.6, front) * _ss(0.0, 0.12, t)
+    off = _TUBES["_last_off"]
+    ang = np.degrees(np.arctan2(np.abs(off[:, 0]), -off[:, 2]))            # 0 = the throat, 90 = the side
+    sw = 9.0 + 6.0 * _night(ctx) + (4.0 if _over(ctx) else 0.0)
+    stripe = _ss(sw, sw * 0.3, np.abs(ang - 72.0)) * _ss(0.02, 0.15, t) * _ss(1.0, 0.85, t)
+    nape = _ss(0.45, 0.15, np.abs(p[:, 0])) * _ss(0.2, 0.6, -front) * _ss(0.3, 0.45, t)
+    stripe = np.maximum(stripe, nape)
+    rgb = _mixc(rgb, _ramp(TURQ, lv - 0.18), skin)
+    rgb = _mixc(rgb, _ramp(TURQ, 0.62 + 0.3 * stripe), stripe * 0.9)
+    rgb = _mixc(rgb, _ramp(TURQ, 0.8 + 0.2 * line), line * 0.85)
+    g = np.maximum.reduce([line * G(ctx, 0.4, 1.0, 1.0), stripe * G(ctx, 0.28, 0.95, 1.0), skin * G(ctx, 0.12, 0.55, 0.7)])
+    return rgb, ctx.ones(), g
+
+
+def mat_tail(ctx):
+    nn, t, _ = _tube(ctx, "tail", TAIL_PTS)
+    lv = _lvn(ctx, nn, 0.85)
+    up = nn[:, 1]
+    dorsal = np.clip(up * 1.3 + 0.35, 0, 1)
+    ventral = np.clip(-up * 1.5 - 0.2, 0, 1)
+    along = t * 17.0
+    band = _ss(0.55, 0.95, 0.5 + 0.5 * np.cos((along - 1.0) * 2 * np.pi / 2.6))
+    scal = _scallop(np.arctan2(nn[:, 0], nn[:, 1]) * 2.0, -along, 2.75, 1.75, 0.11)
+    rgb = _plumage(lv, dorsal, ventral, band, scal)
+    p = _P(ctx)
+    top = _ss(0.7, 0.92, up) * _ss(0.2, 0.32, t) * _ss(1.0, 0.88, t) * _ss(0.75, 0.3, np.abs(p[:, 0]))
+    if not _over(ctx):                               # a dotted display line along the top (continuous in the overflow)
+        top = top * _ss(0.35, 0.8, 0.5 + 0.5 * np.cos(along * 2 * np.pi / 1.75))
+    rgb = _mixc(rgb, _ramp(TURQ, 0.75 + 0.15 * top), top)
+    return rgb, ctx.ones(), top * G(ctx, 0.3, 0.95, 1.0)
+
+
+# ----------------------------------------------------------------------------- head
+
+def _cranium_ell():
+    base, prof = CRANIUM
+    hmax = prof[-1][0]
+    rmax = max(r for _, r in prof)
+    return (_v(base) + _v((0, hmax * 0.42, 0)), _v((rmax * CRANIUM_SQUASH[0], hmax * 0.62, rmax * CRANIUM_SQUASH[1])))
+
+
+def _eye_ring(ctx, rgb):
+    """A ring of bare turquoise display skin round each amber eye (glows)."""
+    p = _P(ctx)
+    d = np.minimum(*[np.linalg.norm(p - _v((s * EYE[0], EYE[1], EYE[2])), axis=1) for s in (-1, 1)])
+    w = 0.32 + 0.18 * _night(ctx) + (0.12 if _over(ctx) else 0.0)
+    ring = np.clip(1 - np.abs(d - 1.75) / w, 0, 1) ** 1.5
+    rgb = _mixc(rgb, _ramp(TURQ, 0.7 + 0.25 * ring), ring)
+    return rgb, ring * G(ctx, 0.3, 0.95, 1.0)
+
+
+def mat_skull(ctx):
+    c, r = _cranium_ell()
+    nw, nl, p = _ell(ctx, c, r)
+    lv = _lvn(ctx, nw, 0.9) + 0.03
+    scal = _scallop(np.arctan2(nl[:, 0], nl[:, 2]) * 3.2, -p[:, 1], 2.0, 1.4, 0.09)
+    crown = np.clip(nl[:, 1] * 1.4 - 0.1, 0, 1)
+    band = _ss(0.6, 0.95, 0.5 + 0.5 * np.cos((p[:, 2] + 6.0) * 2 * np.pi / 2.2)) * crown
+    rgb = _plumage(lv, crown, np.clip(-nl[:, 1], 0, 1) * 0.5, band, scal)
+    # a dark mask round each eye (makes the amber read) fading into the plumage
+    mask = px.glow_spot(ctx, [(s * EYE[0], EYE[1], EYE[2]) for s in (-1, 1)], 2.4, 0.35)
+    rgb = _mixc(rgb, _ramp(SKIN, lv - 0.1), mask * 0.9)
+    rgb, g = _eye_ring(ctx, rgb)
+    return rgb, ctx.ones(), g
+
+
+def mat_face(ctx):
+    c, r = _cranium_ell()
+    nw, nl, p = _ell(ctx, (c[0], c[1] - 0.5, c[2] - 2.5), (r[0], r[1], r[2] * 1.2))
+    lv = _lvn(ctx, nw, 0.8)
+    mask = px.glow_spot(ctx, [(s * EYE[0], EYE[1], EYE[2]) for s in (-1, 1)], 2.6, 0.3)
+    wr = 0.04 * np.sin(p[:, 1] * 9.0 + p[:, 2] * 2.0)                     # fine soft wrinkles (smooth)
+    rgb = _ramp(SKIN, lv + wr - 0.08 * mask)
+    rgb, g = _eye_ring(ctx, rgb)
+    return rgb, ctx.ones(), g
+
+
+def mat_brow(ctx):
+    lv = px.light(ctx, grad=0.12)
+    rgb = _mixc(_ramp(IVORY, lv - 0.08), _ramp(BRASS, lv), 0.35)
+    return rgb, ctx.ones(), ctx.zeros()
+
+
+BEAK = [H(p_) for p_ in BEAK_A]
+
+
+def mat_beak(ctx):
+    """Glossy black keratin with a long specular streak; an ivory hook."""
+    nn, t, _ = _tube(ctx, "beak", BEAK)
+    lv = _lvn(ctx, nn, 0.85) - 0.12
+    rgb = _ramp(KERAT, lv)
+    rgb = rgb + _spec(nn, 14, 0.55)[:, None] * px.col("#cfd8ff")
+    tip = _ss(0.62, 0.9, t)
+    rgb = _mixc(rgb, _ramp(IVORY, lv + 0.25) + _spec(nn, 10, 0.25)[:, None], tip)
+    return np.clip(rgb, 0, 1), ctx.ones(), ctx.zeros()
+
+
+JAW_PTS = [H(p_) for p_ in ((0, 28.25, -6.75), (0, 27.9, -10.25), (0, 27.85, -13.1))]
+
+
+def mat_jaw(ctx):
+    nn, t, _ = _tube(ctx, "jaw", JAW_PTS, 1)
+    lv = _lvn(ctx, nn, 0.8) - 0.1
+    rgb = _mixc(_ramp(SKIN, lv), _ramp(KERAT, lv) + _spec(nn, 12, 0.35)[:, None], _ss(0.25, 0.45, t))
+    rgb = _mixc(rgb, _ramp(IVORY, lv + 0.2), _ss(0.78, 0.97, t))
+    return np.clip(rgb, 0, 1), ctx.ones(), ctx.zeros()
+
+
+def mat_teeth(ctx):
+    """A row of small conical ivory teeth (cutout)."""
+    ix, iy, W, Hh = px.texel(ctx)
+    k = np.mod(ix, 3)
+    depth = 1 - iy / max(Hh - 1, 1)                                     # 1 at the gum, 0 at the tip row
+    tooth = (np.abs(k - 1) <= depth * 1.2) & (np.mod(ix // 3, 4) != 3)
+    rgb = _mixc(_ramp(IVORY, 0.85 - 0.3 * (1 - depth)), px.col("#c88f86"), _ss(0.8, 1.0, depth))
+    return rgb, tooth.astype(float), ctx.zeros()
+
+
+def mat_eye(ctx):
+    """A round amber iris in a dark lid ring; the corners are face skin, so the eye reads round."""
+    lvf = px.light(ctx, grad=0.0)
+    sx = np.sign(EYE[0]) * _side_x(ctx)
+    out_face = abs(_WN(ctx)[0]) > 0.7 and np.sign(_WN(ctx)[0]) == np.sign(np.mean(_P(ctx)[:, 0]))
+    if not out_face:
+        return _ramp(SKIN, lvf), ctx.ones(), ctx.zeros()
+    ix, iy, W, Hh = px.texel(ctx)
+    cx, cy = (W - 1) / 2, (Hh - 1) / 2
+    r = np.hypot(ix - cx, iy - cy) / (min(W, Hh) / 2)
+    iris = np.clip(1 - r / 0.82, 0, 1)
+    over = _over(ctx)
+    pal = AMBER if not over else px.pal("#7a3304", "#ec951c", "#ffd36a", "#fff3c4", "#ffffff", "#ffffff")
+    rgb = _ramp(pal, 0.25 + 0.75 * iris ** 0.6)
+    rgb = _mixc(rgb, px.col("#1a0b05"), _ss(0.70, 0.86, r))                     # the dark limbal ring
+    rgb = _mixc(rgb, _ramp(SKIN, lvf - 0.05), _ss(0.9, 1.0, r))        # lid skin in the corners
+    front = (ix >= W - 3) if ctx.face == "east" else (ix <= 2)
+    hi = front & (iy == 2) | (front & (iy == 3) & ((ix == W - 3) | (ix == 2)))
+    rgb = np.where(hi[:, None], px.col("#fffdf0"), rgb)
+    g = np.clip(1 - r / 0.8, 0, 1) ** 0.7 * G(ctx, 0.55, 0.85, 1.0)
+    return rgb, ctx.ones(), g
+
+
+def mat_pupil(ctx):
+    rgb = np.broadcast_to(px.col("#050304"), (ctx.N, 3)).copy()
+    return rgb, ctx.ones(), ctx.zeros()
+
+
+def mat_nict(ctx):
+    return np.broadcast_to(px.col("#cdd8e0"), (ctx.N, 3)).copy(), ctx.ones(), ctx.zeros()
+
+
+RHORN = [H(p_) for p_ in ((-1.9, 31.9, -8.4), (-2.3, 33.25, -9.0), (-2.5, 34.5, -10.25), (-2.25, 35.0, -11.75))]
+LHORN = [H(p_) for p_ in ((1.9, 31.9, -8.4), (2.1, 32.9, -8.9))]
+
+
+def mat_horn(ctx):
+    """Ivory horns on burnished brass bases, fine growth rings."""
+    right = _side_x(ctx) < 0
+    nn, t, _ = _tube(ctx, "rhorn" if right else "lhorn", RHORN if right else LHORN)
+    lv = _lvn(ctx, nn, 0.85)
+    rings = 0.05 * np.cos(t * (28 if right else 10))
+    rgb = _mixc(_ramp(BRASS, lv + rings), _ramp(IVORY, lv + rings + 0.1), _ss(0.12, 0.45, t))
+    rgb = rgb + _spec(nn, 12, 0.25)[:, None]
+    return np.clip(rgb, 0, 1), ctx.ones(), ctx.zeros()
+
+
+def mat_crest(ctx):
+    """The hollow crest: ivory with burnished brass rings, a turquoise display line along each side."""
+    nn, t, _ = _tube(ctx, "crest", CREST)
+    lv = _lvn(ctx, nn, 0.85)
+    ring = _ss(0.55, 0.85, 0.5 + 0.5 * np.cos(t * 2 * np.pi * 4.5))
+    rgb = _mixc(_ramp(IVORY, lv + 0.05), _ramp(BRASS, lv + 0.05), ring * _ss(0.1, 0.3, t) * 0.85)
+    rgb = rgb + _spec(nn, 12, 0.1)[:, None]
+    off = _TUBES["_last_off"]
+    w = 0.3 + 0.2 * _night(ctx) + (0.2 if _over(ctx) else 0.0)           # half-height of the line, units
+    line = _ss(w, w * 0.3, np.abs(off[:, 1])) * _ss(0.4, 0.8, np.abs(nn[:, 0])) * _ss(0.05, 0.18, t)
+    ridge = _ss(0.3, 0.1, np.abs(off[:, 0])) * _ss(0.3, 0.7, nn[:, 1]) * _ss(0.12, 0.25, t) * min(1.0, _night(ctx) + _over(ctx))
+    rgb = _mixc(rgb, _ramp(TURQ, 0.75 + 0.25 * line), line * 0.9)
+    rgb = _mixc(rgb, _ramp(TURQ, 0.85), ridge * 0.9)
+    g = np.maximum(line * G(ctx, 0.32, 1.0, 1.0), ridge * G(ctx, 0.0, 0.85, 1.0))
+    return np.clip(rgb, 0, 1), ctx.ones(), g
+
+
+def mat_crest_end(ctx):
+    """The bell lip: brass outside; the open end shows the dark lumen with a glowing inner ring."""
+    d = _dir(CREST[-2], CREST[-1])
+    lv = px.light(ctx, grad=0.1)
+    rgb = _ramp(BRASS, lv + 0.05)
+    g = ctx.zeros()
+    if float(_WN(ctx) @ d) > 0.7:
+        ix, iy, W, Hh = px.texel(ctx)
+        r = np.hypot(ix - (W - 1) / 2, iy - (Hh - 1) / 2) / (min(W, Hh) / 2)
+        ring = np.clip(1 - np.abs(r - 0.62) / 0.16, 0, 1)
+        rgb = np.where((r < 0.8)[:, None], LUMEN, rgb)
+        rgb = _mixc(rgb, _ramp(TURQ, 0.9), ring)
+        g = ring * G(ctx, 0.5, 0.9, 1.0)
+    return rgb, ctx.ones(), g
+
+
+def mat_gular(ctx):
+    """The folded throat pouch: turquoise display skin, glowing along its folds."""
+    p = _P(ctx)
+    c = _v(H((0, 27.25, -8.0)))
+    nw, nl, _ = _ell(ctx, c, _v(HZ((3.0, 2.0, 3.75))) / 2)
+    lv = _lvn(ctx, nw, 0.85)
+    fold = 0.5 + 0.5 * np.cos((p[:, 1] - c[1]) * 2 * np.pi / 0.9)
+    rgb = _ramp(TURQ, lv - 0.08 + 0.14 * fold)
+    g = np.maximum(_ss(0.7, 1.0, fold) * G(ctx, 0.55, 0.95, 1.0), np.full(ctx.N, G(ctx, 0.22, 0.6, 0.7)))
+    return rgb, ctx.ones(), g
+
+
+def mat_gular_big(ctx):
+    """The inflated pouch: concentric glowing rings round a golden heart on the front."""
+    base = _v(H((0, 22.5, -8.25)))                     # the lathe is not head-scaled: its profile is in model units
+    c = base + _v((0, 2.75, 0))
+    r = _v((3.1 * 0.92 * 0.92, 2.9, 3.1 * 1.1 * 0.92))
+    nw, nl, p = _ell(ctx, c, r)
+    lv = _lvn(ctx, nw, 0.9)
+    heart = c + _v((0, 0.3, -r[2]))
+    dd = np.linalg.norm(p - heart, axis=1)
+    rings = np.maximum(np.clip(1 - np.abs(dd - 2.25) / 0.5, 0, 1), np.clip(1 - np.abs(dd - 3.9) / 0.5, 0, 1))
+    hearts = _ss(1.5, 0.8, dd)
+    rgb = _ramp(TURQ, lv + 0.08 + 0.25 * rings)
+    rgb = _mixc(rgb, _ramp(GOLD, 0.7 + 0.3 * hearts), hearts)
+    g = np.maximum(rings * G(ctx, 0.55, 0.85, 1.0), hearts * G(ctx, 0.5, 0.8, 1.0))
+    return rgb, ctx.ones(), g
+
+
+# ----------------------------------------------------------------------------- legs, hands, claws
+
+def mat_scale(ctx):
+    """Deep olive scales: big scutes down the front, small scales elsewhere; lit as limbs."""
+    lv = px.light(ctx, grad=0.12) + 0.02
+    front = float(_WN(ctx) @ _v((0, 0.2, -1.0))) > 0.45
+    sc = px.scales(ctx, size=3 if front else 2, depth=0.12 if front else 0.08)
+    lv = lv + sc + px.ao_near(ctx, [_x(KNEE, s) for s in (-1, 1)] + [_x(ANKLE, s) for s in (-1, 1)], 1.6, 0.12)
+    return _ramp(OLIVE, lv), ctx.ones(), ctx.zeros()
+
+
+def mat_claw(ctx):
+    lv = px.light(ctx, grad=0.2) - 0.05
+    rgb = _ramp(KERAT, lv)
+    ix, iy, W, Hh = px.texel(ctx)
+    rgb = _mixc(rgb, _ramp(IVORY, lv + 0.1), _ss(0.6, 1.0, iy / max(Hh - 1, 1)) * 0.6)
+    return rgb, ctx.ones(), ctx.zeros()
+
+
+def mat_sickle(ctx):
+    """The sickle talon: glossy black with a pale cutting edge; the edge glows in the overflow."""
+    lv = px.light(ctx, grad=0.2) - 0.08
+    rgb = _ramp(KERAT, lv) + _spec(np.broadcast_to(_WN(ctx), (ctx.N, 3)), 6, 0.2)[:, None]
+    ix, iy, W, Hh = px.texel(ctx)
+    edge = (iy == Hh - 1) if px.side(ctx) else np.zeros(ctx.N, bool)
+    rgb = np.where(edge[:, None], _ramp(IVORY, 0.85), rgb)
+    g = edge * (0.7 if _over(ctx) else 0.0)
+    return np.clip(rgb, 0, 1), ctx.ones(), g.astype(float)
+
+
+def mat_spike(ctx):
+    """The styliform digit: ivory with dark joint bands, a brass point."""
+    lv = px.light(ctx, grad=0.1) + 0.05
+    loc = ctx.local[:, 2]
+    rgb = _mixc(_ramp(IVORY, lv), _ramp(BRASS, lv), _ss(0.55, 1.0, loc))
+    joint = np.clip(1 - np.abs(np.mod(loc * 3.0, 1.0) - 0.5) / 0.08, 0, 1) * 0.5
+    rgb = _mixc(rgb, _ramp(IVORY, lv - 0.35), joint)
+    return rgb, ctx.ones(), ctx.zeros()
+
+
+def mat_osteo(ctx):
+    """Osteoderm: an ivory plate inlaid with a burnished brass rim; its keel seam glows at night."""
+    ix, iy, W, Hh = px.texel(ctx)
+    lv = px.light(ctx, grad=0.1) + 0.08
+    rgb = _ramp(IVORY, lv)
+    rim = px.border(ctx, 1)
+    rgb = np.where(rim[:, None], _ramp(BRASS, lv - 0.05), rgb)
+    g = ctx.zeros()
+    if W >= 3 and Hh >= 3 and not px.side(ctx):
+        keel = np.clip(1 - np.abs(ix - (W - 1) / 2) / 0.9, 0, 1) * (~rim)
+        rgb = _mixc(rgb, _ramp(TURQ, 0.8), keel)
+        g = keel * G(ctx, 0.28, 0.95, 1.0)
+    return rgb, ctx.ones(), g
+
+
+def mat_bristle(ctx):
+    """Stiff pale Psittacosaurus bristles (cutout): strands of uneven length."""
+    ix, iy, W, Hh = px.texel(ctx)
+    up = 1 - ctx.local[:, 1]
+    ln = 0.15 + 0.3 * (0.5 + 0.5 * np.sin(ix * 2.1 + 0.7))
+    strand = (np.mod(ix, 2) == 0) & (up >= ln)
+    rgb = _ramp(IVORY, 0.95 - 0.55 * up)
+    return rgb, strand.astype(float), ctx.zeros()
+
+
+# ----------------------------------------------------------------------------- feathers (cutout)
+
+def _iridescent(ctx, v, lv):
+    """Teal at the root -> violet -> gold tips; the hue slides with the feather's angle."""
+    wn = _WN(ctx)
+    sheen = 0.5 + 0.5 * float(wn @ _unit((0.25, 0.9, 0.35)))
+    a = _ramp(TEAL, lv + 0.04 + 0.08 * sheen)
+    b = _ramp(VIOLET, lv + 0.10 - 0.06 * sheen)
+    rgb = _mixc(a, b, _ss(0.42, 0.72, v + 0.08 * (sheen - 0.5)))
+    return _mixc(rgb, _ramp(GOLD, lv + 0.18), _ss(0.82, 0.95, v))
+
+
+def mat_flight(ctx):
+    alpha, lvl = px.vane(ctx, width_at=0.42, tip=0.97, base=0.18, rachis=0.09, barb=2.5)
+    v = ctx.local[:, 2]
+    lv = px.light(ctx, grad=0.0) + lvl + 0.10 * v
+    rgb = _iridescent(ctx, v, lv)
+    rach = np.abs(ctx.local[:, 0] * 2 - 1) < 0.09
+    rgb = np.where((rach & (v < 0.85))[:, None], _mixc(rgb, px.col("#e9e3c8"), 0.45), rgb)
+    return rgb, alpha, ctx.zeros()
+
+
+def mat_fanf(ctx):
+    """Tail-fan feather: the same iridescence, darkened in a halo round the eye-spot inset."""
+    alpha, lvl = px.vane(ctx, width_at=0.5, tip=0.98, base=0.22, rachis=0.07, barb=2.0)
+    v = ctx.local[:, 2]
+    lv = px.light(ctx, grad=0.0) + lvl + 0.08 * v
+    rgb = _iridescent(ctx, v, lv)
+    halo = np.clip(1 - np.abs(v - 0.63) / 0.16, 0, 1)
+    rgb = _mixc(rgb, _ramp(VIOLET, lv - 0.15), halo * 0.7)
+    return rgb, alpha, ctx.zeros()
+
+
+def mat_ocellus(ctx):
+    """The eye-spot inset: gold rim, bronze, a glowing turquoise ring round a deep blue heart."""
+    lv = px.light(ctx, grad=0.0) + 0.05
+    if px.side(ctx) and min(ctx.fw, ctx.fh) < 0.6:
+        return _ramp(VIOLET, lv - 0.1), ctx.ones(), ctx.zeros()
+    ix, iy, W, Hh = px.texel(ctx)
+    r = np.hypot(ix - (W - 1) / 2, iy - (Hh - 1) / 2) / (min(W, Hh) / 2)
+    rgb = _ramp(VIOLET, lv - 0.15)                                     # the feather round it
+    rgb = _mixc(rgb, _ramp(GOLD, 0.75), _ss(1.0, 0.9, r))
+    rgb = _mixc(rgb, px.col("#6b3d14"), _ss(0.82, 0.7, r))
+    ring = np.clip(1 - np.abs(r - 0.52) / 0.22, 0, 1)
+    rgb = _mixc(rgb, _ramp(TURQ, 0.85 + 0.15 * ring), _ss(0.68, 0.56, r))
+    rgb = _mixc(rgb, px.col("#0b1c5a"), _ss(0.38, 0.26, r))
+    g = np.maximum(ring, 0.75 * _ss(0.45, 0.0, r)) * G(ctx, 0.65, 0.95, 1.0)
+    return rgb, ctx.ones(), g
+
+
+def _plume(ctx, dark=0.0, banded=True):
+    alpha, lvl = px.vane(ctx, width_at=0.5, tip=0.95, base=0.3, rachis=0.06, barb=2.0)
+    v = ctx.local[:, 2]
+    lv = px.light(ctx, grad=0.0) + lvl + 0.04 - dark - 0.12 * v
+    rgb = _ramp(PLUME, lv)
+    if banded:
+        band = _ss(0.6, 0.95, 0.5 + 0.5 * np.cos(v * 2 * np.pi * 2.5)) * _ss(0.35, 0.6, v)
+        rgb = _mixc(rgb, _ramp(BAND, lv), band * 0.55)
+    rgb = _mixc(rgb, _ramp(CREAM, lv + 0.15), _ss(0.85, 0.98, v) * 0.6)
+    return rgb, alpha
+
+
+def mat_ruff(ctx):
+    rgb, a = _plume(ctx, 0.0)
+    return rgb, a, ctx.zeros()
+
+
+def mat_trouser(ctx):
+    rgb, a = _plume(ctx, 0.08)
+    return rgb, a, ctx.zeros()
+
+
+def mat_tuft(ctx):
+    """Long ivory plume with an iridescent tip and a gold edge."""
+    alpha, lvl = px.vane(ctx, width_at=0.55, tip=0.97, base=0.25, rachis=0.06, barb=2.0)
+    v = ctx.local[:, 2]
+    lv = px.light(ctx, grad=0.0) + lvl + 0.2
+    rgb = _ramp(IVORY, lv)
+    rgb = _mixc(rgb, _iridescent(ctx, (v - 0.55) * 2.2, lv - 0.12), _ss(0.55, 0.8, v))
+    return rgb, alpha, ctx.zeros()
+
+
+# ----------------------------------------------------------------------------- membranes, rods, the luminous rim
+
+def mat_membrane(ctx):
+    """Wine membrane: dark at the hinge, thin and bright toward the rim, veins fanning out."""
+    u = ctx.local[:, 0] * 2 - 1
+    v = ctx.local[:, 2]
     a = ctx.ones()
-    if ctx.face in ("up", "down"):                       # an open wedge: apex at the hinge (local z = 0)
-        u = np.abs(ctx.local[:, 0] - 0.5) * 2
-        a = (u <= ctx.local[:, 2] * 1.02 + 0.04).astype(float)
+    if ctx.face in ("up", "down"):                                    # an open wedge, apex at the hinge
+        a = (np.abs(u) <= v * 1.02 + 0.04).astype(float)
+        ang = np.where(v > 1e-3, u / np.maximum(v, 1e-3), 0.0)
+        vein = np.clip(1 - np.abs(np.mod(ang * 2.5 + 0.5, 1.0) - 0.5) / 0.12, 0, 1) * _ss(0.1, 0.3, v)
+        thin = v
+    else:                                                             # the folded strip
+        ix, iy, W, Hh = px.texel(ctx)
+        thin = iy / max(Hh - 1, 1)
+        vein = np.clip(1 - np.abs(np.mod(ctx.local[:, 2] * 6, 1.0) - 0.5) / 0.15, 0, 1) * 0.6
+    lv = 0.18 + 0.62 * thin ** 0.8 + 0.06 * px.light(ctx, grad=0.0)
+    rgb = _ramp(WINE, lv - 0.22 * vein)
+    rgb = _mixc(rgb, _ramp(RIMC, 0.6), _ss(0.9, 1.0, thin) * 0.6)
+    return rgb, a, ctx.zeros()
+
+
+def mat_rod(ctx):
+    """Jointed bony rods: ivory with burnished brass knuckles."""
+    lv = px.light(ctx, grad=0.08) + 0.05
+    loc = ctx.local[:, 2]
+    knuck = np.clip(1 - np.abs(np.mod(loc * 3.0, 1.0) - 0.5) / 0.1, 0, 1)
+    rgb = _mixc(_ramp(IVORY, lv), _ramp(BRASS, lv), knuck)
+    return rgb, ctx.ones(), knuck * (0.5 if _over(ctx) else 0.0)
+
+
+def mat_rim(ctx):
     lv = px.light(ctx, grad=0.0)
-    return base * (0.6 + 0.6 * lv)[:, None], a, ctx.zeros()
-
-
-def _flat_teeth(ctx):
-    ix, iy, W, H = px.texel(ctx)
-    tooth = (iy < H - 1 - (ix % 2)) | (iy == 0)
-    return np.broadcast_to(px.col("#efe6cf"), (ctx.N, 3)).copy(), tooth.astype(float), ctx.zeros()
-
-
-def _flat_bristle(ctx):
-    ix, iy, W, H = px.texel(ctx)
-    strand = (ix % 2 == 0)
-    return np.broadcast_to(px.col("#efe6cf"), (ctx.N, 3)).copy(), strand.astype(float), ctx.zeros()
+    return _ramp(RIMC, 0.55 + 0.4 * lv), ctx.ones(), np.full(ctx.N, G(ctx, 0.55, 0.85, 1.0))
