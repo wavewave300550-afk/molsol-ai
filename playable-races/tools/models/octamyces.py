@@ -301,11 +301,14 @@ def _eye(m: Model) -> None:
         seg = q(2 * (LIP_IN + t) * math.tan(math.pi / 8) + 0.25, 0.25)
         m.cube(eye.name, (cx - seg / 2, cy + LIP_IN, LID_Z), (seg, t, _lip_depth(th)), "lip", pivot=(cx, cy, cz),
                rot=(0, 0, th) if _rot(th) else None)
-    iris = m.bone("iris", eye.name, (cx, cy, cz + 1.5))
-    # the void at the back of the socket (its corners hide in the lip) and the star pupil
+    # the iris tilts about the middle of its ring funnel (so a glance never pushes a ring into the lip)
+    iris = m.bone("iris", eye.name, (cx, cy, ring_z(RINGS // 2)))
+    # the void at the back of the socket (never turned or scaled: its corners hide in the lip) and
+    # the star pupil on its own bone, free to drift toward the look, turn and pulse
     pu = m.bone("pupil", iris.name, (cx, cy, cz))
     m.cube(pu.name, (cx - VOID_H, cy - VOID_H, cz), (2 * VOID_H, 2 * VOID_H, 0.25), "void", faces={"north"})
-    m.cube(pu.name, (cx - 1.25, cy - 1.25, cz - 0.12), (2.5, 2.5, 0.1), "star", ppu=4.0, faces={"north"})
+    star = m.bone("star", pu.name, (cx, cy, cz - 0.07))
+    m.cube(star.name, (cx - 1.25, cy - 1.25, cz - 0.12), (2.5, 2.5, 0.1), "star", ppu=4.0, faces={"north"})
     # eleven rings, evenly spaced, the inner ones deeper
     for k, n in enumerate(RING_SIDES):
         z = ring_z(k)
@@ -570,52 +573,75 @@ def _band_point(i: int, theta: float, up: float = 0.5) -> np.ndarray:
     return np.array([c[0] - math.sin(a) * d, y0 + (y1 - y0) * up, c[2] - math.cos(a) * d])
 
 
+SPORE = px.pal("#6e3c2a", "#b97a4c", "#e7b47c", "#f8d9a8", "#fff3e0")      # warm pearl-gold, not lemon
+
+
+def _crown_c():
+    i = len(CAP_PROFILE) - 2
+    return np.array(cap_band(i)[2], float)
+
+
+def _exposed_ledge(x: float, z: float):
+    """Height of the dome's band ledge exposed at plan position (x, z), or None outside the rim."""
+    top = None
+    for i in range(len(CAP_PROFILE) - 1):
+        y0, y1, c, r, sides = cap_band(i)
+        apo = r * math.cos(math.pi / sides) - 0.1
+        if ((x - c[0]) / (apo * CAP_SQUASH[0])) ** 2 + ((z - c[2]) / (apo * CAP_SQUASH[1])) ** 2 <= 1.0:
+            top = y1
+    return top
+
+
 def _spore_spots():
-    """Golden spore spots scattered at the golden angle over the back and sides of the dome, on
-    its taller bands (where they read round), larger toward the crown; none on the socket in
-    front: (centres, radii)."""
-    out, rad = [], []
+    """Spore spots in a golden-angle (Vogel) spiral seen from above the crown: they lie in drifting
+    spiral arms that follow the dome, dense at the crown and thinning toward the rim (where the
+    ledges grow steep and narrow); mostly 1-2 texels, a few 3, brightness drifting along the arms.
+    A sparse second scatter sits on the taller lower bands so the sides are not bare.
+    Returns (centres, radii, brightness)."""
+    cc = _crown_c()
+    out, rad, bri = [], [], []
+    for i in range(1, 190):
+        rho = 0.78 * math.sqrt(i)
+        th = math.radians(i * 137.508)
+        x, z = cc[0] + rho * math.sin(th), cc[2] + rho * math.cos(th)
+        if z < cc[2] - 4.5 and abs(x - cc[0]) < 7.5:      # the eye's socket fills the front
+            continue
+        y = _exposed_ledge(x, z)
+        if y is None:
+            continue
+        arm = (0.5 + 0.5 * math.cos(2 * math.pi * (i % 13) / 13 + rho * 0.55)) * (0.5 + 0.5 * math.cos(2 * math.pi * (i % 8) / 8))
+        if arm < 0.18 and i % 3:                          # gaps between the drifts
+            continue
+        thin = 1.0 - 0.55 * min(1.0, rho / 11.0)
+        big = (i % 17 == 0)
+        rad.append((0.62 if big else 0.28 + 0.17 * arm) * (0.85 + 0.3 * thin))
+        bri.append(0.45 + 0.55 * arm * thin + (0.25 if big else 0.0))
+        out.append((x, y + 0.02, z))
     k = 0
-    for i, per, size in ((5, 4, 1.0), (4, 5, 0.95), (3, 6, 0.9), (2, 7, 0.85), (1, 7, 0.8), (0, 7, 0.75)):
+    for i, per in ((1, 6), (2, 5), (3, 4)):               # the sparse scatter on the side bands
         for j in range(per):
-            th = (k * 137.508 + 61.0) % 360.0 - 180.0
+            th = (k * 137.508 + 101.0) % 360.0 - 180.0
+            jit = (k * 0.7548776662) % 1.0
             k += 1
-            if abs(th) < 68.0:                          # the eye's socket fills the front
+            if abs(th) < 70.0:
                 continue
-            jit = (k * 0.7548776662) % 1.0              # low-discrepancy jitter: no rows of "windows"
-            up = 0.2 + 0.6 * jit if i else 0.3 + 0.6 * jit
-            out.append(_band_point(i, th + 9.0 * (jit - 0.5), up))
-            rad.append(size * (0.75 + 0.5 * ((k * 0.618034) % 1.0)))
-    return np.array(out), np.array(rad)
-
-
-def _spore_dust():
-    """Fine golden dust: single-texel specks drifting round the larger spots."""
-    pts = []
-    for j, (c, r) in enumerate(zip(*_spore_spots())):
-        for t in range(2):
-            a = math.radians((j * 97.0 + t * 160.0) % 360.0)
-            pts.append(c + np.array([math.cos(a), 0.6 * math.sin(a), math.sin(a)]) * (r * 1.9 + 0.3 * t))
-    return np.array(pts)
+            out.append(tuple(_band_point(i, th, 0.2 + 0.6 * jit)))
+            rad.append(0.3 + 0.12 * ((k * 0.618034) % 1.0))
+            bri.append(0.5 + 0.3 * jit)
+    return np.array(out), np.array(rad), np.array(bri)
 
 
 SPOTS = _spore_spots()
-DUST = _spore_dust()
 
 
 def _spots(ctx):
-    """(glow core 0..1, soft halo 0..1) of the spore spots and their dust at this texel."""
+    """(glow 0..1, colour weight 0..1) of the spore spots at this texel: a soft core and falloff."""
     p = _wp(ctx)
-    core = np.zeros(ctx.N)
-    ring = np.zeros(ctx.N)
-    for c, r in zip(*SPOTS):
+    g = np.zeros(ctx.N)
+    for c, r, b in zip(*SPOTS):
         d = np.linalg.norm(p - c, axis=1) / r
-        core = np.maximum(core, 1 - _ss(0.3, 1.05, d))
-        ring = np.maximum(ring, (1 - _ss(1.0, 1.9, d)) * _ss(0.7, 1.1, d))
-    for c in DUST:
-        d = np.linalg.norm(p - c, axis=1)
-        core = np.maximum(core, 0.55 * (1 - _ss(0.15, 0.4, d)))
-    return core, ring
+        g = np.maximum(g, b * (1 - _ss(0.35, 1.45, d)))
+    return g
 
 
 def _cap_colour(ctx, extra_lv=0.0):
@@ -655,20 +681,17 @@ def mat_cap(ctx):
             c = _mix(np.broadcast_to(ASH[1], (ctx.N, 3)), EMBER[2], 0.5 * ray * fade)
             return c, ctx.ones(), 0.3 * ray * fade
         c = _mix(np.broadcast_to(MINT[1], (ctx.N, 3)), MINT[4], 0.35 * fade + 0.3 * ray * fade)
-        return c, ctx.ones(), (0.15 + 0.3 * ray) * fade
+        return c, ctx.ones(), 0.45 * ray ** 2 * fade
     rgb, lv, h, n = _cap_colour(ctx)
-    core, ring = _spots(ctx)
-    g = np.zeros(ctx.N)
+    core = _spots(ctx)
     if _burn(ctx):
         # scorched: the spore spots are embers, a few hairline cracks glow
-        rgb = _mix(rgb, rgb * 0.6, ring)
-        rgb = _mix(rgb, px.smooth_ramp(EMBER, 0.55 + 0.45 * core), core)
+        rgb = _mix(rgb, px.smooth_ramp(EMBER, 0.55 + 0.45 * core), np.clip(core * 1.4, 0, 1))
         crack = _ember_cracks(ctx)
         rgb = _mix(rgb, EMBER[3], crack)
         return rgb, ctx.ones(), np.maximum(0.6 * core, 0.55 * crack)
-    rgb = _mix(rgb, rgb * 0.8 + px.col("#6a2a4a") * 0.2, 0.5 * ring)    # a warm soft halo round each spot
-    rgb = _mix(rgb, px.smooth_ramp(GOLD, 0.25 + 0.75 * core), np.clip(core * 1.6, 0, 1))
-    g = 0.8 * core ** 1.5
+    rgb = _mix(rgb, px.smooth_ramp(SPORE, 0.3 + 0.7 * core), np.clip(core * 1.5, 0, 1))
+    g = 0.85 * core ** 1.3
     return rgb, ctx.ones(), g
 
 
@@ -692,7 +715,7 @@ def mat_lip(ctx):
             return _mix(np.broadcast_to(ASH[1], (ctx.N, 3)), EMBER[3], 0.7 * t), ctx.ones(), 0.35 * t
         c = _mix(np.broadcast_to(VOID[2], (ctx.N, 3)), px.col("#b76cff"), 0.8 * t)
         c = _mix(c, px.col("#ffb6f0"), 0.5 * t ** 3)
-        return c, ctx.ones(), 0.7 * _ss(0.45, 1.0, t)
+        return c, ctx.ones(), 0.7 * _ss(0.6, 1.0, t)
     if ctx.face == "north":                             # the rim facing out of the socket
         u = ctx.local[:, 1]                             # 0 inner edge .. 1 outer edge
         inner = u < 0.22 if ctx.size[1] > 1.2 else u < 0.3
@@ -835,8 +858,8 @@ def mat_frill(ctx):
     c = _mix(c, MINT[7], 0.55 * hem_line)
     c = _mix(c, MINT[6], 0.35 * vein)
     c = _mix(c, MINT[1], 0.75 * hem)
-    band = 1 - _ss(0.0, 0.22, v)                       # the luminous band where the skirt leaves the rim
-    g = 0.5 * band ** 1.3 + (0.08 * top if inner else 0.0)
+    band = 1 - _ss(0.0, 0.16, v)                       # the luminous band where the skirt leaves the rim
+    g = 0.42 * band ** 1.6 + (0.06 * top if inner else 0.0)
     g = np.where(hem_line, 0.62, g) + 0.1 * vein * (v < 0.45)
     g = np.where(hem, 0.0, g)
     return c, ctx.ones(), np.clip(g, 0, 1)
@@ -886,12 +909,12 @@ def mat_lattice(ctx):
 def mat_core(ctx):
     """The glowing core: cyan light with a pink spiral wound through it."""
     h = _helix(ctx, 0.4)
-    band = np.abs(((h * 3) % 1.0) - 0.5) < 0.17
+    band = np.abs(((h * 3) % 1.0) - 0.5) < 0.2
     if _burn(ctx):
         c = _mix(np.broadcast_to(EMBER[3], (ctx.N, 3)), EMBER[5], band * 0.7)
         return c, ctx.ones(), np.full(ctx.N, 0.5)
     c = _mix(np.broadcast_to(px.col("#7ff6ea"), (ctx.N, 3)), px.col("#ff9fe0"), band * 0.85)
-    return c, ctx.ones(), np.where(band, 0.8, 0.45)
+    return c, ctx.ones(), np.where(band, 0.85, 0.09)
 
 
 def mat_volva(ctx):

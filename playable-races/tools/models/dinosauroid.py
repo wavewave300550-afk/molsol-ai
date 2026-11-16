@@ -281,8 +281,8 @@ def _trunk(m: Model) -> None:
     lathe(m, t.name, TRUNK_PIVOT, TRUNK_PROFILE, "body", sides=12, squash=TRUNK_SQUASH, skew=TRUNK_SKEW)
     # ankylosaur osteoderms down the spine (upright trunk frame: +Z is the back)
     px_, py, pz = TRUNK_PIVOT
-    plate_row(m, t.name, (0, py + 9.0, pz + 3.5), (0, py + 3.0, pz + 4.5), 3, 1.75, 2.25, 2.25, 0.5, "osteo",
-              normal=(0, 0, 1), tilt=14, arch=0.4)
+    plate_row(m, t.name, (0, py + 8.5, pz + 3.75), (0, py + 3.5, pz + 4.5), 2, 2.0, 2.5, 2.75, 0.5, "osteo",
+              normal=(0, 0, 1), tilt=14, arch=0.3)
     t.locators["chest"] = (0, py + 4.5, pz - 5.0)
 
 
@@ -299,6 +299,13 @@ def HZ(size, step=0.5):
 
 
 CRANIUM = (H(CRANIUM_A[0]), [(h * HS, r * HS) for h, r in CRANIUM_A[1]])
+
+
+def bell_axis():
+    """The crest's open end, turned up like a horn mouth (50 degrees above the horizontal, facing
+    back): the camera behind and above sees its brass rim and a crescent of glow, not a panel."""
+    a = math.radians(50.0)
+    return _unit((0.0, math.sin(a), math.cos(a)))
 EYE = tuple(np.round(H(EYE_A), 3))
 JAW_PIVOT = H((0.0, 28.5, -6.0))
 GULAR_PIVOT = H((0.0, 28.0, -7.0))
@@ -377,14 +384,21 @@ def _neck_head(m: Model) -> None:
     c1.variant.update({"display": ((0, 0, 0), (10.0, 0, 0)), "overflow": ((0, 0, 0), (7.0, 0, 0))})
     tip = _v(CREST[-1])
     d = _dir(CREST[-2], CREST[-1])
-    vane_cube(m, c1.name, tip - d * 0.25, d, (0, 1, 0), 1.0, 3.0, "crest_end", thick=3.0)          # the flared bell lip
-    c1.locators["crest_tip"] = tuple(np.round(tip + d * 0.9, 3))
-    # plume tufts behind the eyes: one long plume per side sweeping back
+    bell = bell_axis()
+    olathe(m, c1.name, tip - d * 0.6, bell, [(0.0, 1.45), (1.25, 1.75)], "crest_end", sides=8, front=(0, 1, 0))
+    c1.locators["crest_tip"] = tuple(np.round(tip - d * 0.6 + bell * 1.6, 3))
+    # the back of the skull: plumes laid over the occiput (seen from the camera behind)
+    for k, (x, ln) in enumerate(((0.0, 6.0), (-1.0, 5.25), (1.0, 5.25))):
+        o = _v(H((x, 32.9 - 0.3 * abs(x), -4.6)))
+        vane_cube(m, sk.name, o, _unit((0.18 * x, -0.42, 1.0)), (0.2 * x, 0.85, 0.45), ln, 2.75, "ruff", cutout=True)
+    # plume tufts behind the eyes: two long plumes per side sweeping back over the occiput
     for s, p in SIDES:
         o = _v(H((s * 2.25, 31.5, -5.25)))
         tf = m.bone(f"{p}_tuft", sk.name, tuple(o))
         tf.variant.update({v: ((0, 0, 0), side_rot((30, -24, 0), s)) for v in OPEN})
-        vane_cube(m, tf.name, o, _unit((0.16 * s, 0.3, 1.0)), (1, 0, 0), 8.0, 1.75, "tuft", cutout=True)
+        vane_cube(m, tf.name, o, _unit((0.12 * s, 0.3, 1.0)), (1, 0, 0), 8.5, 1.75, "tuft", cutout=True)
+        vane_cube(m, tf.name, o + _v((-0.2 * s, -0.4, 0.2)), _unit((-0.22 * s, -0.12, 1.0)), (0.3 * s, 0.85, 0.4), 7.0, 2.0,
+                  "tuft", cutout=True)
 
 
 # ----------------------------------------------------------------------------- arms: folded wings with three digits
@@ -484,8 +498,8 @@ def _legs(m: Model) -> None:
             vane_cube(m, sf.name, o, _unit((0.0, -0.36 + 0.06 * k, 1.0)), (1, 0, 0), ln, 2.25, "flight", cutout=True)
         # ... and a metatarsal fan behind the ankle
         lf = m.bone(f"{p}_lfan", mt.name, tuple(ankle + (0.5 * s, 0, 0.5)))
-        for k, ln in enumerate((6.0, 5.5, 4.75)):
-            o = ankle + (0.5 * s + 0.1 * k * s, -0.5 * k, 0.5)
+        for k, ln in enumerate((6.0, 5.25)):
+            o = ankle + (0.5 * s + 0.1 * k * s, -0.6 * k, 0.5)
             vane_cube(m, lf.name, o, _unit((0.0, -0.08 - 0.12 * k, 1.0)), (1, 0, 0), ln, 2.0, "flight", cutout=True)
         # the hindwing: a folding fan of membrane hinged at the hip - jointed rods, the first running down
         # the leg to the ankle, wedges of membrane between them, a luminous rim along the outer edge.
@@ -1029,19 +1043,27 @@ def mat_crest(ctx):
 
 
 def mat_crest_end(ctx):
-    """The bell lip: brass outside; the open end shows the dark lumen with a glowing inner ring."""
+    """The flared bell: burnished brass outside; the open mouth a soft radial gradient - a glowing
+    ring fading into the dark lumen at the centre (world-space, so it runs across the lathe strips)."""
+    ax = bell_axis()
     d = _dir(CREST[-2], CREST[-1])
-    lv = px.light(ctx, grad=0.1)
-    rgb = _ramp(BRASS, lv + 0.05)
+    c0 = _v(CREST[-1]) - d * 0.6
+    p = _P(ctx) - c0
+    along = p @ ax
+    radial = p - along[:, None] * ax
+    r = np.linalg.norm(radial, axis=1) / 1.75
+    nn = radial / np.maximum(np.linalg.norm(radial, axis=1, keepdims=True), 1e-9)
+    lv = _lvn(ctx, nn, 0.8) + 0.05
+    rgb = _ramp(BRASS, lv) + _spec(nn, 10, 0.2)[:, None]
     g = ctx.zeros()
-    if float(_WN(ctx) @ d) > 0.7:
-        ix, iy, W, Hh = px.texel(ctx)
-        r = np.hypot(ix - (W - 1) / 2, iy - (Hh - 1) / 2) / (min(W, Hh) / 2)
-        ring = np.clip(1 - np.abs(r - 0.62) / 0.16, 0, 1)
-        rgb = np.where((r < 0.8)[:, None], LUMEN, rgb)
-        rgb = _mixc(rgb, _ramp(TURQ, 0.9), ring)
-        g = ring * G(ctx, 0.5, 0.9, 1.0)
-    return rgb, ctx.ones(), g
+    if float(_WN(ctx) @ ax) > 0.7:                                  # the open mouth
+        far = _unit(_v((0, 0, -1)) - ax * float(_v((0, 0, -1)) @ ax))   # the inner wall the camera behind looks onto
+        crescent = _ss(-0.35, 0.45, (radial @ far) / np.maximum(np.linalg.norm(radial, axis=1), 1e-6))
+        ring = np.clip(1 - np.abs(r - 0.6) / 0.26, 0, 1) ** 1.5 * (0.35 + 0.65 * crescent)
+        rgb = _mixc(_ramp(BRASS, 0.85), LUMEN, _ss(0.95, 0.8, r))   # the rolled brass lip, then the dark inside
+        rgb = _mixc(rgb, _ramp(TURQ, 0.6 + 0.35 * ring), ring * _ss(0.95, 0.85, r))
+        g = ring * _ss(0.95, 0.85, r) * G(ctx, 0.5, 0.9, 1.0)
+    return np.clip(rgb, 0, 1), ctx.ones(), g
 
 
 def mat_gular(ctx):

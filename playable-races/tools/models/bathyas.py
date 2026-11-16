@@ -1356,7 +1356,8 @@ def mat_seam(ctx):
     blaze, open_, day = _P(ctx)
     ix, iy, W, H = px.texel(ctx)
     lv = 0.6 + 0.2 * ((ix % 4) == 1) + 0.15 * day
-    return px.smooth_ramp(SUN, lv), ctx.ones(), np.full(ctx.N, 0.85)
+    seen = ctx.face in ("up", "south", "east", "west")                   # the hidden underside stays dark gold
+    return px.smooth_ramp(SUN, lv if seen else lv - 0.3), ctx.ones(), np.full(ctx.N, 0.85 if seen else 0.0)
 
 
 def mat_claw(ctx):
@@ -1518,18 +1519,18 @@ def mat_s_blade(ctx):
         lv = 0.6 + 0.26 * (1 - np.abs((ix + 0.5) / W * 2 - 1)) + 0.08 * heat
         rgb = px.smooth_ramp(STEEL, lv)
         rgb = np.where(edge[:, None], STEEL[4], rgb)
-        g = np.where(edge, 0.5, 0.3 + 0.1 * heat)
+        g = np.where(edge, 0.34, 0.06 + 0.08 * heat)
     else:
         rgb = px.smooth_ramp(STEEL, px.light(ctx) + 0.25)
-        g = np.full(ctx.N, 0.4)
-    return rgb, ctx.ones(), np.clip(g + 0.25 * b, 0, 1)
+        g = np.full(ctx.N, 0.2)
+    return rgb, ctx.ones(), np.clip(g + 0.2 * b, 0, 1)
 
 
 def mat_s_fuller(ctx):
     """The raised spine: a white-hot line of light down the blade."""
     ix, iy, W, H = px.texel(ctx)
-    rgb = px.smooth_ramp(SUN, 0.86 + 0.12 * ((iy % 4) == 0))
-    return rgb, ctx.ones(), np.full(ctx.N, 0.92)
+    rgb = px.smooth_ramp(SUN, 0.8 + 0.15 * ((iy % 4) == 0))
+    return rgb, ctx.ones(), np.full(ctx.N, 0.62)
 
 
 def mat_s_hilt(ctx):
