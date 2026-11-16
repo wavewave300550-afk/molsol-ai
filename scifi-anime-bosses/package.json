@@ -1,0 +1,17 @@
+{
+  "name": "scifi-anime-bosses",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Minecraft Bedrock add-on: SCI-FI ANIME BOSSES - Boss 001 VESPER-0, The Ship That Learned to Pray",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "python3 tools/build.py",
+    "validate": "python3 tools/validate.py",
+    "smoke": "node tools/smoke/smoke.mjs",
+    "test": "npm run typecheck && npm run build && npm run validate && npm run smoke"
+  },
+  "devDependencies": {
+    "@minecraft/server": "2.11.0",
+    "typescript": "5.6.3"
+  }
+}
