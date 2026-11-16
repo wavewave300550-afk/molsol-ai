@@ -23,7 +23,7 @@
    "minecraft:particle_motion_dynamic": {
     "linear_acceleration": [
      0,
-     "-7 * math.clamp((v.particle_age / v.particle_lifetime) * 4 - 0.6, 0, 1)",
+     -6,
      0
     ]
    },

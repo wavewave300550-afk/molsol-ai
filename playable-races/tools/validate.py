@@ -41,6 +41,7 @@ BOUND = {"root", "waist", "body", "head", "rightArm", "leftArm", "rightLeg", "le
 
 checks = 0
 errors: list = []
+warnings: list = []
 
 
 def check(cond, msg):
@@ -66,6 +67,18 @@ def all_json(root):
 # ----------------------------------------------------------------------------- load everything
 for f in all_json(BP) + all_json(RP):
     check(load(f) is not None, f"json {f}")
+
+def _non_finite(c):
+    raise ValueError(f"non-finite number {c}")
+
+
+for f in all_json(BP) + all_json(RP):
+    try:
+        json.loads(open(f, encoding="utf-8").read(), parse_constant=_non_finite)
+        strict = True
+    except Exception:  # noqa: BLE001
+        strict = False
+    check(strict, f"strict JSON (no NaN/Infinity, no comments): {os.path.relpath(f, ROOT)}")
 
 bpm = load(os.path.join(BP, "manifest.json"))
 rpm = load(os.path.join(RP, "manifest.json"))
@@ -103,9 +116,24 @@ for f in glob.glob(os.path.join(RP, "models", "**", "*.geo.json"), recursive=Tru
                     tw, th = g["description"]["texture_width"], g["description"]["texture_height"]
                     check(0 <= u and 0 <= v and u + w <= tw and v + h <= th, f"{gid}: UV out of bounds on {b['name']}/{face}")
 
+OLD_RACES = ("geometry.plrace.salamander", "geometry.plrace.golem", "geometry.plrace.jackalope")
+for gid, g in geos.items():
+    bone_names = {b["name"] for b in g["bones"]}
+    for b in g["bones"]:
+        for loc in b.get("locators", {}):
+            if gid.startswith(OLD_RACES):        # 001-003 shipped like this and render; keep as a note
+                if loc in bone_names:
+                    warnings.append(f"{gid}: locator {loc} has the same name as a bone")
+            else:
+                check(loc not in bone_names, f"{gid}: locator {loc} has the same name as a bone")
+        for c in b.get("cubes", []):
+            if any(not (-180.0 < a <= 180.0) for a in c.get("rotation", [0, 0, 0])):
+                (warnings.append if gid.startswith(OLD_RACES) else errors.append)(
+                    f"{gid}: cube angle outside (-180, 180] on {b['name']}: {c['rotation']}")
+
 vanilla_bones = {b["name"]: b for b in json.load(open(os.path.join(HERE, "vanilla", "humanoid_custom_bones.json")))["geometry.humanoid.custom"]}
 for gid, g in geos.items():
-    if gid.startswith("geometry.plrace.jackalope") or gid.startswith("geometry.plrace.golem") or gid.startswith("geometry.plrace.salamander"):
+    if any(gid.startswith(f"geometry.plrace.{r}") for r in ("jackalope", "golem", "salamander", "xenentoma", "spaghetti", "nurariten")):
         bones = {b["name"]: b for b in g["bones"]}
         for bn in BOUND:
             if check(bn in bones, f"{gid}: bound bone {bn} missing"):
@@ -226,8 +254,36 @@ def molang_strings(obj, path=""):
             yield from molang_strings(v, f"{path}.{k}")
 
 
+DOUBLE_SIGN = re.compile(r"(?<=[\w)]) [+-] -(?=[\w.(])")
+
+
+def _bare_ternary(expr: str) -> bool:
+    """True when a `?` (not `??`) sits at parenthesis depth 0 in a longer expression."""
+    depth, i = 0, 0
+    while i < len(expr):
+        ch = expr[i]
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+        elif ch == "?":
+            if expr[i:i + 2] == "??":
+                i += 2
+                continue
+            if depth == 0 and not re.match(r"^\s*[\w.!()&|<>=\s]+\?", expr):
+                return True
+        i += 1
+    return False
+
+
 def check_expr(where, expr, defined):
     check(not re.search(r"(?<![a-z_.])\d+(?:\.\d+)?[eE][-+]?\d", expr), f"{where}: number in scientific notation (Bedrock Molang cannot parse it)")
+    check(not DOUBLE_SIGN.search(expr), f"{where}: operator followed by a negated operand ('+ -' / '- -'); vanilla never writes it")
+    check(len(expr) <= 700, f"{where}: expression of {len(expr)} characters (keep it under 700)")
+    if len(expr) > 400:
+        warnings.append(f"{where}: long expression ({len(expr)} characters)")
+    if _bare_ternary(expr):
+        warnings.append(f"{where}: ternary not wrapped in parentheses")
     try:
         _molang.check(expr)
     except SyntaxError as e:
@@ -271,6 +327,7 @@ for pid, d in particles.items():
         if re.fullmatch(r"[a-z_]+|#[0-9a-fA-F]{6,8}", expr):
             continue                                   # enum words (directions, facing modes) and hex colours
         check(not re.search(r"(?<![a-z_.])\d+(?:\.\d+)?[eE][-+]?\d", expr), f"{pid}{where}: number in scientific notation")
+        check(not DOUBLE_SIGN.search(expr), f"{pid}{where}: operator followed by a negated operand")
         try:
             _molang.check(expr)
         except SyntaxError as e:
@@ -409,7 +466,9 @@ for f in glob.glob(os.path.join(RP, "textures", "**", "*.png"), recursive=True):
     w, h = im.size
     check(w * h * 4 <= 262144 or "/ui/" in f, f"texture over memory budget: {os.path.relpath(f, RP)}")
 
-print(f"{checks} checks, {len(errors)} errors")
+print(f"{checks} checks, {len(errors)} errors, {len(warnings)} warnings")
+for w in [w for w in warnings if "geometry.plrace.golem" not in w][:40]:
+    print("  warning", w)
 for e in errors[:80]:
     print("  ERROR", e)
 sys.exit(1 if errors else 0)

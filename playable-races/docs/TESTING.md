@@ -1,8 +1,23 @@
 # Testing Report
 
-*Version 1.2.0 (races 001–006; races 004–006 visually redrawn — see [CREATIVE.md](CREATIVE.md#visual-overhaul-v120-races-004006-redrawn)).*
+*Version 1.2.1 (races 001–006; races 004–006 visually redrawn in 1.2.0 — see [CREATIVE.md](CREATIVE.md#visual-overhaul-v120-races-004006-redrawn); 1.2.1 is the in-game hotfix below).*
 
 **Bottom line:** everything that can be verified without a Minecraft client was verified and passes. What only a real client or server can show — visuals, timing, and "feel" — has **not** been verified in game, and is listed separately below as **proposed** in-game tests. Nothing in this report claims an in-game result that did not happen.
+
+## v1.2.1 hotfix — found in game by the player
+After installing v1.2.0 the player reported that **the Flying Spaghetti Monster was completely invisible** in third person and that **some forms did not animate at all**. Nothing in the static checks had failed, so the files were compared against what Bedrock itself is known to accept:
+
+* The Spaghetti Monster's attachable was byte-identical to v1.1.0 and its geometry and texture were sound (no NaN, every face samples opaque texels, bounds cover the body, every animation/controller reference resolves). Its **v1.2.0 animation file was the only file in the pack containing Molang of the form `a - -90`** (ten expressions from travelling waves with a negative phase). Mojang's own files write `* -15`, `+ -8`, `(-this` and `, -40`, but never a minus followed by a negated operand. Our own parser accepted it; Bedrock's evidently is stricter.
+* The new races also carried unusually long expressions (up to 895 characters, from the eye/head saccades and the 12-harmonic ground fit).
+
+**Changes (motion unchanged):**
+* Every Molang string the build writes is folded to the proven sign form (`a + -b` → `a - b`, `a - -b` → `a + b`), and pack JSON is written strictly (no NaN/Infinity).
+* Long sub-expressions are computed once per frame in `pre_animation` and referenced as variables (saccade clocks, steps, eases and targets; the fitted body bob in short partial sums), so the longest expression is now 699 characters in an old-style locomotion channel and 385 in the Spaghetti Monster.
+* Locator names no longer repeat bone names in races 004–006, and cube angles stay within (−180°, 180°].
+* The validator now also rejects a sign pair (`+ -`/`- -`), expressions over 700 characters, non-strict JSON, locator/bone name clashes and out-of-range cube angles in races 004–006, checks the bound bones of every race against the player skeleton (004–006 were not covered before), and warns about expressions over 400 characters and ternaries without parentheses.
+* **Proof that nothing moves differently:** `python3 tools/molang_equiv.py <v1.2.0 packs>` evaluates every attachable's `pre_animation` and every animation channel of both builds under random player states — 934,600 evaluations, worst relative difference 8.9e-16 (floating point only).
+
+**Still to be confirmed in game:** that the Spaghetti Monster is visible and every form animates. If anything is still missing, *Settings > Creator > Content Log GUI* shows the exact error on screen.
 
 ## What was executed (all passing)
 
@@ -10,7 +25,7 @@
 |---|---|---|
 | TypeScript strict typecheck against the official **@minecraft/server 2.11.0** and **@minecraft/server-ui 2.3.0** typings | `npx tsc --noEmit` | **0 errors** |
 | Minecraft Creator Tools 0.21.0 validation (the "Add-On Best Practices" suite Mojang points creators to) | `npx @minecraft/creator-tools@0.21.0 validate -i packs` | **0 errors**, 6 warnings, 52 recommendations, 41 test suites passed (below) |
-| Project static validator: manifests, every geometry/texture/animation/render-controller/particle/locator link, animation bone names, UV bounds, attachable skeleton pivots = vanilla player skeleton, player/armour render-controller overrides = vanilla + one condition, items/icons/lang, every identifier string in the compiled scripts (particles, vanilla sound events, effect ids, items, entities, pose animations), texture memory budget; **since v1.0.2 also every Molang expression** in animations, controllers and attachable scripts parses, uses only known queries, and every variable it reads is set in `pre_animation` or exposed by the player; controller transitions point at existing states | `python3 tools/validate.py` | **48,774 checks, 0 errors** (v1.2.0; 63,151 in v1.1.0 — the count follows the number of cubes and faces, and the redrawn models use far fewer cubes, e.g. the Spaghetti Monster 131 instead of 588; since v1.2.0 it also rejects numbers in scientific notation inside Molang, and parses every Molang string in the particle effects, which may read only the particle's built-in variables or variables the scripts pass in) |
+| Project static validator: manifests, every geometry/texture/animation/render-controller/particle/locator link, animation bone names, UV bounds, attachable skeleton pivots = vanilla player skeleton, player/armour render-controller overrides = vanilla + one condition, items/icons/lang, every identifier string in the compiled scripts (particles, vanilla sound events, effect ids, items, entities, pose animations), texture memory budget; **since v1.0.2 also every Molang expression** in animations, controllers and attachable scripts parses, uses only known queries, and every variable it reads is set in `pre_animation` or exposed by the player; controller transitions point at existing states | `python3 tools/validate.py` | **59,521 checks, 0 errors** (v1.2.1; 48,774 in v1.2.0; 63,151 in v1.1.0 — the count follows the number of cubes and faces, and the redrawn models use far fewer cubes, e.g. the Spaghetti Monster 131 instead of 588; since v1.2.0 it also rejects numbers in scientific notation inside Molang, and parses every Molang string in the particle effects, which may read only the particle's built-in variables or variables the scripts pass in) |
 | Runtime smoke test: the **compiled behavior-pack scripts** run on a strict mock of the Script API, driven through real gameplay scenarios (table below) | `node tests/run.mjs` | **276 / 276 assertions** (136 for races 001–003, unchanged and still passing; 140 new) |
 | **Animation runtime (v1.0.2):** the shipped attachables (animate lists, blend conditions, `pre_animation`, Molang, Catmull-Rom keyframes, animation controllers) are executed by an offline interpreter on top of the vanilla player skeleton (walk swing, arm bob, head look, attack swing from Mojang's `player.animation.json`) through idle, walk, sprint, jump/landing, attack and hurt scenarios; idle-behaviour controllers cycle through all their behaviours; no query used by the packs is left unsimulated | `python3 tools/anim_gifs.py` (+ `--fidgets`) | GIFs in `docs/images` |
 | **Feet on the ground (v1.0.2):** lowest leg point sampled every tick through walk and sprint cycles of the final packs | runtime above | Salamander −0.04…+0.26, Golem −0.04…+0.11, Jackalope walk −0.08…+0.07 model px from the ground; Jackalope sprint −0.12 at contact, up to +1.57 in the deliberate flight phase |
@@ -157,6 +172,7 @@ The sandbox has no Minecraft client. A **Bedrock Dedicated Server** test was att
 cd playable-races
 npm install          # official typings + TypeScript (no game files)
 npm test             # typecheck -> build -> validate -> smoke
+python3 tools/molang_equiv.py <older packs dir>   # same motion as an older build?
 python3 tools/previews.py
 python3 tools/anim_gifs.py && python3 tools/anim_gifs.py --fidgets   # animated previews
 npx -y @minecraft/creator-tools@0.21.0 validate -i packs

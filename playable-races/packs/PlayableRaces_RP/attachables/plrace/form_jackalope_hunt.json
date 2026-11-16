@@ -55,7 +55,12 @@
      "v.plr_still = 1 - math.clamp(q.modified_move_speed * 5, 0, 1);",
      "v.plr_spr = q.is_sprinting ? 1 : 0;",
      "v.plr_walk = 1 - v.plr_spr;",
-     "v.plr_bob = ((v.plr_walk) * (math.clamp(q.modified_move_speed / 0.8, 0, 1.25)) * ((-0.5245 + -0.5343 * math.cos(v.plr_ph * 2) + 0.2529 * math.sin(v.plr_ph * 2) + 0.08689 * math.cos(v.plr_ph * 4) + 0.04048 * math.sin(v.plr_ph * 4)) - (0.065))) + ((v.plr_spr) * (v.plr_mv) * ((1.373 + -0.7513 * math.cos(v.plr_ph) + 2.242 * math.sin(v.plr_ph) + -0.1229 * math.cos(v.plr_ph * 2) + 0.6822 * math.sin(v.plr_ph * 2) + 0.1955 * math.cos(v.plr_ph * 3) + 0.09812 * math.sin(v.plr_ph * 3) + 0.08106 * math.cos(v.plr_ph * 4) + 0.06795 * math.sin(v.plr_ph * 4)) - (0.065)));"
+     "v.plr_bw0 = -0.5245 - 0.5343 * math.cos(v.plr_ph * 2) + 0.2529 * math.sin(v.plr_ph * 2) + 0.08689 * math.cos(v.plr_ph * 4);",
+     "v.plr_bw1 = 0.04048 * math.sin(v.plr_ph * 4);",
+     "v.plr_br0 = 1.373 - 0.7513 * math.cos(v.plr_ph) + 2.242 * math.sin(v.plr_ph) - 0.1229 * math.cos(v.plr_ph * 2);",
+     "v.plr_br1 = 0.6822 * math.sin(v.plr_ph * 2) + 0.1955 * math.cos(v.plr_ph * 3) + 0.09812 * math.sin(v.plr_ph * 3);",
+     "v.plr_br2 = 0.08106 * math.cos(v.plr_ph * 4) + 0.06795 * math.sin(v.plr_ph * 4);",
+     "v.plr_bob = ((v.plr_walk) * (math.clamp(q.modified_move_speed / 0.8, 0, 1.25)) * ((v.plr_bw0 + v.plr_bw1) - (0.065))) + ((v.plr_spr) * (v.plr_mv) * ((v.plr_br0 + v.plr_br1 + v.plr_br2) - (0.065)));"
     ],
     "animate": [
      {

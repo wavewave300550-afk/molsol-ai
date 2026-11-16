@@ -456,7 +456,7 @@ def particles() -> Dict[str, dict]:
     # ------------------------------------------------------------------ 005 Flying Spaghetti Monster: marinara and gold
     add("sauce_drip", "particles_blend", {**burst(1), "minecraft:emitter_shape_point": {},
         "minecraft:particle_initial_speed": 0.0, "minecraft:particle_lifetime_expression": {"max_lifetime": 1.0},
-        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, f"-7 * math.clamp({AGE} * 4 - 0.6, 0, 1)", 0]},
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, -6, 0]},
         **bb([f"0.07", f"0.07 + math.clamp({AGE} * 4 - 0.4, 0, 1) * 0.03"], _uv("f_drop")),
         "minecraft:particle_appearance_tinting": alpha(FADE), "minecraft:particle_appearance_lighting": {}})
     add("sauce_splash", "particles_blend", {**burst(12), "minecraft:emitter_shape_sphere": {"radius": 0.45, "direction": "outwards"},

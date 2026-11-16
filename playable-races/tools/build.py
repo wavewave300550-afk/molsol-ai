@@ -35,7 +35,7 @@ import fx  # noqa: E402
 import fx_ex  # noqa: E402
 
 NS = "plrace"
-VERSION = [1, 2, 0]
+VERSION = [1, 2, 1]
 MIN_ENGINE = [1, 26, 60]
 SERVER_API = "2.11.0"
 UI_API = "2.3.0"
@@ -114,9 +114,11 @@ ARMOR_TINT = [  # (item-name fragment, rgb) for armour assimilation accents
 
 
 def wjson(path, data):
+    """Write pack JSON: strict (no NaN/Infinity) and with every Molang string in the
+    vanilla-proven sign form (see anims.core.canon)."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=1, ensure_ascii=False)
+        json.dump(acore.canon_tree(data), f, indent=1, ensure_ascii=False, allow_nan=False)
         f.write("\n")
 
 
@@ -752,14 +754,14 @@ def manifests():
             {"module_name": "@minecraft/server", "version": SERVER_API},
             {"module_name": "@minecraft/server-ui", "version": UI_API}],
         "metadata": {"authors": ["Playable Races project"], "product_type": "addon",
-                     "generated_with": {"plrace_build": ["1.2.0"]}}}
+                     "generated_with": {"plrace_build": ["1.2.1"]}}}
     rp = {"format_version": 2, "header": {
         "name": "pack.name", "description": "pack.description", "uuid": UUID["rp"], "pack_scope": "world",
         "version": VERSION, "min_engine_version": MIN_ENGINE},
         "modules": [{"type": "resources", "uuid": UUID["rp_res"], "version": VERSION}],
         "dependencies": [{"uuid": UUID["bp"], "version": VERSION}],
         "metadata": {"authors": ["Playable Races project"], "product_type": "addon",
-                     "generated_with": {"plrace_build": ["1.2.0"]}}}
+                     "generated_with": {"plrace_build": ["1.2.1"]}}}
     wjson(os.path.join(BP, "manifest.json"), bp)
     wjson(os.path.join(RP, "manifest.json"), rp)
 

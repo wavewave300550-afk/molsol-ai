@@ -69,7 +69,7 @@
      ],
      "position": [
       "(-0.01047 * (1.5 * (math.sin(q.life_time * 36 + 100)) * (v.plr_still))) + (0.192 * (1.4 * (math.sin(q.life_time * 43.2)) * (v.plr_still)))",
-      "(0.06 * (math.sin(q.life_time * 414 + -50))) + ((((-0.01047 * ((math.sin(q.life_time * 32.4 + 60)) * (v.plr_still)))) * (math.cos(q.target_x_rotation))) + (-1 * (((-0.192 * ((math.sin(q.life_time * 32.4 + 60)) * (v.plr_still)))) * (math.sin(q.target_x_rotation)))))",
+      "(0.06 * (math.sin(q.life_time * 414 - 50))) + ((((-0.01047 * ((math.sin(q.life_time * 32.4 + 60)) * (v.plr_still)))) * (math.cos(q.target_x_rotation))) + (-1 * (((-0.192 * ((math.sin(q.life_time * 32.4 + 60)) * (v.plr_still)))) * (math.sin(q.target_x_rotation)))))",
       "(((-0.01047 * ((math.sin(q.life_time * 32.4 + 60)) * (v.plr_still)))) * (math.sin(q.target_x_rotation))) + (((-0.192 * ((math.sin(q.life_time * 32.4 + 60)) * (v.plr_still)))) * (math.cos(q.target_x_rotation)))"
      ]
     },
@@ -305,7 +305,7 @@
     },
     "r_fore": {
      "rotation": [
-      "((-30 * (v.plr_spr)) + (8 * ((math.sin(v.plr_ph + 25)) * (v.plr_spr))) + -14) * (v.plr_mv) * ((q.is_item_equipped(0) ? 0.2 : 1))",
+      "((-30 * (v.plr_spr)) + (8 * ((math.sin(v.plr_ph + 25)) * (v.plr_spr))) - 14) * (v.plr_mv) * ((q.is_item_equipped(0) ? 0.2 : 1))",
       0.0,
       0.0
      ]
@@ -359,7 +359,7 @@
     },
     "l_fore": {
      "rotation": [
-      "((-30 * (v.plr_spr)) + (8 * ((math.sin(v.plr_ph + 25)) * (v.plr_spr))) + -14) * (v.plr_mv) * ((q.is_item_equipped(1) ? 0.2 : 1))",
+      "((-30 * (v.plr_spr)) + (8 * ((math.sin(v.plr_ph + 25)) * (v.plr_spr))) - 14) * (v.plr_mv) * ((q.is_item_equipped(1) ? 0.2 : 1))",
       0.0,
       0.0
      ]

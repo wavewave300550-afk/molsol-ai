@@ -79,9 +79,30 @@ def series(coef: Sequence[float], phase: str = PH, tol: float = 0.02) -> str:
     return " + ".join(terms) if terms else "0"
 
 
+def series_chunks(coef: Sequence[float], phase: str = PH, tol: float = 0.02, max_len: int = 240) -> List[str]:
+    """series() split into short partial sums (each becomes its own pre_animation variable)."""
+    terms = [n(coef[0])] if abs(coef[0]) > tol else []
+    for h in range(1, (len(coef) - 1) // 2 + 1):
+        a, b = coef[2 * h - 1], coef[2 * h]
+        arg = phase if h == 1 else f"{phase} * {h}"
+        if abs(a) > tol:
+            terms.append(f"{n(a)} * math.cos({arg})")
+        if abs(b) > tol:
+            terms.append(f"{n(b)} * math.sin({arg})")
+    chunks, cur = [], []
+    for t in terms:
+        if cur and len(" + ".join(cur + [t])) > max_len:
+            chunks.append(" + ".join(cur))
+            cur = []
+        cur.append(t)
+    if cur:
+        chunks.append(" + ".join(cur))
+    return chunks or ["0"]
+
+
 def ground_bob(model, anims: Sequence[Anim], speed: float, sprint: bool, harmonics: int = 4,
                clearance: Optional[Callable[[np.ndarray], np.ndarray]] = None, samples: int = 48,
-               report: Optional[list] = None, label: str = "") -> str:
+               report: Optional[list] = None, label: str = "", chunked: bool = False):
     """Bob (model units, + up) that puts the lowest foot on the ground at every stride phase."""
     floor = foot_floor(model, anims, speed, sprint, samples)
     target = -floor
@@ -93,4 +114,6 @@ def ground_bob(model, anims: Sequence[Anim], speed: float, sprint: bool, harmoni
         fit = coef[0] + sum(coef[2 * h - 1] * np.cos(h * th) + coef[2 * h] * np.sin(h * th) for h in range(1, harmonics + 1))
         err = np.abs(fit - target).max()
         report.append(f"{label}: foot floor {floor.min():+.2f}..{floor.max():+.2f} -> bob fit max error {err:.2f} units")
+    if chunked:
+        return series_chunks(coef)
     return series(coef)

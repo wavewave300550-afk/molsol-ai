@@ -77,28 +77,37 @@ def _own_offset(model, bn, variant):
 
 FIT_REPORT: List[str] = []
 BOB_EXPR: Dict[str, str] = {}
+BOB_PRE: Dict[str, List[str]] = {}
 WALK_REF = 0.8   # walking speed the walk fit is made at (modified_move_speed)
 
 
 def grounded(model, loco: Layer, rig: Rig, race: str, sprint_clearance=None, upper_only=None, harmonics: int = 4) -> None:
     """Add the fitted body bob that keeps the feet on the ground (walk + sprint)."""
-    walk = ground_bob(model, [loco.anim()], WALK_REF, False, harmonics=harmonics, report=FIT_REPORT, label=f"{race} walk")
+    walk = ground_bob(model, [loco.anim()], WALK_REF, False, harmonics=harmonics, report=FIT_REPORT, label=f"{race} walk",
+                      chunked=True)
     run = ground_bob(model, [loco.anim()], 1.0, True, harmonics=harmonics, clearance=sprint_clearance, report=FIT_REPORT,
-                     label=f"{race} sprint")
+                     label=f"{race} sprint", chunked=True)
     rest = float(foot_floor(model, [loco.anim()], 0.0, False, samples=1)[0])
     FIT_REPORT.append(f"{race} rest foot floor {rest:+.2f}")
+    # the fitted series are long: each partial sum is its own short pre_animation statement
+    BOB_PRE[race] = [f"v.plr_bw{i} = {c};" for i, c in enumerate(walk)] + [f"v.plr_br{i} = {c};" for i, c in enumerate(run)]
+    walk_v = " + ".join(f"v.plr_bw{i}" for i in range(len(walk)))
+    run_v = " + ".join(f"v.plr_br{i}" for i in range(len(run)))
     wscale = f"math.clamp(q.modified_move_speed / {WALK_REF}, 0, 1.25)"
-    bob = lin([(1.0, prod(WALKING, wscale, f"({walk}) - ({-rest:.3f})")),
-               (1.0, prod(SPR, MOVE, f"({run}) - ({-rest:.3f})"))])
+    bob = lin([(1.0, prod(WALKING, wscale, f"({walk_v}) - ({-rest:.3f})")),
+               (1.0, prod(SPR, MOVE, f"({run_v}) - ({-rest:.3f})"))])
     # computed once per frame (pre_animation), referenced by every group it moves
     BOB_EXPR[race] = bob
     body(loco, rig, bob=f"v.plr_bob")
 
 
 def pre_animation(race: str) -> List[str]:
-    """Per-frame shared values for the race's attachables (see life.SHARED)."""
-    from anims.life import compact, shared_vars
-    return shared_vars() + [f"v.plr_bob = {compact(BOB_EXPR[race])};"]
+    """Per-frame shared values for the race's attachables (see life.SHARED): the shared
+    gait values, the fitted bob in short partial sums, then every long sub-expression the
+    race's layers registered (life.shared)."""
+    from anims.life import compact, drain_shared, shared_vars
+    return (shared_vars() + [compact(x) for x in BOB_PRE.get(race, [])] + [f"v.plr_bob = {compact(BOB_EXPR[race])};"]
+            + [compact(x) for x in drain_shared()])
 
 
 def blink(period_a: float, period_b: float, dur: float, off: float) -> str:

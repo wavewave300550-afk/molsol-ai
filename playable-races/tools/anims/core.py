@@ -1,6 +1,7 @@
 """Tiny helpers for writing Bedrock animation JSON with Molang."""
 from __future__ import annotations
 
+import re
 from typing import Dict, Optional
 
 NS = "plrace"
@@ -16,6 +17,36 @@ T = "q.life_time"
 def n(x: float) -> str:
     """Format a number for Molang."""
     return f"{x:.4g}"
+
+
+# Bedrock's Molang parser is stricter than ours, and vanilla files never write a binary
+# operator followed by a negated operand such as `a - -90` (they do write `* -15`,
+# `(-this`, `, -40`).  Every generated expression is folded to that proven form:
+# `a + -b` -> `a - b`, `a - -b` -> `a + b` (identical values; unary minus binds tighter
+# than * and / anyway, so `a + -b * c` == `a - b * c`).
+_SIGN = re.compile(r"(?<=[\w)]) ([+-]) -(?=[\w.(])")
+
+
+def canon(expr):
+    """Fold `+ -x` / `- -x` in a Molang string (no-op for anything else)."""
+    if not isinstance(expr, str):
+        return expr
+    prev = None
+    while prev != expr:
+        prev = expr
+        expr = _SIGN.sub(lambda m: " - " if m.group(1) == "+" else " + ", expr)
+    return expr
+
+
+def canon_tree(obj):
+    """canon() applied to every string of a JSON tree (identifiers and paths never match)."""
+    if isinstance(obj, str):
+        return canon(obj)
+    if isinstance(obj, list):
+        return [canon_tree(x) for x in obj]
+    if isinstance(obj, dict):
+        return {k: canon_tree(v) for k, v in obj.items()}
+    return obj
 
 
 def osc(freq: float, amp: float, phase: float = 0.0, t: str = T) -> str:

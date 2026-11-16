@@ -37,21 +37,21 @@
    "bones": {
     "r_sense0": {
      "rotation": [
-      "((((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.7)) - 1) * 311.7 + 3.1) * 4375.85), 1) * 2 - 1) + ((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.7))) * 311.7 + 3.1) * 4375.85), 1) * 2 - 1) - (math.mod(math.abs(math.sin((math.floor((q.life_time * 0.7)) - 1) * 311.7 + 3.1) * 4375.85), 1) * 2 - 1)) * (math.clamp(((q.life_time * 0.7) - math.floor((q.life_time * 0.7))) / 0.18, 0, 1) * math.clamp(((q.life_time * 0.7) - math.floor((q.life_time * 0.7))) / 0.18, 0, 1) * (3 - 2 * math.clamp(((q.life_time * 0.7) - math.floor((q.life_time * 0.7))) / 0.18, 0, 1)))) * 10)) + (-60 * ((q.is_sleeping))) + (-0.12 * (math.clamp(q.target_y_rotation, -70, 70)))",
+      "((v.plr_sac0 * 10)) + (-60 * ((q.is_sleeping))) + (-0.12 * (math.clamp(q.target_y_rotation, -70, 70)))",
       0.0,
-      "(-1 * ((((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.55)) - 1) * 311.7 + 4.1) * 4375.85), 1) * 2 - 1) + ((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.55))) * 311.7 + 4.1) * 4375.85), 1) * 2 - 1) - (math.mod(math.abs(math.sin((math.floor((q.life_time * 0.55)) - 1) * 311.7 + 4.1) * 4375.85), 1) * 2 - 1)) * (math.clamp(((q.life_time * 0.55) - math.floor((q.life_time * 0.55))) / 0.18, 0, 1) * math.clamp(((q.life_time * 0.55) - math.floor((q.life_time * 0.55))) / 0.18, 0, 1) * (3 - 2 * math.clamp(((q.life_time * 0.55) - math.floor((q.life_time * 0.55))) / 0.18, 0, 1)))) * 8))) + (25 * ((q.is_sleeping)))"
+      "(-1 * ((v.plr_sac1 * 8))) + (25 * ((q.is_sleeping)))"
      ]
     },
     "r_sense1": {
      "rotation": [
-      "((((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.9)) - 1) * 311.7 + 5.1) * 4375.85), 1) * 2 - 1) + ((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.9))) * 311.7 + 5.1) * 4375.85), 1) * 2 - 1) - (math.mod(math.abs(math.sin((math.floor((q.life_time * 0.9)) - 1) * 311.7 + 5.1) * 4375.85), 1) * 2 - 1)) * (math.clamp(((q.life_time * 0.9) - math.floor((q.life_time * 0.9))) / 0.18, 0, 1) * math.clamp(((q.life_time * 0.9) - math.floor((q.life_time * 0.9))) / 0.18, 0, 1) * (3 - 2 * math.clamp(((q.life_time * 0.9) - math.floor((q.life_time * 0.9))) / 0.18, 0, 1)))) * 9)) + (40 * ((q.is_sleeping)))",
+      "((v.plr_sac2 * 9)) + (40 * ((q.is_sleeping)))",
       0.0,
       0.0
      ]
     },
     "r_sense2": {
      "rotation": [
-      "((((math.mod(math.abs(math.sin((math.floor((q.life_time * 1.1)) - 1) * 311.7 + 6.1) * 4375.85), 1) * 2 - 1) + ((math.mod(math.abs(math.sin((math.floor((q.life_time * 1.1))) * 311.7 + 6.1) * 4375.85), 1) * 2 - 1) - (math.mod(math.abs(math.sin((math.floor((q.life_time * 1.1)) - 1) * 311.7 + 6.1) * 4375.85), 1) * 2 - 1)) * (math.clamp(((q.life_time * 1.1) - math.floor((q.life_time * 1.1))) / 0.18, 0, 1) * math.clamp(((q.life_time * 1.1) - math.floor((q.life_time * 1.1))) / 0.18, 0, 1) * (3 - 2 * math.clamp(((q.life_time * 1.1) - math.floor((q.life_time * 1.1))) / 0.18, 0, 1)))) * 8)) + (30 * ((q.is_sleeping)))",
+      "((v.plr_sac3 * 8)) + (30 * ((q.is_sleeping)))",
       0.0,
       0.0
      ]
@@ -65,7 +65,7 @@
     },
     "r_palp0": {
      "rotation": [
-      "((((math.mod(math.abs(math.sin((math.floor((q.life_time * 1.6)) - 1) * 311.7 + 7.1) * 4375.85), 1) * 2 - 1) + ((math.mod(math.abs(math.sin((math.floor((q.life_time * 1.6))) * 311.7 + 7.1) * 4375.85), 1) * 2 - 1) - (math.mod(math.abs(math.sin((math.floor((q.life_time * 1.6)) - 1) * 311.7 + 7.1) * 4375.85), 1) * 2 - 1)) * (math.clamp(((q.life_time * 1.6) - math.floor((q.life_time * 1.6))) / 0.18, 0, 1) * math.clamp(((q.life_time * 1.6) - math.floor((q.life_time * 1.6))) / 0.18, 0, 1) * (3 - 2 * math.clamp(((q.life_time * 1.6) - math.floor((q.life_time * 1.6))) / 0.18, 0, 1)))) * 12)) + (-6 * (math.sin(q.life_time * 180)))",
+      "((v.plr_sac4 * 12)) + (-6 * (math.sin(q.life_time * 180)))",
       0.0,
       0.0
      ]
@@ -79,21 +79,21 @@
     },
     "l_sense0": {
      "rotation": [
-      "((((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.7)) - 1) * 311.7 + 7.7) * 4375.85), 1) * 2 - 1) + ((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.7))) * 311.7 + 7.7) * 4375.85), 1) * 2 - 1) - (math.mod(math.abs(math.sin((math.floor((q.life_time * 0.7)) - 1) * 311.7 + 7.7) * 4375.85), 1) * 2 - 1)) * (math.clamp(((q.life_time * 0.7) - math.floor((q.life_time * 0.7))) / 0.18, 0, 1) * math.clamp(((q.life_time * 0.7) - math.floor((q.life_time * 0.7))) / 0.18, 0, 1) * (3 - 2 * math.clamp(((q.life_time * 0.7) - math.floor((q.life_time * 0.7))) / 0.18, 0, 1)))) * 10)) + (-60 * ((q.is_sleeping))) + (-0.12 * (math.clamp(q.target_y_rotation, -70, 70)))",
+      "((v.plr_sac5 * 10)) + (-60 * ((q.is_sleeping))) + (-0.12 * (math.clamp(q.target_y_rotation, -70, 70)))",
       0.0,
-      "((((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.55)) - 1) * 311.7 + 8.7) * 4375.85), 1) * 2 - 1) + ((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.55))) * 311.7 + 8.7) * 4375.85), 1) * 2 - 1) - (math.mod(math.abs(math.sin((math.floor((q.life_time * 0.55)) - 1) * 311.7 + 8.7) * 4375.85), 1) * 2 - 1)) * (math.clamp(((q.life_time * 0.55) - math.floor((q.life_time * 0.55))) / 0.18, 0, 1) * math.clamp(((q.life_time * 0.55) - math.floor((q.life_time * 0.55))) / 0.18, 0, 1) * (3 - 2 * math.clamp(((q.life_time * 0.55) - math.floor((q.life_time * 0.55))) / 0.18, 0, 1)))) * 8)) + (-25 * ((q.is_sleeping)))"
+      "((v.plr_sac6 * 8)) + (-25 * ((q.is_sleeping)))"
      ]
     },
     "l_sense1": {
      "rotation": [
-      "((((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.9)) - 1) * 311.7 + 9.7) * 4375.85), 1) * 2 - 1) + ((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.9))) * 311.7 + 9.7) * 4375.85), 1) * 2 - 1) - (math.mod(math.abs(math.sin((math.floor((q.life_time * 0.9)) - 1) * 311.7 + 9.7) * 4375.85), 1) * 2 - 1)) * (math.clamp(((q.life_time * 0.9) - math.floor((q.life_time * 0.9))) / 0.18, 0, 1) * math.clamp(((q.life_time * 0.9) - math.floor((q.life_time * 0.9))) / 0.18, 0, 1) * (3 - 2 * math.clamp(((q.life_time * 0.9) - math.floor((q.life_time * 0.9))) / 0.18, 0, 1)))) * 9)) + (40 * ((q.is_sleeping)))",
+      "((v.plr_sac7 * 9)) + (40 * ((q.is_sleeping)))",
       0.0,
       0.0
      ]
     },
     "l_sense2": {
      "rotation": [
-      "((((math.mod(math.abs(math.sin((math.floor((q.life_time * 1.1)) - 1) * 311.7 + 10.7) * 4375.85), 1) * 2 - 1) + ((math.mod(math.abs(math.sin((math.floor((q.life_time * 1.1))) * 311.7 + 10.7) * 4375.85), 1) * 2 - 1) - (math.mod(math.abs(math.sin((math.floor((q.life_time * 1.1)) - 1) * 311.7 + 10.7) * 4375.85), 1) * 2 - 1)) * (math.clamp(((q.life_time * 1.1) - math.floor((q.life_time * 1.1))) / 0.18, 0, 1) * math.clamp(((q.life_time * 1.1) - math.floor((q.life_time * 1.1))) / 0.18, 0, 1) * (3 - 2 * math.clamp(((q.life_time * 1.1) - math.floor((q.life_time * 1.1))) / 0.18, 0, 1)))) * 8)) + (30 * ((q.is_sleeping)))",
+      "((v.plr_sac8 * 8)) + (30 * ((q.is_sleeping)))",
       0.0,
       0.0
      ]
@@ -107,7 +107,7 @@
     },
     "l_palp0": {
      "rotation": [
-      "((((math.mod(math.abs(math.sin((math.floor((q.life_time * 1.6)) - 1) * 311.7 + 11.7) * 4375.85), 1) * 2 - 1) + ((math.mod(math.abs(math.sin((math.floor((q.life_time * 1.6))) * 311.7 + 11.7) * 4375.85), 1) * 2 - 1) - (math.mod(math.abs(math.sin((math.floor((q.life_time * 1.6)) - 1) * 311.7 + 11.7) * 4375.85), 1) * 2 - 1)) * (math.clamp(((q.life_time * 1.6) - math.floor((q.life_time * 1.6))) / 0.18, 0, 1) * math.clamp(((q.life_time * 1.6) - math.floor((q.life_time * 1.6))) / 0.18, 0, 1) * (3 - 2 * math.clamp(((q.life_time * 1.6) - math.floor((q.life_time * 1.6))) / 0.18, 0, 1)))) * 12)) + (-6 * (math.sin(q.life_time * 180)))",
+      "((v.plr_sac9 * 12)) + (-6 * (math.sin(q.life_time * 180)))",
       0.0,
       0.0
      ]
@@ -121,8 +121,8 @@
     },
     "skull": {
      "rotation": [
-      "((((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.45)) - 1) * 311.7 + 11) * 4375.85), 1) * 2 - 1) + ((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.45))) * 311.7 + 11) * 4375.85), 1) * 2 - 1) - (math.mod(math.abs(math.sin((math.floor((q.life_time * 0.45)) - 1) * 311.7 + 11) * 4375.85), 1) * 2 - 1)) * (math.clamp(((q.life_time * 0.45) - math.floor((q.life_time * 0.45))) / 0.18, 0, 1) * math.clamp(((q.life_time * 0.45) - math.floor((q.life_time * 0.45))) / 0.18, 0, 1) * (3 - 2 * math.clamp(((q.life_time * 0.45) - math.floor((q.life_time * 0.45))) / 0.18, 0, 1)))) * 6)) + (8 * ((q.is_sleeping)))",
-      "((((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.4)) - 1) * 311.7 + 5) * 4375.85), 1) * 2 - 1) + ((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.4))) * 311.7 + 5) * 4375.85), 1) * 2 - 1) - (math.mod(math.abs(math.sin((math.floor((q.life_time * 0.4)) - 1) * 311.7 + 5) * 4375.85), 1) * 2 - 1)) * (math.clamp(((q.life_time * 0.4) - math.floor((q.life_time * 0.4))) / 0.18, 0, 1) * math.clamp(((q.life_time * 0.4) - math.floor((q.life_time * 0.4))) / 0.18, 0, 1) * (3 - 2 * math.clamp(((q.life_time * 0.4) - math.floor((q.life_time * 0.4))) / 0.18, 0, 1)))) * 10))",
+      "((v.plr_sac10 * 6)) + (8 * ((q.is_sleeping)))",
+      "((v.plr_sac11 * 10))",
       0.0
      ]
     },
@@ -219,14 +219,14 @@
     },
     "tergite1": {
      "rotation": [
-      "-1.5 * (math.sin(q.life_time * 108 + -60))",
+      "-1.5 * (math.sin(q.life_time * 108 - 60))",
       0.0,
       0.0
      ]
     },
     "tergite2": {
      "rotation": [
-      "-1.5 * (math.sin(q.life_time * 108 + -120))",
+      "-1.5 * (math.sin(q.life_time * 108 - 120))",
       0.0,
       0.0
      ]
@@ -3014,9 +3014,9 @@
    "bones": {
     "r_sense0": {
      "rotation": [
-      "((((math.mod(math.abs(math.sin((math.floor((q.life_time * 1.2)) - 1) * 311.7 + 2) * 4375.85), 1) * 2 - 1) + ((math.mod(math.abs(math.sin((math.floor((q.life_time * 1.2))) * 311.7 + 2) * 4375.85), 1) * 2 - 1) - (math.mod(math.abs(math.sin((math.floor((q.life_time * 1.2)) - 1) * 311.7 + 2) * 4375.85), 1) * 2 - 1)) * (math.clamp(((q.life_time * 1.2) - math.floor((q.life_time * 1.2))) / 0.18, 0, 1) * math.clamp(((q.life_time * 1.2) - math.floor((q.life_time * 1.2))) / 0.18, 0, 1) * (3 - 2 * math.clamp(((q.life_time * 1.2) - math.floor((q.life_time * 1.2))) / 0.18, 0, 1)))) * 8))",
+      "((v.plr_sac12 * 8))",
       0.0,
-      "((((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.9)) - 1) * 311.7 + 9) * 4375.85), 1) * 2 - 1) + ((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.9))) * 311.7 + 9) * 4375.85), 1) * 2 - 1) - (math.mod(math.abs(math.sin((math.floor((q.life_time * 0.9)) - 1) * 311.7 + 9) * 4375.85), 1) * 2 - 1)) * (math.clamp(((q.life_time * 0.9) - math.floor((q.life_time * 0.9))) / 0.18, 0, 1) * math.clamp(((q.life_time * 0.9) - math.floor((q.life_time * 0.9))) / 0.18, 0, 1) * (3 - 2 * math.clamp(((q.life_time * 0.9) - math.floor((q.life_time * 0.9))) / 0.18, 0, 1)))) * 10))"
+      "((v.plr_sac13 * 10))"
      ]
     },
     "r_sense3": {
@@ -3033,9 +3033,9 @@
     },
     "l_sense0": {
      "rotation": [
-      "((((math.mod(math.abs(math.sin((math.floor((q.life_time * 1.2)) - 1) * 311.7 + 4) * 4375.85), 1) * 2 - 1) + ((math.mod(math.abs(math.sin((math.floor((q.life_time * 1.2))) * 311.7 + 4) * 4375.85), 1) * 2 - 1) - (math.mod(math.abs(math.sin((math.floor((q.life_time * 1.2)) - 1) * 311.7 + 4) * 4375.85), 1) * 2 - 1)) * (math.clamp(((q.life_time * 1.2) - math.floor((q.life_time * 1.2))) / 0.18, 0, 1) * math.clamp(((q.life_time * 1.2) - math.floor((q.life_time * 1.2))) / 0.18, 0, 1) * (3 - 2 * math.clamp(((q.life_time * 1.2) - math.floor((q.life_time * 1.2))) / 0.18, 0, 1)))) * 8))",
+      "((v.plr_sac14 * 8))",
       0.0,
-      "-1 * (((((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.9)) - 1) * 311.7 + 9) * 4375.85), 1) * 2 - 1) + ((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.9))) * 311.7 + 9) * 4375.85), 1) * 2 - 1) - (math.mod(math.abs(math.sin((math.floor((q.life_time * 0.9)) - 1) * 311.7 + 9) * 4375.85), 1) * 2 - 1)) * (math.clamp(((q.life_time * 0.9) - math.floor((q.life_time * 0.9))) / 0.18, 0, 1) * math.clamp(((q.life_time * 0.9) - math.floor((q.life_time * 0.9))) / 0.18, 0, 1) * (3 - 2 * math.clamp(((q.life_time * 0.9) - math.floor((q.life_time * 0.9))) / 0.18, 0, 1)))) * 10)))"
+      "-1 * (((v.plr_sac13 * 10)))"
      ]
     },
     "l_sense3": {
@@ -3053,7 +3053,7 @@
     "skull": {
      "rotation": [
       0.0,
-      "((((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.8)) - 1) * 311.7 + 3.3) * 4375.85), 1) * 2 - 1) + ((math.mod(math.abs(math.sin((math.floor((q.life_time * 0.8))) * 311.7 + 3.3) * 4375.85), 1) * 2 - 1) - (math.mod(math.abs(math.sin((math.floor((q.life_time * 0.8)) - 1) * 311.7 + 3.3) * 4375.85), 1) * 2 - 1)) * (math.clamp(((q.life_time * 0.8) - math.floor((q.life_time * 0.8))) / 0.18, 0, 1) * math.clamp(((q.life_time * 0.8) - math.floor((q.life_time * 0.8))) / 0.18, 0, 1) * (3 - 2 * math.clamp(((q.life_time * 0.8) - math.floor((q.life_time * 0.8))) / 0.18, 0, 1)))) * 18))",
+      "((v.plr_sac15 * 18))",
       0.0
      ]
     }

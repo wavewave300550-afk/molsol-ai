@@ -1,6 +1,6 @@
 # Technical Compatibility Report
 
-*Version 1.2.0 — foundation races 001–003 plus Expansion 01 (races 004–006), with the bodies, animations and effects of races 004–006 redrawn in 1.2.0. Nothing about how any race is stored changed, and races 001–003 are rendered from byte-identical files: same pack ids, item ids, race codes, form names, saved player data and world settings.*
+*Version 1.2.1 — foundation races 001–003 plus Expansion 01 (races 004–006), with the bodies, animations and effects of races 004–006 redrawn in 1.2.0; 1.2.1 rewrites the generated Molang into the forms vanilla files use (same motion). Nothing about how any race is stored changed: same pack ids, item ids, race codes, form names, saved player data and world settings. Races 001–003 keep their models and textures; their animation text was only rewritten, with identical values (checked by `tools/molang_equiv.py`).*
 
 ## Target
 

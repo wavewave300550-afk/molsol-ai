@@ -14,8 +14,8 @@ from typing import Dict
 
 from anims.core import NS, T
 from anims.life import (ATK, C, FALL, LOOK, MOVE, PH, RISE, S, SPR, STILL, TURN, KeyLayer, Layer, chain_wave,
-                        fidget_controller, landing_controller, lin, mul, prod, saccade, shared_vars, smooth_pulse,
-                        wait_anim)
+                        drain_shared, fidget_controller, landing_controller, lin, mul, prod, saccade, shared_vars,
+                        smooth_pulse, wait_anim)
 from anims.races import A, AIR, GAIT_OK, SIDES, TP, blink, mirror, shake, view_anims
 from models.spaghetti import APP, DRAPES, GROUPS, HANG
 
@@ -296,7 +296,7 @@ def anims(model) -> Dict[str, object]:
     particles = {"drip": f"{NS}:sauce_drip", "splash": f"{NS}:sauce_splash", "crack": f"{NS}:dente_crack",
                  "vortex": f"{NS}:pasta_vortex", "saucespiral": f"{NS}:sauce_spiral", "steam": f"{NS}:pasta_steam"}
     return {"anims": built, "animate": animate, "particles": particles, "controllers": controllers,
-            "pre": shared_vars() + ["v.plr_bob = 0;"]}
+            "pre": shared_vars() + ["v.plr_bob = 0;"] + drain_shared()}
 
 
 def _side_lift(side: int, deg: float) -> float:

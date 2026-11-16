@@ -223,11 +223,11 @@ def anims(model) -> Dict[str, object]:
         noct_loop.pos(f"beam{k}", prod(dx, br), prod(dy, br), None)
 
     fx = {
-        "base": A(r, "fx_base", length=4.0).particle(0.0, "motes", "halo"),
-        "nocturne": A(r, "fx_nocturne", length=1.4).particle(0.0, "motes", "halo").particle(0.7, "motes", "chest"),
-        "edict": A(r, "fx_edict", length=0.6).particle(0.0, "motes", "halo"),
+        "base": A(r, "fx_base", length=4.0).particle(0.0, "motes", "halo_c"),
+        "nocturne": A(r, "fx_nocturne", length=1.4).particle(0.0, "motes", "halo_c").particle(0.7, "motes", "chest"),
+        "edict": A(r, "fx_edict", length=0.6).particle(0.0, "motes", "halo_c"),
         "court": A(r, "fx_court", length=0.9).particle(0.0, "motes", "chest"),
-        "throne": A(r, "fx_throne", length=0.7).particle(0.0, "motes", "halo").particle(0.35, "motes", "chest"),
+        "throne": A(r, "fx_throne", length=0.7).particle(0.0, "motes", "halo_c").particle(0.35, "motes", "chest"),
     }
     built = [fp, tp, life.anim(), halo.anim(), hands.anim(), loco.anim(), air.anim(), land.anim(), land_hard.anim(),
              atk.anim(), hurt.anim(), edict_loop.anim(), court_loop.anim(), throne_loop.anim(), noct_loop.anim(),

@@ -65,7 +65,7 @@
     },
     "r_tamoto": {
      "rotation": [
-      "2 * (math.sin(q.life_time * 43.2 + -50))",
+      "2 * (math.sin(q.life_time * 43.2 - 50))",
       0.0,
       "0.8 * (math.sin(q.life_time * 32.4 + 20))"
      ]
@@ -4966,7 +4966,7 @@
    "particle_effects": {
     "0.00": {
      "effect": "motes",
-     "locator": "halo"
+     "locator": "halo_c"
     }
    }
   },
@@ -4976,7 +4976,7 @@
    "particle_effects": {
     "0.00": {
      "effect": "motes",
-     "locator": "halo"
+     "locator": "halo_c"
     },
     "0.70": {
      "effect": "motes",
@@ -4990,7 +4990,7 @@
    "particle_effects": {
     "0.00": {
      "effect": "motes",
-     "locator": "halo"
+     "locator": "halo_c"
     }
    }
   },
@@ -5010,7 +5010,7 @@
    "particle_effects": {
     "0.00": {
      "effect": "motes",
-     "locator": "halo"
+     "locator": "halo_c"
     },
     "0.35": {
      "effect": "motes",

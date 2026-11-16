@@ -1,7 +1,7 @@
 {
   "name": "playable-races-foundation",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Minecraft Bedrock add-on: Playable Races - foundation (001-003) + Expansion 01 (004-006)",
   "scripts": {
     "build": "python3 tools/build.py",

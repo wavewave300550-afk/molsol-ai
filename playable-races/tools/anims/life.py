@@ -54,6 +54,26 @@ SHARED = [
 ]
 
 
+# Long per-frame sub-expressions (saccade clocks, ...) registered while a race's animation
+# set is being built: each becomes one pre_animation variable, so no channel expression
+# carries several hundred characters of Molang (drain_shared() hands them to the race).
+_EXTRA: Dict[str, str] = {}
+
+
+def shared(expr: str, stem: str = "plr_x") -> str:
+    """Return a per-frame variable holding `expr` (computed once in pre_animation)."""
+    if expr not in _EXTRA:
+        _EXTRA[expr] = f"{stem}{sum(1 for v in _EXTRA.values() if v.startswith(stem))}"
+    return f"v.{_EXTRA[expr]}"
+
+
+def drain_shared() -> List[str]:
+    """pre_animation statements for every variable registered since the last drain."""
+    out = [f"v.{name} = {expr};" for expr, name in _EXTRA.items()]
+    _EXTRA.clear()
+    return out
+
+
 def shared_vars() -> List[str]:
     return [
         "v.plr_ph = q.modified_distance_moved * 38.17;",
@@ -501,14 +521,16 @@ def hash_expr(n_expr: str, seed: float) -> str:
 
 def saccade(freq: float, amp: float, seed: float = 0.0, move: float = 0.18, t: str = T) -> str:
     """Quick move, then hold: a new pseudo-random target every 1/freq seconds, reached in
-    `move` of the interval with a smoothstep (insect heads, eyeballs, glances). Stateless."""
-    tt = f"({t} * {n(freq)})"
-    k = f"math.floor({tt})"
-    f = f"({tt} - {k})"
-    s = f"math.clamp({f} / {n(move)}, 0, 1)"
-    ease = f"({s} * {s} * (3 - 2 * {s}))"
-    prev, cur = hash_expr(f"{k} - 1", seed), hash_expr(k, seed)
-    return f"(({prev} + ({cur} - {prev}) * {ease}) * {n(amp)})"
+    `move` of the interval with a smoothstep (insect heads, eyeballs, glances). Stateless.
+    Its pieces live in short pre_animation variables (clock, step, ease, the two targets)."""
+    tt = shared(f"{t} * {n(freq)}", "plr_st")
+    k = shared(f"math.floor({tt})", "plr_sk")
+    s = f"math.clamp(({tt} - {k}) / {n(move)}, 0, 1)"
+    ease = shared(f"{s} * {s} * (3 - 2 * {s})", "plr_se")
+    prev = shared(hash_expr(f"{k} - 1", seed), "plr_sh")
+    cur = shared(hash_expr(k, seed), "plr_sh")
+    unit = shared(f"{prev} + ({cur} - {prev}) * {ease}", "plr_sac")
+    return f"({unit} * {n(amp)})"
 
 
 def smooth_pulse(period: float, rise: float, hold: float, fall: float, offset: float = 0.0, t: str = T) -> str:

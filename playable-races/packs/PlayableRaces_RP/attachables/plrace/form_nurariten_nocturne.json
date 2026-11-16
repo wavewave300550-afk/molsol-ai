@@ -51,7 +51,9 @@
      "v.plr_still = 1 - math.clamp(q.modified_move_speed * 5, 0, 1);",
      "v.plr_spr = q.is_sprinting ? 1 : 0;",
      "v.plr_walk = 1 - v.plr_spr;",
-     "v.plr_bob = ((v.plr_walk) * (math.clamp(q.modified_move_speed / 0.8, 0, 1.25)) * ((0.3034 + 0.1695 * math.cos(v.plr_ph * 2) + -0.05457 * math.cos(v.plr_ph * 4)) - (0.002))) + ((v.plr_spr) * (v.plr_mv) * ((0.3478 + 0.1809 * math.cos(v.plr_ph * 2) + -0.0683 * math.cos(v.plr_ph * 4)) - (0.002)));"
+     "v.plr_bw0 = 0.3034 + 0.1695 * math.cos(v.plr_ph * 2) - 0.05457 * math.cos(v.plr_ph * 4);",
+     "v.plr_br0 = 0.3478 + 0.1809 * math.cos(v.plr_ph * 2) - 0.0683 * math.cos(v.plr_ph * 4);",
+     "v.plr_bob = ((v.plr_walk) * (math.clamp(q.modified_move_speed / 0.8, 0, 1.25)) * ((v.plr_bw0) - (0.002))) + ((v.plr_spr) * (v.plr_mv) * ((v.plr_br0) - (0.002)));"
     ],
     "animate": [
      {

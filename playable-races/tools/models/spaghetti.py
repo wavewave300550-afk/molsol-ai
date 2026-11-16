@@ -218,7 +218,7 @@ def _meatballs(m: Model) -> None:
         ellipsoid(m, mb.name, c, (MB_D, MB_D, MB_D), "meatball", a=0.667, b=0.75, skip={"detached"})
         # the sauce-filled socket left behind while the meatballs ricochet (detached form)
         m.box("mass", (c[0], 19.75, -2.25), (4.0, 0.5, 3.5), "socket", only={"detached"})
-        mb.locators[f"{p}_meatball"] = c
+        mb.locators[f"{p}_meatball_c"] = c          # locator names never repeat a bone name
 
 
 def _eyes(m: Model) -> None:
@@ -234,7 +234,7 @@ def _eyes(m: Model) -> None:
         # the lid hangs in front of the eye when closed; at rest it is folded back over the top
         lid = m.bone(f"{p}_lid", eye.name, (ex, ey + 2.5, ez - 3.0), (90.0, 0.0, 0.0))
         m.box(lid.name, (ex, ey + 0.5, ez - 3.25), (3.5, 4.0, 0.5), "lid")
-        eye.locators[f"{p}_eye"] = (ex, ey, ez - 3.0)
+        eye.locators[f"{p}_eye_c"] = (ex, ey, ez - 3.0)
 
 
 def _sauce(m: Model) -> None:
@@ -271,11 +271,12 @@ def _halo(m: Model) -> None:
     seg = q(2 * HALO_R * math.tan(math.pi / n) + 0.3)
     for k in range(n):
         ang = 360.0 / n * (k + 0.5)
+        ang = ang - 360.0 if ang > 180.0 else ang          # cube angles kept within (-180, 180]
         m.cube(h.name, (cx - seg / 2, cy + HALO_R - 0.375, cz - 0.625), (seg, 0.75, 1.25), "halo",
                pivot=(cx, cy, cz), rot=(0, 0, ang))
     for s in (-1, 1):
         m.box(h.name, (cx + s * (HALO_R + 0.75), cy, cz), (1.25, 1.5, 0.5), "halo")   # handles
-    h.locators["halo"] = (cx, cy, cz)
+    h.locators["halo_c"] = (cx, cy, cz)
 
 
 def _arms(m: Model) -> None:

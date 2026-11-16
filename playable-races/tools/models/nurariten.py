@@ -221,7 +221,7 @@ def _head(m: Model) -> None:
 
 def _halo(m: Model) -> None:
     halo = m.bone("halo", "robe", HALO_C)
-    halo.locators["halo"] = HALO_C
+    halo.locators["halo_c"] = HALO_C                 # locator names never repeat a bone name
     cx, cy, cz = HALO_C
     y = cy + APOTHEM
     for k in range(HALO):
