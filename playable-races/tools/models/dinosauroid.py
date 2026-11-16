@@ -1,26 +1,27 @@
 """Race 007 - The Unknown Dinosauroid.  (v1.5 premium redesign: "the misbred feathered sovereign")
 
 A magnificent feathered impossibility: a powerful theropod leaning forward over strong
-thighs, a deep keeled chest, an S-neck carrying a long skull with a hollow hadrosaur crest
-sweeping far back over the head, forearms folded as iridescent wings, and a long tapering
-tail that ends in a broad fan of individual eyed feathers.
+thighs, a deep keeled chest under a regal ruff, an S-neck carrying a long skull with a
+hollow hadrosaur crest sweeping far back over the head, forearms folded as iridescent wings,
+and a long tapering tail that ends in a broad fan of individual eyed feathers.
 
-Big shapes first (lathe trunk, swept neck / tail / crest / horns, feather fans with one bone
-per feather where they must open); fine detail lives in the textures.
+Big shapes first - beveled ellipsoid masses (trunk, skull, thighs), swept forms (neck, tail,
+crest, horns, beak, claws), feather fans with one bone per feather where they must open -
+and the fine detail (barbs, scales, teeth, plate bevels, banding) lives in the textures.
 
   * skull   - an enlarged braincase; a deep hooked oviraptorosaur beak (glossy black, ivory
               tip) with a row of teeth behind it; ASYMMETRIC supraorbital horns (the right long
-              and curving forward, the left a blunt stump); the hollow tubular crest; plume
-              tufts behind the eyes; a throat pouch; big amber eyes with slit pupils and a
-              nictitating membrane
-  * arms    - a folded wing: coverts and secondaries on the forearm, three long primaries
-              from the hand reaching the hips; two clawed fingers and the elongated styliform
-              digit (a long ivory spike from the wrist along the wing's leading edge)
+              and curving forward, the left a blunt stump); the hollow tubular crest with a
+              flared open end; plume tufts behind the eyes; a throat pouch; big amber eyes with
+              slit pupils and a nictitating membrane
+  * arms    - a folded wing: secondaries along the forearm, three long primaries from the hand
+              reaching the hips; two clawed fingers and the elongated styliform digit (a long
+              ivory spike from the wrist along the wing's leading edge)
   * legs    - digitigrade runners: a raised sickle claw on digit II; Microraptor feathers on
               the shank and the metatarsus; hip-to-ankle membranes on two jointed rods
               (folded against the leg at rest, wide sails in the Veer and the Overflow)
-  * tail    - five bones; osteoderm plates, Psittacosaurus bristles and side feathers; a
-              fan of nine feathers with eye-spots (each its own bone: it opens and closes)
+  * tail    - five bones; osteoderm plates, Psittacosaurus bristles and a frond of side
+              feathers; a fan of nine eyed feathers (each its own bone: it opens and closes)
 
 Rig: the head sits far ahead of the player's head pivot, so the animations cancel the player's
 look on head_g (pitch) and hfix (yaw) and re-apply it on the neck (see anims/dinosauroid.py).
@@ -36,8 +37,8 @@ import numpy as np
 
 from kit.geo import Model, rot_matrix
 from kit import pixel as px
-from models.common import (accents, ellipsoid, feather_fan, fp_sleeves, frame_rot, humanoid, lathe, lathe_proxy,
-                           mat_accent, plate_row, q, side_rot, sweep)
+from models.common import (accents, fp_sleeves, frame_rot, humanoid, lathe, mat_accent, plate_row, q,
+                           side_rot, sweep)
 
 ID = "dinosauroid"
 VARIANTS = ["base", "night", "display", "veer", "overflow"]
@@ -55,33 +56,37 @@ FAN = 9                               # tail-fan feathers fan0..fan8
 
 # ----------------------------------------------------------------------------- anatomy (JSON model units, rest pose)
 TRUNK_PIVOT = (0.0, 12.75, 2.25)      # the hips: the trunk pitches forward about them
-PITCH = 34.0                          # theropod posture (trunk axis from vertical)
+PITCH = 36.0                          # theropod posture (trunk axis from vertical)
 VEER_LEAN = 20.0                      # extra lean of the Hindwing Veer
-# trunk profile in the upright trunk frame: (height above the pivot, radius)
-TRUNK_PROFILE = [(-2.25, 2.4), (0.0, 3.35), (2.75, 4.0), (5.5, 4.2), (7.75, 3.75), (9.5, 2.85), (10.75, 2.0)]
-TRUNK_SQUASH = (0.84, 1.0)
-TRUNK_SKEW = (0.0, -1.0)
-NECK = [(0.0, 19.5, -2.25), (0.0, 22.5, -4.25), (0.0, 25.25, -5.0), (0.0, 27.75, -4.5)]
+# the two beveled masses of the trunk, in the upright trunk frame (centre, dims x/y/z)
+CHEST = ((0.0, 18.75, 1.25), (8.5, 9.0, 9.5))
+PELVIS = ((0.0, 13.75, 2.5), (7.25, 6.5, 7.5))
+NECK = [(0.0, 19.25, -2.0), (0.0, 22.5, -4.5), (0.0, 25.5, -5.25), (0.0, 28.0, -4.5)]
 NECK_BASE = NECK[0]
+RUFF_C = (0.0, 23.75, -4.25)          # the ruff ring round the neck, just above the shoulders
 SKULL_PIVOT = NECK[-1]
-CRANIUM = ((0.0, 30.0, -6.5), (4.75, 4.5, 5.5))                 # centre, dims of the braincase
-EYE = (2.3, 30.0, -8.0)
+HS = 1.15                             # the head is authored at a base size and scaled about the skull pivot
+CRANIUM_A = ((0.0, 30.75, -6.5), (5.5, 5.25, 6.5))             # centre, dims of the braincase (authored)
+EYE_A = (2.45, 30.5, -8.25)
 EYE_RY = 16.0
-JAW_PIVOT = (0.0, 28.0, -5.75)
-GULAR_PIVOT = (0.0, 27.5, -6.75)
-CREST = [(0.0, 30.5, -10.25), (0.0, 32.25, -8.5), (0.0, 33.25, -5.75), (0.0, 34.25, -2.5), (0.0, 35.25, 1.0)]
-SHOULDER = (3.5, 19.25, -2.75)
-ELBOW = (4.75, 16.0, -0.5)
-WRIST = (5.5, 13.0, -2.5)
-HIP = (2.75, 13.0, 1.75)
-KNEE = (3.0, 8.0, -1.75)
-ANKLE = (3.0, 3.75, 2.75)
-BALL = (3.0, 0.75, 0.25)
-TAIL_PTS = [(0.0, 13.5, 4.0), (0.0, 13.5, 8.5), (0.0, 14.0, 13.0), (0.0, 15.0, 17.5), (0.0, 16.25, 21.5),
-            (0.0, 17.25, 24.75)]
-FAN_LEN = [8.0, 8.75, 9.25, 9.5, 9.75, 9.5, 9.25, 8.75, 8.0]
-FAN_FOLD = 64.0                       # folded fan: total spread (degrees)
-FAN_OPEN = 160.0                      # display: total spread
+CREST_A = [(0.0, 31.0, -10.75), (0.0, 32.75, -8.75), (0.0, 33.75, -5.75), (0.0, 34.5, -2.5), (0.0, 34.75, 0.75),
+           (0.0, 34.25, 3.25)]
+SHOULDER = (3.75, 19.5, -2.5)
+ELBOW = (5.0, 16.25, -0.25)
+WRIST = (5.75, 13.0, -2.25)
+SPUR = (6.5, 17.75, 4.75)             # tip of the styliform digit (the folded wing's upper spar)
+HIP = (3.0, 13.0, 1.5)
+KNEE = (3.25, 7.75, -2.0)
+ANKLE = (3.25, 3.75, 3.0)
+BALL = (3.25, 0.75, 0.5)
+TAIL_PTS = [(0.0, 14.5, 4.25), (0.0, 15.0, 7.75), (0.0, 15.75, 11.25), (0.0, 16.25, 14.5), (0.0, 16.5, 17.5),
+            (0.0, 16.25, 20.25)]
+FAN_LEN = [8.5, 9.25, 9.75, 10.25, 10.5, 10.25, 9.75, 9.25, 8.5]
+FAN_W = 2.75
+FAN_DROOP = -14.0                     # the folded fan trails a little below the tail line
+FAN_CUP = 22.0                        # the outer feathers droop this much (a shallow dome)
+FAN_FOLD = 56.0                       # folded fan: total spread (degrees)
+FAN_OPEN = 150.0                      # display: total spread
 
 
 def _v(p):
@@ -89,7 +94,7 @@ def _v(p):
 
 
 def _x(p, s):
-    """Mirror a right-side-authored point for side s (-1 right, +1 left): x -> s * |x|."""
+    """A right-side-authored point (x given as a positive distance) placed on side s (-1 right, +1 left)."""
     return (s * abs(p[0]), p[1], p[2])
 
 
@@ -116,6 +121,27 @@ def _dir(a, b):
     return d / max(np.linalg.norm(d), 1e-9)
 
 
+def _unit(v):
+    v = _v(v)
+    return v / max(np.linalg.norm(v), 1e-9)
+
+
+def oell(m, bone, center, dims, along, normal, mat, a=0.7, b=0.88, **kw):
+    """A beveled ellipsoid (cross of three boxes + a core) whose local Z runs along `along` and
+    local Y along `normal`: dims = (x, y, z) in that frame.  No two faces coplanar."""
+    c = _v(center)
+    rot = frame_rot(along, normal) if along is not None else None
+    dx, dy, dz = dims
+    out, seen = [], set()
+    for sz in ((dx, dy * a, dz * a), (dx * a, dy, dz * a), (dx * a, dy * a, dz), (dx * b, dy * b, dz * b)):
+        s = tuple(q(v) for v in sz)
+        while s in seen:
+            s = (s[0] - 0.5, s[1], s[2])
+        seen.add(s)
+        out.append(m.cube(bone, tuple(c - _v(s) / 2), s, mat, pivot=tuple(c) if rot else None, rot=rot, **kw))
+    return out
+
+
 def vane_cube(m, bone, origin, direction, normal, length, width, mat, thick=0.25, **kw):
     """One feather / blade box: `width` across, `thick` through its plane (normal), `length`
     along `direction` from `origin` (local +Z along the feather: paint with px.vane)."""
@@ -126,9 +152,61 @@ def vane_cube(m, bone, origin, direction, normal, length, width, mat, thick=0.25
 
 def panel(m, bone, top, length, width, mat, **kw):
     """A vertical zero-thickness panel in the YZ plane: hanging `length` down from `top` and
-    `width` back (+Z) from it (membranes; solid so that their rims can glow)."""
+    `width` back (+Z) from it (membranes: solid, so their luminous rims can glow)."""
     x, y, z = top
     return m.cube(bone, (x, y - length, z), (0.0, length, width), mat, faces={"east", "west"}, **kw)
+
+
+def _wrap(a):
+    a = (a + 180.0) % 360.0 - 180.0
+    return 180.0 if a <= -180.0 + 1e-9 else round(a, 2) + 0.0
+
+
+def _tidy_angles(m: Model) -> None:
+    """Bedrock wants angles in (-180, 180]: frame_rot / euler_for may return exactly -180."""
+    for bn in m.order:
+        b = m.bones[bn]
+        b.rot = tuple(_wrap(a) for a in b.rot)
+        for v, (off, r) in list(b.variant.items()):
+            if r is not None:
+                b.variant[v] = (off, tuple(_wrap(a) for a in r))
+        for c in b.cubes:
+            if c.rot is not None:
+                c.rot = tuple(_wrap(a) for a in c.rot)
+
+
+def _frame(d, n):
+    """Orthonormal frame (columns x, y, z) with z along d and y along n (made orthogonal)."""
+    z = _unit(d)
+    y = _v(n) - z * float(_v(n) @ z)
+    if np.linalg.norm(y) < 1e-6:
+        y = _v((0, 1, 0)) - z * z[1]
+    y = _unit(y)
+    return np.column_stack([np.cross(y, z), y, z])
+
+
+def aim(m: Model, bone: str, variant, ref_dir, ref_nrm, tgt_dir, tgt_nrm, offset=(0.0, 0.0, 0.0)) -> None:
+    """Pose `bone` in `variant` (None: its rest rotation) so that a feature authored along
+    ref_dir with plane normal ref_nrm (rest model space) points along tgt_dir / tgt_nrm in the
+    world, given its parents' pose in that variant.  Set parents before children."""
+    from kit.render import bone_matrices
+    from models.common import euler_for
+    par = m.bones[bone].parent
+    P = bone_matrices(m, variant)[par][:3, :3] if par else np.eye(3)
+    R = P.T @ _frame(tgt_dir, tgt_nrm) @ _frame(ref_dir, ref_nrm).T
+    e = tuple(_wrap(a) for a in euler_for(R))
+    if variant is None:
+        m.bones[bone].rot = e
+    else:
+        m.bones[bone].variant[variant] = (tuple(offset), e)
+
+
+def in_plane(theta, s, n):
+    """Direction at `theta` degrees in the plane facing n: 0 = straight down, 90 = outward (side s)."""
+    t = math.radians(theta)
+    d = _v((s * math.sin(t), -math.cos(t), 0.0))
+    n = _unit(n)
+    return _unit(d - n * float(d @ n))
 
 
 # ============================================================================= build
@@ -139,9 +217,9 @@ def build() -> Model:
     # the player's look is cancelled here (pitch on head_g, yaw on hfix, both about the player's
     # head pivot) and re-applied on the neck, which pivots where the neck leaves the chest
     m.bone("hfix", "head_g", (0, 24, 0))
-    for g in ("hfix", "r_arm_g", "l_arm_g"):
-        piv = NECK_BASE if g == "hfix" else _x(SHOULDER, -1 if g[0] == "r" else 1)
-        m.bones[g].variant["veer"] = (lean_offset(piv, VEER_LEAN), None)
+    m.bones["hfix"].variant["veer"] = (lean_offset(NECK_BASE, VEER_LEAN), None)
+    for s, g in ((-1, "r_arm_g"), (1, "l_arm_g")):
+        m.bones[g].variant["veer"] = (lean_offset(_x(SHOULDER, s), VEER_LEAN), None)
     _trunk(m)
     _neck_head(m)
     _arms(m)
@@ -149,12 +227,13 @@ def build() -> Model:
     _tail(m)
     fp_sleeves(m, "sleeve", width=4.4)
     accents(m, [
-        ("c", "breast", "trunk", trunk_to_world((0, 18.25, -2.15)), (4.0, 3.5, 0.5)),
-        ("l", "r", "r_thigh", (-4.6, 10.75, 0.25), (0.5, 3.0, 3.0)),
-        ("l", "l", "l_thigh", (4.6, 10.75, 0.25), (0.5, 3.0, 3.0)),
-        ("f", "r", "r_meta", (-3.0, 2.0, 1.75), (1.75, 1.0, 1.75)),
-        ("f", "l", "l_meta", (3.0, 2.0, 1.75), (1.75, 1.0, 1.75)),
+        ("c", "breast", "trunk", (0, 18.5, -3.6), (4.5, 4.0, 0.5)),
+        ("l", "r", "r_thigh", (-5.25, 10.5, -0.25), (0.5, 3.5, 3.5)),
+        ("l", "l", "l_thigh", (5.25, 10.5, -0.25), (0.5, 3.5, 3.5)),
+        ("f", "r", "r_meta", (-3.25, 2.25, 1.75), (2.0, 1.0, 2.0)),
+        ("f", "l", "l_meta", (3.25, 2.25, 1.75), (2.0, 1.0, 2.0)),
     ])
+    _tidy_angles(m)
     m.pack()
     return m
 
@@ -164,80 +243,110 @@ def build() -> Model:
 def _trunk(m: Model) -> None:
     t = m.bone("trunk", "torso_g", TRUNK_PIVOT, (PITCH, 0, 0))
     t.variant["veer"] = ((0, 0, 0), (PITCH + VEER_LEAN, 0, 0))
-    lathe(m, t.name, TRUNK_PIVOT, TRUNK_PROFILE, "plume", sides=12, squash=TRUNK_SQUASH, skew=TRUNK_SKEW)
-    # osteoderms down the spine (upright trunk frame: +Z is the back)
+    (cc, cd), (pc, pd) = CHEST, PELVIS
+    oell(m, t.name, cc, cd, None, None, "plume", a=0.72, b=0.9)
+    oell(m, t.name, pc, pd, None, None, "plume", a=0.72, b=0.9)
+    # ankylosaur osteoderms down the spine (upright trunk frame: +Z is the back)
     px_, py, pz = TRUNK_PIVOT
-    plate_row(m, t.name, (0, py + 9.0, pz + 2.6), (0, py + 1.0, pz + 3.6), 4, 1.5, 2.0, 1.75, 0.5, "osteo",
-              normal=(0, 0, 1), tilt=14, arch=0.35)
-    t.locators["chest"] = trunk_to_world((0, py + 5.0, pz - 4.2))
+    plate_row(m, t.name, (0, py + 9.75, pz + 3.0), (0, py + 2.5, pz + 4.25), 4, 1.5, 2.25, 1.75, 0.5, "osteo",
+              normal=(0, 0, 1), tilt=14, arch=0.4)
+    t.locators["chest"] = (0, py + 4.5, pz - 4.75)
 
 
 # ----------------------------------------------------------------------------- neck and head
 
+def H(p):
+    """Head geometry is authored at a base size and scaled HS about the skull pivot."""
+    piv = _v(SKULL_PIVOT)
+    return tuple(piv + HS * (_v(p) - piv))
+
+
+def HZ(size, step=0.5):
+    return tuple(q(v * HS, step) if v > 0 else 0.0 for v in size)
+
+
+CRANIUM = (H(CRANIUM_A[0]), HZ(CRANIUM_A[1]))
+EYE = tuple(np.round(H(EYE_A), 3))
+JAW_PIVOT = H((0.0, 28.5, -6.0))
+GULAR_PIVOT = H((0.0, 28.0, -7.0))
+CREST = [H(p_) for p_ in CREST_A]
+
+
 def _neck_head(m: Model) -> None:
-    sweep(m, "hfix", "neck", NECK, 3.75, 2.75, "neck", h0=4.0, h1=3.0, n=2, per_bone=3)
-    # n=2 over 3 spans -> 6 cubes; per_bone=3 -> neck0 (lower S), neck1 (upper S)
-    na = m.bone("nape", "neck1", (0.0, 28.0, -3.25), (-30.0, 0, 0))
-    na.variant.update({v: ((0, 0, 0), (-62.0, 0, 0)) for v in OPEN})
-    feather_fan(m, na.name, "nape", (0.0, 28.0, -3.25), 3, [4.0, 5.0, 4.5], [1.5, 1.75, 1.5], "mane",
-                spread=30, center=150, plane="side", thick=0.25, bones=False, cutout=True)
+    sweep(m, "hfix", "neck", NECK, 4.5, 3.25, "neck", h0=5.0, h1=3.5, n=3, per_bone=5)
+    # n=3 over 3 spans -> 9 cubes; per_bone=5 -> neck0 (lower S), neck1 (upper S)
+    # the regal ruff: a mantle of plumes round the base of the neck, over the shoulders
+    rc = _v(RUFF_C)
+    na = m.bone("nape", "neck0", tuple(rc))
+    na.variant.update({v: ((0, 0, 0), (22.0, 0, 0)) for v in OPEN})
+    for k, (ang, ln, w) in enumerate(((0.0, 7.0, 3.5), (-50.0, 7.0, 3.5), (50.0, 7.0, 3.5), (-100.0, 6.0, 3.25),
+                                      (100.0, 6.0, 3.25))):
+        a = math.radians(ang)
+        out = _v((math.sin(a), 0.0, math.cos(a)))                  # 0 = straight back, + = toward +X
+        o = rc + out * (2.0 + 0.05 * k) + _v((0, 0.4 * (k % 2), 0))
+        d = _unit(out * 0.85 + _v((0, -0.52, 0)))
+        vane_cube(m, na.name, o, d, out + _v((0, 0.35, 0)), ln, w, "ruff", cutout=True)
     sk = m.bone("skull", "neck1", SKULL_PIVOT)
     sk.variant.update({"display": ((0, 0, 0), (-14.0, 0, 0)), "overflow": ((0, 0, 0), (-8.0, 0, 6.0))})
-    c, d = CRANIUM
-    ellipsoid(m, sk.name, c, d, "skull", a=0.66, b=0.88)
-    m.box(sk.name, (0, 29.75, -9.5), (3.5, 3.0, 2.5), "face")                       # snout between the eyes and the beak
-    m.box(sk.name, (0, 28.5, -7.75), (4.25, 2.0, 3.0), "face")                      # cheeks
-    m.box(sk.name, (0, 31.5, -8.0), (5.25, 0.75, 2.0), "brow")                      # heavy supraorbital ridge
+    c, d = CRANIUM_A
+    oell(m, sk.name, H(c), HZ(d), None, None, "skull", a=0.68, b=0.88)
+    m.box(sk.name, H((0, 30.25, -9.75)), HZ((3.75, 3.25, 2.5)), "face")                # snout between the eyes and the beak
+    m.box(sk.name, H((0, 29.0, -8.0)), HZ((4.5, 2.0, 3.5)), "face")                   # cheeks
+    m.box(sk.name, H((0, 32.25, -8.25)), HZ((5.5, 0.75, 2.25)), "brow")               # heavy supraorbital ridge
     # the beak: deep, hooked, oviraptorosaur
-    sweep(m, sk.name, "beak", [(0, 30.0, -10.5), (0, 29.75, -11.75), (0, 29.0, -13.0), (0, 27.75, -13.75)],
-          3.0, 1.0, "beak", h0=2.75, h1=1.0, n=1, bones=False)
+    sweep(m, sk.name, "beak", [H(p_) for p_ in ((0, 30.4, -10.5), (0, 29.9, -12.6), (0, 28.0, -14.1))],
+          3.25 * HS, 1.25, "beak", h0=3.0 * HS, h1=1.25, n=1, bones=False)
     # a row of teeth behind the beak (cutout planes hanging from the upper jaw line)
     for s in (-1, 1):
-        m.cube(sk.name, (s * 1.45, 27.0, -10.75), (0.0, 1.0, 3.5), "teeth", cutout=True, faces={"east", "west"})
+        o = H((s * 1.55, 28.5, -11.25))
+        m.cube(sk.name, (o[0], o[1] - 1.0, o[2]), (0.0, 1.0, q(3.75 * HS)), "teeth", cutout=True, faces={"east", "west"})
     # ASYMMETRIC supraorbital horns: the right long and curving forward, the left a blunt stump
-    sweep(m, sk.name, "rhorn", [(-1.75, 31.5, -8.25), (-2.25, 32.75, -8.75), (-2.5, 34.0, -10.0), (-2.25, 34.5, -11.5)],
-          1.5, 0.5, "horn", n=1, bones=False)
-    sweep(m, sk.name, "lhorn", [(1.75, 31.5, -8.25), (2.0, 32.5, -8.75)], 1.5, 1.25, "horn", n=1, bones=False)
+    sweep(m, sk.name, "rhorn", [H(p_) for p_ in ((-1.75, 32.25, -8.5), (-2.25, 33.5, -9.0), (-2.5, 34.75, -10.25),
+                                                  (-2.25, 35.25, -11.75))], 1.75, 0.5, "horn", n=1, bones=False)
+    sweep(m, sk.name, "lhorn", [H(p_) for p_ in ((1.75, 32.25, -8.5), (2.0, 33.25, -9.0))], 1.75, 1.25, "horn", n=1,
+          bones=False)
     # jaw
     jw = m.bone("jaw", sk.name, JAW_PIVOT)
     jw.variant.update({"display": ((0, 0, 0), (10.0, 0, 0)), "overflow": ((0, 0, 0), (14.0, 0, 0))})
-    sweep(m, jw.name, "jawb", [(0, 27.75, -6.25), (0, 27.5, -9.75), (0, 27.25, -12.75)], 3.25, 1.5, "jaw",
-          h0=1.25, h1=0.75, n=1, bones=False)
+    sweep(m, jw.name, "jawb", [H(p_) for p_ in ((0, 28.25, -6.5), (0, 28.0, -10.25), (0, 27.75, -13.25))], 3.5 * HS, 1.5,
+          "jaw", h0=1.5 * HS, h1=0.75, n=1, bones=False)
     # eyes: big, amber, turned a little forward; slit pupils; a nictitating membrane
+    ew, eh, ed = 0.5, q(2.0 * HS, 0.25), q(2.25 * HS, 0.25)
     for s, p in SIDES:
         ex, ey, ez = s * EYE[0], EYE[1], EYE[2]
-        m.cube(sk.name, (ex - 0.25, ey - 1.0, ez - 1.125), (0.5, 2.0, 2.25), "eye", ppu=4.0,
+        m.cube(sk.name, (ex - ew / 2, ey - eh / 2, ez - ed / 2), (ew, eh, ed), "eye", ppu=4.0,
                pivot=(ex, ey, ez), rot=side_rot((0, -EYE_RY, 0), s))
     pu = m.bone("pupils", sk.name, (0, EYE[1], EYE[2]))
-    nc = m.bone("nict", sk.name, (0, EYE[1], EYE[2] - 1.0))
+    nc = m.bone("nict", sk.name, (0, EYE[1], EYE[2] - ed / 2 + 0.1))
     for s, p in SIDES:
         ex, ey, ez = s * EYE[0], EYE[1], EYE[2]
-        m.cube(pu.name, (ex + s * 0.27 - 0.05, ey - 0.75, ez - 0.25), (0.1, 1.5, 0.5), "pupil", ppu=4.0,
+        m.cube(pu.name, (ex + s * 0.27 - 0.05, ey - 0.875, ez - 0.25), (0.1, 1.75, 0.5), "pupil", ppu=4.0,
                pivot=(ex, ey, ez), rot=side_rot((0, -EYE_RY, 0), s))
-        m.cube(nc.name, (ex + s * 0.31 - 0.025, ey - 1.0, ez - 1.0), (0.05, 2.0, 0.1), "nict",
+        m.cube(nc.name, (ex + s * 0.31 - 0.025, ey - eh / 2, ez - ed / 2 + 0.1), (0.05, eh, 0.1), "nict",
                pivot=(ex, ey, ez), rot=side_rot((0, -EYE_RY, 0), s))
     sk.locators["eyes"] = (0, EYE[1], EYE[2] - 1.5)
     # throat pouch: tucked under the jaw at rest, a balloon in the display
     gu = m.bone("gular", sk.name, GULAR_PIVOT)
-    ellipsoid(m, gu.name, (0, 26.75, -7.75), (2.75, 2.0, 3.5), "gular", a=0.66, b=0.86, skip=OPEN)
-    lathe(m, gu.name, (0, 22.75, -8.0), [(0.0, 1.5), (1.25, 2.5), (2.75, 2.9), (4.0, 2.5), (5.0, 1.5)], "gular_big",
-          sides=12, squash=(0.92, 1.08), only=OPEN)
-    gu.locators["throat"] = (0, 25.5, -8.0)
+    oell(m, gu.name, H((0, 27.25, -8.0)), HZ((3.0, 2.0, 3.75)), None, None, "gular", a=0.66, b=0.86, skip=OPEN)
+    lathe(m, gu.name, H((0, 22.75, -8.25)), [(0.0, 1.25), (1.0, 2.5), (2.5, 3.0), (4.0, 2.75), (5.25, 1.75)], "gular_big",
+          sides=12, squash=(0.92, 1.1), only=OPEN)
+    gu.locators["throat"] = H((0, 25.5, -8.25))
     # the hollow tubular crest: from the snout over the skull roof, sweeping far behind
-    sweep(m, sk.name, "crest", CREST, 1.75, 2.25, "crest", h0=1.75, h1=2.0, n=2, per_bone=4)
-    m.bones["crest0"].variant.update({"display": ((0, 0, 0), (-14.0, 0, 0)), "overflow": ((0, 0, 0), (-10.0, 0, 0))})
-    m.bones["crest1"].variant.update({"display": ((0, 0, 0), (-12.0, 0, 0)), "overflow": ((0, 0, 0), (-8.0, 0, 0))})
+    sweep(m, sk.name, "crest", CREST[:4], 2.75, 2.0, "crest", h0=2.75, h1=2.0, n=2, per_bone=6, power=0.7)
+    c1 = m.bone("crest1", "crest0", CREST[3])
+    sweep(m, c1.name, "crestb", CREST[3:], 2.0, 2.25, "crest", h0=2.0, h1=2.25, n=2, bones=False, power=2.0)
+    m.bones["crest0"].variant.update({"display": ((0, 0, 0), (16.0, 0, 0)), "overflow": ((0, 0, 0), (11.0, 0, 0))})
+    c1.variant.update({"display": ((0, 0, 0), (10.0, 0, 0)), "overflow": ((0, 0, 0), (7.0, 0, 0))})
     tip = _v(CREST[-1])
     d = _dir(CREST[-2], CREST[-1])
-    vane_cube(m, "crest1", tip - d * 0.5, d, (0, 1, 0), 1.0, 2.75, "crest_end", thick=2.75)
-    m.bones["crest1"].locators["crest_tip"] = tuple(np.round(tip + d * 0.6, 3))
-    # plume tufts behind the eyes
+    vane_cube(m, c1.name, tip - d * 0.75, d, (0, 1, 0), 1.5, 2.75, "crest_end", thick=2.75)        # the flared open end
+    c1.locators["crest_tip"] = tuple(np.round(tip + d * 0.9, 3))
+    # plume tufts behind the eyes: one long plume per side sweeping back
     for s, p in SIDES:
-        o = (s * 2.25, 30.75, -4.75)
-        tf = m.bone(f"{p}_tuft", sk.name, o, side_rot((0, -8, 0), s))
-        tf.variant.update({v: ((0, 0, 0), side_rot((-26, -32, 0), s)) for v in OPEN})
-        feather_fan(m, tf.name, f"{p}_tf", o, 3, [5.0, 6.0, 4.5], [1.5, 1.75, 1.5], "tuft", spread=34, center=112,
-                    plane="side", thick=0.25, bones=False, cutout=True)
+        o = _v(H((s * 2.25, 31.5, -5.25)))
+        tf = m.bone(f"{p}_tuft", sk.name, tuple(o))
+        tf.variant.update({v: ((0, 0, 0), side_rot((30, -24, 0), s)) for v in OPEN})
+        vane_cube(m, tf.name, o, _unit((0.16 * s, 0.3, 1.0)), (1, 0, 0), 8.0, 1.75, "tuft", cutout=True)
 
 
 # ----------------------------------------------------------------------------- arms: folded wings with three digits
@@ -246,13 +355,11 @@ def _arms(m: Model) -> None:
     for s, p in SIDES:
         g = f"{p}_arm_g"
         sh, el, wr = (_v(_x(c, s)) for c in (SHOULDER, ELBOW, WRIST))
+        # the arm itself never leaves the player's arm (held items stay in the hand): only the
+        # wing feathers and the styliform digit open in the display forms
         up = m.bone(f"{p}_upper", g, tuple(sh))
-        up.variant.update({"display": ((0, 0, 0), side_rot((-24, 0, 38), s)),
-                           "overflow": ((0, 0, 0), side_rot((-20, 0, 30), s))})
-        sweep(m, up.name, f"{p}_ua", [sh + (0, 0.5, 0), el], 2.5, 2.0, "plume", h0=2.75, h1=2.0, n=1, bones=False)
+        oell(m, up.name, (sh + el) / 2 + (0, 0.25, 0), (2.75, 2.75, 5.0), el - sh, (1, 0, 0), "plume", a=0.7, b=0.88)
         fo = m.bone(f"{p}_fore", up.name, tuple(el))
-        fo.variant.update({"display": ((0, 0, 0), side_rot((-30, 0, 20), s)),
-                           "overflow": ((0, 0, 0), side_rot((-26, 0, 16), s))})
         sweep(m, fo.name, f"{p}_fa", [el, wr], 2.0, 1.5, "plume", n=1, bones=False)
         ha = m.bone(f"{p}_hand", fo.name, tuple(wr))
         m.box(ha.name, tuple(wr + (0.1 * s, -1.0, -0.4)), (1.5, 2.0, 1.75), "scale")
@@ -260,25 +367,44 @@ def _arms(m: Model) -> None:
             a = wr + (dx * s, -1.75, dz - 0.4)
             sweep(m, ha.name, f"{p}_cl", [a, a + (0, -ln * 0.7, -ln * 0.45), a + (0, -ln, -ln * 0.3)], 0.6, 0.35, "claw",
                   n=1, bones=False)
-        # the styliform digit: a long ivory spike from the wrist back along the wing's leading edge
+        # the styliform digit: a long ivory spar from the wrist up and back over the hip; the primaries
+        # hang from it (as the membrane of Yi qi hung from its styliform element)
         st = m.bone(f"{p}_stylus", ha.name, tuple(wr))
-        st.variant.update({v: ((0, 0, 0), side_rot((-20, 0, -26), s)) for v in OPEN})
-        sweep(m, st.name, f"{p}_st", [wr + (0.55 * s, 0.25, 0.25), wr + (0.7 * s, 2.0, 3.5), wr + (0.75 * s, 3.25, 7.25)],
-              0.75, 0.35, "spike", n=1, bones=False)
-        # folded wing: secondaries along the forearm, three long primaries from the hand to the hips
-        fold = _v((0.0, -0.5, 1.0))
+        spur = _v(_x(SPUR, s))
+        sweep(m, st.name, f"{p}_st", [wr + (0.55 * s, 0.25, 0.25), (wr + spur) / 2 + (0.2 * s, 0.25, 0), spur], 0.9, 0.4,
+              "spike", n=1, bones=False)
+        n_w = _unit((s * 0.92, 0.38, 0.0))                       # folded feathers face up-out (seen from behind too)
+        # folded wing: three secondaries fanned along the forearm, three long primaries along the spar
         sec = m.bone(f"{p}_sec", fo.name, tuple(el))
-        sec.variant.update({v: ((0, 0, 0), side_rot((-48, 0, 0), s)) for v in OPEN})
-        for k, (t, ln) in enumerate(((0.15, 6.0), (0.45, 6.75), (0.75, 7.25))):
-            o = el + (wr - el) * t + (0.35 * s, 0, 0)
-            dk = fold + _v((0.06 * s, -0.12 * k, 0))
-            vane_cube(m, sec.name, o + (0.12 * k * s, 0, 0), dk, (1, 0, 0), ln, 2.5, "flight", cutout=True)
-        for k, (ln, ang) in enumerate(((9.0, 0.0), (10.0, 8.0), (10.5, 16.0))):
-            pr = m.bone(f"{p}_pri{k}", ha.name, tuple(wr))
-            pr.variant.update({v: ((0, 0, 0), side_rot((-40 - 22 * k, 0, 0), s)) for v in OPEN})
-            a = math.radians(ang)
-            dk = _v((0.04 * s, -0.42 - 0.3 * math.sin(a), 0.9))
-            vane_cube(m, pr.name, wr + ((0.0 - 0.12 * k) * s, -0.5, 0.0), dk, (1, 0, 0), ln, 2.5, "flight", cutout=True)
+        sec_ref = _unit((0.05 * s, 0.0, 1.0))
+        for k, (t, ln) in enumerate(((0.12, 6.75), (0.42, 7.25), (0.72, 7.75))):
+            o = el + (wr - el) * t + (0.45 * s + 0.12 * k * s, 0, 0)
+            vane_cube(m, sec.name, o, _unit((0.05 * s, 0.25 * (1 - k), 1.0)), n_w, ln, 2.75, "flight", cutout=True)
+        pri_dir = []
+        for k, (t, ln, drop) in enumerate(((0.35, 8.25, -0.2), (0.65, 9.25, -0.3), (0.95, 9.75, -0.38))):
+            o = wr + (spur - wr) * t + (0.15 * s, -0.25, 0)
+            pr = m.bone(f"{p}_pri{k}", st.name, tuple(o))
+            d = _unit((0.1 * s, drop, 1.0))
+            pri_dir.append(d)
+            vane_cube(m, pr.name, o + (0.1 * k * s, 0, 0), d, n_w, ln, 2.75, "flight", cutout=True)
+        # display: each wing opens as a fan facing forward that rises from the wrist up the flank, so the
+        # two wings frame the body (bird-of-paradise); overflow: half-open and drooping
+        ex = _v((1, 0, 0))
+        n_d = _unit((s * 0.25, 0.0, -1.0))
+        sp_ref = spur - wr
+        aim(m, sec.name, "display", sec_ref, n_w, in_plane(70, s, n_d), n_d)
+        aim(m, st.name, "display", sp_ref, ex, in_plane(160, s, n_d), n_d)
+        for k in range(3):
+            aim(m, f"{p}_pri{k}", "display", pri_dir[k], n_w, in_plane(98 + 18 * k, s, n_d), n_d)
+        n_o = _unit((s * 1.0, 0.2, 0.25))
+
+        def droop(t):
+            a = math.radians(t)
+            return _unit(_v((s * 0.42, 0.0, 0.0)) + _v((0, 0, 1)) * math.cos(a) + _v((0, -1, 0)) * math.sin(a))
+        aim(m, sec.name, "overflow", sec_ref, n_w, droop(30), n_o)
+        aim(m, st.name, "overflow", sp_ref, ex, _unit((s * 0.55, 0.75, 0.75)), n_o)
+        for k in range(3):
+            aim(m, f"{p}_pri{k}", "overflow", pri_dir[k], n_w, droop(12 + 16 * k), n_o)
 
 
 # ----------------------------------------------------------------------------- legs: digitigrade runners with hindwings
@@ -288,12 +414,13 @@ def _legs(m: Model) -> None:
         g = f"{p}_leg_g"
         hip, knee, ankle, ball = (_v(_x(c, s)) for c in (HIP, KNEE, ANKLE, BALL))
         th = m.bone(f"{p}_thigh", g, tuple(hip))
-        sweep(m, th.name, f"{p}_tg", [hip + (0, 1.25, 0.75), hip + (0.1 * s, -2.0, -1.0), knee + (0, 0, 0.25)],
-              4.0, 2.25, "thigh", h0=5.25, h1=2.5, n=1, bones=False)
+        top = hip + (0.1 * s, 2.25, 1.25)
+        oell(m, th.name, (top + knee) / 2 + (0.15 * s, 0, 0.25), (4.5, 5.5, 8.5), knee - top, (0, 0, -1), "thigh",
+             a=0.7, b=0.88)
         sh = m.bone(f"{p}_shin", th.name, tuple(knee))
-        sweep(m, sh.name, f"{p}_sn", [knee + (0, 0.5, -0.25), ankle], 2.25, 1.5, "shin", h0=2.5, h1=1.5, n=1, bones=False)
+        sweep(m, sh.name, f"{p}_sn", [knee + (0, 0.75, -0.25), ankle], 2.75, 1.75, "shin", h0=3.0, h1=1.75, n=1, bones=False)
         mt = m.bone(f"{p}_meta", sh.name, tuple(ankle))
-        sweep(m, mt.name, f"{p}_mt", [ankle + (0, 0.25, 0.1), ball], 1.5, 1.25, "scale", n=1, bones=False)
+        sweep(m, mt.name, f"{p}_mt", [ankle + (0, 0.25, 0.1), ball], 1.75, 1.5, "scale", n=1, bones=False)
         ft = m.bone(f"{p}_foot", mt.name, tuple(ball))
         bx, by, bz = ball
         sweep(m, ft.name, f"{p}_d3", [(bx, 0.6, bz), (bx, 0.5, bz - 2.0), (bx, 0.4, bz - 3.75)], 1.25, 0.75, "toe",
@@ -305,76 +432,122 @@ def _legs(m: Model) -> None:
         tx = bx - 0.8 * s
         tl = m.bone(f"{p}_talon", ft.name, (tx, 0.75, bz))
         sweep(m, tl.name, f"{p}_d2", [(tx, 0.75, bz), (tx, 1.5, bz - 1.25)], 0.9, 0.75, "toe", n=1, bones=False)
-        sweep(m, tl.name, f"{p}_sk", [(tx, 1.4, bz - 1.25), (tx, 2.75, bz - 1.75), (tx, 3.0, bz - 2.75), (tx, 2.25, bz - 3.6)],
-              0.75, 0.35, "sickle", h0=1.0, h1=0.4, n=1, bones=False)
+        sweep(m, tl.name, f"{p}_sk", [(tx, 1.4, bz - 1.25), (tx, 2.85, bz - 1.75), (tx, 3.1, bz - 2.85), (tx, 2.25, bz - 3.75)],
+              0.85, 0.35, "sickle", h0=1.0, h1=0.4, n=1, bones=False)
         tl.locators[f"{p}_sickle"] = (tx, 2.5, bz - 3.0)
         # Microraptor feathers: long feathers down the back of the shank ...
-        sf = m.bone(f"{p}_sfan", sh.name, tuple(knee + (0.6 * s, -0.5, 1.0)))
-        sf.variant.update({v: ((0, 0, 0), side_rot((0, -20, 72), s)) for v in WINGS})
+        sf = m.bone(f"{p}_sfan", sh.name, tuple(knee + (0.75 * s, -0.5, 1.0)))
         for k, (t, ln) in enumerate(((0.1, 7.0), (0.4, 7.5), (0.7, 6.5))):
-            o = knee + (ankle - knee) * t + (0.7 * s + 0.1 * k * s, 0, 0.5)
-            vane_cube(m, sf.name, o, _v((0.0, -0.55 + 0.1 * k, 0.83)), (1, 0, 0), ln, 2.25, "flight", cutout=True)
+            o = knee + (ankle - knee) * t + (0.8 * s + 0.1 * k * s, 0, 0.5)
+            vane_cube(m, sf.name, o, _unit((0.0, -0.36 + 0.06 * k, 1.0)), (1, 0, 0), ln, 2.25, "flight", cutout=True)
         # ... and a metatarsal fan behind the ankle
         lf = m.bone(f"{p}_lfan", mt.name, tuple(ankle + (0.5 * s, 0, 0.5)))
-        lf.variant.update({v: ((0, 0, 0), side_rot((0, -26, 80), s)) for v in WINGS})
-        for k, ln in enumerate((6.5, 6.0, 5.25)):
+        for k, ln in enumerate((6.0, 5.5, 4.75)):
             o = ankle + (0.5 * s + 0.1 * k * s, -0.5 * k, 0.5)
-            vane_cube(m, lf.name, o, _v((0.0, -0.25 - 0.22 * k, 0.95)), (1, 0, 0), ln, 2.0, "flight", cutout=True)
-        # hindwing membranes on two jointed rods: hip -> knee and knee -> ankle
-        s0 = m.bone(f"{p}_sail0", th.name, tuple(hip + (1.75 * s, 0.75, 1.0)))
-        s0.variant.update({v: ((0, 0, 0), side_rot((0, -8, 76), s)) for v in WINGS})
-        _sail(m, s0.name, hip + (1.75 * s, 0.75, 1.0), 6.0, 1.25, 6.5, s)
-        s1 = m.bone(f"{p}_sail1", sh.name, tuple(knee + (1.25 * s, 0.25, 0.75)))
-        s1.variant.update({v: ((0, 0, 0), side_rot((0, -14, 70), s)) for v in WINGS})
-        _sail(m, s1.name, knee + (1.25 * s, 0.25, 0.75), 5.25, 1.25, 6.0, s)
+            vane_cube(m, lf.name, o, _unit((0.0, -0.08 - 0.12 * k, 1.0)), (1, 0, 0), ln, 2.0, "flight", cutout=True)
+        # the hindwing: a folding fan of membrane hinged at the hip - jointed rods, the first running down
+        # the leg to the ankle, wedges of membrane between them, a luminous rim along the outer edge.
+        # Folded at rest (one rod and a strip of membrane behind the thigh), opened in the WINGS forms.
+        hinge = hip + (1.5 * s, 1.0, 1.25)
+        sl = m.bone(f"{p}_sail", th.name, tuple(hinge))
+        _hindwing(m, sl.name, hinge, ankle + (0.9 * s, 0.0, 0.0), s)
+        ex, ey, ez = _v((1, 0, 0)), _v((0, 1, 0)), _v((0, 0, 1))
+        # the leg feathers open as horizontal hindwings
+        for v in WINGS:
+            aim(m, sf.name, v, (0, -0.3, 1.0), ex, (s * 0.8, -0.12, 0.62), ey)
+            aim(m, lf.name, v, (0, -0.2, 1.0), ex, (s * 0.88, -0.06, 0.48), ey)
 
 
-def _sail(m, bone, top, length, folded, wide, s):
-    """A membrane panel hanging from `top`, its rod along the free (back) edge: a narrow strip
-    folded against the leg, a wide sail in the WINGS variants."""
-    top = _v(top)
-    for w, cond in ((folded, {"skip": WINGS}), (wide, {"only": WINGS})):
-        panel(m, bone, tuple(top), length, w, "membrane", **cond)
-        m.cube(bone, (top[0] - 0.3, top[1] - length - 0.25, top[2] + w - 0.3), (0.6, length + 0.5, 0.6), "rod", **cond)
+RODS = 4                              # hindwing fan: rods (3 membrane wedges between them)
+HW_SPREAD = (8.0, 112.0)              # open: angle of the first and last rod from straight down toward outward
+
+
+def hindwing_plane(s):
+    """Open hindwing fan plane: faces mostly backward (seen from the third-person camera)."""
+    return _unit((s * 0.32, 0.18, 1.0))
+
+
+def _hindwing(m, bone, hinge, ankle, s):
+    hinge, ankle = _v(hinge), _v(ankle)
+    leg = ankle - hinge
+    R = float(np.linalg.norm(leg)) + 0.5
+    # folded: the first rod down the back of the leg with a narrow strip of membrane behind it
+    d0 = _unit(leg)
+    back = _unit(_v((0, 0, 1)) - d0 * d0[2])
+    m.cube(bone, tuple(hinge - _v((0.3, 0.3, 0.0))), (0.6, 0.6, q(R)), "rod", pivot=tuple(hinge),
+           rot=frame_rot(d0, back), skip=WINGS)
+    m.cube(bone, (hinge[0], hinge[1], hinge[2]), (0.0, 1.5, q(R - 0.5)), "membrane", cutout=True, faces={"east", "west"},
+           pivot=tuple(hinge), rot=frame_rot(d0, back), skip=WINGS)
+    # open: the fan
+    n = hindwing_plane(s)
+    a0, a1 = HW_SPREAD
+    angs = [a0 + (a1 - a0) * k / (RODS - 1) for k in range(RODS)]
+    dirs = [in_plane(a, s, n) for a in angs]
+    lens = [R, R * 0.97, R * 0.9, R * 0.78]
+    tips = [hinge + d * L for d, L in zip(dirs, lens)]
+    for k in range(RODS):
+        nrm = _unit(np.cross(n, dirs[k])) * s
+        m.cube(bone, tuple(hinge - _v((0.3, 0.3, 0.0))), (0.6, 0.6, q(lens[k])), "rod", pivot=tuple(hinge),
+               rot=frame_rot(dirs[k], nrm), only=WINGS)
+    for k in range(RODS - 1):
+        mid = _unit(dirs[k] + dirs[k + 1])
+        half = math.acos(max(-1.0, min(1.0, float(dirs[k] @ dirs[k + 1])))) / 2
+        L = max(lens[k], lens[k + 1]) * math.cos(half)
+        W = 2 * max(lens[k], lens[k + 1]) * math.sin(half) + 0.5
+        side = _unit(np.cross(n, mid))
+        o = hinge + n * (0.02 * k)
+        m.cube(bone, tuple(o - _v((q(W) / 2, 0.0, 0.0))), (q(W), 0.0, q(L)), "membrane", cutout=True, faces={"up", "down"},
+               pivot=tuple(o), rot=frame_rot(mid, n), only=WINGS)
+        # the luminous rim along the trailing edge between two rod tips
+        a, b = tips[k], tips[k + 1]
+        m.cube(bone, tuple(a - _v((0.15, 0.15, 0.0))), (0.3, 0.3, q(float(np.linalg.norm(b - a)))), "rim",
+               pivot=tuple(a), rot=frame_rot(b - a, n), only=WINGS)
 
 
 # ----------------------------------------------------------------------------- tail: plates, bristles, side feathers, the fan
 
 def _tail(m: Model) -> None:
-    names = sweep(m, "tail_g", "tail", TAIL_PTS, 4.75, 1.25, "tailp", h0=4.25, h1=1.25, n=2, per_bone=2, power=0.85)
-    for k, a in enumerate((-6.0, 4.0, 10.0, 14.0, 16.0)):          # display: the tail lifts its fan high
-        m.bones[names[k]].variant["display"] = ((0, 0, 0), (-a * 0.5 if k == 0 else -a, 0, 0))
-        m.bones[names[k]].variant["overflow"] = ((0, 0, 0), (-a * 0.35 if k == 0 else -a * 0.7, 0, 0))
+    names = sweep(m, "tail_g", "tail", TAIL_PTS, 5.75, 1.75, "tailp", h0=5.25, h1=1.75, n=2, per_bone=2, power=0.7)
+    for k, a in enumerate((4.0, 9.0, 12.0, 12.0, 10.0)):            # display: the tail lifts its fan high
+        m.bones[names[k]].variant["display"] = ((0, 0, 0), (a, 0, 0))
+        m.bones[names[k]].variant["overflow"] = ((0, 0, 0), (a * 0.7, 0, 0))
     m.bones[names[0]].variant["veer"] = ((0, 0, 0), (4.0, 0, 0))
     # ankylosaur osteoderms along the top of the tail base
-    plate_row(m, "tail0", (0, 15.75, 4.5), (0, 15.25, 10.5), 3, 1.75, 1.25, 2.0, 0.5, "osteo", tilt=12, arch=0.25)
+    plate_row(m, "tail0", (0, 17.25, 5.0), (0, 17.0, 9.75), 3, 2.0, 1.5, 1.75, 0.5, "osteo", tilt=12, arch=0.25)
     # Psittacosaurus bristles standing along the top
-    for k, (y, z) in enumerate(((15.25, 10.5), (15.5, 13.5))):
-        m.cube(names[1 + k], (0, y - 0.25, z - 1.0), (0.0, 2.75 - 0.5 * k, 3.25), "bristle", cutout=True,
+    for k, (bn, y, z) in enumerate((("tail1", 16.75, 10.25), ("tail2", 17.0, 13.25))):
+        m.cube(bn, (0, y - 0.25, z - 1.0), (0.0, 3.0 - 0.5 * k, 3.5), "bristle", cutout=True,
                faces={"east", "west"}, pivot=(0, y, z), rot=(-22, 0, 0))
-    # side feathers on the distal tail (a frond)
-    for k, (seg, z, ln) in enumerate(((2, 14.5, 4.0), (3, 18.0, 4.5))):
+    # a frond of side feathers on the distal tail
+    for k, (seg, z, ln) in enumerate((("tail2", 12.75, 4.25), ("tail3", 15.75, 4.75))):
         for s in (-1, 1):
-            o = (s * (1.75 - 0.4 * k), TAIL_PTS[seg][1] + 0.6, z)
-            vane_cube(m, names[seg], o, _v((0.55 * s, 0.05, 0.84)), (0, 1, 0), ln, 1.75, "flight", cutout=True)
+            o = (s * (1.75 - 0.35 * k), 16.0 + 0.2 * k, z)
+            vane_cube(m, seg, o, _unit((0.55 * s, 0.05, 0.84)), (0, 1, 0), ln, 2.0, "flight", cutout=True)
     # the fan: nine eyed feathers, each its own bone (it opens and closes)
     tip = _v(TAIL_PTS[-1])
-    fan = m.bone("fan", names[-1], tuple(tip))
-    fan.variant.update({"display": ((0, 0, 0), (78.0, 0, 0)), "veer": ((0, 0, 0), (0, 0, 88.0)),
-                        "overflow": ((0, 0, 0), (52.0, 0, 0))})
-    feathers = feather_fan(m, "fan", "fan", tuple(tip), FAN, FAN_LEN, 2.5, "fanf", spread=FAN_FOLD, center=0.0,
-                           plane="flat", thick=0.25, bones=True, cutout=True)
-    for k, bn in enumerate(feathers):
-        f = 0.5 if FAN == 1 else k / (FAN - 1)
+    fan = m.bone("fan", names[-1], tuple(tip), (FAN_DROOP, 0, 0))
+    ez, ey = _v((0, 0, 1)), _v((0, 1, 0))
+    aim(m, fan.name, "display", ez, ey, (0, 1.0, 0.22), (0, 0.22, -1.0))          # raised: a vertical fan facing forward
+    aim(m, fan.name, "overflow", ez, ey, (0, 0.72, 0.7), (0, 0.7, -0.72))
+    aim(m, fan.name, "veer", ez, ey, (0, -0.05, 1.0), (1, 0, 0))                   # a rudder
+    for k in range(FAN):
+        f = k / (FAN - 1)
+        c = 2 * f - 1                                          # -1 (right edge) .. 1 (left edge)
         a0 = -FAN_FOLD / 2 + FAN_FOLD * f
         a1 = -FAN_OPEN / 2 + FAN_OPEN * f
+        # cupped: the outer feathers droop and roll outward, the middle pair lies on top
+        phi, roll = math.radians(FAN_CUP * abs(c)), math.radians(FAN_CUP * 0.8 * c)
+        a = math.radians(a0)
+        d = _v((math.sin(a) * math.cos(phi), -math.sin(phi), math.cos(a) * math.cos(phi)))
+        nrm = _v((math.sin(roll), math.cos(roll), 0.0))
+        o = tip + (0, -0.12 * abs(k - (FAN - 1) / 2), 0)
+        bn = m.bone(f"fan{k}", "fan", tuple(tip)).name
         m.bones[bn].variant.update({v: ((0, 0, 0), (0, a1 - a0, 0)) for v in OPEN})
         m.bones[bn].variant["veer"] = ((0, 0, 0), (0, (a1 - a0) * 0.45, 0))
-        # the eye-spot near the tip: a solid inset (cutout feathers cannot glow)
-        a = math.radians(a0)
-        d = _v((math.sin(a), 0.0, math.cos(a)))
         L = FAN_LEN[k]
-        vane_cube(m, bn, tip + d * (L * 0.62), d, (0, 1, 0), 1.75, 1.75, "ocellus", thick=0.5, ppu=4.0)
+        vane_cube(m, bn, o, d, nrm, L, FAN_W, "fanf", cutout=True)
+        # the eye-spot near the tip: a solid inset (cutout feathers cannot glow)
+        vane_cube(m, bn, o + d * (L * 0.58), d, nrm, 2.0, 2.0, "ocellus", thick=0.5, ppu=4.0)
     fan.locators["tail_fan"] = tuple(tip + (0, 0.5, 5.0))
 
 
@@ -383,10 +556,11 @@ def _tail(m: Model) -> None:
 def materials():
     names = ["plume", "neck", "skull", "face", "brow", "beak", "jaw", "eye", "pupil", "nict", "horn", "crest",
              "crest_end", "gular", "gular_big", "thigh", "shin", "scale", "toe", "claw", "sickle", "spike", "osteo",
-             "tailp", "membrane", "rod", "ocellus", "sleeve"]
+             "tailp", "rod", "rim", "ocellus", "sleeve"]
     mats = {nm: _flat(nm) for nm in names}
-    for nm in ("flight", "fanf", "tuft", "mane"):
+    for nm in ("flight", "fanf", "tuft", "ruff"):
         mats[nm] = _flat_vane(nm)
+    mats["membrane"] = _flat_membrane
     mats["teeth"] = _flat_teeth
     mats["bristle"] = _flat_bristle
     mats["accent"] = mat_accent
@@ -398,8 +572,8 @@ FLAT = {
     "jaw": "#2a2630", "eye": "#e0a020", "pupil": "#120a06", "nict": "#d6dcd6", "horn": "#e8dcc0", "crest": "#e4d6b2",
     "crest_end": "#c8a050", "gular": "#2bb3a6", "gular_big": "#2bb3a6", "thigh": "#c39a62", "shin": "#4f5a2a",
     "scale": "#4f5a2a", "toe": "#46512a", "claw": "#16141a", "sickle": "#1a171e", "spike": "#efe3c6", "osteo": "#d9c48f",
-    "tailp": "#c39a62", "membrane": "#7a1f3d", "rod": "#e8d8a8", "ocellus": "#3ad6c8", "sleeve": "#c9a46a",
-    "flight": "#1f6f74", "fanf": "#2a5f86", "tuft": "#efe0bb", "mane": "#e2cf9e",
+    "tailp": "#c39a62", "membrane": "#7a1f3d", "rod": "#e8d8a8", "rim": "#ff7ab0", "ocellus": "#3ad6c8", "sleeve": "#c9a46a",
+    "flight": "#1f6f74", "fanf": "#2a5f86", "tuft": "#efe0bb", "ruff": "#dcc28c",
 }
 
 
@@ -424,6 +598,16 @@ def _flat_vane(name):
         lv = px.light(ctx, grad=0.0) + lvl
         return base * (0.6 + 0.6 * lv)[:, None], a, ctx.zeros()
     return mat
+
+
+def _flat_membrane(ctx):
+    base = px.col(FLAT["membrane"])
+    a = ctx.ones()
+    if ctx.face in ("up", "down"):                       # an open wedge: apex at the hinge (local z = 0)
+        u = np.abs(ctx.local[:, 0] - 0.5) * 2
+        a = (u <= ctx.local[:, 2] * 1.02 + 0.04).astype(float)
+    lv = px.light(ctx, grad=0.0)
+    return base * (0.6 + 0.6 * lv)[:, None], a, ctx.zeros()
 
 
 def _flat_teeth(ctx):
