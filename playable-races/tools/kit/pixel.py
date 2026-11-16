@@ -222,3 +222,147 @@ def hash01(ctx: Ctx, seed: int = 0) -> np.ndarray:
 
 def mix(a: Color, b: Color, t: float) -> np.ndarray:
     return col(a) * (1 - t) + col(b) * t
+
+
+# ----------------------------------------------------------------------------- premium painting (v1.5)
+#
+# The Marketplace look of races 007-009: continuous gradients (no quantisation noise), light
+# taken from the smooth form the boxes approximate (proxy / cyl), soft ambient occlusion where
+# parts meet, crisp rims, and glow designed as patterns (lines, spots, veins) that fade out.
+
+def smooth_ramp(palette: np.ndarray, level) -> np.ndarray:
+    """Continuous colour along a dark -> light palette for light levels 0..1 (no dither)."""
+    P = np.asarray(palette, float)
+    K = len(P)
+    x = np.clip(np.asarray(level, float), 0, 1) * (K - 1)
+    i0 = np.minimum(np.floor(x).astype(int), K - 1)
+    i1 = np.minimum(i0 + 1, K - 1)
+    t = (x - i0)[:, None]
+    return P[i0] * (1 - t) + P[i1] * t
+
+
+def _pos(ctx: Ctx) -> np.ndarray:
+    return ctx.wp if ctx.wp is not None else ctx.p
+
+
+def ao_near(ctx: Ctx, points, radius: float, strength: float = 0.25) -> np.ndarray:
+    """Soft ambient occlusion around rest-pose points (joints, where parts meet): a level
+    offset (<= 0) that fades quadratically to 0 at `radius` model units."""
+    p = _pos(ctx)
+    out = np.zeros(ctx.N)
+    for c in points:
+        d = np.linalg.norm(p - np.asarray(c, float), axis=1)
+        out -= strength * np.clip(1 - d / radius, 0, 1) ** 2
+    return out
+
+
+def ao_below(ctx: Ctx, y: float, depth: float, strength: float = 0.22) -> np.ndarray:
+    """Darken texels just below height y (the shadow under a cap, a crest, a plate edge)."""
+    p = _pos(ctx)
+    d = y - p[:, 1]
+    return -strength * np.clip(1 - d / depth, 0, 1) * (d >= 0)
+
+
+def soft_shade(ctx: Ctx, palette: np.ndarray, offset: float = 0.0, ellipsoid=None, cylinder=None, k: float = 0.85,
+               grad: float = 0.10, up: float = 0.08, down: float = 0.07, extra=None) -> np.ndarray:
+    """The premium default: light from the smooth form (ellipsoid=(center, radii) or
+    cylinder=(from, to)), a gentle top-to-bottom gradient, soft rims, optional extra level
+    offsets (ao_near / ao_below / patterns), mapped continuously onto `palette`.
+    For stacked forms that must read as ONE surface (lathe domes, sweeps) pass up=0, down=0:
+    per-box rims would stripe them."""
+    if ellipsoid is not None:
+        lv = proxy(ctx, ellipsoid[0], ellipsoid[1], k)
+    elif cylinder is not None:
+        lv = cyl(ctx, cylinder[0], cylinder[1], k)
+    else:
+        lv = light(ctx, grad)
+    lv = rim(ctx, lv + offset, up, down)
+    if extra is not None:
+        lv = lv + extra
+    return smooth_ramp(palette, lv)
+
+
+def glow_spot(ctx: Ctx, centers, radius: float, core: float = 0.35) -> np.ndarray:
+    """Emissive strength 0..1 of round glowing spots at rest-pose positions (photophores,
+    ocelli, spore pits): 1 inside core*radius, easing to 0 at `radius`."""
+    p = _pos(ctx)
+    g = np.zeros(ctx.N)
+    for c in centers:
+        d = np.linalg.norm(p - np.asarray(c, float), axis=1) / max(radius, 1e-6)
+        t = np.clip((1 - d) / max(1 - core, 1e-6), 0, 1)
+        g = np.maximum(g, t * t * (3 - 2 * t))
+    return g
+
+
+def _seg_dist(p: np.ndarray, a, b) -> np.ndarray:
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    ab = b - a
+    t = np.clip(((p - a) @ ab) / max(float(ab @ ab), 1e-9), 0, 1)
+    return np.linalg.norm(p - (a + t[:, None] * ab), axis=1)
+
+
+def glow_line(ctx: Ctx, pts, width: float, core: float = 0.3) -> np.ndarray:
+    """Emissive strength along a rest-pose polyline (veins of light, display lines, cracks):
+    1 within core*width of the line, easing to 0 at `width`."""
+    p = _pos(ctx)
+    d = np.full(ctx.N, np.inf)
+    for a, b in zip(pts[:-1], pts[1:]):
+        d = np.minimum(d, _seg_dist(p, a, b))
+    t = np.clip((1 - d / max(width, 1e-6)) / max(1 - core, 1e-6), 0, 1)
+    return t * t * (3 - 2 * t)
+
+
+def vane(ctx: Ctx, width_at=0.45, tip: float = 0.97, base: float = 0.12, rachis: float = 0.10, barb: float = 2.5,
+         notch: float = 0.0):
+    """A feather on a box that runs along its local +Z (feather_fan / sweep vanes): returns
+    (alpha, level_offset).  The silhouette is widest at `width_at` of the length and comes to a
+    point at `tip`; a light rachis runs down the middle; barbs are soft diagonal grooves every
+    `barb` texels; notch > 0 cuts a few gaps in the trailing edge (worn primaries)."""
+    u = ctx.local[:, 0] * 2 - 1           # -1..1 across
+    v = ctx.local[:, 2]                   # 0 base .. 1 tip
+    prof = np.where(v < width_at, base + (1 - base) * np.sin(np.clip(v / width_at, 0, 1) * np.pi / 2),
+                    np.cos(np.clip((v - width_at) / max(tip - width_at, 1e-6), 0, 1) * np.pi / 2))
+    alpha = (np.abs(u) <= prof * 0.98) & (v <= tip)
+    if notch > 0:
+        ix, iy, _, _ = texel(ctx)
+        alpha &= ~((u > 0.55) & (((iy + 3 * ix) % 9) < 9 * notch))
+    ix, iy, _, _ = texel(ctx)
+    groove = ((ix + iy * np.sign(u + 1e-6)) % max(barb, 1.0)) < 1.0
+    lvl = 0.10 * (np.abs(u) < rachis) - 0.05 * groove - 0.10 * np.clip(np.abs(u) / np.maximum(prof, 1e-3), 0, 1) ** 4
+    return alpha.astype(float), lvl
+
+
+def scales(ctx: Ctx, size: int = 3, depth: float = 0.10) -> np.ndarray:
+    """Overlapping rounded scales in texel space (rows offset by half a scale): a level
+    offset with a light upper edge and a shadowed lower rim on each scale."""
+    ix, iy, _, _ = texel(ctx)
+    row = iy // size
+    x = (ix + (row % 2) * (size // 2)) % size
+    y = iy % size
+    r = np.hypot(x - (size - 1) / 2, y) / max(size * 0.62, 1e-6)
+    return depth * (0.6 - np.clip(r, 0, 1) * 1.4) * (y < size)
+
+
+def veins(ctx: Ctx, seed: int = 0, n: int = 4, width: float = 0.7, branch: int = 2) -> np.ndarray:
+    """Branching hairline veins / cracks in face texel space (deterministic per seed):
+    returns 0..1 strength (use as glow for light-cracks, or as a darkening mask)."""
+    ix, iy, W, H = texel(ctx)
+    rng = np.random.default_rng((ctx.seed * 7919 + seed) & 0xFFFFFFFF)
+    P = np.column_stack([ix + 0.5, iy + 0.5]).astype(float)
+    d = np.full(ctx.N, np.inf)
+
+    def walk(x, y, ang, steps, depth):
+        nonlocal d
+        for _ in range(steps):
+            nx, ny = x + np.cos(ang) * 2.2, y + np.sin(ang) * 2.2
+            a, b = np.array([x, y]), np.array([nx, ny])
+            ab = b - a
+            t = np.clip(((P - a) @ ab) / max(float(ab @ ab), 1e-9), 0, 1)
+            d = np.minimum(d, np.linalg.norm(P - (a + t[:, None] * ab), axis=1))
+            x, y = nx, ny
+            ang += rng.uniform(-0.6, 0.6)
+            if depth < branch and rng.random() < 0.18:
+                walk(x, y, ang + rng.choice([-1.0, 1.0]) * rng.uniform(0.6, 1.1), max(2, steps // 2), depth + 1)
+    for _ in range(n):
+        walk(rng.uniform(0, W), rng.uniform(0, H), rng.uniform(0, 2 * np.pi), int(max(W, H) / 2.2) + 2, 0)
+    return np.clip(1 - d / max(width, 1e-6), 0, 1)

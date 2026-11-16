@@ -2,6 +2,7 @@
 
     python3 tools/preview_anim.py <race> --out DIR [--variant base] [--clips idle,walk,sprint,jump,attack,hurt]
                                   [--sheet] [--fidgets name,name,...] [--seconds 3]
+                                  [--view side|tp|front] [--bg white|dark] [--compare]
 
 Writes <race>_<variant>_anim.gif (clips side by side), with --sheet a white-background
 turnaround <race>_sheet.png (front / three-quarter / side / back for every variant), and with
@@ -77,10 +78,19 @@ class MemActor:
         return base.for_render(self.names)
 
 
-def frame(actor, sim, pose, yaw, scale, cy, size, label=None, bg=(255, 255, 255)):
+VIEW = {"side": None, "tp": (190.0, 24.0), "front": (25.0, 8.0)}   # (yaw, pitch); None = the clip's own yaw
+BG = {"white": (255, 255, 255), "dark": (30, 33, 42)}
+OPT = {"view": "side", "bg": "white"}
+
+
+def frame(actor, sim, pose, yaw, scale, cy, size, label=None, bg=None):
     follow = max(0.0, sim.y * 16.0 - 2.0)
-    im = render(actor.model, actor.texture, variant=actor.variant, pose=pose, yaw=yaw, pitch=7, size=size, scale=scale,
-                center=(0, cy + follow, 1), ss=2, hide=HIDE, ground=True, bg=bg, bloom=True)
+    v = VIEW[OPT["view"]]
+    pitch = 7
+    if v is not None:
+        yaw, pitch = v
+    im = render(actor.model, actor.texture, variant=actor.variant, pose=pose, yaw=yaw, pitch=pitch, size=size, scale=scale,
+                center=(0, cy + follow, 1), ss=2, hide=HIDE, ground=True, bg=bg or BG[OPT["bg"]], bloom=True)
     return _label(im, label) if label else im
 
 
@@ -132,14 +142,36 @@ def turnaround(race, scale, cy, out_path):
     imgs, labels = [], []
     for v in mod.VARIANTS:
         tex = texs[mod.VARIANT_TEXTURE[v]]
-        views = [(0, "front"), (35, "three-quarter"), (90, "side"), (180, "back")] if v == "base" else [(35, "three-quarter")]
-        for yaw, name in views:
-            imgs.append(render(m, tex, variant=v, yaw=yaw, pitch=8, size=(300, 380), scale=scale, center=(0, cy, 0),
-                               ss=2, hide=HIDE, ground=True, bg=(255, 255, 255), bloom=True))
+        views = [(0, 8, "front"), (35, 8, "three-quarter"), (90, 8, "side"), (180, 8, "back"), (190, 24, "3rd-person camera")] \
+            if v == "base" else [(35, 8, "three-quarter"), (190, 24, "3rd-person camera")]
+        for yaw, pitch, name in views:
+            imgs.append(render(m, tex, variant=v, yaw=yaw, pitch=pitch, size=(300, 380), scale=scale, center=(0, cy, 0),
+                               ss=2, hide=HIDE, ground=True, bg=BG[OPT["bg"]], bloom=True))
             labels.append(f"{v} - {name}")
-    sheet(imgs, 4, labels, title=f"{race} - turnaround and forms (white background)", bg=(255, 255, 255)).save(out_path)
+    sheet(imgs, 5, labels, title=f"{race} - turnaround and forms ({OPT['bg']} background)", bg=BG[OPT["bg"]]).save(out_path)
     nb, nc = m.stats("base")
     print(f"{race}: base form {nb} bones / {nc} cubes, atlas {m.tex_w}x{m.tex_h} -> {out_path}")
+
+
+def compare(race, scale, cy, out_path):
+    """The race next to the vanilla player and two finished races at one scale: front
+    three-quarter and the 3rd-person camera, white and dark ground."""
+    from previews import human  # plain Steve-sized figure
+    figs = [human() + ("base", "vanilla player")]
+    for other in ("golem", "nurariten", race):
+        mod = importlib.import_module(f"models.{other}")
+        m = mod.build()
+        tv = mod.VARIANT_TEXTURE["base"]
+        figs.append((m, paint(m, mod.materials(), mod.TEXTURES[tv]), "base", other))
+    imgs, labels = [], []
+    for bg in ("white", "dark"):
+        for yaw, pitch, name in ((30, 8, "front 3/4"), (190, 24, "3rd-person camera")):
+            for m, tex, v, nm in figs:
+                imgs.append(render(m, tex, variant=v, yaw=yaw, pitch=pitch, size=(240, 330), scale=scale, center=(0, cy, 0),
+                                   ss=2, hide=HIDE, ground=True, bg=BG[bg], bloom=True))
+                labels.append(f"{nm} - {name}")
+    sheet(imgs, 4, labels, title=f"{race} at player scale (vanilla / golem / nurariten / {race})").save(out_path)
+    print("->", out_path)
 
 
 def main():
@@ -153,14 +185,21 @@ def main():
     ap.add_argument("--cy", type=float, default=17.0)
     ap.add_argument("--sheet", action="store_true")
     ap.add_argument("--fidgets", default="", help="comma list of animation short names to play one by one")
+    ap.add_argument("--view", default="side", choices=sorted(VIEW), help="camera for clips: each clip's own angle, "
+                    "the in-game 3rd-person camera (behind and above) or a front three-quarter")
+    ap.add_argument("--bg", default="white", choices=sorted(BG))
+    ap.add_argument("--compare", action="store_true", help="scale sheet next to the vanilla player, golem and nurariten")
     a = ap.parse_args()
+    OPT["view"], OPT["bg"] = a.view, a.bg
     os.makedirs(a.out, exist_ok=True)
+    if a.compare:
+        compare(a.race, a.scale, a.cy, os.path.join(a.out, f"{a.race}_compare.png"))
     if a.sheet:
         turnaround(a.race, a.scale, a.cy, os.path.join(a.out, f"{a.race}_sheet.png"))
     if a.clips:
         cols = [run_clip((a.race, a.variant), c, a.seconds, a.scale, a.cy) for c in a.clips.split(",") if c]
         if cols:
-            path = os.path.join(a.out, f"{a.race}_{a.variant}_anim.gif")
+            path = os.path.join(a.out, f"{a.race}_{a.variant}_anim{'' if a.view == 'side' else '_' + a.view}.gif")
             save_gif(grid(cols, f"{a.race} ({a.variant})"), path)
             print("->", path)
     for nm in [x for x in a.fidgets.split(",") if x]:

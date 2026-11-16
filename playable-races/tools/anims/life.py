@@ -551,3 +551,51 @@ def smooth_pulse(period: float, rise: float, hold: float, fall: float, offset: f
     e_up = f"({up} * {up} * (3 - 2 * {up}))"
     e_dn = f"({dn} * {dn} * (3 - 2 * {dn}))"
     return f"({e_up} - {e_dn})"
+
+
+# ----------------------------------------------------------------------------- premium motion (v1.5)
+#
+# Rules for races 007-009: no quantised darts, nothing above ~3 Hz in idle motion, every
+# on/off change eased, secondary motion as slow waves that grow toward the tip and stream
+# behind with speed.  Only Molang that vanilla files use (sin, cos, clamp, lerp-by-hand).
+
+def ease(x: Expr) -> str:
+    """Slow-in / slow-out 0..1 of a 0..1 expression (cosine ease; vanilla-proven Molang)."""
+    return f"(0.5 - 0.5 * math.cos(math.clamp({x}, 0, 1) * 180))"
+
+
+def follow_chain(ly: "Layer", bones: Sequence[str], axis: str, amp: float, freq: float, lag: float = 35.0,
+                 falloff: float = 1.25, drag: float = 0.0, drag_falloff: float = 1.25, run_amp: float = None,
+                 run_freq: float = None, phase: float = 0.0, base: Sequence[float] = None) -> None:
+    """Flowing secondary motion for a chain of nested bones (tail, crest, feather panel,
+    tendril, fin): a slow wave travelling to the tip (`lag` degrees of phase per joint,
+    amplitude x`falloff` per joint) that cross-fades with speed into a quicker running wave
+    (run_amp / run_freq), plus a trailing angle proportional to speed (`drag` degrees at the
+    first joint, x`drag_falloff` per joint) so the chain streams behind when moving.
+    base: constant rest angles per joint (degrees).  The two waves are blended by speed
+    weight, never by changing a frequency, so the motion never jumps."""
+    ra = amp if run_amp is None else run_amp
+    rf = freq if run_freq is None else run_freq
+    for k, b in enumerate(bones):
+        g = falloff ** k
+        idle = f"math.sin({T} * {n(freq * 360)} - {n(lag * k - phase)}) * {n(amp * g)}"
+        terms: List[Expr] = []
+        if run_amp is None and run_freq is None:
+            terms.append(idle)
+        else:
+            run = f"math.sin({T} * {n(rf * 360)} - {n(lag * k - phase)}) * {n(ra * g)}"
+            terms.append(f"{idle} * (1 - {MOVE})")
+            terms.append(f"{run} * {MOVE}")
+        if drag:
+            terms.append(f"{MOVE} * {n(drag * drag_falloff ** k)}")
+        if base is not None and k < len(base) and base[k]:
+            terms.append(float(base[k]))
+        e = _join_sum(terms)
+        vals: List[Expr] = [None, None, None]
+        vals["xyz".index(axis)] = e
+        ly.rot(b, *vals)
+
+
+def by_speed(idle: Expr, moving: Expr) -> Expr:
+    """Cross-fade two expressions by movement speed (0 still .. 1 sprint)."""
+    return lin([(1.0, prod(idle, f"(1 - {MOVE})")), (1.0, prod(moving, MOVE))])

@@ -15,7 +15,7 @@ from typing import Sequence
 
 import numpy as np
 
-from kit.geo import Model
+from kit.geo import Model, rot_matrix
 from kit.tex import Ctx, hx, lerp
 from kit import noise as nz
 
@@ -267,4 +267,230 @@ def arc(m: Model, bone: str, center, radius: float, a0: float, a1: float, segmen
         ang = a0 + span * (k + 0.5)
         o = (cx - seg_len / 2, cy + radius - thick / 2, cz - depth / 2)
         out.append(m.cube(bone, o, (seg_len, thick, depth), mat, pivot=(cx, cy, cz), rot=(0, 0, ang), **kw))
+    return out
+
+
+# ----------------------------------------------------------------------------- premium shapes (v1.5)
+#
+# Helpers for the Marketplace-style bodies of races 007-009: smooth curves instead of stepped
+# stacks, fans of individual feathers, overlapping plates, rays.  All sizes snap to whole texels
+# (q) so textures never stretch; overlapping boxes are staggered so no two faces are coplanar.
+
+def euler_for(basis) -> tuple:
+    """Bedrock cube/bone rotation [rx, ry, rz] whose matrix (kit.geo.rot_matrix) maps the
+    local X, Y, Z axes onto the columns of `basis` (an orthonormal 3x3)."""
+    M = np.asarray(basis, float)
+    ay = math.asin(max(-1.0, min(1.0, -M[2, 0])))
+    if abs(math.cos(ay)) > 1e-6:
+        ax = math.atan2(M[2, 1], M[2, 2])
+        az = math.atan2(M[1, 0], M[0, 0])
+    else:  # gimbal lock: put everything in ax
+        ax = math.atan2(-M[1, 2], M[1, 1])
+        az = 0.0
+    return (-math.degrees(ax), math.degrees(ay), -math.degrees(az))
+
+
+def frame_rot(along, normal) -> tuple:
+    """Rotation that points a box's local +Z along `along` and its local +Y along `normal`
+    (made orthogonal to `along`); local +X is their cross product."""
+    z = np.asarray(along, float)
+    z = z / max(np.linalg.norm(z), 1e-9)
+    y = np.asarray(normal, float)
+    y = y - z * float(y @ z)
+    if np.linalg.norm(y) < 1e-6:
+        y = np.array([0.0, 1.0, 0.0]) if abs(z[1]) < 0.9 else np.array([0.0, 0.0, 1.0])
+        y = y - z * float(y @ z)
+    y = y / np.linalg.norm(y)
+    x = np.cross(y, z)
+    return euler_for(np.column_stack([x, y, z]))
+
+
+def spline(pts, n: int = 3):
+    """Catmull-Rom curve through `pts`: n samples per span, both ends included."""
+    P = [np.asarray(p, float) for p in pts]
+    if len(P) < 3 or n <= 1:
+        return P
+    ext = [P[0] + (P[0] - P[1])] + P + [P[-1] + (P[-1] - P[-2])]
+    out = []
+    for i in range(1, len(ext) - 2):
+        p0, p1, p2, p3 = ext[i - 1], ext[i], ext[i + 1], ext[i + 2]
+        for k in range(n):
+            t = k / n
+            out.append(0.5 * (2 * p1 + (p2 - p0) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t
+                              + (3 * p1 - p0 - 3 * p2 + p3) * t ** 3))
+    out.append(P[-1])
+    return out
+
+
+def taper(w0: float, w1: float, n: int, power: float = 1.0, step: float = 0.5):
+    """n sizes easing from w0 to w1 (power > 1 keeps the base thick longer), snapped to texels."""
+    return [q(w0 + (w1 - w0) * ((k / max(n - 1, 1)) ** power), step) for k in range(n)]
+
+
+def sweep(m: Model, parent: str, prefix: str, pts, w0: float, w1: float, mat: str, h0: float = None,
+          h1: float = None, n: int = 3, per_bone: int = 1, bones: bool = True, power: float = 1.0,
+          normal=None, mats=None, **kw):
+    """A smooth tapered form along a Catmull-Rom curve through `pts` (tails, necks, horns,
+    crests, tendrils).  Width (local X) eases w0 -> w1, height (local Y) h0 -> h1.
+    bones=True: a new bone every `per_bone` spans (pivot at the span start, chained), so the
+    form can bend joint by joint; bones=False: every span is a cube of `parent` (rigid).
+    normal: orient the cross-section (local +Y) toward this vector (flat crests, blades);
+    default lets the box keep its natural roll.  Returns bone names (bones=True) or cubes."""
+    P = spline(pts, n)
+    k = len(P) - 1
+    ws = taper(w0, w1, k, power)
+    hs = taper(h0 if h0 is not None else w0, h1 if h1 is not None else w1, k, power)
+    names, cubes = [], []
+    par = parent
+    for i in range(k):
+        if bones and i % per_bone == 0:
+            name = f"{prefix}{i // per_bone}"
+            m.bone(name, par, tuple(P[i]))
+            names.append(name)
+            par = name
+        mt = mats[i] if mats else mat
+        if normal is None:
+            cubes.append(segment(m, par if bones else parent, P[i], P[i + 1], ws[i], hs[i], mt, **kw))
+        else:
+            a, b = P[i], P[i + 1]
+            ln = q(float(np.linalg.norm(b - a)) + 0.25)
+            cubes.append(m.cube(par if bones else parent, (a[0] - ws[i] / 2, a[1] - hs[i] / 2, a[2]),
+                                (ws[i], hs[i], ln), mt, pivot=tuple(a), rot=frame_rot(b - a, normal), **kw))
+    return names if bones else cubes
+
+
+def lathe(m: Model, bone: str, center, profile, mat: str, sides: int = 12, skew=(0.0, 0.0), squash=(1.0, 1.0),
+          step: float = 0.5, **kw):
+    """A smooth solid of revolution around the vertical axis through `center` (domes, caps,
+    bulbs, bells, stalks).  profile = [(height, radius), ...] from the bottom up; each band
+    between two profile points is a regular polygon prism (8, 12 or 16 sides) built from
+    sides/2 crossing strips (edge length x 2 x apothem, rotated 360/sides apart), so the
+    outline has flat edges and no star points.  Overlapping strips are staggered by 0.02 so
+    their top and bottom faces never coincide (no z-fighting).  squash=(sx, sz) makes it
+    elliptical; skew=(dx, dz) shifts each band in proportion to its height (lopsided caps).
+    Light it as one surface: soft_shade(ctx, pal, ellipsoid=lathe_proxy(...), up=0, down=0).
+    Returns the cubes."""
+    if sides not in (8, 12, 16):
+        raise ValueError("sides must be 8, 12 or 16")
+    cx, cy, cz = center
+    y_lo, y_hi = profile[0][0], profile[-1][0]
+    H = (y_hi - y_lo) or 1.0
+    out = []
+    for i in range(len(profile) - 1):
+        (y0, r0), (y1, r1) = profile[i], profile[i + 1]
+        r = (r0 + r1) / 2
+        h = q(y1 - y0, step / 2)
+        apo = r * math.cos(math.pi / sides)
+        edge = 2 * r * math.sin(math.pi / sides)
+        f = ((y0 + y1) / 2 - y_lo) / H
+        bx, bz = cx + skew[0] * f, cz + skew[1] * f
+        for k in range(sides // 2):
+            ang = 360.0 / sides * k
+            # strip: `edge` across, 2*apothem along its axis; squash scales the axis lengths
+            a_r = math.radians(ang)
+            sq = math.hypot(squash[0] * math.sin(a_r), squash[1] * math.cos(a_r))
+            sx, sz = q(edge * sq + 0.25, step / 2), q(2 * apo * sq, step / 2)
+            e = 0.02 * k
+            out.append(m.cube(bone, (bx - sx / 2, cy + y0 - e, bz - sz / 2), (sx, h + 2 * e, sz), mat,
+                              pivot=(bx, cy + y0, bz), rot=(0.0, ang, 0.0) if ang else None, **kw))
+    return out
+
+
+def lathe_proxy(center, profile, squash=(1.0, 1.0)):
+    """(center, radii) of the ellipsoid that best matches a lathe() outline - pass it to
+    kit.pixel.proxy / soft_shade so the bands are lit as one smooth surface."""
+    cx, cy, cz = center
+    y_lo, y_hi = profile[0][0], profile[-1][0]
+    rmax = max(r for _, r in profile)
+    ry = max(y_hi - y_lo, 1e-3)
+    return (cx, cy + y_lo, cz), (rmax * squash[0], ry, rmax * squash[1])
+
+
+def _dir_in_plane(angle_deg: float, plane: str):
+    a = math.radians(angle_deg)
+    if plane in ("back", "front"):      # fan facing backward/forward: XY plane, 0 = up, + = creature's left (+X)
+        return np.array([math.sin(a), math.cos(a), 0.0]), np.array([0.0, 0.0, 1.0 if plane == "back" else -1.0])
+    if plane == "side":                 # YZ plane (wing panels): 0 = up, + = backward (+Z)
+        return np.array([0.0, math.cos(a), math.sin(a)]), np.array([1.0, 0.0, 0.0])
+    if plane == "flat":                 # XZ plane (horizontal fans, gill rays): 0 = back (+Z), + = left (+X)
+        return np.array([math.sin(a), 0.0, math.cos(a)]), np.array([0.0, 1.0, 0.0])
+    raise ValueError(plane)
+
+
+def feather_fan(m: Model, parent: str, prefix: str, origin, n: int, length, width, mat: str, spread: float = 120.0,
+                center: float = 0.0, plane: str = "back", thick: float = 0.25, bones: bool = True, mats=None,
+                lift: float = 0.0, **kw):
+    """n feathers (thin vanes) radiating from `origin` over `spread` degrees around the
+    direction `center` in `plane` ("back" / "front": XY plane, 0 = up, + toward +X;
+    "side": YZ plane, + = backward; "flat": XZ plane, 0 = backward).  length / width may be
+    lists (one per feather).  Each vane: width across, length along its direction, `thick`
+    through the plane; `lift` tilts the vanes out of the plane (degrees) for a cupped fan.
+    bones=True: one bone per feather with its pivot at the origin (animate the bones to open
+    and close the fan).  Paint vanes with kit.pixel.vane() for the feather shape.
+    Returns the bone names (or cubes)."""
+    o = np.asarray(origin, float)
+    out = []
+    for k in range(n):
+        f = 0.5 if n == 1 else k / (n - 1)
+        ang = center - spread / 2 + spread * f
+        d, nrm = _dir_in_plane(ang, plane)
+        if lift:
+            d = d * math.cos(math.radians(lift)) + nrm * math.sin(math.radians(lift))
+        L = length[k] if isinstance(length, (list, tuple)) else length
+        W = width[k] if isinstance(width, (list, tuple)) else width
+        mt = mats[k] if mats else mat
+        rot = frame_rot(d, nrm)
+        tgt = parent
+        if bones:
+            tgt = f"{prefix}{k}"
+            m.bone(tgt, parent, tuple(o))
+            out.append(tgt)
+        c = m.cube(tgt, (o[0] - q(W) / 2, o[1] - thick / 2, o[2]), (q(W), thick, q(L)), mt, pivot=tuple(o), rot=rot, **kw)
+        if not bones:
+            out.append(c)
+    return out
+
+
+def rays(m: Model, bone: str, center, n: int, r0: float, r1: float, width: float, mat: str, plane: str = "front",
+         thick: float = 0.25, phase: float = 0.0, lengths=None, **kw):
+    """A full circle of n rays (a corona, gill fins, a crown of petals) around `center` in
+    `plane`, each from radius r0 out to r1 (lengths may override r1 per ray).  Returns cubes."""
+    c = np.asarray(center, float)
+    out = []
+    for k in range(n):
+        ang = phase + 360.0 * k / n
+        d, nrm = _dir_in_plane(ang, plane)
+        R1 = r0 + (lengths[k] if lengths is not None else (r1 - r0))
+        a = c + d * r0
+        out.append(m.cube(bone, (a[0] - q(width) / 2, a[1] - thick / 2, a[2]), (q(width), thick, q(R1 - r0)), mat,
+                          pivot=tuple(a), rot=frame_rot(d, nrm), **kw))
+    return out
+
+
+def plate_row(m: Model, bone: str, start, end, n: int, w0: float, w1: float, length: float, thick: float, mat: str,
+              normal=(0.0, 1.0, 0.0), overlap: float = 0.35, tilt: float = 10.0, arch: float = 0.0, mats=None, **kw):
+    """n overlapping armour plates (isopod tergites, scutes, osteoderms, scales) laid from
+    `start` to `end` on a surface facing `normal`: plate k is w (across, easing w0 -> w1) by
+    length*(1+overlap) (along the row) by thick (through the surface), its trailing edge lifted
+    by `tilt` degrees so it laps over the next; `arch` bows the row outward at the middle.
+    Each plate sits `0.02*k` higher than the previous one (no coplanar overlaps).  Returns cubes."""
+    a, b = np.asarray(start, float), np.asarray(end, float)
+    nrm = np.asarray(normal, float)
+    nrm = nrm / max(np.linalg.norm(nrm), 1e-9)
+    d = b - a
+    L = float(np.linalg.norm(d))
+    d = d / max(L, 1e-9)
+    out = []
+    for k in range(n):
+        f = 0.5 if n == 1 else k / (n - 1)
+        p = a + (b - a) * f + nrm * (arch * 4 * f * (1 - f) + 0.02 * k)
+        w = q(w0 + (w1 - w0) * f)
+        ln = q(length * (1 + overlap))
+        # tilt: rotate the plate's along-axis toward the normal (trailing edge up)
+        t = math.radians(tilt)
+        along = d * math.cos(t) - nrm * math.sin(t)
+        rot = frame_rot(along, nrm)
+        mt = mats[k] if mats else mat
+        out.append(m.cube(bone, (p[0] - w / 2, p[1] - thick / 2, p[2] - ln / 2), (w, thick, ln), mt,
+                          pivot=tuple(p), rot=rot, **kw))
     return out
