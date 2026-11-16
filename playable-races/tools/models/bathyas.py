@@ -51,7 +51,7 @@ TEXTURES = {
 }
 VARIANT_TEXTURE = {"base": "base", "lure": "blaze", "maw": "base", "bastion": "base",
                    "unshackled": "unshackled", "daybreak": "daybreak"}
-DRAWN = {"unshackled", "daybreak"}          # the sword is out of his body (the real item is in his hand)
+DRAWN = {"unshackled", "daybreak"}          # the sword is out of his body (unshackled: the real item; daybreak: his own fist)
 SEAMED = {"bastion", "daybreak"}            # light leaks between the armour plates
 CROUCH = {"unshackled"}                     # the predator's crouch (used by the animation set)
 
@@ -140,7 +140,7 @@ PLATE_OPEN = [(0.5, -10.0), (0.6, -9.0), (0.7, -8.0), (0.7, -7.0), (0.65, -6.0),
 
 # --------------------------------------------------------------------------- shoulders, arms, neck
 SHOULDER_C = (7.5, 28.75, 1.25)             # shoulder joint (chest frame, right side mirrored with x < 0)
-ELBOW = (8.25, 20.5, -1.25)                 # world rest pose (|x|)
+ELBOW = (8.25, 20.5, 0.0)                   # world rest pose (|x|): a slight bend leaves the arm slack for every form
 WRIST = (7.5, 13.5, -1.75)                  # the hand stays here in every form: held items sit in the claws
 NECK_C = (0.0, 32.5, -1.0)                  # where the neck leaves the chest (chest frame)
 FIN_ROOT = (4.5, 28.75, 7.25)               # the dorsal fins rise from tergite 3 (chest frame, |x|)
@@ -222,13 +222,13 @@ def build() -> Model:
     _head(m, drop)
     fp_sleeves(m, "fp_arm", width=4.7)
     accents(m, [
-        ("c", "breast", "chest", (0.0, 29.0, -4.0), (9.0, 2.5, 0.5)),
+        ("c", "breast", "trunk", (0.0, 19.25, -1.9), (8.5, 2.0, 0.5)),       # a belt plate under the corona
         ("c", "rsh", "r_pauldron", (-6.0, 34.25, 1.5), (4.5, 0.5, 6.5)),
         ("c", "lsh", "l_pauldron", (6.0, 34.25, 1.5), (4.5, 0.5, 6.5)),
-        ("l", "r", "r_leg_g", (-6.0, 13.5, 0.0), (0.5, 3.5, 4.0)),
-        ("l", "l", "l_leg_g", (6.0, 13.5, 0.0), (0.5, 3.5, 4.0)),
-        ("f", "r", "r_foot", (-3.75, 2.5, -0.25), (3.0, 0.5, 2.5)),
-        ("f", "l", "l_foot", (3.75, 2.5, -0.25), (3.0, 0.5, 2.5)),
+        ("l", "r", "r_leg_g", (-6.5, 14.0, 0.25), (0.5, 3.5, 4.0)),
+        ("l", "l", "l_leg_g", (6.5, 14.0, 0.25), (0.5, 3.5, 4.0)),
+        ("f", "r", "r_foot", (-3.75, 1.5, -3.75), (3.5, 0.5, 2.5)),
+        ("f", "l", "l_foot", (3.75, 1.5, -3.75), (3.5, 0.5, 2.5)),
     ])
     m.pack()
     return m
@@ -438,7 +438,7 @@ def _fins(m: Model) -> None:
 # ----------------------------------------------------------------------------- the sun through his heart
 
 def sword_parts(m: Model, bone: str, base, blade_from: float = BLADE_Y, tip: float = TIP_Y, hilt: bool = True,
-                **kw) -> None:
+                short_rays: bool = True, **kw) -> None:
     """The sword, shared by the embedded and the held sword.  Local frame: grip centre at
     `base`, blade along +Y, broad faces along +-Z (the width runs along X)."""
     bx, by, bz = base
@@ -460,7 +460,8 @@ def sword_parts(m: Model, bone: str, base, blade_from: float = BLADE_Y, tip: flo
         box(GUARD_Y, 2.0, 1.25, 2.0, "s_sun", rot=(0.0, 45.0, 0.0))
         g = (bx, by + GUARD_Y, bz)
         rays(m, bone, g, 8, 1.25, 4.0, 0.5, "s_ray", plane="flat", thick=0.5, phase=0.0, **kw)             # sunburst
-        rays(m, bone, g, 8, 1.25, 2.75, 0.5, "s_ray", plane="flat", thick=0.5, phase=22.5, **kw)
+        if short_rays:
+            rays(m, bone, g, 8, 1.25, 2.75, 0.5, "s_ray", plane="flat", thick=0.5, phase=22.5, **kw)
     main = tip - 1.75 - blade_from
     box(blade_from + main / 2, 2.5, main, 0.5, "s_blade")
     box(blade_from + main / 2 - 0.25, 0.75, main - 0.5, 1.0, "s_fuller")      # the raised spine: the blade reads edge-on too
@@ -563,7 +564,7 @@ def _arms(m: Model, drop) -> None:
         mid = (E0 + W0) / 2
         out = np.array([s * 1.0, 0.0, 0.0])
         for k, f in enumerate((0.22, -0.16)):                                              # vambrace lames
-            slab(m, fo.name, mid + ax * f * 7.0 + out * (2.7 + 0.1 * k), out, -ax, 4.25, 3.5, 0.75, "plate")
+            slab(m, fo.name, mid + ax * f * 7.0 + out * (2.7 + 0.1 * k), out, -ax, 4.0, 3.25, 0.75, "plate")
         slab(m, fo.name, E0 + (0, -0.5, 2.5), (0, -0.2, 1), (0, -1, 0), 3.25, 2.75, 0.75, "plate")      # elbow cop
         m.cube(fo.name, (s * 8.0, 14.25, 1.0), (0.0, 5.0, 3.5), "calf_fin", cutout=True)                    # forearm fin
         # the hand: palm, three long webbed fingers with hard white claws, a thumb
@@ -579,6 +580,11 @@ def _arms(m: Model, drop) -> None:
         m.box(th.name, (s * 6.5, 10.25, hz - 1.75), (1.25, 2.75, 1.25), "skin")
         m.cube(th.name, (s * 6.5 - 0.375, 8.25, hz - 2.25), (0.75, 1.25, 0.75), "claw")
         hd.locators[f"{p}_claws"] = (s * 7.5, 6.0, hz)
+        if s < 0:                                # daybreak (the ultimate's Solar Execution): the sun torn out, in his fist
+            palm = (s * 7.5, 11.75, hz)
+            sun = m.bone("r_sun", hd.name, palm, orient((0.0, 0.42, -0.91), (0.0, 0.91, 0.42)), only={"daybreak"})
+            sword_parts(m, sun.name, palm, short_rays=False)
+            sun.locators["sun_tip"] = (palm[0], palm[1] + TIP_Y, palm[2])
 
 
 # ----------------------------------------------------------------------------- the head: goblin shark, hung low and forward
@@ -615,18 +621,19 @@ def _head(m: Model, drop) -> None:
     m.box(sk.name, P(0, 25.75, -10.25), (6.75, 2.5, 4.5), "jowl")                              # sagging jowls
     m.box(sk.name, P(0, 30.0, -13.25), (6.5, 1.5, 1.75), "brow")                               # the heavy brow ridge
     m.box(sk.name, P(0, 27.75, -13.5), (5.0, 2.75, 1.0), "face", ppu=4.0)                      # the face under it
-    # the rostrum: a long flat blade of a snout, slightly upturned
+    m.box(sk.name, P(0, 28.375, -15.0), (4.75, 2.75, 2.25), "snout")                            # the muzzle tapers into ...
+    # ... the rostrum: a long flat blade of a snout, slightly upturned
     sweep(m, sk.name, "ros", [P(0, 29.75, -13.75), P(0, 29.9, -17.0), P(0, 30.4, -20.25)], 4.25, 1.5, "snout", h0=1.5,
           h1=0.75, n=2, bones=False, normal=(0, 1, 0))
     for s, p in ((-1, "r"), (1, "l")):
-        m.box(sk.name, P(s * 2.875, 28.6, -12.75), (0.75, 0.75, 1.0), "eye", ppu=4.0)          # small ice-blue eyes
+        m.box(sk.name, P(s * 2.4, 28.75, -13.9), (1.0, 0.75, 0.75), "eye", ppu=4.0)            # small ice-blue eyes
         m.cube(sk.name, P(s * 3.3, 25.0, -9.0), (0.0, 4.0, 4.5), "wisp", cutout=True)            # an old man's last wisps
-        lid = m.bone(f"lid_{p}", sk.name, P(s * 2.875, 29.05, -12.75))
-        m.cube(lid.name, P(s * 2.875 - 0.45, 28.95, -13.35), (0.9, 0.25, 1.2), "lid")
-        br = m.bone(f"brow_{p}", sk.name, P(s * 1.9, 30.25, -14.0), side_rot((0.0, 0.0, 8.0), s))
-        m.box(br.name, P(s * 1.9, 30.5, -13.75), (2.75, 0.75, 1.25), "hair")                   # the white tuft
-        m.cube(br.name, P(s * 2.75 - (2.75 if s < 0 else 0.0), 27.25, -14.25), (2.75, 3.25, 0.0), "brow_hair",
-               cutout=True, pivot=P(s * 2.75, 30.5, -14.25), rot=(0.0, -s * 34.0, 0.0))          # long brows drooping out
+        lid = m.bone(f"lid_{p}", sk.name, P(s * 2.4, 29.2, -14.05))                              # (scale y to squint / blink)
+        m.cube(lid.name, P(s * 2.4 - 0.55, 28.95, -14.4), (1.1, 0.25, 0.6), "lid")
+        br = m.bone(f"brow_{p}", sk.name, P(s * 2.0, 30.25, -14.0), side_rot((0.0, 0.0, 8.0), s))
+        m.box(br.name, P(s * 2.0, 30.5, -13.75), (2.75, 0.75, 1.25), "hair")                   # the white tuft
+        m.cube(br.name, P(s * 3.0 - (2.25 if s < 0 else 0.0), 28.0, -14.25), (2.25, 2.75, 0.0), "brow_hair",
+               cutout=True, pivot=P(s * 3.0, 30.5, -14.25), rot=(0.0, -s * 42.0, s * 10.0))      # long brows drooping out
         for k in range(3):                                                                       # gill flaps
             gz = -6.75 - k * 1.0
             gl = m.bone(f"gill_{p}{k}", sk.name, P(s * 2.75, 28.0, gz - 0.5))
@@ -636,7 +643,7 @@ def _head(m: Model, drop) -> None:
     jw.variant["maw"] = ((0.0, -0.5, -4.5), (4.0, 0.0, 0.0))
     m.box(jw.name, P(0, 26.25, -15.25), (4.25, 1.0, 5.0), "lip")                               # upper jaw under the snout
     m.box(jw.name, P(0, 25.375, -15.25), (3.75, 1.25, 4.5), "teeth", cutout=True)              # needle teeth (upper row)
-    m.box(jw.name, P(0, 25.5, -11.25), (3.5, 2.0, 7.5), "gum")                                 # the sling: it stretches out
+    m.box(jw.name, P(0, 25.5, -11.625), (3.5, 2.0, 6.75), "gum")                               # the sling: it stretches out
     lo = m.bone("jaw", jw.name, P(0, 25.5, -12.0))
     lo.variant.update({"maw": ((0, 0, 0), (40.0, 0.0, 0.0)), "daybreak": ((0, 0, 0), (14.0, 0.0, 0.0)),
                        "unshackled": ((0, 0, 0), (6.0, 0.0, 0.0))})
