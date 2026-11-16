@@ -31,12 +31,13 @@ from PIL import Image, ImageDraw  # noqa: E402
 
 from kit import animrt, ljson, molang  # noqa: E402
 from kit.render import render  # noqa: E402
-from models import golem, jackalope, nurariten, salamander, spaghetti, xenentoma  # noqa: E402
+from models import (bathyas, dinosauroid, golem, jackalope, nurariten, octamyces, salamander,  # noqa: E402
+                    spaghetti, xenentoma)
 
 RP = os.path.join(ROOT, "packs", "PlayableRaces_RP")
 HIDE = ["r_arm_fp", "l_arm_fp"]
 MODS = {"salamander": salamander, "golem": golem, "jackalope": jackalope, "xenentoma": xenentoma, "spaghetti": spaghetti,
-        "nurariten": nurariten}
+        "nurariten": nurariten, "dinosauroid": dinosauroid, "bathyas": bathyas, "octamyces": octamyces}
 
 
 from kit.playersim import DT, FPS, Sim, vanilla_skeleton  # noqa: E402
@@ -97,6 +98,9 @@ CAMERA = {  # race -> (scale, center y)
     "xenentoma": (5.0, 16.0),
     "spaghetti": (6.4, 17.0),
     "nurariten": (5.0, 18.0),
+    "dinosauroid": (5.6, 17.0),
+    "bathyas": (4.8, 19.0),
+    "octamyces": (6.5, 18.0),
 }
 
 
@@ -174,6 +178,12 @@ FIDGETS = {
                   ("fidget_sauce", "sauce defies gravity")],
     "nurariten": [("fidget_survey", "surveys its court"), ("fidget_sleeves", "settles its sleeves"), ("fidget_glyph", "writes a glyph"),
                   ("fidget_procession", "its shadow becomes a procession")],
+    "dinosauroid": [("fidget_stare", "the long stare"), ("fidget_pouch", "throat-pouch pulses"), ("fidget_preen", "preens its fan"),
+                    ("fidget_study", "studies you")],
+    "bathyas": [("fidget_shield", "shields its eyes"), ("fidget_sigh", "tired sigh"), ("fidget_doze", "dozes off"),
+                ("fidget_poke", "pokes the sword")],
+    "octamyces": [("fidget_fold", "the eye folds shut"), ("fidget_align", "frames re-align"), ("fidget_gills", "gills breathe out"),
+                  ("fidget_probe", "the sensor probes")],
 }
 
 
@@ -252,7 +262,9 @@ def grid(cols: List[List[Image.Image]], title: str = "") -> List[Image.Image]:
 
 
 TITLES = {"salamander": "001 Aberrant Flora Salamander", "golem": "002 Runic Titan Golem", "jackalope": "003 Blood Moon Jackalope",
-          "xenentoma": "004 Xenentoma", "spaghetti": "005 Flying Spaghetti Monster", "nurariten": "006 Nurariten [Unique]"}
+          "xenentoma": "004 Xenentoma", "spaghetti": "005 Flying Spaghetti Monster", "nurariten": "006 Nurariten [Unique]",
+          "dinosauroid": "007 The Unknown Dinosauroid", "bathyas": "008 Bathyas, the Sun-Impaled [Unique]",
+          "octamyces": "009 Octamyces Undecimus"}
 
 
 def main():

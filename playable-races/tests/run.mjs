@@ -115,7 +115,7 @@ function mob(type, x, z) {
   return harness.spawnMob(type, { x, y: 64, z });
 }
 function hp(e) {
-  return e.getComponent("minecraft:health").currentValue;
+  return e.isValid ? e.getComponent("minecraft:health").currentValue : 0; // a creature that died (and despawned) has 0 left
 }
 function forceSave() {
   tickN(101);
@@ -1189,8 +1189,8 @@ tickN(6);
 ok(m1 - hp(dz1) >= 10 - 0.01, "the misclassified victim is opened up (10 damage)");
 eq(dz1.getEffect("slowness")?.amplifier, 3, "and pinned (Slowness IV)");
 ok(m2 - hp(dz2) >= 6 - 0.01 && m2 - hp(dz2) < 10, "an ordinary target takes the plain strike");
-dz1.remove();
-dz2.remove();
+if (dz1.isValid) dz1.remove();
+if (dz2.isValid) dz2.remove();
 
 begin("dinosauroid: Taxonomic Error");
 await use(dino, true); // -> Error
@@ -1204,7 +1204,7 @@ ok(dz3.getEffect("slowness"), "the aura misclassifies creatures that come close"
 tickN(220);
 eq(head(dino)?.typeId, "plrace:form_dinosauroid", "the body folds back afterwards");
 ok(dino.getEffect("slowness") && dino.getEffect("weakness"), "and is spent (Slowness, Weakness)");
-dz3.remove();
+if (dz3.isValid) dz3.remove();
 dino._health = 20;
 
 // ======================================================================== 008 Bathyas, the Sun-Impaled [Unique] (v1.4)
@@ -1258,7 +1258,7 @@ bat.applyDamage(4, { cause: "entityAttack", damagingEntity: bz1 });
 tickN(2);
 ok(bh2 - hp(bz1) >= 3 - 0.01, "a blow on the plates answers with a counterpulse");
 tickN(130);
-bz1.remove();
+if (bz1.isValid) bz1.remove();
 
 begin("bathyas: Draw the Sun");
 await use(bat, true); // -> Draw
@@ -1338,8 +1338,8 @@ ok(!bat._fog.includes("plrace_ab"), "the haze lifts afterwards");
 eq(bat.inputPermissions.isPermissionCategoryEnabled(InputPermissionCategory.LateralMovement), true, "movement restored");
 ok(bat.getEffect("slowness") && bat.getEffect("weakness"), "and Bathyas is spent");
 tickN(60);
-bz3.remove();
-bz4.remove();
+if (bz3.isValid) bz3.remove();
+if (bz4.isValid) bz4.remove();
 commands.get("plrace:setrace").cb({ sourceEntity: bat }, "none", [bat]);
 await settle(4);
 ok(!JSON.parse(world.getDynamicProperty("plrace:unique") ?? "{}")["008"], "leaving the lineage releases the Unique claim");
@@ -1376,7 +1376,7 @@ for (let k = 0; k < 6; k++) {
   tickN(8);
 }
 ok(particles("plrace:parallax_echo") > echoes0, "the infected leave false afterimages where they stood");
-ogol.remove();
+if (ogol.isValid) ogol.remove();
 
 begin("octamyces: The Eye That Records");
 await use(octa, true); // -> Record
@@ -1416,19 +1416,19 @@ octa._fire = 0;
 
 begin("octamyces: The Eleventh Frame");
 await use(octa, true); // -> Frame
-const before = particles("plrace:frame_strike");
+const strikes0 = particles("plrace:frame_strike");
 const of1 = hp(oz1);
 await use(octa);
 eq(octa.inputPermissions.isPermissionCategoryEnabled(InputPermissionCategory.LateralMovement), false, "the eye stops; the body is still");
 tickN(2);
 eq(head(octa)?.typeId, "plrace:form_octamyces_frame", "the eleven rings open (frame form)");
 tickN(72);
-ok(particles("plrace:frame_strike") - before >= 6, "the network strikes along the recorded path");
+ok(particles("plrace:frame_strike") - strikes0 >= 6, "the network strikes along the recorded path");
 ok(of1 - hp(oz1) >= 6 - 0.01, "the observed creature is struck where it walked");
 eq(octa.inputPermissions.isPermissionCategoryEnabled(InputPermissionCategory.LateralMovement), true, "movement restored");
 tickN(8);
 ok(String(sim.log.actionbar.get(octa.id)).includes("no recording"), "the recording is spent");
-oz1.remove();
+if (oz1.isValid) oz1.remove();
 harness.leave(octa);
 
 // ======================================================================== display check (v1.3.1)

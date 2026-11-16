@@ -832,21 +832,23 @@ def _codex_icon():
 
 
 def pack_icon(path_bp, path_rp):
-    imgs = {}
-    for race in ("salamander", "golem", "jackalope", "xenentoma", "spaghetti", "nurariten"):
-        imgs[race] = _key_out_black(_render_icon(race, 128, yaw=26, pitch=6, focus="body")).resize((128, 128), Image.LANCZOS)
-    icon = Image.new("RGBA", (256, 256), (20, 16, 30, 255))
-    g = Image.new("L", (256, 256), 0)
-    ImageDraw.Draw(g).ellipse([30, 10, 226, 206], fill=160)
-    icon = Image.composite(Image.new("RGBA", (256, 256), (120, 30, 50, 255)), icon, g.filter(ImageFilter.GaussianBlur(40)))
-    ImageDraw.Draw(icon).ellipse([166, 14, 222, 70], fill=(200, 30, 50, 255))          # the Blood Moon
-    halo = Image.new("L", (256, 256), 0)
-    ImageDraw.Draw(halo).ellipse([24, 22, 88, 86], outline=200, width=5)                  # a broken celestial halo
-    icon = Image.composite(Image.new("RGBA", (256, 256), (240, 200, 110, 255)), icon, halo.filter(ImageFilter.GaussianBlur(1.5)))
-    # back row: Nurariten, Golem, Xenentoma - front row: Salamander, Spaghetti Monster, Jackalope
-    for race, size, x, y in (("nurariten", 112, -6, 46), ("xenentoma", 112, 150, 52), ("golem", 140, 58, 40),
-                             ("salamander", 108, -8, 140), ("jackalope", 108, 156, 140), ("spaghetti", 104, 76, 150)):
-        icon.alpha_composite(imgs[race].resize((size, size), Image.LANCZOS), (x, y))
+    """Nine lineages on soft spotlights in their own colours (3 x 3)."""
+    layout = (  # race, spotlight colour, size, x, y   (back row first so the front row overlaps it)
+        ("nurariten", (236, 196, 120), 96, -2, 4), ("bathyas", (255, 236, 170), 104, 76, -2), ("golem", (255, 150, 60), 100, 158, 2),
+        ("xenentoma", (170, 120, 236), 92, -4, 82), ("octamyces", (180, 110, 255), 92, 82, 80), ("dinosauroid", (70, 214, 182), 96, 162, 80),
+        ("salamander", (110, 210, 120), 92, -2, 162), ("spaghetti", (246, 198, 96), 90, 84, 166), ("jackalope", (236, 60, 76), 92, 166, 162))
+    icon = Image.new("RGBA", (256, 256), (18, 16, 30, 255))
+    vign = Image.new("L", (256, 256), 0)
+    ImageDraw.Draw(vign).ellipse([-40, -40, 296, 296], fill=120)
+    icon = Image.composite(Image.new("RGBA", (256, 256), (44, 34, 64, 255)), icon, vign.filter(ImageFilter.GaussianBlur(40)))
+    for race, col, size, x, y in layout:
+        spot = Image.new("L", (256, 256), 0)
+        cx, cy = x + size / 2, y + size * 0.56
+        ImageDraw.Draw(spot).ellipse([cx - 30, cy - 30, cx + 30, cy + 30], fill=150)
+        icon = Image.composite(Image.new("RGBA", (256, 256), col + (255,)), icon, spot.filter(ImageFilter.GaussianBlur(12)))
+    for race, col, size, x, y in layout:
+        img = _key_out_black(_render_icon(race, 128, yaw=26, pitch=6, focus="body")).resize((size, size), Image.LANCZOS)
+        icon.alpha_composite(img, (x, y))
     icon.save(path_bp)
     icon.save(path_rp)
 
@@ -870,7 +872,7 @@ def _mk(path):
 
 
 def texts(lang_rp, lang_bp):
-    lines = ["## Playable Races - Foundation + Expansion 01 (Races 001-006)"]
+    lines = ["## Playable Races - Foundation + Expansion 01 + Expansion 02 (Races 001-009)"]
     lines += [f"{k}={v}" for k, v in lang_rp]
     os.makedirs(os.path.join(RP, "texts"), exist_ok=True)
     with open(os.path.join(RP, "texts/en_US.lang"), "w", encoding="utf-8") as f:

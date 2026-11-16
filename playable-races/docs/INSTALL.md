@@ -56,7 +56,7 @@ Consoles cannot open `.mcaddon` files directly. Either play in a world hosted fr
 
 On first join every player gets a **Lineage Codex** and the selection screen opens once. Pick a lineage, read it, and press **Embrace**. You receive your race's **Focus** item, and your racial body appears.
 
-Six lineages are offered: 001 Salamander, 002 Golem, 003 Jackalope, 004 Xenentoma, 005 Flying Spaghetti Monster and **006 Nurariten [UNIQUE]** — only one player per world can hold the Unique lineage at a time (operators can change this in World Settings).
+Nine lineages are offered: 001 Salamander, 002 Golem, 003 Jackalope, 004 Xenentoma, 005 Flying Spaghetti Monster, **006 Nurariten [UNIQUE]**, 007 The Unknown Dinosauroid, **008 Bathyas, the Sun-Impaled [UNIQUE]** and 009 Octamyces Undecimus. Each Unique lineage can be held by only one player per world at a time (operators can change this in World Settings); 006 and 008 are separate claims, so two different players can hold one each.
 
 ## Multiplayer and Realms
 
@@ -67,10 +67,10 @@ All players in the world use the same packs; joining players download the resour
 1. Unzip the two `.mcpack` files into `behavior_packs/PlayableRaces_BP` and `resource_packs/PlayableRaces_RP`.
 2. Add them to the world's `world_behavior_packs.json` and `world_resource_packs.json`:
    ```json
-   [{ "pack_id": "6a3f2c1e-8d4b-4f7a-9c2e-1b5d7e9f0a21", "version": [1, 3, 0] }]
+   [{ "pack_id": "6a3f2c1e-8d4b-4f7a-9c2e-1b5d7e9f0a21", "version": [1, 4, 0] }]
    ```
    ```json
-   [{ "pack_id": "9d6a5f4b-b07e-4cad-8f5b-4e8a0b2c3d54", "version": [1, 3, 0] }]
+   [{ "pack_id": "9d6a5f4b-b07e-4cad-8f5b-4e8a0b2c3d54", "version": [1, 4, 0] }]
    ```
 3. Set `texturepack-required=true` in `server.properties` so clients receive the resource pack.
 

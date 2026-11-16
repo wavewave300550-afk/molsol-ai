@@ -315,7 +315,7 @@ const draw: AbilityDef = {
     return undefined;
   },
   freeCast({ s }) {
-    return drawn(s); // the draw is free; the cooldown is spent when the sun goes back
+    return !drawn(s); // asked before the cast: the draw is free; the cooldown is spent when the sun goes back
   },
   cast({ p, s }) {
     if (drawn(s)) {
@@ -576,6 +576,7 @@ export const bathyas: RaceDef = {
     if (drawn(s) || swordCount(p) > 0) reimpale(p, s, "cleanup");
     clearAbyssFog(p);
     s.dirty = true;
+    save(p, s, true); // the saved state agrees at once: the sun is back in the chest
   },
   cleanup(p, s) {
     reimpale(p, s, "cleanup");

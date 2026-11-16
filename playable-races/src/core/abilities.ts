@@ -66,7 +66,6 @@ export function remaining(p: Player, s: Session, race: RaceDef, a: AbilityDef): 
 
 function spend(p: Player, s: Session, race: RaceDef, a: AbilityDef): void {
   const now = system.currentTick;
-  if (a.freeCast?.(ctxOf(p, s, race, a))) return; // e.g. the first half of a toggle (Draw the Sun)
   const max = maxCharges(p, s, race, a);
   if (max <= 1) {
     s.readyAt.set(a.id, now + cdTicks(p, s, race, a));
@@ -151,6 +150,8 @@ export function cast(p: Player, s: Session): void {
     fail(p, s, reason);
     return;
   }
+  // asked before the cast changes any state: e.g. the first half of a toggle (Draw the Sun) is free
+  const free = a.freeCast?.(ctx) === true;
   let result: true | string;
   try {
     result = a.cast(ctx);
@@ -162,7 +163,7 @@ export function cast(p: Player, s: Session): void {
     fail(p, s, result);
     return;
   }
-  spend(p, s, race, a);
+  if (!free) spend(p, s, race, a);
   s.lastCast = now;
   s.data.stats.casts = (s.data.stats.casts ?? 0) + 1;
   s.dirty = true;

@@ -158,6 +158,14 @@ The mock is deliberately strict (and was made stricter for 1.1.0: fog ids must e
 * Spaghetti Monster: dithered strands read as straw, the hanging strands as spider legs and the side appendages as crab claws; the meatball sauce caps made brownies of the meatballs → wound strands painted continuously across faces, U-loops underneath, streaming appendages, glaze painted onto rounder meatballs.
 * The celestial gate's light read as a ladder → staggered golden mist bands.
 
+### Bugs the tests caught during Expansion 02 (fixed before release)
+* **Draw the Sun spent its cooldown on the draw.** The engine charged the cooldown after the cast, but the sword only leaves the chest 0.7 s later, so the "first half is free" check still saw an impaled Bathyas: the draw cost 45 s and the sun could then not be returned (the test's *Return the Sun* failed with the sword still in hand) → whether a use is free is now decided *before* the cast (`freeCast`).
+* **After death the sword was gone but the saved state still said "drawn"** until the next 5-second save → Bathyas' state is saved as soon as he is restored (join, respawn, reload).
+* The first draft gave marked creatures the `glowing` effect; Bedrock has none (the strict mock rejects unknown effect ids) → statuses are shown by sigils over the head.
+* Forms that follow the world (the Dinosauroid's night skin, its four drift configurations) changed only when an ability ran → the visible form is re-synchronised every quarter second.
+* `Block.isSolid` does not exist in `@minecraft/server` 2.11.0 (typecheck) → the framework's own solidity helper.
+* Test-harness fixes: a duplicated variable in the 009 section, and removing a zombie the Abyssal Daybreak had already killed (the mock throws like `InvalidEntityError`, as the game would).
+
 ## Not tested — needs a real game (please check these)
 
 The sandbox has no Minecraft client. A **Bedrock Dedicated Server** test was attempted through Minecraft Creator Tools, but the server requires the **Minecraft EULA to be accepted by you**; I did not accept it on your behalf, so no real-engine run happened. Recommended in-game checklist:
@@ -194,6 +202,13 @@ The sandbox has no Minecraft client. A **Bedrock Dedicated Server** test was att
    * `pre_animation` variables, controller `blend_transition` cross-fades and `q.all_animations_finished` on the idle-behaviour timer behave as in the interpreter (idle behaviours should start after ~6–8 s of standing still and stop instantly when you move);
    * feet stay on the ground in game for walk and sprint, including with Speed/Slowness effects (the fit assumes the vanilla limb-swing model, `modified_move_speed` 0…1);
    * held items stay in the hands during walking, attacking and idle behaviours.
+
+13. **Expansion 02 (v1.4.0): races 007–009 — proposed in-game tests** (none of these were run in a real game):
+   * **Selection:** the Codex lists nine lineages; Bathyas shows **✦ UNIQUE ✦** and can be held at the same time as Nurariten by a different player; *Codex → Display Check* shows all nine bodies.
+   * **Unknown Dinosauroid:** the HUD's *Drift* name changes about every 75 s of world time and the body changes with it (plumed / webbed / toothed / fanned); at night or in darkness the display skin glows; Hindwing Veer launches you about 7 blocks along your movement, the hindlimb membranes open, sneaking in the air glides and the landing does no damage; Crest of Misclassification puts a broken-cladogram sigil over creatures nearby and they visibly slow; Sickle Testament pins a misclassified target; Taxonomic Error ends in a short exhaustion; under a two-block ceiling you are slowed.
+   * **Bathyas:** the embedded sword glows through the chest; Lure of the Impaled Sun marks creatures with a sun sigil and pulls them a step; Goblin Maw Rush's jaw shoots forward; Isopod Bastion's plates close and leak light; **Draw the Sun** puts *The Impaled Sun* in your hand as a real sword (check it cannot be dropped, put in a chest, a hopper or an item frame, and that there is never a second one — also after death, logout, reload, `/kill` and a lineage change), the unshackled form shows the open wound, Stability drains on the HUD, Return the Sun puts it back and starts the 45 s cooldown; **Abyssal Daybreak**: the dark haze appears only for players within 24 blocks and lifts at the end (also if you log out during it), the pillar, leviathan silhouettes and eruption are visible, an iPhone keeps an acceptable frame rate; the *Unique ultimate screen effects* world setting turns the haze off.
+   * **Octamyces Undecimus:** the eye's rings turn independently and the blink folds the polygon shut; the body floats a little above the ground and drifts down when sneaking in the air; Parallax Sporeveil leaves false afterimages around infected creatures and some of their blows miss; The Eye That Records shows an eye sigil and the HUD counts recorded points; Hyphal Offset never ends inside a wall, lava or fire and leaves a translucent echo that bursts after 3 s (`/testfor @e[type=plrace:hyphal_echo]` finds nothing afterwards); The Eleventh Frame strikes along the path the observed creature walked; while burning, Offset is refused and the scorched form shows.
+   * **Iridescence and glow:** no flashing, nothing strobes, the impaled sun and the eye glow softly in the dark without lighting the world.
 
 ## Reproduce
 ```bash
