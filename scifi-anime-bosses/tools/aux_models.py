@@ -10,7 +10,7 @@ import math
 
 import geo
 from geo import Model
-from vesper_model import (ARMOR, BONE, CENSER, DARK, EYE, FLESH, GLOW_GLYPH, GLOW_SOFT, GLOW_STRIP, GLYPH,
+from vesper_model import (ARMOR, BONE, CENSER, DARK, EYE, FLESH, GLOW_GLYPH, GLOW_HOLY, GLOW_SOFT, GLOW_STRIP, GLYPH,
                           GOLD, LIGHT, MACH, RING, SAIL, SUN)
 
 
@@ -24,13 +24,13 @@ def _finish(m: Model, main, glow, bounds):
 
 def cherub(main, glow) -> Model:
     """Autonomous drone: an eye inside a gold octahedron, four blade wings and a halo."""
-    m = Model("geometry.sab.cherub", tex_size=(512, 256), glow_tex_size=(128, 64))
+    m = Model("geometry.sab.cherub", tex_size=(512, 256), glow_tex_size=(128, 128))
     m.bone("root", (0, 0, 0))
     m.bone("body", (0, 12, 0), "root")
     m.box("body", (0, 12, 0), (9, 9, 9), ARMOR)
     m.box("body", (0, 12, 0), (8, 8, 8), GOLD, rotation=(45, 0, 45))
     m.box("body", (0, 12, -4.4), (6, 6, 1.4), DARK, face_mats={"north": EYE})
-    m.box("body", (0, 12, -5), (12, 12, 6), GLOW_SOFT, layer="glow")
+    m.box("body", (0, 12, -5), (12, 12, 6), GLOW_HOLY, layer="glow")
     m.box("body", (0, 5, 0), (3, 5, 3), GOLD)
     m.box("body", (0, 2, 0), (2, 3, 2), LIGHT)
     # two pairs of swept angelic blade-wings (upper long, lower short)
@@ -51,7 +51,7 @@ def cherub(main, glow) -> Model:
 
 
 def plasma_orb(main, glow) -> Model:
-    m = Model("geometry.sab.plasma_orb", tex_size=(512, 256), glow_tex_size=(128, 64))
+    m = Model("geometry.sab.plasma_orb", tex_size=(512, 256), glow_tex_size=(128, 128))
     m.bone("root", (0, 0, 0))
     m.bone("core", (0, 4, 0), "root")
     m.box("core", (0, 4, 0), (6, 6, 6), SUN)
@@ -64,7 +64,7 @@ def plasma_orb(main, glow) -> Model:
 
 def censer(main, glow) -> Model:
     """Prayer node: a floating thurible with a spinning ring and incense core."""
-    m = Model("geometry.sab.censer", tex_size=(512, 256), glow_tex_size=(128, 64))
+    m = Model("geometry.sab.censer", tex_size=(512, 256), glow_tex_size=(128, 128))
     m.bone("root", (0, 0, 0))
     m.bone("body", (0, 16, 0), "root")
     m.box("body", (0, 40, 0), (2, 26, 2), GOLD)
@@ -93,7 +93,7 @@ SERAPH = {"a": (64, 18, 9, 7), "b": (48, 16, 8, 6), "c": (34, 12, 7, 5)}   # rad
 
 def seraph(main, glow) -> Model:
     """Detached Ophanim ring: rim + light spokes + central eye hub. Variant chosen by bone visibility."""
-    m = Model("geometry.sab.seraph", tex_size=(512, 256), glow_tex_size=(128, 64))
+    m = Model("geometry.sab.seraph", tex_size=(512, 256), glow_tex_size=(128, 128))
     m.bone("root", (0, 0, 0))
     m.bone("tilt", (0, 16, 0), "root")
     m.bone("spin", (0, 16, 0), "tilt")
@@ -129,7 +129,7 @@ def seraph(main, glow) -> Model:
 
 def hull_plate(main, glow) -> Model:
     """Fallen armour plate embedded in the ground (Phase II cover)."""
-    m = Model("geometry.sab.hull_plate", tex_size=(512, 256), glow_tex_size=(128, 64))
+    m = Model("geometry.sab.hull_plate", tex_size=(512, 256), glow_tex_size=(128, 128))
     m.bone("root", (0, 0, 0))
     m.bone("slab", (0, 0, 0), "root", rotation=(14, 0, 4))
     m.box("slab", (0, 30, 0), (46, 66, 9), ARMOR)
@@ -151,7 +151,7 @@ def hull_plate(main, glow) -> Model:
 
 def singularity(main, glow) -> Model:
     """Event Horizon: a black sphere with a violet accretion disk and a lensing ring."""
-    m = Model("geometry.sab.singularity", tex_size=(512, 256), glow_tex_size=(128, 64))
+    m = Model("geometry.sab.singularity", tex_size=(512, 256), glow_tex_size=(128, 128))
     m.bone("root", (0, 0, 0))
     m.bone("core", (0, 24, 0), "root")
     m.box("core", (0, 24, 0), (18, 18, 18), DARK)
@@ -171,7 +171,7 @@ LANCE_LEN = 512.0
 
 def lance(main, glow) -> Model:
     """Litany Lance beam. Built along -Z for LANCE_LEN units; scaled on Z by the client."""
-    m = Model("geometry.sab.lance", tex_size=(512, 256), glow_tex_size=(128, 64))
+    m = Model("geometry.sab.lance", tex_size=(512, 256), glow_tex_size=(128, 128))
     m.bone("root", (0, 0, 0))
     m.bone("aim", (0, 0, 0), "root")
     m.bone("beam", (0, 0, 0), "aim")
@@ -190,7 +190,7 @@ def lance(main, glow) -> Model:
 
 def orison_halo(main, glow) -> Model:
     """The thrown Orison Halo (player reward weapon)."""
-    m = Model("geometry.sab.orison_halo", tex_size=(512, 256), glow_tex_size=(128, 64))
+    m = Model("geometry.sab.orison_halo", tex_size=(512, 256), glow_tex_size=(128, 128))
     m.bone("root", (0, 0, 0))
     m.bone("spin", (0, 6, 0), "root")
     m.ring("spin", (0, 6, 0), 9, "y", 12, 3, 2, RING)

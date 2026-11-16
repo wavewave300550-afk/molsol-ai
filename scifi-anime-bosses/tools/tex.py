@@ -668,6 +668,16 @@ def glow_glyph(w, h, variant):
     return img
 
 
+def tinted(painter, hex_p1: str, hex_p2: str):
+    """Colourise a white additive glow painter per phase variant."""
+    def p(w, h, variant):
+        img = painter(w, h, variant)
+        c = hexc(hex_p1 if variant == "p1" else hex_p2)
+        img[..., :3] = img[..., :3] * c
+        return img
+    return p
+
+
 def shield_hex(w, h, variant):
     yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
     a = np.abs(((xx / 8.0) + (yy / 13.86)) % 1.0 - 0.5)

@@ -38,7 +38,8 @@ CENSER = S("censer", 0.75)
 DARK = S("dark", 0.5)
 EYE = U(tex.eye(1), "eye", 1.0)
 
-GLOW_SOFT = S("glow_soft", 1.0)
+GLOW_SOFT = S("glow_soft", 1.0)      # sun corona: gold (P1) / violet (P2)
+GLOW_HOLY = S("glow_holy", 1.0)      # holy light: cyan (P1) / magenta-violet (P2)
 GLOW_STRIP = S("glow_strip", 1.0)
 GLOW_GLYPH = S("glow_glyph", 1.0)
 SHIELD = S("shield_hex", 0.2)
@@ -69,10 +70,11 @@ def build_atlases():
     main.add_swatch("glyph", 128, 16, tex.glyph_strip(43))
     main.add_swatch("dark", 32, 32, tex.dark(37))
     main.add_swatch("light", 32, 16, tex.light())
-    glow = AtlasLayout(128, 64)
-    glow.add_swatch("glow_soft", 64, 64, tex.glow_soft)
-    glow.add_swatch("glow_strip", 64, 16, tex.glow_strip)
-    glow.add_swatch("glow_glyph", 64, 16, tex.glow_glyph)
+    glow = AtlasLayout(128, 128)
+    glow.add_swatch("glow_soft", 64, 64, tex.tinted(tex.glow_soft, "fff0c0", "c27bff"))
+    glow.add_swatch("glow_holy", 64, 64, tex.tinted(tex.glow_soft, "7de9ff", "e06bff"))
+    glow.add_swatch("glow_strip", 64, 16, tex.tinted(tex.glow_strip, "8cefff", "c47dff"))
+    glow.add_swatch("glow_glyph", 64, 16, tex.tinted(tex.glow_glyph, "b8f6ff", "d79bff"))
     shield = AtlasLayout(64, 64)
     shield.add_swatch("shield_hex", 64, 64, tex.shield_hex)
     return main, glow, shield
@@ -189,7 +191,7 @@ def thorax(m: Model):
         m.box(b, (0, 146, z), (12, 3, 12), GOLD)
         m.box(b, (0, 142 + hgt - 22 - 4, z), (11, 3, 11), GOLD)
         m.box(b, (0, 142 + hgt - 22 + 4, z), (5, 12, 5), LIGHT)
-        m.box(b, (0, 142 + hgt - 22 + 4, z), (10, 18, 10), GLOW_SOFT, layer="glow")
+        m.box(b, (0, 142 + hgt - 22 + 4, z), (10, 18, 10), GLOW_HOLY, layer="glow")
         m.locator(b, f"spire_tip_{i}", (0, 142 + hgt - 12, z))
     # ribs (external, cathedral buttresses)
     for i, (z, sc) in enumerate(RIBS, start=1):
@@ -301,7 +303,7 @@ def fins_and_engines(m: Model):
         m.box(e, (x * 40, 38, 82), (21, 21, 46), ARMOR, rotation=(0, 0, 45))
         m.box(e, (x * 40, 38, 58), (26, 26, 6), GOLD)
         m.box(e, (x * 40, 38, 110.5), (15, 15, 2), LIGHT)
-        m.box(e, (x * 40, 38, 116), (26, 26, 12), GLOW_SOFT, layer="glow")
+        m.box(e, (x * 40, 38, 116), (26, 26, 12), GLOW_HOLY, layer="glow")
         m.beam(e, (x * 22, 50, 66), (x * 38, 42, 70), 7, 7, BONE)
         m.locator(e, f"exhaust_{s}", (x * 40, 38, 118))
 
@@ -425,7 +427,7 @@ def shield(m: Model):
 
 
 def build() -> tuple:
-    m = Model("geometry.sab.vesper_0", tex_size=(512, 256), glow_tex_size=(128, 64), shield_tex_size=(64, 64))
+    m = Model("geometry.sab.vesper_0", tex_size=(512, 256), glow_tex_size=(128, 128), shield_tex_size=(64, 64))
     m.bone("root", (0, 0, 0))
     m.bone("body", SUN_C, "root")
     skull(m)
