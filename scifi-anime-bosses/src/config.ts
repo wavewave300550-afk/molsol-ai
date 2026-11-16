@@ -1,6 +1,6 @@
 /** Tuning for the VESPER-0 encounter. Damage values are Normal difficulty, before armour. */
 export const CFG = {
-  maxHealth: 1000,
+  maxHealth: 1200,
   arenaRange: 64, // players within this distance of the arena centre take part
   leashRange: 46, // the boss stays within this distance of the arena centre
   departAfterTicks: 600, // no combatants for 30 s -> VESPER-0 leaves (Psalter refunded)

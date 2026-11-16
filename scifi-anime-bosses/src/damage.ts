@@ -1,5 +1,4 @@
 import { Entity, EntityDamageCause, EntityHurtBeforeEvent, system, world } from "@minecraft/server";
-import { CFG } from "./config.js";
 import { PHASE } from "./generated/ids.js";
 import { bosses, clock, ledgerTake, minions, parts, throttle } from "./registry.js";
 import type { Vesper } from "./boss/controller.js";
@@ -51,15 +50,10 @@ function onHurt(ev: EntityHurtBeforeEvent): void {
       if (!isOwnSource(attacker)) feedback(v, "shield", attacker);
       return;
     }
-    let dmg = Math.min(CFG.perHitCap, ev.damage * v.multiplierFor("hull", cause));
-    dmg = v.clampToThreshold(dmg);
-    if (dmg <= 0) {
-      ev.cancel = true;
-      return;
-    }
-    ev.damage = dmg;
-    v.credit(attacker, dmg);
-    feedback(v, "hull", attacker);
+    // every hit is pooled and applied by the controller (see Vesper.queueDamage)
+    ev.cancel = true;
+    const dmg = v.queueDamage(ev.damage * v.multiplierFor("hull", cause), attacker, cause);
+    if (dmg > 0) feedback(v, "hull", attacker);
     return;
   }
 
@@ -76,8 +70,7 @@ function onHurt(ev: EntityHurtBeforeEvent): void {
     const amount = ev.damage * owner.multiplierFor(part.kind, cause);
     const exposed = part.kind === "heart" && owner.heartOpen;
     const at = { x: e.location.x, y: e.location.y + 1.5, z: e.location.z };
-    system.run(() => owner.forwardDamage(amount, attacker, cause));
-    feedback(owner, exposed ? "heart" : "hull", attacker, at);
+    if (owner.queueDamage(amount, attacker, cause) > 0) feedback(owner, exposed ? "heart" : "hull", attacker, at);
     return;
   }
 

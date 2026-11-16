@@ -441,11 +441,11 @@ export function chooseP1(v: Vesper): (() => void) | undefined {
     return () => v.start("genuflect", genuflect(v), { cooldown: 400 });
   }
   return choose(v, [
-    { name: "lance", weight: 3 + (far ? 2 : 0), run: () => v.start("lance", lance(v, v.pickTarget((p) => dist(p.location, v.pos) * 0.15) ?? tgt), { cooldown: cd(v, CFG.lance.cooldown) }) },
-    { name: "rite", weight: 2.5 + (cluster >= 2 ? 2 : 0), run: () => v.start("rite", rite(v), { cooldown: cd(v, CFG.rite.cooldown) }) },
-    { name: "horizon", weight: 2.5, run: () => v.start("horizon", horizon(v, [tgt]), { cooldown: cd(v, CFG.horizon.cooldown) }) },
-    { name: "choir", weight: drones ? 0 : 2, run: () => v.start("choir", choir(v), { cooldown: cd(v, CFG.choir.cooldown) }) },
-    { name: "genuflect", weight: 0.8, run: () => v.start("genuflect", genuflect(v), { cooldown: 400 }) },
+    { name: "lance", weight: 2.6 + (far ? 1 : 0), run: () => v.start("lance", lance(v, v.pickTarget((p) => dist(p.location, v.pos) * 0.15) ?? tgt), { cooldown: cd(v, CFG.lance.cooldown) }) },
+    { name: "rite", weight: 2.4 + (cluster >= 2 ? 1.2 : 0), run: () => v.start("rite", rite(v), { cooldown: cd(v, CFG.rite.cooldown) }) },
+    { name: "horizon", weight: 3.0, run: () => v.start("horizon", horizon(v, [tgt]), { cooldown: cd(v, CFG.horizon.cooldown) }) },
+    { name: "choir", weight: drones ? 0 : 2.4, run: () => v.start("choir", choir(v), { cooldown: cd(v, CFG.choir.cooldown) }) },
+    { name: "genuflect", weight: 0.6, run: () => v.start("genuflect", genuflect(v), { cooldown: 400 }) },
   ]);
 }
 

@@ -97,6 +97,12 @@ export class Vesper {
   readonly audience = new Set<string>(); // players currently given music + fog
   cinematic = new Map<string, number>(); // player id -> camera release tick
   private hullState = "p1";
+  // pooled damage: every player's hits count (per-attacker invulnerability frames), applied every 11 ticks
+  private pool = 0;
+  private poolBy?: Entity;
+  private poolCause: EntityDamageCause = EntityDamageCause.entityAttack;
+  private lastFlush = 0;
+  private attackerFrames = new Map<string, { t: number; dmg: number }>();
 
   constructor(boss: Entity, arena?: V3) {
     this.boss = boss;
@@ -226,7 +232,24 @@ export class Vesper {
   }
 
   private refreshPlayers(): void {
-    this.players = combatants(this.dim, this.arena, CFG.arenaRange);
+    // whoever is near the arena or near the boss takes part; the arena drifts with the fight
+    const seen = new Map<string, Player>();
+    for (const p of combatants(this.dim, this.arena, CFG.arenaRange)) seen.set(p.id, p);
+    for (const p of combatants(this.dim, this.pos, CFG.arenaRange)) seen.set(p.id, p);
+    this.players = [...seen.values()];
+    if (this.players.length && this.t % 20 === 1 && !this.dying) {
+      let cx = 0;
+      let cz = 0;
+      for (const p of this.players) {
+        cx += p.location.x;
+        cz += p.location.z;
+      }
+      cx /= this.players.length;
+      cz /= this.players.length;
+      const k = hdist({ x: cx, y: 0, z: cz }, this.arena) > 24 ? 0.12 : 0.04;
+      this.arena = { x: this.arena.x + (cx - this.arena.x) * k, y: this.arena.y, z: this.arena.z + (cz - this.arena.z) * k };
+      this.arena.y = groundY(this.dim, this.arena.x, this.arena.z, this.arena.y, this.arena.y + 24);
+    }
     for (const p of this.players) if (!this.participants.has(p.id)) this.participants.set(p.id, { name: p.name, damage: 0 });
     if (!this.target || !this.target.isValid || !this.players.includes(this.target) || Math.random() < 0.03) {
       this.target = this.pickTarget();
@@ -264,7 +287,7 @@ export class Vesper {
 
   /** Clamp damage so phase thresholds are never skipped; returns the allowed amount. */
   clampToThreshold(amount: number): number {
-    const hp = this.health();
+    const hp = this.health() - this.pool;
     const max = CFG.maxHealth;
     const stops: [number, "prayer1" | "transform" | "prayer2" | "death"][] = [];
     const th = CFG.thresholds;
@@ -283,16 +306,50 @@ export class Vesper {
     return amount;
   }
 
-  /** Damage forwarded by script (proxy hitboxes, reflected orbs). Already scaled. */
-  forwardDamage(amount: number, source: Entity | undefined, cause = EntityDamageCause.entityAttack): void {
-    if (this.invulnerable || this.dying) return;
-    const a = this.clampToThreshold(Math.min(CFG.perHitCap, amount));
-    if (a <= 0) return;
+  /**
+   * Queue already-scaled damage (hull hits, proxy hitboxes, reflected orbs, the Orison Halo).
+   * Each attacker gets vanilla-like invulnerability frames (10 ticks, stronger hits add the
+   * difference) so spam-clicking gains nothing, but several players' hits all count.
+   * Safe to call from before-events (no world mutation here).
+   */
+  queueDamage(amount: number, source: Entity | undefined, cause = EntityDamageCause.entityAttack): number {
+    if (this.invulnerable || this.dying) return 0;
+    let a = Math.min(CFG.perHitCap, amount);
+    const key = source?.id ?? `env:${cause}`;
+    const f = this.attackerFrames.get(key);
+    if (f && this.t - f.t < 10) {
+      if (a <= f.dmg) return 0;
+      const extra = a - f.dmg;
+      f.dmg = a;
+      a = extra;
+    } else {
+      this.attackerFrames.set(key, { t: this.t, dmg: a });
+    }
+    a = this.clampToThreshold(a);
+    if (a <= 0) return 0;
+    this.pool += a;
+    if (source) this.poolBy = source;
+    this.poolCause = cause;
     this.credit(source, a);
+    return a;
+  }
+
+  /** Alias kept for helpers that forward hits. */
+  forwardDamage(amount: number, source: Entity | undefined, cause = EntityDamageCause.entityAttack): number {
+    return this.queueDamage(amount, source, cause);
+  }
+
+  private flushDamage(): void {
+    if (this.pool <= 0 || this.t - this.lastFlush < 11) return;
+    const a = Math.round(this.pool * 100) / 100;
+    this.pool = 0;
+    this.lastFlush = this.t;
+    if (this.attackerFrames.size > 64) this.attackerFrames.clear();
     ledgerAdd(this.id, a, clock.now);
     try {
-      if (source && source.isValid) this.boss.applyDamage(a, { cause, damagingEntity: source });
-      else this.boss.applyDamage(a, { cause });
+      const by = this.poolBy && this.poolBy.isValid ? this.poolBy : undefined;
+      if (by) this.boss.applyDamage(a, { cause: this.poolCause, damagingEntity: by });
+      else this.boss.applyDamage(a, { cause: this.poolCause });
     } catch {
       /* ignore */
     }
@@ -373,6 +430,7 @@ export class Vesper {
     const th = this.pendingThreshold;
     if (!th || this.dying) return;
     if (this.action && !this.action.interruptible) return;
+    if (this.pool > 0) return; // wait for the pooled hit to land
     if (this.health() > this.pendingLevel + 0.5) {
       // the clamped hit was absorbed (e.g. invulnerability frames): wait for a real one
       this.pendingThreshold = undefined;
@@ -449,9 +507,10 @@ export class Vesper {
         console.warn("[VESPER-0] impulse steering ineffective; using teleport steering");
       }
     }
-    if (this.useTeleport || d > 24) {
+    const far = d > 72; // only when something went badly wrong (e.g. pushed far away while unloaded)
+    if (this.useTeleport || far) {
       try {
-        this.boss.teleport(add(pos, d > 24 ? mul(norm(to), Math.min(d, 3)) : want), { keepVelocity: false });
+        this.boss.teleport(add(pos, far ? mul(norm(to), Math.min(d, 4)) : want), { keepVelocity: false });
       } catch {
         /* ignore */
       }
@@ -541,7 +600,7 @@ export class Vesper {
   // ------------------------------------------------------------------ audience: music, fog, cinematic
   private syncAudience(): void {
     if (this.t % 20 !== 0) return;
-    const near = spectators(this.dim, this.arena, CFG.arenaRange + 16);
+    const near = spectators(this.dim, this.pos, CFG.arenaRange + 16);
     const ids = new Set(near.map((p) => p.id));
     for (const p of near) {
       if (!this.audience.has(p.id)) {
@@ -613,7 +672,10 @@ export class Vesper {
     this.t++;
     this.dim = this.boss.dimension;
     if (this.t % 5 === 1) this.refreshPlayers();
+    else this.players = this.players.filter((p) => p.isValid);
+    if (this.target && !this.target.isValid) this.target = this.players[0];
     if (this.t === 1) this.closeHeart();
+    this.flushDamage();
     this.handleThreshold();
     // leaving when nobody fights
     if (!this.players.length && !this.dying) {

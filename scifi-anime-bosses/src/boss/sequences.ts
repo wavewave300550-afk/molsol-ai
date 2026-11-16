@@ -11,7 +11,7 @@ import type { Step, Vesper } from "./controller.js";
 import { Censer, Plate, Seraph, Wave } from "./minions.js";
 
 function lore(v: Vesper, text: string): void {
-  for (const p of spectators(v.dim, v.arena, CFG.arenaRange + 16)) {
+  for (const p of spectators(v.dim, v.pos, CFG.arenaRange + 16)) {
     try {
       p.sendMessage(`§7§o« ${text} »`);
     } catch {
@@ -21,7 +21,7 @@ function lore(v: Vesper, text: string): void {
 }
 
 function title(v: Vesper, main: string, sub: string, stay = 60): void {
-  for (const p of spectators(v.dim, v.arena, CFG.arenaRange + 16)) {
+  for (const p of spectators(v.dim, v.pos, CFG.arenaRange + 16)) {
     try {
       p.onScreenDisplay.setTitle(main, { fadeInDuration: 10, stayDuration: stay, fadeOutDuration: 20, subtitle: sub });
     } catch {

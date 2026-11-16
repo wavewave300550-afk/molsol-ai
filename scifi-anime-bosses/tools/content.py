@@ -22,7 +22,7 @@ ENT = {
 }
 ITEMS = {"psalter": f"{NS}:astral_psalter", "halo": f"{NS}:orison_halo", "alloy": f"{NS}:vesper_alloy"}
 FOGS = {"p1": f"{NS}:fog_vesper_p1", "p2": f"{NS}:fog_vesper_p2"}
-FORMAT_ENTITY = "1.26.0"
+FORMAT_ENTITY = "1.26.50"
 FORMAT_ITEM = "1.21.90"
 FAMILY = ["sab_vesper"]
 
@@ -107,7 +107,7 @@ def entity(identifier, components, properties=None, groups=None, events=None, sp
 def bp_entities() -> Dict[str, dict]:
     out = {}
     # ---- the boss
-    c = base_components(1000, 8.0, 7.5, FAMILY + ["sab_boss", "monster", "mob"], persistent=True)
+    c = base_components(1200, 8.0, 7.5, FAMILY + ["sab_boss", "monster", "mob"], persistent=True)
     c.update({
         "minecraft:boss": {"hud_range": 96, "should_darken_sky": True},
         "minecraft:body_rotation_always_follows_head": {},

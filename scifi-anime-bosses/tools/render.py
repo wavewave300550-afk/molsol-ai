@@ -136,6 +136,9 @@ class Scene:
             self._raster(P[list(tri)], [uvq[i] for i in tri], tex, layer, shade, tint)
 
     def _raster(self, P, uvs, tex, layer, shade, tint):
+        r, u, f = self.cam
+        if ((P - self.eye) @ f).min() < 0.08:
+            return  # near-plane rejection (no clipping needed at preview quality)
         sx, sy, z = self.project(P)
         minx = max(int(math.floor(sx.min())), 0)
         maxx = min(int(math.ceil(sx.max())), self.W - 1)

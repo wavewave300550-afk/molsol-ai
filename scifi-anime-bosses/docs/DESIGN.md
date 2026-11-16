@@ -62,7 +62,7 @@ Passes: `geometry.sab.vesper_0` (opaque, `entity_emissive` – texture alpha is 
 | **Black Sun Nova** (P2) | core swells for 3 s, crescendo, screen shake | every player within 48 blocks **with line of sight** to the core; 18 blast dmg | hide behind fallen hull plates (entities, 3 hits each) or any blocks; Blast Protection helps |
 
 Damage taken: hull ×0.55 (P1), flesh ×0.8 (P2), heart ×1.75 when exposed, ×0.5 extra vs explosions,
-group scaling `1 / (1 + 0.5·(players−1))`, per-hit cap 60. Health 1000.
+group scaling `1 / (1 + 0.5·(players−1))` with per-attacker invulnerability frames, per-hit cap 60. Health 1200.
 
 ## Rewards
 
