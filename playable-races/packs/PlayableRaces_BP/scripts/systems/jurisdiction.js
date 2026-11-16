@@ -145,13 +145,13 @@ function tickCourts(now) {
         }
         const dim = owner.dimension;
         const age = now - c.born;
-        if (age % 8 === 0) {
+        if (Math.floor(age / 8) !== Math.floor((age - 4) / 8)) {
             for (let k = 0; k < 8; k++) {
                 const a = ((k * 45 + age * 0.9) * Math.PI) / 180;
                 particle(dim, "plrace:court_pillar", add(c.center, v3(Math.cos(a) * c.radius, 0.1, Math.sin(a) * c.radius)));
             }
         }
-        if (age % 20 === 0)
+        if (Math.floor(age / 20) !== Math.floor((age - 4) / 20))
             particle(dim, "plrace:court_ring", add(c.center, v3(0, 0.08, 0)), { size: c.radius * 2 });
         for (const e of enemiesNear(owner, c.center, c.radius + 2.5)) {
             const ex = c.exiled.get(e.id);

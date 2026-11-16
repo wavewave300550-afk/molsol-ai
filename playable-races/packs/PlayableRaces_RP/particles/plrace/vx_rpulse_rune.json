@@ -1,0 +1,63 @@
+{
+ "format_version": "1.10.0",
+ "particle_effect": {
+  "description": {
+   "identifier": "plrace:vx_rpulse_rune",
+   "basic_render_parameters": {
+    "material": "particles_add",
+    "texture": "textures/plrace/races/particles/particles_vfx"
+   }
+  },
+  "components": {
+   "minecraft:emitter_rate_instant": {
+    "num_particles": 2
+   },
+   "minecraft:emitter_lifetime_once": {
+    "active_time": 0.05
+   },
+   "minecraft:emitter_shape_disc": {
+    "radius": 0.5,
+    "plane_normal": "y"
+   },
+   "minecraft:particle_initial_speed": 0.0,
+   "minecraft:particle_lifetime_expression": {
+    "max_lifetime": "0.6 + v.particle_random_1 * 0.3"
+   },
+   "minecraft:particle_motion_dynamic": {
+    "linear_acceleration": [
+     0,
+     0.8,
+     0
+    ],
+    "linear_drag_coefficient": 1.2
+   },
+   "minecraft:particle_appearance_billboard": {
+    "size": [
+     "0.26 * math.clamp(math.min((v.particle_age / v.particle_lifetime) * 6, (1 - (v.particle_age / v.particle_lifetime)) * 2.5), 0, 1)",
+     "0.26 * math.clamp(math.min((v.particle_age / v.particle_lifetime) * 6, (1 - (v.particle_age / v.particle_lifetime)) * 2.5), 0, 1)"
+    ],
+    "facing_camera_mode": "lookat_xyz",
+    "uv": {
+     "texture_width": 512,
+     "texture_height": 512,
+     "uv": [
+      "256 + math.floor(v.particle_random_3 * 4) * 32",
+      448
+     ],
+     "uv_size": [
+      32,
+      32
+     ]
+    }
+   },
+   "minecraft:particle_appearance_tinting": {
+    "color": [
+     1.0,
+     0.843,
+     0.478,
+     1.0
+    ]
+   }
+  }
+ }
+}

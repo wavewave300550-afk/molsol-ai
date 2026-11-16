@@ -11263,12 +11263,6 @@
       ]
      }
     }
-   },
-   "particle_effects": {
-    "0.20": {
-     "effect": "dew",
-     "locator": "spores"
-    }
    }
   },
   "animation.plrace.salamander.intro_dormant": {
@@ -11730,12 +11724,6 @@
        0.0
       ]
      }
-    }
-   },
-   "particle_effects": {
-    "0.40": {
-     "effect": "flakes",
-     "locator": "spores"
     }
    }
   },
@@ -12760,12 +12748,6 @@
        1.0
       ]
      }
-    }
-   },
-   "particle_effects": {
-    "0.00": {
-     "effect": "rootburst",
-     "locator": "spores"
     }
    }
   },

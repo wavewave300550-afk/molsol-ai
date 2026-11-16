@@ -4,7 +4,7 @@
   "description": {
    "identifier": "plrace:gate_shadow",
    "basic_render_parameters": {
-    "material": "particles_alpha",
+    "material": "particles_blend",
     "texture": "textures/plrace/races/particles/particles_ex"
    }
   },
@@ -13,7 +13,7 @@
     "num_particles": 1
    },
    "minecraft:emitter_lifetime_once": {
-    "active_time": "0.1"
+    "active_time": 0.1
    },
    "minecraft:emitter_shape_point": {},
    "minecraft:particle_lifetime_expression": {
@@ -39,14 +39,12 @@
     }
    },
    "minecraft:particle_appearance_tinting": {
-    "color": {
-     "gradient": {
-      "0.0": "#00a07818",
-      "0.3": "#80a07818",
-      "1.0": "#00a07818"
-     },
-     "interpolant": "v.particle_age / v.particle_lifetime"
-    }
+    "color": [
+     0.078,
+     0.047,
+     0.063,
+     "0.45 * math.clamp(math.min((v.particle_age / v.particle_lifetime) * 6, (1 - (v.particle_age / v.particle_lifetime)) * 2.5), 0, 1)"
+    ]
    }
   }
  }

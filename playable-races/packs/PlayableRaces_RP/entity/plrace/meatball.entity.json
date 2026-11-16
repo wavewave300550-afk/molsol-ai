@@ -14,11 +14,13 @@
     "default": "geometry.plrace.meatball"
    },
    "animations": {
-    "spin": "animation.plrace.meatball.spin"
+    "spin": "animation.plrace.meatball.spin",
+    "trail": "animation.plrace.meatball.trail"
    },
    "scripts": {
     "animate": [
-     "spin"
+     "spin",
+     "trail"
     ]
    },
    "particle_effects": {

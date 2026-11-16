@@ -5,7 +5,7 @@
    "identifier": "plrace:vibration_trace",
    "basic_render_parameters": {
     "material": "particles_add",
-    "texture": "textures/plrace/races/particles/particles_ex"
+    "texture": "textures/plrace/races/particles/particles_vfx"
    }
   },
   "components": {
@@ -13,7 +13,7 @@
     "num_particles": 1
    },
    "minecraft:emitter_lifetime_once": {
-    "active_time": "0.1"
+    "active_time": 0.05
    },
    "minecraft:emitter_shape_point": {},
    "minecraft:particle_lifetime_expression": {
@@ -21,29 +21,39 @@
    },
    "minecraft:particle_appearance_billboard": {
     "size": [
-     "0.15 + (v.particle_age / v.particle_lifetime) * 0.9",
-     "0.15 + (v.particle_age / v.particle_lifetime) * 0.9"
+     1.4,
+     1.4
     ],
     "facing_camera_mode": "emitter_transform_xz",
     "uv": {
-     "texture_width": 256,
-     "texture_height": 256,
-     "uv": [
-      32,
-      0
-     ],
-     "uv_size": [
-      32,
-      32
-     ]
+     "texture_width": 512,
+     "texture_height": 512,
+     "flipbook": {
+      "base_UV": [
+       0,
+       64
+      ],
+      "size_UV": [
+       64,
+       64
+      ],
+      "step_UV": [
+       64,
+       0
+      ],
+      "max_frame": 8,
+      "loop": false,
+      "stretch_to_lifetime": true,
+      "frames_per_second": 8
+     }
     }
    },
    "minecraft:particle_appearance_tinting": {
     "color": [
-     "1",
-     "1",
-     "1",
-     "(1 - (v.particle_age / v.particle_lifetime)) * 0.55"
+     0.561,
+     0.42,
+     1.0,
+     0.55
     ]
    }
   }

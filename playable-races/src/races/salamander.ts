@@ -82,11 +82,12 @@ const snare: AbilityDef = {
   cooldown: 14,
   range: 8,
   needsTarget: true,
+  aim: (p, s) => aimTarget(p, state(s) === "bloom" ? 10 : 8, 14),
   original: "Cooldown 15 s, ~8 blocks, slows ~4 s.",
   desc: "Fling glandular filaments at prey up to 8 blocks away (10 while Blooming). It is slowed (Slowness III, 4 s), dragged toward you and ENSNARED: your next Carnivorous Embrace on it bites 50% harder.",
   cast({ p, s }) {
     const range = state(s) === "bloom" ? 10 : 8;
-    const t = aimTarget(p, range, 14);
+    const t = snare.aim!(p, s);
     if (!t) return `No prey within ${range} blocks`;
     const from = hand(p);
     const d = sub(chest(t), from);
@@ -117,10 +118,11 @@ const embrace: AbilityDef = {
   range: 3.5,
   cone: 70,
   needsTarget: true,
+  aim: (p) => aimTarget(p, 3.6, 70, (e) => isEnsnared(e.id, p.id)),
   original: "Cooldown 25 s, close-range bite that restores some health.",
   desc: "The trap-lobes on your forearms snap shut on a creature within 3.5 blocks: 6 damage (9 if Ensnared), it is held in place for a second, and you absorb 40% of the damage dealt as health (min 1 heart).",
   cast({ p, s }) {
-    const t = aimTarget(p, 3.6, 70, (e) => isEnsnared(e.id, p.id));
+    const t = embrace.aim!(p, s);
     if (!t) return "Nothing within reach (3.5 blocks)";
     const caught = isEnsnared(t.id, p.id);
     const dmg = caught ? 9 : 6;

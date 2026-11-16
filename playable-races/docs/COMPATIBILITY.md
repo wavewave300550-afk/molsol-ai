@@ -1,6 +1,6 @@
 # Technical Compatibility Report
 
-*Version 1.2.1 — foundation races 001–003 plus Expansion 01 (races 004–006), with the bodies, animations and effects of races 004–006 redrawn in 1.2.0; 1.2.1 rewrites the generated Molang into the forms vanilla files use (same motion). Nothing about how any race is stored changed: same pack ids, item ids, race codes, form names, saved player data and world settings. Races 001–003 keep their models and textures; their animation text was only rewritten, with identical values (checked by `tools/molang_equiv.py`).*
+*Version 1.3.0 — foundation races 001–003 plus Expansion 01 (races 004–006), with the bodies, animations and effects of races 004–006 redrawn in 1.2.0, the generated Molang rewritten into the forms vanilla files use in 1.2.1 (same motion), and new ability effects for every race in 1.3.0. Nothing about how any race is stored changed: same pack ids, item ids, race codes, form names, saved player data and world settings. Races 001–003 keep their models and textures; their animation text was only rewritten, with identical values (checked by `tools/molang_equiv.py`).*
 
 ## Target
 
@@ -78,7 +78,7 @@ All carry the family `plrace_proxy`. They are removed when their owner dies, lea
 | No dimension/biome files; no vanilla sound/lang overrides | ✅ |
 | Guide book given once per player (Lineage Codex), short chat message, recipe uses vanilla items (book + lapis + bone meal) | ✅ |
 | No terrain destruction; no ticking areas | ✅ |
-| Size budget (< 25 MB, < 3,500 files): 1.6 MB packaged, ~7.5 MB unpacked, 267 files (v1.2.0); every texture ≤ 256 KB memory | ✅ |
+| Size budget (< 25 MB, < 3,500 files): 1.9 MB packaged, ~7.8 MB unpacked, 374 files (v1.3.0); every model texture ≤ 256 KB of texture memory, the particle atlases ≤ 1 MB | ✅ |
 
 ## Performance
 
@@ -88,6 +88,7 @@ All carry the family `plrace_proxy`. They are removed when their owner dies, lea
 * Geometry (base forms, bones / cubes incl. cut-out and accent layers): Salamander 87 / 179, Golem 70 / 110, Jackalope 61 / 93, Xenentoma 74 / 103 (154 before 1.2.0), Flying Spaghetti Monster 68 / 136 (593 before 1.2.0), Nurariten 64 / 97 (court 96, throne 105); textures 256×256 or 256×128 RGBA.
 * HYAKUTEN CHŪKŌ adds ten entities for ≤ 10 s: ~1,050 cubes in total (eight 124-cube columns, a 36-cube gate, a 21-cube herald pair) and ~150 animated bones, driven by short looping client animations. Script cost per tick: one teleport per column, ground probes every 4 ticks per column, one small entity query per column every 4 ticks. Particle emitters are single bursts (seals, rings, fractures) — never per-figure.
 * New race ambient effects (sensilla motes, sauce drips, royal motes) are client-side attachable particles with 1–3 particles per emission, like the foundation races.
+* Since 1.3.0 every ability effect is an entry effect (same identifier as before) that starts its layers through particle **events** (`emitter_lifetime_events` → `particle_effect` of type `emitter`), all in particle format 1.10.0, using flipbook UVs, `lookat_direction` with a velocity or custom direction, `emitter_transform_xz` ground decals, `lookat_y` pillars and `particle_motion_collision`. They draw from a third texture, `textures/plrace/races/particles/particles_vfx.png` (512×512, 1 MB of texture memory). One cast creates at most 68 particles (the rite of transformation; the heaviest ability is 53), all client-side.
 * Since 1.2.0 the effects of races 004–006 use a second particle texture, `textures/plrace/races/particles/particles_ex.png` (256×256, full colour, 76 KB on disk), with the standard `particles_add`, `particles_blend` and `particles_alpha` materials; their identifiers are unchanged, so the scripts did not change. Races 001–003 keep the original 128×128 atlas.
 * Animation (v1.0.2): each form runs ~10 layers. Values shared by every layer — stride phase, the vanilla swing, speed, sprint and the fitted body bob — are computed **once per frame** in the attachable's `pre_animation` script and read as variables (`v.plr_*`), which halves the Molang work; the longest single channel expression is ~650 characters. Layers that only matter in third person are switched off in first person, idle behaviours and landings are short keyframed clips run by tiny controllers, and footfall dust is a 6-particle client-side burst.
 * Mobile/iOS: no shader changes, no custom materials, only vanilla entity materials (`entity_emissive_alpha` for glowing runes/veins, `entity_alphatest` for leaves and fur fringes, `entity_alphablend` for the mirage).

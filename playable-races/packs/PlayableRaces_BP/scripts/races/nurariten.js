@@ -253,10 +253,11 @@ const expulsion = {
     range: 12,
     cone: 20,
     needsTarget: true,
+    aim: (p) => aimTarget(p, 12, 20, (e) => marksOn(e, p.id) > 0),
     original: "Cooldown 40 s; casts a target out of the Sovereign's presence; synergy with the Uninvited Temple and judgment marks.",
     desc: "Point at one creature within 12 blocks and it is thrown out of your presence: 5 damage +3 per judgment mark (marks are consumed), knocked far away (farther per mark) and Slowed. Expelled from inside your court it takes +3 damage and is barred from re-entering for 6 s - it is turned back at the threshold. Aim assist prefers judged creatures.",
     cast({ p, s }) {
-        const t = aimTarget(p, 12, 20, (e) => marksOn(e, p.id) > 0);
+        const t = expulsion.aim(p, s);
         if (!t)
             return "No one here to expel";
         const marks = consumeMarks(t, p.id);

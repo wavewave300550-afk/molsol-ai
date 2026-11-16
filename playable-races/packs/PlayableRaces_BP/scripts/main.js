@@ -342,9 +342,9 @@ function reticle(p, s) {
     if (!race)
         return;
     const a = selected(s, race);
-    if (!a.needsTarget || !a.range)
+    if (!a.needsTarget || (!a.aim && !a.range))
         return;
-    const t = aimTarget(p, a.range, a.cone ?? 14);
+    const t = a.aim ? a.aim(p, s) : aimTarget(p, a.range ?? 8, a.cone ?? 14);
     if (t)
         privateParticle(p, "plrace:target_reticle", chest(t), rgb(RGB.green));
 }

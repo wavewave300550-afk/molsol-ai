@@ -5,45 +5,58 @@
    "identifier": "plrace:hydrate",
    "basic_render_parameters": {
     "material": "particles_add",
-    "texture": "textures/plrace/races/particles/particles"
+    "texture": "textures/plrace/races/particles/particles_vfx"
+   }
+  },
+  "events": {
+   "l0": {
+    "particle_effect": {
+     "effect": "plrace:vx_hyd_ring",
+     "type": "emitter"
+    }
+   },
+   "l1": {
+    "particle_effect": {
+     "effect": "plrace:vx_hyd_drops",
+     "type": "emitter"
+    }
    }
   },
   "components": {
    "minecraft:emitter_rate_instant": {
-    "num_particles": 10
+    "num_particles": 1
    },
    "minecraft:emitter_lifetime_once": {
-    "active_time": "0.1"
+    "active_time": 0.1
    },
-   "minecraft:emitter_shape_sphere": {
-    "radius": 1.2,
-    "direction": "inwards"
-   },
-   "minecraft:particle_initial_speed": 1.5,
+   "minecraft:emitter_shape_point": {},
    "minecraft:particle_lifetime_expression": {
-    "max_lifetime": 0.7
+    "max_lifetime": 0.05
    },
    "minecraft:particle_appearance_billboard": {
     "size": [
-     "0.06",
-     "0.06"
+     0,
+     0
     ],
     "facing_camera_mode": "lookat_xyz",
     "uv": {
-     "texture_width": 128,
-     "texture_height": 128,
+     "texture_width": 512,
+     "texture_height": 512,
      "uv": [
-      0,
-      0
+      32,
+      448
      ],
      "uv_size": [
-      16,
-      16
+      32,
+      32
      ]
     }
    },
-   "minecraft:particle_appearance_tinting": {
-    "color": "#ff6fd7ff"
+   "minecraft:emitter_lifetime_events": {
+    "creation_event": [
+     "l0",
+     "l1"
+    ]
    }
   }
  }

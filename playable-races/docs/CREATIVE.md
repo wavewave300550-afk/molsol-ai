@@ -257,6 +257,35 @@ The three new bodies use the same layered, stateless animation system as v1.0.2 
 ![Flying Spaghetti Monster v1.2](images/race_005_spaghetti.png)
 ![Helper entities](images/helper_entities.png)
 
+## Ability effects overhaul (v1.3.0): every race
+
+**Why:** in game the player found the skill effects "extremely not beautiful" and asked for all of them to be redone, for all six races, in the direction they chose: **spectacular glow** — flashes, magic circles drawn on the ground, beams and streaking sparks, shockwaves, debris; a charge → release → impact → linger rhythm; still at home in Minecraft.
+
+**How it is built (identifiers unchanged, gameplay unchanged):**
+* A third particle atlas, `particles_vfx.png` (512×512), holds **white, animated sprites**: 8-frame flipbooks of a starburst flash, a shockwave ring, a magic circle that draws itself, a sword-arc slash, a smoke puff, a liquid splash and a branching crack, plus 20 static sprites (streak, star, petal, leaf, droplet, shard, four runes, crescent, hexagon, rock chunk, glyph ring, spiral...). The particle tint gives each race its colour, so one sprite serves every race.
+* Every identifier the scripts spawn became an **entry effect that fires layers through particle events** on a timeline (`tools/vfx/lib.py: compose`). One script call now gives, for example, a converging charge, a flash, an expanding ring, streaking sparks and falling debris, each its own small effect (`plrace:vx_*`, 106 layers). Layers that need what the script passes in (beam direction and length, circle radius and duration, slash angle and size, the race colour) are drawn by the entry effect itself, since child emitters do not inherit variables.
+* New Bedrock particle features in use: flipbooks, `lookat_direction` sparks stretched along their velocity (or along the aimed direction), ground decals (`emitter_transform_xz`), pillars of light (`lookat_y`), rocks that **bounce on blocks** (collision), and soft fades on `particles_blend`/`particles_add` (no more cut-out sprites for anything that fades).
+* Budget: one cast is at most 68 particles (the rite of transformation; the heaviest ability is 53), checked for every entry effect.
+
+| Race | Effects |
+|---|---|
+| 001 Salamander | Sundew Snare: spores gather, a glowing nectar filament streaks to the prey, a sundew blossom opens on the ground under it · Carnivorous Embrace: two green jaws snap, a pink burst, leaves · Root Metamorphosis: roots crack the ground in a ring, sap rises in columns, leaves fall · Bladder Jet: a water shock ring, streaking spray, bubbles · dew and hydration splashes |
+| 002 Golem | Titan's Edict: each step of the shockwave tears a molten crack with rocks, dust and a rune pillar · Runic Bastion: hexagonal rune shields flash where blows land · Glyph Dominion: the great circle draws itself, runes rise, pillars of light walk its rim · Colossus Reassembly: glowing stone streams along the path and reforms with a blast |
+| 003 Jackalope | Lunar Bound: crescent afterimages and glints along the leap · Antler Brand: a turning moon sigil · Velvet Mirage: silver-violet smoke and stars · Crimson Waltz: huge crimson arcs with flashes and sparks, a full-moon finisher |
+| 004 Xenentoma | violet sonar rings on the ground · a moulting shimmer with fluid and spinning chitin flakes · violet impacts for the Surge |
+| 005 Spaghetti Monster | golden noodles reaching out · Al Dente's crack of light and splinters · marinara crowns and drops · the Revelation's turning golden spiral and a sauce shockwave with a holy pillar and steam · the meatball's sauce trail |
+| 006 Nurariten | torii gates of light with petals · decree glyphs bursting with a golden ring · the court circle drawing itself with pillars of light along its rim · light tearing the sky · petals and gold dust as everything dissolves |
+| Shared | the rite of transformation (a magic circle in the race colour, a pillar of light, falling stars) · a sharper aim reticle |
+
+**Visual bugs fixed on the way:** the court's walking pillars and ring (Temple and HYAKUTEN) only drew for about one court in four (the court loop runs every 4 ticks but tested `age % 8` / `% 20`); the aim reticle could mark a different creature than the cast would take and ignored the Bloom range (abilities now expose `aim()`, which both the cast and the reticle use); Root / Bloom / Dormant played their burst twice; the detached meatball's sauce trail never fired; shadows drawn with the cut-out material could vanish.
+
+**Tooling:** `tools/vfx/` (atlas, layer builders, effect definitions per race, an offline particle simulator) and `tools/vfx_gifs.py`, which re-enacts what each ability's script spawns — identifiers, positions, timing and variables — next to the race's model and renders it from the pack's own particle files.
+
+| | | |
+|---|---|---|
+| ![006 effects](images/vfx_nurariten.gif) | ![005 effects](images/vfx_spaghetti.gif) | ![004 effects](images/vfx_xenentoma.gif) |
+| ![001 effects](images/vfx_salamander.gif) | ![002 effects](images/vfx_golem.gif) | ![003 effects](images/vfx_jackalope.gif) |
+
 ## Shared systems built for this release
 
 * **Lineage Codex** — selection with race portraits, detail pages (lore, strengths, weaknesses, passives, abilities with the original brief values), a confirmation step, the Rite of Unbecoming (policy-controlled race change), Veil/Manifest, Crest Infusion, Recall Focus, an archive of all races and operator settings. Opens once automatically for new players and never nags.

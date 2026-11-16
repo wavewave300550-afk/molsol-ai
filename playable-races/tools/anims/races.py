@@ -404,9 +404,7 @@ def salamander(model) -> Dict[str, object]:
     for p, s_ in SIDES:
         for k in range(4):
             intro["base"].bone(f"plate_{p}{k}", rot={0.0: [0, 0, 0], 0.15: [0, 0, 9 * -s_], 0.35: [0, 0, -4 * -s_], 0.6: [0, 0, 0]})
-    intro["rooted"].particle(0.0, "rootburst", "spores")
-    intro["bloom"].particle(0.2, "dew", "spores")
-    intro["dormant"].particle(0.4, "flakes", "spores")
+    # (Root / Bloom / Dormant: the script spawns the burst itself when the state changes)
     intro["predatory"].particle(0.0, "drip", "mouth")
 
     pred = Layer(r, "predatory_loop", loop=True)          # agitated: quick breaths, lashing tail, twitching jaw

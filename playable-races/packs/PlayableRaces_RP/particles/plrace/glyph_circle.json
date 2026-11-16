@@ -5,7 +5,27 @@
    "identifier": "plrace:glyph_circle",
    "basic_render_parameters": {
     "material": "particles_add",
-    "texture": "textures/plrace/races/particles/particles"
+    "texture": "textures/plrace/races/particles/particles_vfx"
+   }
+  },
+  "events": {
+   "l0": {
+    "particle_effect": {
+     "effect": "plrace:vx_dom_flash",
+     "type": "emitter"
+    }
+   },
+   "l1": {
+    "particle_effect": {
+     "effect": "plrace:vx_dom_ring",
+     "type": "emitter"
+    }
+   },
+   "l2": {
+    "particle_effect": {
+     "effect": "plrace:vx_dom_runes",
+     "type": "emitter"
+    }
    }
   },
   "components": {
@@ -13,7 +33,7 @@
     "num_particles": 1
    },
    "minecraft:emitter_lifetime_once": {
-    "active_time": "0.1"
+    "active_time": 0.4
    },
    "minecraft:emitter_shape_point": {},
    "minecraft:particle_lifetime_expression": {
@@ -21,34 +41,53 @@
    },
    "minecraft:particle_initial_spin": {
     "rotation": 0,
-    "rotation_rate": 14
+    "rotation_rate": 12
    },
    "minecraft:particle_appearance_billboard": {
     "size": [
-     "v.radius * math.min(1, v.particle_age * 3)",
-     "v.radius * math.min(1, v.particle_age * 3)"
+     "v.radius * 2.25",
+     "v.radius * 2.25"
     ],
     "facing_camera_mode": "emitter_transform_xz",
     "uv": {
-     "texture_width": 128,
-     "texture_height": 128,
-     "uv": [
-      64,
-      64
-     ],
-     "uv_size": [
-      64,
-      64
-     ]
+     "texture_width": 512,
+     "texture_height": 512,
+     "flipbook": {
+      "base_UV": [
+       0,
+       128
+      ],
+      "size_UV": [
+       64,
+       64
+      ],
+      "step_UV": [
+       64,
+       0
+      ],
+      "max_frame": 8,
+      "loop": false,
+      "stretch_to_lifetime": false,
+      "frames_per_second": 13.333
+     }
     }
    },
    "minecraft:particle_appearance_tinting": {
     "color": [
-     "1.0",
-     "0.82",
-     "0.35",
-     "0.85 * math.clamp((v.life - v.particle_age) * 2, 0, 1)"
+     1.0,
+     0.71,
+     0.278,
+     "0.95 * math.clamp((v.life - v.particle_age) * 2, 0, 1)"
     ]
+   },
+   "minecraft:emitter_lifetime_events": {
+    "creation_event": [
+     "l0",
+     "l1"
+    ],
+    "timeline": {
+     "0.30": "l2"
+    }
    }
   }
  }

@@ -977,6 +977,10 @@ ok(Math.abs(n_before - sov._health - 8.5) < 0.01, "-15% damage taken inside its 
 sov._health = 20;
 tickN(70);
 ok(particles("plrace:court_pillar") > 0 && particles("plrace:court_ring") > 0, "pillars of light and a ring mark the boundary");
+const n_pil0 = particles("plrace:court_pillar"), n_ring0 = particles("plrace:court_ring");
+tickN(40);
+ok(particles("plrace:court_pillar") - n_pil0 >= 32 && particles("plrace:court_ring") - n_ring0 >= 2,
+  "the boundary keeps drawing: 8 pillars every 0.4 s and the ring every second, whatever tick the court opened on");
 ok(OW.getEntities({ type: "minecraft:zombie" }).length >= 1, "the court changes no blocks and summons nothing hostile");
 // expel from inside the court: the creature is barred from returning
 await select(sov, 3); // -> Expulsion

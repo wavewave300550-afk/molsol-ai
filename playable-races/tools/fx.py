@@ -607,6 +607,10 @@ def particles() -> Dict[str, dict]:
     redrawn = fx_ex.particles()
     assert set(redrawn) == set(fx_ex.RACE_PARTICLES) and set(redrawn) <= set(P), "fx_ex must only redraw existing effects"
     P.update(redrawn)
+    # v1.3: every ability effect of all six races becomes a layered entry effect on the
+    # animated white atlas (vfx/); identifiers stay, layers are new plrace:vx_* effects
+    from vfx import races as vfx_races
+    P.update(vfx_races.build())
     return P
 
 

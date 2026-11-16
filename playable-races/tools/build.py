@@ -33,9 +33,10 @@ from anims import xenentoma as anim_xenentoma  # noqa: E402
 from anims import spaghetti as anim_spaghetti  # noqa: E402
 import fx  # noqa: E402
 import fx_ex  # noqa: E402
+from vfx import atlas as vfx_atlas  # noqa: E402
 
 NS = "plrace"
-VERSION = [1, 2, 1]
+VERSION = [1, 3, 0]
 MIN_ENGINE = [1, 26, 60]
 SERVER_API = "2.11.0"
 UI_API = "2.3.0"
@@ -489,9 +490,11 @@ def race_entities(lang):
     spin.bone("ball", rot=["q.life_time * 720", 0, "math.sin(q.life_time * 400) * 10"])
     for k in range(2):
         spin.bone(f"tether{k}", rot=[aset.osc(3.0, 14, k * 90), aset.osc(2.4, 20, k * 60), 0])
-    wjson(os.path.join(RP, "animations/plrace/meatball.animation.json"), acore.file([spin]))
+    trail = acore.Anim(f"animation.{NS}.meatball.trail", loop=True, length=0.15)
+    trail.particle(0.0, "trail", "trail")
+    wjson(os.path.join(RP, "animations/plrace/meatball.animation.json"), acore.file([spin, trail]))
     proxy_entity(lang, f"{NS}:meatball", "Meatball", {"default": f"geometry.{NS}.meatball"},
-                 f"{TEXROOT}/spaghetti/meatball", {"spin": f"animation.{NS}.meatball.spin"}, ["inanimate"],
+                 f"{TEXROOT}/spaghetti/meatball", {"spin": f"animation.{NS}.meatball.spin", "trail": f"animation.{NS}.meatball.trail"}, ["inanimate"],
                  health=1, size=(0.5, 0.5), timer=14, physics=False, gravity=False,
                  particles={"trail": f"{NS}:meatball_trail"})
     # Nurariten: the celestial gate, the heralds and the processions of the Hundred Heavens
@@ -718,6 +721,7 @@ def pack_icon(path_bp, path_rp):
 def particles():
     fx.atlas().save(_mk(os.path.join(RP, f"{TEXROOT}/particles/particles.png")))
     fx_ex.atlas().save(_mk(os.path.join(RP, f"{TEXROOT}/particles/particles_ex.png")))
+    vfx_atlas.atlas().save(_mk(os.path.join(RP, f"{TEXROOT}/particles/particles_vfx.png")))
     for name, data in fx.particles().items():
         wjson(os.path.join(RP, f"particles/plrace/{name}.json"), data)
     wjson(os.path.join(RP, "fogs/plrace_blood_moon.json"), fx.fog())
@@ -754,14 +758,14 @@ def manifests():
             {"module_name": "@minecraft/server", "version": SERVER_API},
             {"module_name": "@minecraft/server-ui", "version": UI_API}],
         "metadata": {"authors": ["Playable Races project"], "product_type": "addon",
-                     "generated_with": {"plrace_build": ["1.2.1"]}}}
+                     "generated_with": {"plrace_build": ["1.3.0"]}}}
     rp = {"format_version": 2, "header": {
         "name": "pack.name", "description": "pack.description", "uuid": UUID["rp"], "pack_scope": "world",
         "version": VERSION, "min_engine_version": MIN_ENGINE},
         "modules": [{"type": "resources", "uuid": UUID["rp_res"], "version": VERSION}],
         "dependencies": [{"uuid": UUID["bp"], "version": VERSION}],
         "metadata": {"authors": ["Playable Races project"], "product_type": "addon",
-                     "generated_with": {"plrace_build": ["1.2.1"]}}}
+                     "generated_with": {"plrace_build": ["1.3.0"]}}}
     wjson(os.path.join(BP, "manifest.json"), bp)
     wjson(os.path.join(RP, "manifest.json"), rp)
 

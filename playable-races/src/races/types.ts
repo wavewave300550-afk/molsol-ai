@@ -1,4 +1,4 @@
-import { EntityHurtBeforeEvent, Player } from "@minecraft/server";
+import { Entity, EntityHurtBeforeEvent, Player } from "@minecraft/server";
 import { EndReason, Session } from "../core/session.js";
 
 export interface CastContext {
@@ -22,6 +22,8 @@ export interface AbilityDef {
   range?: number; // for the targeting reticle
   cone?: number; // aim-assist cone for the reticle (degrees, default 14)
   needsTarget?: boolean;
+  /** The creature the cast would take right now (the reticle shows exactly this one). */
+  aim?(p: Player, s: Session): Entity | undefined;
   /** Unique ultimate (shown with its own styling in the Codex and HUD). */
   ultimate?: boolean;
   /** Pre-check; return a reason string to block casting. */

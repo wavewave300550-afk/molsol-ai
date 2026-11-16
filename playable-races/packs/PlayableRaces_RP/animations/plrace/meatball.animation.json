@@ -26,6 +26,16 @@
      ]
     }
    }
+  },
+  "animation.plrace.meatball.trail": {
+   "loop": true,
+   "animation_length": 0.15,
+   "particle_effects": {
+    "0.00": {
+     "effect": "trail",
+     "locator": "trail"
+    }
+   }
   }
  }
 }

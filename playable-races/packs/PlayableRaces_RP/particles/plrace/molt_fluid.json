@@ -4,43 +4,65 @@
   "description": {
    "identifier": "plrace:molt_fluid",
    "basic_render_parameters": {
-    "material": "particles_blend",
-    "texture": "textures/plrace/races/particles/particles_ex"
+    "material": "particles_add",
+    "texture": "textures/plrace/races/particles/particles_vfx"
+   }
+  },
+  "events": {
+   "l0": {
+    "particle_effect": {
+     "effect": "plrace:vx_molt_flash",
+     "type": "emitter"
+    }
+   },
+   "l1": {
+    "particle_effect": {
+     "effect": "plrace:vx_molt_ring",
+     "type": "emitter"
+    }
+   },
+   "l2": {
+    "particle_effect": {
+     "effect": "plrace:vx_molt_splash",
+     "type": "emitter"
+    }
+   },
+   "l3": {
+    "particle_effect": {
+     "effect": "plrace:vx_molt_flakes",
+     "type": "emitter"
+    }
+   },
+   "l4": {
+    "particle_effect": {
+     "effect": "plrace:vx_molt_motes",
+     "type": "emitter"
+    }
    }
   },
   "components": {
    "minecraft:emitter_rate_instant": {
-    "num_particles": 4
+    "num_particles": 1
    },
    "minecraft:emitter_lifetime_once": {
-    "active_time": "0.1"
+    "active_time": 0.2
    },
-   "minecraft:emitter_shape_sphere": {
-    "radius": 0.35
-   },
-   "minecraft:particle_initial_speed": 0.25,
+   "minecraft:emitter_shape_point": {},
    "minecraft:particle_lifetime_expression": {
-    "max_lifetime": 0.9
-   },
-   "minecraft:particle_motion_dynamic": {
-    "linear_acceleration": [
-     0,
-     -5.0,
-     0
-    ]
+    "max_lifetime": 0.05
    },
    "minecraft:particle_appearance_billboard": {
     "size": [
-     "0.06",
-     "0.06 + math.min((v.particle_age / v.particle_lifetime) * 0.08, 0.04)"
+     0,
+     0
     ],
     "facing_camera_mode": "lookat_xyz",
     "uv": {
-     "texture_width": 256,
-     "texture_height": 256,
+     "texture_width": 512,
+     "texture_height": 512,
      "uv": [
-      96,
-      0
+      32,
+      448
      ],
      "uv_size": [
       32,
@@ -48,15 +70,17 @@
      ]
     }
    },
-   "minecraft:particle_appearance_tinting": {
-    "color": [
-     "1",
-     "1",
-     "1",
-     "math.clamp((1 - (v.particle_age / v.particle_lifetime)) * 3, 0, 1)"
-    ]
-   },
-   "minecraft:particle_appearance_lighting": {}
+   "minecraft:emitter_lifetime_events": {
+    "creation_event": [
+     "l0",
+     "l1",
+     "l2"
+    ],
+    "timeline": {
+     "0.02": "l3",
+     "0.10": "l4"
+    }
+   }
   }
  }
 }

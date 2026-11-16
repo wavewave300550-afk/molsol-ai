@@ -5,7 +5,7 @@
    "identifier": "plrace:court_ring",
    "basic_render_parameters": {
     "material": "particles_add",
-    "texture": "textures/plrace/races/particles/particles_ex"
+    "texture": "textures/plrace/races/particles/particles_vfx"
    }
   },
   "components": {
@@ -13,7 +13,7 @@
     "num_particles": 1
    },
    "minecraft:emitter_lifetime_once": {
-    "active_time": "0.1"
+    "active_time": 0.1
    },
    "minecraft:emitter_shape_point": {},
    "minecraft:particle_lifetime_expression": {
@@ -21,20 +21,20 @@
    },
    "minecraft:particle_initial_spin": {
     "rotation": 0,
-    "rotation_rate": 12
+    "rotation_rate": 8
    },
    "minecraft:particle_appearance_billboard": {
     "size": [
-     "v.size * 0.5",
-     "v.size * 0.5"
+     "v.size",
+     "v.size"
     ],
     "facing_camera_mode": "emitter_transform_xz",
     "uv": {
-     "texture_width": 256,
-     "texture_height": 256,
+     "texture_width": 512,
+     "texture_height": 512,
      "uv": [
-      0,
-      96
+      448,
+      128
      ],
      "uv_size": [
       64,
@@ -44,10 +44,10 @@
    },
    "minecraft:particle_appearance_tinting": {
     "color": [
-     "1",
-     "1",
-     "1",
-     "math.clamp(math.min((v.particle_age / v.particle_lifetime) * 6, (1 - (v.particle_age / v.particle_lifetime)) * 2.5), 0, 1) * 0.9"
+     1.0,
+     0.839,
+     0.467,
+     "0.75 * math.clamp(math.min((v.particle_age / v.particle_lifetime) * 6, (1 - (v.particle_age / v.particle_lifetime)) * 2.5), 0, 1)"
     ]
    }
   }

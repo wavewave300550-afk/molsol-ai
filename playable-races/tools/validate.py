@@ -323,6 +323,25 @@ PARTICLE_BUILTINS = {f"{w}_{k}" for w in ("particle", "emitter") for k in ("age"
 _js_all = "".join(open(f, encoding="utf-8").read() for f in glob.glob(os.path.join(BP, "scripts", "**", "*.js"), recursive=True))
 _passed = {}
 for pid, d in particles.items():
+    for ev, body in d.get("events", {}).items():                 # layered effects: every child must exist
+        child = body.get("particle_effect", {}).get("effect")
+        if child:
+            check(child in particles or child in VANILLA_PARTICLES, f"{pid}: event {ev} starts unknown effect {child}")
+    lev = d.get("components", {}).get("minecraft:emitter_lifetime_events", {})
+    for key in ("creation_event", "expiration_event"):
+        for ev in ([lev[key]] if isinstance(lev.get(key), str) else lev.get(key, [])):
+            check(ev in d.get("events", {}), f"{pid}: {key} names undefined event {ev}")
+    for t, evs in lev.get("timeline", {}).items():
+        for ev in ([evs] if isinstance(evs, str) else evs):
+            check(ev in d.get("events", {}), f"{pid}: timeline {t} names undefined event {ev}")
+    bbd = d.get("components", {}).get("minecraft:particle_appearance_billboard", {})
+    fb = bbd.get("uv", {}).get("flipbook")
+    if fb and all(isinstance(x, (int, float)) for x in fb["base_UV"] + fb.get("step_UV", [0, 0]) + fb["size_UV"] + [fb["max_frame"]]):
+        tw, th = bbd["uv"]["texture_width"], bbd["uv"]["texture_height"]
+        lx = fb["base_UV"][0] + fb.get("step_UV", [0, 0])[0] * (fb["max_frame"] - 1)
+        ly = fb["base_UV"][1] + fb.get("step_UV", [0, 0])[1] * (fb["max_frame"] - 1)
+        check(0 <= min(fb["base_UV"][0], lx) and max(fb["base_UV"][0], lx) + fb["size_UV"][0] <= tw
+              and 0 <= min(fb["base_UV"][1], ly) and max(fb["base_UV"][1], ly) + fb["size_UV"][1] <= th, f"{pid}: flipbook frames outside the texture")
     for where, expr in molang_strings(d.get("components", {})):
         if re.fullmatch(r"[a-z_]+|#[0-9a-fA-F]{6,8}", expr):
             continue                                   # enum words (directions, facing modes) and hex colours
@@ -464,7 +483,8 @@ check("plrace:heaven_light" in fog_ids, "heaven light fog file")
 for f in glob.glob(os.path.join(RP, "textures", "**", "*.png"), recursive=True):
     im = Image.open(f)
     w, h = im.size
-    check(w * h * 4 <= 262144 or "/ui/" in f, f"texture over memory budget: {os.path.relpath(f, RP)}")
+    budget = 1048576 if "/particles/" in f else 262144          # particle atlases: up to 512 x 512
+    check(w * h * 4 <= budget or "/ui/" in f, f"texture over memory budget: {os.path.relpath(f, RP)}")
 
 print(f"{checks} checks, {len(errors)} errors, {len(warnings)} warnings")
 for w in [w for w in warnings if "geometry.plrace.golem" not in w][:40]:

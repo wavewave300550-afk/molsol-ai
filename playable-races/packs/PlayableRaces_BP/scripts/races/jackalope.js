@@ -157,10 +157,11 @@ const waltz = {
     range: 10,
     cone: 60,
     needsTarget: true,
+    aim: (p) => aimTarget(p, 10, 60, (e) => markedBy(e) === p.id),
     original: "Cooldown 45 s; consecutive high-speed leaps around a target with crimson crescent attacks from the antlers.",
     desc: "Choose a target within 10 blocks (branded enemies first) and dance around it: 4 blinding leaps (6 under the Blood Moon), each ending in a crimson antler crescent (4 damage, 6 vs branded), then a full-moon cross slash (6, 9 vs branded) that launches it. You take 50% less damage while waltzing. Blood Moon slashes also heal you for 20% of their damage.",
     cast({ p, s }) {
-        const target = aimTarget(p, 10, 60, (e) => markedBy(e) === p.id);
+        const target = waltz.aim(p, s);
         if (!target)
             return "No target within 10 blocks";
         const blood = awakened(p);
