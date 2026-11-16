@@ -833,7 +833,7 @@ def _reach(ctx):
     blaze, open_, day = _P(ctx)
     if open_ or day:
         return 40.0, 1.0
-    return (14.0, 0.95) if blaze else (11.5, 0.8)
+    return (13.0, 0.95) if blaze else (11.5, 0.8)
 
 
 def crack(rgb, glow, d, r, reach, heat, width=0.3):
@@ -841,7 +841,7 @@ def crack(rgb, glow, d, r, reach, heat, width=0.3):
     fade = np.clip(1 - r / reach, 0, 1)
     core = (d < width) & (fade > 0.02)
     rim = (d < width + 0.34) & ~core & (fade > 0.1)
-    rgb = np.where(core[:, None], px.smooth_ramp(SUN, 0.62 + 0.38 * fade), rgb)
+    rgb = np.where(core[:, None], px.smooth_ramp(SUN, 0.48 + 0.24 * fade + 0.14 * (heat > 0.9)), rgb)   # gold, white-hot only near
     rgb = np.where(rim[:, None], _mix(rgb, SUN[2], 0.35 + 0.35 * fade), rgb)
     glow = np.where(core, np.maximum(glow, (0.42 + 0.53 * fade) * heat), glow)
     glow = np.where(rim, np.maximum(glow, 0.22 * fade * heat), glow)
@@ -881,7 +881,7 @@ def limb_cracks(ctx, rgb, glow, seed=0):
     if H < 5 or W < 3:
         return rgb, glow
     k = ctx.seed * 3 + len(ctx.face) * 7 + seed
-    if _h(np.array([k]), np.array([1]), 5)[0] > 0.7:                  # about two faces in three
+    if _h(np.array([k]), np.array([1]), 5)[0] > 0.5:                  # about half the faces
         return rgb, glow
     x0 = 1 + int(_h(np.array([k]), np.array([2]), 9)[0] * max(W - 2, 1))
     zz = np.array(ZIG)[(iy + k) % len(ZIG)]
@@ -891,7 +891,7 @@ def limb_cracks(ctx, rgb, glow, seed=0):
     sgn = 1 if x0 < W / 2 else -1
     on |= (iy > b) & (iy <= b + 3) & (ix == np.clip(x_line + sgn * (iy - b), 0, W - 1))
     r = np.linalg.norm(_wp(ctx) - np.array(chest_world(ENTRY)), axis=1)
-    return crack(rgb, glow, np.where(on, 0.0, 9.0), r, 36.0, 0.95)
+    return crack(rgb, glow, np.where(on, 0.0, 9.0), r, 36.0, 0.85)
 
 
 def sun_spill(ctx, reach: float = 9.0):
@@ -936,6 +936,8 @@ def skin(ctx, lv, belly=False, spill=1.0, wet=True, seed=0):
     brightest texels, sparse wet glints along upper edges, the warm light of the wound."""
     ix, iy, W, H = px.texel(ctx)
     pal = skin_pal(ctx, belly)
+    wn = _wn(ctx)
+    lv = lv - 0.12 * max(wn[1], 0.0) + 0.1 * max(-wn[1], 0.0)   # countershaded like a shark: dark above, pale below
     lv = 0.2 + 0.7 * lv                                       # faces land in the midtones; the top is for wet light
     rgb = px.smooth_ramp(pal, lv)
     blaze, open_, day = _P(ctx)
@@ -1305,7 +1307,7 @@ def plate_paint(ctx, crack_fn=chest_cracks, photo=True, rim_glow=0.0):
         rgb = px.smooth_ramp(ARMOR, lv - 0.18)
         rgb = np.where((iy == 0)[:, None], _mix(rgb, ARMOR[5], 0.6), rgb)
         rgb = np.where((iy == H - 1)[:, None] if H >= 2 else np.zeros((ctx.N, 1), bool), SEAMLINE, rgb)
-        if day > 0.5:                                                     # ... and from every seam
+        if day > 0.5 and ctx.face == "south":                             # ... and from every seam (trailing edges)
             rgb = _mix(rgb, SUN[3], 0.8)
             glow = np.full(ctx.N, 0.75)
     if crack_fn is not None:
@@ -1313,8 +1315,9 @@ def plate_paint(ctx, crack_fn=chest_cracks, photo=True, rim_glow=0.0):
     if photo and ctx.face == "up" and W >= 4 and H >= 4:
         n = _wn(ctx)
         g = np.zeros(ctx.N)
-        if abs(n[0]) > 0.45:                                              # a photophore on every flange and lame:
-            g = np.clip(1 - np.hypot(ix - (W - 1) / 2, iy - (H - 1) / 2) / 1.3, 0, 1)   # rows down the back
+        if abs(n[0]) > 0.45:                                              # two photophores on every flange and lame:
+            for fy in (0.3, 0.72):                                        # rows down the back
+                g = np.maximum(g, np.clip(1 - np.hypot(ix - (W - 1) / 2, iy - (H - 1) * fy) / 1.45, 0, 1))
         rgb, glow = photophores(rgb, glow, g, gold=day > 0.5)
     return rgb, glow
 
@@ -1453,10 +1456,10 @@ def _corona_paint(ctx, center, r_max, plane_n):
     r = np.linalg.norm(_wp(ctx) - np.array(chest_world(center)), axis=1)
     v = np.clip((r - 1.8) / (r_max - 1.8), 0, 1)
     hot = 1.0 + 0.15 * blaze + 0.1 * open_
-    rgb = px.smooth_ramp(SUN[::-1], np.clip(v * 0.95, 0, 1))      # white -> gold -> amber -> deep orange
+    rgb = px.smooth_ramp(SUN[::-1], np.clip(v * 0.72, 0, 1))      # white -> gold -> amber at the tip
     if day > 0.5:
         rgb = _mix(rgb, SUN[6], 0.25)
-    g = np.clip((0.98 * (1 - v) ** 1.25 + 0.1) * hot, 0, 1)
+    g = np.clip((0.8 * (1 - v) ** 1.2 + 0.24) * hot, 0, 1)
     return rgb, ctx.ones(), g
 
 

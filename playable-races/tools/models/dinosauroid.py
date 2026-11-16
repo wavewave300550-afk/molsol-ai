@@ -260,9 +260,9 @@ def build() -> Model:
     _tail(m)
     fp_sleeves(m, "sleeve", width=4.4)
     accents(m, [
-        ("c", "breast", "trunk", (0, 18.5, -3.6), (4.5, 4.0, 0.5)),
-        ("l", "r", "r_thigh", (-5.25, 10.5, -0.25), (0.5, 3.5, 3.5)),
-        ("l", "l", "l_thigh", (5.25, 10.5, -0.25), (0.5, 3.5, 3.5)),
+        ("c", "breast", "trunk", (0, 19.25, -3.4), (4.5, 4.0, 0.5)),       # upright trunk frame: the upper breast
+        ("l", "r", "r_thigh", (-6.0, 10.75, -0.25), (0.5, 3.5, 3.5)),
+        ("l", "l", "l_thigh", (6.0, 10.75, -0.25), (0.5, 3.5, 3.5)),
         ("f", "r", "r_meta", (-3.25, 2.25, 1.75), (2.0, 1.0, 2.0)),
         ("f", "l", "l_meta", (3.25, 2.25, 1.75), (2.0, 1.0, 2.0)),
     ])
@@ -773,7 +773,7 @@ def mat_body(ctx):
     lv = lv + px.ao_near(ctx, [(s * 2.9, 13.4, 1.5) for s in (-1, 1)], 3.5, 0.14)
     rgb = _plumage(lv, dorsal, ventral, band, scal)
     g = ctx.zeros()
-    wid = 0.1 + 0.05 * _night(ctx) + (0.04 if _over(ctx) else 0.0)
+    wid = 0.1 + 0.05 * _night(ctx) + (-0.01 if _over(ctx) else 0.0)
     flank = np.clip(1 - np.abs(np.abs(nl[:, 0]) - 0.8) / wid, 0, 1)
     flank = flank * _ss(12.5, 15.0, u[:, 1]) * _ss(23.0, 20.5, u[:, 1])
     if not _over(ctx):                               # a row of display spots on each flank (a continuous line in the overflow)
@@ -845,18 +845,18 @@ def mat_neck(ctx):
     scal = _scallop(np.arctan2(nn[:, 0], nn[:, 2]) * 2.2, -p[:, 1], 2.5, 1.6, 0.11)
     band = _ss(0.6, 0.95, 0.5 + 0.5 * np.cos(p[:, 1] * 2 * np.pi / 2.6))
     rgb = _plumage(lv, np.clip(nn[:, 2] + 0.3, 0, 1), 0.0, band, scal)
-    w = 0.35 + 0.25 * _night(ctx) + (0.3 if _over(ctx) else 0.0)          # half-width of the line, units
+    w = 0.35 + 0.25 * _night(ctx) + (0.15 if _over(ctx) else 0.0)         # half-width of the line, units
     line = _ss(w, w * 0.35, np.abs(p[:, 0])) * _ss(0.2, 0.6, front) * _ss(0.0, 0.12, t)
     off = _TUBES["_last_off"]
     ang = np.degrees(np.arctan2(np.abs(off[:, 0]), -off[:, 2]))            # 0 = the throat, 90 = the side
-    sw = 9.0 + 6.0 * _night(ctx) + (4.0 if _over(ctx) else 0.0)
+    sw = 9.0 + 6.0 * _night(ctx) + (1.0 if _over(ctx) else 0.0)
     stripe = _ss(sw, sw * 0.3, np.abs(ang - 72.0)) * _ss(0.02, 0.15, t) * _ss(1.0, 0.85, t)
     nape = _ss(0.45, 0.15, np.abs(p[:, 0])) * _ss(0.2, 0.6, -front) * _ss(0.3, 0.45, t)
     stripe = np.maximum(stripe, nape)
     rgb = _mixc(rgb, _ramp(TURQ, lv - 0.18), skin)
     rgb = _mixc(rgb, _ramp(TURQ, 0.62 + 0.3 * stripe), stripe * 0.9)
     rgb = _mixc(rgb, _ramp(TURQ, 0.8 + 0.2 * line), line * 0.85)
-    g = np.maximum.reduce([line * G(ctx, 0.4, 1.0, 1.0), stripe * G(ctx, 0.28, 0.95, 1.0), skin * G(ctx, 0.12, 0.55, 0.7)])
+    g = np.maximum.reduce([line * G(ctx, 0.4, 1.0, 1.0), stripe * G(ctx, 0.28, 0.95, 1.0), skin * G(ctx, 0.12, 0.55, 0.5)])
     return rgb, ctx.ones(), g
 
 
@@ -867,7 +867,7 @@ def mat_tail(ctx):
     dorsal = np.clip(up * 1.3 + 0.35, 0, 1)
     ventral = np.clip(-up * 1.5 - 0.2, 0, 1)
     along = t * 17.0
-    band = _ss(0.55, 0.95, 0.5 + 0.5 * np.cos((along - 1.0) * 2 * np.pi / 2.6))
+    band = _ss(0.6, 0.98, 0.5 + 0.5 * np.cos((along - 1.0) * 2 * np.pi / 3.2)) * (0.45 + 0.35 * t)
     scal = _scallop(np.arctan2(nn[:, 0], nn[:, 1]) * 2.0, -along, 2.75, 1.75, 0.11)
     rgb = _plumage(lv, dorsal, ventral, band, scal)
     p = _P(ctx)
@@ -891,7 +891,7 @@ def _eye_ring(ctx, rgb):
     """A ring of bare turquoise display skin round each amber eye (glows)."""
     p = _P(ctx)
     d = np.minimum(*[np.linalg.norm(p - _v((s * EYE[0], EYE[1], EYE[2])), axis=1) for s in (-1, 1)])
-    w = 0.32 + 0.18 * _night(ctx) + (0.12 if _over(ctx) else 0.0)
+    w = 0.32 + 0.18 * _night(ctx) + (0.06 if _over(ctx) else 0.0)
     ring = np.clip(1 - np.abs(d - 1.75) / w, 0, 1) ** 1.5
     rgb = _mixc(rgb, _ramp(TURQ, 0.7 + 0.25 * ring), ring)
     return rgb, ring * G(ctx, 0.3, 0.95, 1.0)
@@ -1019,7 +1019,7 @@ def mat_crest(ctx):
     rgb = _mixc(_ramp(IVORY, lv + 0.05), _ramp(BRASS, lv + 0.05), ring * _ss(0.1, 0.3, t) * 0.85)
     rgb = rgb + _spec(nn, 12, 0.1)[:, None]
     off = _TUBES["_last_off"]
-    w = 0.3 + 0.2 * _night(ctx) + (0.2 if _over(ctx) else 0.0)           # half-height of the line, units
+    w = 0.3 + 0.2 * _night(ctx) + (0.1 if _over(ctx) else 0.0)           # half-height of the line, units
     line = _ss(w, w * 0.3, np.abs(off[:, 1])) * _ss(0.4, 0.8, np.abs(nn[:, 0])) * _ss(0.05, 0.18, t)
     ridge = _ss(0.3, 0.1, np.abs(off[:, 0])) * _ss(0.3, 0.7, nn[:, 1]) * _ss(0.12, 0.25, t) * min(1.0, _night(ctx) + _over(ctx))
     rgb = _mixc(rgb, _ramp(TURQ, 0.75 + 0.25 * line), line * 0.9)
@@ -1052,7 +1052,7 @@ def mat_gular(ctx):
     lv = _lvn(ctx, nw, 0.85)
     fold = 0.5 + 0.5 * np.cos((p[:, 1] - c[1]) * 2 * np.pi / 0.9)
     rgb = _ramp(TURQ, lv - 0.08 + 0.14 * fold)
-    g = np.maximum(_ss(0.7, 1.0, fold) * G(ctx, 0.55, 0.95, 1.0), np.full(ctx.N, G(ctx, 0.22, 0.6, 0.7)))
+    g = np.maximum(_ss(0.7, 1.0, fold) * G(ctx, 0.55, 0.95, 1.0), np.full(ctx.N, G(ctx, 0.22, 0.6, 0.5)))
     return rgb, ctx.ones(), g
 
 
