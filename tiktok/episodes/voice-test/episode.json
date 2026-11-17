@@ -11,7 +11,9 @@
       "id": "pubchem-water",
       "label": "PubChem: Water (CID 962)",
       "citation": "National Center for Biotechnology Information. PubChem Compound Summary for CID 962, Water.",
-      "url": "https://pubchem.ncbi.nlm.nih.gov/compound/962"
+      "url": "https://pubchem.ncbi.nlm.nih.gov/compound/962",
+      "accessed": "2026-11-17",
+      "note": "Reviewer verified: one water molecule has two hydrogen atoms and one oxygen atom (formula H2O)."
     }
   ],
   "scenes": [
@@ -20,31 +22,73 @@
       "label": "ทดสอบเสียง",
       "factual": false,
       "narration": "สวัสดี นี่คือการทดสอบเสียงบรรยายภาษาไทยสำหรับช่องวิทยาศาสตร์ของเรา",
-      "visual": { "type": "title", "kicker": "VOICE TEST", "title": "ทดสอบเสียงผู้บรรยาย", "subtitle": "Madame Scientia" }
+      "visual": {
+        "type": "title",
+        "kicker": "VOICE TEST",
+        "title": "ทดสอบเสียงผู้บรรยาย",
+        "subtitle": "Madame Scientia"
+      }
     },
     {
       "id": "water",
       "label": "สูตรเคมีของน้ำ",
       "narration": "น้ำหนึ่งโมเลกุลประกอบด้วยไฮโดรเจนสองอะตอม และออกซิเจนหนึ่งอะตอม จึงเขียนเป็นสูตรเคมีได้ว่า H2O",
-      "sourceIds": ["pubchem-water"],
+      "sourceIds": [
+        "pubchem-water"
+      ],
       "cues": [
-        { "id": "hydrogen", "text": "ไฮโดรเจน" },
-        { "id": "oxygen", "text": "ออกซิเจน" }
+        {
+          "id": "hydrogen",
+          "text": "ไฮโดรเจน"
+        },
+        {
+          "id": "oxygen",
+          "text": "ออกซิเจน"
+        }
       ],
       "visual": {
         "type": "molecule",
         "title": "โมเลกุลของน้ำ",
         "formula": "H2O",
         "atoms": [
-          { "id": "O", "element": "O", "x": 0, "y": 0 },
-          { "id": "H1", "element": "H", "x": -0.79, "y": 0.61 },
-          { "id": "H2", "element": "H", "x": 0.79, "y": 0.61 }
+          {
+            "id": "O",
+            "element": "O",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "H1",
+            "element": "H",
+            "x": -0.79,
+            "y": 0.61
+          },
+          {
+            "id": "H2",
+            "element": "H",
+            "x": 0.79,
+            "y": 0.61
+          }
         ],
         "bonds": [
-          { "from": "O", "to": "H1" },
-          { "from": "O", "to": "H2" }
+          {
+            "from": "O",
+            "to": "H1"
+          },
+          {
+            "from": "O",
+            "to": "H2"
+          }
         ],
-        "reveal": { "hydrogen": ["H1", "H2"], "oxygen": ["O"] }
+        "reveal": {
+          "hydrogen": [
+            "H1",
+            "H2"
+          ],
+          "oxygen": [
+            "O"
+          ]
+        }
       }
     },
     {
@@ -52,8 +96,18 @@
       "label": "ฟังเสียง",
       "factual": false,
       "narration": "ฟังว่าเสียงชัดและจังหวะเป็นธรรมชาติไหม ถ้าดี เราพร้อมเริ่มตอนแรกแล้ว",
-      "visual": { "type": "title", "title": "เสียงชัดไหม", "subtitle": "จังหวะเป็นธรรมชาติไหม" }
+      "visual": {
+        "type": "title",
+        "title": "เสียงชัดไหม",
+        "subtitle": "จังหวะเป็นธรรมชาติไหม"
+      }
     }
   ],
-  "approval": null
+  "approval": {
+    "approvedBy": "wavewave300550-afk",
+    "approvedAt": "2026-11-17T07:57:23.075Z",
+    "contentHash": "c5dcded778a22cb433ba7b0c5fadc43d9c228c03a96128e9f0ed57eb4d970a5a",
+    "durationTier": "standard",
+    "notes": "Approved in Claude Code chat. H2O claim verified by the reviewer against PubChem CID 962."
+  }
 }
