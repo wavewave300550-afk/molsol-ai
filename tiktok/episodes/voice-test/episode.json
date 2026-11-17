@@ -2,7 +2,7 @@
   "$schema": "../episode.schema.json",
   "schemaVersion": 1,
   "id": "voice-test",
-  "kind": "pipeline-test",
+  "kind": "voice-test",
   "title": "ทดสอบเสียงผู้บรรยาย",
   "language": "th",
   "durationTier": "standard",

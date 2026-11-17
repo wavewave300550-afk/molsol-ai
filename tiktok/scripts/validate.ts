@@ -5,6 +5,7 @@
  * Usage: npm run validate -- <episode-id>
  * Exit code 1 when there are errors.
  */
+import { VOICE_TEST } from "../src/lib/config.ts";
 import { estimateVideoSeconds, formatSeconds } from "../src/lib/duration.ts";
 import { formatIssues, hasErrors } from "../src/lib/issues.ts";
 import { fullNarration, validateEpisode } from "../src/lib/rules.ts";
@@ -17,7 +18,9 @@ runCli(() => {
   const issues = validateEpisode(episode, { publicFileExists });
   const status = approvalStatus(episode);
 
-  console.log(`Episode: ${episode.id} — ${episode.title} (${episode.kind}, ${episode.durationTier} tier)`);
+  const limits =
+    episode.kind === "voice-test" ? `voice-test limits ${VOICE_TEST.minSeconds}-${VOICE_TEST.maxSeconds} s` : `${episode.durationTier} tier`;
+  console.log(`Episode: ${episode.id} — ${episode.title} (${episode.kind}, ${limits})`);
   console.log(`Scenes: ${episode.scenes.length}, sources: ${episode.sources.length}, narration: ${fullNarration(episode.scenes).length} characters`);
   console.log(`Estimated length: ${formatSeconds(estimateVideoSeconds(episode.scenes))} (only an estimate; the narration decides)`);
   console.log(`Approval: ${status.approved ? `approved by ${episode.approval?.approvedBy} on ${episode.approval?.approvedAt}` : status.reason}`);

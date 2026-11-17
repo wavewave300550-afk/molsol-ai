@@ -100,7 +100,8 @@ export async function prepareNarration(input: PrepareInput): Promise<{ meta: Nar
 export function reportLength(episode: Episode, audioSeconds: number): void {
   const videoSeconds = Math.ceil((audioSeconds + TIMELINE.tailSeconds) * VIDEO.fps) / VIDEO.fps;
   const issues = checkVideoDuration(videoSeconds, episode);
-  if (issues.length === 0) ok(`Video will be ${formatSeconds(videoSeconds)}: fits the "${episode.durationTier}" tier.`);
+  const limits = episode.kind === "voice-test" ? "the voice-test limits" : `the "${episode.durationTier}" tier`;
+  if (issues.length === 0) ok(`Video will be ${formatSeconds(videoSeconds)}: fits ${limits}.`);
   else warn(`Video will be ${formatSeconds(videoSeconds)}:\n${formatIssues(issues)}`);
 }
 

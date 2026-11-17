@@ -149,8 +149,12 @@ export const EpisodeSchema = z.strictObject({
   $schema: z.string().optional(),
   schemaVersion: z.literal(1),
   id: slug,
-  /** "pipeline-test" episodes are never published and render with a TEST badge. */
-  kind: z.enum(["episode", "pipeline-test"]),
+  /**
+   * "episode": a real episode. "pipeline-test": a full test render (TEST
+   * badge). "voice-test": a short narration sample to hear the narrator,
+   * with its own length limits (VOICE_TEST); never published.
+   */
+  kind: z.enum(["episode", "pipeline-test", "voice-test"]),
   title: text,
   language: z.literal("th"),
   /** standard = 60-90 s. complex = up to 120 s, needs a justification and approval. */

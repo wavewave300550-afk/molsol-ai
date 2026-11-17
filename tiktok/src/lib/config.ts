@@ -67,3 +67,10 @@ export const AUDIO_MASTER = { integratedLufs: -14, truePeakDb: -1.5, loudnessRan
  * narration exists. The real narration duration always wins.
  */
 export const ESTIMATE = { weightedCharsPerSecond: 13, phrasePauseSeconds: 0.25, scenePauseSeconds: 0.6 };
+
+/**
+ * Narrator voice tests (kind "voice-test"): short samples to hear the voice,
+ * never published. They replace the 60-120 s episode rule with their own
+ * limits; the text cap keeps each test cheap (ElevenLabs bills per character).
+ */
+export const VOICE_TEST = { minSeconds: 5, maxSeconds: 30, maxCharacters: 400 };

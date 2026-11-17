@@ -2,7 +2,7 @@
  * Script checks run before approval, before narration and before rendering.
  * Errors block the pipeline; warnings are for the human reviewer.
  */
-import { TTS } from "./config.ts";
+import { TTS, VOICE_TEST } from "./config.ts";
 import { checkVideoDuration, estimateVideoSeconds, formatSeconds } from "./duration.ts";
 import type { Issue } from "./issues.ts";
 import { PROFANITY, PROFANITY_HINTS } from "./profanity.ts";
@@ -209,13 +209,16 @@ export function validateEpisode(episode: Episode, options: ValidateOptions = {})
     if (!usedSources.has(source.id)) warn("UNUSED_SOURCE", "Source is not cited by any scene.", source.id);
   }
 
+  // Voice tests are listened to, not published: they need no end card or
+  // title scene. Every other kind keeps these checks exactly as before.
+  const voiceTest = episode.kind === "voice-test";
   const last = episode.scenes[episode.scenes.length - 1];
-  if (episode.sources.length > 0 && last.visual.type !== "sources") {
+  if (!voiceTest && episode.sources.length > 0 && last.visual.type !== "sources") {
     const message = 'The last scene must be a "sources" card listing the references.';
     if (episode.kind === "episode") error("SOURCES_CARD_MISSING", message);
     else warn("SOURCES_CARD_MISSING", message);
   }
-  if (episode.scenes[0].visual.type !== "title") warn("NO_TITLE_SCENE", 'The first scene is usually a "title" scene.');
+  if (!voiceTest && episode.scenes[0].visual.type !== "title") warn("NO_TITLE_SCENE", 'The first scene is usually a "title" scene.');
 
   if (episode.durationTier === "complex" && !episode.complexJustification?.trim()) {
     error("COMPLEX_WITHOUT_REASON", 'durationTier "complex" needs a complexJustification explaining why 90 s is not enough.');
@@ -228,14 +231,20 @@ export function validateEpisode(episode: Episode, options: ValidateOptions = {})
       `Narration has ${characters} characters; the limit for one narration request is ${TTS.maxCharactersPerRequest}.`,
     );
   }
+  if (voiceTest && characters > VOICE_TEST.maxCharacters) {
+    error(
+      "VOICE_TEST_TOO_MUCH_TEXT",
+      `A voice test has ${characters} characters; keep it to ${VOICE_TEST.maxCharacters} or fewer (ElevenLabs bills per character).`,
+    );
+  }
 
   const estimate = estimateVideoSeconds(episode.scenes);
+  const limits = voiceTest ? `voice-test limits (${VOICE_TEST.minSeconds}-${VOICE_TEST.maxSeconds} s)` : `"${episode.durationTier}" tier`;
   for (const issue of checkVideoDuration(estimate, episode)) {
     if (issue.level === "error") {
       warn(
         `ESTIMATE_${issue.code}`,
-        `Estimated length ${formatSeconds(estimate)} may not fit the "${episode.durationTier}" tier. ` +
-          "This is only an estimate; the real narration decides.",
+        `Estimated length ${formatSeconds(estimate)} may not fit the ${limits}. This is only an estimate; the real narration decides.`,
       );
     }
   }
