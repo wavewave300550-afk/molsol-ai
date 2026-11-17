@@ -406,6 +406,30 @@ def check_textures():
         ok(w <= 1024 and h <= 1024, f"{rel(path)}: texture larger than 1024 (mobile budget)")
 
 
+def check_entity_schema():
+    """
+    Minecraft parses entity files strictly: a component (or field) that is not in the schema of the file's
+    format_version makes the whole entity fail to load ("this component was found in the input, but is not
+    present in the Schema"). Creator Tools' community schemas do not catch this, so every component and field
+    must appear in a vanilla entity of the same format version (reference extracted from the vanilla pack).
+    """
+    ref = load(os.path.join(HERE, "data", "vanilla_entity_components_1_26_50.json"))
+    comps = ref["components"]
+    for path in glob.glob(os.path.join(BP, "entities", "**", "*.json"), recursive=True):
+        d = load(path)
+        name = os.path.basename(path)
+        ok(d.get("format_version") == ref["format_version"],
+           f"{name}: format_version {d.get('format_version')} has no vanilla reference")
+        e = d["minecraft:entity"]
+        blocks = [("components", e.get("components", {}))] + [(f"group {g}", b) for g, b in e.get("component_groups", {}).items()]
+        for where, block in blocks:
+            for comp, value in block.items():
+                ok(comp in comps, f"{name} {where}: {comp} is not used by any vanilla {ref['format_version']} entity")
+                if comp in comps and isinstance(value, dict):
+                    extra = [f for f in value if f not in comps[comp]]
+                    ok(not extra, f"{name} {where}: {comp} fields {extra} not used by vanilla {ref['format_version']}")
+
+
 def check_manifests():
     bpm = load(os.path.join(BP, "manifest.json"))
     rpm = load(os.path.join(RP, "manifest.json"))
@@ -478,6 +502,7 @@ def main():
     geos, bp_entities, particles, sounds = cross_refs()
     check_textures()
     check_manifests()
+    check_entity_schema()
     check_scripts(particles, sounds, bp_entities)
     print(f"schema-validated files: {n_schema}")
     print(f"cross-reference checks: {checks}")

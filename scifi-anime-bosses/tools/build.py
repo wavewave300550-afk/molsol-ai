@@ -38,7 +38,7 @@ RP = os.path.join(BUILD, "SAB_VESPER_RP")
 DIST = os.path.join(ROOT, "dist")
 CACHE = os.path.join(ROOT, ".cache")
 
-VERSION = [1, 0, 4]
+VERSION = [1, 0, 5]
 MIN_ENGINE = [1, 26, 60]
 SERVER_VERSION = "2.11.0"
 UUID = {

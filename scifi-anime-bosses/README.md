@@ -5,7 +5,7 @@ Script API **`@minecraft/server` 2.11.0** (latest stable) — **no experimental 
 
 **Install:** open [`dist/SciFi_Anime_Bosses_VESPER-0.mcaddon`](dist/SciFi_Anime_Bosses_VESPER-0.mcaddon)
 (separate `_BP.mcpack` / `_RP.mcpack` are next to it), enable the behavior pack on a world.
-**Updating:** import the new file (a higher pack version, currently 1.0.4, replaces the old one); if an existing
+**Updating:** import the new file (a higher pack version, currently 1.0.5, replaces the old one); if an existing
 world still behaves the old way, remove both packs from that world and add them again. If VESPER-0 ever fails to
 appear, the chat message includes the game's own reason in grey; and if Minecraft refuses to load any of the add-on's
 entities, joining the world says which ones (the exact cause is then in Settings > Creator > Content Log History).
@@ -113,7 +113,7 @@ Animated: [transformation](docs/images/transform.gif) · [Litany Lance](docs/ima
 |---|---|
 | TypeScript `strict` typecheck against the official 2.11.0 typings | **pass** |
 | JSON-schema validation of every pack file (Creator Tools' Bedrock schemas) | **110 files, 0 errors** |
-| Cross-reference validation (`tools/validate.py`): bones/locators used by animations, part visibility, materials, textures, Molang syntax + allowed queries + synced properties, particles, sounds, lang keys, item icons, manifests, every `sab:*` id and sound in the compiled JS | **12,612 checks, 0 errors** |
+| Cross-reference validation (`tools/validate.py`): bones/locators used by animations, part visibility, materials, textures, Molang syntax + allowed queries + synced properties, particles, sounds, lang keys, item icons, manifests, every `sab:*` id and sound in the compiled JS, and every entity component/field against vanilla entities of the same format version (the game rejects unknown ones; see below) | **12,825 checks, 0 errors** |
 | Microsoft **Minecraft Creator Tools 0.21.0** validation | **0 errors, 0 warnings** (3 known false positives about `item_texture.json`; format-version recommendations intentionally left at vanilla's values) |
 | Runtime simulation (`tools/smoke`): compiled scripts on a strict mock of `@minecraft/server` that rejects unknown ids, out-of-range/unsynced properties, unknown entity events, particle variables the effect never reads, bad camera/fog/music ids | **80/80 checks in 5 scenarios** |
 
@@ -127,6 +127,14 @@ stress test (eight players landing simultaneous capped hits every tick: the 75 %
 must start at exactly 900 / 600 / 300 HP, in order; the pre-fix code failed it), and summon rules (including a ritual
 that fizzles without costing the Psalter), the Orison Halo (damage, cooldown, durability, return) and the commands. With never-dodging, never-missing bots the fight
 lasts ~3.5 min (≈1.6 min per phase, every ability seen in each phase); real players should expect roughly 5–8 minutes.
+
+### Found in game
+
+Testing on an iPhone found what no file validator here caught: Minecraft parses entity files strictly against the
+schema of their `format_version`, and in 1.26.50 `minecraft:pushable` no longer exists (vanilla split it into
+`pushable_by_entity` / `pushable_by_block`). One unknown component made every add-on entity fail to load
+("this component was found in the input, but is not present in the Schema"), while items and scripts still worked.
+Fixed in 1.0.5; `tools/validate.py` now checks every entity component and field against vanilla 1.26.50 entities.
 
 ### Not tested in-game — please verify
 

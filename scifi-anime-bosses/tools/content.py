@@ -78,11 +78,12 @@ def base_components(health, width, height, families, kb=1.0, persistent=False):
         "minecraft:health": {"value": health, "max": health},
         "minecraft:collision_box": {"width": width, "height": height},
         "minecraft:physics": {"has_gravity": False, "has_collision": False},
-        "minecraft:pushable": {"is_pushable": False, "is_pushable_by_piston": False},
         "minecraft:knockback_resistance": {"value": kb},
         "minecraft:fire_immune": {},
         "minecraft:damage_sensor": damage_sensor(),
-        "minecraft:breathable": {"breathes_air": True, "breathes_water": True, "suffocate_time": 0, "total_supply": 15},
+        # not pushable: format 1.26.50 has no "minecraft:pushable" (vanilla split it into pushable_by_entity /
+        # pushable_by_block, and an entity without them - like the Ender Dragon - cannot be pushed)
+        "minecraft:breathable": {"breathes_water": True, "suffocate_time": 0, "total_supply": 15},
         "minecraft:conditional_bandwidth_optimization": {},
     }
     if persistent:
@@ -109,7 +110,6 @@ def bp_entities() -> Dict[str, dict]:
     c = base_components(1200, 8.0, 7.5, FAMILY + ["sab_boss", "monster", "mob"], persistent=True)
     c.update({
         "minecraft:boss": {"hud_range": 55, "should_darken_sky": True},  # vanilla's value
-        "minecraft:body_rotation_always_follows_head": {},
         "minecraft:can_fly": {},
         "minecraft:nameable": {},
         "minecraft:loot": {"table": "loot_tables/entities/sab_vesper_0.json"},

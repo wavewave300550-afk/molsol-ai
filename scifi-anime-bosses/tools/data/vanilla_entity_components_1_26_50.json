@@ -1,0 +1,251 @@
+{
+ "format_version": "1.26.50",
+ "source": "vanilla behavior pack entities of format 1.26.50 (bedrock-samples 1.26.60.5): breeze, creaking, ender_dragon, wither",
+ "components": {
+  "minecraft:ambient_sound_interval": [
+   "event_name",
+   "event_names",
+   "range",
+   "value"
+  ],
+  "minecraft:attack": [
+   "damage"
+  ],
+  "minecraft:behavior.dragonchargeplayer": [
+   "priority"
+  ],
+  "minecraft:behavior.dragondeath": [
+   "priority"
+  ],
+  "minecraft:behavior.dragonflaming": [
+   "priority"
+  ],
+  "minecraft:behavior.dragonholdingpattern": [
+   "priority"
+  ],
+  "minecraft:behavior.dragonlanding": [
+   "priority"
+  ],
+  "minecraft:behavior.dragonscanning": [
+   "priority"
+  ],
+  "minecraft:behavior.dragonstrafeplayer": [
+   "priority"
+  ],
+  "minecraft:behavior.dragontakeoff": [
+   "priority"
+  ],
+  "minecraft:behavior.fire_at_target": [
+   "attack_cooldown",
+   "attack_range",
+   "filters",
+   "owner_anchor",
+   "owner_offset",
+   "post_shoot_delay",
+   "pre_shoot_delay",
+   "priority",
+   "projectile_def",
+   "ranged_fov",
+   "target_anchor",
+   "target_offset"
+  ],
+  "minecraft:behavior.float": [
+   "priority"
+  ],
+  "minecraft:behavior.hurt_by_target": [
+   "entity_types",
+   "priority"
+  ],
+  "minecraft:behavior.jump_around_target": [
+   "check_collision",
+   "entity_bounding_box_scale",
+   "filters",
+   "jump_angles",
+   "jump_cooldown_duration",
+   "jump_cooldown_when_hurt_duration",
+   "landing_distance_from_target",
+   "landing_position_spread_degrees",
+   "last_hurt_duration",
+   "line_of_sight_obstruction_height_ignore",
+   "max_jump_velocity",
+   "prepare_jump_duration",
+   "priority",
+   "required_vertical_space",
+   "snap_to_surface_block_range",
+   "valid_distance_to_target"
+  ],
+  "minecraft:behavior.look_at_player": [
+   "look_distance",
+   "look_time",
+   "priority"
+  ],
+  "minecraft:behavior.look_at_target": [
+   "look_time",
+   "priority"
+  ],
+  "minecraft:behavior.melee_box_attack": [
+   "cooldown_time",
+   "priority"
+  ],
+  "minecraft:behavior.move_around_target": [
+   "destination_pos_spread_degrees",
+   "destination_position_range",
+   "filters",
+   "height_difference_limit",
+   "movement_speed",
+   "priority"
+  ],
+  "minecraft:behavior.nearest_attackable_target": [
+   "entity_types",
+   "must_see",
+   "priority",
+   "within_radius"
+  ],
+  "minecraft:behavior.random_look_around": [
+   "priority"
+  ],
+  "minecraft:behavior.random_stroll": [
+   "priority",
+   "speed_multiplier"
+  ],
+  "minecraft:behavior.timer_flag_1": [
+   "duration_range",
+   "on_end"
+  ],
+  "minecraft:behavior.wither_random_attack_pos_goal": [
+   "priority"
+  ],
+  "minecraft:behavior.wither_target_highest_damage": [
+   "priority"
+  ],
+  "minecraft:body_rotation_blocked": [],
+  "minecraft:boss": [
+   "hud_range",
+   "should_darken_sky"
+  ],
+  "minecraft:breathable": [
+   "breathes_water",
+   "suffocate_time",
+   "total_supply"
+  ],
+  "minecraft:can_climb": [],
+  "minecraft:can_fly": [],
+  "minecraft:collision_box": [
+   "height",
+   "width"
+  ],
+  "minecraft:conditional_bandwidth_optimization": [],
+  "minecraft:damage_sensor": [
+   "triggers"
+  ],
+  "minecraft:despawn": [
+   "despawn_from_distance"
+  ],
+  "minecraft:dimension_bound": [],
+  "minecraft:environment_sensor": [
+   "triggers"
+  ],
+  "minecraft:experience_reward": [
+   "on_bred",
+   "on_death"
+  ],
+  "minecraft:fire_immune": [],
+  "minecraft:flying_speed": [
+   "value"
+  ],
+  "minecraft:follow_range": [
+   "max",
+   "value"
+  ],
+  "minecraft:freezing_immune": [],
+  "minecraft:game_event_movement_tracking": [
+   "emit_flap"
+  ],
+  "minecraft:health": [
+   "max",
+   "value"
+  ],
+  "minecraft:home": [
+   "restriction_radius",
+   "restriction_type"
+  ],
+  "minecraft:hurt_on_condition": [
+   "damage_conditions"
+  ],
+  "minecraft:instant_despawn": [],
+  "minecraft:is_hidden_when_invisible": [],
+  "minecraft:jump.static": [],
+  "minecraft:knockback_resistance": [
+   "max",
+   "value"
+  ],
+  "minecraft:looked_at": [
+   "field_of_view",
+   "filters",
+   "find_players_only",
+   "line_of_sight_obstruction_type",
+   "look_at_locations",
+   "looked_at_cooldown",
+   "looked_at_event",
+   "not_looked_at_event",
+   "scale_fov_by_distance",
+   "search_radius",
+   "set_target"
+  ],
+  "minecraft:loot": [
+   "table"
+  ],
+  "minecraft:movement": [
+   "value"
+  ],
+  "minecraft:movement.basic": [
+   "max_turn"
+  ],
+  "minecraft:nameable": [],
+  "minecraft:navigation.walk": [
+   "avoid_damage_blocks",
+   "avoid_water",
+   "blocks_to_avoid",
+   "can_path_over_lava",
+   "can_path_over_water",
+   "using_door_annotation"
+  ],
+  "minecraft:not_pickable_from_inside": [],
+  "minecraft:on_death": [
+   "event",
+   "target"
+  ],
+  "minecraft:on_start_landing": [
+   "event",
+   "target"
+  ],
+  "minecraft:on_start_takeoff": [
+   "event",
+   "target"
+  ],
+  "minecraft:persistent": [],
+  "minecraft:physics": [
+   "has_collision",
+   "has_gravity"
+  ],
+  "minecraft:pushable_by_block": [],
+  "minecraft:pushable_by_entity": [],
+  "minecraft:reflect_projectiles": [
+   "azimuth_angle",
+   "reflected_projectiles",
+   "reflection_scale"
+  ],
+  "minecraft:renders_when_invisible": [],
+  "minecraft:shooter": [
+   "def"
+  ],
+  "minecraft:type_family": [
+   "family"
+  ],
+  "minecraft:uses_legacy_friction": [],
+  "minecraft:variable_max_auto_step": [
+   "base_value",
+   "jump_prevented_value"
+  ]
+ }
+}
