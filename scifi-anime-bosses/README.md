@@ -5,8 +5,9 @@ Script API **`@minecraft/server` 2.11.0** (latest stable) — **no experimental 
 
 **Install:** open [`dist/SciFi_Anime_Bosses_VESPER-0.mcaddon`](dist/SciFi_Anime_Bosses_VESPER-0.mcaddon)
 (separate `_BP.mcpack` / `_RP.mcpack` are next to it), enable the behavior pack on a world.
-**Updating from 1.0.0:** import the new file (version 1.0.1 replaces the old one); if an existing world still behaves
-the old way, remove both packs from that world and add them again.
+**Updating:** import the new file (a higher pack version, currently 1.0.2, replaces the old one); if an existing
+world still behaves the old way, remove both packs from that world and add them again. If VESPER-0 ever fails to
+appear, the chat message includes the game's own reason in grey; please report it.
 
 ![VESPER-0, Phase I — The Sacred Vessel](docs/images/vesper_p1_hero.png)
 
@@ -113,7 +114,7 @@ Animated: [transformation](docs/images/transform.gif) · [Litany Lance](docs/ima
 | JSON-schema validation of every pack file (Creator Tools' Bedrock schemas) | **110 files, 0 errors** |
 | Cross-reference validation (`tools/validate.py`): bones/locators used by animations, part visibility, materials, textures, Molang syntax + allowed queries + synced properties, particles, sounds, lang keys, item icons, manifests, every `sab:*` id and sound in the compiled JS | **12,612 checks, 0 errors** |
 | Microsoft **Minecraft Creator Tools 0.21.0** validation | **0 errors, 0 warnings** (3 known false positives about `item_texture.json`; format-version recommendations intentionally left at vanilla's values) |
-| Runtime simulation (`tools/smoke`): compiled scripts on a strict mock of `@minecraft/server` that rejects unknown ids, out-of-range/unsynced properties, unknown entity events, particle variables the effect never reads, bad camera/fog/music ids | **77/77 checks in 5 scenarios** |
+| Runtime simulation (`tools/smoke`): compiled scripts on a strict mock of `@minecraft/server` that rejects unknown ids, out-of-range/unsynced properties, unknown entity events, particle variables the effect never reads, bad camera/fog/music ids | **78/78 checks in 5 scenarios** |
 
 The simulation runs a complete fight with two bot players (melee + archer): ritual → arrival → Phase I → Vespers
 (broken) → transformation → Phase II → Requiem (completed → False Benediction) → death → rewards, then verifies every

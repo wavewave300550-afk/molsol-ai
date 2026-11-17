@@ -1,5 +1,5 @@
 import {
-  Dimension, EquipmentSlot, GameMode, ItemComponentUseEvent, ItemStack, Player, Vector3, world,
+  Dimension, Entity, EquipmentSlot, GameMode, ItemComponentUseEvent, ItemStack, Player, Vector3, world,
 } from "@minecraft/server";
 import { Vesper } from "./boss/controller.js";
 import { startArrival } from "./boss/sequences.js";
@@ -7,7 +7,7 @@ import { ENT, ITEMS } from "./generated/ids.js";
 import { bosses } from "./registry.js";
 import { COLORS, particle, sound } from "./util/fx.js";
 import { hdist } from "./util/vec.js";
-import { groundY, isPeaceful, spectators } from "./util/world.js";
+import { groundY, isPeaceful, safeRemove, spectators } from "./util/world.js";
 
 interface Ritual {
   dim: Dimension;
@@ -137,20 +137,76 @@ function completeRitual(r: Ritual): void {
       /* ignore */
     }
   }
-  fizzle(r, p, "The stars did not answer. Your Psalter is returned.");
+  const why = summonError();
+  fizzle(r, p, `The stars did not answer. Your Psalter is returned.${why ? ` §7(${why})` : ""}`);
+}
+
+let lastSummonError = "";
+
+/** The engine's reason for the last failed summon (shown in chat so a player can report it). */
+export function summonError(): string {
+  return lastSummonError;
+}
+
+function errorText(e: unknown): string {
+  const s = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+  return s.length > 120 ? `${s.slice(0, 117)}...` : s;
 }
 
 export function summonNow(dim: Dimension, at: Vector3): Vesper | undefined {
+  lastSummonError = "";
   const gy = groundY(dim, at.x, at.z, at.y);
-  const spawnAt = { x: at.x, y: Math.min(dim.heightRange.max - 20, gy + 46), z: at.z };
+  const sky = { x: at.x, y: Math.min(dim.heightRange.max - 20, gy + 46), z: at.z };
+  // in the sky first; if the engine refuses that spot, at the ritual site itself (then lifted into the sky)
+  let boss: Entity | undefined;
+  const errors: string[] = [];
+  for (const loc of [sky, { x: at.x, y: gy + 1, z: at.z }]) {
+    try {
+      boss = dim.spawnEntity(ENT.boss, loc);
+      break;
+    } catch (e) {
+      const t = `spawn: ${errorText(e)}`;
+      if (!errors.includes(t)) errors.push(t);
+    }
+  }
+  lastSummonError = errors.join(" | ");
+  if (!boss) {
+    // last resort: the game's own /summon takes a different path through the engine
+    try {
+      const res = dim.runCommand(`summon ${ENT.boss} ${sky.x.toFixed(2)} ${sky.y.toFixed(2)} ${sky.z.toFixed(2)}`);
+      if (res.successCount > 0) {
+        boss = dim.getEntities({ type: ENT.boss, location: sky, maxDistance: 6 }).find((e) => !bosses.has(e.id));
+      }
+      if (!boss) lastSummonError += " | /summon: no entity";
+    } catch (e) {
+      lastSummonError += ` | /summon: ${errorText(e)}`;
+    }
+  }
+  if (!boss) {
+    console.warn(`[VESPER-0] summon failed: ${lastSummonError}`);
+    return undefined;
+  }
   try {
-    const boss = dim.spawnEntity(ENT.boss, spawnAt, { initialRotation: Math.random() * 360 });
+    boss.setRotation({ x: 0, y: Math.random() * 360 - 180 });
+  } catch {
+    /* cosmetic */
+  }
+  try {
+    if (boss.location.y < sky.y - 1) boss.teleport(sky);
+  } catch {
+    /* the arrival climbs anyway */
+  }
+  try {
     const v = new Vesper(boss, { x: at.x, y: gy, z: at.z });
     v.persist();
     startArrival(v);
+    lastSummonError = "";
     return v;
   } catch (e) {
-    console.warn(`[VESPER-0] summon failed: ${e}`);
+    lastSummonError = `setup: ${errorText(e)}`;
+    console.warn(`[VESPER-0] summon failed: ${lastSummonError}`);
+    bosses.delete(boss.id);
+    safeRemove(boss);
     return undefined;
   }
 }

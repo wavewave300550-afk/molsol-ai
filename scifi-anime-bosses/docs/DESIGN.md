@@ -66,8 +66,9 @@ explosions, group scaling `1 / (1 + 0.5·(players−1))` with per-attacker invul
 Health 1200. Stagger caps close a weak-point window early once it has absorbed 8 % (Genuflection), 12 % (prayer
 stun), 5 % (Anchored) or 8 % (Unhaloed) of max health.
 
-Ability choice is a weighted pick with a soft shuffle-bag: abilities not yet shown in the current phase weigh ×3,
-the last pick ×0.2 and the one before ×0.55, plus situational weights (range, clustering, live drones).
+Ability choice is a weighted pick with a shuffle-bag: while some ability has not been shown yet in the current
+phase, only those are candidates; after that the last pick weighs ×0.2 and the one before ×0.55. Situational weights
+(range, clustering, live drones) apply throughout.
 
 ## Rewards
 

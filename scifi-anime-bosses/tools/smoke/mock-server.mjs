@@ -610,6 +610,7 @@ class Dimension {
     this.heightRange = { min: -64, max: 320 };
     this._entities = new Map();
     this._unloaded = new Set(); // "cx,cz" chunk keys a test marks as unloaded
+    this._failSpawn = new Set(); // entity ids whose spawnEntity a test forces to fail
   }
   isChunkLoaded(loc) {
     finite(loc, "isChunkLoaded");
@@ -633,6 +634,7 @@ class Dimension {
     return this.getEntities({ ...opts, type: "minecraft:player" });
   }
   spawnEntity(id, loc, opts) {
+    if (this._failSpawn.has(id)) throw new Error("mock spawn refused");
     if (!(id in ENTITY_DEFS) && !id.startsWith("minecraft:")) {
       issue(`spawnEntity unknown ${id}`);
       throw new Error("unknown entity");
@@ -702,6 +704,8 @@ class Dimension {
     __log.xp += amount;
   }
   runCommand(c) {
+    // only the boss-summon fallback may use commands, and only after spawnEntity was refused (forced in a test)
+    if (/^summon /.test(c) && this._failSpawn.size) throw new Error("mock: /summon refused too");
     issue(`dimension.runCommand not expected: ${c}`);
   }
 }

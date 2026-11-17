@@ -3,7 +3,7 @@ import {
   CustomCommandStatus, system, world,
 } from "@minecraft/server";
 import { bosses } from "./registry.js";
-import { summonNow } from "./summon.js";
+import { summonError, summonNow } from "./summon.js";
 
 function ok(message: string): CustomCommandResult {
   return { status: CustomCommandStatus.Success, message };
@@ -38,7 +38,16 @@ export function registerCommands(reg: CustomCommandRegistry): void {
     if (!src) return fail("Run this command as a player or entity.");
     const dim = src.dimension;
     const at = { ...src.location };
-    system.run(() => summonNow(dim, at));
+    system.run(() => {
+      if (summonNow(dim, at)) return;
+      try {
+        if (src.isValid && src.typeId === "minecraft:player") {
+          (src as unknown as { sendMessage(m: string): void }).sendMessage(`§c[VESPER-0] §fsummon failed §7(${summonError()})`);
+        }
+      } catch {
+        /* ignore */
+      }
+    });
     return ok("VESPER-0 descends...");
   });
 

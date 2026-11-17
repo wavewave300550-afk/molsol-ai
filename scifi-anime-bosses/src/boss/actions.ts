@@ -410,15 +410,17 @@ function* roar(v: Vesper): Step {
 type Option = { name: string; weight: number; run: () => void };
 
 /**
- * Weighted pick with a soft shuffle-bag: abilities not yet shown this phase are strongly preferred (the whole
- * repertoire appears early in each phase), and the last two picks are damped so no pattern loops.
+ * Weighted pick with a shuffle-bag: while some ability has not been shown yet this phase, only those are
+ * candidates (the whole repertoire appears early in each phase); after that, the last two picks are damped so
+ * no pattern loops. Situational weights (range, clustering, live drones) apply throughout.
  */
 function choose(v: Vesper, opts: Option[]): (() => void) | undefined {
-  const avail = opts.filter((o) => o.weight > 0 && v.ready(o.name));
+  let avail = opts.filter((o) => o.weight > 0 && v.ready(o.name));
   if (!avail.length) return undefined;
+  const fresh = avail.filter((o) => !v.seen.has(o.name));
+  if (fresh.length) avail = fresh;
   const h = v.history;
   for (const o of avail) {
-    if (!v.seen.has(o.name)) o.weight *= 3;
     const at = h.lastIndexOf(o.name);
     if (at >= 0 && at === h.length - 1) o.weight *= 0.2;
     else if (at >= 0 && at === h.length - 2) o.weight *= 0.55;
