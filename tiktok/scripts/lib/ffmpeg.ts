@@ -80,8 +80,8 @@ export type Loudness = { inputI: number; inputTp: number; inputLra: number; inpu
 
 /**
  * EBU R128 loudness of the first audio stream (FFmpeg loudnorm analysis).
- * `stereo` measures it as it will play in the video: mono narration becomes
- * two identical channels there, which reads about 3 LU louder.
+ * `stereo` measures after FFmpeg's stereo upmix, i.e. what masterNarration
+ * writes: the upmix keeps loudness and lowers each channel's true peak.
  */
 export async function measureLoudness(file: string, options: { stereo?: boolean } = {}): Promise<Loudness> {
   const { integratedLufs: I, truePeakDb: TP, loudnessRange: LRA } = AUDIO_MASTER;
@@ -97,8 +97,10 @@ export async function measureLoudness(file: string, options: { stereo?: boolean 
 export type MasterResult = { gainDb: number; inputSeconds: number; outputSeconds: number; loudness: Loudness };
 
 /**
- * Makes the playback copy of the narration: one constant gain so the video's
- * stereo track lands at -14 LUFS (capped so it never clips), 48 kHz stereo.
+ * Makes the playback copy of the narration: one constant gain toward
+ * -14 LUFS (capped so it never clips), 48 kHz. It is written as stereo on
+ * purpose: given a mono file, Remotion copies it into both channels at full
+ * level and the video comes out about 3 LU louder than intended.
  * A constant gain and resampling leave timing and dynamics untouched; the
  * output must be as long as the input or the step fails.
  */

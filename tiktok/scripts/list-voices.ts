@@ -16,7 +16,7 @@ runCli(async () => {
     const labels = Object.entries(v.labels ?? {})
       .map(([k, value]) => `${k}: ${value}`)
       .join(", ");
-    const current = v.voice_id === (process.env.ELEVENLABS_VOICE_ID ?? TTS.defaultVoiceId) ? "  ← current" : "";
+    const current = v.voice_id === (process.env.ELEVENLABS_VOICE_ID?.trim() || TTS.defaultVoiceId) ? "  ← current" : "";
     console.log(`${v.voice_id}  ${v.name.padEnd(24)} ${(v.category ?? "").padEnd(12)} ${labels}${current}`);
   }
   console.log(`\n${voices.length} voices. Thai narration uses model ${TTS.modelId} with language "${TTS.languageCode}".`);

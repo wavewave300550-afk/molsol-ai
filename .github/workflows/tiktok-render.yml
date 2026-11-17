@@ -1,0 +1,189 @@
+# Renders TikTok episodes with Remotion and makes the MP4 downloadable,
+# including on an iPhone.
+#
+# Pull requests that touch tiktok/: lint, unit tests and a full test render of
+# the pipeline-test episode with temporary test audio (no ElevenLabs key).
+#
+# Manual run (Actions > TikTok render > Run workflow; works on github.com in
+# iPhone Safari): renders any episode. The MP4 is attached to the run as an
+# artifact (a zip) and, when "publish" is ticked, to the "tiktok-renders"
+# pre-release as a plain .mp4 that plays and saves directly on iPhone.
+#
+# Settings > Secrets and variables > Actions:
+#   ELEVENLABS_API_KEY    secret: only needed when narration is generated
+#   ELEVENLABS_VOICE_ID   variable: the Thai narrator voice
+#   REMOTION_LICENSE_KEY  secret, optional: Remotion company license
+name: TikTok render
+
+on:
+  pull_request:
+    paths:
+      - "tiktok/**"
+      - ".github/workflows/tiktok-render.yml"
+  workflow_dispatch:
+    inputs:
+      episode:
+        description: "Episode id (folder name in tiktok/episodes)"
+        required: true
+        default: pipeline-test
+        type: string
+      narration:
+        description: "auto = committed take if it matches the script, else ElevenLabs; test-audio = no key, TEST badge"
+        required: true
+        default: auto
+        type: choice
+        options:
+          - auto
+          - committed
+          - elevenlabs
+          - test-audio
+      publish:
+        description: "Also attach the MP4 to the tiktok-renders pre-release (direct iPhone download)"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tiktok-render-${{ github.event_name }}-${{ inputs.episode || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  render:
+    name: Render ${{ inputs.episode || 'pipeline-test' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      EPISODE: ${{ inputs.episode || 'pipeline-test' }}
+      NARRATION: ${{ inputs.narration || 'test-audio' }}
+    defaults:
+      run:
+        working-directory: tiktok
+    outputs:
+      name: ${{ steps.files.outputs.name }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tiktok/package-lock.json
+
+      - name: Check the episode id
+        run: |
+          if [[ ! "$EPISODE" =~ ^[a-z0-9][a-z0-9-]{1,63}$ ]]; then
+            echo "::error::Episode id must be lowercase letters, digits and hyphens: $EPISODE"
+            exit 1
+          fi
+          if [[ ! -f "episodes/$EPISODE/episode.json" ]]; then
+            echo "::error::tiktok/episodes/$EPISODE/episode.json does not exist"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Remotion's browser
+        uses: actions/cache@v4
+        with:
+          path: tiktok/node_modules/.remotion
+          key: remotion-browser-${{ runner.os }}-${{ hashFiles('tiktok/package-lock.json') }}
+
+      - name: Install Remotion's browser
+        run: npx remotion browser ensure
+
+      - name: Lint, type-check and unit tests
+        run: npm run check
+
+      - name: Validate the script
+        run: npm run validate -- "$EPISODE"
+
+      - name: Narration (temporary test audio, no key)
+        if: env.NARRATION == 'test-audio'
+        run: |
+          npm run audio:test -- "$EPISODE"
+          npm run audio:import -- "$EPISODE" "tmp/test-audio/$EPISODE.wav" --test
+
+      - name: Narration (committed take or ElevenLabs)
+        if: env.NARRATION != 'test-audio'
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ vars.ELEVENLABS_VOICE_ID }}
+        run: |
+          case "$NARRATION" in
+            committed) npm run narration:prepare -- "$EPISODE" ;;
+            elevenlabs) npm run narrate -- "$EPISODE" --force ;;
+            auto) npm run narration:prepare -- "$EPISODE" || npm run narrate -- "$EPISODE" ;;
+            *) echo "::error::Unknown narration mode: $NARRATION"; exit 1 ;;
+          esac
+
+      - name: Render and verify
+        env:
+          REMOTION_LICENSE_KEY: ${{ secrets.REMOTION_LICENSE_KEY }}
+        run: npm run render -- "$EPISODE"
+
+      - name: Collect the files
+        id: files
+        if: always()
+        run: |
+          name="${EPISODE}_$(date -u +%Y%m%d-%H%M)_run${GITHUB_RUN_NUMBER}"
+          mkdir -p upload
+          for ext in mp4 description.txt report.json; do
+            if [[ -f "out/$EPISODE.$ext" ]]; then cp "out/$EPISODE.$ext" "upload/$name.$ext"; fi
+          done
+          # A new ElevenLabs take: keep it so it can be committed and reused.
+          media="public/episodes/$EPISODE"
+          if [[ -f "$media/narration.json" ]] && grep -q '"source": "elevenlabs"' "$media/narration.json"; then
+            mkdir -p upload/narration
+            cp "$media/narration.source.mp3" "$media/alignment.json" "$media/narration.json" upload/narration/
+          fi
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - name: Upload the MP4 as a run artifact
+        if: always() && steps.files.outputs.name != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.files.outputs.name }}
+          path: tiktok/upload/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Summary
+        if: always()
+        run: node scripts/summary.ts "$EPISODE" "$NARRATION" >> "$GITHUB_STEP_SUMMARY"
+
+  publish:
+    name: Publish for iPhone download
+    needs: render
+    if: github.event_name == 'workflow_dispatch' && inputs.publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.render.outputs.name }}
+          path: upload
+
+      - name: Attach the MP4 to the tiktok-renders pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          NAME: ${{ needs.render.outputs.name }}
+        run: |
+          if ! gh release view tiktok-renders > /dev/null 2>&1; then
+            gh release create tiktok-renders --prerelease --target "$GITHUB_SHA" \
+              --title "TikTok renders" \
+              --notes "Rendered TikTok videos. Not software releases. On iPhone: tap an .mp4 to play it, then Share > Save Video."
+          fi
+          gh release upload tiktok-renders "upload/$NAME.mp4" "upload/$NAME.description.txt" --clobber
+          {
+            echo "## Download on iPhone"
+            echo ""
+            echo "[$NAME.mp4](https://github.com/$GH_REPO/releases/download/tiktok-renders/$NAME.mp4)"
+            echo ""
+            echo "All renders: https://github.com/$GH_REPO/releases/tag/tiktok-renders"
+          } >> "$GITHUB_STEP_SUMMARY"

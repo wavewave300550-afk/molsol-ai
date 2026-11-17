@@ -50,7 +50,8 @@
     "verify": "node scripts/verify.ts",
     "pipeline:test": "node scripts/test-pipeline.ts",
     "fonts:sync": "node scripts/sync-fonts.ts",
-    "schema": "node scripts/export-schema.ts"
+    "schema": "node scripts/export-schema.ts",
+    "narration:prepare": "node scripts/prepare-narration.ts"
   },
   "allowScripts": {
     "esbuild": false

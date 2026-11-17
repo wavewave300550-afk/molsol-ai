@@ -32,7 +32,8 @@ runCli(async () => {
     throw new Error(`Narration is only generated for an approved script. ${status.reason}\n  Approve it with: npm run approve -- ${episode.id} --by "Name"`);
   }
 
-  const voiceId = values.voice ?? process.env.ELEVENLABS_VOICE_ID ?? episode.voice?.voiceId ?? TTS.defaultVoiceId;
+  // `||` so an empty variable (an unset GitHub Actions variable) falls through.
+  const voiceId = values.voice || process.env.ELEVENLABS_VOICE_ID?.trim() || episode.voice?.voiceId || TTS.defaultVoiceId;
   const modelId = values.model ?? episode.voice?.modelId ?? TTS.modelId;
   const existing = readNarrationMeta(paths);
   if (
