@@ -1,0 +1,60 @@
+{
+  "name": "science-tiktok",
+  "version": "1.0.0",
+  "description": "Reusable audio-driven production system for Thai science TikTok episodes (Remotion + FFmpeg + ElevenLabs)",
+  "repository": {},
+  "license": "UNLICENSED",
+  "engines": {
+    "node": "^22.18.0 || >=24"
+  },
+  "private": true,
+  "dependencies": {
+    "@remotion/captions": "4.0.544",
+    "@remotion/cli": "4.0.544",
+    "@remotion/fonts": "4.0.544",
+    "@remotion/media": "4.0.544",
+    "mediabunny": "1.66.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "remotion": "4.0.544",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@fontsource/kanit": "^5.3.0",
+    "@fontsource/noto-sans-thai": "^5.3.0",
+    "@remotion/eslint-config-flat": "4.0.544",
+    "@types/node": "^22.20.5",
+    "@types/react": "19.3.0",
+    "@types/web": "0.0.166",
+    "eslint": "10.12.0",
+    "prettier": "3.8.1",
+    "typescript": "5.9.3"
+  },
+  "scripts": {
+    "dev": "remotion studio",
+    "build": "remotion bundle",
+    "upgrade": "remotion upgrade",
+    "lint": "eslint src && npm run typecheck",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.node.json",
+    "test": "node --test \"tests/**/*.test.ts\"",
+    "check": "npm run lint && npm test",
+    "new-episode": "node scripts/new-episode.ts",
+    "validate": "node scripts/validate.ts",
+    "approve": "node scripts/approve.ts",
+    "voices": "node --env-file-if-exists=.env scripts/list-voices.ts",
+    "narrate": "node --env-file-if-exists=.env scripts/narrate.ts",
+    "audio:import": "node scripts/import-audio.ts",
+    "audio:test": "node scripts/make-test-audio.ts",
+    "timeline": "node scripts/build-timeline.ts",
+    "render": "node scripts/render.ts",
+    "verify": "node scripts/verify.ts",
+    "pipeline:test": "node scripts/test-pipeline.ts",
+    "fonts:sync": "node scripts/sync-fonts.ts",
+    "schema": "node scripts/export-schema.ts",
+    "narration:prepare": "node scripts/prepare-narration.ts"
+  },
+  "allowScripts": {
+    "esbuild": false
+  },
+  "type": "module"
+}

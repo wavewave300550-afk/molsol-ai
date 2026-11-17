@@ -1,0 +1,157 @@
+{
+  "$schema": "../episode.schema.json",
+  "schemaVersion": 1,
+  "id": "pipeline-test",
+  "kind": "pipeline-test",
+  "title": "ทดสอบระบบผลิตคลิปวิทยาศาสตร์",
+  "language": "th",
+  "durationTier": "standard",
+  "sources": [
+    {
+      "id": "pubchem-water",
+      "label": "PubChem: Water (CID 962)",
+      "citation": "National Center for Biotechnology Information. PubChem Compound Summary for CID 962, Water.",
+      "url": "https://pubchem.ncbi.nlm.nih.gov/compound/962"
+    },
+    {
+      "id": "huuskonen-2000",
+      "label": "Huuskonen (2000)",
+      "citation": "Huuskonen, J. (2000). Estimation of aqueous solubility for a diverse set of organic compounds based on molecular topology. Journal of Chemical Information and Computer Sciences, 40(3), 773–777.",
+      "doi": "10.1021/ci9901338",
+      "note": "solubility.sdf matches RDKit's solubility.train set, which is attributed to this paper. Confirm before using in a real episode."
+    },
+    {
+      "id": "molsol-solubility-sdf",
+      "label": "solubility.sdf (MolSol)",
+      "citation": "solubility.sdf in the MolSol repository: 1,025 compounds, SOL = measured log S in mol/L. Benzene -1.64, naphthalene -3.6, pyrene -6.19.",
+      "url": "https://github.com/wavewave300550-afk/molsol-ai/blob/main/solubility.sdf",
+      "accessed": "2026-11-17"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "intro",
+      "label": "ทดสอบระบบ",
+      "factual": false,
+      "narration": "นี่คือวิดีโอทดสอบระบบผลิตคลิปวิทยาศาสตร์ เสียงที่ได้ยินเป็นเสียงสังเคราะห์ชั่วคราว ไม่ใช่เสียงบรรยายจริง และไม่ใช่ตอนที่จะเผยแพร่",
+      "visual": {
+        "type": "title",
+        "kicker": "PIPELINE TEST",
+        "title": "ทดสอบระบบผลิตคลิปวิทยาศาสตร์",
+        "subtitle": "เสียงสังเคราะห์ชั่วคราว ไม่ใช่ตอนจริง"
+      }
+    },
+    {
+      "id": "molecule",
+      "label": "ภาพโมเลกุล",
+      "narration": "ฉากนี้ทดสอบภาพโมเลกุล น้ำหนึ่งโมเลกุลประกอบด้วยไฮโดรเจนสองอะตอม และออกซิเจนหนึ่งอะตอม อะตอมแต่ละชนิดควรปรากฏขึ้นตรงกับคำที่ได้ยิน",
+      "sourceIds": ["pubchem-water"],
+      "cues": [
+        { "id": "hydrogen", "text": "ไฮโดรเจน" },
+        { "id": "oxygen", "text": "ออกซิเจน" }
+      ],
+      "visual": {
+        "type": "molecule",
+        "title": "โมเลกุลของน้ำ",
+        "formula": "H2O",
+        "atoms": [
+          { "id": "O", "element": "O", "x": 0, "y": 0 },
+          { "id": "H1", "element": "H", "x": -0.79, "y": 0.61 },
+          { "id": "H2", "element": "H", "x": 0.79, "y": 0.61 }
+        ],
+        "bonds": [
+          { "from": "O", "to": "H1" },
+          { "from": "O", "to": "H2" }
+        ],
+        "reveal": { "hydrogen": ["H1", "H2"], "oxygen": ["O"] },
+        "caption": "ไฮโดรเจน 2 อะตอม + ออกซิเจน 1 อะตอม"
+      }
+    },
+    {
+      "id": "chart",
+      "label": "กราฟข้อมูล",
+      "narration": "ฉากนี้ทดสอบกราฟจากข้อมูลจริงในโปรเจกต์ ค่าการละลายน้ำที่วัดได้ของเบนซีน แนฟทาลีน และไพรีน ลดลงเมื่อจำนวนวงแหวนเพิ่มขึ้น",
+      "sourceIds": ["molsol-solubility-sdf", "huuskonen-2000"],
+      "cues": [
+        { "id": "benzene", "text": "เบนซีน" },
+        { "id": "naphthalene", "text": "แนฟทาลีน" },
+        { "id": "pyrene", "text": "ไพรีน" }
+      ],
+      "visual": {
+        "type": "chart",
+        "title": "การละลายน้ำของไฮโดรคาร์บอนอะโรมาติก",
+        "unit": "log S (โมลต่อลิตร)",
+        "decimals": 2,
+        "bars": [
+          { "label": "เบนซีน", "sublabel": "1 วง", "value": -1.64, "cue": "benzene" },
+          { "label": "แนฟทาลีน", "sublabel": "2 วง", "value": -3.6, "cue": "naphthalene" },
+          { "label": "ไพรีน", "sublabel": "4 วง", "value": -6.19, "cue": "pyrene" }
+        ],
+        "note": "ค่ายิ่งติดลบมาก ยิ่งละลายน้ำได้น้อย"
+      }
+    },
+    {
+      "id": "process",
+      "label": "ขั้นตอนการผลิต",
+      "factual": false,
+      "narration": "ฉากนี้ทดสอบแผนภาพขั้นตอน ระบบเริ่มจากบทที่ผ่านการอนุมัติ จากนั้นสร้างเสียงบรรยาย จัดเวลาภาพตามเสียง แล้วเรนเดอร์เป็นวิดีโอ",
+      "cues": [
+        { "id": "approve", "text": "บทที่ผ่านการอนุมัติ" },
+        { "id": "narrate", "text": "สร้างเสียงบรรยาย" },
+        { "id": "sync", "text": "จัดเวลาภาพตามเสียง" },
+        { "id": "render", "text": "เรนเดอร์เป็นวิดีโอ" }
+      ],
+      "visual": {
+        "type": "process",
+        "title": "ขั้นตอนการผลิต",
+        "steps": [
+          { "label": "อนุมัติบท", "detail": "ตรวจข้อเท็จจริงกับแหล่งอ้างอิง", "cue": "approve" },
+          { "label": "สร้างเสียงบรรยาย", "detail": "ElevenLabs ภาษาไทย", "cue": "narrate" },
+          { "label": "จัดเวลาตามเสียง", "detail": "ฉาก ภาพ และคำบรรยาย", "cue": "sync" },
+          { "label": "เรนเดอร์วิดีโอ", "detail": "1080×1920 · 30 FPS · H.264", "cue": "render" }
+        ]
+      }
+    },
+    {
+      "id": "numbers",
+      "label": "ตัวเลขเคลื่อนไหว",
+      "factual": false,
+      "narration": "ฉากนี้ทดสอบตัวเลขเคลื่อนไหว วิดีโอกว้างหนึ่งพันแปดสิบพิกเซล สูงหนึ่งพันเก้าร้อยยี่สิบพิกเซล และเล่นที่สามสิบเฟรมต่อวินาที",
+      "cues": [
+        { "id": "width", "text": "กว้าง" },
+        { "id": "height", "text": "สูง" },
+        { "id": "fps", "text": "สามสิบเฟรม" }
+      ],
+      "visual": {
+        "type": "fact",
+        "title": "ข้อกำหนดของวิดีโอ",
+        "items": [
+          { "value": 1080, "label": "ความกว้าง (พิกเซล)", "cue": "width" },
+          { "value": 1920, "label": "ความสูง (พิกเซล)", "cue": "height" },
+          { "value": 30, "label": "เฟรมต่อวินาที", "cue": "fps" }
+        ]
+      }
+    },
+    {
+      "id": "illustration",
+      "label": "ภาพประกอบ",
+      "factual": false,
+      "narration": "ฉากนี้ทดสอบภาพประกอบจากไฟล์ในโปรเจกต์ ภาพประกอบทุกภาพต้องระบุผู้สร้างและสิทธิ์การใช้งานไว้บนจอ",
+      "visual": {
+        "type": "image",
+        "title": "ภาพประกอบ",
+        "src": "illustrations/pipeline-test-beaker.svg",
+        "alt": "บีกเกอร์ที่มีอนุภาคกำลังละลายในน้ำ",
+        "credit": "ภาพประกอบสร้างขึ้นเพื่อทดสอบระบบ ใช้ได้ภายในโปรเจกต์นี้"
+      }
+    },
+    {
+      "id": "sources",
+      "label": "แหล่งอ้างอิง",
+      "factual": false,
+      "narration": "ฉากสุดท้ายแสดงแหล่งอ้างอิงทั้งหมด ความยาวของวิดีโอถูกกำหนดจากความยาวของเสียงจริง โดยไม่มีการเร่ง ไม่มีการบีบ และไม่มีการตัดเสียง",
+      "visual": { "type": "sources", "title": "แหล่งอ้างอิง" }
+    }
+  ],
+  "approval": null
+}
