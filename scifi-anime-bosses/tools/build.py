@@ -38,7 +38,7 @@ RP = os.path.join(BUILD, "SAB_VESPER_RP")
 DIST = os.path.join(ROOT, "dist")
 CACHE = os.path.join(ROOT, ".cache")
 
-VERSION = [1, 0, 3]
+VERSION = [1, 0, 4]
 MIN_ENGINE = [1, 26, 60]
 SERVER_VERSION = "2.11.0"
 UUID = {
@@ -88,8 +88,9 @@ def manifests():
     rp = {"format_version": 2,
           "header": {"name": "pack.name", "description": "pack.description", "uuid": UUID["rp"], "version": VERSION,
                      "min_engine_version": MIN_ENGINE},
+          # no dependency back on the behavior pack: the BP depends on the RP, and circular pack dependencies
+          # can stop packs from loading
           "modules": [{"type": "resources", "uuid": UUID["rp_res"], "version": VERSION}],
-          "dependencies": [{"uuid": UUID["bp"], "version": VERSION}],
           "metadata": meta}
     write_json(os.path.join(BP, "manifest.json"), bp)
     write_json(os.path.join(RP, "manifest.json"), rp)
@@ -195,7 +196,7 @@ def rp_misc():
 
 def bp_data():
     for name, data in C.bp_entities().items():
-        write_json(os.path.join(BP, "entities", "sab", f"{name}.json"), data)
+        write_json(os.path.join(BP, "entities", f"sab_{name}.json"), data)  # flat, like every Microsoft sample
     for name, data in C.bp_items().items():
         write_json(os.path.join(BP, "items", "sab", f"{name}.json"), data)
     for name, data in C.bp_recipes().items():

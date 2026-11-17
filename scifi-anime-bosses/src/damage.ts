@@ -95,6 +95,10 @@ function onHurt(ev: EntityHurtBeforeEvent): void {
   const m = minions.get(e.id);
   if (m) {
     if (PASS_THROUGH.has(cause)) return;
+    if (ENVIRONMENT.has(cause)) {
+      ev.cancel = true;
+      return;
+    }
     const r = m.hurt(ev.damage, attacker, cause);
     ev.cancel = r.cancel;
     if (!r.cancel && r.damage !== undefined) ev.damage = r.damage;
@@ -105,6 +109,15 @@ function onHurt(ev: EntityHurtBeforeEvent): void {
   if (e.typeId.startsWith("sab:") && !PASS_THROUGH.has(cause)) ev.cancel = true;
 }
 
+/** Effects the boss and its helpers ignore (scripted here so the entity files stay vanilla-shaped). */
+const IMMUNE_EFFECTS = new Set<string>(["levitation", "slowness", "poison", "wither", "weakness", "slow_falling",
+  "nausea", "blindness", "darkness", "fatal_poison", "infested", "oozing", "weaving", "wind_charged",
+  "mining_fatigue", "hunger"]);
+
 export function registerDamage(): void {
   world.beforeEvents.entityHurt.subscribe(onHurt, { entityFilter: { families: ["sab_vesper"] } });
+  world.beforeEvents.effectAdd.subscribe((ev) => {
+    if (!ev.entity.typeId.startsWith("sab:")) return;
+    if (IMMUNE_EFFECTS.has(ev.effectType.replace(/^minecraft:/, ""))) ev.cancel = true;
+  });
 }

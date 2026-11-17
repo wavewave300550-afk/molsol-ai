@@ -719,7 +719,7 @@ export const world = {
     entitySpawn: new Signal("entitySpawn"), entityLoad: new Signal("entityLoad"), entityRemove: new Signal("entityRemove"),
     entityDie: new Signal("entityDie"), entityHurt: new Signal("entityHurt"), playerSpawn: new Signal("playerSpawn"),
   },
-  beforeEvents: { entityHurt: new Signal("beforeEntityHurt") },
+  beforeEvents: { entityHurt: new Signal("beforeEntityHurt"), effectAdd: new Signal("beforeEffectAdd") },
   _dyn: {},
   _difficulty: Difficulty.Normal,
   getDimension(id) {

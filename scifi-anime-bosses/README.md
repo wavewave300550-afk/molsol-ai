@@ -5,7 +5,7 @@ Script API **`@minecraft/server` 2.11.0** (latest stable) — **no experimental 
 
 **Install:** open [`dist/SciFi_Anime_Bosses_VESPER-0.mcaddon`](dist/SciFi_Anime_Bosses_VESPER-0.mcaddon)
 (separate `_BP.mcpack` / `_RP.mcpack` are next to it), enable the behavior pack on a world.
-**Updating:** import the new file (a higher pack version, currently 1.0.3, replaces the old one); if an existing
+**Updating:** import the new file (a higher pack version, currently 1.0.4, replaces the old one); if an existing
 world still behaves the old way, remove both packs from that world and add them again. If VESPER-0 ever fails to
 appear, the chat message includes the game's own reason in grey; and if Minecraft refuses to load any of the add-on's
 entities, joining the world says which ones (the exact cause is then in Settings > Creator > Content Log History).

@@ -59,15 +59,16 @@ BOSS_PROPS = {
     "sab:enrage": prop("bool", False),
 }
 
-ENV_IMMUNE = ["fall", "suffocation", "drowning", "fire", "fire_tick", "lava", "fly_into_wall", "magma",
-              "contact", "freezing", "campfire", "soul_campfire", "stalagmite", "stalactite", "falling_block",
-              "piston", "temperature", "anvil", "lightning"]
+# Every component below is written exactly the way vanilla 1.26.x entities write it (the game rejected all of the
+# add-on's entity files while Creator Tools passed them, so nothing here may differ from vanilla's own shapes).
+# Environmental damage (suffocation, drowning, contact, ...) is filtered in script instead (damage.ts ENVIRONMENT),
+# and the boss's effect immunities live in main.ts (world.beforeEvents.effectAdd).
 
 
 def damage_sensor(extra: List[dict] = None):
-    trig = [{"cause": c, "deals_damage": "no"} for c in ENV_IMMUNE]
-    trig.append({"on_damage": {"filters": {"test": "is_family", "subject": "other", "value": "sab_vesper"}},
-                 "deals_damage": "no"})
+    trig = [{"cause": "fall", "deals_damage": "no"},
+            {"on_damage": {"filters": {"test": "is_family", "subject": "other", "value": "sab_vesper"}},
+             "deals_damage": "no"}]
     return {"triggers": (extra or []) + trig}
 
 
@@ -81,11 +82,8 @@ def base_components(health, width, height, families, kb=1.0, persistent=False):
         "minecraft:knockback_resistance": {"value": kb},
         "minecraft:fire_immune": {},
         "minecraft:damage_sensor": damage_sensor(),
-        "minecraft:breathable": {"breathes_air": True, "breathes_water": True, "breathes_solids": True,
-                                 "suffocate_time": 0, "total_supply": 15},
-        "minecraft:conditional_bandwidth_optimization": {"default_values": {"max_optimized_distance": 128.0,
-                                                                            "max_dropped_ticks": 0,
-                                                                            "use_motion_prediction_hints": True}},
+        "minecraft:breathable": {"breathes_air": True, "breathes_water": True, "suffocate_time": 0, "total_supply": 15},
+        "minecraft:conditional_bandwidth_optimization": {},
     }
     if persistent:
         c["minecraft:persistent"] = {}
@@ -113,11 +111,7 @@ def bp_entities() -> Dict[str, dict]:
         "minecraft:boss": {"hud_range": 55, "should_darken_sky": True},  # vanilla's value
         "minecraft:body_rotation_always_follows_head": {},
         "minecraft:can_fly": {},
-        "minecraft:nameable": {"allow_name_tag_renaming": False, "always_show": False},
-        "minecraft:mob_effect_immunity": {"mob_effects": ["levitation", "slowness", "poison", "wither", "weakness",
-                                                          "slow_falling", "nausea", "blindness", "darkness",
-                                                          "fatal_poison", "infested", "oozing", "weaving",
-                                                          "wind_charged", "mining_fatigue", "hunger"]},
+        "minecraft:nameable": {},
         "minecraft:loot": {"table": "loot_tables/entities/sab_vesper_0.json"},
     })
     groups = {

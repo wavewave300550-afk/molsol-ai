@@ -415,7 +415,8 @@ def check_manifests():
         ok(re.match(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", u) is not None, f"bad uuid {u}")
     deps = {d.get("uuid") for d in bpm["dependencies"]}
     ok(rpm["header"]["uuid"] in deps, "BP does not depend on RP")
-    ok(bpm["header"]["uuid"] in {d.get("uuid") for d in rpm["dependencies"]}, "RP does not depend on BP")
+    ok(bpm["header"]["uuid"] not in {d.get("uuid") for d in rpm.get("dependencies", [])},
+       "RP must not depend on BP (circular pack dependencies can stop packs from loading)")
     script = [m for m in bpm["modules"] if m["type"] == "script"]
     ok(len(script) == 1, "BP must have one script module")
     if script:
