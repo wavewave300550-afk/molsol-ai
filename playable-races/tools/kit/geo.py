@@ -254,7 +254,7 @@ class Model:
             jb["pivot"] = _r3(np.array(b.pivot) + off)
             rot = self.bone_rot(bn, variant)
             if any(abs(v) > 1e-9 for v in rot):
-                jb["rotation"] = _r3(rot)
+                jb["rotation"] = _ang3(rot)
             if b.never_render:
                 jb["neverRender"] = True
             cubes = []
@@ -268,7 +268,7 @@ class Model:
                 jc: dict = {"origin": _r3(np.array(c.origin) + off), "size": _r3(c.size)}
                 if c.rot is not None and any(abs(v) > 1e-9 for v in c.rot):
                     jc["pivot"] = _r3(np.array(c.pivot if c.pivot else c.origin) + off)
-                    jc["rotation"] = _r3(c.rot)
+                    jc["rotation"] = _ang3(c.rot)
                 inf = c.inflate + inflate_extra
                 if abs(inf) > 1e-9:
                     jc["inflate"] = round(inf, 4)
@@ -371,3 +371,18 @@ def _skyline(rects, W: int, pad: int):
 
 def _r3(v) -> List[float]:
     return [round(float(x), 4) + 0.0 for x in v]
+
+
+def _ang3(v) -> List[float]:
+    """Euler angles folded into (-180, 180] (the same rotation: each axis turn is periodic),
+    the range Bedrock's own files use; e.g. -180 becomes 180 and -190 becomes 170."""
+    out = []
+    for x in v:
+        a = math.fmod(float(x), 360.0)
+        if a <= -180.0:
+            a += 360.0
+        elif a > 180.0:
+            a -= 360.0
+        a = round(a, 4) + 0.0
+        out.append(180.0 if a == -180.0 else a)
+    return out
