@@ -13,6 +13,7 @@ import { haloInFlight, onHaloUse, tickHalos } from "./halo.js";
 import { bosses, clock, ledgerPrune, minions, parts } from "./registry.js";
 import { onPsalterUse, tickHeldHints, tickRituals } from "./summon.js";
 import { resetFxBudget } from "./util/fx.js";
+import { reportMissing, reportMissingToAll } from "./selfcheck.js";
 import { groundY, safeRemove } from "./util/world.js";
 
 const DIMENSIONS = ["minecraft:overworld", "minecraft:nether", "minecraft:the_end"];
@@ -55,6 +56,14 @@ world.afterEvents.entitySpawn.subscribe((ev) => {
 world.afterEvents.entityLoad.subscribe((ev) => {
   const e = ev.entity;
   if (e.isValid && e.typeId === ENT.boss) system.run(() => adopt(e, false));
+});
+
+world.afterEvents.playerSpawn.subscribe((ev) => {
+  if (!ev.initialSpawn) return;
+  const p = ev.player;
+  system.runTimeout(() => {
+    if (p.isValid) reportMissing([p]);
+  }, 60);
 });
 
 world.afterEvents.entityRemove.subscribe((ev) => {
@@ -129,6 +138,7 @@ system.runInterval(() => {
   } catch (err) {
     console.warn(`[VESPER-0] helper tick failed: ${err}`);
   }
+  if (clock.now === 60) reportMissingToAll();
   if (clock.now % 40 === 0) discover();
   if (clock.now % 200 === 100) cleanupOrphans();
 }, 1);

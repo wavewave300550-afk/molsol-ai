@@ -8,6 +8,7 @@ import { bosses } from "./registry.js";
 import { COLORS, particle, sound } from "./util/fx.js";
 import { hdist } from "./util/vec.js";
 import { groundY, isPeaceful, safeRemove, spectators } from "./util/world.js";
+import { missingEntityTypes } from "./selfcheck.js";
 
 interface Ritual {
   dim: Dimension;
@@ -33,6 +34,9 @@ function deny(p: Player, msg: string): void {
 
 /** Reasons the hymn cannot be played here (undefined = allowed). */
 export function summonBlocker(p: Player, at: Vector3): string | undefined {
+  if (missingEntityTypes().includes(ENT.boss)) {
+    return "Minecraft could not load VESPER-0 in this world (see Settings > Creator > Content Log History).";
+  }
   if (p.dimension.id !== "minecraft:overworld") return "The Psalter's hymn only reaches the stars from the Overworld.";
   if (isPeaceful()) return "VESPER-0 does not answer in Peaceful difficulty.";
   for (const v of bosses.values()) {

@@ -82,7 +82,7 @@ def base_components(health, width, height, families, kb=1.0, persistent=False):
         "minecraft:fire_immune": {},
         "minecraft:damage_sensor": damage_sensor(),
         "minecraft:breathable": {"breathes_air": True, "breathes_water": True, "breathes_solids": True,
-                                 "suffocate_time": -1, "total_supply": 15},
+                                 "suffocate_time": 0, "total_supply": 15},
         "minecraft:conditional_bandwidth_optimization": {"default_values": {"max_optimized_distance": 128.0,
                                                                             "max_dropped_ticks": 0,
                                                                             "use_motion_prediction_hints": True}},
@@ -92,8 +92,9 @@ def base_components(health, width, height, families, kb=1.0, persistent=False):
     return c
 
 
-def entity(identifier, components, properties=None, groups=None, events=None, spawnable=False):
-    desc = {"identifier": identifier, "is_spawnable": spawnable, "is_summonable": True}
+def entity(identifier, components, properties=None, groups=None, events=None, spawnable=False, category="misc"):
+    # same description shape as vanilla 1.26.x entities (spawn_category included)
+    desc = {"identifier": identifier, "spawn_category": category, "is_spawnable": spawnable, "is_summonable": True}
     if properties:
         desc["properties"] = properties
     body = {"description": desc, "components": components}
@@ -109,7 +110,7 @@ def bp_entities() -> Dict[str, dict]:
     # ---- the boss
     c = base_components(1200, 8.0, 7.5, FAMILY + ["sab_boss", "monster", "mob"], persistent=True)
     c.update({
-        "minecraft:boss": {"hud_range": 96, "should_darken_sky": True},
+        "minecraft:boss": {"hud_range": 55, "should_darken_sky": True},  # vanilla's value
         "minecraft:body_rotation_always_follows_head": {},
         "minecraft:can_fly": {},
         "minecraft:nameable": {"allow_name_tag_renaming": False, "always_show": False},
@@ -128,7 +129,7 @@ def bp_entities() -> Dict[str, dict]:
         "sab:set_hull_p2": {"add": {"component_groups": ["sab:hull_p2"]}, "remove": {"component_groups": ["sab:hull_open"]}},
         "sab:set_hull_open": {"add": {"component_groups": ["sab:hull_open"]}, "remove": {"component_groups": ["sab:hull_p2"]}},
     }
-    out["vesper_0"] = entity(BOSS, c, BOSS_PROPS, groups, events, spawnable=True)
+    out["vesper_0"] = entity(BOSS, c, BOSS_PROPS, groups, events, spawnable=True, category="monster")
 
     # ---- proxy hitboxes (prow / stern / heart): damage is forwarded to the boss by script
     c = base_components(1000, 4.5, 4.0, FAMILY + ["sab_part", "inanimate"])

@@ -298,6 +298,16 @@ async function summonRulesAndWeapon(mock) {
   cmd.cb({ sourceEntity: hero, sourceType: "Entity" }, "despawn");
   for (let i = 0; i < 5; i++) mock.__tick();
   check(!mock.__entities().some((e) => e.typeId === "sab:vesper_0"), "/sab:vesper despawn removes the boss");
+  // the game failed to load the boss entity type: the Psalter refuses up front and says why
+  mock.__hiddenTypes.add("sab:vesper_0");
+  const rook2 = mock.__addPlayer("Wyn", { x: 900.5, y: 64, z: -900.5 });
+  rook2._hand = new mock.ItemStack("sab:astral_psalter", 1);
+  for (let i = 0; i < 70; i++) mock.__tick();
+  ps.onUse({ source: rook2, itemStack: rook2._hand });
+  mock.__hiddenTypes.delete("sab:vesper_0");
+  const wyn = mock.__log.chat.filter((c) => c[1] === "Wyn").map((c) => c[2]).join(" / ");
+  check(/could not load these add-on entities: .*sab:vesper_0/.test(wyn), "a player joining a world that failed to load the boss is told so");
+  check(!!rook2._hand && /could not load VESPER-0/.test(wyn), "the Psalter then refuses up front (and is kept) instead of a ritual that fails");
   // a spawn the engine refuses: the engine's reason is shown in chat and the Psalter comes back
   const ow = mock.world.getDimension("minecraft:overworld");
   ow._failSpawn.add("sab:vesper_0");
@@ -368,7 +378,7 @@ async function runOne(name) {
   }
   for (const msg of mock.__issues) check(false, `mock: ${msg}`);
   // the forced spawn failure in summon_rules_and_weapon logs its (expected) reason
-  const bad = mock.__log.warnings.filter((w) => /crash|failed|ineffective/.test(w) && !/mock spawn refused/.test(w));
+  const bad = mock.__log.warnings.filter((w) => /crash|failed|ineffective/.test(w) && !/mock spawn refused|entity types missing/.test(w));
   for (const w of bad) check(false, `script warning: ${w}`);
   process.stdout.write(JSON.stringify({ name, results, info }) + "\n");
 }

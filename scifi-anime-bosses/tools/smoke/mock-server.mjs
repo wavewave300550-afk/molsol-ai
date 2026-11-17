@@ -717,7 +717,7 @@ const pendingSpawnEvents = [];
 export const world = {
   afterEvents: {
     entitySpawn: new Signal("entitySpawn"), entityLoad: new Signal("entityLoad"), entityRemove: new Signal("entityRemove"),
-    entityDie: new Signal("entityDie"), entityHurt: new Signal("entityHurt"),
+    entityDie: new Signal("entityDie"), entityHurt: new Signal("entityHurt"), playerSpawn: new Signal("playerSpawn"),
   },
   beforeEvents: { entityHurt: new Signal("beforeEntityHurt") },
   _dyn: {},
@@ -829,8 +829,22 @@ export function __addPlayer(name, loc, dim = "minecraft:overworld") {
   const d = DIMS[dim];
   const p = new Player(name, d, loc);
   d._entities.set(p.id, p);
+  world.afterEvents.playerSpawn.fire({ player: p, initialSpawn: true });
   return p;
 }
+
+// entity types the game "failed to load" (a test hides them to exercise the self-check)
+export const __hiddenTypes = new Set();
+export const EntityTypes = {
+  get(id) {
+    if (typeof id !== "string") issue("EntityTypes.get without id");
+    if (__hiddenTypes.has(id)) return undefined;
+    return id in ENTITY_DEFS || id.startsWith("minecraft:") ? { id } : undefined;
+  },
+  getAll() {
+    return Object.keys(ENTITY_DEFS).filter((id) => !__hiddenTypes.has(id)).map((id) => ({ id }));
+  },
+};
 
 export function __addEntity(typeId, loc, dim = "minecraft:overworld") {
   const d = DIMS[dim];
