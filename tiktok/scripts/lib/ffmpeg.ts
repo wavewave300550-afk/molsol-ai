@@ -19,10 +19,15 @@ function tool(name: "ffmpeg" | "ffprobe"): { cmd: string; pre: string[] } {
 
 export type RunResult = { code: number; stdout: string; stderr: string };
 
-export function run(cmd: string, args: string[], options: { cwd?: string; inherit?: boolean } = {}): Promise<RunResult> {
+export function run(
+  cmd: string,
+  args: string[],
+  options: { cwd?: string; inherit?: boolean; env?: NodeJS.ProcessEnv } = {},
+): Promise<RunResult> {
   return new Promise((resolve, reject) => {
     const child = spawn(cmd, args, {
       cwd: options.cwd ?? projectRoot,
+      env: options.env ?? process.env,
       stdio: options.inherit ? "inherit" : ["ignore", "pipe", "pipe"],
     });
     let stdout = "";
@@ -73,10 +78,16 @@ export async function audioDurationSeconds(file: string): Promise<number> {
 
 export type Loudness = { inputI: number; inputTp: number; inputLra: number; inputThresh: number };
 
-/** EBU R128 loudness of the first audio stream (FFmpeg loudnorm analysis). */
-export async function measureLoudness(file: string): Promise<Loudness> {
+/**
+ * EBU R128 loudness of the first audio stream (FFmpeg loudnorm analysis).
+ * `stereo` measures it as it will play in the video: mono narration becomes
+ * two identical channels there, which reads about 3 LU louder.
+ */
+export async function measureLoudness(file: string, options: { stereo?: boolean } = {}): Promise<Loudness> {
   const { integratedLufs: I, truePeakDb: TP, loudnessRange: LRA } = AUDIO_MASTER;
-  const result = await ffmpeg(["-i", file, "-map", "0:a:0", "-af", `loudnorm=I=${I}:TP=${TP}:LRA=${LRA}:print_format=json`, "-f", "null", "-"]);
+  const analysis = `loudnorm=I=${I}:TP=${TP}:LRA=${LRA}:print_format=json`;
+  const filter = options.stereo ? `aformat=channel_layouts=stereo,${analysis}` : analysis;
+  const result = await ffmpeg(["-i", file, "-map", "0:a:0", "-af", filter, "-f", "null", "-"]);
   const json = result.stderr.slice(result.stderr.lastIndexOf("{"), result.stderr.lastIndexOf("}") + 1);
   if (result.code !== 0 || !json) throw new Error(`Loudness analysis failed for ${file}: ${result.stderr.slice(-400)}`);
   const m = JSON.parse(json) as Record<string, string>;
@@ -86,13 +97,13 @@ export async function measureLoudness(file: string): Promise<Loudness> {
 export type MasterResult = { gainDb: number; inputSeconds: number; outputSeconds: number; loudness: Loudness };
 
 /**
- * Makes the playback copy of the narration: one constant gain toward
- * -14 LUFS (capped so it never clips) and 48 kHz mono. A constant gain and
- * resampling leave timing and dynamics untouched; the output must be as long
- * as the input or the step fails.
+ * Makes the playback copy of the narration: one constant gain so the video's
+ * stereo track lands at -14 LUFS (capped so it never clips), 48 kHz stereo.
+ * A constant gain and resampling leave timing and dynamics untouched; the
+ * output must be as long as the input or the step fails.
  */
 export async function masterNarration(input: string, output: string): Promise<MasterResult> {
-  const loudness = await measureLoudness(input);
+  const loudness = await measureLoudness(input, { stereo: true });
   if (!Number.isFinite(loudness.inputI) || loudness.inputI < -70) throw new Error(`${input} is silent; there is no narration to use.`);
   const gainDb = Math.min(AUDIO_MASTER.integratedLufs - loudness.inputI, AUDIO_MASTER.truePeakDb - loudness.inputTp);
   const result = await ffmpeg([
@@ -104,7 +115,7 @@ export async function masterNarration(input: string, output: string): Promise<Ma
     "-af",
     `volume=${gainDb.toFixed(2)}dB,aresample=${AUDIO_MASTER.sampleRate}`,
     "-ac",
-    "1",
+    "2",
     "-c:a",
     "pcm_s16le",
     output,

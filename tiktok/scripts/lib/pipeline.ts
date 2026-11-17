@@ -92,7 +92,10 @@ export async function renderEpisode(id: string | undefined): Promise<BuiltEpisod
     if (isTestRender(timeline)) args.push("--is-production=false");
   }
   step(`Rendering ${paths.id}: ${timeline.durationInFrames} frames, 1080×1920, 30 fps, H.264`);
-  const result = await run(join(projectRoot, "node_modules", ".bin", "remotion"), args, { inherit: true });
+  // Behind an HTTPS proxy (Claude Code cloud sessions), Node only uses it for
+  // Remotion's one-time browser download when NODE_USE_ENV_PROXY is set.
+  const env = process.env.HTTPS_PROXY && !process.env.NODE_USE_ENV_PROXY ? { ...process.env, NODE_USE_ENV_PROXY: "1" } : process.env;
+  const result = await run(join(projectRoot, "node_modules", ".bin", "remotion"), args, { inherit: true, env });
   if (result.code !== 0) throw new Error("Remotion render failed (see the log above).");
   if (await ensureFaststart(paths.video)) ok("Moved the MP4 index to the front so phones can stream it");
   writeDescription(episode, timeline, paths);

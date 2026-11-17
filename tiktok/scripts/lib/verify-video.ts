@@ -5,6 +5,7 @@
  */
 import { existsSync, statSync } from "node:fs";
 import type { Interval } from "../../src/lib/alignment.ts";
+import { AUDIO_MASTER } from "../../src/lib/config.ts";
 import type { Timeline } from "../../src/lib/timeline.ts";
 import { detectPauses, ffmpeg, ffprobeJson, measureLoudness, mp4TopLevelBoxes } from "./ffmpeg.ts";
 import type { EpisodePaths } from "./paths.ts";
@@ -72,7 +73,9 @@ export async function verifyVideo(paths: EpisodePaths, timeline: Timeline, file 
   const boxes = mp4TopLevelBoxes(file);
   add("Fast start (index before media)", boxes.indexOf("moov") !== -1 && boxes.indexOf("moov") < boxes.indexOf("mdat"), boxes.join(" → "));
 
-  const decode = await ffmpeg(["-v", "error", "-i", file, "-f", "null", "-"]);
+  // Decode every frame and sample (explicit codecs: Remotion's FFmpeg build
+  // has no default encoder for the null output).
+  const decode = await ffmpeg(["-v", "error", "-i", file, "-map", "0", "-c:v", "rawvideo", "-c:a", "pcm_s16le", "-f", "null", "-"]);
   add("Decodes start to end without errors", decode.code === 0 && decode.stderr.trim() === "", decode.stderr.trim().slice(0, 200) || "no decoder errors");
 
   const [inVideo, inNarration] = await Promise.all([detectPauses(file), detectPauses(paths.narrationWav)]);
@@ -88,6 +91,11 @@ export async function verifyVideo(paths: EpisodePaths, timeline: Timeline, file 
   const loudness = await measureLoudness(file);
   metrics.loudnessLufs = loudness.inputI;
   metrics.truePeakDb = loudness.inputTp;
+  add(
+    "Loudness about -14 LUFS, no clipping",
+    Math.abs(loudness.inputI - AUDIO_MASTER.integratedLufs) <= 1.5 && loudness.inputTp <= 0,
+    `${loudness.inputI} LUFS (target ${AUDIO_MASTER.integratedLufs}), true peak ${loudness.inputTp} dBTP`,
+  );
   return finish();
 }
 

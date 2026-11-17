@@ -6,7 +6,7 @@
  * both Node and Chrome provide.
  */
 
-const INVISIBLE = /[​⁠﻿]/g;
+const INVISIBLE = /[\u200B\u2060\uFEFF]/g;
 const COMBINING = /\p{Mn}/u;
 const LETTER_OR_DIGIT = /[\p{L}\p{N}]/u;
 
@@ -18,7 +18,7 @@ export function normalizeNarration(text: string): string {
   return text
     .normalize("NFC")
     .replace(INVISIBLE, "")
-    .replace(/[\s ]+/g, " ")
+    .replace(/[\s\u00A0]+/g, " ")
     .trim();
 }
 
