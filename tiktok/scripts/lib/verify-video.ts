@@ -20,6 +20,30 @@ export type VideoReport = {
   metrics: Record<string, number | string>;
 };
 
+/**
+ * Narration loudness: -14 LUFS, or as loud as one constant gain can make it
+ * when the take's peaks reach the -1.5 dBTP ceiling first (mastering never
+ * limits or compresses, so no sample is reshaped). Never clipping.
+ */
+export function loudnessCheck(lufs: number, truePeakDb: number): Check {
+  const { integratedLufs: target, truePeakDb: ceiling, quietestLufs } = AUDIO_MASTER;
+  const name = `Loudness ${target} LUFS (or as loud as the peaks allow), no clipping`;
+  if (truePeakDb > 0) return { name, pass: false, detail: `${lufs} LUFS, true peak ${truePeakDb} dBTP: clipping` };
+  if (Math.abs(lufs - target) <= 1.5) return { name, pass: true, detail: `${lufs} LUFS (target ${target}), true peak ${truePeakDb} dBTP` };
+  const peakLimited = lufs < target && truePeakDb >= ceiling - 0.5;
+  if (peakLimited && lufs >= quietestLufs) {
+    return {
+      name,
+      pass: true,
+      detail:
+        `${lufs} LUFS, true peak ${truePeakDb} dBTP: the peaks reach the ${ceiling} dBTP ceiling before ${target} LUFS, ` +
+        "so this is as loud as one constant gain can make it (no limiter: no sample is reshaped)",
+    };
+  }
+  const why = peakLimited ? `quieter than ${quietestLufs} LUFS: check the take for clicks or pops` : `target ${target} ±1.5`;
+  return { name, pass: false, detail: `${lufs} LUFS, true peak ${truePeakDb} dBTP (${why})` };
+}
+
 export async function verifyVideo(paths: EpisodePaths, timeline: Timeline, file = paths.video): Promise<VideoReport> {
   const checks: Check[] = [];
   const metrics: VideoReport["metrics"] = {};
@@ -93,11 +117,7 @@ export async function verifyVideo(paths: EpisodePaths, timeline: Timeline, file 
   const loudness = await measureLoudness(file);
   metrics.loudnessLufs = loudness.inputI;
   metrics.truePeakDb = loudness.inputTp;
-  add(
-    "Loudness about -14 LUFS, no clipping",
-    Math.abs(loudness.inputI - AUDIO_MASTER.integratedLufs) <= 1.5 && loudness.inputTp <= 0,
-    `${loudness.inputI} LUFS (target ${AUDIO_MASTER.integratedLufs}), true peak ${loudness.inputTp} dBTP`,
-  );
+  checks.push(loudnessCheck(loudness.inputI, loudness.inputTp));
   return finish();
 }
 

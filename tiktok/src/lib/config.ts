@@ -59,8 +59,14 @@ export const TTS = {
   maxCharactersPerRequest: 5000,
 };
 
-/** Loudness target for TikTok (EBU R128 integrated loudness). */
-export const AUDIO_MASTER = { integratedLufs: -14, truePeakDb: -1.5, loudnessRange: 11, sampleRate: 48000 };
+/**
+ * Loudness target for TikTok (EBU R128 integrated loudness). Narration only
+ * ever gets one constant gain, never a limiter or compressor, so every sample
+ * keeps its shape. When a take's peaks reach the true-peak ceiling before it
+ * reaches the target, it stays quieter: accepted down to `quietestLufs`
+ * (below that, listen for clicks or pops that push the peaks up).
+ */
+export const AUDIO_MASTER = { integratedLufs: -14, truePeakDb: -1.5, quietestLufs: -20, loudnessRange: 11, sampleRate: 48000 };
 
 /**
  * Rough speaking-rate model used only to warn about script length before

@@ -14,6 +14,7 @@ import { projectRoot } from "../scripts/lib/paths.ts";
 import { isTestRender } from "../scripts/lib/pipeline.ts";
 import { planSyntheticNarration } from "../scripts/lib/test-audio.ts";
 import { assessMaster } from "../scripts/lib/pcm.ts";
+import { loudnessCheck } from "../scripts/lib/verify-video.ts";
 import { buildVoiceTestReport, formatVoiceTestReport } from "../scripts/lib/voice-test.ts";
 
 const voiceTestRaw = () => JSON.parse(readFileSync(join(projectRoot, "episodes", "voice-test", "episode.json"), "utf8"));
@@ -181,4 +182,16 @@ test("a recovered take without ElevenLabs timing passes with a warning; a normal
   const failed = buildVoiceTestReport(normal.episode, normal.meta, normal.alignment, m);
   assert.equal(failed.pass, false);
   assert.deepEqual(failed.warnings, []);
+});
+
+test("loudness: -14 LUFS, or quieter only because the peaks reached the ceiling; never clipping", () => {
+  const pass = (lufs: number, truePeak: number) => loudnessCheck(lufs, truePeak).pass;
+  assert.equal(pass(-14.1, -4), true);
+  // The recovered take: one constant gain of +3.42 dB brings its peaks to -1.5 dBTP at -16.43 LUFS.
+  assert.equal(pass(-16.43, -1.5), true);
+  assert.match(loudnessCheck(-16.43, -1.5).detail, /as loud as one constant gain can make it/);
+  assert.equal(pass(-16.43, -4), false, "quiet with room left below the ceiling");
+  assert.equal(pass(-21, -1.5), false, "quieter than -20 LUFS");
+  assert.equal(pass(-12, -1.5), false, "too loud");
+  assert.equal(pass(-14, 0.2), false, "clipping");
 });

@@ -199,6 +199,9 @@ export async function renderMaster(input: string, output: string, options: { gai
 
 export type MasterResult = {
   gainDb: number;
+  /** Loudness after the gain, and whether the peak ceiling stopped the gain short of the target. */
+  outputLufs: number;
+  peakLimited: boolean;
   /** Exact lengths from decoded samples. */
   inputSeconds: number;
   outputSeconds: number;
@@ -228,7 +231,15 @@ export async function masterNarration(input: string, output: string): Promise<Ma
         "Nothing may shorten, speed up or alter narration.",
     );
   }
-  return { gainDb, inputSeconds: check.sourceSeconds, outputSeconds: check.masterSeconds, loudness, check };
+  return {
+    gainDb,
+    outputLufs: Number((loudness.inputI + gainDb).toFixed(2)),
+    peakLimited: gainDb < AUDIO_MASTER.integratedLufs - loudness.inputI - 0.01,
+    inputSeconds: check.sourceSeconds,
+    outputSeconds: check.masterSeconds,
+    loudness,
+    check,
+  };
 }
 
 /** Silent stretches (FFmpeg silencedetect) of the first audio stream. */

@@ -8,7 +8,7 @@ import { copyFileSync, existsSync } from "node:fs";
 import { extname, join, resolve } from "node:path";
 import type { AlignmentFile, AlignmentSource, CharacterAlignment } from "../../src/lib/alignment.ts";
 import { estimateAlignmentFromSilences, mapAlignmentToText, normalizeAlignment } from "../../src/lib/alignment.ts";
-import { TIMELINE, VIDEO } from "../../src/lib/config.ts";
+import { AUDIO_MASTER, TIMELINE, VIDEO } from "../../src/lib/config.ts";
 import { checkVideoDuration, formatSeconds } from "../../src/lib/duration.ts";
 import { formatIssues } from "../../src/lib/issues.ts";
 import { fullNarration } from "../../src/lib/rules.ts";
@@ -68,6 +68,12 @@ export async function prepareNarration(input: PrepareInput): Promise<{ meta: Nar
   const master = await masterNarration(input.sourceFile, paths.narrationWav);
   ok(`Mastered narration: ${formatSeconds(master.outputSeconds)}, gain ${master.gainDb.toFixed(1)} dB, every sample kept`);
   console.log(`   ${describeMaster(master.check)}`);
+  if (master.peakLimited) {
+    console.log(
+      `   Loudness ${master.outputLufs.toFixed(1)} LUFS: the peaks reach the ${AUDIO_MASTER.truePeakDb} dBTP ceiling before ${AUDIO_MASTER.integratedLufs} LUFS ` +
+        "(no limiter is used, so no sample is reshaped)",
+    );
+  }
 
   let characterAlignment = input.alignment ?? null;
   let timingSource: AlignmentSource = input.timingSource ?? "elevenlabs";

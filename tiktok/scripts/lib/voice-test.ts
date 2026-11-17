@@ -6,14 +6,14 @@
  * already on disk: it spends no credits.
  */
 import { type AlignmentFile, mapAlignmentToText } from "../../src/lib/alignment.ts";
-import { AUDIO_MASTER, TIMELINE, TTS, VOICE_TEST } from "../../src/lib/config.ts";
+import { TIMELINE, TTS, VOICE_TEST } from "../../src/lib/config.ts";
 import { checkVideoDuration, estimateVideoSeconds } from "../../src/lib/duration.ts";
 import { fullNarration, sceneRanges } from "../../src/lib/rules.ts";
 import type { Episode } from "../../src/lib/schema.ts";
 import { narrationHash } from "./approval.ts";
 import type { NarrationMeta } from "./narration.ts";
 import { describeMaster, type MasterAssessment } from "./pcm.ts";
-import type { Check } from "./verify-video.ts";
+import { type Check, loudnessCheck } from "./verify-video.ts";
 
 export type VoiceTestMeasurements = {
   /** Exact length of the file ElevenLabs returned: decoded samples, not the MP3 header's estimate. */
@@ -89,11 +89,7 @@ export function buildVoiceTestReport(
       : `ElevenLabs file ${m.sourceSeconds.toFixed(6)} s, playback copy ${m.masteredSeconds.toFixed(6)} s` +
           (shorter ? " (shorter)" : longer ? " (longer)" : ""),
   );
-  add(
-    `Loudness about ${AUDIO_MASTER.integratedLufs} LUFS, no clipping`,
-    Math.abs(m.loudnessLufs - AUDIO_MASTER.integratedLufs) <= 1.5 && m.truePeakDb <= 0,
-    `${m.loudnessLufs} LUFS, true peak ${m.truePeakDb} dBTP`,
-  );
+  checks.push(loudnessCheck(m.loudnessLufs, m.truePeakDb));
 
   const estimated = estimateVideoSeconds(episode.scenes) - TIMELINE.tailSeconds;
   return {

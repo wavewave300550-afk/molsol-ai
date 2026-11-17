@@ -142,7 +142,10 @@ no scientific claim (intro, outro).
   (or `--from "<where it came from>"` when only the MP3 survived; the timing
   is then estimated from the pauses). It checks the take belongs to the
   approved script and its exact MP3, then prepares it like a new take.
-- After mastering, the narration plays at -14 LUFS.
+- **Loudness:** one constant gain toward -14 LUFS, with true peaks at most
+  -1.5 dBTP. Narration never goes through a limiter or compressor, so when a
+  take's peaks reach the ceiling first it stays a little quieter (accepted
+  down to -20 LUFS; the report says so).
 
 ## Voice tests (hearing the narrator)
 
