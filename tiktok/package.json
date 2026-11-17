@@ -51,7 +51,8 @@
     "pipeline:test": "node scripts/test-pipeline.ts",
     "fonts:sync": "node scripts/sync-fonts.ts",
     "schema": "node scripts/export-schema.ts",
-    "narration:prepare": "node scripts/prepare-narration.ts"
+    "narration:prepare": "node scripts/prepare-narration.ts",
+    "elevenlabs:check": "node --env-file-if-exists=.env scripts/check-elevenlabs.ts"
   },
   "allowScripts": {
     "esbuild": false

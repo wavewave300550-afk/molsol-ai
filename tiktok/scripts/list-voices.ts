@@ -1,9 +1,9 @@
 /**
- * Lists the ElevenLabs voices this API key can use, to pick a Thai narrator.
- * Pre-made voices work on every plan; Voice Library voices need a paid plan.
+ * Lists the ElevenLabs voices this API key can use (read-only, no credits)
+ * and marks the channel narrator, Madame Scientia. To use another voice for
+ * one take: npm run narrate -- <id> --voice <voice-id>
  *
  * Usage: npm run voices
- * Then set ELEVENLABS_VOICE_ID (or "voice": { "voiceId": ... } in an episode).
  */
 import { TTS } from "../src/lib/config.ts";
 import { runCli } from "./lib/cli.ts";
@@ -16,8 +16,10 @@ runCli(async () => {
     const labels = Object.entries(v.labels ?? {})
       .map(([k, value]) => `${k}: ${value}`)
       .join(", ");
-    const current = v.voice_id === (process.env.ELEVENLABS_VOICE_ID?.trim() || TTS.defaultVoiceId) ? "  ← current" : "";
+    const current = v.voice_id === TTS.narrator.voiceId ? "  ← channel narrator" : v.voice_id === process.env.ELEVENLABS_VOICE_ID?.trim() ? "  ← ELEVENLABS_VOICE_ID" : "";
     console.log(`${v.voice_id}  ${v.name.padEnd(24)} ${(v.category ?? "").padEnd(12)} ${labels}${current}`);
   }
-  console.log(`\n${voices.length} voices. Thai narration uses model ${TTS.modelId} with language "${TTS.languageCode}".`);
+  console.log(
+    `\n${voices.length} voices. Narration uses ${TTS.narrator.name} (${TTS.narrator.voiceId}) with model ${TTS.modelId}, language "${TTS.languageCode}".`,
+  );
 });

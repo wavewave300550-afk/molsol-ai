@@ -119,9 +119,16 @@ no scientific claim (intro, outro).
   - **Claude Code cloud session:** save it as an environment secret for
     `api.elevenlabs.io`; the proxy adds it to each request. Run with
     `ELEVENLABS_API_KEY=injected-by-proxy`.
-- Choose a voice that sounds natural in Thai: `npm run voices`, then set
-  `ELEVENLABS_VOICE_ID` (GitHub variable or `.env`) or `voice.voiceId` in the
-  episode. The default is ElevenLabs' George voice.
+- **Narrator:** every episode is read by the channel's permanent Thai voice,
+  **Madame Scientia** (`XAF1635HwW2TJGfbLzfc`, set in `src/lib/config.ts`).
+  A take only uses another voice when one is given explicitly (`--voice <id>`,
+  the `ELEVENLABS_VOICE_ID` variable, or `voice.voiceId` in an episode), and
+  the narration step says so. The pipeline never creates or edits voices.
+- **Check before spending credits:** `npm run narrate -- <id> --dry-run`
+  shows the voice, model, request URL and character count without sending
+  anything. **Actions → ElevenLabs check → Run workflow** confirms the GitHub
+  secret is set, the key works and it can use Madame Scientia, using
+  read-only requests only (no audio, no credits).
 - The same script, voice and model is never narrated twice (`--force` makes a
   new take). After mastering, the narration plays at -14 LUFS.
 
@@ -164,8 +171,10 @@ Workflow: `.github/workflows/tiktok-render.yml`.
 | `npm run new-episode -- <id> ["title"]` | new script from the template |
 | `npm run validate -- <id>` | check the script |
 | `npm run approve -- <id> --by "Name"` | record the scientific review |
-| `npm run voices` | list ElevenLabs voices (needs the key) |
-| `npm run narrate -- <id>` | Thai narration with ElevenLabs |
+| `npm run voices` | list ElevenLabs voices, narrator marked (needs the key) |
+| `npm run elevenlabs:check [-- --online]` | is the key set, which voice, does the key work (no credits) |
+| `npm run narrate -- <id> --dry-run` | show exactly what narration would send, without sending |
+| `npm run narrate -- <id>` | Thai narration with ElevenLabs (Madame Scientia) |
 | `npm run audio:import -- <id> <file> [--test]` | use a recording (or test audio) as narration |
 | `npm run narration:prepare -- <id>` | rebuild `narration.wav` from a committed take |
 | `npm run audio:test -- <id>` | write temporary test audio for a script |
