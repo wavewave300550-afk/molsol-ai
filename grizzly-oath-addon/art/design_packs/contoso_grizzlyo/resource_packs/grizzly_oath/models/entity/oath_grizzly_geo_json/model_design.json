@@ -1,0 +1,1441 @@
+{
+  "design": {
+    "identifier": "oath_grizzly",
+    "description": "Oath Grizzly - colossal spirit grizzly with glowing crimson claw scars, burning eyes and obsidian claws (anime dark fantasy)",
+    "textureSize": [
+      256,
+      256
+    ],
+    "pixelsPerUnit": 2,
+    "textures": {
+      "fur": {
+        "background": {
+          "type": "perlin_noise",
+          "colors": [
+            "#2B1A10",
+            "#3A2416",
+            "#1F130B",
+            "#4A2E1A"
+          ],
+          "factor": 0.55,
+          "seed": 101,
+          "scale": 2
+        }
+      },
+      "fur_hump": {
+        "background": {
+          "type": "perlin_noise",
+          "colors": [
+            "#1F130B",
+            "#2B1A10",
+            "#160D07"
+          ],
+          "factor": 0.5,
+          "seed": 102,
+          "scale": 2
+        },
+        "effects": {
+          "overlay": {
+            "pattern": "veins",
+            "density": 0.18,
+            "color": "#FF1E1E",
+            "seed": 4
+          }
+        }
+      },
+      "fur_scar": {
+        "background": {
+          "type": "perlin_noise",
+          "colors": [
+            "#2B1A10",
+            "#3A2416",
+            "#1F130B",
+            "#4A2E1A"
+          ],
+          "factor": 0.55,
+          "seed": 103,
+          "scale": 2
+        },
+        "pixelArt": [
+          {
+            "scaleMode": "exact",
+            "x": 0,
+            "y": 0,
+            "lines": [
+              "                          ",
+              "                          ",
+              "   R      R      R        ",
+              "   R      R      R        ",
+              "   R      R      R        ",
+              "   Rr     Rr     Rr       ",
+              "   Rr     Rr     Rr       ",
+              "    Rr     Rr     Rr      ",
+              "    Rr     Rr     Rr      ",
+              "    Rr     Rr     Rr      ",
+              "    Rr     Rr     Rr      ",
+              "    Rr     Rr     Rr      ",
+              "     Rr     Rr     Rr     ",
+              "     Rr     Rr     Rr     ",
+              "     Rr     Rr     Rr     ",
+              "     Rr     Rr     Rr     ",
+              "     Rr     Rr     Rr     ",
+              "      Rr     Rr     Rr    ",
+              "      Rr     Rr     Rr    ",
+              "      Rr     Rr     Rr    ",
+              "      Rr     Rr     Rr    ",
+              "      Rr     Rr     Rr    ",
+              "       Rr     Rr     Rr   ",
+              "       Rr     Rr     Rr   ",
+              "       Rr     Rr     Rr   ",
+              "       Rr     Rr     Rr   ",
+              "       Rr     Rr     Rr   ",
+              "        Rr     Rr     Rr  ",
+              "        Rr     Rr     Rr  ",
+              "        R      R      R   ",
+              "        R      R      R   ",
+              "        R      R      R   ",
+              "                          ",
+              "                          "
+            ],
+            "palette": {
+              "R": {
+                "hex": "#FF2418"
+              },
+              "r": {
+                "hex": "#FF9A80"
+              }
+            }
+          }
+        ]
+      },
+      "face": {
+        "background": {
+          "type": "perlin_noise",
+          "colors": [
+            "#2B1A10",
+            "#3A2416",
+            "#1F130B"
+          ],
+          "factor": 0.5,
+          "seed": 104,
+          "scale": 2
+        },
+        "pixelArt": [
+          {
+            "scaleMode": "exact",
+            "x": 0,
+            "y": 0,
+            "lines": [
+              "                    ",
+              "                    ",
+              "                    ",
+              "                    ",
+              "  dddd        dddd  ",
+              "   dddd      dddd   ",
+              "   RRRr      rRRR   ",
+              "    RRR      RRR    ",
+              "     R        R     ",
+              "                    ",
+              "                    ",
+              "                    ",
+              "                    ",
+              "                    ",
+              "                    ",
+              "                    ",
+              "                    ",
+              "                    ",
+              "                    ",
+              "                    "
+            ],
+            "palette": {
+              "R": {
+                "hex": "#FF1A1A"
+              },
+              "r": {
+                "hex": "#FFB080"
+              },
+              "d": {
+                "hex": "#120A06"
+              }
+            }
+          }
+        ]
+      },
+      "muzzle": {
+        "background": {
+          "type": "stipple_noise",
+          "colors": [
+            "#5A3E2A",
+            "#6B4A33",
+            "#4A3222"
+          ],
+          "factor": 0.35,
+          "seed": 105
+        }
+      },
+      "muzzle_front": {
+        "background": {
+          "type": "stipple_noise",
+          "colors": [
+            "#5A3E2A",
+            "#6B4A33",
+            "#4A3222"
+          ],
+          "factor": 0.35,
+          "seed": 106
+        },
+        "pixelArt": [
+          {
+            "scaleMode": "exact",
+            "x": 0,
+            "y": 0,
+            "lines": [
+              "            ",
+              "   nnnnnn   ",
+              "   nnnnnn   ",
+              "    nnnn    ",
+              "     nn     ",
+              "     nn     ",
+              "    n  n    ",
+              "            ",
+              "            ",
+              "            "
+            ],
+            "palette": {
+              "n": {
+                "hex": "#120C0A"
+              }
+            }
+          }
+        ]
+      },
+      "mouth": {
+        "background": {
+          "type": "solid",
+          "colors": [
+            "#6E0E10"
+          ]
+        },
+        "effects": {
+          "lighting": {
+            "preset": "inset",
+            "intensity": 0.3
+          }
+        }
+      },
+      "claw": {
+        "background": {
+          "type": "gradient",
+          "colors": [
+            "#2A2024",
+            "#0E0A0C"
+          ]
+        },
+        "effects": {
+          "border": {
+            "all": {
+              "style": "highlight",
+              "width": 1,
+              "color": "#FF2A1A"
+            }
+          }
+        }
+      },
+      "bone": {
+        "background": {
+          "type": "solid",
+          "colors": [
+            "#E6DAC0"
+          ]
+        },
+        "effects": {
+          "lighting": {
+            "preset": "pillow",
+            "intensity": 0.2
+          }
+        }
+      },
+      "pad": {
+        "background": {
+          "type": "stipple_noise",
+          "colors": [
+            "#1A1210",
+            "#241815"
+          ],
+          "factor": 0.3,
+          "seed": 107
+        }
+      }
+    },
+    "visibleBoundsSize": [
+      4,
+      4,
+      4
+    ],
+    "visibleBoundsOffset": [
+      0,
+      1.5,
+      0
+    ],
+    "bones": [
+      {
+        "name": "root",
+        "pivot": [
+          0,
+          0,
+          0
+        ],
+        "cubes": []
+      },
+      {
+        "name": "body",
+        "parent": "root",
+        "pivot": [
+          0,
+          13,
+          7
+        ],
+        "cubes": [
+          {
+            "origin": [
+              -7,
+              9,
+              -1
+            ],
+            "size": [
+              14,
+              13,
+              13
+            ],
+            "faces": {
+              "north": {
+                "textureId": "fur"
+              },
+              "south": {
+                "textureId": "fur"
+              },
+              "east": {
+                "textureId": "fur"
+              },
+              "west": {
+                "textureId": "fur"
+              },
+              "up": {
+                "textureId": "fur_hump"
+              },
+              "down": {
+                "textureId": "fur"
+              }
+            }
+          },
+          {
+            "origin": [
+              -8,
+              8,
+              -14
+            ],
+            "size": [
+              16,
+              17,
+              13
+            ],
+            "faces": {
+              "north": {
+                "textureId": "fur"
+              },
+              "south": {
+                "textureId": "fur"
+              },
+              "east": {
+                "textureId": "fur_scar"
+              },
+              "west": {
+                "textureId": "fur_scar"
+              },
+              "up": {
+                "textureId": "fur_hump"
+              },
+              "down": {
+                "textureId": "fur"
+              }
+            }
+          },
+          {
+            "origin": [
+              -6,
+              25,
+              -12
+            ],
+            "size": [
+              12,
+              3,
+              9
+            ],
+            "faces": {
+              "north": {
+                "textureId": "fur_hump"
+              },
+              "south": {
+                "textureId": "fur_hump"
+              },
+              "east": {
+                "textureId": "fur_hump"
+              },
+              "west": {
+                "textureId": "fur_hump"
+              },
+              "up": {
+                "textureId": "fur_hump"
+              },
+              "down": {
+                "textureId": "fur"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "head",
+        "parent": "body",
+        "pivot": [
+          0,
+          20,
+          -14
+        ],
+        "cubes": [
+          {
+            "origin": [
+              -5,
+              15,
+              -22
+            ],
+            "size": [
+              10,
+              10,
+              8
+            ],
+            "faces": {
+              "north": {
+                "textureId": "face"
+              },
+              "south": {
+                "textureId": "fur"
+              },
+              "east": {
+                "textureId": "fur"
+              },
+              "west": {
+                "textureId": "fur"
+              },
+              "up": {
+                "textureId": "fur_hump"
+              },
+              "down": {
+                "textureId": "fur"
+              }
+            }
+          },
+          {
+            "origin": [
+              -3,
+              15,
+              -27
+            ],
+            "size": [
+              6,
+              5,
+              5
+            ],
+            "faces": {
+              "north": {
+                "textureId": "muzzle_front"
+              },
+              "south": {
+                "textureId": "muzzle"
+              },
+              "east": {
+                "textureId": "muzzle"
+              },
+              "west": {
+                "textureId": "muzzle"
+              },
+              "up": {
+                "textureId": "muzzle"
+              },
+              "down": {
+                "textureId": "mouth"
+              }
+            }
+          },
+          {
+            "origin": [
+              -5.5,
+              24,
+              -18
+            ],
+            "size": [
+              3,
+              3,
+              2
+            ],
+            "faces": {
+              "north": {
+                "textureId": "fur"
+              },
+              "south": {
+                "textureId": "fur"
+              },
+              "east": {
+                "textureId": "fur"
+              },
+              "west": {
+                "textureId": "fur"
+              },
+              "up": {
+                "textureId": "fur"
+              },
+              "down": {
+                "textureId": "fur"
+              }
+            }
+          },
+          {
+            "origin": [
+              2.5,
+              24,
+              -18
+            ],
+            "size": [
+              3,
+              3,
+              2
+            ],
+            "faces": {
+              "north": {
+                "textureId": "fur"
+              },
+              "south": {
+                "textureId": "fur"
+              },
+              "east": {
+                "textureId": "fur"
+              },
+              "west": {
+                "textureId": "fur"
+              },
+              "up": {
+                "textureId": "fur"
+              },
+              "down": {
+                "textureId": "fur"
+              }
+            }
+          },
+          {
+            "origin": [
+              -2.4,
+              13.6,
+              -26.6
+            ],
+            "size": [
+              0.9,
+              1.4,
+              0.9
+            ],
+            "faces": {
+              "north": {
+                "textureId": "bone"
+              },
+              "south": {
+                "textureId": "bone"
+              },
+              "east": {
+                "textureId": "bone"
+              },
+              "west": {
+                "textureId": "bone"
+              },
+              "up": {
+                "textureId": "bone"
+              },
+              "down": {
+                "textureId": "bone"
+              }
+            }
+          },
+          {
+            "origin": [
+              1.5,
+              13.6,
+              -26.6
+            ],
+            "size": [
+              0.9,
+              1.4,
+              0.9
+            ],
+            "faces": {
+              "north": {
+                "textureId": "bone"
+              },
+              "south": {
+                "textureId": "bone"
+              },
+              "east": {
+                "textureId": "bone"
+              },
+              "west": {
+                "textureId": "bone"
+              },
+              "up": {
+                "textureId": "bone"
+              },
+              "down": {
+                "textureId": "bone"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "jaw",
+        "parent": "head",
+        "pivot": [
+          0,
+          15,
+          -22
+        ],
+        "cubes": [
+          {
+            "origin": [
+              -2.5,
+              13,
+              -26.5
+            ],
+            "size": [
+              5,
+              2,
+              4.5
+            ],
+            "faces": {
+              "north": {
+                "textureId": "muzzle"
+              },
+              "south": {
+                "textureId": "muzzle"
+              },
+              "east": {
+                "textureId": "muzzle"
+              },
+              "west": {
+                "textureId": "muzzle"
+              },
+              "up": {
+                "textureId": "mouth"
+              },
+              "down": {
+                "textureId": "muzzle"
+              }
+            }
+          },
+          {
+            "origin": [
+              -2.25,
+              15,
+              -26.4
+            ],
+            "size": [
+              0.9,
+              1.3,
+              0.9
+            ],
+            "faces": {
+              "north": {
+                "textureId": "bone"
+              },
+              "south": {
+                "textureId": "bone"
+              },
+              "east": {
+                "textureId": "bone"
+              },
+              "west": {
+                "textureId": "bone"
+              },
+              "up": {
+                "textureId": "bone"
+              },
+              "down": {
+                "textureId": "bone"
+              }
+            }
+          },
+          {
+            "origin": [
+              1.35,
+              15,
+              -26.4
+            ],
+            "size": [
+              0.9,
+              1.3,
+              0.9
+            ],
+            "faces": {
+              "north": {
+                "textureId": "bone"
+              },
+              "south": {
+                "textureId": "bone"
+              },
+              "east": {
+                "textureId": "bone"
+              },
+              "west": {
+                "textureId": "bone"
+              },
+              "up": {
+                "textureId": "bone"
+              },
+              "down": {
+                "textureId": "bone"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "arm_l",
+        "parent": "body",
+        "pivot": [
+          5,
+          20,
+          -8
+        ],
+        "cubes": [
+          {
+            "origin": [
+              2,
+              3,
+              -11
+            ],
+            "size": [
+              6,
+              17,
+              6
+            ],
+            "faces": {
+              "north": {
+                "textureId": "fur"
+              },
+              "south": {
+                "textureId": "fur"
+              },
+              "east": {
+                "textureId": "fur"
+              },
+              "west": {
+                "textureId": "fur"
+              },
+              "up": {
+                "textureId": "fur"
+              },
+              "down": {
+                "textureId": "fur"
+              }
+            }
+          },
+          {
+            "origin": [
+              1.5,
+              0,
+              -12.5
+            ],
+            "size": [
+              7,
+              3.5,
+              8
+            ],
+            "faces": {
+              "north": {
+                "textureId": "fur"
+              },
+              "south": {
+                "textureId": "fur"
+              },
+              "east": {
+                "textureId": "fur"
+              },
+              "west": {
+                "textureId": "fur"
+              },
+              "up": {
+                "textureId": "fur"
+              },
+              "down": {
+                "textureId": "pad"
+              }
+            }
+          },
+          {
+            "origin": [
+              2,
+              0,
+              -15
+            ],
+            "size": [
+              1.2,
+              1.5,
+              2.5
+            ],
+            "faces": {
+              "north": {
+                "textureId": "claw"
+              },
+              "south": {
+                "textureId": "claw"
+              },
+              "east": {
+                "textureId": "claw"
+              },
+              "west": {
+                "textureId": "claw"
+              },
+              "up": {
+                "textureId": "claw"
+              },
+              "down": {
+                "textureId": "claw"
+              }
+            }
+          },
+          {
+            "origin": [
+              4.4,
+              0,
+              -15.5
+            ],
+            "size": [
+              1.2,
+              1.5,
+              3
+            ],
+            "faces": {
+              "north": {
+                "textureId": "claw"
+              },
+              "south": {
+                "textureId": "claw"
+              },
+              "east": {
+                "textureId": "claw"
+              },
+              "west": {
+                "textureId": "claw"
+              },
+              "up": {
+                "textureId": "claw"
+              },
+              "down": {
+                "textureId": "claw"
+              }
+            }
+          },
+          {
+            "origin": [
+              6.8,
+              0,
+              -15
+            ],
+            "size": [
+              1.2,
+              1.5,
+              2.5
+            ],
+            "faces": {
+              "north": {
+                "textureId": "claw"
+              },
+              "south": {
+                "textureId": "claw"
+              },
+              "east": {
+                "textureId": "claw"
+              },
+              "west": {
+                "textureId": "claw"
+              },
+              "up": {
+                "textureId": "claw"
+              },
+              "down": {
+                "textureId": "claw"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "arm_r",
+        "parent": "body",
+        "pivot": [
+          -5,
+          20,
+          -8
+        ],
+        "cubes": [
+          {
+            "origin": [
+              -8,
+              3,
+              -11
+            ],
+            "size": [
+              6,
+              17,
+              6
+            ],
+            "faces": {
+              "north": {
+                "textureId": "fur"
+              },
+              "south": {
+                "textureId": "fur"
+              },
+              "east": {
+                "textureId": "fur"
+              },
+              "west": {
+                "textureId": "fur"
+              },
+              "up": {
+                "textureId": "fur"
+              },
+              "down": {
+                "textureId": "fur"
+              }
+            }
+          },
+          {
+            "origin": [
+              -8.5,
+              0,
+              -12.5
+            ],
+            "size": [
+              7,
+              3.5,
+              8
+            ],
+            "faces": {
+              "north": {
+                "textureId": "fur"
+              },
+              "south": {
+                "textureId": "fur"
+              },
+              "east": {
+                "textureId": "fur"
+              },
+              "west": {
+                "textureId": "fur"
+              },
+              "up": {
+                "textureId": "fur"
+              },
+              "down": {
+                "textureId": "pad"
+              }
+            }
+          },
+          {
+            "origin": [
+              -3.2,
+              0,
+              -15
+            ],
+            "size": [
+              1.2,
+              1.5,
+              2.5
+            ],
+            "faces": {
+              "north": {
+                "textureId": "claw"
+              },
+              "south": {
+                "textureId": "claw"
+              },
+              "east": {
+                "textureId": "claw"
+              },
+              "west": {
+                "textureId": "claw"
+              },
+              "up": {
+                "textureId": "claw"
+              },
+              "down": {
+                "textureId": "claw"
+              }
+            }
+          },
+          {
+            "origin": [
+              -5.6,
+              0,
+              -15.5
+            ],
+            "size": [
+              1.2,
+              1.5,
+              3
+            ],
+            "faces": {
+              "north": {
+                "textureId": "claw"
+              },
+              "south": {
+                "textureId": "claw"
+              },
+              "east": {
+                "textureId": "claw"
+              },
+              "west": {
+                "textureId": "claw"
+              },
+              "up": {
+                "textureId": "claw"
+              },
+              "down": {
+                "textureId": "claw"
+              }
+            }
+          },
+          {
+            "origin": [
+              -8,
+              0,
+              -15
+            ],
+            "size": [
+              1.2,
+              1.5,
+              2.5
+            ],
+            "faces": {
+              "north": {
+                "textureId": "claw"
+              },
+              "south": {
+                "textureId": "claw"
+              },
+              "east": {
+                "textureId": "claw"
+              },
+              "west": {
+                "textureId": "claw"
+              },
+              "up": {
+                "textureId": "claw"
+              },
+              "down": {
+                "textureId": "claw"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "leg_l",
+        "parent": "root",
+        "pivot": [
+          4.5,
+          13,
+          6
+        ],
+        "cubes": [
+          {
+            "origin": [
+              1.5,
+              3,
+              2
+            ],
+            "size": [
+              6.5,
+              11,
+              8
+            ],
+            "faces": {
+              "north": {
+                "textureId": "fur"
+              },
+              "south": {
+                "textureId": "fur"
+              },
+              "east": {
+                "textureId": "fur"
+              },
+              "west": {
+                "textureId": "fur"
+              },
+              "up": {
+                "textureId": "fur"
+              },
+              "down": {
+                "textureId": "fur"
+              }
+            }
+          },
+          {
+            "origin": [
+              1.25,
+              0,
+              -0.5
+            ],
+            "size": [
+              7,
+              3.5,
+              9.5
+            ],
+            "faces": {
+              "north": {
+                "textureId": "fur"
+              },
+              "south": {
+                "textureId": "fur"
+              },
+              "east": {
+                "textureId": "fur"
+              },
+              "west": {
+                "textureId": "fur"
+              },
+              "up": {
+                "textureId": "fur"
+              },
+              "down": {
+                "textureId": "pad"
+              }
+            }
+          },
+          {
+            "origin": [
+              2,
+              0,
+              -2.5
+            ],
+            "size": [
+              1.2,
+              1.2,
+              2
+            ],
+            "faces": {
+              "north": {
+                "textureId": "claw"
+              },
+              "south": {
+                "textureId": "claw"
+              },
+              "east": {
+                "textureId": "claw"
+              },
+              "west": {
+                "textureId": "claw"
+              },
+              "up": {
+                "textureId": "claw"
+              },
+              "down": {
+                "textureId": "claw"
+              }
+            }
+          },
+          {
+            "origin": [
+              4.2,
+              0,
+              -2.5
+            ],
+            "size": [
+              1.2,
+              1.2,
+              2
+            ],
+            "faces": {
+              "north": {
+                "textureId": "claw"
+              },
+              "south": {
+                "textureId": "claw"
+              },
+              "east": {
+                "textureId": "claw"
+              },
+              "west": {
+                "textureId": "claw"
+              },
+              "up": {
+                "textureId": "claw"
+              },
+              "down": {
+                "textureId": "claw"
+              }
+            }
+          },
+          {
+            "origin": [
+              6.4,
+              0,
+              -2.5
+            ],
+            "size": [
+              1.2,
+              1.2,
+              2
+            ],
+            "faces": {
+              "north": {
+                "textureId": "claw"
+              },
+              "south": {
+                "textureId": "claw"
+              },
+              "east": {
+                "textureId": "claw"
+              },
+              "west": {
+                "textureId": "claw"
+              },
+              "up": {
+                "textureId": "claw"
+              },
+              "down": {
+                "textureId": "claw"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "leg_r",
+        "parent": "root",
+        "pivot": [
+          -4.5,
+          13,
+          6
+        ],
+        "cubes": [
+          {
+            "origin": [
+              -8,
+              3,
+              2
+            ],
+            "size": [
+              6.5,
+              11,
+              8
+            ],
+            "faces": {
+              "north": {
+                "textureId": "fur"
+              },
+              "south": {
+                "textureId": "fur"
+              },
+              "east": {
+                "textureId": "fur"
+              },
+              "west": {
+                "textureId": "fur"
+              },
+              "up": {
+                "textureId": "fur"
+              },
+              "down": {
+                "textureId": "fur"
+              }
+            }
+          },
+          {
+            "origin": [
+              -8.25,
+              0,
+              -0.5
+            ],
+            "size": [
+              7,
+              3.5,
+              9.5
+            ],
+            "faces": {
+              "north": {
+                "textureId": "fur"
+              },
+              "south": {
+                "textureId": "fur"
+              },
+              "east": {
+                "textureId": "fur"
+              },
+              "west": {
+                "textureId": "fur"
+              },
+              "up": {
+                "textureId": "fur"
+              },
+              "down": {
+                "textureId": "pad"
+              }
+            }
+          },
+          {
+            "origin": [
+              -3.2,
+              0,
+              -2.5
+            ],
+            "size": [
+              1.2,
+              1.2,
+              2
+            ],
+            "faces": {
+              "north": {
+                "textureId": "claw"
+              },
+              "south": {
+                "textureId": "claw"
+              },
+              "east": {
+                "textureId": "claw"
+              },
+              "west": {
+                "textureId": "claw"
+              },
+              "up": {
+                "textureId": "claw"
+              },
+              "down": {
+                "textureId": "claw"
+              }
+            }
+          },
+          {
+            "origin": [
+              -5.4,
+              0,
+              -2.5
+            ],
+            "size": [
+              1.2,
+              1.2,
+              2
+            ],
+            "faces": {
+              "north": {
+                "textureId": "claw"
+              },
+              "south": {
+                "textureId": "claw"
+              },
+              "east": {
+                "textureId": "claw"
+              },
+              "west": {
+                "textureId": "claw"
+              },
+              "up": {
+                "textureId": "claw"
+              },
+              "down": {
+                "textureId": "claw"
+              }
+            }
+          },
+          {
+            "origin": [
+              -7.6,
+              0,
+              -2.5
+            ],
+            "size": [
+              1.2,
+              1.2,
+              2
+            ],
+            "faces": {
+              "north": {
+                "textureId": "claw"
+              },
+              "south": {
+                "textureId": "claw"
+              },
+              "east": {
+                "textureId": "claw"
+              },
+              "west": {
+                "textureId": "claw"
+              },
+              "up": {
+                "textureId": "claw"
+              },
+              "down": {
+                "textureId": "claw"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "tail",
+        "parent": "body",
+        "pivot": [
+          0,
+          18,
+          12
+        ],
+        "cubes": [
+          {
+            "origin": [
+              -1.5,
+              16.5,
+              12
+            ],
+            "size": [
+              3,
+              3,
+              2
+            ],
+            "faces": {
+              "north": {
+                "textureId": "fur"
+              },
+              "south": {
+                "textureId": "fur"
+              },
+              "east": {
+                "textureId": "fur"
+              },
+              "west": {
+                "textureId": "fur"
+              },
+              "up": {
+                "textureId": "fur"
+              },
+              "down": {
+                "textureId": "fur"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "meta": {
+    "generatedAt": "2026-11-01T07:51:26.546Z",
+    "schemaVersion": "1.0.0"
+  },
+  "usage": "entity"
+}

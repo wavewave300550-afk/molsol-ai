@@ -1,0 +1,6 @@
+pack.name=Grizzly's Oath - Historical Artifacts 001
+pack.description=§cGrizzly's Oath, the Unbroken Survivor§r. Inspired by Hugh Glass.
+item.grizzly_oath:grizzlys_oath.name=§4Grizzly's Oath§r
+item.grizzly_oath:grizzlys_oath_awakened.name=§cGrizzly's Oath §6- Awakened§r
+entity.grizzly_oath:oath_grizzly.name=Oath Grizzly
+entity.grizzly_oath:grizzly_shade.name=Grizzly Shade

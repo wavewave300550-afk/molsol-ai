@@ -1,0 +1,49 @@
+{
+  "format_version": "1.10.0",
+  "particle_effect": {
+    "description": {
+      "identifier": "grizzly_oath:ring",
+      "basic_render_parameters": {
+        "material": "particles_blend",
+        "texture": "textures/particle/grizzly_oath_fx"
+      }
+    },
+    "components": {
+      "minecraft:emitter_lifetime_once": {},
+      "minecraft:emitter_rate_instant": {
+        "num_particles": 1
+      },
+      "minecraft:emitter_shape_point": {},
+      "minecraft:particle_lifetime_expression": {
+        "max_lifetime": "(v.life ?? 0.45)"
+      },
+      "minecraft:particle_appearance_billboard": {
+        "size": [
+          "(v.radius ?? 4) * (1 - math.pow(1 - math.min(1, (v.particle_age / v.particle_lifetime) * 1.25), 3)) + 0.3",
+          "(v.radius ?? 4) * (1 - math.pow(1 - math.min(1, (v.particle_age / v.particle_lifetime) * 1.25), 3)) + 0.3"
+        ],
+        "facing_camera_mode": "emitter_transform_xz",
+        "uv": {
+          "texture_width": 256,
+          "texture_height": 256,
+          "uv": [
+            128,
+            128
+          ],
+          "uv_size": [
+            64,
+            64
+          ]
+        }
+      },
+      "minecraft:particle_appearance_tinting": {
+        "color": [
+          "(v.color.r ?? 1)",
+          "(v.color.g ?? 0.15)",
+          "(v.color.b ?? 0.1)",
+          "(v.color.a ?? 1) * (1 - (v.particle_age / v.particle_lifetime))"
+        ]
+      }
+    }
+  }
+}

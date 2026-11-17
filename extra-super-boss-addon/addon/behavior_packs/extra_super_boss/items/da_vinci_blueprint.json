@@ -1,0 +1,19 @@
+{
+  "format_version": "1.21.70",
+  "minecraft:item": {
+    "description": {
+      "identifier": "esb:da_vinci_blueprint",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "esb_da_vinci_blueprint",
+      "minecraft:display_name": {
+        "value": "item.esb:da_vinci_blueprint.name"
+      },
+      "minecraft:max_stack_size": 16,
+      "minecraft:glint": true
+    }
+  }
+}

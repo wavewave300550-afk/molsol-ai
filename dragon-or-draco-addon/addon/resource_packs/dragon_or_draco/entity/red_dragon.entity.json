@@ -1,0 +1,140 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "dod:red_dragon",
+      "materials": {
+        "default": "entity_emissive",
+        "fire": "entity_beam_additive"
+      },
+      "textures": {
+        "default": "textures/entity/red_dragon",
+        "fire": "textures/entity/red_dragon_fire"
+      },
+      "geometry": {
+        "default": "geometry.dod.red_dragon",
+        "fire": "geometry.dod.red_dragon_fire"
+      },
+      "scripts": {
+        "pre_animation": [
+          "v.spd = math.lerp(v.spd ?? 0.0, q.ground_speed, math.min(1.0, q.delta_time * 8.0));",
+          "v.yaw_d = q.body_y_rotation - (v.last_yaw ?? q.body_y_rotation);",
+          "v.yaw_d = v.yaw_d > 180 ? v.yaw_d - 360 : (v.yaw_d < -180 ? v.yaw_d + 360 : v.yaw_d);",
+          "v.last_yaw = q.body_y_rotation;",
+          "v.turn = math.lerp(v.turn ?? 0.0, v.yaw_d / math.max(q.delta_time, 0.016), math.min(1.0, q.delta_time * 6.0));",
+          "v.vy = math.lerp(v.vy ?? 0.0, q.vertical_speed, math.min(1.0, q.delta_time * 4.0));",
+          "v.climb = math.clamp((v.vy - 1.5) / 3.0, 0.0, 1.0);",
+          "v.dive = math.clamp((-v.vy - 1.5) / 4.0, 0.0, 1.0);",
+          "v.bank_l = math.clamp(-v.turn / 70.0, 0.0, 1.0);",
+          "v.bank_r = math.clamp(v.turn / 70.0, 0.0, 1.0);",
+          "v.blink_seed = v.blink_seed ?? math.random(0.0, 10.0);",
+          "v.blink = math.mod(q.life_time + v.blink_seed, 4.3) < 0.12 || math.mod(q.life_time * 1.13 + v.blink_seed * 1.7, 6.9) < 0.12;"
+        ],
+        "animate": [
+          "move_controller",
+          "idle_controller",
+          "action_controller",
+          "look_controller",
+          "blink_controller",
+          "hurt_controller"
+        ],
+        "should_update_bones_and_effects_offscreen": "1.0"
+      },
+      "animations": {
+        "alert": "animation.dod.red_dragon.alert",
+        "bite": "animation.dod.red_dragon.bite",
+        "claw_swipe": "animation.dod.red_dragon.claw_swipe",
+        "death": "animation.dod.red_dragon.death",
+        "fire_breath_charge": "animation.dod.red_dragon.fire_breath_charge",
+        "fire_breath_release": "animation.dod.red_dragon.fire_breath_release",
+        "flight_ascend": "animation.dod.red_dragon.flight_ascend",
+        "flight_bank_left": "animation.dod.red_dragon.flight_bank_left",
+        "flight_bank_right": "animation.dod.red_dragon.flight_bank_right",
+        "flight_descend": "animation.dod.red_dragon.flight_descend",
+        "flight_flap": "animation.dod.red_dragon.flight_flap",
+        "flight_glide": "animation.dod.red_dragon.flight_glide",
+        "hurt": "animation.dod.red_dragon.hurt",
+        "idle_blink": "animation.dod.red_dragon.idle_blink",
+        "idle_breathe": "animation.dod.red_dragon.idle_breathe",
+        "idle_ground_scratch": "animation.dod.red_dragon.idle_ground_scratch",
+        "idle_look_left": "animation.dod.red_dragon.idle_look_left",
+        "idle_look_right": "animation.dod.red_dragon.idle_look_right",
+        "idle_sniff": "animation.dod.red_dragon.idle_sniff",
+        "idle_stretch": "animation.dod.red_dragon.idle_stretch",
+        "idle_tail_sway": "animation.dod.red_dragon.idle_tail_sway",
+        "idle_wing_adjust": "animation.dod.red_dragon.idle_wing_adjust",
+        "idle_yawn": "animation.dod.red_dragon.idle_yawn",
+        "landing_approach": "animation.dod.red_dragon.landing_approach",
+        "landing_impact": "animation.dod.red_dragon.landing_impact",
+        "launch": "animation.dod.red_dragon.launch",
+        "look_at_target": "animation.dod.red_dragon.look_at_target",
+        "pre_takeoff": "animation.dod.red_dragon.pre_takeoff",
+        "rest_breathe": "animation.dod.red_dragon.rest_breathe",
+        "rest_lower": "animation.dod.red_dragon.rest_lower",
+        "rest_rise": "animation.dod.red_dragon.rest_rise",
+        "roar": "animation.dod.red_dragon.roar",
+        "run_loop": "animation.dod.red_dragon.run_loop",
+        "run_start": "animation.dod.red_dragon.run_start",
+        "run_stop": "animation.dod.red_dragon.run_stop",
+        "step_backward": "animation.dod.red_dragon.step_backward",
+        "tail_smash": "animation.dod.red_dragon.tail_smash",
+        "turn_left": "animation.dod.red_dragon.turn_left",
+        "turn_right": "animation.dod.red_dragon.turn_right",
+        "walk_loop": "animation.dod.red_dragon.walk_loop",
+        "walk_start": "animation.dod.red_dragon.walk_start",
+        "walk_stop": "animation.dod.red_dragon.walk_stop",
+        "wing_buffet": "animation.dod.red_dragon.wing_buffet",
+        "move_controller": "controller.animation.dod.red_dragon.move",
+        "idle_controller": "controller.animation.dod.red_dragon.idle",
+        "action_controller": "controller.animation.dod.red_dragon.action",
+        "look_controller": "controller.animation.dod.red_dragon.look",
+        "blink_controller": "controller.animation.dod.red_dragon.blink",
+        "hurt_controller": "controller.animation.dod.red_dragon.hurt"
+      },
+      "particle_effects": {
+        "fire_charge_glow": "dod:fire_charge_glow",
+        "fire_charge_core": "dod:fire_charge_core",
+        "fire_mouth_burst": "dod:fire_mouth_burst",
+        "nostril_smoke": "dod:nostril_smoke",
+        "roar_breath": "dod:roar_breath",
+        "dust_ring": "dod:dust_ring",
+        "dust_puff": "dod:dust_puff",
+        "claw_slash": "dod:claw_slash",
+        "wind_burst": "dod:wind_burst",
+        "death_embers": "dod:death_embers"
+      },
+      "sound_effects": {
+        "bite": "mob.dod.red_dragon.bite",
+        "buffet": "mob.dod.red_dragon.buffet",
+        "death": "mob.dod.red_dragon.death",
+        "fire_breath": "mob.dod.red_dragon.fire_breath",
+        "fire_charge": "mob.dod.red_dragon.fire_charge",
+        "fire_charge_layer": "mob.dod.red_dragon.fire_charge_layer",
+        "flap": "mob.dod.red_dragon.flap",
+        "glide": "mob.dod.red_dragon.glide",
+        "growl": "mob.dod.red_dragon.growl",
+        "land": "mob.dod.red_dragon.land",
+        "roar": "mob.dod.red_dragon.roar",
+        "roar_layer": "mob.dod.red_dragon.roar_layer",
+        "scratch": "mob.dod.red_dragon.scratch",
+        "sniff": "mob.dod.red_dragon.sniff",
+        "step": "mob.dod.red_dragon.step",
+        "swipe": "mob.dod.red_dragon.swipe",
+        "tail_slam": "mob.dod.red_dragon.tail_slam",
+        "takeoff": "mob.dod.red_dragon.takeoff",
+        "wing_unfold": "mob.dod.red_dragon.wing_unfold",
+        "yawn": "mob.dod.red_dragon.yawn"
+      },
+      "render_controllers": [
+        "controller.render.dod.red_dragon",
+        {
+          "controller.render.dod.red_dragon_fire": "q.property('dod:action') == 'fire_breath'"
+        }
+      ],
+      "spawn_egg": {
+        "texture": "dod_red_dragon_spawn_egg"
+      },
+      "enable_attachables": false
+    }
+  }
+}

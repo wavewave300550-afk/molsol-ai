@@ -1,0 +1,29 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "esb:sound_ring",
+   "materials": {
+    "default": "entity_beam_additive"
+   },
+   "textures": {
+    "default": "textures/entity/sound_ring"
+   },
+   "geometry": {
+    "default": "geometry.esb.sound_ring"
+   },
+   "render_controllers": [
+    "controller.render.esb.sound_ring"
+   ],
+   "animations": {
+    "grow": "animation.esb.sound_ring.grow"
+   },
+   "scripts": {
+    "animate": [
+     "grow"
+    ],
+    "should_update_bones_and_effects_offscreen": "1.0"
+   }
+  }
+ }
+}

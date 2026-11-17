@@ -1,0 +1,80 @@
+{
+  "format_version": "1.21.90",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "esb:brass_gear",
+      "is_spawnable": false,
+      "is_summonable": true
+    },
+    "component_groups": {
+      "esb:expire": {
+        "minecraft:instant_despawn": {}
+      }
+    },
+    "events": {
+      "esb:expire": {
+        "add": {
+          "component_groups": [
+            "esb:expire"
+          ]
+        }
+      }
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": [
+          "esb_projectile",
+          "inanimate"
+        ]
+      },
+      "minecraft:collision_box": {
+        "width": 0.5,
+        "height": 0.5
+      },
+      "minecraft:projectile": {
+        "on_hit": {
+          "impact_damage": {
+            "damage": 6,
+            "knockback": true,
+            "semi_random_diff_damage": false,
+            "destroy_on_hit": true
+          },
+          "remove_on_hit": {}
+        },
+        "power": 1.1,
+        "gravity": 0.0,
+        "inertia": 1.0,
+        "liquid_inertia": 0.8,
+        "uncertainty_base": 0,
+        "uncertainty_multiplier": 0,
+        "anchor": 1,
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "hit_sound": "bow.hit",
+        "reflect_on_hurt": true
+      },
+      "minecraft:physics": {},
+      "minecraft:pushable": {
+        "is_pushable": false,
+        "is_pushable_by_piston": true
+      },
+      "minecraft:timer": {
+        "looping": false,
+        "time": 4,
+        "time_down_event": {
+          "event": "esb:expire"
+        }
+      },
+      "minecraft:conditional_bandwidth_optimization": {
+        "default_values": {
+          "max_optimized_distance": 80.0,
+          "max_dropped_ticks": 5,
+          "use_motion_prediction_hints": true
+        }
+      }
+    }
+  }
+}

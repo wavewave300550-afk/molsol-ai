@@ -1,0 +1,44 @@
+{
+  "format_version": "1.10.0",
+  "animations": {
+    "animation.grizzlys_oath.hold_third_person": {
+      "loop": true,
+      "bones": {
+        "grizzlys_oath": {
+          "rotation": [ 75, 0, 0 ],
+          "position": [ 0, 25, 0 ],
+          "scale": 0.7
+        }
+      }
+    },
+    "animation.grizzlys_oath.hold_first_person": {
+      "loop": true,
+      "bones": {
+        "grizzlys_oath": {
+          "rotation": [ 125, 0, 32 ],
+          "position": [ 0, 25, 2 ],
+          "scale": 0.42
+        }
+      }
+    },
+    "animation.grizzlys_oath.embers": {
+      "loop": true,
+      "animation_length": 0.8,
+      "particle_effects": {
+        "0.0": { "effect": "ember", "locator": "blade_mid" },
+        "0.4": { "effect": "ember", "locator": "blade_top" }
+      }
+    },
+    "animation.grizzlys_oath.awakened_flames": {
+      "loop": true,
+      "animation_length": 0.15,
+      "particle_effects": {
+        "0.0": [
+          { "effect": "flame", "locator": "blade_mid" },
+          { "effect": "flame", "locator": "blade_top" },
+          { "effect": "flame", "locator": "blade_low" }
+        ]
+      }
+    }
+  }
+}

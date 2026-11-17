@@ -1,0 +1,41 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:attachable": {
+    "description": {
+      "identifier": "grizzly_oath:grizzlys_oath",
+      "materials": {
+        "default": "entity_emissive"
+      },
+      "textures": {
+        "default": "textures/attachables/grizzlys_oath"
+      },
+      "geometry": {
+        "default": "geometry.grizzlys_oath"
+      },
+      "particle_effects": {
+        "ember": "grizzly_oath:blade_ember"
+      },
+      "animations": {
+        "hold_first_person": "animation.grizzlys_oath.hold_first_person",
+        "hold_third_person": "animation.grizzlys_oath.hold_third_person",
+        "embers": "animation.grizzlys_oath.embers"
+      },
+      "scripts": {
+        "animate": [
+          {
+            "hold_first_person": "c.is_first_person"
+          },
+          {
+            "hold_third_person": "!c.is_first_person"
+          },
+          {
+            "embers": "!c.is_first_person"
+          }
+        ]
+      },
+      "render_controllers": [
+        "controller.render.grizzly_oath.axe"
+      ]
+    }
+  }
+}

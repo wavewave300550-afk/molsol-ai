@@ -1,0 +1,31 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "esb:volt_bulb",
+   "materials": {
+    "default": "entity_emissive"
+   },
+   "textures": {
+    "default": "textures/entity/volt_bulb"
+   },
+   "geometry": {
+    "default": "geometry.esb.volt_bulb"
+   },
+   "render_controllers": [
+    "controller.render.esb.volt_bulb"
+   ],
+   "animations": {
+    "spin": "animation.esb.volt_bulb.spin"
+   },
+   "particle_effects": {
+    "trail": "esb:volt_spark"
+   },
+   "scripts": {
+    "animate": [
+     "spin"
+    ]
+   }
+  }
+ }
+}

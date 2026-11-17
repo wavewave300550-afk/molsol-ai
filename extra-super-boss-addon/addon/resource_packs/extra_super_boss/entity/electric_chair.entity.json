@@ -1,0 +1,33 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "esb:electric_chair",
+   "materials": {
+    "default": "entity_emissive"
+   },
+   "textures": {
+    "default": "textures/entity/electric_chair"
+   },
+   "geometry": {
+    "default": "geometry.esb.electric_chair"
+   },
+   "render_controllers": [
+    "controller.render.esb.electric_chair"
+   ],
+   "animations": {
+    "armed": "animation.esb.electric_chair.armed",
+    "locked": "animation.esb.electric_chair.locked",
+    "state_controller": "controller.animation.esb.electric_chair.state"
+   },
+   "particle_effects": {
+    "zap": "esb:volt_spark"
+   },
+   "scripts": {
+    "animate": [
+     "state_controller"
+    ]
+   }
+  }
+ }
+}

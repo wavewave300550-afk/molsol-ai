@@ -1,0 +1,19 @@
+{
+  "name": "forbidden-fruits",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Minecraft Bedrock add-on: Forbidden Fruits - Jōki Jōki no Mi (steam) + Sekiyu Sekiyu no Mi (petroleum), one fruit per body",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "python3 tools/build.py",
+    "validate": "python3 tools/validate.py",
+    "smoke": "node tools/smoke/run.mjs",
+    "test": "npm run typecheck && npm run build && npm run validate && npm run smoke"
+  },
+  "devDependencies": {
+    "@minecraft/server": "2.11.0",
+    "@minecraft/server-ui": "2.3.0",
+    "@minecraft/vanilla-data": "1.26.60",
+    "typescript": "5.6.3"
+  }
+}

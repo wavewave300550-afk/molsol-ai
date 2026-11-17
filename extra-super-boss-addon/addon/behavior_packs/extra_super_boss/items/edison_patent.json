@@ -1,0 +1,19 @@
+{
+  "format_version": "1.21.70",
+  "minecraft:item": {
+    "description": {
+      "identifier": "esb:edison_patent",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "esb_edison_patent",
+      "minecraft:display_name": {
+        "value": "item.esb:edison_patent.name"
+      },
+      "minecraft:max_stack_size": 16,
+      "minecraft:glint": true
+    }
+  }
+}

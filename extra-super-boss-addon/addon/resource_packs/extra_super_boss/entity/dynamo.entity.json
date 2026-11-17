@@ -1,0 +1,34 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "esb:dynamo",
+   "materials": {
+    "default": "entity_emissive"
+   },
+   "textures": {
+    "default": "textures/entity/dynamo",
+    "charged": "textures/entity/dynamo_charged"
+   },
+   "geometry": {
+    "default": "geometry.esb.dynamo"
+   },
+   "render_controllers": [
+    "controller.render.esb.dynamo"
+   ],
+   "animations": {
+    "idle": "animation.esb.dynamo.idle",
+    "charge": "animation.esb.dynamo.charge",
+    "mode_controller": "controller.animation.esb.dynamo.mode"
+   },
+   "particle_effects": {
+    "zap": "esb:volt_spark"
+   },
+   "scripts": {
+    "animate": [
+     "mode_controller"
+    ]
+   }
+  }
+ }
+}

@@ -1,0 +1,64 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "esb:edison",
+   "materials": {
+    "default": "entity_emissive"
+   },
+   "textures": {
+    "default": "textures/entity/edison",
+    "charged": "textures/entity/edison_charged"
+   },
+   "geometry": {
+    "default": "geometry.esb.edison"
+   },
+   "render_controllers": [
+    "controller.render.esb.edison"
+   ],
+   "spawn_egg": {
+    "base_color": "#5D6A44",
+    "overlay_color": "#FFD27A"
+   },
+   "enable_attachables": false,
+   "scripts": {
+    "scale": "1.45",
+    "animate": [
+     "idle",
+     {
+      "walk": "!(q.property('esb:action') == 'intro' || q.property('esb:action') == 'ultimate')"
+     },
+     {
+      "look": "!(q.property('esb:action') == 'death' || q.property('esb:action') == 'intro' || q.property('esb:action') == 'transform' || q.property('esb:action') == 'stunned' || q.property('esb:action') == 'ultimate')"
+     },
+     "attack_controller",
+     "action_controller"
+    ],
+    "should_update_bones_and_effects_offscreen": "1.0"
+   },
+   "animations": {
+    "action_controller": "controller.animation.esb.edison.action",
+    "attack_controller": "controller.animation.esb.edison.attack",
+    "backstab": "animation.esb.edison.backstab",
+    "bulb_toss": "animation.esb.edison.bulb_toss",
+    "chair": "animation.esb.edison.chair",
+    "death": "animation.esb.edison.death",
+    "flourish": "animation.esb.edison.flourish",
+    "idle": "animation.esb.edison.idle",
+    "intro": "animation.esb.edison.intro",
+    "look": "animation.esb.edison.look",
+    "overload": "animation.esb.edison.overload",
+    "shank": "animation.esb.edison.shank",
+    "stunned": "animation.esb.edison.stunned",
+    "transform": "animation.esb.edison.transform",
+    "ultimate": "animation.esb.edison.ultimate",
+    "vanish": "animation.esb.edison.vanish",
+    "walk": "animation.esb.edison.walk"
+   },
+   "particle_effects": {
+    "spark": "esb:volt_spark",
+    "glass": "esb:glass_shards"
+   }
+  }
+ }
+}

@@ -1,0 +1,380 @@
+{
+ "walk_loop": {
+  "category": "B Ground locomotion",
+  "priority": 1,
+  "desc": "4-beat lateral-sequence walk, IK-planted feet, stride synced to ground speed",
+  "kind": "absolute",
+  "length": 1.6,
+  "loop": true,
+  "speed_synced": true
+ },
+ "run_loop": {
+  "category": "B Ground locomotion",
+  "priority": 1,
+  "desc": "transverse gallop: spine flex, pitch rock, IK feet, speed-synced",
+  "kind": "absolute",
+  "length": 0.8,
+  "loop": true,
+  "speed_synced": true
+ },
+ "walk_start": {
+  "category": "B Ground locomotion",
+  "priority": 1,
+  "desc": "weight shifts forward, first steps; ends exactly on walk_loop phase 0",
+  "kind": "absolute",
+  "length": 0.6,
+  "loop": false,
+  "speed_synced": false
+ },
+ "walk_stop": {
+  "category": "B Ground locomotion",
+  "priority": 1,
+  "desc": "decelerates over planted feet, last legs step into a square stance, body rocks back and settles",
+  "kind": "absolute",
+  "length": 0.95,
+  "loop": "hold",
+  "speed_synced": false
+ },
+ "run_start": {
+  "category": "B Ground locomotion",
+  "priority": 1,
+  "desc": "anticipation crouch on the haunches, explosive push-off into run_loop phase 0",
+  "kind": "absolute",
+  "length": 0.55,
+  "loop": false,
+  "speed_synced": false
+ },
+ "run_stop": {
+  "category": "B Ground locomotion",
+  "priority": 1,
+  "desc": "braking: forelegs plant ahead, weight thrown back on the haunches, head and tail swing up, settle",
+  "kind": "absolute",
+  "length": 0.95,
+  "loop": "hold",
+  "speed_synced": false
+ },
+ "turn_left": {
+  "category": "B Ground locomotion",
+  "priority": 1,
+  "desc": "turn in place left: diagonal stepping around the body centre, chest leads, head looks into the turn, tail swings out",
+  "kind": "absolute",
+  "length": 1.2,
+  "loop": true,
+  "speed_synced": true
+ },
+ "turn_right": {
+  "category": "B Ground locomotion",
+  "priority": 1,
+  "desc": "turn in place right: diagonal stepping around the body centre, chest leads, head looks into the turn, tail swings out",
+  "kind": "absolute",
+  "length": 1.2,
+  "loop": true,
+  "speed_synced": true
+ },
+ "step_backward": {
+  "category": "B Ground locomotion",
+  "priority": 1,
+  "desc": "two wary backward steps: weight back, head drawn up, wings flare slightly, tail lifts",
+  "kind": "absolute",
+  "length": 1.25,
+  "loop": "hold",
+  "speed_synced": false
+ },
+ "flight_flap": {
+  "category": "C Aerial movement",
+  "priority": 1,
+  "desc": "powered flight: fast power stroke, half-folded recovery stroke, wing-tip lag, body heave, steady head",
+  "kind": "absolute",
+  "length": 1.05,
+  "loop": true,
+  "speed_synced": false
+ },
+ "flight_ascend": {
+  "category": "C Aerial movement",
+  "priority": 1,
+  "desc": "climbing: deeper, faster strokes, body pitched up, legs hanging, tail low as a rudder",
+  "kind": "absolute",
+  "length": 0.9,
+  "loop": true,
+  "speed_synced": false
+ },
+ "flight_glide": {
+  "category": "C Aerial movement",
+  "priority": 1,
+  "desc": "soaring: wings held out but never frozen - slow dihedral swell, finger ripple, membrane flutter, head scanning, tail rudder",
+  "kind": "absolute",
+  "length": 4.0,
+  "loop": true,
+  "speed_synced": false
+ },
+ "flight_descend": {
+  "category": "C Aerial movement",
+  "priority": 1,
+  "desc": "descending: wings raised in a V and swept back, tips buffeting, nose down, legs starting to drop, tail up as an air brake",
+  "kind": "absolute",
+  "length": 3.0,
+  "loop": true,
+  "speed_synced": false
+ },
+ "flight_bank_left": {
+  "category": "C Aerial movement",
+  "priority": 1,
+  "desc": "banking left (additive, weighted by turn rate): roll into the turn, head looks in and stays level, outer wing reaches, tail trails out",
+  "kind": "additive",
+  "length": 2.0,
+  "loop": true,
+  "speed_synced": false
+ },
+ "flight_bank_right": {
+  "category": "C Aerial movement",
+  "priority": 1,
+  "desc": "banking right (additive, weighted by turn rate): roll into the turn, head looks in and stays level, outer wing reaches, tail trails out",
+  "kind": "additive",
+  "length": 2.0,
+  "loop": true,
+  "speed_synced": false
+ },
+ "landing_approach": {
+  "category": "C Aerial movement",
+  "priority": 1,
+  "desc": "flare before touch-down: nose up, braking back-flaps, legs reaching for the ground, tail down, eyes on the spot",
+  "kind": "absolute",
+  "length": 0.8,
+  "loop": true,
+  "speed_synced": false
+ },
+ "landing_impact": {
+  "category": "C Aerial movement",
+  "priority": 1,
+  "desc": "touch-down: legs absorb the weight on planted feet, body dips and rebounds, wings snap up then fold shoulder->elbow->fingers, tail slams and settles",
+  "kind": "absolute",
+  "length": 1.4,
+  "loop": "hold",
+  "speed_synced": false
+ },
+ "pre_takeoff": {
+  "category": "C Aerial movement",
+  "priority": 1,
+  "desc": "anticipation: crouch on the haunches, wings unfold shoulder first and cock high, head looks up, tail lifts",
+  "kind": "absolute",
+  "length": 0.55,
+  "loop": "hold",
+  "speed_synced": false
+ },
+ "launch": {
+  "category": "C Aerial movement",
+  "priority": 1,
+  "desc": "explosive leg push on planted feet, huge first downstroke, legs trail then tuck, two climbing strokes; ends on flight_flap frame 0",
+  "kind": "absolute",
+  "length": 1.05,
+  "loop": "hold",
+  "speed_synced": false
+ },
+ "idle_breathe": {
+  "category": "A Living behaviour",
+  "priority": 1,
+  "desc": "standing base: chest and flanks breathe, shoulders and wings lift on the inhale, weight drifts side to side on planted feet, tail sways",
+  "kind": "absolute",
+  "length": 4.2,
+  "loop": true,
+  "speed_synced": false
+ },
+ "idle_look_left": {
+  "category": "A Living behaviour",
+  "priority": 2,
+  "desc": "eyes/head lead a quick glance left, the neck follows segment by segment, a curious tilt and a small re-fixation, head returns first",
+  "kind": "additive",
+  "length": 2.6,
+  "loop": false,
+  "speed_synced": false
+ },
+ "idle_look_right": {
+  "category": "A Living behaviour",
+  "priority": 2,
+  "desc": "slow look to the right over the shoulder with the neck raised, a double-take, two sniffs and a tail flick",
+  "kind": "additive",
+  "length": 2.9,
+  "loop": false,
+  "speed_synced": false
+ },
+ "idle_sniff": {
+  "category": "A Living behaviour",
+  "priority": 2,
+  "desc": "lowers chest and head to the ground, scans left-right with short sniff pulses and jaw twitches, smoke from the nostrils",
+  "kind": "additive",
+  "length": 3.2,
+  "loop": false,
+  "speed_synced": false
+ },
+ "idle_blink": {
+  "category": "A Living behaviour",
+  "priority": 2,
+  "desc": "eyelids close and open (new eyelid bones, hidden inside the skull at rest); fired at random 2.5-6 s intervals on the client",
+  "kind": "additive",
+  "length": 0.3,
+  "loop": false,
+  "speed_synced": false
+ },
+ "idle_ground_scratch": {
+  "category": "A Living behaviour",
+  "priority": 2,
+  "desc": "shifts weight onto the left legs, rakes the ground three times with the right fore-claws (claws curl on each stroke), watches the foot",
+  "kind": "additive",
+  "length": 2.8,
+  "loop": false,
+  "speed_synced": false
+ },
+ "idle_tail_sway": {
+  "category": "A Living behaviour",
+  "priority": 2,
+  "desc": "slow S-wave travels down the tail (tip lags, grows), hips counter-sway, a glance back along the body",
+  "kind": "additive",
+  "length": 3.6,
+  "loop": false,
+  "speed_synced": false
+ },
+ "idle_wing_adjust": {
+  "category": "A Living behaviour",
+  "priority": 2,
+  "desc": "half-opens the left wing (shoulder, elbow, fingers in turn), shakes it out, refolds, then a small shrug of the right wing",
+  "kind": "additive",
+  "length": 3.0,
+  "loop": false,
+  "speed_synced": false
+ },
+ "idle_stretch": {
+  "category": "A Living behaviour",
+  "priority": 2,
+  "desc": "cat-like stretch: forelegs reach forward, chest dips while the hips stay up, neck extends, wings lift half open, tail stretches and shivers, then steps back",
+  "kind": "additive",
+  "length": 3.4,
+  "loop": false,
+  "speed_synced": false
+ },
+ "idle_yawn": {
+  "category": "A Living behaviour",
+  "priority": 2,
+  "desc": "inhales, raises the head, jaw opens slowly to 46 deg with the eyes shut, a shudder, the jaw snaps shut, head shake",
+  "kind": "additive",
+  "length": 2.8,
+  "loop": false,
+  "speed_synced": false
+ },
+ "rest_lower": {
+  "category": "A Living behaviour",
+  "priority": 2,
+  "desc": "lies down: hind legs fold first, then the forelegs, belly settles on the ground, neck and tail curl around to the left",
+  "kind": "absolute",
+  "length": 2.2,
+  "loop": "hold",
+  "speed_synced": false
+ },
+ "rest_breathe": {
+  "category": "utility",
+  "priority": 2,
+  "desc": "(utility layer) slow deep breathing while lying down, a lazy tail-tip twitch",
+  "kind": "additive",
+  "length": 5.0,
+  "loop": true,
+  "speed_synced": false
+ },
+ "rest_rise": {
+  "category": "A Living behaviour",
+  "priority": 2,
+  "desc": "gets up: head lifts and the neck uncurls first, forelegs push the chest up, hind legs follow, tail uncurls last, shakes off",
+  "kind": "absolute",
+  "length": 2.0,
+  "loop": "hold",
+  "speed_synced": false
+ },
+ "alert": {
+  "category": "D Combat and reactions",
+  "priority": 3,
+  "desc": "head snaps up toward the intruder, body tenses into a low crouch, shoulders and wings lift off the back, tail rises stiff, low growl",
+  "kind": "additive",
+  "length": 1.4,
+  "loop": false,
+  "speed_synced": false
+ },
+ "roar": {
+  "category": "D Combat and reactions",
+  "priority": 3,
+  "desc": "anticipation: rears back and inhales (chest swells); action: thrusts forward, jaw wide, wings half-spread and trembling, head shake; recovery: settles",
+  "kind": "additive",
+  "length": 2.4,
+  "loop": false,
+  "speed_synced": false
+ },
+ "bite": {
+  "category": "D Combat and reactions",
+  "priority": 3,
+  "desc": "anticipation: coils the neck back, jaw opens, forelegs brace; action: accelerating lunge; impact 0.45 s: jaws snap with a shake; recovery: pulls back, overshoots, settles",
+  "kind": "additive",
+  "length": 0.95,
+  "loop": false,
+  "speed_synced": false
+ },
+ "claw_swipe": {
+  "category": "D Combat and reactions",
+  "priority": 3,
+  "desc": "anticipation: rears and loads onto the left, right foreleg cocked high; action: raking swipe across; impact 0.55 s; follow-through and twist; recovery: foot replanted",
+  "kind": "additive",
+  "length": 1.15,
+  "loop": false,
+  "speed_synced": false
+ },
+ "tail_smash": {
+  "category": "D Combat and reactions",
+  "priority": 3,
+  "desc": "anticipation: body winds up and the tail coils high to one side, looks back; action: whip across the rear arc (tip lags the base); impact 0.72 s slam; follow-through overshoot, settle",
+  "kind": "additive",
+  "length": 1.35,
+  "loop": false,
+  "speed_synced": false
+ },
+ "wing_buffet": {
+  "category": "D Combat and reactions",
+  "priority": 3,
+  "desc": "anticipation: rears onto the hind legs, wings open fully and cock high and back; action: massive forward sweep; impact 0.7 s gust; second beat; forefeet land, wings fold",
+  "kind": "additive",
+  "length": 1.45,
+  "loop": false,
+  "speed_synced": false
+ },
+ "fire_breath_charge": {
+  "category": "D Combat and reactions",
+  "priority": 3,
+  "desc": "building tension: neck coils into an S, chest swells, jaw cracks open with a glow, head trembles harder and harder, tail lashes",
+  "kind": "additive",
+  "length": 1.3,
+  "loop": "hold",
+  "speed_synced": false
+ },
+ "fire_breath_release": {
+  "category": "D Combat and reactions",
+  "priority": 3,
+  "desc": "the neck whips forward (overshoot), jaw slams open, a sustained jet with recoil shudder and a slow sweep; aim pitch from the server; flame geometry grows out of the mouth",
+  "kind": "additive",
+  "length": 3.2,
+  "loop": "hold",
+  "speed_synced": false
+ },
+ "hurt": {
+  "category": "D Combat and reactions",
+  "priority": 3,
+  "desc": "flinch: head jerks away and the body recoils in 0.06 s on planted feet, wings and tail twitch, everything settles back with a damped wobble",
+  "kind": "additive",
+  "length": 0.5,
+  "loop": false,
+  "speed_synced": false
+ },
+ "death": {
+  "category": "D Combat and reactions",
+  "priority": 3,
+  "desc": "(existing, improved) staggers in pain, a foreleg buckles, chest drops, rolls onto the side, wings sprawl, the head hits the ground and bounces, tail flops, last breath",
+  "kind": "absolute",
+  "length": 3.2,
+  "loop": "hold",
+  "speed_synced": false
+ }
+}

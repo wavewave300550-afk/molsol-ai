@@ -1,0 +1,37 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "esb:phonograph",
+   "materials": {
+    "default": "entity_emissive"
+   },
+   "textures": {
+    "default": "textures/entity/phonograph"
+   },
+   "geometry": {
+    "default": "geometry.esb.phonograph"
+   },
+   "render_controllers": [
+    "controller.render.esb.phonograph"
+   ],
+   "animations": {
+    "assemble": "animation.esb.phonograph.assemble",
+    "play": "animation.esb.phonograph.play",
+    "blast": "animation.esb.phonograph.blast",
+    "fold": "animation.esb.phonograph.fold",
+    "state": "controller.animation.esb.phonograph.state"
+   },
+   "scripts": {
+    "animate": [
+     "state"
+    ],
+    "scale": "2.2",
+    "should_update_bones_and_effects_offscreen": "1.0"
+   },
+   "particle_effects": {
+    "notes": "esb:music_note"
+   }
+  }
+ }
+}

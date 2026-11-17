@@ -1,0 +1,31 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "esb:brass_gear",
+      "materials": {
+        "default": "entity_emissive"
+      },
+      "textures": {
+        "default": "textures/entity/brass_gear"
+      },
+      "geometry": {
+        "default": "geometry.esb.brass_gear"
+      },
+      "animations": {
+        "spin": "animation.esb.brass_gear.spin"
+      },
+      "particle_effects": {
+        "trail": "esb:gear_trail"
+      },
+      "scripts": {
+        "animate": [
+          "spin"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.esb.brass_gear"
+      ]
+    }
+  }
+}
