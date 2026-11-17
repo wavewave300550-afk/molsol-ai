@@ -8,8 +8,8 @@ import { Vesper } from "./boss/controller.js";
 import { resumeAfterLoad, startArrival } from "./boss/sequences.js";
 import { registerCommands } from "./commands.js";
 import { registerDamage } from "./damage.js";
-import { ENT } from "./generated/ids.js";
-import { onHaloUse, tickHalos } from "./halo.js";
+import { ENT, PHASE } from "./generated/ids.js";
+import { haloInFlight, onHaloUse, tickHalos } from "./halo.js";
 import { bosses, clock, ledgerPrune, minions, parts } from "./registry.js";
 import { onPsalterComplete, tickRituals } from "./summon.js";
 import { resetFxBudget } from "./util/fx.js";
@@ -74,24 +74,36 @@ function discover(): void {
   }
 }
 
-/** Remove helper entities whose boss is gone (e.g. after a crash or chunk reload). */
+/**
+ * Remove helper entities nothing controls any more (after a crash, reload or chunk unload). Landed cover plates of
+ * a live phase II boss are adopted again instead, and a thrown Orison Halo survives only while it is in flight.
+ */
 function cleanupOrphans(): void {
   for (const id of DIMENSIONS) {
     let list: Entity[] = [];
     try {
-      list = world.getDimension(id).getEntities({ families: ["sab_vesper"], excludeTypes: [ENT.boss, ENT.halo] });
+      list = world.getDimension(id).getEntities({ families: ["sab_vesper"], excludeTypes: [ENT.boss] });
     } catch {
       continue;
     }
     for (const e of list) {
       if (parts.has(e.id) || minions.has(e.id)) continue;
+      if (e.typeId === ENT.halo) {
+        if (!haloInFlight(e.id)) safeRemove(e);
+        continue;
+      }
       let owner: unknown;
       try {
         owner = e.getDynamicProperty("sab:owner");
       } catch {
         owner = undefined;
       }
-      if (typeof owner === "string" && bosses.has(owner) && e.typeId === ENT.lance) continue;
+      const boss = typeof owner === "string" ? bosses.get(owner) : undefined;
+      if (boss && e.typeId === ENT.lance && boss.beamId === e.id) continue; // the beam being fired right now
+      if (boss && e.typeId === ENT.plate && boss.phase === PHASE.p2) {
+        boss.adoptPlate(e);
+        continue;
+      }
       safeRemove(e);
     }
   }

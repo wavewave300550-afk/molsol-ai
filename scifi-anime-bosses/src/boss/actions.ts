@@ -74,6 +74,7 @@ function* lance(v: Vesper, tgt: Player): Step {
   try {
     beam = v.dim.spawnEntity(ENT.lance, v.prow());
     beam.setDynamicProperty("sab:owner", v.id);
+    v.beamId = beam.id;
   } catch {
     beam = undefined;
   }
@@ -130,6 +131,7 @@ function* lance(v: Vesper, tgt: Player): Step {
       setProp(beam, "sab:power", 0);
       v.addMinion(new Expire(beam, 8));
     }
+    v.beamId = undefined;
     v.charge = 0;
   }
   yield 20;
@@ -193,11 +195,12 @@ function* genuflect(v: Vesper): Step {
   v.setAct("genuflect");
   hold(v, 1.6, undefined, 0.26, 1.0);
   yield c.descend;
-  v.openHeart(CFG.heartMult, 10);
+  v.openHeart(CFG.heartMult, 10, CFG.windowCap.genuflect);
   sound(v.dim, "vent", v.core(), 1.6);
   actionBar(v, "§dThe reactor heart is exposed — §fstrike it!");
   const window = Math.round(c.window * (v.players.length > 2 ? 0.85 : 1));
   for (let i = 0; i < window; i++) {
+    if (v.heartSated()) break;
     if (i % 20 === 0) particle(v.dim, "heart_sparks", v.core());
     yield 1;
   }
@@ -282,9 +285,10 @@ function* lunge(v: Vesper, tgt: Player): Step {
   particle(v.dim, "dust", g);
   shockwave(v.dim, add(g, { x: 0, y: 0.3, z: 0 }), 9, 0.5, COLORS.violet);
   yield 8;
-  v.openHeart(CFG.heartMult, 42);
+  v.openHeart(CFG.heartMult, 42, CFG.windowCap.anchored);
   actionBar(v, "§dVESPER-0 is anchored — §fits heart is exposed!");
   for (let i = 0; i < c.anchored; i++) {
+    if (v.heartSated()) break;
     if (i % 20 === 0) particle(v.dim, "heart_sparks", v.core());
     yield 1;
   }
@@ -405,10 +409,20 @@ function* roar(v: Vesper): Step {
 
 type Option = { name: string; weight: number; run: () => void };
 
+/**
+ * Weighted pick with a soft shuffle-bag: abilities not yet shown this phase are strongly preferred (the whole
+ * repertoire appears early in each phase), and the last two picks are damped so no pattern loops.
+ */
 function choose(v: Vesper, opts: Option[]): (() => void) | undefined {
   const avail = opts.filter((o) => o.weight > 0 && v.ready(o.name));
   if (!avail.length) return undefined;
-  for (const o of avail) if (o.name === v.lastAction) o.weight *= 0.25;
+  const h = v.history;
+  for (const o of avail) {
+    if (!v.seen.has(o.name)) o.weight *= 3;
+    const at = h.lastIndexOf(o.name);
+    if (at >= 0 && at === h.length - 1) o.weight *= 0.2;
+    else if (at >= 0 && at === h.length - 2) o.weight *= 0.55;
+  }
   let total = avail.reduce((s, o) => s + o.weight, 0);
   let r = Math.random() * total;
   for (const o of avail) {
@@ -438,14 +452,14 @@ export function chooseP1(v: Vesper): (() => void) | undefined {
   const cluster = v.players.filter((p) => hdist(p.location, v.pos) < 22).length;
   const drones = v.minions.of<Drone>("drone").length;
   if (v.t - v.lastVulnerable > CFG.genuflect.forceAfter && v.ready("genuflect")) {
-    return () => v.start("genuflect", genuflect(v), { cooldown: 400 });
+    return () => v.start("genuflect", genuflect(v), { cooldown: 400, cleanup: () => v.closeHeart() });
   }
   return choose(v, [
     { name: "lance", weight: 2.6 + (far ? 1 : 0), run: () => v.start("lance", lance(v, v.pickTarget((p) => dist(p.location, v.pos) * 0.15) ?? tgt), { cooldown: cd(v, CFG.lance.cooldown) }) },
     { name: "rite", weight: 2.4 + (cluster >= 2 ? 1.2 : 0), run: () => v.start("rite", rite(v), { cooldown: cd(v, CFG.rite.cooldown) }) },
     { name: "horizon", weight: 3.0, run: () => v.start("horizon", horizon(v, [tgt]), { cooldown: cd(v, CFG.horizon.cooldown) }) },
     { name: "choir", weight: drones ? 0 : 2.4, run: () => v.start("choir", choir(v), { cooldown: cd(v, CFG.choir.cooldown) }) },
-    { name: "genuflect", weight: 0.6, run: () => v.start("genuflect", genuflect(v), { cooldown: 400 }) },
+    { name: "genuflect", weight: 0.6, run: () => v.start("genuflect", genuflect(v), { cooldown: 400, cleanup: () => v.closeHeart() }) },
   ]);
 }
 
@@ -459,7 +473,7 @@ export function chooseP2(v: Vesper): (() => void) | undefined {
   }
   const others = v.players.filter((p) => p !== tgt);
   return choose(v, [
-    { name: "lunge", weight: d > 6 && d < 30 ? 3.2 : 0.6, run: () => v.start("lunge", lunge(v, tgt), { cooldown: cd(v, CFG.lunge.cooldown) }) },
+    { name: "lunge", weight: d > 6 && d < 30 ? 3.2 : 0.6, run: () => v.start("lunge", lunge(v, tgt), { cooldown: cd(v, CFG.lunge.cooldown), cleanup: () => v.closeHeart() }) },
     { name: "talons", weight: near ? 3 : 0.5, run: () => v.start("talons", talons(v), { cooldown: cd(v, CFG.talons.cooldown) }) },
     { name: "nova", weight: 2.2, run: () => v.start("nova", nova(v), { cooldown: cd(v, CFG.nova.cooldown) }) },
     { name: "horizon2", weight: 1.6, run: () => v.start("horizon2", horizon(v, others.length ? [tgt, others[Math.floor(Math.random() * others.length)]] : [tgt], 7), { cooldown: cd(v, 300) }) },

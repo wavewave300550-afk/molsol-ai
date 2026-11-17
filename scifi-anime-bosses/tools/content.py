@@ -136,9 +136,10 @@ def bp_entities() -> Dict[str, dict]:
         "sab:prow": {"minecraft:collision_box": {"width": 4.5, "height": 4.0}},
         "sab:stern": {"minecraft:collision_box": {"width": 3.6, "height": 3.6}},
         "sab:heart": {"minecraft:collision_box": {"width": 3.2, "height": 3.2}},
+        "sab:legs": {"minecraft:collision_box": {"width": 6.0, "height": 4.0}},
     }
-    events = {f"sab:as_{k}": {"add": {"component_groups": [f"sab:{k}"]}} for k in ("prow", "stern", "heart")}
-    out["vesper_part"] = entity(ENT["part"], c, {"sab:part": prop("int", 0, [0, 2], sync=False)}, groups, events)
+    events = {f"sab:as_{k}": {"add": {"component_groups": [f"sab:{k}"]}} for k in ("prow", "stern", "heart", "legs")}
+    out["vesper_part"] = entity(ENT["part"], c, {"sab:part": prop("int", 0, [0, 3], sync=False)}, groups, events)
 
     # ---- Cherub drone (P1 autonomous system)
     c = base_components(16, 1.1, 1.3, FAMILY + ["sab_minion", "monster", "mob"], kb=0.4)

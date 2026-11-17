@@ -8,13 +8,13 @@ import {
 } from "@minecraft/server";
 import { CFG } from "../config.js";
 import { ACT, ENT, FOGS, MUSIC, PHASE } from "../generated/ids.js";
-import { bosses, clock, ledgerAdd, parts, PartKind } from "../registry.js";
+import { bosses, clock, ledgerAdd, minions as minionRegistry, parts, PartKind } from "../registry.js";
 import { particle, sound } from "../util/fx.js";
 import {
   add, approachAngle, clamp, dist, hdist, len, modelToWorld, mul, norm, pitchOf, rand, sub, V3, wrapAngle, yawOf,
 } from "../util/vec.js";
 import { combatants, groundY, safeRemove, setProp, spectators } from "../util/world.js";
-import { Minion, MinionSet, Seraph } from "./minions.js";
+import { Minion, MinionSet, Plate, Seraph } from "./minions.js";
 import * as A from "./actions.js";
 import * as S from "./sequences.js";
 
@@ -48,6 +48,7 @@ const PART_OFFSET: { [k in PartKind]: [number, number, number, number] } = {
   prow: [0, 66, -150, 2.0],
   stern: [0, 62, 128, 1.8],
   heart: [0, 62, -2, 1.6],
+  legs: [0, -18, -2, 2.0], // phase II only: the limbs under the body, reachable in melee
 };
 
 export class Vesper {
@@ -68,12 +69,16 @@ export class Vesper {
   action?: Action;
   cooldowns = new Map<string, number>();
   gcdUntil = 60;
-  lastAction = "";
+  /** Recent action names (newest last) and the abilities already shown this phase, for the chooser. */
+  history: string[] = [];
+  seen = new Set<string>();
   lastVulnerable = 0;
   invulnerable = false;
   heartOpen = false;
   heartMult: number = CFG.heartMult;
   heartDrop = 0; // model units the heart is lowered by the current pose
+  windowTaken = 0; // damage absorbed by the current weak-point window
+  windowCap = Infinity;
   prayers = 0; // bit 1: 75 % prayer done, bit 2: 25 % prayer done
   enraged = false;
   dying = false;
@@ -96,7 +101,10 @@ export class Vesper {
   private orbitAngle = Math.random() * 360;
   readonly audience = new Set<string>(); // players currently given music + fog
   cinematic = new Map<string, number>(); // player id -> camera release tick
-  private hullState = "p1";
+  private hullState?: string; // unknown until the first setHull (a reloaded boss may carry the "open" group)
+  /** The Litany Lance beam being fired right now (orphan cleanup spares only this one). */
+  beamId?: string;
+  private recentHitters = new Map<string, number>(); // player id -> last tick they damaged the boss
   // pooled damage: every player's hits count (per-attacker invulnerability frames), applied every 11 ticks
   private pool = 0;
   private poolBy?: Entity;
@@ -167,6 +175,7 @@ export class Vesper {
   }
 
   setPhase(p: number): void {
+    if (p !== this.phase) this.seen.clear();
     this.phase = p;
     this.prop("sab:phase", p);
   }
@@ -181,12 +190,28 @@ export class Vesper {
     }
   }
 
-  openHeart(mult: number, drop: number): void {
+  openHeart(mult: number, drop: number, cap = Infinity): void {
     this.heartOpen = true;
     this.heartMult = mult;
     this.heartDrop = drop;
     this.lastVulnerable = this.t;
+    this.windowTaken = 0;
+    this.windowCap = cap * CFG.maxHealth;
     this.setHull("open");
+  }
+
+  /** True once the open heart has absorbed its stagger cap; the window then closes early (with feedback). */
+  heartSated(): boolean {
+    if (!this.heartOpen || this.windowTaken < this.windowCap) return false;
+    sound(this.dim, "shield", this.core(), 1.6, 0.8);
+    for (const p of this.players) {
+      try {
+        p.onScreenDisplay.setActionBar("§7The heart seals itself under the onslaught!");
+      } catch {
+        /* ignore */
+      }
+    }
+    return true;
   }
 
   closeHeart(): void {
@@ -229,6 +254,7 @@ export class Vesper {
     const e = this.participants.get(p.id) ?? { name: p.name, damage: 0 };
     e.damage += amount;
     this.participants.set(p.id, e);
+    this.recentHitters.set(p.id, this.t);
   }
 
   private refreshPlayers(): void {
@@ -272,8 +298,14 @@ export class Vesper {
     return best;
   }
 
+  /** Group size counts nearby players and anyone who hurt the boss in the last 15 s (e.g. far-away snipers). */
   groupScale(): number {
-    return CFG.groupScale(Math.max(1, this.players.length));
+    let n = this.players.length;
+    for (const [id, t] of this.recentHitters) {
+      if (this.t - t > 300) this.recentHitters.delete(id);
+      else if (!this.players.some((p) => p.id === id)) n++;
+    }
+    return CFG.groupScale(Math.max(1, n));
   }
 
   // ------------------------------------------------------------------ damage model
@@ -288,22 +320,30 @@ export class Vesper {
   /** Clamp damage so phase thresholds are never skipped; returns the allowed amount. */
   clampToThreshold(amount: number): number {
     const hp = this.health() - this.pool;
+    // a threshold is pending: nothing more lands until its sequence has started
+    if (this.pendingThreshold) return Math.max(0, Math.min(amount, hp - this.pendingLevel));
     const max = CFG.maxHealth;
     const stops: [number, "prayer1" | "transform" | "prayer2" | "death"][] = [];
     const th = CFG.thresholds;
-    if (!(this.prayers & 1)) stops.push([max * th.prayer1, "prayer1"]);
+    if (!(this.prayers & 1) && this.phase === PHASE.p1) stops.push([max * th.prayer1, "prayer1"]);
     if (this.phase === PHASE.p1) stops.push([max * th.transform, "transform"]);
     if (!(this.prayers & 2) && this.phase >= PHASE.p2) stops.push([max * th.prayer2, "prayer2"]);
     stops.push([1, "death"]);
     for (const [level, name] of stops) {
-      if (hp > level && hp - amount <= level) {
+      // no "hp > level" test: a boss already at or below an unused stop (e.g. after a reload) re-arms it
+      if (hp - amount <= level) {
         this.pendingThreshold = name;
         this.pendingLevel = level;
         return Math.max(0, hp - level);
       }
     }
-    if (hp <= 1) return 0;
     return amount;
+  }
+
+  /** Re-adopt a landed cover plate whose helper object did not survive a reload. */
+  adoptPlate(e: Entity): void {
+    if (minionRegistry.has(e.id)) return;
+    this.addMinion(new Plate(this, e.location, e.location, 0, e));
   }
 
   /**
@@ -328,6 +368,7 @@ export class Vesper {
     a = this.clampToThreshold(a);
     if (a <= 0) return 0;
     this.pool += a;
+    if (this.heartOpen) this.windowTaken += a;
     if (source) this.poolBy = source;
     this.poolCause = cause;
     this.credit(source, a);
@@ -359,7 +400,9 @@ export class Vesper {
   start(name: string, gen: Step, opts: { interruptible?: boolean; cleanup?: () => void; cooldown?: number } = {}): void {
     this.stop();
     this.action = { name, gen, wait: 0, started: this.t, interruptible: opts.interruptible ?? true, cleanup: opts.cleanup };
-    this.lastAction = name;
+    this.history.push(name);
+    if (this.history.length > 4) this.history.shift();
+    this.seen.add(name);
     if (opts.cooldown) this.cooldowns.set(name, this.t + opts.cooldown);
   }
 
@@ -563,12 +606,19 @@ export class Vesper {
 
   // ------------------------------------------------------------------ proxy hitboxes
   private syncParts(): void {
-    for (const kind of ["prow", "stern", "heart"] as PartKind[]) {
+    const kinds: PartKind[] = this.phase >= PHASE.p2 ? ["prow", "stern", "heart", "legs"] : ["prow", "stern", "heart"];
+    if (this.phase < PHASE.p2 && this.partEntities.legs) {
+      parts.delete(this.partEntities.legs.id);
+      safeRemove(this.partEntities.legs);
+      this.partEntities.legs = undefined;
+    }
+    for (const kind of kinds) {
       let e = this.partEntities[kind];
       const [mx, my, mz, half] = PART_OFFSET[kind];
       const drop = kind === "heart" ? this.heartDrop : this.heartDrop * 0.6;
       const c = this.at(mx, my - drop, mz);
-      const loc = { x: c.x, y: c.y - half, z: c.z };
+      // while the heart is exposed the legs box steps aside (up, into open air) so it never shields the weak point
+      const loc = kind === "legs" && this.heartOpen ? { x: c.x, y: c.y + 40, z: c.z } : { x: c.x, y: c.y - half, z: c.z };
       if (!e || !e.isValid) {
         if (this.t % 20 !== 0) continue;
         try {
@@ -589,7 +639,7 @@ export class Vesper {
   }
 
   removeParts(): void {
-    for (const kind of ["prow", "stern", "heart"] as PartKind[]) {
+    for (const kind of ["prow", "stern", "heart", "legs"] as PartKind[]) {
       const e = this.partEntities[kind];
       if (e) parts.delete(e.id);
       safeRemove(e);
@@ -676,6 +726,8 @@ export class Vesper {
     if (this.target && !this.target.isValid) this.target = this.players[0];
     if (this.t === 1) this.closeHeart();
     this.flushDamage();
+    // a stop the boss already sits on (e.g. pending when the world was saved) re-arms without a new hit
+    if (!this.pendingThreshold && this.pool <= 0 && !this.dying && this.t % 10 === 0) this.clampToThreshold(0);
     this.handleThreshold();
     // leaving when nobody fights
     if (!this.players.length && !this.dying) {

@@ -7,6 +7,19 @@ import { add, mul, norm, sub } from "./util/vec.js";
 
 const PASS_THROUGH = new Set<string>([EntityDamageCause.override, EntityDamageCause.selfDestruct, "void"]);
 
+/**
+ * Environmental causes the entities' damage sensors already ignore. Filtered here too, because a proxy hitbox that
+ * clips into terrain must never forward suffocation (etc.) to the boss, whatever order the engine evaluates
+ * damage sensors and script events in.
+ */
+const ENVIRONMENT = new Set<string>([
+  EntityDamageCause.fall, EntityDamageCause.suffocation, EntityDamageCause.drowning, EntityDamageCause.fire,
+  EntityDamageCause.fireTick, EntityDamageCause.lava, EntityDamageCause.flyIntoWall, EntityDamageCause.magma,
+  EntityDamageCause.contact, EntityDamageCause.freezing, EntityDamageCause.campfire, EntityDamageCause.soulCampfire,
+  EntityDamageCause.stalagmite, EntityDamageCause.stalactite, EntityDamageCause.fallingBlock, EntityDamageCause.piston,
+  EntityDamageCause.temperature, EntityDamageCause.anvil, EntityDamageCause.lightning,
+]);
+
 function isOwnSource(src: Entity | undefined): boolean {
   return !!src && src.typeId.startsWith("sab:");
 }
@@ -45,6 +58,10 @@ function onHurt(ev: EntityHurtBeforeEvent): void {
   if (v) {
     if (PASS_THROUGH.has(cause)) return;
     if (ledgerTake(v.id, ev.damage, clock.now)) return; // forwarded & already scaled
+    if (ENVIRONMENT.has(cause)) {
+      ev.cancel = true;
+      return;
+    }
     if (v.invulnerable || v.dying || isOwnSource(attacker)) {
       ev.cancel = true;
       if (!isOwnSource(attacker)) feedback(v, "shield", attacker);
@@ -62,7 +79,7 @@ function onHurt(ev: EntityHurtBeforeEvent): void {
   if (part) {
     ev.cancel = true;
     const owner = part.owner;
-    if (!owner.boss.isValid || isOwnSource(attacker) || PASS_THROUGH.has(cause)) return;
+    if (!owner.boss.isValid || isOwnSource(attacker) || PASS_THROUGH.has(cause) || ENVIRONMENT.has(cause)) return;
     if (owner.invulnerable || owner.dying) {
       feedback(owner, "shield", attacker, e.location);
       return;

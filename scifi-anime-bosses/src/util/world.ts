@@ -4,6 +4,7 @@ import {
   Entity,
   EntityDamageCause,
   GameMode,
+  ItemStack,
   Player,
   Vector3,
   world,
@@ -157,6 +158,27 @@ export function push(target: Entity, vel: Vector3): void {
     else target.applyImpulse(vel);
   } catch {
     /* some entities refuse impulses */
+  }
+}
+
+/**
+ * Put an item into a player's inventory; whatever does not fit (or everything, if the inventory is unavailable)
+ * drops at the player's feet, or at `fallback` in `dim` when the player is gone.
+ */
+export function giveItem(p: Player, stack: ItemStack, dim: Dimension, fallback: Vector3): void {
+  let left: ItemStack | undefined = stack;
+  try {
+    const container = p.isValid ? p.getComponent("minecraft:inventory")?.container : undefined;
+    if (container) left = container.addItem(stack);
+  } catch {
+    left = stack;
+  }
+  if (!left) return;
+  try {
+    if (p.isValid) p.dimension.spawnItem(left, p.location);
+    else dim.spawnItem(left, fallback);
+  } catch {
+    /* ignore */
   }
 }
 

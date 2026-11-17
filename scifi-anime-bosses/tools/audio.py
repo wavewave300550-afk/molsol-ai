@@ -329,7 +329,7 @@ def s_lance_charge():
     n = int(dur * SR)
     whine = sine(np.exp(np.linspace(math.log(300), math.log(2400), n))) * curve(n, [(0, 0), (1, 1)]) * 0.5
     ch = choir_note(D["A4"], dur, "i", attack=1.4, release=0.1) * 0.6
-    crackle = highpass(noise(dur), 4000) * (RNG.random(n) < 0.02) * 2.0
+    crackle = highpass(noise(dur), 4000) * (RNG.random(n) < 0.02) * 0.6
     return reverb(mix(whine, ch, crackle * curve(n, [(0, 0), (1, 1)])), 1.8, 0.3)
 
 
@@ -604,6 +604,22 @@ def encode_ogg(x, out_path, quality=3, tmp_dir=None):
     os.remove(wav)
 
 
+LOUDNESS = {"hum": -21.0, "prayer": -18.0, "vent": -19.0, "drone_charge": -18.0, "seraph_whine": -17.0}
+
+
+def master(x, target_db=-16.0, ceiling=0.85):
+    """Loudness (RMS over the active part) normalisation with a gain cap and soft peak limiting."""
+    peak = float(np.max(np.abs(x))) or 1.0
+    active = np.abs(x) > peak * 1e-3
+    rms = float(np.sqrt(np.mean(x[active] ** 2))) if active.any() else peak
+    gain = min(10 ** (target_db / 20) / max(rms, 1e-9), ceiling / peak * 4.0)
+    y = x * gain
+    knee = 0.7
+    over = np.abs(y) > knee
+    y[over] = np.sign(y[over]) * (knee + (ceiling - knee) * np.tanh((np.abs(y[over]) - knee) / (ceiling - knee)))
+    return y
+
+
 def render_all(sound_dir, music_dir, only=None):
     os.makedirs(sound_dir, exist_ok=True)
     os.makedirs(music_dir, exist_ok=True)
@@ -611,7 +627,7 @@ def render_all(sound_dir, music_dir, only=None):
     for name, fn in SOUNDS.items():
         if only and name not in only:
             continue
-        x = fade(normalize(fn(), 0.89))
+        x = fade(master(fn(), LOUDNESS.get(name, -16.0)))
         p = os.path.join(sound_dir, f"{name}.ogg")
         encode_ogg(x, p, 3)
         info[name] = (len(x) / SR, os.path.getsize(p))

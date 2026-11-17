@@ -6,10 +6,13 @@ export const CFG = {
   departAfterTicks: 600, // no combatants for 30 s -> VESPER-0 leaves (Psalter refunded)
 
   // damage taken by the boss
-  hullMultP1: 0.55,
-  hullMultP2: 0.8,
+  hullMultP1: 0.35, // ceramic armour: phase I damage comes mostly from the weak-point windows
+  hullMultP2: 0.7,
   heartMult: 1.75,
   heartMultStunned: 2.0,
+  // stagger caps: a weak-point window closes early once it has absorbed this fraction of max health,
+  // so strong groups cannot delete a whole segment in one window (small groups still get the full window)
+  windowCap: { genuflect: 0.08, stun: 0.12, anchored: 0.05, unhaloed: 0.08 },
   explosionMult: 0.5,
   perHitCap: 60,
   groupScale: (players: number) => 1 / (1 + 0.5 * Math.max(0, Math.min(players, 8) - 1)),
@@ -43,7 +46,7 @@ export const CFG = {
   seraph: { health: 40, dormant: 400, unhaloed: 120 },
   death: { length: 160 },
 
-  rewards: { alloyMin: 8, alloyMax: 12, xp: 1500, blessing: 600, blessRadius: 16 },
+  rewards: { alloyMin: 8, alloyMax: 12, xp: 1500, blessing: 600, blessRadius: 16, maxWinners: 8 },
   gcdP1: [50, 70] as const,
   gcdP2: [30, 46] as const,
 };

@@ -20,6 +20,15 @@ interface Flight {
 
 const flights: Flight[] = [];
 const COOLDOWN = "sab:orison";
+const COOLDOWN_TICKS = 50;
+/** Script-side throw gate (player id -> tick of the last throw); independent of when the engine starts the
+ * item's own `minecraft:cooldown`, which is kept for the hotbar cooldown overlay. */
+const lastThrow = new Map<string, number>();
+
+/** True while a thrown halo entity is still flying (anything else is a leftover from a reload). */
+export function haloInFlight(id: string): boolean {
+  return flights.some((f) => f.e.isValid && f.e.id === id);
+}
 const OUT_SPEED = 1.15;
 const BACK_SPEED = 1.35;
 const RANGE = 16;
@@ -31,9 +40,13 @@ const SAFE_TYPES = new Set(["minecraft:villager_v2", "minecraft:wandering_trader
 export function onHaloUse(ev: ItemComponentUseEvent): void {
   const p = ev.source;
   if (!(p instanceof Player)) return;
+  const now = system.currentTick;
+  const last = lastThrow.get(p.id);
+  if (last !== undefined && now - last < COOLDOWN_TICKS) return;
+  lastThrow.set(p.id, now);
+  if (lastThrow.size > 64) for (const [k, t] of lastThrow) if (now - t > COOLDOWN_TICKS) lastThrow.delete(k);
   try {
-    if (p.getItemCooldown(COOLDOWN) > 0) return;
-    p.startItemCooldown(COOLDOWN, 50);
+    p.startItemCooldown(COOLDOWN, COOLDOWN_TICKS);
   } catch {
     /* ignore */
   }

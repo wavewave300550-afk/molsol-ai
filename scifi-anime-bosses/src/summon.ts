@@ -1,9 +1,9 @@
 import {
-  Dimension, EquipmentSlot, GameMode, ItemComponentCompleteUseEvent, Player, Vector3,
+  Dimension, EquipmentSlot, GameMode, ItemComponentCompleteUseEvent, ItemStack, Player, Vector3, world,
 } from "@minecraft/server";
 import { Vesper } from "./boss/controller.js";
 import { startArrival } from "./boss/sequences.js";
-import { ENT } from "./generated/ids.js";
+import { ENT, ITEMS } from "./generated/ids.js";
 import { bosses } from "./registry.js";
 import { COLORS, particle, sound } from "./util/fx.js";
 import { hdist } from "./util/vec.js";
@@ -13,7 +13,8 @@ interface Ritual {
   dim: Dimension;
   at: Vector3;
   t: number;
-  by: string;
+  by: string; // summoner name
+  pid: string; // summoner id: the Psalter is taken from them only once VESPER-0 has actually arrived
 }
 
 const rituals: Ritual[] = [];
@@ -54,24 +55,7 @@ export function onPsalterComplete(ev: ItemComponentCompleteUseEvent): void {
     deny(p, why);
     return;
   }
-  // consume one Psalter (not in creative)
-  try {
-    if (p.getGameMode() !== GameMode.Creative) {
-      const eq = p.getComponent("minecraft:equippable");
-      const item = eq?.getEquipment(EquipmentSlot.Mainhand);
-      if (item && item.typeId === ev.itemStack.typeId) {
-        if (item.amount > 1) {
-          item.amount -= 1;
-          eq!.setEquipment(EquipmentSlot.Mainhand, item);
-        } else {
-          eq!.setEquipment(EquipmentSlot.Mainhand, undefined);
-        }
-      }
-    }
-  } catch {
-    /* ignore */
-  }
-  rituals.push({ dim: p.dimension, at, t: 0, by: p.name });
+  rituals.push({ dim: p.dimension, at, t: 0, by: p.name, pid: p.id });
   sound(p.dimension, "psalter", at, 2.0);
   for (const s of spectators(p.dimension, at, 96)) {
     try {
@@ -80,6 +64,77 @@ export function onPsalterComplete(ev: ItemComponentCompleteUseEvent): void {
       /* ignore */
     }
   }
+}
+
+/** Take one Astral Psalter from the player (main hand first, then the inventory). */
+function takePsalter(p: Player): boolean {
+  try {
+    const eq = p.getComponent("minecraft:equippable");
+    const hand = eq?.getEquipment(EquipmentSlot.Mainhand);
+    if (eq && hand && hand.typeId === ITEMS.psalter) {
+      if (hand.amount > 1) {
+        hand.amount -= 1;
+        eq.setEquipment(EquipmentSlot.Mainhand, hand);
+      } else {
+        eq.setEquipment(EquipmentSlot.Mainhand, undefined);
+      }
+      return true;
+    }
+    const c = p.getComponent("minecraft:inventory")?.container;
+    if (!c) return false;
+    for (let i = 0; i < c.size; i++) {
+      const it = c.getItem(i);
+      if (!it || it.typeId !== ITEMS.psalter) continue;
+      if (it.amount > 1) {
+        it.amount -= 1;
+        c.setItem(i, it);
+      } else {
+        c.setItem(i, undefined);
+      }
+      return true;
+    }
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
+/** The hymn ends without an answer; nothing is consumed. */
+function fizzle(r: Ritual, p: Player | undefined, why: string): void {
+  particle(r.dim, "dust", r.at);
+  if (p) deny(p, why);
+}
+
+/** End of the ritual: VESPER-0 arrives, and only then is the Psalter consumed (never in creative). */
+function completeRitual(r: Ritual): void {
+  const e = world.getEntity(r.pid);
+  const p = e && e.isValid && e.typeId === "minecraft:player" ? (e as Player) : undefined;
+  if (!p) return fizzle(r, undefined, "");
+  let loaded = true;
+  try {
+    loaded = r.dim.isChunkLoaded(r.at);
+  } catch {
+    loaded = false;
+  }
+  if (!loaded) return fizzle(r, p, "The hymn faded: you left the ritual site.");
+  let creative = false;
+  try {
+    creative = p.getGameMode() === GameMode.Creative;
+  } catch {
+    /* ignore */
+  }
+  if (!creative && !takePsalter(p)) return fizzle(r, p, "The hymn falters: the Astral Psalter is gone.");
+  if (summonNow(r.dim, r.at)) return;
+  // the boss could not be spawned: give the Psalter back
+  if (!creative) {
+    try {
+      const left = p.getComponent("minecraft:inventory")?.container?.addItem(new ItemStack(ITEMS.psalter, 1));
+      if (left) p.dimension.spawnItem(left, p.location);
+    } catch {
+      /* ignore */
+    }
+  }
+  fizzle(r, p, "The stars did not answer. Your Psalter is returned.");
 }
 
 export function summonNow(dim: Dimension, at: Vector3): Vesper | undefined {
@@ -109,7 +164,7 @@ export function tickRituals(): void {
       particle(r.dim, "light_pillar", r.at, { height: 40, life: 2.5 }, COLORS.cyan);
       sound(r.dim, "arrive", r.at, 1.2, 1.3);
     }
-    if (t === RITUAL_TICKS) summonNow(r.dim, r.at);
+    if (t === RITUAL_TICKS) completeRitual(r);
   }
   for (let i = rituals.length - 1; i >= 0; i--) if (rituals[i].t >= RITUAL_TICKS) rituals.splice(i, 1);
 }

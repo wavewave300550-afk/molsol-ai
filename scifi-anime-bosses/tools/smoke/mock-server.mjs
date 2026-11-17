@@ -149,6 +149,38 @@ class HealthComponent {
   }
 }
 
+class Container {
+  constructor(p) {
+    this.p = p;
+    this.size = 36;
+  }
+  getItem(i) {
+    if (!Number.isInteger(i) || i < 0 || i >= this.size) issue(`container.getItem bad slot ${i}`);
+    return i === this.p.selectedSlotIndex ? this.p._hand : this.p._inv[i];
+  }
+  setItem(i, item) {
+    if (!Number.isInteger(i) || i < 0 || i >= this.size) issue(`container.setItem bad slot ${i}`);
+    if (item !== undefined && !(item instanceof ItemStack)) issue("container.setItem without ItemStack");
+    if (i === this.p.selectedSlotIndex) this.p._hand = item;
+    else this.p._inv[i] = item;
+  }
+  addItem(stack) {
+    if (!(stack instanceof ItemStack)) issue("container.addItem without ItemStack");
+    for (let i = 0; i < this.size; i++) {
+      if (this.getItem(i)) continue;
+      this.setItem(i, stack);
+      __log.items.push([tickNo, stack.typeId, stack.amount, this.p.name]);
+      return undefined;
+    }
+    return stack;
+  }
+  get emptySlotsCount() {
+    let n = 0;
+    for (let i = 0; i < this.size; i++) if (!this.getItem(i)) n++;
+    return n;
+  }
+}
+
 class Equippable {
   constructor(p) {
     this.p = p;
@@ -278,6 +310,7 @@ export class Entity {
   getComponent(id) {
     if (id === "minecraft:health" || id === "health") return this._health;
     if ((id === "minecraft:equippable" || id === "equippable") && this.typeId === "minecraft:player") return this._equip;
+    if ((id === "minecraft:inventory" || id === "inventory") && this.typeId === "minecraft:player") return this._inventory;
     if (id === "minecraft:tameable") return undefined;
     issue(`getComponent(${id}) not emulated on ${this.typeId}`);
     return undefined;
@@ -487,6 +520,9 @@ export class Player extends Entity {
     this.name = name;
     this._mode = GameMode.Survival;
     this._equip = new Equippable(this);
+    this.selectedSlotIndex = 0;
+    this._inv = new Array(36).fill(undefined);
+    this._inventory = { container: new Container(this) };
     this.camera = new Camera(this);
     this.onScreenDisplay = new ScreenDisplay(this);
     this.fogSettings = new FogSettings(this);
@@ -567,6 +603,11 @@ class Dimension {
     this.id = id;
     this.heightRange = { min: -64, max: 320 };
     this._entities = new Map();
+    this._unloaded = new Set(); // "cx,cz" chunk keys a test marks as unloaded
+  }
+  isChunkLoaded(loc) {
+    finite(loc, "isChunkLoaded");
+    return !this._unloaded.has(`${Math.floor(loc.x / 16)},${Math.floor(loc.z / 16)}`);
   }
   _all() {
     return [...this._entities.values()].filter((e) => e.isValid);

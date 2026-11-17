@@ -19,8 +19,9 @@ Script API **`@minecraft/server` 2.11.0** (latest stable) — **no experimental 
 1. **Craft the Astral Psalter** — amethyst shards, copper ingots and an end crystal (`ACA / CEC / ACA`),
    or 3 Vesper Alloy + ender eye + amethyst shard after your first victory.
 2. **Hold use for 1.6 s** in the Overworld under open sky. An 8-second hymn ritual (pillar of light,
-   rising glyphs) ends with VESPER-0 descending from the sky. Refused (item kept) in other dimensions,
-   under a roof, in Peaceful, or when a VESPER-0 is already nearby.
+   rising glyphs) ends with VESPER-0 descending from the sky. The Psalter is consumed only when VESPER-0 actually
+   arrives: a hymn that fizzles (the summoner leaves, the site unloads) costs nothing. Refused (item kept) in other
+   dimensions, under a roof, in Peaceful, or when a VESPER-0 is already nearby.
 3. If everyone leaves for 30 s, VESPER-0 departs and the Psalter is returned.
 
 | Phase | Ability | Telegraph | Counterplay |
@@ -41,13 +42,17 @@ Script API **`@minecraft/server` 2.11.0** (latest stable) — **no experimental 
 | < 12 % | **Enrage** — faster cooldowns and rings | | |
 | 0 % | **Death** — 8 s collapse, reactor implosion, white-out | | |
 
-**Rewards** (each participant): the **Orison Halo** (guaranteed on your first victory, 25 % after),
-8–12 **Vesper Alloy**, 1500 XP at the crash site, and the **Dying Star** — 30 s of Regeneration II near the wreck.
+**Rewards** (each participant, up to the top 8 damage dealers, delivered straight into your inventory): the
+**Orison Halo** (guaranteed on your first victory, 25 % after), 8–12 **Vesper Alloy**, plus 1500 XP at the crash site
+and the **Dying Star** — 30 s of Regeneration II near the wreck.
 The **Orison Halo** is a sword-class chakram (9 damage, enchantable, repairable with Vesper Alloy):
 *use* throws a piercing halo that flies 16 blocks and returns (8 damage each way, 2.5 s cooldown, 2 durability).
 
-Damage taken by VESPER-0: hull ×0.55 (Phase I) / ×0.8 (Phase II), heart ×1.75–2.0 when exposed, explosions ×0.5,
-60 per hit max, scaled for group size `1/(1+0.5·(n−1))`. 1200 HP. Easy ×0.7 / Hard ×1.3 boss damage.
+Damage taken by VESPER-0: hull ×0.35 (Phase I ceramic armour) / ×0.7 (Phase II flesh), heart ×1.75–2.0 when exposed,
+explosions ×0.5, 60 per hit max, scaled for group size `1/(1+0.5·(n−1))`. 1200 HP. Each weak-point window has a
+**stagger cap** (Genuflection 8 %, prayer stun 12 %, Anchored 5 %, Unhaloed 8 % of max health): once the heart has
+absorbed it, it seals early, so a strong group can't burn a whole segment in one window, while a small group still
+gets the full window. Easy ×0.7 / Hard ×1.3 boss damage.
 Every player's hits count (per-attacker invulnerability frames, pooled application) — groups are not penalised.
 
 Commands (operators): `/sab:vesper summon|despawn|status` (cheats), `/sab:vesper_cinematics on|off`.
@@ -64,7 +69,7 @@ Commands (operators): `/sab:vesper summon|despawn|status` (cheats), `/sab:vesper
 | **Animation** | **31 boss animations** (base layer, idles, P2 pose, 20 actions, 9 s transformation, 8 s death, ambient FX) + 9 helper animations; **2 controllers / 24 states** driven by synced entity properties; client-side smoothing of heading/pitch/bank and head tracking |
 | **VFX** | **55 particle effects**; telegraphs are single emitters parameterised from script (`MolangVariableMap`: radius, length, life, colour) |
 | **Audio** | **36 original sound effects + 2 looping music tracks** (Phase I hymn 64 s, Phase II 40 s), all synthesised from scratch (formant choir, inharmonic bells, FM metal, filtered noise, convolution reverb) |
-| **Gameplay** | ~3,700 lines of TypeScript: AI scheduler with weighted, context-aware choices, velocity steering, terrain following, threat targeting, phase thresholds, prayer/transform/death sequences, persistence across reloads, rewards, weapon, ritual, commands |
+| **Gameplay** | ~3,900 lines of TypeScript: AI scheduler with weighted, context-aware choices, velocity steering, terrain following, threat targeting, phase thresholds, prayer/transform/death sequences, persistence across reloads, rewards, weapon, ritual, commands |
 
 | Animation sequences (rendered from the shipped animation data through a client simulator) | |
 |---|---|
@@ -85,7 +90,8 @@ Animated: [transformation](docs/images/transform.gif) · [Litany Lance](docs/ima
   `Rz(−rz)·Ry(ry)·Rx(−rx)`, `+ry` turns toward the entity's right. The preview renderer implements the same maths.
 * **Heading** is sent as a synced property and applied to the root bone as `heading − body_y_rotation`, smoothed
   per frame — correct whether or not the engine also rotates the body. Pitch/bank and head-look follow the same pattern.
-* **Weak points / long body:** proxy hitbox entities (prow, stern, heart) follow the body every tick and forward hits.
+* **Weak points / long body:** proxy hitbox entities (prow, stern, heart; plus the limbs in Phase II, which step aside
+  while the heart is exposed) follow the body every tick and forward hits.
   While the heart is exposed the hull's collision group shrinks so the heart becomes the target.
 * **Damage** is intercepted in `world.beforeEvents.entityHurt`, scaled, clamped at phase thresholds (no skipping a
   prayer or the transformation) and pooled; the scripted death replaces vanilla death (no 90° death flip).
@@ -100,17 +106,19 @@ Animated: [transformation](docs/images/transform.gif) · [Litany Lance](docs/ima
 |---|---|
 | TypeScript `strict` typecheck against the official 2.11.0 typings | **pass** |
 | JSON-schema validation of every pack file (Creator Tools' Bedrock schemas) | **110 files, 0 errors** |
-| Cross-reference validation (`tools/validate.py`): bones/locators used by animations, part visibility, materials, textures, Molang syntax + allowed queries + synced properties, particles, sounds, lang keys, item icons, manifests, every `sab:*` id and sound in the compiled JS | **12,609 checks, 0 errors** |
+| Cross-reference validation (`tools/validate.py`): bones/locators used by animations, part visibility, materials, textures, Molang syntax + allowed queries + synced properties, particles, sounds, lang keys, item icons, manifests, every `sab:*` id and sound in the compiled JS | **12,612 checks, 0 errors** |
 | Microsoft **Minecraft Creator Tools 0.21.0** validation | **0 errors, 0 warnings** (3 known false positives about `item_texture.json`; format-version recommendations intentionally left at vanilla's values) |
-| Runtime simulation (`tools/smoke`): compiled scripts on a strict mock of `@minecraft/server` that rejects unknown ids, out-of-range/unsynced properties, unknown entity events, particle variables the effect never reads, bad camera/fog/music ids | **64/64 checks in 4 scenarios** |
+| Runtime simulation (`tools/smoke`): compiled scripts on a strict mock of `@minecraft/server` that rejects unknown ids, out-of-range/unsynced properties, unknown entity events, particle variables the effect never reads, bad camera/fog/music ids | **71/71 checks in 5 scenarios** |
 
 The simulation runs a complete fight with two bot players (melee + archer): ritual → arrival → Phase I → Vespers
 (broken) → transformation → Phase II → Requiem (completed → False Benediction) → death → rewards, then verifies every
 ability, title, helper, reward, XP amount, music/fog/camera use and that no helper entity leaks. Further scenarios
 cover a 3-minute Phase I rotation (every ability incl. the vent burst), world reload mid-fight (including a save taken
-mid-transformation, orphan cleanup, and an unattended boss departing with a Psalter refund), and summon rules, the
-Orison Halo (damage, cooldown, durability, return) and the commands. With never-dodging bots the fight lasts ~2.6 min;
-real players should expect roughly 5–8 minutes.
+mid-transformation, orphan cleanup, and an unattended boss departing with a Psalter refund), a threshold-integrity
+stress test (eight players landing simultaneous capped hits every tick: the 75 % prayer, transformation and Requiem
+must start at exactly 900 / 600 / 300 HP, in order; the pre-fix code failed it), and summon rules (including a ritual
+that fizzles without costing the Psalter), the Orison Halo (damage, cooldown, durability, return) and the commands. With never-dodging, never-missing bots the fight
+lasts ~3.5 min (≈1.6 min per phase, every ability seen in each phase); real players should expect roughly 5–8 minutes.
 
 ### Not tested in-game — please verify
 

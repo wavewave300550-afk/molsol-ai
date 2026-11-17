@@ -5,7 +5,7 @@ import type { Minion } from "./boss/minions.js";
 export const bosses = new Map<string, Vesper>();
 
 /** Proxy hitbox entity id -> owner + part kind. */
-export type PartKind = "prow" | "stern" | "heart";
+export type PartKind = "prow" | "stern" | "heart" | "legs";
 export const parts = new Map<string, { owner: Vesper; kind: PartKind }>();
 
 /** Helper entity id -> minion object. */

@@ -9,7 +9,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "..", "..");
 const BUILD = path.join(ROOT, "build");
-const SCENARIOS = ["full_fight", "p1_rotation", "reload_resume", "summon_rules_and_weapon"];
+const SCENARIOS = ["full_fight", "p1_rotation", "threshold_integrity", "reload_resume", "summon_rules_and_weapon"];
 
 function prepare(name) {
   const dir = path.join(BUILD, `smoke-${name}`);
@@ -95,14 +95,17 @@ async function fullFight(mock) {
   const ps = mock.__registries.components["sab:psalter"];
   check(ps && typeof ps.onCompleteUse === "function", "Psalter custom component registered");
   ps.onCompleteUse({ source: melee, itemStack: melee._hand });
-  check(!melee._hand, "Psalter consumed on a successful summon (survival)");
+  check(!!melee._hand, "Psalter kept while the hymn plays");
   let bossSeenAt = -1;
   let deathAt = -1;
   const phaseTimes = {};
   for (let i = 0; i < 16000; i++) {
     mock.__tick();
     const boss = mock.__entities().find((e) => e.typeId === "sab:vesper_0");
-    if (boss && bossSeenAt < 0) bossSeenAt = mock.__now();
+    if (boss && bossSeenAt < 0) {
+      bossSeenAt = mock.__now();
+      check(!melee._hand, "Psalter consumed once VESPER-0 arrives (survival)");
+    }
     if (boss) {
       const ph = boss.getProperty("sab:phase");
       if (!(ph in phaseTimes)) phaseTimes[ph] = mock.__now();
@@ -247,8 +250,15 @@ async function summonRulesAndWeapon(mock) {
   calm._mode = "Creative";
   ps.onCompleteUse({ source: calm, itemStack: calm._hand });
   check(!!calm._hand, "creative players keep their Psalter");
+  // a ritual whose site unloads before the end fizzles and costs nothing
+  const wander = mock.__addPlayer("Rook", { x: 900.5, y: 64, z: 900.5 });
+  wander._hand = new mock.ItemStack("sab:astral_psalter", 1);
+  ps.onCompleteUse({ source: wander, itemStack: wander._hand });
+  mock.world.getDimension("minecraft:overworld")._unloaded.add(`${Math.floor(900.5 / 16)},${Math.floor(900.5 / 16)}`);
   for (let i = 0; i < 200; i++) mock.__tick();
   check(mock.__entities().filter((e) => e.typeId === "sab:vesper_0").length === 1, "exactly one boss from the valid ritual");
+  check(!!wander._hand && !mock.__entities().some((e) => e.typeId === "sab:vesper_0" && Math.abs(e.location.x - 900.5) < 64),
+    "a ritual whose site unloaded fizzles and keeps the Psalter");
   // Orison Halo
   const hero = mock.__addPlayer("Ash", { x: 300.5, y: 64, z: 300.5 });
   hero._hand = new mock.ItemStack("sab:orison_halo", 1);
@@ -277,6 +287,47 @@ async function summonRulesAndWeapon(mock) {
   return {};
 }
 
+async function thresholdIntegrity(mock) {
+  // eight players hammer VESPER-0 with simultaneous hits every tick: every phase threshold must still be hit
+  // exactly (no damage may leak past a pending threshold), and the fight must run prayer -> transform -> requiem
+  const ps = [];
+  for (let k = 0; k < 8; k++) ps.push(mock.__addPlayer(`Anvil${k}`, { x: 0.5 + k * 2, y: 64, z: 6.5 }));
+  ps[0]._hand = new mock.ItemStack("sab:astral_psalter", 1);
+  mock.__registries.components["sab:psalter"].onCompleteUse({ source: ps[0], itemStack: ps[0]._hand });
+  const seen = [];
+  let lastAct = -1;
+  let lastPhase = -1;
+  let gone = false;
+  for (let i = 0; i < 14000 && !gone; i++) {
+    mock.__tick();
+    const boss = mock.__entities().find((e) => e.typeId === "sab:vesper_0");
+    if (!boss) {
+      gone = i > 400;
+      continue;
+    }
+    const hp = Math.round(boss._health.currentValue * 10) / 10;
+    const act = boss.getProperty("sab:act");
+    const phase = boss.getProperty("sab:phase");
+    if (act === 10 && lastAct !== 10) seen.push(`pray@${hp}`);
+    if (phase !== lastPhase) seen.push(`phase${phase}@${hp}`);
+    lastAct = act;
+    lastPhase = phase;
+    for (const p of ps) {
+      p._loc.x = boss.location.x + 4;
+      p._loc.z = boss.location.z + 4;
+      mock.__hit(boss, p, 400, "entityAttack");
+    }
+  }
+  const s = seen.join(" ");
+  check(seen.includes("pray@900"), `75 % prayer starts exactly at 900 HP (${s})`);
+  check(seen.includes("phase1@600"), "transformation starts exactly at 600 HP");
+  check(seen.filter((x) => x.startsWith("pray@")).length === 2 && seen.includes("pray@300"), "Requiem starts exactly at 300 HP");
+  const order = seen.filter((x) => x.startsWith("phase")).map((x) => Number(x[5]));
+  check(JSON.stringify(order) === "[0,1,2,3]", `phases in order (${order})`);
+  check(gone, "the boss still dies at the end");
+  return { seen };
+}
+
 async function runOne(name) {
   const dir = prepare(name);
   const mock = await load(dir);
@@ -285,6 +336,7 @@ async function runOne(name) {
     if (name === "full_fight") info = await fullFight(mock);
     else if (name === "p1_rotation") info = await p1Rotation(mock);
     else if (name === "reload_resume") info = await reloadResume(mock);
+    else if (name === "threshold_integrity") info = await thresholdIntegrity(mock);
     else info = await summonRulesAndWeapon(mock);
   } catch (e) {
     check(false, `scenario threw: ${e.stack}`);

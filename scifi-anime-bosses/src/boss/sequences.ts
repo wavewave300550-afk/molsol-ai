@@ -2,11 +2,11 @@ import {
   EasingType, EntityDamageCause, HudVisibility, ItemStack, Player, world,
 } from "@minecraft/server";
 import { CFG } from "../config.js";
-import { ITEMS, PHASE } from "../generated/ids.js";
+import { ENT, ITEMS, PHASE } from "../generated/ids.js";
 import { afterglow } from "../afterglow.js";
 import { COLORS, particle, shockwave, sound } from "../util/fx.js";
 import { add, hdist, rand, V3 } from "../util/vec.js";
-import { chest, groundY, hasLineOfSight, hurt, knock, spectators } from "../util/world.js";
+import { chest, giveItem, groundY, hasLineOfSight, hurt, knock, spectators } from "../util/world.js";
 import type { Step, Vesper } from "./controller.js";
 import { Censer, Plate, Seraph, Wave } from "./minions.js";
 
@@ -41,7 +41,7 @@ export function cinematicsEnabled(): boolean {
 // ========================================================================================= arrival
 
 export function startArrival(v: Vesper): void {
-  v.start("arrive", arrive(v), { interruptible: false });
+  v.start("arrive", arrive(v), { interruptible: false, cleanup: () => { v.invulnerable = false; } });
 }
 
 function* arrive(v: Vesper): Step {
@@ -106,11 +106,15 @@ function* prayer(v: Vesper, level: 1 | 2): Step {
   const P = CFG.prayer;
   const dark = level === 2;
   v.invulnerable = true;
+  v.closeHeart();
   v.setAct("pray");
   v.prop("sab:censers", false);
   v.goal.pos = { x: v.arena.x, y: -1, z: v.arena.z };
   v.goal.alt = 15;
   v.goal.speed = 0.35;
+  v.goal.accel = 0.04;
+  v.goal.turn = v.phase >= PHASE.p2 ? CFG.turnRateP2 : CFG.turnRateP1;
+  v.goal.face = undefined;
   sound(v.dim, "choir", v.pos, 2.5);
   sound(v.dim, "prayer", v.pos, 2.0);
   if (level === 1) {
@@ -178,8 +182,9 @@ function* prayer(v: Vesper, level: 1 | 2): Step {
     sound(v.dim, "plate_impact", g, 2.0, 0.6);
     particle(v.dim, "dust", g);
     shockwave(v.dim, add(g, { x: 0, y: 0.3, z: 0 }), 10, 0.6, COLORS.white);
-    v.openHeart(CFG.heartMultStunned, level === 1 ? 22 : 30);
+    v.openHeart(CFG.heartMultStunned, level === 1 ? 22 : 30, CFG.windowCap.stun);
     for (let i = 0; i < P.stun; i++) {
+      if (v.heartSated() || v.pendingThreshold) break;
       if (i % 20 === 0) particle(v.dim, "heart_sparks", v.core());
       yield 1;
     }
@@ -218,7 +223,36 @@ function* prayer(v: Vesper, level: 1 | 2): Step {
 // ===================================================================================== transformation
 
 export function startTransform(v: Vesper): void {
-  v.start("transform", transform(v), { interruptible: false });
+  v.start("transform", transform(v), {
+    interruptible: false,
+    cleanup: () => {
+      for (const id of [...v.cinematic.keys()]) {
+        const p = world.getEntity(id);
+        if (p && p.typeId === "minecraft:player") v.releaseCamera(p as Player);
+      }
+      settleTransform(v);
+    },
+  });
+}
+
+/** Put VESPER-0 into its finished phase II state when the transformation could not play to the end. */
+function settleTransform(v: Vesper): void {
+  if (v.phase === PHASE.transform) {
+    v.prop("sab:rings", false);
+    v.prop("sab:plates", false);
+    v.prop("sab:limbs", true);
+    v.prop("sab:censers", false);
+    v.prop("sab:skin", 1);
+    v.setPhase(PHASE.p2);
+    v.closeHeart();
+  }
+  if (v.phase >= PHASE.p2 && v.phase !== PHASE.dying) {
+    v.moodP2 = true;
+    if (!v.minions.of("seraph").length) {
+      for (let r = 0; r < 3; r++) v.addMinion(new Seraph(v, r, v.at(0, 64, -2)));
+    }
+  }
+  v.invulnerable = false;
 }
 
 function shot(v: Vesper, players: Player[], loc: V3, ease: number): void {
@@ -325,8 +359,9 @@ function* unhaloed(v: Vesper): Step {
   v.goal.speed = 0.5;
   for (const s of v.minions.of<Seraph>("seraph")) s.dormantUntil += CFG.seraph.unhaloed + 100;
   yield 16;
-  v.openHeart(CFG.heartMult, 34);
+  v.openHeart(CFG.heartMult, 34, CFG.windowCap.unhaloed);
   for (let i = 0; i < CFG.seraph.unhaloed; i++) {
+    if (v.heartSated()) break;
     if (i % 20 === 0) particle(v.dim, "heart_sparks", v.core());
     yield 1;
   }
@@ -386,14 +421,17 @@ export function rewards(v: Vesper): void {
   const at = add(site, { x: 0, y: 1, z: 0 });
   const R = CFG.rewards;
   const total = [...v.participants.values()].reduce((s, p) => s + p.damage, 0);
-  const winners: Player[] = [];
+  const ranked: [Player, number][] = [];
   for (const [id, part] of v.participants) {
     const p = world.getEntity(id);
     if (!p || p.typeId !== "minecraft:player" || p.dimension.id !== v.dim.id) continue;
     if (total > 0 && part.damage < total * 0.03 && hdist(p.location, site) > 40) continue;
-    winners.push(p as Player);
+    ranked.push([p as Player, part.damage]);
   }
-  for (const p of winners.slice(0, 6)) {
+  // the top damage dealers (bounded), each reward delivered into its owner's inventory
+  ranked.sort((a, b) => b[1] - a[1]);
+  const winners = ranked.slice(0, R.maxWinners).map(([p]) => p);
+  for (const p of winners) {
     let first = true;
     try {
       first = p.getDynamicProperty("sab:halo_awarded") !== true;
@@ -401,12 +439,8 @@ export function rewards(v: Vesper): void {
     } catch {
       /* ignore */
     }
-    try {
-      if (first || Math.random() < 0.25) v.dim.spawnItem(new ItemStack(ITEMS.halo, 1), at);
-      v.dim.spawnItem(new ItemStack(ITEMS.alloy, Math.round(rand(R.alloyMin, R.alloyMax))), at);
-    } catch {
-      /* ignore */
-    }
+    if (first || Math.random() < 0.25) giveItem(p, new ItemStack(ITEMS.halo, 1), v.dim, at);
+    giveItem(p, new ItemStack(ITEMS.alloy, Math.round(rand(R.alloyMin, R.alloyMax))), v.dim, at);
   }
   if (!winners.length) {
     try {
@@ -437,22 +471,18 @@ export function rewards(v: Vesper): void {
 
 export function resumeAfterLoad(v: Vesper): void {
   // transient sequences cannot resume mid-way: settle into the nearest stable state
-  if (v.phase === PHASE.transform) {
-    v.prop("sab:rings", false);
-    v.prop("sab:plates", false);
-    v.prop("sab:limbs", true);
-    v.prop("sab:censers", false);
-    v.prop("sab:skin", 1);
-    v.setPhase(PHASE.p2);
-  }
-  v.invulnerable = false;
+  settleTransform(v);
   v.prop("sab:shield", false);
   v.setAct("idle");
   if (v.phase >= PHASE.p2) {
-    v.moodP2 = true;
     v.prop("sab:censers", false);
-    if (!v.minions.of("seraph").length) {
-      for (let r = 0; r < 3; r++) v.addMinion(new Seraph(v, r, v.at(0, 64, -2)));
+    // landed cover plates outlive their helper objects: adopt them again (late-loading ones: main.cleanupOrphans)
+    try {
+      for (const e of v.dim.getEntities({ type: ENT.plate, location: v.arena, maxDistance: CFG.arenaRange + 32 })) {
+        if (e.getDynamicProperty("sab:owner") === v.id) v.adoptPlate(e);
+      }
+    } catch {
+      /* ignore */
     }
   } else {
     v.prop("sab:censers", true);

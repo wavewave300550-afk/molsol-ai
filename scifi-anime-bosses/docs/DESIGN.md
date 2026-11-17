@@ -61,8 +61,13 @@ Passes: `geometry.sab.vesper_0` (opaque, `entity_emissive` – texture alpha is 
 | **Halo Seraphs** (P2) | rings detach as 3 autonomous weapons; red glow + tilt + whine before a dash | ring entity sweep vs players | break a ring (40 HP) → dormant 20 s; break all three → boss *Unhaloed* (stagger, heart exposed) |
 | **Black Sun Nova** (P2) | core swells for 3 s, crescendo, screen shake | every player within 48 blocks **with line of sight** to the core; 18 blast dmg | hide behind fallen hull plates (entities, 3 hits each) or any blocks; Blast Protection helps |
 
-Damage taken: hull ×0.55 (P1), flesh ×0.8 (P2), heart ×1.75 when exposed, ×0.5 extra vs explosions,
-group scaling `1 / (1 + 0.5·(players−1))` with per-attacker invulnerability frames, per-hit cap 60. Health 1200.
+Damage taken: hull ×0.35 (P1), flesh ×0.7 (P2), heart ×1.75 when exposed (×2.0 while stunned), ×0.5 extra vs
+explosions, group scaling `1 / (1 + 0.5·(players−1))` with per-attacker invulnerability frames, per-hit cap 60.
+Health 1200. Stagger caps close a weak-point window early once it has absorbed 8 % (Genuflection), 12 % (prayer
+stun), 5 % (Anchored) or 8 % (Unhaloed) of max health.
+
+Ability choice is a weighted pick with a soft shuffle-bag: abilities not yet shown in the current phase weigh ×3,
+the last pick ×0.2 and the one before ×0.55, plus situational weights (range, clustering, live drones).
 
 ## Rewards
 

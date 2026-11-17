@@ -553,11 +553,19 @@ export class Plate extends Minion {
   landed = false;
   cracks = 0;
 
-  constructor(v: Vesper, from: V3, to: V3, delay: number) {
+  constructor(v: Vesper, from: V3, to: V3, delay: number, existing?: Entity) {
     super();
     this.from = from;
     this.to = to;
     this.fall = 26;
+    if (existing) {
+      // re-adopted after a reload: already landed, keeps its cracks
+      this.landed = true;
+      const c = existing.getProperty("sab:cracks");
+      this.cracks = typeof c === "number" ? c : 0;
+      this.bind(existing, v);
+      return;
+    }
     this.age = -delay;
     const e = spawn(v.dim, ENT.plate, from, undefined, Math.random() * 360);
     if (e) this.bind(e, v);
