@@ -11,14 +11,14 @@ import { registerDamage } from "./damage.js";
 import { ENT, PHASE } from "./generated/ids.js";
 import { haloInFlight, onHaloUse, tickHalos } from "./halo.js";
 import { bosses, clock, ledgerPrune, minions, parts } from "./registry.js";
-import { onPsalterComplete, tickRituals } from "./summon.js";
+import { onPsalterUse, tickHeldHints, tickRituals } from "./summon.js";
 import { resetFxBudget } from "./util/fx.js";
 import { groundY, safeRemove } from "./util/world.js";
 
 const DIMENSIONS = ["minecraft:overworld", "minecraft:nether", "minecraft:the_end"];
 
 system.beforeEvents.startup.subscribe((ev) => {
-  ev.itemComponentRegistry.registerCustomComponent("sab:psalter", { onCompleteUse: onPsalterComplete });
+  ev.itemComponentRegistry.registerCustomComponent("sab:psalter", { onUse: onPsalterUse });
   ev.itemComponentRegistry.registerCustomComponent("sab:orison", { onUse: onHaloUse });
   registerCommands(ev.customCommandRegistry);
 });
@@ -124,6 +124,7 @@ system.runInterval(() => {
   try {
     tickHalos();
     tickRituals();
+    tickHeldHints(clock.now);
     afterglow.tick();
   } catch (err) {
     console.warn(`[VESPER-0] helper tick failed: ${err}`);

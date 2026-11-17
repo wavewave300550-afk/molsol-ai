@@ -732,6 +732,7 @@ export class Vesper {
     // leaving when nobody fights
     if (!this.players.length && !this.dying) {
       this.noTargetTicks++;
+      if (this.noTargetTicks === 60) this.explainNoChallenger();
       if (this.noTargetTicks > CFG.departAfterTicks && !this.departing) S.startDepart(this);
     } else {
       this.noTargetTicks = 0;
@@ -758,6 +759,19 @@ export class Vesper {
     }
     if (this.t % 100 === 0) this.persist();
     if (this.t % 40 === 0 && this.phase >= PHASE.p2 && !this.dying) particle(this.dim, "ember_drip", this.core());
+  }
+
+  /** Nobody can be fought (e.g. everyone nearby is in Creative): say so instead of silently leaving later. */
+  private explainNoChallenger(): void {
+    const secs = Math.round((CFG.departAfterTicks - this.noTargetTicks) / 20);
+    for (const p of spectators(this.dim, this.pos, CFG.arenaRange + 32)) {
+      try {
+        p.sendMessage(`§7[VESPER-0] It ignores players in Creative or Spectator mode. Switch to Survival or Adventure ` +
+          `to fight it; with no challenger it leaves in ${secs} s and returns the Psalter.`);
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
   private checkUnhaloed(): void {

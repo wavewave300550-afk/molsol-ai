@@ -10,7 +10,7 @@ const RP = path.join(BUILD, "SAB_VESPER_RP");
 
 export const __issues = [];
 export const __log = { particles: {}, sounds: {}, warnings: [], titles: [], damage: [], spawned: {}, items: [], xp: 0,
-  camera: [], music: [], fog: [], effects: {} };
+  camera: [], music: [], fog: [], effects: {}, actionbar: [], chat: [] };
 function issue(msg) {
   if (__issues.length < 500) __issues.push(msg);
 }
@@ -507,7 +507,10 @@ class ScreenDisplay {
     }
     __log.titles.push([tickNo, t]);
   }
-  setActionBar() {}
+  setActionBar(text) {
+    if (typeof text !== "string") issue("setActionBar without text");
+    __log.actionbar.push([tickNo, this.p.name, text]);
+  }
   updateSubtitle() {}
   setHudVisibility(v) {
     if (v !== 0 && v !== 1) issue(`setHudVisibility ${v}`);
@@ -533,7 +536,10 @@ export class Player extends Entity {
   getGameMode() {
     return this._mode;
   }
-  sendMessage() {}
+  sendMessage(msg) {
+    if (typeof msg !== "string") issue("sendMessage without text");
+    __log.chat.push([tickNo, this.name, msg]);
+  }
   playSound(id) {
     if (!(id in SOUNDS) && !VANILLA_SOUNDS.has(id)) issue(`player.playSound unknown ${id}`);
     __log.sounds[id] = (__log.sounds[id] ?? 0) + 1;

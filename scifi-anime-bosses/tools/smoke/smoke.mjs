@@ -93,8 +93,8 @@ async function fullFight(mock) {
   const archer = mock.__addPlayer("Corvin", { x: 8.5, y: 64, z: 4.5 });
   melee._hand = new mock.ItemStack("sab:astral_psalter", 1);
   const ps = mock.__registries.components["sab:psalter"];
-  check(ps && typeof ps.onCompleteUse === "function", "Psalter custom component registered");
-  ps.onCompleteUse({ source: melee, itemStack: melee._hand });
+  check(ps && typeof ps.onUse === "function", "Psalter custom component registered (tap / right-click to use)");
+  ps.onUse({ source: melee, itemStack: melee._hand });
   check(!!melee._hand, "Psalter kept while the hymn plays");
   let bossSeenAt = -1;
   let deathAt = -1;
@@ -214,7 +214,7 @@ async function p1Rotation(mock) {
   const ps = [mock.__addPlayer("Ira", { x: 0.5, y: 64, z: 0.5 }), mock.__addPlayer("Oda", { x: 9.5, y: 64, z: -6.5 }),
     mock.__addPlayer("Tam", { x: -8.5, y: 64, z: 7.5 })];
   ps[0]._hand = new mock.ItemStack("sab:astral_psalter", 1);
-  mock.__registries.components["sab:psalter"].onCompleteUse({ source: ps[0], itemStack: ps[0]._hand });
+  mock.__registries.components["sab:psalter"].onUse({ source: ps[0], itemStack: ps[0]._hand });
   for (let i = 0; i < 3800; i++) {
     mock.__tick();
     const boss = mock.__entities().find((e) => e.typeId === "sab:vesper_0");
@@ -241,29 +241,35 @@ async function summonRulesAndWeapon(mock) {
   const ps = mock.__registries.components["sab:psalter"];
   const nether = mock.__addPlayer("Nyx", { x: 0, y: 64, z: 0 }, "minecraft:nether");
   nether._hand = new mock.ItemStack("sab:astral_psalter", 1);
-  ps.onCompleteUse({ source: nether, itemStack: nether._hand });
+  ps.onUse({ source: nether, itemStack: nether._hand });
   check(!!nether._hand, "Psalter refused (and kept) in the Nether");
+  check(mock.__log.chat.some((c) => c[1] === "Nyx" && /\[VESPER-0\].*Overworld/.test(c[2])), "the refusal reason is also posted in chat");
   const roofed = mock.__addPlayer("Moss", { x: 100.5, y: 64, z: 100.5 });
   roofed._hand = new mock.ItemStack("sab:astral_psalter", 1);
   mock.terrain.boxes.push({ min: { x: 95, y: 70, z: 95 }, max: { x: 106, y: 71, z: 106 } });
-  ps.onCompleteUse({ source: roofed, itemStack: roofed._hand });
+  ps.onUse({ source: roofed, itemStack: roofed._hand });
   check(!!roofed._hand, "Psalter refused (and kept) under a roof");
+  for (let i = 0; i < 41; i++) mock.__tick();
+  check(mock.__log.actionbar.some((a) => a[1] === "Moss" && /open sky/.test(a[2])),
+    "holding the Psalter under a roof shows why it can't be used here");
   mock.world._difficulty = "Peaceful";
   const calm = mock.__addPlayer("Wren", { x: -200.5, y: 64, z: -200.5 });
   calm._hand = new mock.ItemStack("sab:astral_psalter", 1);
-  ps.onCompleteUse({ source: calm, itemStack: calm._hand });
+  ps.onUse({ source: calm, itemStack: calm._hand });
   check(!!calm._hand, "Psalter refused (and kept) in Peaceful");
   mock.world._difficulty = "Normal";
   calm._mode = "Creative";
-  ps.onCompleteUse({ source: calm, itemStack: calm._hand });
+  ps.onUse({ source: calm, itemStack: calm._hand });
   check(!!calm._hand, "creative players keep their Psalter");
   // a ritual whose site unloads before the end fizzles and costs nothing
   const wander = mock.__addPlayer("Rook", { x: 900.5, y: 64, z: 900.5 });
   wander._hand = new mock.ItemStack("sab:astral_psalter", 1);
-  ps.onCompleteUse({ source: wander, itemStack: wander._hand });
+  ps.onUse({ source: wander, itemStack: wander._hand });
   mock.world.getDimension("minecraft:overworld")._unloaded.add(`${Math.floor(900.5 / 16)},${Math.floor(900.5 / 16)}`);
-  for (let i = 0; i < 200; i++) mock.__tick();
+  for (let i = 0; i < 300; i++) mock.__tick();
   check(mock.__entities().filter((e) => e.typeId === "sab:vesper_0").length === 1, "exactly one boss from the valid ritual");
+  check(mock.__log.chat.some((c) => c[1] === "Wren" && /Creative/.test(c[2])),
+    "a boss with only Creative-mode players nearby explains that it ignores them");
   check(!!wander._hand && !mock.__entities().some((e) => e.typeId === "sab:vesper_0" && Math.abs(e.location.x - 900.5) < 64),
     "a ritual whose site unloaded fizzles and keeps the Psalter");
   // Orison Halo
@@ -277,6 +283,7 @@ async function summonRulesAndWeapon(mock) {
   halo.onUse({ source: hero, itemStack: hero._hand });
   for (let i = 0; i < 60; i++) mock.__tick();
   check(zombie._health.currentValue < 20, `thrown halo damaged a mob on the way out/back (hp ${zombie._health.currentValue})`);
+  check(mock.__log.actionbar.some((a) => a[1] === "Ash" && /Orison Halo/.test(a[2])), "picking up the Orison Halo explains how to throw it");
   check(hero.getItemCooldown("sab:orison") === 0 && hero._cooldowns["sab:orison"] > 0, "halo cooldown was applied");
   check(hero._hand && hero._hand.getComponent("minecraft:durability").damage === 2, "one throw costs 2 durability (cooldown blocked the second)");
   check(!mock.__entities().some((e) => e.typeId === "sab:orison_halo"), "thrown halo returned and despawned");
@@ -300,7 +307,7 @@ async function thresholdIntegrity(mock) {
   const ps = [];
   for (let k = 0; k < 8; k++) ps.push(mock.__addPlayer(`Anvil${k}`, { x: 0.5 + k * 2, y: 64, z: 6.5 }));
   ps[0]._hand = new mock.ItemStack("sab:astral_psalter", 1);
-  mock.__registries.components["sab:psalter"].onCompleteUse({ source: ps[0], itemStack: ps[0]._hand });
+  mock.__registries.components["sab:psalter"].onUse({ source: ps[0], itemStack: ps[0]._hand });
   const seen = [];
   let lastAct = -1;
   let lastPhase = -1;

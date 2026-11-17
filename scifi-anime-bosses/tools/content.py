@@ -190,7 +190,6 @@ def bp_items() -> Dict[str, dict]:
             "minecraft:max_stack_size": 1,
             "minecraft:glint": True,
             "minecraft:rarity": "epic",
-            "minecraft:use_modifiers": {"use_duration": 1.6, "movement_modifier": 0.35},
             "minecraft:tags": {"tags": ["sab:summoner"]},
             "sab:psalter": {},
         }, "items"),

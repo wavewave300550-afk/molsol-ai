@@ -1,5 +1,5 @@
 import {
-  Dimension, EquipmentSlot, GameMode, ItemComponentCompleteUseEvent, ItemStack, Player, Vector3, world,
+  Dimension, EquipmentSlot, GameMode, ItemComponentUseEvent, ItemStack, Player, Vector3, world,
 } from "@minecraft/server";
 import { Vesper } from "./boss/controller.js";
 import { startArrival } from "./boss/sequences.js";
@@ -21,8 +21,10 @@ const rituals: Ritual[] = [];
 export const RITUAL_TICKS = 160;
 
 function deny(p: Player, msg: string): void {
+  if (!msg) return;
   try {
     p.onScreenDisplay.setActionBar(`§c${msg}`);
+    p.sendMessage(`§c[VESPER-0] §f${msg}`);
     p.playSound("note.bass", { volume: 0.8, pitch: 0.6 });
   } catch {
     /* ignore */
@@ -46,7 +48,8 @@ export function summonBlocker(p: Player, at: Vector3): string | undefined {
   return undefined;
 }
 
-export function onPsalterComplete(ev: ItemComponentCompleteUseEvent): void {
+/** Using the Astral Psalter (tap on touch screens, right-click with a mouse, LT on a controller) starts the hymn. */
+export function onPsalterUse(ev: ItemComponentUseEvent): void {
   const p = ev.source;
   if (!(p instanceof Player)) return;
   const at = { x: Math.floor(p.location.x) + 0.5, y: p.location.y, z: Math.floor(p.location.z) + 0.5 };
@@ -171,5 +174,55 @@ export function tickRituals(): void {
 
 export function activeRituals(): number {
   return rituals.length;
+}
+
+// ------------------------------------------------------------------ held-item hints
+// While a player holds the Psalter, the action bar says whether the hymn can be played right here (and why not);
+// picking up the Orison Halo explains its throw. This also makes it obvious in game that the scripts are running.
+const lastHeld = new Map<string, string>();
+const haloHintAt = new Map<string, number>();
+
+function heldItem(p: Player): string | undefined {
+  try {
+    return p.getComponent("minecraft:equippable")?.getEquipment(EquipmentSlot.Mainhand)?.typeId;
+  } catch {
+    return undefined;
+  }
+}
+
+function busyNear(p: Player): boolean {
+  for (const v of bosses.values()) if (v.dim.id === p.dimension.id && hdist(v.pos, p.location) < 96) return true;
+  for (const r of rituals) if (r.dim.id === p.dimension.id && hdist(r.at, p.location) < 64) return true;
+  return false;
+}
+
+export function tickHeldHints(now: number): void {
+  if (now % 20 !== 0) return;
+  let players: Player[] = [];
+  try {
+    players = world.getAllPlayers();
+  } catch {
+    return;
+  }
+  for (const p of players) {
+    if (!p.isValid) continue;
+    const id = heldItem(p);
+    const was = lastHeld.get(p.id);
+    if (id) lastHeld.set(p.id, id);
+    else lastHeld.delete(p.id);
+    try {
+      if (id === ITEMS.psalter && now % 40 === 0 && !busyNear(p)) {
+        const at = { x: Math.floor(p.location.x) + 0.5, y: p.location.y, z: Math.floor(p.location.z) + 0.5 };
+        const why = summonBlocker(p, at);
+        p.onScreenDisplay.setActionBar(why ? `§c${why}` : "§bAstral Psalter §f— use it to call VESPER-0 §7(tap / right-click)");
+      } else if (id === ITEMS.halo && was !== id && now - (haloHintAt.get(p.id) ?? -99999) > 1200) {
+        haloHintAt.set(p.id, now);
+        p.onScreenDisplay.setActionBar("§eOrison Halo §f— use it to throw §7(tap / right-click); it flies back to you");
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  if (lastHeld.size > 256) lastHeld.clear();
 }
 

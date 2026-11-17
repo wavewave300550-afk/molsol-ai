@@ -5,6 +5,8 @@ Script API **`@minecraft/server` 2.11.0** (latest stable) — **no experimental 
 
 **Install:** open [`dist/SciFi_Anime_Bosses_VESPER-0.mcaddon`](dist/SciFi_Anime_Bosses_VESPER-0.mcaddon)
 (separate `_BP.mcpack` / `_RP.mcpack` are next to it), enable the behavior pack on a world.
+**Updating from 1.0.0:** import the new file (version 1.0.1 replaces the old one); if an existing world still behaves
+the old way, remove both packs from that world and add them again.
 
 ![VESPER-0, Phase I — The Sacred Vessel](docs/images/vesper_p1_hero.png)
 
@@ -18,11 +20,14 @@ Script API **`@minecraft/server` 2.11.0** (latest stable) — **no experimental 
 
 1. **Craft the Astral Psalter** — amethyst shards, copper ingots and an end crystal (`ACA / CEC / ACA`),
    or 3 Vesper Alloy + ender eye + amethyst shard after your first victory.
-2. **Hold use for 1.6 s** in the Overworld under open sky. An 8-second hymn ritual (pillar of light,
+2. **Use it** (tap on a touch screen, right-click with a mouse, left trigger on a controller) in the Overworld under
+   open sky. While you hold the Psalter, the bar above the hotbar says whether the hymn can be played where you stand
+   (and if not, why). An 8-second hymn ritual (pillar of light,
    rising glyphs) ends with VESPER-0 descending from the sky. The Psalter is consumed only when VESPER-0 actually
    arrives: a hymn that fizzles (the summoner leaves, the site unloads) costs nothing. Refused (item kept) in other
    dimensions, under a roof, in Peaceful, or when a VESPER-0 is already nearby.
-3. If everyone leaves for 30 s, VESPER-0 departs and the Psalter is returned.
+3. Fight it in **Survival or Adventure**: VESPER-0 ignores players in Creative or Spectator mode (it says so in chat).
+   If nobody can be fought for 30 s, VESPER-0 departs and the Psalter is returned.
 
 | Phase | Ability | Telegraph | Counterplay |
 |---|---|---|---|
@@ -108,7 +113,7 @@ Animated: [transformation](docs/images/transform.gif) · [Litany Lance](docs/ima
 | JSON-schema validation of every pack file (Creator Tools' Bedrock schemas) | **110 files, 0 errors** |
 | Cross-reference validation (`tools/validate.py`): bones/locators used by animations, part visibility, materials, textures, Molang syntax + allowed queries + synced properties, particles, sounds, lang keys, item icons, manifests, every `sab:*` id and sound in the compiled JS | **12,612 checks, 0 errors** |
 | Microsoft **Minecraft Creator Tools 0.21.0** validation | **0 errors, 0 warnings** (3 known false positives about `item_texture.json`; format-version recommendations intentionally left at vanilla's values) |
-| Runtime simulation (`tools/smoke`): compiled scripts on a strict mock of `@minecraft/server` that rejects unknown ids, out-of-range/unsynced properties, unknown entity events, particle variables the effect never reads, bad camera/fog/music ids | **73/73 checks in 5 scenarios** |
+| Runtime simulation (`tools/smoke`): compiled scripts on a strict mock of `@minecraft/server` that rejects unknown ids, out-of-range/unsynced properties, unknown entity events, particle variables the effect never reads, bad camera/fog/music ids | **77/77 checks in 5 scenarios** |
 
 The simulation runs a complete fight with two bot players (melee + archer): ritual → arrival → Phase I → Vespers
 (broken) → transformation → Phase II → Requiem (completed → False Benediction) → death → rewards, then verifies every
@@ -131,7 +136,9 @@ downloads). These items depend on engine behaviour I could only derive from docu
 * sign of the root-bone heading compensation (derived from vanilla; if VESPER-0 ever faces away from its target, flip it in `tools/vesper_anims.py`);
 * feel of velocity steering on a no-gravity mob (an automatic teleport fallback engages if impulses don't move it),
   the gravity-well pull strength, knockback values and the camera cinematic easing;
-* the large proxy hitboxes and the boss bar range; performance on low-end phones (budgets are conservative).
+* the large proxy hitboxes and the boss bar range; performance on low-end phones (budgets are conservative);
+* using the Psalter and the Orison Halo with touch controls (both are plain "use" actions, which the Script API
+  documents as firing for any use by a player).
 
 ## Build from source
 
