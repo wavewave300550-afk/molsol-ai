@@ -378,7 +378,7 @@ MYC_PTS = {
     # 5 spore emitter (front-right): carries a lantern pod
     5: [(-2.5, 21.25, -2.25), (-4.75, 18.75, -4.5), (-5.25, 16.0, -6.25), (-4.5, 14.5, -7.25)],
     # 6 stabiliser curtain: a wide ribbon trailing from the bulb, down and far back in an S
-    6: [(0.0, 10.25, 2.25), (0.5, 7.5, 4.0), (-0.5, 5.75, 6.75), (0.5, 5.0, 9.5), (-0.25, 4.75, 12.0)],
+    6: [(0.0, 10.25, 2.25), (0.5, 7.75, 4.0), (-0.5, 6.5, 6.75), (0.5, 6.25, 9.5), (-0.25, 6.75, 12.25)],
     # 7 resonance antenna: rises from the crown and leans back
     7: [(2.75, 36.25, 0.25), (3.75, 38.25, 1.5), (3.5, 39.75, 3.25), (4.25, 40.5, 5.0)],
 }
@@ -390,7 +390,7 @@ MYC_JOB = {0: "m", 1: "m", 2: "f", 3: "f", 4: "s", 5: "p", 6: "b", 7: "a"}
 RIBBON_W = (4.0, 1.25)                   # the curtain narrows toward its tip
 SPREAD = {2: (-12.0, -22.0, 18.0), 3: (-12.0, 22.0, -18.0), 4: (-20.0, 18.0, -8.0), 5: (-14.0, -14.0, 14.0),
           6: (24.0, 0.0, 0.0), 7: (-14.0, 0.0, -12.0)}            # Hyphal Offset: the mycelia stand out like fins
-DROOP = {2: (18.0, 0.0, -8.0), 3: (18.0, 0.0, 8.0), 4: (22.0, 0.0, 0.0), 5: (10.0, 0.0, 8.0), 6: (-6.0, 0.0, 0.0),
+DROOP = {2: (18.0, 0.0, -8.0), 3: (18.0, 0.0, 8.0), 4: (22.0, 0.0, 0.0), 5: (10.0, 0.0, 8.0), 6: (4.0, 0.0, 0.0),
          7: (-30.0, 0.0, 8.0)}                                        # on fire: they hang limp
 
 
@@ -823,10 +823,8 @@ def _ring_mat(k: int):
             c = np.broadcast_to(base * (0.75 + 0.25 * (ctx.face == "north")), (ctx.N, 3))
             return c, ctx.ones(), np.full(ctx.N, 0.45)
         base = px.col(RING_HEX[k])
-        if frame > 0.5:
-            base = base * 0.62 + px.col("#ffffff") * 0.38
-        elif rec > 0.5:
-            base = base * 0.75 + px.col("#ffffff") * 0.25
+        if frame > 0.5 or rec > 0.5:                     # brighter, but every ring keeps its own hue
+            base = np.clip(base * 1.12 + 0.06, 0, 1)
         shade = 1.0 if ctx.face == "north" else 0.78
         c = np.broadcast_to(base * shade, (ctx.N, 3))
         return c, ctx.ones(), np.full(ctx.N, 0.82 + 0.13 * max(rec, frame))

@@ -125,10 +125,12 @@ def shimmer(kl: KeyLayer, bones, t0: float, dur: float, amp: float, axis: int = 
 
 
 def eye_blink(kl: KeyLayer, t0: float, dur: float = 0.36):
-    """One soft sideways sweep of both nictitating membranes."""
+    """One soft sideways sweep of both outer nictitating membranes (their own bones: scales from different
+    animations multiply, so a timed sweep must never share a bone with the periodic blink of the life layer)."""
     for p in ("r", "l"):
-        kl.scale(f"{p}_nict", {0.0: 1, t0: 1, t0 + dur * 0.45: (1, 1, 24), t0 + dur * 0.6: (1, 1, 24), t0 + dur: 1,
-                               kl.length: 1})
+        kl.scale(f"{p}_nictk", {0.0: 1, t0 - 0.2: 1, t0: 1, t0 + dur * 0.15: (1, 1, 3), t0 + dur * 0.45: (1, 1, 21.5),
+                                t0 + dur * 0.6: (1, 1, 21.5), t0 + dur * 0.85: (1, 1, 3), t0 + dur: 1, t0 + dur + 0.2: 1,
+                                kl.length: 1})
 
 
 def anims(model) -> Dict[str, object]:
@@ -160,9 +162,12 @@ def anims(model) -> Dict[str, object]:
     life.rot("neck0", mul(-0.9, br), None, None)
     life.rot("skull", mul(0.6, br), None, None)
     body(life, rig, roll=prod(1.3, S(0.071), STILL), twist=prod(2.0, S(0.053, 90), STILL))      # weight shifts
-    # soft nictitating blinks: long unblinking stares; shut while asleep
+    # soft nictitating blinks: long unblinking stares; shut while asleep; a reflex sweep when hit
+    # (one bone, combined with math.max: bone scales from different animations would multiply)
+    flinch = "math.sin(math.clamp((10 - q.hurt_time) * 30, 0, 180))"
     for p in ("r", "l"):
-        life.scale(f"{p}_nict", None, None, lin([(1, 1), (23, f"math.max({blink(9.3, 14.7, 0.4, 5.1)}, {SLEEP})")]))
+        life.scale(f"{p}_nict", None, None,
+                   lin([(1, 1), (23, f"math.max(math.max({blink(9.3, 14.7, 0.4, 5.1)}, {SLEEP}), {flinch})")]))
     life.scale("pupils", None, None, lin([(1, 1), (-0.5, TOOTHED), (0.12, S(0.031))]))
     # the crest sways on a slow clock of its own, its far half a beat late
     life.rot("crest0", mul(1.6, S(0.11)), None, mul(0.9, S(0.083, 40)))
@@ -203,6 +208,11 @@ def anims(model) -> Dict[str, object]:
         loco.rot(f"{p}_meta", lin([(-0.72, knee), (-12, prod(pu, s))]))  # the ankle keeps the foot level, extends at push-off
         loco.rot(f"{p}_foot", lin([(0.45, knee), (16, prod(pu, s))]))   # the toes curl in the swing, roll off at push-off
         loco.rot(f"{p}_talon", prod(-12, sw, s))                         # the sickle lifts clear in the swing
+        # the leg feathers trail with speed and fold up in the swing; while the leg reaches forward they
+        # lift so they never brush the ground (they are part of the fit, which must only see the toes)
+        fwd = f"math.max(0, {'-' if side < 0 else ''}{COS})"
+        loco.rot(f"{p}_sfan", lin([(8, s), (10, prod(sw, s)), (8, prod(fwd, s))]), None, None)
+        loco.rot(f"{p}_lfan", lin([(6, s), (16, prod(sw, s)), (22, prod(fwd, s))]), None, None)
     body(loco, rig, lean=lin([(4, s), (8, ss)]), twist=prod(6, COS, s), roll=prod(2.2, SIN, ws))
     grounded(model, loco, rig, r, harmonics=8)
     # the head rides steady: the neck absorbs the dip, a smooth nod with the steps, stretched forward at a run
@@ -220,8 +230,6 @@ def anims(model) -> Dict[str, object]:
         for k, b in enumerate((f"{p}_sec", f"{p}_pri0", f"{p}_pri1", f"{p}_pri2")):
             loco.rot(b, lin([(5.0 * 1.15 ** k, s), (1.5 * 1.15 ** k, prod(f"math.sin({T} * 864 - {50 * k})", ss))]), None, None)
         loco.rot(f"{p}_tuft", lin([(8, s), (2.5, prod(f"math.sin({T} * 792 + {90 if side < 0 else 0})", ss))]), None, None)
-        loco.rot(f"{p}_sfan", lin([(8, s), (10, prod(sw, s))]), None, None)
-        loco.rot(f"{p}_lfan", lin([(6, s), (16, prod(sw, s))]), None, None)
     loco.rot("nape", lin([(6, s), (2, prod(f"math.sin({T} * 720)", ss))]), None, None)
     # the tail counter-swings against the hips, bounces with each step and straightens at a run
     amp = lin([(1.0, 1.0), (-0.4, SPR)])
@@ -235,7 +243,7 @@ def anims(model) -> Dict[str, object]:
     halfwing = Layer(r, "hindwing_run", loop=True)
     for p, side in SIDES:
         halfwing.rot(f"{p}_sail", prod(3, f"math.sin({T} * 792 + {0 if side < 0 else 120})", ss), None,
-                     mirror(side, mul(22, ss)))
+                     mirror(side, mul(10, ss)))
         halfwing.rot(f"{p}_sfan", None, None, mirror(side, mul(16, ss)))
         halfwing.rot(f"{p}_lfan", None, None, mirror(side, mul(20, ss)))
 
@@ -318,7 +326,6 @@ def anims(model) -> Dict[str, object]:
     hurt.rot("nape", {0: (0, 0, 0), 0.06: (22, 0, 0), 0.45: (16, 0, 0), 0.9: (0, 0, 0), 1.0: (0, 0, 0)})
     hurt.scale("nape", {0: 1, 0.06: 1.14, 0.5: 1.08, 0.9: 1, 1.0: 1})
     hurt.scale("gular", {0: 1, 0.07: (1.25, 1.6, 1.25), 0.4: (1.1, 1.25, 1.1), 0.8: 1, 1.0: 1})
-    eye_blink(hurt, 0.03, 0.3)
     hurt.scale("pupils", {0: 1, 0.06: (1, 1, 0.45), 0.5: (1, 1, 0.6), 0.85: 1, 1.0: 1})
     for p, side in SIDES:
         sg = -1 if side < 0 else 1
@@ -352,7 +359,6 @@ def anims(model) -> Dict[str, object]:
     swim.rot("nape", 12, None, None)
     swim.rot("neck0", -18, None, None)
     swim.rot("skull", 16, None, None)
-    swim.particle(0.0, "stepdust", "throat")
 
     # ------------------------------------------------------------------ idle behaviours (each a 3-6 s performance)
     def still_look(name, length, keys):

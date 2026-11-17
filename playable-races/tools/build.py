@@ -109,21 +109,21 @@ RACES = {
         "display": "The Unknown Dinosauroid", "protection": 1, "hover": "dark_aqua", "focus": ("Fossil Quill Focus", "dark_aqua"),
         "variants": {"base": "Composed", "night": "Display Skin (night)", "display": "Crest of Misclassification",
                      "veer": "Hindwing Veer", "overflow": "Taxonomic Error"},
-        "icon": {"variant": "display", "tex": "base", "head": ((0, 28.5, -4.5), 2.5), "body": ((0, 19, 2), 4.7)},
+        "icon": {"variant": "display", "tex": "base", "head": ((0, 31, -9.5), 2.5), "body": ((0, 19, 2), 4.7)},
         "portrait_bg": (16, 52, 50)},
     "bathyas": {
         "code": "008", "mod": bathyas, "anims": anim_bathyas.anims, "bounds": (4.2, 3.6, (0, 1.3, 0)),
         "display": "Bathyas, the Sun-Impaled", "protection": 2, "hover": "white", "focus": ("Abyssal Hilt Focus", "white"),
         "variants": {"base": "Impaled", "lure": "Lure of the Impaled Sun", "maw": "Goblin Maw Rush", "bastion": "Isopod Bastion",
                      "unshackled": "Unshackled", "daybreak": "Abyssal Daybreak"},
-        "icon": {"variant": "lure", "tex": "blaze", "head": ((0, 21.0, -5.0), 2.4), "body": ((0, 16.0, 1.0), 6.0)},
+        "icon": {"variant": "lure", "tex": "blaze", "head": ((0, 30.5, -12.5), 3.0), "body": ((0, 22, 1), 7.5)},
         "portrait_bg": (14, 26, 40)},
     "octamyces": {
         "code": "009", "mod": octamyces, "anims": anim_octamyces.anims, "bounds": (3.4, 3.2, (0, 1.2, 0)),
         "display": "Octamyces Undecimus", "protection": 1, "hover": "dark_purple", "focus": ("Undecimal Lens Focus", "dark_purple"),
         "variants": {"base": "Witnessing", "sporeveil": "Parallax Sporeveil", "record": "The Eye That Records",
                      "offset": "Hyphal Offset", "frame": "The Eleventh Frame", "unstable": "Destabilised (burning)"},
-        "icon": {"variant": "base", "tex": "base", "head": ((0, 23, -4), 2.6), "body": ((0, 19, 0), 5.6)},
+        "icon": {"variant": "base", "tex": "base", "head": ((0, 29, -12), 2.0), "body": ((0, 23, -1), 5.0)},
         "portrait_bg": (40, 18, 56)},
 }
 DISPLAY = {race: info["display"] for race, info in RACES.items()}

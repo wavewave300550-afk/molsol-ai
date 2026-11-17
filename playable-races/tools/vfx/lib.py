@@ -42,13 +42,14 @@ def tint(color: str, alpha: Num = 1.0) -> dict:
     return {"color": [r, g, b, _f(alpha)]}
 
 
-def tint_grad(stops: Sequence[Tuple[float, str, float]]) -> dict:
-    """[(t, '#rrggbb', alpha)] over the particle's life."""
+def tint_grad(stops: Sequence[Tuple[float, str, float]], interpolant: Optional[str] = None) -> dict:
+    """[(t, '#rrggbb', alpha)] over the particle's life (or over `interpolant`, e.g.
+    v.particle_random_3 for a per-particle colour picked from the ramp)."""
     grad = {}
     for t, c, a in stops:
         r, g, b = rgb(c)
         grad[f"{t:.2f}"] = [r, g, b, round(a, 3)]
-    return {"color": {"gradient": grad, "interpolant": AGE}}
+    return {"color": {"gradient": grad, "interpolant": interpolant or AGE}}
 
 
 def uv_flip(book: str, fps: Optional[float] = None, loop: bool = False) -> dict:
@@ -166,7 +167,7 @@ def sparks(name, color, n=12, speed=(3.0, 6.0), life=(0.25, 0.5), gravity=-6.0, 
 
 def motes(name, color, n=8, radius=0.8, rise=0.6, life=(0.8, 1.4), size=0.08, sprite="dot", material="particles_add",
           rate: Optional[float] = None, active=0.05, offset=(0, 0, 0), alpha=1.0, spin=0.0, uv: Optional[dict] = None,
-          texture: str = atlas.TEX, speed=0.1, drag=1.5):
+          texture: str = atlas.TEX, speed=0.1, drag=1.5, grad=None, grad_by: Optional[str] = None):
     rate_c = _once(n, active) if rate is None else {"minecraft:emitter_rate_steady": {"spawn_rate": rate, "max_particles": n},
                                                     "minecraft:emitter_lifetime_once": {"active_time": active}}
     uvd = uv or (uv_sprite(sprite) if isinstance(sprite, str) else uv_pick(sprite))
@@ -174,7 +175,7 @@ def motes(name, color, n=8, radius=0.8, rise=0.6, life=(0.8, 1.4), size=0.08, sp
              "minecraft:particle_initial_speed": speed, **_life(*life),
              "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, rise, 0], "linear_drag_coefficient": drag},
              **billboard([f"{size} * {IN_OUT}", f"{size} * {IN_OUT}"], uvd),
-             "minecraft:particle_appearance_tinting": tint(color, alpha)}
+             "minecraft:particle_appearance_tinting": tint_grad(grad, grad_by) if grad else tint(color, alpha)}
     if spin:
         comps["minecraft:particle_initial_spin"] = {"rotation": "v.particle_random_2 * 360", "rotation_rate": f"{spin} * (v.particle_random_4 * 2 - 1)"}
     return effect(name, material, comps, texture=texture)

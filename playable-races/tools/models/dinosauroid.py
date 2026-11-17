@@ -371,6 +371,11 @@ def _neck_head(m: Model) -> None:
         front = _v((ex, ey, ez)) + R @ _v((s * 0.31, 0.0, -ed / 2 + 0.1))
         nc = m.bone(f"{p}_nict", sk.name, tuple(np.round(front, 3)), side_rot((0, -EYE_RY, 0), s))
         m.cube(nc.name, tuple(np.round(front + _v((-0.025, -eh / 2, 0.0)), 3)), (0.05, eh, 0.1), "nict")
+        # a second membrane just outside the first, for the keyframed blinks (idles, intros): bone scales from
+        # different animations multiply, so the timed sweep must never share a bone with the periodic one
+        front = _v((ex, ey, ez)) + R @ _v((s * 0.37, 0.0, -ed / 2 + 0.1))
+        nk = m.bone(f"{p}_nictk", sk.name, tuple(np.round(front, 3)), side_rot((0, -EYE_RY, 0), s))
+        m.cube(nk.name, tuple(np.round(front + _v((-0.025, -eh / 2, 0.0)), 3)), (0.05, eh, 0.1), "nict")
     sk.locators["eyes"] = (0, EYE[1], EYE[2] - 1.5)
     # throat pouch: tucked under the jaw at rest, a balloon in the display
     gu = m.bone("gular", sk.name, GULAR_PIVOT)

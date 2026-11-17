@@ -52,9 +52,13 @@ def line(name, color_a, color_b, n=30, width=0.08, length=0.7, life=0.7):
 def dinosauroid():
     C = DINO
     # attachable idle effects: loose feathers, display motes
+    # v1.5 palettes follow the redrawn bodies: each feather picks its colour from the plumage ramp
     L.motes("dino_feathers", "#ffffff", n=5, radius=0.5, rise=-0.5, life=(0.9, 1.4), size=0.16, sprite="feather",
-            material="particles_blend", spin=120, speed=0.9, drag=2.0)
-    L.motes("dino_display", C["teal"], n=6, radius=0.6, rise=0.6, life=(0.7, 1.1), size=0.07, sprite=["dot", "star4"])
+            material="particles_blend", spin=120, speed=0.9, drag=2.0, grad_by="v.particle_random_3",
+            grad=[(0.0, "#2fae8f", 1.0), (0.3, "#14806f", 1.0), (0.55, "#3b3f94", 1.0), (0.78, "#d9a537", 1.0), (1.0, "#d6ac63", 1.0)])
+    L.motes("dino_display", C["teal"], n=6, radius=0.6, rise=0.6, life=(0.7, 1.1), size=0.07, sprite=["dot", "star4"],
+            grad_by="v.particle_random_3",
+            grad=[(0.0, "#2fc2b0", 1.0), (0.45, "#7debd9", 1.0), (0.8, "#d2fff6", 1.0), (0.84, "#ffc84a", 1.0), (1.0, "#ffc84a", 1.0)])
     # Hindwing Veer: a ring of dust, feathers thrown back, teal display flecks
     L.ring("vx_veer_ring", C["dust"], size=2.6, life=0.4, material="particles_blend", alpha=0.7)
     L.motes("vx_veer_feathers", "#ffffff", n=8, radius=0.4, rise=-1.0, life=(0.7, 1.1), size=0.18, sprite="feather",
@@ -97,10 +101,11 @@ def dinosauroid():
 def bathyas():
     C = BATH
     # attachable idle effects
-    L.motes("sun_motes", C["gold"], n=4, radius=0.25, rise=0.5, life=(0.8, 1.3), size=0.06, sprite=["dot", "star4"])
-    L.motes("abyss_bubbles", "#cfe9ff", n=4, radius=0.3, rise=1.6, life=(0.8, 1.2), size=0.07, sprite="dot", material="particles_blend",
+    L.motes("sun_motes", C["gold"], n=4, radius=0.25, rise=0.5, life=(0.8, 1.3), size=0.06, sprite=["dot", "star4"],
+            grad=[(0.0, "#fff8e2", 1.0), (0.5, "#ffc75a", 0.9), (1.0, "#f3982c", 0.0)])
+    L.motes("abyss_bubbles", "#cfeef2", n=4, radius=0.3, rise=1.6, life=(0.8, 1.2), size=0.07, sprite="dot", material="particles_blend",
             alpha=0.7, drag=0.6)
-    L.flash("sun_glare", C["sun"], size=0.9, life=0.28, alpha=0.75)   # the esca flares (small: it hangs near the camera)
+    L.flash("sun_glare", "#ffeaa8", size=0.9, life=0.28, alpha=0.75)   # the esca flares (small: it hangs near the camera)
     # Lure of the Impaled Sun: a warped, uncomfortable ring of light rolling out 10 blocks along the ground (two rings out
     # of step), a small warped halo round the chest and a dark undertow. Nothing camera-facing is larger than the body,
     # so the pulse never washes over the screen of the caster or of a player standing next to him.
@@ -176,14 +181,16 @@ def bathyas():
 def octamyces():
     C = OCTA
     # attachable idle effects (iridescent, never strobing: three hues per effect, soft fades)
-    L.motes("geo_spores", "#ffffff", n=6, radius=0.5, rise=0.25, life=(1.2, 1.8), size=0.1, sprite="polyspore", spin=50, speed=0.4)
-    L.motes("parallax_motes", C["cyan"], n=4, radius=0.4, rise=0.3, life=(0.7, 1.0), size=0.06, sprite="dot")
+    L.motes("geo_spores", "#ffffff", n=6, radius=0.5, rise=0.25, life=(1.2, 1.8), size=0.1, sprite="polyspore", spin=50, speed=0.4,
+            grad=[(0.0, "#fff3e0", 1.0), (0.5, "#f8d9a8", 0.9), (1.0, "#7deac6", 0.0)])
+    L.motes("parallax_motes", C["cyan"], n=4, radius=0.4, rise=0.3, life=(0.7, 1.0), size=0.06, sprite="dot",
+            grad=[(0.0, "#8cffcf", 1.0), (0.5, "#55cdfd", 0.9), (1.0, "#8470ff", 0.0)])
     echo = {**own_once(3), "minecraft:emitter_shape_box": {"half_dimensions": [0.05, 0.6, 0.05]},
             "minecraft:particle_lifetime_expression": {"max_lifetime": "0.6 + v.particle_random_1 * 0.2"},
             "minecraft:particle_initial_spin": {"rotation": "v.particle_random_2 * 60", "rotation_rate": 0},
             "minecraft:particle_motion_parametric": {"relative_position": ["(v.particle_random_3 - 0.5) * 0.3 * v.particle_age", 0, 0]},
             **billboard([f"0.7 * {FADE}", f"0.7 * {FADE}"], uv_sprite("hexagon")),
-            "minecraft:particle_appearance_tinting": tint_grad([(0.0, C["cyan"], 0.55), (0.5, C["violet"], 0.4), (1.0, C["pink"], 0.0)])}
+            "minecraft:particle_appearance_tinting": tint_grad([(0.0, "#8cffcf", 0.55), (0.5, "#8470ff", 0.4), (1.0, "#ec56c2", 0.0)])}
     L.effect("parallax_echo", "particles_add", echo)
     # Parallax Sporeveil: a controlled field of geometric spores
     L.flash("vx_veil_flash", C["cyan"], size=1.6, life=0.25)
