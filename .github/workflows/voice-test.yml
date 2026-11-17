@@ -1,0 +1,169 @@
+# Narrates a short narrator voice test (an episode with "kind": "voice-test")
+# with ElevenLabs, checks the take, and makes the audio downloadable,
+# including on iPhone. Voice tests skip the 60-90 s episode rule (they allow
+# 5-30 s and at most 400 characters); every other check still applies,
+# including script approval.
+#
+# Credits: nothing is sent to ElevenLabs unless "Generate the narration" is
+# ticked. Each such run spends about 1 credit per character of the script
+# (the plan step shows the count first). Run by hand only.
+#
+# Uses the ELEVENLABS_API_KEY repository secret. Narrator: Madame Scientia,
+# unless the ELEVENLABS_VOICE_ID variable says otherwise.
+name: Voice test
+
+on:
+  workflow_dispatch:
+    inputs:
+      episode:
+        description: "Voice test id (folder in tiktok/episodes with kind voice-test)"
+        required: true
+        default: voice-test
+        type: string
+      spend_credits:
+        description: "Generate the narration (spends about 1 ElevenLabs credit per character)"
+        required: true
+        default: false
+        type: boolean
+      preview_video:
+        description: "Also render a short TEST video with subtitles to check the timing"
+        required: true
+        default: true
+        type: boolean
+      publish:
+        description: "Attach the MP3 (and video) to the tiktok-renders pre-release for iPhone"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: voice-test-${{ inputs.episode }}
+  cancel-in-progress: false
+
+jobs:
+  voice-test:
+    name: Voice test ${{ inputs.episode }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      EPISODE: ${{ inputs.episode }}
+    defaults:
+      run:
+        working-directory: tiktok
+    outputs:
+      name: ${{ steps.files.outputs.name }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tiktok/package-lock.json
+
+      - name: Check the id
+        run: |
+          if [[ ! "$EPISODE" =~ ^[a-z0-9][a-z0-9-]{1,63}$ ]]; then
+            echo "::error::Id must be lowercase letters, digits and hyphens: $EPISODE"
+            exit 1
+          fi
+          if [[ ! -f "episodes/$EPISODE/episode.json" ]]; then
+            echo "::error::tiktok/episodes/$EPISODE/episode.json does not exist"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Plan (checks the script and approval; sends nothing)
+        env:
+          ELEVENLABS_VOICE_ID: ${{ vars.ELEVENLABS_VOICE_ID }}
+        run: npm run voice-test -- "$EPISODE"
+
+      - name: Narrate with ElevenLabs (spends credits)
+        if: inputs.spend_credits
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ vars.ELEVENLABS_VOICE_ID }}
+        run: npm run narrate -- "$EPISODE"
+
+      - name: Check the take
+        if: inputs.spend_credits
+        run: npm run voice-test -- "$EPISODE" --report
+
+      - name: Cache Remotion's browser
+        if: inputs.spend_credits && inputs.preview_video
+        uses: actions/cache@v4
+        with:
+          path: tiktok/node_modules/.remotion
+          key: remotion-browser-${{ runner.os }}-${{ hashFiles('tiktok/package-lock.json') }}
+
+      - name: Render a preview video (TEST badge, uses the same narration)
+        if: inputs.spend_credits && inputs.preview_video
+        run: |
+          npx remotion browser ensure
+          npm run render -- "$EPISODE"
+
+      - name: Collect the files
+        id: files
+        if: always() && inputs.spend_credits
+        run: |
+          name="${EPISODE}_$(date -u +%Y%m%d-%H%M)_run${GITHUB_RUN_NUMBER}"
+          media="public/episodes/$EPISODE"
+          mkdir -p upload
+          if [[ -f "$media/narration.source.mp3" ]]; then cp "$media/narration.source.mp3" "upload/$name.mp3"; fi
+          for file in alignment.json narration.json; do
+            if [[ -f "$media/$file" ]]; then cp "$media/$file" "upload/$name.$file"; fi
+          done
+          for ext in voice-report.json mp4 report.json; do
+            if [[ -f "out/$EPISODE.$ext" ]]; then cp "out/$EPISODE.$ext" "upload/$name.$ext"; fi
+          done
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - name: Upload the take as a run artifact
+        if: always() && inputs.spend_credits && steps.files.outputs.name != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.files.outputs.name }}
+          path: tiktok/upload/
+          retention-days: 30
+          if-no-files-found: warn
+
+  publish:
+    name: Publish for iPhone listening
+    needs: voice-test
+    if: inputs.spend_credits && inputs.publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.voice-test.outputs.name }}
+          path: upload
+
+      - name: Attach the take to the tiktok-renders pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          NAME: ${{ needs.voice-test.outputs.name }}
+        run: |
+          if ! gh release view tiktok-renders > /dev/null 2>&1; then
+            gh release create tiktok-renders --prerelease --target "$GITHUB_SHA" \
+              --title "TikTok renders" \
+              --notes "Rendered TikTok videos and voice tests. Not software releases. On iPhone: tap a file to play it."
+          fi
+          files=("upload/$NAME.mp3")
+          if [[ -f "upload/$NAME.mp4" ]]; then files+=("upload/$NAME.mp4"); fi
+          gh release upload tiktok-renders "${files[@]}" --clobber
+          {
+            echo "## Listen on iPhone"
+            echo ""
+            echo "- [$NAME.mp3](https://github.com/$GH_REPO/releases/download/tiktok-renders/$NAME.mp3)"
+            if [[ -f "upload/$NAME.mp4" ]]; then
+              echo "- [$NAME.mp4](https://github.com/$GH_REPO/releases/download/tiktok-renders/$NAME.mp4) (preview with subtitles)"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

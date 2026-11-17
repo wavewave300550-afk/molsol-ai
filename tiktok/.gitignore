@@ -16,3 +16,5 @@ tmp
 public/episodes/*/narration.wav
 public/episodes/*/timeline.json
 public/episodes/pipeline-test/
+# Narrator voice tests are listened to, not published.
+public/episodes/voice-test/

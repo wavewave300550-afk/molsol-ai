@@ -18,7 +18,7 @@ import { readNarrationMeta } from "./narration.ts";
 import { type EpisodePaths, ensureDir, projectRoot } from "./paths.ts";
 
 export const isTestRender = (timeline: Timeline): boolean =>
-  timeline.kind === "pipeline-test" || timeline.audio.narrationSource === "test-audio";
+  timeline.kind !== "episode" || timeline.audio.narrationSource === "test-audio";
 
 export type BuiltEpisode = LoadedEpisode & { timeline: Timeline };
 

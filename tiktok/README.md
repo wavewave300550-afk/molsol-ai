@@ -117,8 +117,9 @@ no scientific claim (intro, outro).
   - **GitHub Actions:** repository secret `ELEVENLABS_API_KEY`.
   - **This computer:** `tiktok/.env` (git-ignored; see `.env.example`).
   - **Claude Code cloud session:** save it as an environment secret for
-    `api.elevenlabs.io`; the proxy adds it to each request. Run with
-    `ELEVENLABS_API_KEY=injected-by-proxy`.
+    `api.elevenlabs.io` (header `xi-api-key`); the proxy adds it to each
+    request. Run with `ELEVENLABS_API_KEY=injected-by-proxy` and
+    `NODE_USE_ENV_PROXY=1` (Node's `fetch` only uses the proxy with it).
 - **Narrator:** every episode is read by the channel's permanent Thai voice,
   **Madame Scientia** (`XAF1635HwW2TJGfbLzfc`, set in `src/lib/config.ts`).
   A take only uses another voice when one is given explicitly (`--voice <id>`,
@@ -131,6 +132,31 @@ no scientific claim (intro, outro).
   read-only requests only (no audio, no credits).
 - The same script, voice and model is never narrated twice (`--force` makes a
   new take). After mastering, the narration plays at -14 LUFS.
+
+## Voice tests (hearing the narrator)
+
+Short samples to hear Madame Scientia before or between episodes: scripts
+with `"kind": "voice-test"` (example: `episodes/voice-test`).
+
+- They have their own limits: **5–30 s and at most 400 characters** (so at
+  most about 400 credits). The 60–90 s episode rule does not apply to them;
+  everything else does: the narration rules, sources for factual lines, and
+  approval before any narration. Real episodes are checked exactly as before.
+- They are never published: no sources card is needed, and any preview video
+  carries the TEST badge.
+- **On GitHub:** approve and commit the test script, then **Actions → Voice
+  test → Run workflow**. Left unticked, "Generate the narration" only shows the
+  plan and the cost. Ticked, the workflow:
+  1. narrates once (about 1 credit per character);
+  2. checks the take: ElevenLabs timing came back, the voice is Madame
+     Scientia, the length is right, the loudness is right, nothing was cut;
+  3. can render a short preview video with subtitles;
+  4. puts the MP3, and the video if rendered, on the `tiktok-renders` release
+     for listening on iPhone.
+- **Locally:**
+  1. `npm run voice-test -- <id>` shows the plan and cost (no credits);
+  2. `npm run narrate -- <id>` makes the take;
+  3. `npm run voice-test -- <id> --report` checks it.
 
 ## Rendering on GitHub and downloading on iPhone
 
@@ -175,6 +201,7 @@ Workflow: `.github/workflows/tiktok-render.yml`.
 | `npm run elevenlabs:check [-- --online]` | is the key set, which voice, does the key work (no credits) |
 | `npm run narrate -- <id> --dry-run` | show exactly what narration would send, without sending |
 | `npm run narrate -- <id>` | Thai narration with ElevenLabs (Madame Scientia) |
+| `npm run voice-test -- <id> [--report]` | voice test: plan and cost (no credits), or check a take |
 | `npm run audio:import -- <id> <file> [--test]` | use a recording (or test audio) as narration |
 | `npm run narration:prepare -- <id>` | rebuild `narration.wav` from a committed take |
 | `npm run audio:test -- <id>` | write temporary test audio for a script |

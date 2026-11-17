@@ -52,7 +52,8 @@
     "fonts:sync": "node scripts/sync-fonts.ts",
     "schema": "node scripts/export-schema.ts",
     "narration:prepare": "node scripts/prepare-narration.ts",
-    "elevenlabs:check": "node --env-file-if-exists=.env scripts/check-elevenlabs.ts"
+    "elevenlabs:check": "node --env-file-if-exists=.env scripts/check-elevenlabs.ts",
+    "voice-test": "node --env-file-if-exists=.env scripts/voice-test.ts"
   },
   "allowScripts": {
     "esbuild": false

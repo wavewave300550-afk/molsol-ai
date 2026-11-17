@@ -52,7 +52,9 @@ export const calculateEpisodeMetadata: CalculateMetadataFunction<EpisodeProps> =
  */
 export const Episode: React.FC<EpisodeProps> = ({ timeline }) => {
   if (!timeline) throw new Error("The episode timeline is missing; calculateMetadata loads it.");
-  const isTest = timeline.kind === "pipeline-test" || timeline.audio.narrationSource === "test-audio";
+  // Anything that is not a real episode (pipeline and voice tests) or uses
+  // temporary test audio carries the TEST badge.
+  const isTest = timeline.kind !== "episode" || timeline.audio.narrationSource === "test-audio";
   return (
     <AbsoluteFill style={{ backgroundColor: COLORS.background }}>
       <Background />
