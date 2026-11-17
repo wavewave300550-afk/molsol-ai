@@ -1,0 +1,46 @@
+{
+  "$schema": "../episode.schema.json",
+  "schemaVersion": 1,
+  "id": "replace-me",
+  "kind": "episode",
+  "title": "ชื่อตอน",
+  "language": "th",
+  "durationTier": "standard",
+  "sources": [
+    {
+      "id": "source-1",
+      "label": "ชื่อย่อของแหล่งอ้างอิง",
+      "citation": "ผู้แต่ง (ปี). ชื่อผลงาน. วารสารหรือสำนักพิมพ์.",
+      "url": "https://example.org/replace-with-the-real-source"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "hook",
+      "label": "เปิดเรื่อง",
+      "factual": false,
+      "narration": "ประโยคเปิดที่ดึงความสนใจในสามวินาทีแรก",
+      "visual": { "type": "title", "title": "ชื่อตอน", "subtitle": "คำโปรยสั้น ๆ" }
+    },
+    {
+      "id": "main-fact",
+      "label": "ประเด็นหลัก",
+      "narration": "ข้อเท็จจริงทางวิทยาศาสตร์หนึ่งข้อ พร้อมตัวเลขที่ตรวจสอบได้จากแหล่งอ้างอิง",
+      "sourceIds": ["source-1"],
+      "cues": [{ "id": "number", "text": "ตัวเลข" }],
+      "visual": {
+        "type": "fact",
+        "title": "หัวข้อของฉากนี้",
+        "items": [{ "value": 42, "label": "สิ่งที่ตัวเลขนี้วัด", "cue": "number" }]
+      }
+    },
+    {
+      "id": "sources",
+      "label": "แหล่งอ้างอิง",
+      "factual": false,
+      "narration": "ข้อมูลในคลิปนี้มาจากแหล่งอ้างอิงที่แสดงบนจอ",
+      "visual": { "type": "sources", "title": "แหล่งอ้างอิง" }
+    }
+  ],
+  "approval": null
+}

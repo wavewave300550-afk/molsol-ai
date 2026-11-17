@@ -1,0 +1,18 @@
+node_modules
+dist
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Rendered videos, reports and temporary files
+out
+tmp
+
+# Generated per-episode media. The script (episodes/<id>/episode.json) is the
+# source of truth. Raw ElevenLabs narration (narration.source.mp3), its
+# alignment.json and narration.json may be committed to avoid paying for the
+# same narration twice; everything derived from them is rebuilt on demand.
+public/episodes/*/narration.wav
+public/episodes/*/timeline.json
+public/episodes/pipeline-test/

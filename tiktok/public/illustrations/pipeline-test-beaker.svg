@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 720" role="img" aria-label="Beaker with particles dissolving in water (test illustration)">
+  <defs>
+    <linearGradient id="liquid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#38bdf8" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#1d4ed8" stop-opacity="0.85"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.16"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.04"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.12"/>
+    </linearGradient>
+    <clipPath id="inside">
+      <path d="M150 120 L150 590 Q150 650 210 650 L390 650 Q450 650 450 590 L450 120 Z"/>
+    </clipPath>
+  </defs>
+  <path d="M150 120 L150 590 Q150 650 210 650 L390 650 Q450 650 450 590 L450 120 Z" fill="url(#glass)"/>
+  <g clip-path="url(#inside)">
+    <path d="M120 330 Q195 305 270 330 T420 330 T560 330 L560 700 L120 700 Z" fill="url(#liquid)"/>
+    <g fill="#ffffff">
+      <rect x="226" y="600" width="34" height="34" rx="4" transform="rotate(14 243 617)"/>
+      <rect x="276" y="608" width="30" height="30" rx="4" transform="rotate(-9 291 623)"/>
+      <rect x="320" y="598" width="36" height="36" rx="4" transform="rotate(22 338 616)"/>
+      <rect x="258" y="572" width="26" height="26" rx="4" transform="rotate(31 271 585)"/>
+    </g>
+    <g fill="#e0f2fe">
+      <circle cx="232" cy="540" r="9" opacity="0.9"/>
+      <circle cx="300" cy="520" r="8" opacity="0.8"/>
+      <circle cx="356" cy="548" r="9" opacity="0.85"/>
+      <circle cx="262" cy="478" r="7" opacity="0.65"/>
+      <circle cx="338" cy="462" r="6" opacity="0.6"/>
+      <circle cx="210" cy="430" r="6" opacity="0.5"/>
+      <circle cx="398" cy="420" r="5" opacity="0.45"/>
+      <circle cx="292" cy="402" r="5" opacity="0.4"/>
+      <circle cx="244" cy="372" r="4" opacity="0.3"/>
+      <circle cx="372" cy="366" r="4" opacity="0.3"/>
+    </g>
+  </g>
+  <path d="M150 120 L150 590 Q150 650 210 650 L390 650 Q450 650 450 590 L450 120" fill="none" stroke="#f8fafc" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M118 112 L482 112" stroke="#f8fafc" stroke-width="12" stroke-linecap="round"/>
+  <g stroke="#f8fafc" stroke-width="6" stroke-linecap="round" opacity="0.8">
+    <path d="M150 230 L196 230"/>
+    <path d="M150 330 L210 330"/>
+    <path d="M150 430 L196 430"/>
+    <path d="M150 530 L210 530"/>
+  </g>
+</svg>
