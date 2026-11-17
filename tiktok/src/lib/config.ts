@@ -42,18 +42,19 @@ export const CAPTIONS = {
 
 export const TTS = {
   provider: "elevenlabs",
+  /**
+   * The channel's permanent Thai narrator: an existing ElevenLabs voice that
+   * every episode uses unless a run explicitly picks another (--voice,
+   * ELEVENLABS_VOICE_ID or voice.voiceId in an episode). The pipeline only
+   * reads and speaks with voices; it never creates, edits or replaces one.
+   */
+  narrator: { name: "Madame Scientia", voiceId: "XAF1635HwW2TJGfbLzfc", language: "th" },
   /** Highest-quality ElevenLabs model, 90+ languages including Thai. */
   modelId: "eleven_v4",
   languageCode: "th",
   outputFormat: "mp3_44100_128",
   /** eleven_v4 accepts only stability and similarity_boost (no speed). */
   voiceSettings: { stability: 0.7, similarity_boost: 0.75 },
-  /**
-   * George, the default voice in the installed ElevenLabs skill. Pick a
-   * voice that sounds natural in Thai before the first episode (npm run
-   * voices) and set ELEVENLABS_VOICE_ID or voice.voiceId in the episode.
-   */
-  defaultVoiceId: "JBFqnCBsd6RMkjVDRZzb",
   /** One request carries the whole narration; longer scripts are rejected. */
   maxCharactersPerRequest: 5000,
 };

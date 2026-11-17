@@ -1,0 +1,41 @@
+# Checks the ElevenLabs setup without generating audio or using credits:
+# whether the ELEVENLABS_API_KEY secret is set (its value is never shown),
+# which narrator voice the pipeline uses, and, with read-only requests,
+# whether the key works and can use that voice. No text-to-speech call.
+#
+# Run it by hand (Actions > ElevenLabs check > Run workflow) after adding or
+# changing the secret. It also runs when the narration settings change.
+name: ElevenLabs check
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "tiktok/src/lib/config.ts"
+      - "tiktok/scripts/lib/voice.ts"
+      - "tiktok/scripts/check-elevenlabs.ts"
+      - ".github/workflows/elevenlabs-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Key and narrator voice
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: tiktok
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Check the key and the narrator voice (read-only, no audio)
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ vars.ELEVENLABS_VOICE_ID }}
+        run: node scripts/check-elevenlabs.ts --online

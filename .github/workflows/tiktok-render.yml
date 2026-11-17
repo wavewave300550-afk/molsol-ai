@@ -11,7 +11,9 @@
 #
 # Settings > Secrets and variables > Actions:
 #   ELEVENLABS_API_KEY    secret: only needed when narration is generated
-#   ELEVENLABS_VOICE_ID   variable: the Thai narrator voice
+#                         (check it with Actions > ElevenLabs check; no credits)
+#   ELEVENLABS_VOICE_ID   variable, optional: leave unset to use the channel
+#                         narrator Madame Scientia (tiktok/src/lib/config.ts)
 #   REMOTION_LICENSE_KEY  secret, optional: Remotion company license
 name: TikTok render
 
