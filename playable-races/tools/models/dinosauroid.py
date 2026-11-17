@@ -362,13 +362,15 @@ def _neck_head(m: Model) -> None:
         m.cube(sk.name, (ex - ew / 2, ey - eh / 2, ez - ed / 2), (ew, eh, ed), "eye", ppu=4.0,
                pivot=(ex, ey, ez), rot=side_rot((0, -EYE_RY, 0), s))
     pu = m.bone("pupils", sk.name, (0, EYE[1], EYE[2]))
-    nc = m.bone("nict", sk.name, (0, EYE[1], EYE[2] - ed / 2 + 0.1))
     for s, p in SIDES:
         ex, ey, ez = s * EYE[0], EYE[1], EYE[2]
         m.cube(pu.name, (ex + s * 0.27 - 0.05, ey - 0.875, ez - 0.25), (0.1, 1.75, 0.5), "pupil", ppu=4.0,
                pivot=(ex, ey, ez), rot=side_rot((0, -EYE_RY, 0), s))                # the slit (narrows by scale)
-        m.cube(nc.name, (ex + s * 0.31 - 0.025, ey - eh / 2, ez - ed / 2 + 0.1), (0.05, eh, 0.1), "nict",
-               pivot=(ex, ey, ez), rot=side_rot((0, -EYE_RY, 0), s))
+        # the nictitating membrane: its own bone turned with the eye, so scaling z sweeps it along the eye face
+        R = rot_matrix(side_rot((0, -EYE_RY, 0), s))
+        front = _v((ex, ey, ez)) + R @ _v((s * 0.31, 0.0, -ed / 2 + 0.1))
+        nc = m.bone(f"{p}_nict", sk.name, tuple(np.round(front, 3)), side_rot((0, -EYE_RY, 0), s))
+        m.cube(nc.name, tuple(np.round(front + _v((-0.025, -eh / 2, 0.0)), 3)), (0.05, eh, 0.1), "nict")
     sk.locators["eyes"] = (0, EYE[1], EYE[2] - 1.5)
     # throat pouch: tucked under the jaw at rest, a balloon in the display
     gu = m.bone("gular", sk.name, GULAR_PIVOT)

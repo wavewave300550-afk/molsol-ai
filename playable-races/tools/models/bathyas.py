@@ -128,7 +128,7 @@ TERGITES = [  # (y, z, normal angle, centre width, flange width, length)
     (23.75, 6.25, -8.0, 9.0, 3.5, 3.75),
     (21.25, 6.1, -14.0, 8.5, 3.25, 3.5),
 ]
-WAIST_PLATES = [(17.5, 5.6, -14.0, 8.0, 3.0, 4.0)]
+WAIST_PLATES = [(19.75, 5.55, -10.0, 8.5, 2.75, 3.5), (17.0, 5.3, -16.0, 8.0, 2.5, 3.25)]
 PLATES = TERGITES + WAIST_PLATES             # (the animation set lifts and jostles them in this order)
 PLATE_T = 1.25                              # armour thickness
 PLATE_LIFT = 17.0                           # the trailing edge of each plate lifts over the next one
@@ -136,9 +136,9 @@ PLATE_BEND = 55.0                           # the flanges wrap forward round the
 
 # bastion: the tergites slide together and down over the nape; daybreak: they lift apart (offset along normal, extra tilt)
 PLATE_CLOSE = [(-0.35, 10.0), (-0.3, 7.0), (-0.25, 5.0), (-0.2, 3.0), (-0.2, 2.0), (-0.15, 0.0), (-0.1, -2.0),
-               (-0.05, -3.0)]
+               (-0.05, -3.0), (0.0, -4.0)]
 PLATE_OPEN = [(0.5, -10.0), (0.6, -9.0), (0.7, -8.0), (0.7, -7.0), (0.65, -6.0), (0.6, -5.0), (0.5, -4.0),
-              (0.45, -4.0)]
+              (0.45, -4.0), (0.4, -4.0)]
 
 # --------------------------------------------------------------------------- shoulders, arms, neck
 SHOULDER_C = (7.5, 28.75, 1.25)             # shoulder joint (chest frame, right side mirrored with x < 0)
@@ -254,14 +254,16 @@ def _legs(m: Model) -> None:
         limb(m, g, (s * 3.5, 13.0, -0.5), knee + (0, -0.25, 0.25), 4.75, 5.25, "leg")
         sn = m.bone(f"{p}_shin", g, tuple(knee))
         sn.variant.update({v: ((0, 0, 0), (LEG_POSE[v][1], 0.0, 0.0)) for v in VARIANTS if LEG_POSE[v][1]})
-        slab(m, sn.name, knee + (0, 0.25, -2.6), (0, 0.3, -1), (0, 1, 0.3), 4.25, 3.5, 1.0, "plate_limb")  # knee cop
-        limb(m, sn.name, knee + (0, 0.75, 0.25), ankle + (0, -0.25, 0), 4.0, 4.25, "leg")                   # the shin
+        top, bot = knee + (0, 0.75, 0.25), ankle + (0, -0.25, 0)
+        limb(m, sn.name, top, bot, 4.0, 4.25, "leg")                                                         # the shin
         limb(m, sn.name, knee + (0, -0.75, 2.0), ankle + (0, 1.5, 0.75), 3.25, 2.25, "leg")                 # the calf
         mid = (knee + ankle) / 2
         dn = (ankle - knee) / np.linalg.norm(ankle - knee)
         fw = np.array([0.0, dn[2], -dn[1]])                       # the shin's front normal
         fw = -fw if fw[2] > 0 else fw
-        slab(m, sn.name, mid + dn * -0.08 * 5.5 + fw * 2.1, fw, dn, 4.0, 4.25, 0.75, "plate_limb")    # the greave
+        wrap = fw * 1.0 + np.array([s * 0.6, 0.0, 0.0])           # isopod shell bands wrap the shin's front and outside
+        for t0, t1, w in ((0.0, 0.44, 4.0), (0.37, 0.8, 3.75)):     # (their inner halves sink into the leg)
+            limb(m, sn.name, top + (bot - top) * t0 + wrap, top + (bot - top) * t1 + wrap, w, w, "shell")
         m.cube(sn.name, (s * 3.75, 4.75, 1.25), (0.0, 4.0, 3.0), "calf_fin", cutout=True)                       # calf fin
         fb = m.bone(f"{p}_foot", sn.name, tuple(ankle))
         fb.variant.update({v: ((0, 0, 0), (LEG_POSE[v][2], 0.0, 0.0)) for v in VARIANTS if LEG_POSE[v][2]})
@@ -520,7 +522,7 @@ def _corona(m: Model) -> None:
     sunburst(m, cf.name, c, "front", CORONA_F, skip=hide)
     sunburst(m, cf.name, (x, y, cz - 0.1), "front", CORONA_BLAZE, only={"lure"})
     sunburst(m, cf.name, (x, y, cz - 0.1), "front", [(a + 30, 3.5, L - 2.0, (0.5,)) for a, _, L, _ in CORONA_BLAZE],
-             only=DRAWN)                                             # the open sun: thin glints between the rays
+             only={"unshackled"})                                    # the open sun: thin glints between the rays
     m.box(cf.name, (x, y, cz + 0.25), (3.0, 3.0, 0.5), "core", skip=hide | DRAWN)               # the glare at the wound
     m.box(cf.name, (x, y, cz + 0.05), (2.5, 4.5, 0.5), "core", only=DRAWN)                      # the open sun
     m.box(cf.name, (x, y, cz + 0.1), (4.5, 2.5, 0.5), "core", only=DRAWN)
@@ -589,12 +591,10 @@ def _arms(m: Model, drop) -> None:
         limb(m, dl.name, S0 + (0, -1.75, 0), E0 + (0, 0.25, 0), 4.0, 4.0, "arm")         # upper arm
         # the forearm: massive, shelled on the outside, a torn fin trailing behind
         limb(m, fo.name, E0 + (0, 0.75, 0.25), W0 + (0, -0.25, 0), 5.0, 5.25, "fore")
-        ax = (E0 - W0) / np.linalg.norm(E0 - W0)
-        mid = (E0 + W0) / 2
-        out = np.array([s * 1.0, 0.0, 0.0])
-        for k, f in enumerate((0.22, -0.16)):                                              # vambrace lames
-            slab(m, fo.name, mid + ax * f * 7.0 + out * (2.7 + 0.1 * k), out, -ax, 4.0, 3.25, 0.75, "plate_limb")
-        slab(m, fo.name, E0 + (0, -0.5, 2.5), (0, -0.2, 1), (0, -1, 0), 3.25, 2.75, 0.75, "plate_limb")  # elbow cop
+        ft, fb_ = E0 + (0, 0.75, 0.25), W0 + (0, -0.25, 0)
+        wrap = np.array([s * 1.0, 0.0, 0.75])                     # shell bands wrap the outside and back of the forearm
+        for t0, t1, w, d in ((0.0, 0.4, 4.75, 5.0), (0.33, 0.71, 4.5, 4.75), (0.64, 0.97, 4.25, 4.5)):   # (shingled; the
+            limb(m, fo.name, ft + (fb_ - ft) * t0 + wrap, ft + (fb_ - ft) * t1 + wrap, w, d, "shell")       # inner half sinks)
         m.cube(fo.name, (s * 8.0, 14.25, 1.0), (0.0, 5.0, 3.5), "calf_fin", cutout=True)                    # forearm fin
         # the hand: palm, three long webbed fingers with hard white claws, a thumb
         hz = W0[2]
@@ -1019,8 +1019,6 @@ def _photo_limbs():
         S0 = _shoulder("base", s)
         E0 = np.array([s * ELBOW[0], ELBOW[1], ELBOW[2]])
         W0 = np.array([s * WRIST[0], WRIST[1], WRIST[2]])
-        for t in (0.22, 0.46, 0.7):                                    # down the back of the forearm
-            PHOTO_LIMB.append(tuple(E0 + (W0 - E0) * t + np.array([0.0, 0.0, 2.6])))
         for t in (0.5, 0.75):                                          # the outside of the upper arm
             PHOTO_LIMB.append(tuple(S0 + (E0 - S0) * t + np.array([s * 2.05, 0.0, 0.0])))
         PHOTO_LIMB.extend([(s * 6.15, 15.25, 0.5), (s * 6.0, 13.5, -0.25)])     # the outer thigh (lateral line)
@@ -1333,6 +1331,38 @@ def mat_plate_limb(ctx):
     return rgb, ctx.ones(), glow
 
 
+def mat_shell(ctx):
+    """Isopod shell bands round the limbs: pearl with a lavender sheen, rounded across each face, a
+    bright lip on the upper edge and a dark seam under the lower one (where the next band tucks in),
+    growth lines, a photophore on the back of each forearm band; daybreak: light from the seam."""
+    blaze, open_, day = _P(ctx)
+    ix, iy, W, H = px.texel(ctx)
+    lv = 0.12 + 0.66 * px.light(ctx, grad=0.0)
+    glow = np.zeros(ctx.N)
+    if px.side(ctx):
+        u = (ix + 0.5) / W * 2 - 1
+        lv = lv + 0.1 * (1 - u ** 2) - 0.14 * u ** 4 - 0.035 * ((iy % 3) == 2) * (H >= 5)
+        rgb = px.smooth_ramp(ARMOR, lv)
+        rgb = _mix(rgb, LAVENDER, 0.32 * np.clip(np.sin((u * 0.8 + 0.4) * np.pi) * 0.5 + 0.25, 0, 1))
+        lip = iy == 0
+        seam = iy == H - 1
+        rgb = np.where(lip[:, None], _mix(rgb, ARMOR[6], 0.6), rgb)
+        rgb = np.where(seam[:, None], SEAMLINE, rgb)
+        if day > 0.5:
+            rgb = np.where(seam[:, None], SUN[4], rgb)
+            glow = np.where(seam, 0.8, glow)
+        n = _wn(ctx)
+        if n[2] > 0.55 and np.abs(_wp(ctx)[:, 0]).mean() > 6.0 and W >= 4 and H >= 4:
+            g = np.clip(1 - np.hypot(ix - (W - 1) / 2, iy - (H - 1) * 0.45) / 1.45, 0, 1)
+            rgb, glow = photophores(rgb, glow, g, gold=day > 0.5)
+    else:                                                                 # the band's rim
+        rgb = px.smooth_ramp(ARMOR, lv - 0.22)
+        rim = px.border(ctx, 1)
+        rgb = np.where(rim[:, None], _mix(rgb, ARMOR[5], 0.5), rgb)
+    rgb, glow = limb_cracks(ctx, rgb, glow, 23)
+    return rgb, ctx.ones(), glow
+
+
 def mat_keel(ctx):
     blaze, open_, day = _P(ctx)
     ix, iy, W, H = px.texel(ctx)
@@ -1489,7 +1519,7 @@ def materials():
         "hand": mat_hand, "leg": mat_leg, "foot": mat_foot, "fp_arm": mat_fp_arm, "neck": mat_neck, "head": mat_head,
         "jowl": mat_jowl, "brow": mat_brow, "snout": mat_snout, "eye": mat_eye, "lid": mat_lid, "hair": mat_hair,
         "wisp": mat_wisp, "gill": mat_gill, "lip": mat_lip, "jaw": mat_jaw, "gum": mat_gum, "teeth": mat_teeth,
-        "barbel": mat_barbel, "plate": mat_plate, "plate_limb": mat_plate_limb, "keel": mat_keel, "seam": mat_seam,
+        "barbel": mat_barbel, "plate": mat_plate, "plate_limb": mat_plate_limb, "shell": mat_shell, "keel": mat_keel, "seam": mat_seam,
         "claw": mat_claw, "ray": mat_ray, "fin": mat_fin, "fin_flap": mat_fin_flap, "calf_fin": mat_small_fin,
         "web": mat_web, "corona": mat_corona, "corona_b": mat_corona_b, "core": mat_core, "core_hot": mat_core_hot,
         "accent": mat_accent,
