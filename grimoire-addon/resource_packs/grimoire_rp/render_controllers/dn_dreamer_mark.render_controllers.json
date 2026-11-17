@@ -1,0 +1,1 @@
+{"format_version":"1.8.0","render_controllers":{"controller.render.grimoire.dn_dreamer_mark":{"geometry":"Geometry.default","materials":[{"*":"Material.default"}],"textures":["Array.skin[q.property('grimoire:skin')]"],"arrays":{"textures":{"Array.skin":["Texture.default","Texture.s1"]}}}}}

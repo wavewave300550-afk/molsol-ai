@@ -1,0 +1,1 @@
+{"format_version":"1.16.100","minecraft:fog_settings":{"description":{"identifier":"grimoire:ed6_fog_2"},"distance":{"air":{"fog_start":40,"fog_end":165,"fog_color":"#e8c58c","render_distance_type":"fixed"},"weather":{"fog_start":28.0,"fog_end":123.8,"fog_color":"#e8c58c","render_distance_type":"fixed"}}}}
