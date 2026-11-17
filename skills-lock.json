@@ -91,6 +91,13 @@
       "sourceType": "github",
       "skillPath": "skills/remotion-upgrade/SKILL.md",
       "computedHash": "e469c92611c08ca705bd510965650e249a983d54703b1b5ca7cfb7165deb0f8f"
+    },
+    "text-to-speech": {
+      "source": "elevenlabs/skills",
+      "commit": "64271c12b46efb7c9a0b65c8ec521683bb35fc4a",
+      "sourceType": "github",
+      "skillPath": "text-to-speech/SKILL.md",
+      "computedHash": "fec523d1f12af3c06c94783129f2d556fafc9309ee3f13578170f7ef33c5f97e"
     }
   }
 }
