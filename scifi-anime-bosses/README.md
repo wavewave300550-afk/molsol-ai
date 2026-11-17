@@ -108,13 +108,14 @@ Animated: [transformation](docs/images/transform.gif) · [Litany Lance](docs/ima
 | JSON-schema validation of every pack file (Creator Tools' Bedrock schemas) | **110 files, 0 errors** |
 | Cross-reference validation (`tools/validate.py`): bones/locators used by animations, part visibility, materials, textures, Molang syntax + allowed queries + synced properties, particles, sounds, lang keys, item icons, manifests, every `sab:*` id and sound in the compiled JS | **12,612 checks, 0 errors** |
 | Microsoft **Minecraft Creator Tools 0.21.0** validation | **0 errors, 0 warnings** (3 known false positives about `item_texture.json`; format-version recommendations intentionally left at vanilla's values) |
-| Runtime simulation (`tools/smoke`): compiled scripts on a strict mock of `@minecraft/server` that rejects unknown ids, out-of-range/unsynced properties, unknown entity events, particle variables the effect never reads, bad camera/fog/music ids | **71/71 checks in 5 scenarios** |
+| Runtime simulation (`tools/smoke`): compiled scripts on a strict mock of `@minecraft/server` that rejects unknown ids, out-of-range/unsynced properties, unknown entity events, particle variables the effect never reads, bad camera/fog/music ids | **73/73 checks in 5 scenarios** |
 
 The simulation runs a complete fight with two bot players (melee + archer): ritual → arrival → Phase I → Vespers
 (broken) → transformation → Phase II → Requiem (completed → False Benediction) → death → rewards, then verifies every
 ability, title, helper, reward, XP amount, music/fog/camera use and that no helper entity leaks. Further scenarios
 cover a 3-minute Phase I rotation (every ability incl. the vent burst), world reload mid-fight (including a save taken
-mid-transformation, orphan cleanup, and an unattended boss departing with a Psalter refund), a threshold-integrity
+mid-transformation, orphan cleanup, cover plates re-adopted and stray halos removed, and an unattended boss
+departing with a Psalter refund), a threshold-integrity
 stress test (eight players landing simultaneous capped hits every tick: the 75 % prayer, transformation and Requiem
 must start at exactly 900 / 600 / 300 HP, in order; the pre-fix code failed it), and summon rules (including a ritual
 that fizzles without costing the Psalter), the Orison Halo (damage, cooldown, durability, return) and the commands. With never-dodging, never-missing bots the fight

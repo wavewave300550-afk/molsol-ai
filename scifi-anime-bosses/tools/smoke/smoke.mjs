@@ -187,6 +187,11 @@ async function reloadResume(mock) {
   b2.setDynamicProperty("sab:arena", JSON.stringify({ x: 400, y: 64, z: 400 }));
   // orphaned helpers from the previous session must be cleaned up
   mock.__addEntity("sab:cherub", { x: 5, y: 70, z: 5 }).setDynamicProperty("sab:owner", "dead-boss");
+  mock.__addEntity("sab:hull_plate", { x: 20, y: 64, z: 20 }).setDynamicProperty("sab:owner", "dead-boss");
+  const strayHalo = mock.__addEntity("sab:orison_halo", { x: 3, y: 66, z: 3 });
+  // ... but the live boss's landed cover plate must be adopted again (kept out of the nova's line of sight here)
+  const plate = mock.__addEntity("sab:hull_plate", { x: -30, y: 64, z: -30 });
+  plate.setDynamicProperty("sab:owner", boss.id);
   for (let i = 0; i < 900; i++) {
     mock.__tick();
     botStep(mock, p, "melee", {});
@@ -196,7 +201,9 @@ async function reloadResume(mock) {
   check(!b2.isValid && mock.__log.items.some((x) => x[1] === "sab:astral_psalter"),
     "an unattended boss departs after 30 s and refunds the Psalter");
   check(boss.isValid, "the attended boss stays");
-  check(!mock.__entities().some((e) => e.typeId === "sab:cherub" && e.getDynamicProperty("sab:owner") === "dead-boss"), "orphaned helper removed");
+  check(!mock.__entities().some((e) => e.getDynamicProperty("sab:owner") === "dead-boss"), "orphaned helpers removed");
+  check(plate.isValid, "the live boss's landed cover plate survives the reload (re-adopted)");
+  check(!strayHalo.isValid, "an Orison Halo left mid-flight by a reload is removed");
   const acts = new Set((mock.__log.props?.["sab:act"] ?? []).map((x) => x[1]));
   check([12, 15, 16, 6].some((a) => acts.has(a)), "resumed boss keeps fighting with phase II abilities");
   return { acts: [...acts] };
