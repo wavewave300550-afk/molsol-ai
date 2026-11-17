@@ -4,11 +4,11 @@
  * and ending where the narration does, nothing cut.
  */
 import { existsSync, statSync } from "node:fs";
-import type { Interval } from "../../src/lib/alignment.ts";
 import { AUDIO_MASTER } from "../../src/lib/config.ts";
 import type { Timeline } from "../../src/lib/timeline.ts";
-import { detectPauses, ffmpeg, ffprobeJson, measureLoudness, mp4TopLevelBoxes } from "./ffmpeg.ts";
+import { decodeAudio, ffmpeg, ffprobeJson, measureLoudness, mp4TopLevelBoxes } from "./ffmpeg.ts";
 import type { EpisodePaths } from "./paths.ts";
+import { speechSpan } from "./pcm.ts";
 
 export type Check = { name: string; pass: boolean; detail: string };
 export type VideoReport = {
@@ -18,12 +18,6 @@ export type VideoReport = {
   pass: boolean;
   checks: Check[];
   metrics: Record<string, number | string>;
-};
-
-const firstSpeech = (silences: Interval[]) => (silences[0] && silences[0].start <= 0.01 ? silences[0].end : 0);
-const lastSpeech = (silences: Interval[], duration: number) => {
-  const last = silences[silences.length - 1];
-  return last && last.end >= duration - 0.05 ? last.start : duration;
 };
 
 export async function verifyVideo(paths: EpisodePaths, timeline: Timeline, file = paths.video): Promise<VideoReport> {
@@ -78,15 +72,23 @@ export async function verifyVideo(paths: EpisodePaths, timeline: Timeline, file 
   const decode = await ffmpeg(["-v", "error", "-i", file, "-map", "0", "-c:v", "rawvideo", "-c:a", "pcm_s16le", "-f", "null", "-"]);
   add("Decodes start to end without errors", decode.code === 0 && decode.stderr.trim() === "", decode.stderr.trim().slice(0, 200) || "no decoder errors");
 
-  const [inVideo, inNarration] = await Promise.all([detectPauses(file), detectPauses(paths.narrationWav)]);
-  const startShift = firstSpeech(inVideo.silences) - firstSpeech(inNarration.silences);
-  const endShift = lastSpeech(inVideo.silences, videoSeconds) - lastSpeech(inNarration.silences, narration);
+  // Same rule on both decoded tracks: no minimum pause length, so a narration
+  // that ends with only a short silence is measured the same way as the video,
+  // where the tail lengthens that silence.
+  const [inVideo, inNarration] = await Promise.all([decodeAudio(file), decodeAudio(paths.narrationWav)]);
+  const videoSpeech = speechSpan(inVideo.pcm, inVideo.sampleRate);
+  const narrationSpeech = speechSpan(inNarration.pcm, inNarration.sampleRate);
+  const startShift = (videoSpeech?.start ?? Number.NaN) - (narrationSpeech?.start ?? Number.NaN);
+  const endShift = (videoSpeech?.end ?? Number.NaN) - (narrationSpeech?.end ?? Number.NaN);
   metrics.speechStartShiftMs = Math.round(startShift * 1000);
   metrics.speechEndShiftMs = Math.round(endShift * 1000);
   add(
     "Speech in the video lines up with the narration",
     Math.abs(startShift) <= 0.06 && Math.abs(endShift) <= 0.06,
-    `first word ${(startShift * 1000).toFixed(0)} ms, last word ${(endShift * 1000).toFixed(0)} ms from the narration file`,
+    videoSpeech && narrationSpeech
+      ? `first word ${(startShift * 1000).toFixed(0)} ms, last word ${(endShift * 1000).toFixed(0)} ms from the narration file ` +
+          `(speech ${narrationSpeech.start.toFixed(3)}-${narrationSpeech.end.toFixed(3)} s)`
+      : `no speech found in the ${videoSpeech ? "narration file" : "video"}`,
   );
   const loudness = await measureLoudness(file);
   metrics.loudnessLufs = loudness.inputI;

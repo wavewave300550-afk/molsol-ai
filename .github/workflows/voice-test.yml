@@ -8,6 +8,12 @@
 # ticked. Each such run spends about 1 credit per character of the script
 # (the plan step shows the count first). Run by hand only.
 #
+# Reusing a take (no credits): enter the run id of an earlier Voice test run
+# (the number in its URL, .../actions/runs/<id>) in "Reuse the take of run".
+# Its MP3 is taken from that run's artifact (kept 30 days) and prepared,
+# checked and published exactly like a new take, without contacting
+# ElevenLabs. Use it when a run paid for a take but failed afterwards.
+#
 # Uses the ELEVENLABS_API_KEY repository secret. Narrator: Madame Scientia,
 # unless the ELEVENLABS_VOICE_ID variable says otherwise.
 name: Voice test
@@ -25,6 +31,11 @@ on:
         required: true
         default: false
         type: boolean
+      reuse_run:
+        description: "Or reuse the take of run (id of an earlier Voice test run; no credits). Leave empty otherwise"
+        required: false
+        default: ""
+        type: string
       preview_video:
         description: "Also render a short TEST video with subtitles to check the timing"
         required: true
@@ -38,6 +49,7 @@ on:
 
 permissions:
   contents: read
+  actions: read # to download the artifact of an earlier run when reusing its take
 
 concurrency:
   group: voice-test-${{ inputs.episode }}
@@ -50,6 +62,8 @@ jobs:
     timeout-minutes: 20
     env:
       EPISODE: ${{ inputs.episode }}
+      REUSE_RUN: ${{ inputs.reuse_run }}
+      SPEND_CREDITS: ${{ inputs.spend_credits }}
     defaults:
       run:
         working-directory: tiktok
@@ -74,6 +88,16 @@ jobs:
             echo "::error::tiktok/episodes/$EPISODE/episode.json does not exist"
             exit 1
           fi
+          if [[ -n "$REUSE_RUN" ]]; then
+            if [[ ! "$REUSE_RUN" =~ ^[0-9]{1,20}$ ]]; then
+              echo "::error::The run to reuse must be a run id (the number in .../actions/runs/<id>): $REUSE_RUN"
+              exit 1
+            fi
+            if [[ "$SPEND_CREDITS" == "true" ]]; then
+              echo "::error::Choose one: generate a new take (spends credits) or reuse the take of run $REUSE_RUN (no credits)."
+              exit 1
+            fi
+          fi
 
       - name: Install dependencies
         run: npm ci
@@ -90,32 +114,61 @@ jobs:
           ELEVENLABS_VOICE_ID: ${{ vars.ELEVENLABS_VOICE_ID }}
         run: npm run narrate -- "$EPISODE"
 
+      - name: Download the take of run ${{ inputs.reuse_run }} (no credits)
+        if: inputs.reuse_run != ''
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ inputs.reuse_run }}
+          github-token: ${{ github.token }}
+          pattern: ${{ inputs.episode }}_*
+          merge-multiple: true
+          path: tiktok/reused
+
+      - name: Prepare the reused take (nothing is sent to ElevenLabs)
+        if: inputs.reuse_run != ''
+        env:
+          ELEVENLABS_VOICE_ID: ${{ vars.ELEVENLABS_VOICE_ID }}
+        run: |
+          shopt -s nullglob
+          mp3s=(reused/*.mp3)
+          takes=(reused/*.elevenlabs-take.json)
+          if [[ ${#mp3s[@]} -ne 1 ]]; then
+            echo "::error::Expected one MP3 in the artifact of run $REUSE_RUN, found ${#mp3s[@]}."
+            exit 1
+          fi
+          args=(--from "GitHub Actions run $REUSE_RUN ($(basename "${mp3s[0]}"))")
+          if [[ ${#takes[@]} -eq 1 ]]; then args+=(--take "${takes[0]}"); fi
+          npm run narration:recover -- "$EPISODE" "${mp3s[0]}" "${args[@]}"
+
       - name: Check the take
-        if: inputs.spend_credits
+        if: inputs.spend_credits || inputs.reuse_run != ''
         run: npm run voice-test -- "$EPISODE" --report
 
       - name: Cache Remotion's browser
-        if: inputs.spend_credits && inputs.preview_video
+        if: (inputs.spend_credits || inputs.reuse_run != '') && inputs.preview_video
         uses: actions/cache@v4
         with:
           path: tiktok/node_modules/.remotion
           key: remotion-browser-${{ runner.os }}-${{ hashFiles('tiktok/package-lock.json') }}
 
       - name: Render a preview video (TEST badge, uses the same narration)
-        if: inputs.spend_credits && inputs.preview_video
+        if: (inputs.spend_credits || inputs.reuse_run != '') && inputs.preview_video
         run: |
           npx remotion browser ensure
           npm run render -- "$EPISODE"
 
       - name: Collect the files
         id: files
-        if: always() && inputs.spend_credits
+        if: always() && (inputs.spend_credits || inputs.reuse_run != '')
         run: |
           name="${EPISODE}_$(date -u +%Y%m%d-%H%M)_run${GITHUB_RUN_NUMBER}"
+          if [[ -n "$REUSE_RUN" ]]; then name="${name}_reused"; fi
           media="public/episodes/$EPISODE"
           mkdir -p upload
+          # The MP3 and ElevenLabs' timing are saved before mastering, so they
+          # are kept here even when a later step failed: reuse them for free.
           if [[ -f "$media/narration.source.mp3" ]]; then cp "$media/narration.source.mp3" "upload/$name.mp3"; fi
-          for file in alignment.json narration.json; do
+          for file in elevenlabs-take.json alignment.json narration.json; do
             if [[ -f "$media/$file" ]]; then cp "$media/$file" "upload/$name.$file"; fi
           done
           for ext in voice-report.json mp4 report.json; do
@@ -124,7 +177,7 @@ jobs:
           echo "name=$name" >> "$GITHUB_OUTPUT"
 
       - name: Upload the take as a run artifact
-        if: always() && inputs.spend_credits && steps.files.outputs.name != ''
+        if: always() && (inputs.spend_credits || inputs.reuse_run != '') && steps.files.outputs.name != ''
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.files.outputs.name }}
@@ -135,7 +188,7 @@ jobs:
   publish:
     name: Publish for iPhone listening
     needs: voice-test
-    if: inputs.spend_credits && inputs.publish
+    if: (inputs.spend_credits || inputs.reuse_run != '') && inputs.publish
     runs-on: ubuntu-latest
     permissions:
       contents: write

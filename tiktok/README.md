@@ -51,9 +51,9 @@ must never be published.
    sources for the TikTok description) and `out/ep001-water.report.json`.
    Or run it on GitHub and download it on your phone (see below).
 
-Commit `public/episodes/<id>/narration.source.mp3`, `alignment.json` and
-`narration.json` after narrating, so later renders reuse the same take
-instead of paying for a new one.
+Commit `public/episodes/<id>/narration.source.mp3`, `elevenlabs-take.json`,
+`alignment.json` and `narration.json` after narrating, so later renders reuse
+the same take instead of paying for a new one.
 
 ## Rules the system enforces
 
@@ -131,7 +131,18 @@ no scientific claim (intro, outro).
   secret is set, the key works and it can use Madame Scientia, using
   read-only requests only (no audio, no credits).
 - The same script, voice and model is never narrated twice (`--force` makes a
-  new take). After mastering, the narration plays at -14 LUFS.
+  new take).
+- **Every take is saved before anything else happens to it:** the MP3 as
+  `narration.source.mp3` and ElevenLabs' character timing and request details
+  as `elevenlabs-take.json`. If a later step fails, `npm run narrate` reuses
+  the saved take instead of sending a new request, and GitHub keeps both
+  files in the run's artifact.
+- **Recovering a paid take without new credits:**
+  `npm run narration:recover -- <id> <take.mp3> --take <elevenlabs-take.json>`
+  (or `--from "<where it came from>"` when only the MP3 survived; the timing
+  is then estimated from the pauses). It checks the take belongs to the
+  approved script and its exact MP3, then prepares it like a new take.
+- After mastering, the narration plays at -14 LUFS.
 
 ## Voice tests (hearing the narrator)
 
@@ -153,9 +164,16 @@ with `"kind": "voice-test"` (example: `episodes/voice-test`).
   3. can render a short preview video with subtitles;
   4. puts the MP3, and the video if rendered, on the `tiktok-renders` release
      for listening on iPhone.
+- **Reusing a take for free:** if a run paid for a take but failed later, run
+  the workflow again with "Generate the narration" unticked and that run's id
+  (the number in its URL, `…/actions/runs/<id>`) in "Reuse the take of run".
+  The MP3 comes from that run's artifact (kept 30 days); nothing is sent to
+  ElevenLabs. Without saved timing (runs before the take file existed), the
+  report shows a warning: subtitles then follow timing estimated from pauses.
 - **Locally:**
   1. `npm run voice-test -- <id>` shows the plan and cost (no credits);
-  2. `npm run narrate -- <id>` makes the take;
+  2. `npm run narrate -- <id>` makes the take (or `npm run narration:recover`
+     reuses one);
   3. `npm run voice-test -- <id> --report` checks it.
 
 ## Rendering on GitHub and downloading on iPhone
@@ -171,14 +189,21 @@ Workflow: `.github/workflows/tiktok-render.yml`.
 - **Download:** the run summary links the MP4 on the **TikTok renders**
   pre-release (`…/releases/tag/tiktok-renders`). On iPhone, tap the link, play
   it, then Share → Save Video. Every run also keeps a zip artifact for 30 days,
-  with the description, the verification report and any new ElevenLabs take
-  (commit that take to reuse it).
+  with the description, the verification report and any new ElevenLabs take,
+  even when a later step failed (commit that take to reuse it, or prepare it
+  with `npm run narration:recover`).
 
 ## How timing works
 
 1. `narration.wav`: the narration, mastered by FFmpeg with one constant gain
-   and resampled to 48 kHz. The step fails if the length changes by more
-   than 10 ms.
+   and resampled to 48 kHz. Lengths are counted in decoded samples, never
+   taken from a file's header: an MP3's header counts whole frames, including
+   the encoder delay and padding that decoders remove (an ElevenLabs take
+   says 19.879 s but holds 19.840 s of audio). The playback copy must hold
+   the source's exact length at 48 kHz (if the resampler ever came up short,
+   silence is added at the end), and every 20 ms of speech must match the
+   source at one constant gain; otherwise the copy is deleted and the step
+   fails. `narration.json` records the sample counts.
 2. `alignment.json`: the start and end time of every character, from
    ElevenLabs. For a recording, it is estimated from the pauses with FFmpeg
    (`silencedetect`, adaptive threshold): accurate to the phrase, close for
@@ -204,6 +229,7 @@ Workflow: `.github/workflows/tiktok-render.yml`.
 | `npm run voice-test -- <id> [--report]` | voice test: plan and cost (no credits), or check a take |
 | `npm run audio:import -- <id> <file> [--test]` | use a recording (or test audio) as narration |
 | `npm run narration:prepare -- <id>` | rebuild `narration.wav` from a committed take |
+| `npm run narration:recover -- <id> <mp3> [--take <json>]` | reuse a paid take (e.g. from a failed run's artifact), no credits |
 | `npm run audio:test -- <id>` | write temporary test audio for a script |
 | `npm run timeline -- <id>` | build the timeline only |
 | `npm run render -- <id>` | render and verify the MP4 |

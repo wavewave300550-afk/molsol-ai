@@ -26,6 +26,8 @@ export type EpisodePaths = {
   /** Path of the media folder relative to public/, for staticFile(). */
   mediaStaticDir: string;
   narrationSource: string;
+  /** The raw ElevenLabs response details (timing, request id), saved with narration.source.mp3 before any processing. */
+  elevenlabsTake: string;
   narrationWav: string;
   narrationMeta: string;
   alignment: string;
@@ -48,6 +50,7 @@ export function episodePaths(rawId: string | undefined): EpisodePaths {
     mediaDir,
     mediaStaticDir: `episodes/${id}`,
     narrationSource: join(mediaDir, "narration.source.mp3"),
+    elevenlabsTake: join(mediaDir, "elevenlabs-take.json"),
     narrationWav: join(mediaDir, "narration.wav"),
     narrationMeta: join(mediaDir, "narration.json"),
     alignment: join(mediaDir, "alignment.json"),

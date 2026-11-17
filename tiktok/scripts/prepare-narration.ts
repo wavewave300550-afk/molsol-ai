@@ -34,7 +34,7 @@ runCli(async () => {
     source: meta.source,
     alignment: alignment.alignment,
     timingSource: alignment.source,
-    extra: { voiceId: meta.voiceId, modelId: meta.modelId, requestId: meta.requestId, characterCount: meta.characterCount },
+    extra: { voiceId: meta.voiceId, modelId: meta.modelId, requestId: meta.requestId, characterCount: meta.characterCount, recovered: meta.recovered },
   });
   ok(`Narration ready from the committed ${meta.source} take.`);
 });

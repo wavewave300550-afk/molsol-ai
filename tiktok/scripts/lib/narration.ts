@@ -18,6 +18,7 @@ import { ok, warn } from "./cli.ts";
 import { readJson, writeJson } from "./episode-io.ts";
 import { detectPauses, masterNarration } from "./ffmpeg.ts";
 import { type EpisodePaths, ensureDir } from "./paths.ts";
+import { describeMaster } from "./pcm.ts";
 
 export type NarrationMeta = {
   version: 1;
@@ -31,6 +32,19 @@ export type NarrationMeta = {
   modelId?: string;
   requestId?: string | null;
   characterCount?: string | null;
+  /** Exact lengths, from decoded samples (see checkMaster). */
+  audio?: {
+    sourceSampleRate: number;
+    sourceSamples: number;
+    masterSampleRate: number;
+    masterSamples: number;
+    /** Silence added at the end so the playback copy is never shorter. */
+    paddedSamples: number;
+    /** Worst difference between copy and source in any 20 ms of speech (dB; null = identical). */
+    speechDifferenceDb: number | null;
+  };
+  /** Set when a take that was already paid for was reused (npm run narration:recover). */
+  recovered?: { from: string; audioSha256: string; at: string };
   createdAt: string;
 };
 
@@ -52,7 +66,8 @@ export async function prepareNarration(input: PrepareInput): Promise<{ meta: Nar
   const hash = narrationHash(episode);
 
   const master = await masterNarration(input.sourceFile, paths.narrationWav);
-  ok(`Mastered narration: ${formatSeconds(master.outputSeconds)}, gain ${master.gainDb.toFixed(1)} dB (length unchanged)`);
+  ok(`Mastered narration: ${formatSeconds(master.outputSeconds)}, gain ${master.gainDb.toFixed(1)} dB, every sample kept`);
+  console.log(`   ${describeMaster(master.check)}`);
 
   let characterAlignment = input.alignment ?? null;
   let timingSource: AlignmentSource = input.timingSource ?? "elevenlabs";
@@ -87,6 +102,16 @@ export async function prepareNarration(input: PrepareInput): Promise<{ meta: Nar
     durationSeconds: master.outputSeconds,
     masterGainDb: Number(master.gainDb.toFixed(2)),
     timingSource,
+    audio: {
+      sourceSampleRate: master.check.sourceRate,
+      sourceSamples: master.check.sourceSamples,
+      masterSampleRate: master.check.masterRate,
+      masterSamples: master.check.masterSamples,
+      paddedSamples: master.check.paddedSamples,
+      speechDifferenceDb: Number.isFinite(master.check.comparison.worstDifferenceDb)
+        ? Number(master.check.comparison.worstDifferenceDb.toFixed(1))
+        : null,
+    },
     createdAt: alignment.createdAt,
     ...input.extra,
   };
