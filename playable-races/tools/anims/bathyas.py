@@ -34,6 +34,9 @@ R = "bathyas"
 NECK = tuple(float(v) for v in mb._neck("base"))                 # the head pivots here (the base of the neck)
 SHOULDER = {s: tuple(float(v) for v in mb._shoulder("base", s)) for s in (-1, 1)}
 RIG = Rig("trunk", (0, 12, 0), [("head_g", NECK), ("r_arm_g", SHOULDER[-1]), ("l_arm_g", SHOULDER[1])])
+# the chest hinges in the trunk; the neck and the arms hang from the player's skeleton, so they ride along with it
+CHEST_RIG = Rig("chest", tuple(float(v) for v in mb.CHEST_PIVOT),
+                [("head_g", NECK), ("r_arm_g", SHOULDER[-1]), ("l_arm_g", SHOULDER[1])])
 HUNT = {"unshackled", "daybreak"}                                 # drawn: the hunter's breath and heart
 NPL = len(PLATES)
 PL = [f"plate{k}" for k in range(NPL)]
@@ -49,10 +52,17 @@ LID = 1.7                                                         # heavy, half-
 ATK2 = "math.sin(math.clamp((v.attack_time ?? 0) * 1.3 - 0.15, 0, 1) * 180)"   # the swing, a beat later
 STRIKE_R = f"math.pow(math.max(0, -math.cos({PH})), 8)"          # footfalls: right at phase 180, left at 0
 STRIKE_L = f"math.pow(math.max(0, math.cos({PH})), 8)"
-# solved left-arm gestures (arm group, upper arm, forearm): the hand in front of the eyes; the hand on the hilt
-VISOR = {"l_arm_g": (-6.6, 4.3, -35.4), "l_upper": (-79.0, 0.0, 0.0), "l_fore": (-30.6, 0.0, 0.0)}
-VISOR_LURE = {"l_arm_g": (-13.6, 25.7, -9.1), "l_upper": (-82.8, 0.0, 0.0), "l_fore": (-29.5, 0.0, 0.0)}
-HILT = {"l_arm_g": (-50.7, 51.3, 0.7), "l_upper": (11.8, 0.0, 0.0), "l_fore": (-24.8, 0.0, 0.0)}
+# solved left-arm gestures, turned about his own shoulder joint (l_upper) - never about the player's arm pivot,
+# which sits 6.6 px lower and would slide the shoulder out of its socket: the hand in front of the eyes, the
+# hand on the hilt (+ the wrist that keeps the palm facing the same way)
+VISOR = {"l_upper": (-105.2, 17.1, -39.9), "l_fore": (-20.5, 0.0, 0.0)}
+VISOR_HAND = (-21.1, 0.8, 6.7)
+VISOR_LURE = {"l_upper": (-103.3, 31.4, -11.9), "l_fore": (-27.6, 0.0, 0.0)}
+VISOR_LURE_HAND = (-26.2, 0.1, 13.9)
+HILT = {"l_upper": (-16.1, 52.6, 4.0), "l_fore": (-44.9, 0.0, 0.0)}
+# known lifetimes of the temporary forms (src/races/bathyas.ts tempForm ticks / 20): their exits are keyed on them
+LURE_END, MAW_END, BASTION_END, DAYBREAK_END = 1.6, 0.9, 6.0, 2.5
+OVERLOAD = 6.5                                                    # the ultimate's stage I runs in the lure form
 
 
 def _n(k):
@@ -116,6 +126,51 @@ def stagger(model, name: str, frm: str, to: str, length: float, order: Dict[str,
         if not np.allclose(dt, 0, atol=0.01):
             kl.pos(bn, {t: tuple(dt * k) for t, k in env.items()})
     return kl
+
+
+def chest_keys(kl: KeyLayer, keys: Dict[float, tuple]) -> None:
+    """Keyframed chest pitch / twist / roll that carries the head (at the neck base) and the arms (at the shoulders)
+    along - they hang from the player's skeleton, not from the chest, and would otherwise slide off it."""
+    body_keys(kl, CHEST_RIG, {t: {"lean": v[0], "twist": v[1], "roll": v[2]} for t, v in keys.items()})
+
+
+def outro(model, name: str, frm: str, to: str, length: float, order: Dict[str, tuple], default: tuple) -> KeyLayer:
+    """The exit of a temporary form, keyed on its known lifetime: every bone whose rest pose differs travels
+    from this form's pose into `to`'s with its own (start, duration), eased in and out, and then holds there
+    (hold_on_last_frame) - so when the form is swapped for `to`, nothing jumps."""
+    kl = KeyLayer(R, name, length, loop="hold")
+    for bn in model.order:
+        if not (model.bone_in_variant(bn, frm) and model.bone_in_variant(bn, to)):
+            continue
+        b = model.bones[bn]
+        dr = np.array(model.bone_rot(bn, to), float) - np.array(model.bone_rot(bn, frm), float)
+        t_to = np.array(b.variant[to][0], float) if to in b.variant else np.zeros(3)
+        t_from = np.array(b.variant[frm][0], float) if frm in b.variant else np.zeros(3)
+        dt = t_to - t_from
+        if np.allclose(dr, 0, atol=0.01) and np.allclose(dt, 0, atol=0.01):
+            continue
+        st, du = order.get(bn, default)
+        env = {0.0: 0.0, st: 0.0, st + du * 0.5: 0.5, st + du: 1.0, length: 1.0}
+        if not np.allclose(dr, 0, atol=0.01):
+            kl.rot(bn, {t: tuple(dr * k) for t, k in env.items()})
+        if not np.allclose(dt, 0, atol=0.01):
+            kl.pos(bn, {t: tuple(dt * k) for t, k in env.items()})
+    return kl
+
+
+def gated_keys(name: str, length: float, chans: Dict[str, tuple], loop="hold"):
+    """Keyframed (Catmull-Rom) rotations whose every value is multiplied by its gate expression (a free hand):
+    {bone: ({t: rot}, gate)}.  The keys are Molang, so the gesture lets go the moment an item is equipped."""
+    a = A(R, name, loop=loop, length=length)
+    for bn, (keys, gate) in chans.items():
+        a.bone(bn, rot={t: {"post": [f"{n(v)} * {gate}" if abs(v) > 1e-6 else 0 for v in rot],
+                            "lerp_mode": "catmullrom"} for t, rot in sorted(keys.items())})
+    return a
+
+
+def envelope(rot, env: Dict[float, float]) -> Dict[float, tuple]:
+    """{t: weight} -> {t: weight * rot}."""
+    return {t: tuple(float(w) * np.array(rot, float)) for t, w in env.items()}
 
 
 def pulse(period: float, rise: float, hold: float, fall: float, off: float, stem: str) -> str:
@@ -243,7 +298,7 @@ def anims(model) -> Dict[str, object]:
         e = EMPTY_R if side < 0 else EMPTY_L
         lagg = CSTEP(-55) if side < 0 else f"-{CSTEP(-55)}"
         loco.rot(f"{p}_fore", prod(lin([(-9, f"math.max(0, {lagg})"), (-10, SPR)]), s_, e))   # the forearm trails
-        loco.rot(f"{p}_arm_g", prod(-10, ss, e), None, mirror(side, prod(8, ss, e)))         # sprint: arms low and out
+        loco.rot(f"{p}_upper", prod(-10, ss, e), None, mirror(side, prod(8, ss, e)))         # sprint: arms low and out
         loco.rot(f"{p}_pauldron", None, None, mirror(side, prod(1.6, f"math.sin({PH} * 2 - 60)", s_)))
         for k in range(2):
             loco.rot(f"gill_{p}{k}", None, mirror(side, prod(-10, ss)), None)
@@ -252,7 +307,7 @@ def anims(model) -> Dict[str, object]:
     roll = shared(f"{s_} * (3.2 * {STEP()} + 3 * {TURN})", "plr_bt")      # the weight rolls over each stance leg
     twist = shared(f"0.12 * {LOOK} - 4 * {CSTEP()} * {s_}", "plr_bt")
     body(loco, rig, lean=lean, roll=roll, twist=twist)
-    loco.rot("chest", lin([(1.6, s_), (4.0, ss), (1.6, impact)]))
+    body(loco, CHEST_RIG, lean=shared(lin([(1.6, s_), (4.0, ss), (1.6, impact)]), "plr_bt"))   # the hump leads
     loco.rot("head_g", lin([(2.5, s_), (-6.0, ss), (2.0, prod(f"math.sin({PH} * 2 - 50)", s_))]),
              prod(2.5, CSTEP(-30), s_), mul(-0.6, roll))          # the head sways low and lags the body
     loco.pos("head_g", None, None, prod(-1.0, ss))
@@ -287,7 +342,7 @@ def anims(model) -> Dict[str, object]:
         air.rot(f"{p}_leg_g", lin([(-16, RISE), (-5, FALL)]))
         air.rot(f"{p}_shin", lin([(28, RISE), (8, FALL)]))
         air.rot(f"{p}_foot", lin([(-10, RISE), (12, FALL)]))
-        air.rot(f"{p}_arm_g", prod(-9, FALL, e), None, mirror(side, prod(lin([(6, RISE), (15, FALL)]), e)))
+        air.rot(f"{p}_upper", prod(-9, FALL, e), None, mirror(side, prod(lin([(6, RISE), (15, FALL)]), e)))
         air.rot(f"{p}_fin0", lin([(8, RISE), (-12, FALL)]))
         air.rot(f"barbel_{p}0", lin([(10, RISE), (-18, FALL)]))
         for k in range(3):
@@ -379,13 +434,13 @@ def anims(model) -> Dict[str, object]:
     swim = Layer(r, "swim", loop=True)
     wf = 0.75                                                     # Hz: a slow, powerful undulation
     swim.rot("trunk", None, None, mul(4.5, S(wf)))
-    swim.rot("chest", lin([(-6, 1)]), None, mul(3.5, S(wf, 50)))
+    body(swim, CHEST_RIG, lean=-6.0, roll=mul(3.5, S(wf, 50)))
     for p, side in SIDES:
         e = EMPTY_R if side < 0 else EMPTY_L
         swim.rot(f"{p}_leg_g", lin([(12, 1), (10, S(wf, -70 if side < 0 else 110))]))     # the legs kick like a tail
         swim.rot(f"{p}_shin", lin([(16, 1), (9, S(wf, -110 if side < 0 else 70))]))
         swim.rot(f"{p}_foot", lin([(28, 1), (12, S(wf, -150 if side < 0 else 30))]))      # wide feet as flukes
-        swim.rot(f"{p}_arm_g", prod(lin([(10, 1), (6, S(wf, 30))]), e), None, mirror(side, prod(-6, e)))   # arms trail
+        swim.rot(f"{p}_upper", prod(lin([(10, 1), (6, S(wf, 30))]), e), None, mirror(side, prod(-6, e)))   # arms trail
         swim.rot(f"{p}_fore", prod(lin([(14, 1), (8, S(wf, -20))]), e))
         swim.rot(f"{p}_fin0", lin([(-14, 1), (8, S(wf * 2, 40))]))
         follow_chain(swim, [f"barbel_{p}0", f"barbel_{p}1"], "x", 8.0, wf, lag=60, falloff=1.4, base=(-20, -10))
@@ -408,7 +463,7 @@ def anims(model) -> Dict[str, object]:
     shade = KeyLayer(r, "fidget_shield", 4.8)
     env = {0: 0, 0.35: 0, 0.95: 1.06, 1.15: 1, 3.3: 1, 3.55: 0.92, 4.2: 0, 4.8: 0}
     pose_keys(shade, VISOR, env)
-    shade.rot("l_hand", {0: (0, 0, 0), 0.9: (-30, 0, 20), 3.4: (-30, 0, 20), 4.1: (0, 0, 0), 4.8: (0, 0, 0)})
+    shade.rot("l_hand", {0: (0, 0, 0), 0.9: VISOR_HAND, 3.4: VISOR_HAND, 4.1: (0, 0, 0), 4.8: (0, 0, 0)})
     for k in range(3):
         shade.rot(f"l_finger{k}", {0: (0, 0, 0), 0.9: ((k - 1) * 8, 0, 18), 3.4: ((k - 1) * 8, 0, 18), 4.1: (0, 0, 0)})
     shade.rot("head_g", {0: (0, 0, 0), 0.35: (-4, 0, 0), 0.9: (8, 16, 5), 1.6: (6, 19, 6), 2.3: (8, 13, 4),
@@ -426,7 +481,7 @@ def anims(model) -> Dict[str, object]:
 
     # 2. a long, irritated sigh: the hump rises and holds, then everything sags; bubbles leave the gills and jaw
     sigh = KeyLayer(r, "fidget_sigh", 5.2)
-    sigh.rot("chest", {0: (0, 0, 0), 1.3: (-6, 0, 0), 1.9: (-6.5, 0, 0), 3.2: (5, 0, 0), 4.2: (4, 0, 0), 5.2: (0, 0, 0)})
+    chest_keys(sigh, {0: (0, 0, 0), 1.3: (-6, 0, 0), 1.9: (-6.5, 0, 0), 3.2: (5, 0, 0), 4.2: (4, 0, 0), 5.2: (0, 0, 0)})
     for k, pl in enumerate(PL):
         nn = _n(k)
         sigh.pos(pl, {0: (0, 0, 0), 1.3 + 0.03 * k: tuple(nn * 0.45), 1.9: tuple(nn * 0.45),
@@ -457,7 +512,7 @@ def anims(model) -> Dict[str, object]:
         doze.scale(f"lid_{p}", {0: 1, 1.2: (1, 1.5, 1), 2.4: (1, 1.85, 1), 3.55: (1, 1.88, 1), 3.64: (1, 0.35, 1),
                                 4.3: (1, 0.45, 1), 4.9: (1, 1.0, 1), 5.6: 1})
         doze.rot(f"brow_{p}", {0: (0, 0, 0), 3.58: (0, 0, 0), 3.68: (-6, 0, sg * 8), 4.4: (-3, 0, sg * 4), 5.0: (0, 0, 0)})
-        doze.rot(f"{p}_arm_g", {0: (0, 0, 0), 3.55: (0, 0, 0), 3.66: (-9, 0, -sg * 7), 3.95: (0, 0, 0), 5.6: (0, 0, 0)})
+        doze.pos(f"{p}_pauldron", {0: (0, 0, 0), 3.55: (0, 0, 0), 3.65: (0, 0.45, 0), 3.95: (0, -0.1, 0), 4.4: (0, 0, 0)})
         for k in range(3):
             doze.rot(f"{p}_finger{k}", {0: (0, 0, 0), 3.55: (0, 0, 0), 3.66: ((k - 1) * 16, 0, -sg * 12), 4.1: (0, 0, 0)})
         doze.rot(f"{p}_fin0", {0: (0, 0, 0), 3.5: (4, 0, 0), 3.64: (-14, 0, 0), 4.2: (2, 0, 0), 4.8: (0, 0, 0)})
@@ -496,11 +551,27 @@ def anims(model) -> Dict[str, object]:
     D = np.array(mb._D, float)
     intro = {}
 
-    # base - RETURN: the blade slides the last of the way home, he flinches, then a long grumbling exhale
+    # base - RETURN: the blade slides the last of the way home, he flinches, then a long grumbling exhale.  Every
+    # temporary form eases back into the base pose before it ends; the drawn form cannot (its end is the player's
+    # choice), so base begins a little sunk in the knees - 40% of the predator's crouch - and the weight settles
+    # back up as the blade seats: the crouch never pops, and after the other forms it reads as a settling.
     ib = KeyLayer(r, "intro_base", 1.5)
+    settle = {0.0: 0.4, 0.1: 0.36, 0.3: 0.12, 0.42: 0.0, 1.5: 0.0}
+    for bn in ("r_leg_g", "l_leg_g", "r_shin", "l_shin", "r_foot", "l_foot", "torso_g", "head_g", "tail_g", "r_upper",
+               "l_upper"):
+        dr = np.array(model.bone_rot(bn, "unshackled"), float) - np.array(model.bone_rot(bn, "base"), float)
+        if bn.endswith("_upper"):
+            dr = np.zeros(3)                                       # the shoulder joint sinks with the trunk, rigidly
+        vb = model.bones[bn].variant
+        dt = ((np.array(vb["unshackled"][0], float) if "unshackled" in vb else np.zeros(3))
+              - (np.array(vb["base"][0], float) if "base" in vb else np.zeros(3)))
+        if not np.allclose(dr, 0, atol=0.01):
+            ib.rot(bn, envelope(dr, settle))
+        if not np.allclose(dt, 0, atol=0.01):
+            ib.pos(bn, envelope(dt, settle))
     ib.pos("sword", {0.0: tuple(-D * 4.0), 0.12: tuple(-D * 4.0), 0.24: tuple(-D * 2.6), 0.32: tuple(-D * 0.6),
                      0.36: tuple(D * 0.25), 0.44: (0, 0, 0), 1.5: (0, 0, 0)})
-    ib.rot("chest", {0: (0, 0, 0), 0.34: (0, 0, 0), 0.4: (8, 0, 0), 0.62: (4, 0, 0), 1.0: (-1.5, 0, 0), 1.5: (0, 0, 0)})
+    chest_keys(ib, {0: (0, 0, 0), 0.34: (0, 0, 0), 0.4: (8, 0, 0), 0.62: (4, 0, 0), 1.0: (-1.5, 0, 0), 1.5: (0, 0, 0)})
     ib.rot("head_g", {0: (0, 0, 0), 0.34: (0, 0, 0), 0.4: (12, 0, 0), 0.7: (5, 0, 0), 1.05: (-3, 0, 0), 1.5: (0, 0, 0)})
     ib.rot("jaw", {0: (0, 0, 0), 0.34: (0, 0, 0), 0.42: (16, 0, 0), 0.8: (4, 0, 0), 1.5: (0, 0, 0)})
     ib.scale("corona_f", {0: 0.7, 0.34: 0.8, 0.4: 1.7, 0.7: 1.1, 1.5: 1})
@@ -516,8 +587,10 @@ def anims(model) -> Dict[str, object]:
             ib.rot(f"gill_{p}{k}", {0: (0, 0, 0), 0.9: (0, 0, 0), 1.1: (0, sg * 20, 0), 1.4: (0, 0, 0), 1.5: (0, 0, 0)})
     ib.particle(0.36, "sunmotes", "wound").particle(1.0, "bubbles", "gills")
     intro["base"] = ib
+    holds, outros, extra = {}, {}, {v: [] for v in mb.VARIANTS}
 
-    # lure - the sun blazes: a brace, the flare, he recoils from his own light, squints, the hand comes up
+    # lure - the sun blazes: a brace, the flare, he recoils from his own light, squints, the off hand comes up as a
+    # visor; from 1.2 s it all eases back into the base pose, so the end of the form (1.6 s) changes nothing
     il = stagger(model, "intro_lure", "base", "lure", 0.75, {"chest": (0.1, 0.35), "skull": (0.12, 0.4)},
                  default=(0.1, 0.4))
     il.scale("corona_f", {0.0: 0.75, 0.1: 0.7, 0.22: 1.7, 0.45: 1.2, 0.75: 1.12})
@@ -526,10 +599,13 @@ def anims(model) -> Dict[str, object]:
         il.scale(f"lid_{p}", {0.0: 1, 0.12: (1, 0.8, 1), 0.2: (1, 1.88, 1), 0.75: (1, 1.75, 1)})
     il.particle(0.18, "glare", "lure_c").particle(0.2, "sunmotes", "wound")
     intro["lure"] = il
-    # the off hand rises as a visor - only while it holds nothing (an expression envelope, not keys: it must
-    # release the moment an item is equipped)
-    holds = {"lure": gated_hold("lure_hold", 0.8, 0.14, 0.5, {**{bn: (rot, FREE_L) for bn, rot in VISOR_LURE.items()},
-                                                              "l_hand": ((-30.0, 0.0, 20.0), FREE_L)})}
+    # the visor - Molang-gated keys (only while the off hand is empty: it lets go the moment an item is equipped)
+    up = {0.0: 0, 0.14: 0, 0.3: 0.7, 0.44: 1.05, 0.5: 1.0, LURE_END - 0.38: 1.0, LURE_END - 0.2: 0.4,
+          LURE_END - 0.06: 0.0, LURE_END: 0.0}
+    holds["lure"] = gated_keys("lure_hold", LURE_END, {bn: (envelope(rot, up), FREE_L) for bn, rot in
+                                                       {**VISOR_LURE, "l_hand": VISOR_LURE_HAND}.items()})
+    outros["lure"] = outro(model, "outro_lure", "lure", "base", LURE_END, {"skull": (LURE_END - 0.42, 0.38)},
+                           (LURE_END - 0.4, 0.34))
     lure_loop = Layer(r, "lure_loop", loop=True)
     lure_loop.uscale("corona_f", lin([(1, 1), (0.1, S(0.8)), (0.07, hb)]))
     lure_loop.uscale("corona_b", lin([(1, 1), (0.08, S(0.8, 60))]))
@@ -539,7 +615,75 @@ def anims(model) -> Dict[str, object]:
     lure_loop.rot("head_g", None, mul(-3.5, S(0.55)), None)                  # an irritated slow shake
     lure_loop.rot("jaw", mul(4, f"math.max(0, {S(1.1)})"))
 
-    # maw - the jaw shoots out: a pull-back, then the snap
+    # ABYSSAL DAYBREAK, stage I (Solar Overload) runs in the lure form for 6.5 s; the lure ability's form is gone
+    # by 1.85 s, so from 1.9 s on the lure form IS the overload: he folds over the swelling sun and fights it, both
+    # hands clamped on the chest, the plates prised open by the light, every surge harder than the last.  The
+    # shoulders come from the player pose bat_overload; the twist and the elbows are ours (free hands only).
+    t0 = 1.9
+    surges = (2.75, 4.0, 5.05, 5.95)
+    ov = KeyLayer(r, "overload", OVERLOAD, loop="hold")
+
+    def hunch(t):
+        return 7.0 + 3.0 * (t - 2.6) / 3.6
+    chest = {0: (0, 0, 0), t0: (0, 0, 0), 2.6: (7, 0, 0)}
+    head = {0: (0, 0, 0), t0: (0, 0, 0), 2.6: (12, 0, 0)}
+    jaw = {0: (0, 0, 0), t0: (0, 0, 0), 2.6: (2, 0, 0)}
+    cf = {0: 1, t0: 1, 2.6: 1.12}
+    cb = {0: 1, t0: 1, 2.6: 1.08}
+    lid = {0: 1, t0: 1, 2.6: (1, 1.06, 1)}
+    for i, s in enumerate(surges):
+        h = hunch(s)
+        chest.update({s - 0.08: (h, 0, 0), s + 0.1: (h + 4.5, 0, 0.8 * (-1) ** i), s + 0.55: (h + 0.6, 0, 0)})
+        head.update({s - 0.08: (12, 0, 0), s + 0.08: (6, 3 * (-1) ** i, 0), s + 0.5: (13, 0, 0)})
+        jaw.update({s - 0.04: (2, 0, 0), s + 0.08: (16 + 3 * i, 0, 0), s + 0.5: (4, 0, 0)})
+        cf.update({s - 0.04: 1.12 + 0.1 * i, s + 0.08: 1.42 + 0.1 * i, s + 0.5: 1.2 + 0.1 * i})
+        cb.update({s - 0.02: 1.08 + 0.08 * i, s + 0.1: 1.35 + 0.08 * i, s + 0.55: 1.15 + 0.08 * i})
+        lid.update({s - 0.04: (1, 1.06, 1), s + 0.06: (1, 1.1, 1), s + 0.6: (1, 1.06, 1)})
+        ov.particle(s + 0.06, "sunmotes", "wound")
+    chest.update({6.3: (11, 0, 0), OVERLOAD: (10, 0, 0)})
+    head.update({6.3: (11, 0, 0), OVERLOAD: (10, 0, 0)})
+    jaw.update({OVERLOAD: (6, 0, 0)})
+    cf.update({6.3: 1.5, OVERLOAD: 1.55})
+    cb.update({6.3: 1.4, OVERLOAD: 1.4})
+    lid.update({OVERLOAD: (1, 1.1, 1)})
+    chest_keys(ov, chest)
+    ov.rot("head_g", head).rot("jaw", jaw).scale("corona_f", cf).scale("corona_b", cb)
+    for k, pl in enumerate(PL):                                    # the light prises the shell open, surge by surge
+        nn = _n(k)
+        keys = {0: (0, 0, 0), t0: (0, 0, 0), 2.6: tuple(nn * 0.06)}
+        for i, s in enumerate(surges):
+            keys.update({s + 0.04 + 0.02 * k: tuple(nn * (0.12 + 0.09 * i)), s + 0.5: tuple(nn * (0.08 + 0.07 * i))})
+        keys.update({OVERLOAD: tuple(nn * 0.35)})
+        ov.pos(pl, keys)
+    for p, side in SIDES:
+        sg = -1 if side < 0 else 1
+        ov.scale(f"lid_{p}", lid)
+        ov.rot(f"brow_{p}", {0: (0, 0, 0), t0: (0, 0, 0), 2.6: (6, 0, -sg * 10), OVERLOAD: (7, 0, -sg * 12)})
+        fin = {0: (0, 0, 0), t0: (0, 0, 0)}
+        gill = {0: (0, 0, 0), t0: (0, 0, 0)}
+        for s in surges:
+            fin.update({s: (0, 0, 0), s + 0.1: (-12, 0, 0), s + 0.6: (-2, 0, 0)})
+            gill.update({s: (0, 0, 0), s + 0.1: (0, sg * 22, 0), s + 0.6: (0, sg * 4, 0)})
+        ov.rot(f"{p}_fin0", fin)
+        for k in range(2):
+            ov.rot(f"gill_{p}{k}", gill)
+    ov.particle(6.2, "glare", "lure_c")
+    clutch = {"r": {"r_upper": (0.0, -70.6, 0.0), "r_fore": (-35.0, 0.0, 0.0)},
+              "l": {"l_upper": (0.0, 72.4, 0.0), "l_fore": (-66.0, 0.0, 0.0)}}
+    grab = {0: 0, t0: 0, 2.25: 0.6, 2.55: 1.04, 2.65: 1.0}
+    let_go = {**grab, 6.0: 1.0, 6.3: 0.25, OVERLOAD: 0.0}                  # the right hand lets go before the tear
+    hold_on = {**grab, OVERLOAD: 1.0}                                      # the left keeps its grip: it tears
+    arms = {}
+    for p, env in (("r", let_go), ("l", hold_on)):
+        gate = FREE_R if p == "r" else FREE_L
+        for bn, rot in clutch[p].items():
+            arms[bn] = (envelope(rot, env), gate)
+        for k in range(3):
+            arms[f"{p}_finger{k}"] = (envelope((0.0, 0.0, (-1 if p == "r" else 1) * 46.0), env), gate)
+    extra["lure"] += [("outro_lure", None), ("overload", TP), ("overload_arms", TP)]
+    ov_arms = gated_keys("overload_arms", OVERLOAD, arms)
+
+    # maw - the jaw shoots out: a pull-back, then the snap; eased back into the base pose before the form ends
     imw = stagger(model, "intro_maw", "base", "maw", 0.5, {"jaws": (0.1, 0.16), "jaw": (0.12, 0.2), "chest": (0.06, 0.22),
                                                            "skull": (0.06, 0.2)}, over=-0.18, default=(0.06, 0.24))
     imw.pos("jaws", {0.0: (0, 0, 0), 0.08: (0, 0.15, 1.1), 0.17: (0, -0.1, -1.2), 0.26: (0, 0, 0.3), 0.5: (0, 0, 0)})
@@ -550,12 +694,19 @@ def anims(model) -> Dict[str, object]:
     maw_loop.rot("jaw", mul(-12, f"math.max(0, {S(1.6)})"))
     maw_loop.pos("jaws", None, None, mul(-0.5, S(1.6, 60)))
     maw_loop.rot("head_g", mul(3, S(1.6, 100)))
-    holds["maw"] = gated_hold("maw_hold", 0.4, 0.04, 0.22, {
-        **{f"{p}_arm_g": ((10.0, 0.0, 7.0 * -side), FREE_R if side < 0 else FREE_L) for p, side in SIDES},   # swept back
-        **{f"{p}_finger{k}": (((k - 1) * 12.0, 0.0, -side * 10.0), FREE_R if side < 0 else FREE_L)
+    up = {0: 0, 0.04: 0, 0.13: 0.7, 0.19: 1.05, 0.22: 1.0, MAW_END - 0.3: 1.0, MAW_END - 0.16: 0.45, MAW_END - 0.04: 0.0,
+          MAW_END: 0.0}
+    holds["maw"] = gated_keys("maw_hold", MAW_END, {
+        **{f"{p}_upper": (envelope((10.0, 0.0, 7.0 * -side), up), FREE_R if side < 0 else FREE_L) for p, side in SIDES},
+        **{f"{p}_finger{k}": (envelope(((k - 1) * 12.0, 0.0, -side * 10.0), up), FREE_R if side < 0 else FREE_L)
            for p, side in SIDES for k in range(3)}})
+    outros["maw"] = outro(model, "outro_maw", "maw", "base", MAW_END,
+                          {"jaws": (MAW_END - 0.34, 0.24), "jaw": (MAW_END - 0.35, 0.22), "chest": (MAW_END - 0.3, 0.26),
+                           "skull": (MAW_END - 0.32, 0.26)}, (MAW_END - 0.3, 0.27))
+    extra["maw"].append(("outro_maw", None))
 
-    # bastion - the plates close from the tail up, the shoulders slide in over him, the head tucks
+    # bastion - the plates close from the tail up, the shoulders slide in over him, the head tucks; at the end of
+    # the six seconds they reopen from the nape down
     order = {f"plate{k}": (0.04 * (NPL - 1 - k), 0.26) for k in range(NPL)}
     order.update({"r_pauldron": (0.24, 0.24), "l_pauldron": (0.27, 0.24), "skull": (0.12, 0.34), "chest": (0.05, 0.4),
                   "r_fin0": (0.2, 0.3), "l_fin0": (0.22, 0.3)})
@@ -569,30 +720,39 @@ def anims(model) -> Dict[str, object]:
         w = mul(0.07, S(0.9, -k * 35))
         bastion_loop.pos(pl, None, mul(nn[1], w), mul(nn[2], w))
     bastion_loop.uscale("corona_b", lin([(1, 1), (0.12, hb_h)]))
-    holds["bastion"] = gated_hold("bastion_hold", 0.8, 0.12, 0.5, {
-        **{f"{p}_fore": ((-34.0, 0.0, 0.0), FREE_R if side < 0 else FREE_L) for p, side in SIDES},  # folded across him
-        **{f"{p}_finger{k}": ((0.0, 0.0, side * -30.0), FREE_R if side < 0 else FREE_L) for p, side in SIDES for k in range(3)}})
+    up = {0: 0, 0.12: 0, 0.33: 0.7, 0.45: 1.05, 0.5: 1.0, BASTION_END - 0.55: 1.0, BASTION_END - 0.3: 0.45,
+          BASTION_END - 0.08: 0.0, BASTION_END: 0.0}
+    holds["bastion"] = gated_keys("bastion_hold", BASTION_END, {
+        **{f"{p}_fore": (envelope((-34.0, 0.0, 0.0), up), FREE_R if side < 0 else FREE_L) for p, side in SIDES},
+        **{f"{p}_finger{k}": (envelope((0.0, 0.0, side * -30.0), up), FREE_R if side < 0 else FREE_L)
+           for p, side in SIDES for k in range(3)}})
+    order = {f"plate{k}": (BASTION_END - 0.62 + 0.035 * k, 0.3) for k in range(NPL)}
+    order.update({"r_pauldron": (BASTION_END - 0.6, 0.3), "l_pauldron": (BASTION_END - 0.58, 0.3),
+                  "r_fin0": (BASTION_END - 0.5, 0.36), "l_fin0": (BASTION_END - 0.48, 0.36),
+                  "chest": (BASTION_END - 0.56, 0.46), "skull": (BASTION_END - 0.5, 0.42)})
+    outros["bastion"] = outro(model, "outro_bastion", "bastion", "base", BASTION_END, order, (BASTION_END - 0.55, 0.43))
+    extra["bastion"].append(("outro_bastion", None))
     for p, side in SIDES:
         bastion_loop.rot(f"{p}_pauldron", None, None, mirror(side, mul(0.6, S(1.2))))
     body(bastion_loop, rig, roll=mul(0.5, S(0.4)))
     bastion_loop.particle(0.0, "sunmotes", "back")
     bastion_loop.kw["length"] = 1.5
 
-    # unshackled - TORN OUT: the wound bursts open, he rears back, then sinks into the predator's crouch
+    # unshackled - TORN OUT: the wound bursts open, he rears back, then sinks into the predator's crouch (the arm
+    # that tore the sun out is the player pose bat_draw's: the sun is an item in that hand now)
     iu_order = {"chest": (0.18, 0.55), "skull": (0.22, 0.5), "r_leg_g": (0.3, 0.45), "l_leg_g": (0.3, 0.45),
                 "r_shin": (0.32, 0.45), "l_shin": (0.32, 0.45), "r_foot": (0.32, 0.45), "l_foot": (0.32, 0.45),
                 "torso_g": (0.3, 0.45), "head_g": (0.3, 0.45), "tail_g": (0.3, 0.45)}
     iu = stagger(model, "intro_unshackled", "base", "unshackled", 1.2, iu_order, default=(0.25, 0.5))
     iu.scale("corona_f", {0.0: 0.3, 0.06: 2.4, 0.3: 1.35, 0.7: 1.08, 1.2: 1.0})
     iu.scale("corona_b", {0.0: 0.5, 0.1: 2.0, 0.4: 1.2, 1.2: 1.0})
-    iu.rot("chest", {0.0: (0, 0, 0), 0.08: (-16, 0, 0), 0.25: (-12, 0, 0), 0.6: (2, 0, 0), 1.2: (0, 0, 0)})
+    chest_keys(iu, {0.0: (0, 0, 0), 0.08: (-16, 0, 0), 0.25: (-12, 0, 0), 0.6: (2, 0, 0), 1.2: (0, 0, 0)})
     iu.rot("head_g", {0.0: (0, 0, 0), 0.08: (-22, 0, 0), 0.3: (-14, 0, 0), 0.7: (3, 0, 0), 1.2: (0, 0, 0)})
     iu.rot("jaw", {0.0: (0, 0, 0), 0.08: (30, 0, 0), 0.4: (14, 0, 0), 0.8: (0, 0, 0), 1.2: (0, 0, 0)})
     for p, side in SIDES:
         sg = -1 if side < 0 else 1
         iu.scale(f"lid_{p}", {0.0: 1, 0.06: (1, 0.4, 1), 0.5: (1, 0.4, 1), 0.8: (1, 1.0, 1), 1.2: 1})
         iu.rot(f"{p}_fin0", {0.0: (0, 0, 0), 0.08: (-16, 0, 0), 0.4: (-6, 0, 0), 0.8: (2, 0, 0), 1.2: (0, 0, 0)})
-        iu.rot(f"{p}_arm_g", {0.0: (0, 0, 0), 0.1: (-8, 0, -sg * 10), 0.5: (-2, 0, -sg * 3), 1.0: (0, 0, 0)})
     for k, pl in enumerate(PL):
         nn = _n(k)
         iu.pos(pl, {0: (0, 0, 0), 0.06 + 0.02 * k: tuple(nn * 0.8), 0.4 + 0.02 * k: tuple(nn * 0.1), 0.8: (0, 0, 0),
@@ -601,7 +761,7 @@ def anims(model) -> Dict[str, object]:
     intro["unshackled"] = iu
     unshackled_loop = Layer(r, "unshackled_loop", loop=True)       # the hunter: low, still, claws ready
     holds["unshackled"] = gated_hold("unshackled_hold", 1.2, 0.45, 0.95, {
-        **{f"{p}_arm_g": ((-10.0, 0.0, -7.0 * side), FREE_R if side < 0 else FREE_L) for p, side in SIDES},
+        **{f"{p}_upper": ((-10.0, 0.0, -7.0 * side), FREE_R if side < 0 else FREE_L) for p, side in SIDES},
         **{f"{p}_fore": ((-14.0, 0.0, 0.0), FREE_R if side < 0 else FREE_L) for p, side in SIDES},
         **{f"{p}_finger{k}": (((k - 1) * 12.0, 0.0, side * 18.0), FREE_R if side < 0 else FREE_L)
            for p, side in SIDES for k in range(3)}})
@@ -612,17 +772,28 @@ def anims(model) -> Dict[str, object]:
     unshackled_loop.rot("jaw", lin([(3, 1), (2, S(0.3))]))
     unshackled_loop.rot("head_g", mul(1.2, S(0.12)), mul(4.0, S(0.07, 40)), None)   # slowly tracking
 
-    # daybreak - he hunches over the overloading sun, then arches back as the light floods out of every seam
+    # daybreak - SOLAR EXECUTION, out of the overload's clutch: the left fist tears the sun from his chest, he winds
+    # up, sweeps it through the dark and drives it into the ground as the field erupts (1.0 s); the light floods
+    # out of every seam.  It starts from the overload's last pose; the shoulders are the player pose
+    # bat_execution's, the elbow and the fist are ours (free off hand only - the sun is only there then).
     order = {f"plate{k}": (0.32 + 0.05 * k, 0.35) for k in range(NPL)}
     order.update({"chest": (0.25, 0.5), "skull": (0.3, 0.5), "r_fin0": (0.4, 0.4), "l_fin0": (0.42, 0.4),
-                  "r_pauldron": (0.35, 0.4), "l_pauldron": (0.37, 0.4)})
-    idb = stagger(model, "intro_daybreak", "lure", "daybreak", 1.3, order, default=(0.28, 0.5))
-    idb.rot("chest", {0.0: (0, 0, 0), 0.22: (9, 0, 0), 0.5: (-6, 0, 0), 0.8: (1, 0, 0), 1.3: (0, 0, 0)})
-    idb.rot("head_g", {0.0: (0, 0, 0), 0.22: (10, 0, 0), 0.52: (-10, 0, 0), 0.9: (2, 0, 0), 1.3: (0, 0, 0)})
-    idb.scale("corona_f", {0.0: 1.1, 0.22: 0.7, 0.42: 2.2, 0.8: 1.3, 1.3: 1.25})
-    idb.scale("corona_b", {0.0: 1.0, 0.3: 0.8, 0.5: 1.9, 1.3: 1.2})
-    idb.scale("l_sun", {0.0: 0.0, 0.3: 0.0, 0.45: 1.15, 0.6: 1.0, 1.3: 1.0})
-    idb.particle(0.0, "glare", "lure_c").particle(0.42, "sunmotes", "back").particle(0.45, "sunmotes", "wound")
+                  "r_pauldron": (0.35, 0.4), "l_pauldron": (0.37, 0.4), "l_upper": (0.18, 0.3), "l_fore": (0.18, 0.3),
+                  "l_hand": (0.18, 0.3), "r_upper": (0.05, 0.35), "r_fore": (0.05, 0.35), "r_hand": (0.05, 0.35)})
+    idb = stagger(model, "intro_daybreak", "base", "daybreak", 1.3, order, default=(0.28, 0.5))
+    chest_keys(idb, {0.0: (10, 0, 0), 0.2: (13, 0, 0), 0.36: (2, 0, 0), 0.52: (-6, 0, 0), 0.8: (-2, 0, 0),
+                      1.0: (6, 0, 0), 1.3: (0, 0, 0)})
+    idb.rot("head_g", {0.0: (10, 0, 0), 0.2: (12, 0, 0), 0.36: (-2, 0, 0), 0.52: (-10, 0, 0), 0.85: (0, 0, 0),
+                       1.0: (8, 0, 0), 1.3: (0, 0, 0)})
+    idb.rot("jaw", {0.0: (6, 0, 0), 0.2: (8, 0, 0), 0.38: (26, 0, 0), 0.7: (12, 0, 0), 1.0: (22, 0, 0), 1.3: (0, 0, 0)})
+    idb.scale("corona_f", {0.0: 1.55, 0.22: 1.0, 0.42: 2.2, 0.8: 1.3, 1.0: 1.7, 1.3: 1.25})
+    idb.scale("corona_b", {0.0: 1.4, 0.3: 0.9, 0.5: 1.9, 1.0: 1.6, 1.3: 1.2})
+    idb.scale("l_sun", {0.0: 0.0, 0.28: 0.0, 0.4: 1.15, 0.52: 1.0, 1.3: 1.0})
+    for k, pl in enumerate(PL):                                    # still prised open by the overload, then flung wide
+        nn = _n(k)
+        idb.pos(pl, {0.0: tuple(nn * 0.35), 0.2: tuple(nn * 0.3), 0.45 + 0.02 * k: tuple(nn * 0.6), 1.3: (0, 0, 0)})
+    idb.particle(0.0, "glare", "lure_c").particle(0.38, "sunmotes", "wound").particle(0.42, "sunmotes", "back")
+    idb.particle(1.0, "sunmotes", "wound")
     intro["daybreak"] = idb
     daybreak_loop = Layer(r, "daybreak_loop", loop=True)           # strained: trembling in the flood of light
     daybreak_loop.rot("chest", lin([(1.0, S(2.3)), (0.5, S(1.7, 40))]), None, mul(0.6, S(2.1)))
@@ -636,8 +807,29 @@ def anims(model) -> Dict[str, object]:
         daybreak_loop.pos(pl, None, mul(nn[1], w), mul(nn[2], w))
     for p, side in SIDES:
         daybreak_loop.rot(f"{p}_fin0", lin([(3, S(1.5, 0 if side < 0 else 90))]))
-    holds["daybreak"] = gated_hold("daybreak_hold", 0.8, 0.3, 0.5, {     # the left fist closes on the sun (when free)
-        **{f"l_finger{k}": ((0.0, 0.0, 64.0), FREE_L) for k in range(3)}, "l_thumb": ((0.0, 0.0, 36.0), FREE_L)})
+    fist = {0: 0, 0.3: 0, 0.41: 0.7, 0.47: 1.05, 0.5: 1.0, DAYBREAK_END - 0.3: 1.0, DAYBREAK_END - 0.12: 0.4,
+            DAYBREAK_END: 0.0}
+    holds["daybreak"] = gated_keys("daybreak_hold", DAYBREAK_END, {     # the left fist closes on the sun (when free)
+        **{f"l_finger{k}": (envelope((0.0, 0.0, 64.0), fist), FREE_L) for k in range(3)},
+        "l_thumb": (envelope((0.0, 0.0, 36.0), fist), FREE_L)})
+    # the off arm's elbow on the execution path (the shoulder is the pose's): clutched -> torn out -> straight
+    # through the sweep -> cocked as the sun is lifted -> straight into the ground -> drawn back in as it goes home
+    ex_arms = gated_keys("execution_arms", DAYBREAK_END, {
+        "l_upper": ({0: (0, 72.4, 0), 0.2: (0, 74, 0), 0.34: (0, 30, 0), 0.46: (0, 4, 0), 0.56: (0, 0, 0),
+                     DAYBREAK_END: (0, 0, 0)}, FREE_L),
+        "l_fore": ({0: (-66, 0, 0), 0.2: (-70, 0, 0), 0.34: (-38, 0, 0), 0.46: (-14, 0, 0), 0.56: (0, 0, 0),
+                    0.84: (-6, 0, 0), 0.93: (-24, 0, 0), 1.02: (0, 0, 0), 2.05: (0, 0, 0), 2.32: (-14, 0, 0),
+                    DAYBREAK_END: (0, 0, 0)}, FREE_L),
+        "l_hand": ({0: (0, 0, 0), 0.3: (0, 0, 0), 0.5: (-10, 0, 0), 0.93: (14, 0, 0), 1.02: (-6, 0, 0),
+                    DAYBREAK_END: (0, 0, 0)}, FREE_L)})
+    order = {f"plate{k}": (DAYBREAK_END - 0.45 + 0.03 * k, 0.3) for k in range(NPL)}
+    order.update({"r_fin0": (DAYBREAK_END - 0.4, 0.3), "l_fin0": (DAYBREAK_END - 0.38, 0.3),
+                  "chest": (DAYBREAK_END - 0.42, 0.38), "skull": (DAYBREAK_END - 0.4, 0.36)})
+    od = outro(model, "outro_daybreak", "daybreak", "base", DAYBREAK_END, order, (DAYBREAK_END - 0.42, 0.38))
+    od.scale("l_sun", {0: 1, DAYBREAK_END - 0.42: 1, DAYBREAK_END - 0.12: 0.25, DAYBREAK_END: 0.0})   # it goes home
+    od.scale("corona_f", {0: 1, DAYBREAK_END - 0.4: 1, DAYBREAK_END - 0.1: 1.45, DAYBREAK_END: 1.3})
+    outros["daybreak"] = od
+    extra["daybreak"] += [("outro_daybreak", None), ("execution_arms", TP)]
 
     fx = {
         "base": A(r, "fx_base", length=3.4).particle(0.0, "sunmotes", "wound"),
@@ -651,7 +843,8 @@ def anims(model) -> Dict[str, object]:
              air.anim(), land.anim(), land_hard.anim(), atk.anim(), hurt.anim(), swim.anim(), lure_loop.anim(),
              maw_loop.anim(), bastion_loop.anim(), unshackled_loop.anim(), daybreak_loop.anim(),
              wait_anim(r, "fidget_wait", 7.0), wait_anim(r, "fidget_rest", 3.5), *[f.anim() for f in fid],
-             *[i.anim() for i in intro.values()], *holds.values(), *fx.values()]
+             *[i.anim() for i in intro.values()], *holds.values(), *[o.anim() for o in outros.values()],
+             ov.anim(), ov_arms, ex_arms, *fx.values()]
     controllers = {**landing_controller(r, hard_speed=-13.0), **fidget_controller(r, picks), **step_ctrl}
     loops = {"lure": "lure_loop", "maw": "maw_loop", "bastion": "bastion_loop", "unshackled": "unshackled_loop",
              "daybreak": "daybreak_loop"}
@@ -669,6 +862,7 @@ def anims(model) -> Dict[str, object]:
             lst.append((loops[v], TP))
         if v in holds:
             lst.append((f"{v}_hold", TP))
+        lst += extra[v]
         animate[v] = lst
     particles = {"sunmotes": f"{NS}:sun_motes", "bubbles": f"{NS}:abyss_bubbles", "stepdust": f"{NS}:step_dust",
                  "glare": f"{NS}:sun_glare"}
