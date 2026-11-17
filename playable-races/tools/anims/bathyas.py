@@ -807,8 +807,8 @@ def anims(model) -> Dict[str, object]:
         daybreak_loop.pos(pl, None, mul(nn[1], w), mul(nn[2], w))
     for p, side in SIDES:
         daybreak_loop.rot(f"{p}_fin0", lin([(3, S(1.5, 0 if side < 0 else 90))]))
-    fist = {0: 0, 0.3: 0, 0.41: 0.7, 0.47: 1.05, 0.5: 1.0, DAYBREAK_END - 0.3: 1.0, DAYBREAK_END - 0.12: 0.4,
-            DAYBREAK_END: 0.0}
+    fist = {0: 0.72, 0.22: 0.76, 0.32: 0.55, 0.41: 0.8, 0.47: 1.05, 0.5: 1.0, DAYBREAK_END - 0.3: 1.0,   # from the clutch
+            DAYBREAK_END - 0.12: 0.4, DAYBREAK_END: 0.0}
     holds["daybreak"] = gated_keys("daybreak_hold", DAYBREAK_END, {     # the left fist closes on the sun (when free)
         **{f"l_finger{k}": (envelope((0.0, 0.0, 64.0), fist), FREE_L) for k in range(3)},
         "l_thumb": (envelope((0.0, 0.0, 36.0), fist), FREE_L)})
