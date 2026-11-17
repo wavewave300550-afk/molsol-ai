@@ -813,7 +813,7 @@ def anims(model) -> Dict[str, object]:
         **{f"l_finger{k}": (envelope((0.0, 0.0, 64.0), fist), FREE_L) for k in range(3)},
         "l_thumb": (envelope((0.0, 0.0, 36.0), fist), FREE_L)})
     # the off arm's elbow on the execution path (the shoulder is the pose's): clutched -> torn out -> straight
-    # through the sweep -> cocked as the sun is lifted -> straight into the ground -> drawn back in as it goes home
+    # through the high sweep -> cocked as the sun is lifted -> straight into the ground -> drawn in as it goes home
     ex_arms = gated_keys("execution_arms", DAYBREAK_END, {
         "l_upper": ({0: (0, 72.4, 0), 0.2: (0, 74, 0), 0.34: (0, 30, 0), 0.46: (0, 4, 0), 0.56: (0, 0, 0),
                      DAYBREAK_END: (0, 0, 0)}, FREE_L),
@@ -821,7 +821,11 @@ def anims(model) -> Dict[str, object]:
                     0.84: (-6, 0, 0), 0.93: (-24, 0, 0), 1.02: (0, 0, 0), 2.05: (0, 0, 0), 2.32: (-14, 0, 0),
                     DAYBREAK_END: (0, 0, 0)}, FREE_L),
         "l_hand": ({0: (0, 0, 0), 0.3: (0, 0, 0), 0.5: (-10, 0, 0), 0.93: (14, 0, 0), 1.02: (-6, 0, 0),
-                    DAYBREAK_END: (0, 0, 0)}, FREE_L)})
+                    DAYBREAK_END: (0, 0, 0)}, FREE_L),
+        # held up to the sky the sun turns in his fist (65 -> 180 deg): the blade becomes the line of his arm and
+        # goes into the ground point first
+        "l_sun": ({0: (0, 0, 0), 0.82: (0, 0, 0), 0.93: (114.8, 0, 0), 1.0: (114.8, 0, 0), DAYBREAK_END: (114.8, 0, 0)},
+                  FREE_L)})
     order = {f"plate{k}": (DAYBREAK_END - 0.45 + 0.03 * k, 0.3) for k in range(NPL)}
     order.update({"r_fin0": (DAYBREAK_END - 0.4, 0.3), "l_fin0": (DAYBREAK_END - 0.38, 0.3),
                   "chest": (DAYBREAK_END - 0.42, 0.38), "skull": (DAYBREAK_END - 0.4, 0.36)})
