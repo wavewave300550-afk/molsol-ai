@@ -164,6 +164,8 @@ export const EpisodeSchema = z.strictObject({
       similarityBoost: z.number().min(0).max(1).optional(),
     })
     .optional(),
+  /** Extra terms subtitles must not split (see src/lib/glossary.ts). */
+  glossary: z.array(text).optional(),
   sources: z.array(SourceSchema),
   scenes: z.array(SceneSchema).min(2).max(14),
   approval: ApprovalSchema.nullable().optional(),

@@ -107,6 +107,17 @@ export function fullNarration(scenes: Array<Pick<Scene, "narration">>): string {
   return scenes.map((s) => normalizeNarration(s.narration)).join(" ");
 }
 
+/** Where each scene's narration sits in fullNarration() (end exclusive). */
+export function sceneRanges(scenes: Array<Pick<Scene, "narration">>): Array<{ from: number; to: number }> {
+  let offset = 0;
+  return scenes.map((scene) => {
+    const length = normalizeNarration(scene.narration).length;
+    const range = { from: offset, to: offset + length };
+    offset += length + 1;
+    return range;
+  });
+}
+
 export type ValidateOptions = {
   /** Checks that a file exists under public/ (images). Node-only, optional. */
   publicFileExists?: (path: string) => boolean;
