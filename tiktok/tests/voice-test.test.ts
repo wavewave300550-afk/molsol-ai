@@ -13,7 +13,9 @@ import type { NarrationMeta } from "../scripts/lib/narration.ts";
 import { projectRoot } from "../scripts/lib/paths.ts";
 import { isTestRender } from "../scripts/lib/pipeline.ts";
 import { planSyntheticNarration } from "../scripts/lib/test-audio.ts";
-import { buildVoiceTestReport } from "../scripts/lib/voice-test.ts";
+import { assessMaster } from "../scripts/lib/pcm.ts";
+import { loudnessCheck } from "../scripts/lib/verify-video.ts";
+import { buildVoiceTestReport, formatVoiceTestReport } from "../scripts/lib/voice-test.ts";
 
 const voiceTestRaw = () => JSON.parse(readFileSync(join(projectRoot, "episodes", "voice-test", "episode.json"), "utf8"));
 const voiceTest = (): Episode => EpisodeSchema.parse(voiceTestRaw());
@@ -129,4 +131,67 @@ test("the report catches a wrong voice, missing timing, a cut and a bad length",
   assert.deepEqual(failing({ alignment: { source: "estimated-from-silences" } }), ["Character timing came from ElevenLabs"]);
   assert.deepEqual(failing({}, { masteredSeconds: 15 }), ["Nothing sped up or cut"]);
   assert.deepEqual(failing({}, { sourceSeconds: 40, masteredSeconds: 40 }), ["Length within 5-30 s"]);
+});
+
+test("the cut check is sample-accurate and uses decoded lengths, not the MP3 header", () => {
+  const { episode, meta, alignment } = take();
+  const report = (sourceSeconds: number, masteredSeconds: number) =>
+    buildVoiceTestReport(episode, meta, alignment, { sourceSeconds, masteredSeconds, loudnessLufs: -14, truePeakDb: -4 }).checks.find(
+      (c) => c.name === "Nothing sped up or cut",
+    );
+  // The failed take: 874,944 decoded samples at 44.1 kHz -> 952,320 at 48 kHz, both 19.84 s.
+  // (Its MP3 header said 19.879184 s, which the old check compared and failed on.)
+  assert.equal(report(874944 / 44100, 952320 / 48000)?.pass, true);
+  assert.equal(report(874944 / 44100, 952319 / 48000)?.pass, false, "one sample short at 48 kHz");
+  assert.equal(report(874944 / 44100, 952321 / 48000)?.pass, true, "rounding up by a sample is fine");
+});
+
+test("the report shows the sample counts and fails on any problem the master check found", () => {
+  const { episode, meta, alignment } = take();
+  const reference = new Float32Array(48000).map((_, i) => 0.3 * Math.sin(i / 7));
+  const good = assessMaster({ sourceSamples: 44100, sourceRate: 44100, reference, master: reference, masterRate: 48000 });
+  const cut = assessMaster({ sourceSamples: 44100, sourceRate: 44100, reference, master: reference.subarray(0, 47000), masterRate: 48000 });
+  const check = (master: typeof good) =>
+    buildVoiceTestReport(episode, meta, alignment, { sourceSeconds: 1, masteredSeconds: master.masterSamples / 48000, master, loudnessLufs: -14, truePeakDb: -4 }).checks.find(
+      (c) => c.name === "Nothing sped up or cut",
+    );
+  assert.equal(check(good)?.pass, true);
+  assert.match(check(good)?.detail ?? "", /44,100 samples at 44\.1 kHz → 48,000 at 48 kHz/);
+  assert.equal(check(cut)?.pass, false);
+  assert.match(check(cut)?.detail ?? "", /1000 samples \(20\.8 ms\) shorter than the source/);
+});
+
+test("a recovered take without ElevenLabs timing passes with a warning; a normal take without it still fails", () => {
+  const recovered = take({
+    meta: { recovered: { from: "GitHub Actions run 44044487202", audioSha256: "f".repeat(64), at: "2026-11-17T00:00:00.000Z" }, timingSource: "estimated-from-silences" },
+    alignment: { source: "estimated-from-silences" },
+  });
+  const m = { sourceSeconds: recovered.seconds, masteredSeconds: recovered.seconds, loudnessLufs: -14, truePeakDb: -4 };
+  const report = buildVoiceTestReport(recovered.episode, recovered.meta, recovered.alignment, m);
+  assert.equal(report.pass, true, JSON.stringify(report.checks, null, 1));
+  assert.deepEqual(
+    report.warnings.map((w) => w.name),
+    ["Character timing came from ElevenLabs"],
+  );
+  assert.equal(report.facts.recoveredFrom, "GitHub Actions run 44044487202");
+  const lines = formatVoiceTestReport(report);
+  assert.ok(lines.some((l) => l.startsWith("WARN  Character timing came from ElevenLabs: no: estimated from the pauses")));
+  assert.ok(lines.some((l) => l.includes("recovered from GitHub Actions run 44044487202 without a new request")));
+
+  const normal = take({ alignment: { source: "estimated-from-silences" } });
+  const failed = buildVoiceTestReport(normal.episode, normal.meta, normal.alignment, m);
+  assert.equal(failed.pass, false);
+  assert.deepEqual(failed.warnings, []);
+});
+
+test("loudness: -14 LUFS, or quieter only because the peaks reached the ceiling; never clipping", () => {
+  const pass = (lufs: number, truePeak: number) => loudnessCheck(lufs, truePeak).pass;
+  assert.equal(pass(-14.1, -4), true);
+  // The recovered take: one constant gain of +3.42 dB brings its peaks to -1.5 dBTP at -16.43 LUFS.
+  assert.equal(pass(-16.43, -1.5), true);
+  assert.match(loudnessCheck(-16.43, -1.5).detail, /as loud as one constant gain can make it/);
+  assert.equal(pass(-16.43, -4), false, "quiet with room left below the ceiling");
+  assert.equal(pass(-21, -1.5), false, "quieter than -20 LUFS");
+  assert.equal(pass(-12, -1.5), false, "too loud");
+  assert.equal(pass(-14, 0.2), false, "clipping");
 });

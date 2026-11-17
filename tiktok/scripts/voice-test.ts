@@ -3,9 +3,11 @@
  *
  *   npm run voice-test -- <id>            check the test can be narrated and show what it
  *                                         will send and cost. Sends nothing, no credits.
- *   npm run voice-test -- <id> --report   after `npm run narrate -- <id>`: check the take
- *                                         (ElevenLabs timing, length, loudness) and write
- *                                         out/<id>.voice-report.json. No credits.
+ *   npm run voice-test -- <id> --report   after `npm run narrate -- <id>` (or
+ *                                         `npm run narration:recover`): check the take
+ *                                         (ElevenLabs timing, length and every sample,
+ *                                         loudness) and write out/<id>.voice-report.json.
+ *                                         No credits.
  *
  * Narration itself is the normal `npm run narrate -- <id>` (approval required).
  * On GitHub: Actions > Voice test > Run workflow.
@@ -21,7 +23,7 @@ import { fullNarration, validateEpisode } from "../src/lib/rules.ts";
 import { approvalStatus } from "./lib/approval.ts";
 import { ok, runCli } from "./lib/cli.ts";
 import { loadEpisode, publicFileExists, readJson, writeJson } from "./lib/episode-io.ts";
-import { audioDurationSeconds, measureLoudness } from "./lib/ffmpeg.ts";
+import { checkMaster, measureLoudness } from "./lib/ffmpeg.ts";
 import { readNarrationMeta } from "./lib/narration.ts";
 import { ensureDir } from "./lib/paths.ts";
 import { describeVoice, resolveVoice } from "./lib/voice.ts";
@@ -66,14 +68,12 @@ runCli(async () => {
     throw new Error(`No narration for ${episode.id} yet. Run: npm run narrate -- ${episode.id}`);
   }
   const alignment = readJson<AlignmentFile>(paths.alignment);
-  const [sourceSeconds, masteredSeconds, loudness] = await Promise.all([
-    audioDurationSeconds(join(paths.mediaDir, meta.sourceFile)),
-    audioDurationSeconds(paths.narrationWav),
-    measureLoudness(paths.narrationWav),
-  ]);
+  // Decoded samples, never the MP3 header's duration (it counts encoder delay and padding).
+  const [master, loudness] = await Promise.all([checkMaster(join(paths.mediaDir, meta.sourceFile), paths.narrationWav), measureLoudness(paths.narrationWav)]);
   const report = buildVoiceTestReport(episode, meta, alignment, {
-    sourceSeconds,
-    masteredSeconds,
+    sourceSeconds: master.sourceSeconds,
+    masteredSeconds: master.masterSeconds,
+    master,
     loudnessLufs: loudness.inputI,
     truePeakDb: loudness.inputTp,
   });
@@ -84,5 +84,5 @@ runCli(async () => {
   for (const line of lines) console.log(`  ${line}`);
   summary(`Voice test result: ${report.pass ? "passed" : "failed"}`, lines);
   if (!report.pass) throw new Error(`The voice test failed some checks; see ${reportFile}`);
-  ok(`All checks passed. Report: ${reportFile}`);
+  ok(`All checks passed${report.warnings.length ? ` (${report.warnings.length} warning${report.warnings.length === 1 ? "" : "s"} above)` : ""}. Report: ${reportFile}`);
 });

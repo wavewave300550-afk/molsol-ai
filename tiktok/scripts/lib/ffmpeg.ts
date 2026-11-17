@@ -4,11 +4,12 @@
  * locally or in CI. Set FFMPEG_BIN / FFPROBE_BIN to use other binaries.
  */
 import { spawn } from "node:child_process";
-import { closeSync, openSync, readSync, statSync } from "node:fs";
+import { closeSync, openSync, readSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
 import type { Interval } from "../../src/lib/alignment.ts";
 import { AUDIO_MASTER } from "../../src/lib/config.ts";
 import { projectRoot } from "./paths.ts";
+import { assessMaster, channelSamples, type MasterAssessment, parseWav, samplesAtRate } from "./pcm.ts";
 
 const remotionBin = join(projectRoot, "node_modules", ".bin", "remotion");
 
@@ -39,6 +40,19 @@ export function run(
   });
 }
 
+/** Like run(), but keeps stdout as bytes (decoded audio). */
+function runForBytes(cmd: string, args: string[]): Promise<{ code: number; stdout: Buffer; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, args, { cwd: projectRoot, stdio: ["ignore", "pipe", "pipe"] });
+    const chunks: Buffer[] = [];
+    let stderr = "";
+    child.stdout.on("data", (d: Buffer) => chunks.push(d));
+    child.stderr.on("data", (d) => (stderr += d));
+    child.on("error", reject);
+    child.on("close", (code) => resolve({ code: code ?? 1, stdout: Buffer.concat(chunks), stderr }));
+  });
+}
+
 export async function ffmpeg(args: string[]): Promise<RunResult> {
   const { cmd, pre } = tool("ffmpeg");
   return run(cmd, [...pre, "-hide_banner", "-nostats", ...args]);
@@ -64,16 +78,71 @@ export type FfprobeStream = {
   avg_frame_rate?: string;
   nb_frames?: string;
   duration?: string;
+  /** Length in time_base units: for PCM audio (time base 1/rate), the sample count. */
+  duration_ts?: number;
+  time_base?: string;
   sample_rate?: string;
   channels?: number;
 };
 export type FfprobeResult = { streams: FfprobeStream[]; format: { format_name: string; duration: string; size: string; bit_rate?: string } };
 
+/**
+ * Exact length of the first audio stream. A PCM file (WAV) states it exactly;
+ * for compressed audio the duration in the header is only an estimate (an
+ * MP3's includes the encoder delay and padding that decoding removes), so the
+ * audio is decoded and its samples counted.
+ */
 export async function audioDurationSeconds(file: string): Promise<number> {
   const probe = await ffprobeJson(file);
   const audio = probe.streams.find((s) => s.codec_type === "audio");
   if (!audio) throw new Error(`${file} has no audio stream.`);
-  return Number(audio.duration ?? probe.format.duration);
+  const [num, den] = (audio.time_base ?? "").split("/").map(Number);
+  if (audio.codec_name.startsWith("pcm_") && Number.isInteger(audio.duration_ts) && num > 0 && den > 0) {
+    return ((audio.duration_ts as number) * num) / den; // samples / rate, not the rounded "duration"
+  }
+  return (await decodeAudio(file)).seconds;
+}
+
+export type DecodedAudio = {
+  sampleRate: number;
+  /** Every decoded sample (per channel): the exact length. */
+  samples: number;
+  seconds: number;
+  /** The decoded audio, mixed to mono. */
+  pcm: Float32Array;
+};
+
+/**
+ * Decodes the first audio stream completely and counts its samples. The
+ * decoder drops an MP3's encoder delay and padding, so this is the real
+ * length, unlike the duration in the header. Mono, 24-bit; at `sampleRate`
+ * if given, through FFmpeg's default resampler (the one masterNarration uses).
+ */
+export async function decodeAudio(file: string, options: { sampleRate?: number } = {}): Promise<DecodedAudio> {
+  const { cmd, pre } = tool("ffmpeg");
+  const rate = options.sampleRate ? ["-ar", String(options.sampleRate)] : [];
+  const result = await runForBytes(cmd, [
+    ...pre,
+    "-hide_banner",
+    "-nostats",
+    "-v",
+    "error",
+    "-i",
+    file,
+    "-map",
+    "0:a:0",
+    "-ac",
+    "1",
+    ...rate,
+    "-c:a",
+    "pcm_s24le",
+    "-f",
+    "wav",
+    "-",
+  ]);
+  if (result.code !== 0) throw new Error(`Could not decode ${file}: ${result.stderr.slice(-400)}`);
+  const wav = parseWav(result.stdout);
+  return { sampleRate: wav.sampleRate, samples: wav.frames, seconds: wav.frames / wav.sampleRate, pcm: channelSamples(wav) };
 }
 
 export type Loudness = { inputI: number; inputTp: number; inputLra: number; inputThresh: number };
@@ -94,41 +163,83 @@ export async function measureLoudness(file: string, options: { stereo?: boolean 
   return { inputI: Number(m.input_i), inputTp: Number(m.input_tp), inputLra: Number(m.input_lra), inputThresh: Number(m.input_thresh) };
 }
 
-export type MasterResult = { gainDb: number; inputSeconds: number; outputSeconds: number; loudness: Loudness };
+export type MasterCheck = MasterAssessment & { sourceSeconds: number; masterSeconds: number };
+
+/**
+ * Proves a playback copy holds the whole narration, sample for sample: both
+ * files are decoded and their samples counted (never the duration in a file
+ * header), the copy must be at least as long as the source, anything extra
+ * must be trailing silence, and in every 20 ms of speech the copy must equal
+ * the source at one constant gain. See assessMaster in pcm.ts.
+ */
+export async function checkMaster(source: string, master: string, decodedSource?: DecodedAudio): Promise<MasterCheck> {
+  const [original, copy] = await Promise.all([decodedSource ?? decodeAudio(source), decodeAudio(master)]);
+  const reference = await decodeAudio(source, { sampleRate: copy.sampleRate });
+  const assessment = assessMaster({
+    sourceSamples: original.samples,
+    sourceRate: original.sampleRate,
+    reference: reference.pcm,
+    master: copy.pcm,
+    masterRate: copy.sampleRate,
+  });
+  return { ...assessment, sourceSeconds: original.seconds, masterSeconds: copy.seconds };
+}
+
+/**
+ * Writes the playback copy: one constant gain, FFmpeg's default resampler to
+ * 48 kHz, stereo, 16-bit. `lengthSamples` is the least it may hold: if the
+ * resampler ever came up short, silence is added at the end (apad), so the
+ * narration is never shortened.
+ */
+export async function renderMaster(input: string, output: string, options: { gainDb: number; lengthSamples: number }): Promise<void> {
+  const filter = `volume=${options.gainDb.toFixed(2)}dB,aresample=${AUDIO_MASTER.sampleRate},apad=whole_len=${options.lengthSamples}`;
+  const result = await ffmpeg(["-y", "-i", input, "-map", "0:a:0", "-af", filter, "-ac", "2", "-c:a", "pcm_s16le", output]);
+  if (result.code !== 0) throw new Error(`Could not master ${input}: ${result.stderr.slice(-400)}`);
+}
+
+export type MasterResult = {
+  gainDb: number;
+  /** Loudness after the gain, and whether the peak ceiling stopped the gain short of the target. */
+  outputLufs: number;
+  peakLimited: boolean;
+  /** Exact lengths from decoded samples. */
+  inputSeconds: number;
+  outputSeconds: number;
+  loudness: Loudness;
+  check: MasterCheck;
+};
 
 /**
  * Makes the playback copy of the narration: one constant gain toward
  * -14 LUFS (capped so it never clips), 48 kHz. It is written as stereo on
  * purpose: given a mono file, Remotion copies it into both channels at full
  * level and the video comes out about 3 LU louder than intended.
- * A constant gain and resampling leave timing and dynamics untouched; the
- * output must be as long as the input or the step fails.
+ * A constant gain and resampling leave timing and dynamics untouched. The
+ * copy is then checked sample for sample against the source (checkMaster);
+ * if it is shorter or differs in any way, it is deleted and the step fails.
  */
 export async function masterNarration(input: string, output: string): Promise<MasterResult> {
-  const loudness = await measureLoudness(input, { stereo: true });
+  const [loudness, source] = await Promise.all([measureLoudness(input, { stereo: true }), decodeAudio(input)]);
   if (!Number.isFinite(loudness.inputI) || loudness.inputI < -70) throw new Error(`${input} is silent; there is no narration to use.`);
-  const gainDb = Math.min(AUDIO_MASTER.integratedLufs - loudness.inputI, AUDIO_MASTER.truePeakDb - loudness.inputTp);
-  const result = await ffmpeg([
-    "-y",
-    "-i",
-    input,
-    "-map",
-    "0:a:0",
-    "-af",
-    `volume=${gainDb.toFixed(2)}dB,aresample=${AUDIO_MASTER.sampleRate}`,
-    "-ac",
-    "2",
-    "-c:a",
-    "pcm_s16le",
-    output,
-  ]);
-  if (result.code !== 0) throw new Error(`Could not master ${input}: ${result.stderr.slice(-400)}`);
-  const inputSeconds = await audioDurationSeconds(input);
-  const outputSeconds = await audioDurationSeconds(output);
-  if (Math.abs(inputSeconds - outputSeconds) > 0.01) {
-    throw new Error(`Mastering changed the narration length (${inputSeconds} s -> ${outputSeconds} s). Nothing may shorten narration.`);
+  const gainDb = Number(Math.min(AUDIO_MASTER.integratedLufs - loudness.inputI, AUDIO_MASTER.truePeakDb - loudness.inputTp).toFixed(2));
+  await renderMaster(input, output, { gainDb, lengthSamples: samplesAtRate(source.samples, source.sampleRate, AUDIO_MASTER.sampleRate) });
+  const check = await checkMaster(input, output, source);
+  if (check.problems.length > 0) {
+    rmSync(output, { force: true });
+    throw new Error(
+      `Mastering changed the narration, so the result was not kept: the playback copy ${check.problems.join("; ")}. ` +
+        "Nothing may shorten, speed up or alter narration.",
+    );
   }
-  return { gainDb, inputSeconds, outputSeconds, loudness };
+  return {
+    gainDb,
+    outputLufs: Number((loudness.inputI + gainDb).toFixed(2)),
+    peakLimited: gainDb < AUDIO_MASTER.integratedLufs - loudness.inputI - 0.01,
+    inputSeconds: check.sourceSeconds,
+    outputSeconds: check.masterSeconds,
+    loudness,
+    check,
+  };
 }
 
 /** Silent stretches (FFmpeg silencedetect) of the first audio stream. */

@@ -4,11 +4,11 @@
  * and ending where the narration does, nothing cut.
  */
 import { existsSync, statSync } from "node:fs";
-import type { Interval } from "../../src/lib/alignment.ts";
 import { AUDIO_MASTER } from "../../src/lib/config.ts";
 import type { Timeline } from "../../src/lib/timeline.ts";
-import { detectPauses, ffmpeg, ffprobeJson, measureLoudness, mp4TopLevelBoxes } from "./ffmpeg.ts";
+import { decodeAudio, ffmpeg, ffprobeJson, measureLoudness, mp4TopLevelBoxes } from "./ffmpeg.ts";
 import type { EpisodePaths } from "./paths.ts";
+import { speechSpan } from "./pcm.ts";
 
 export type Check = { name: string; pass: boolean; detail: string };
 export type VideoReport = {
@@ -20,11 +20,29 @@ export type VideoReport = {
   metrics: Record<string, number | string>;
 };
 
-const firstSpeech = (silences: Interval[]) => (silences[0] && silences[0].start <= 0.01 ? silences[0].end : 0);
-const lastSpeech = (silences: Interval[], duration: number) => {
-  const last = silences[silences.length - 1];
-  return last && last.end >= duration - 0.05 ? last.start : duration;
-};
+/**
+ * Narration loudness: -14 LUFS, or as loud as one constant gain can make it
+ * when the take's peaks reach the -1.5 dBTP ceiling first (mastering never
+ * limits or compresses, so no sample is reshaped). Never clipping.
+ */
+export function loudnessCheck(lufs: number, truePeakDb: number): Check {
+  const { integratedLufs: target, truePeakDb: ceiling, quietestLufs } = AUDIO_MASTER;
+  const name = `Loudness ${target} LUFS (or as loud as the peaks allow), no clipping`;
+  if (truePeakDb > 0) return { name, pass: false, detail: `${lufs} LUFS, true peak ${truePeakDb} dBTP: clipping` };
+  if (Math.abs(lufs - target) <= 1.5) return { name, pass: true, detail: `${lufs} LUFS (target ${target}), true peak ${truePeakDb} dBTP` };
+  const peakLimited = lufs < target && truePeakDb >= ceiling - 0.5;
+  if (peakLimited && lufs >= quietestLufs) {
+    return {
+      name,
+      pass: true,
+      detail:
+        `${lufs} LUFS, true peak ${truePeakDb} dBTP: the peaks reach the ${ceiling} dBTP ceiling before ${target} LUFS, ` +
+        "so this is as loud as one constant gain can make it (no limiter: no sample is reshaped)",
+    };
+  }
+  const why = peakLimited ? `quieter than ${quietestLufs} LUFS: check the take for clicks or pops` : `target ${target} ±1.5`;
+  return { name, pass: false, detail: `${lufs} LUFS, true peak ${truePeakDb} dBTP (${why})` };
+}
 
 export async function verifyVideo(paths: EpisodePaths, timeline: Timeline, file = paths.video): Promise<VideoReport> {
   const checks: Check[] = [];
@@ -78,24 +96,28 @@ export async function verifyVideo(paths: EpisodePaths, timeline: Timeline, file 
   const decode = await ffmpeg(["-v", "error", "-i", file, "-map", "0", "-c:v", "rawvideo", "-c:a", "pcm_s16le", "-f", "null", "-"]);
   add("Decodes start to end without errors", decode.code === 0 && decode.stderr.trim() === "", decode.stderr.trim().slice(0, 200) || "no decoder errors");
 
-  const [inVideo, inNarration] = await Promise.all([detectPauses(file), detectPauses(paths.narrationWav)]);
-  const startShift = firstSpeech(inVideo.silences) - firstSpeech(inNarration.silences);
-  const endShift = lastSpeech(inVideo.silences, videoSeconds) - lastSpeech(inNarration.silences, narration);
+  // Same rule on both decoded tracks: no minimum pause length, so a narration
+  // that ends with only a short silence is measured the same way as the video,
+  // where the tail lengthens that silence.
+  const [inVideo, inNarration] = await Promise.all([decodeAudio(file), decodeAudio(paths.narrationWav)]);
+  const videoSpeech = speechSpan(inVideo.pcm, inVideo.sampleRate);
+  const narrationSpeech = speechSpan(inNarration.pcm, inNarration.sampleRate);
+  const startShift = (videoSpeech?.start ?? Number.NaN) - (narrationSpeech?.start ?? Number.NaN);
+  const endShift = (videoSpeech?.end ?? Number.NaN) - (narrationSpeech?.end ?? Number.NaN);
   metrics.speechStartShiftMs = Math.round(startShift * 1000);
   metrics.speechEndShiftMs = Math.round(endShift * 1000);
   add(
     "Speech in the video lines up with the narration",
     Math.abs(startShift) <= 0.06 && Math.abs(endShift) <= 0.06,
-    `first word ${(startShift * 1000).toFixed(0)} ms, last word ${(endShift * 1000).toFixed(0)} ms from the narration file`,
+    videoSpeech && narrationSpeech
+      ? `first word ${(startShift * 1000).toFixed(0)} ms, last word ${(endShift * 1000).toFixed(0)} ms from the narration file ` +
+          `(speech ${narrationSpeech.start.toFixed(3)}-${narrationSpeech.end.toFixed(3)} s)`
+      : `no speech found in the ${videoSpeech ? "narration file" : "video"}`,
   );
   const loudness = await measureLoudness(file);
   metrics.loudnessLufs = loudness.inputI;
   metrics.truePeakDb = loudness.inputTp;
-  add(
-    "Loudness about -14 LUFS, no clipping",
-    Math.abs(loudness.inputI - AUDIO_MASTER.integratedLufs) <= 1.5 && loudness.inputTp <= 0,
-    `${loudness.inputI} LUFS (target ${AUDIO_MASTER.integratedLufs}), true peak ${loudness.inputTp} dBTP`,
-  );
+  checks.push(loudnessCheck(loudness.inputI, loudness.inputTp));
   return finish();
 }
 

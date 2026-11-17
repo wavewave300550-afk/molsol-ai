@@ -137,10 +137,15 @@ jobs:
             if [[ -f "out/$EPISODE.$ext" ]]; then cp "out/$EPISODE.$ext" "upload/$name.$ext"; fi
           done
           # A new ElevenLabs take: keep it so it can be committed and reused.
+          # Its MP3 and timing (elevenlabs-take.json) are saved before mastering,
+          # so they are kept even when a later step failed; reuse them for free with
+          # npm run narration:recover -- <id> narration.source.mp3 --take elevenlabs-take.json
           media="public/episodes/$EPISODE"
-          if [[ -f "$media/narration.json" ]] && grep -q '"source": "elevenlabs"' "$media/narration.json"; then
+          if [[ -f "$media/elevenlabs-take.json" ]] || { [[ -f "$media/narration.json" ]] && grep -q '"source": "elevenlabs"' "$media/narration.json"; }; then
             mkdir -p upload/narration
-            cp "$media/narration.source.mp3" "$media/alignment.json" "$media/narration.json" upload/narration/
+            for file in narration.source.mp3 elevenlabs-take.json alignment.json narration.json; do
+              if [[ -f "$media/$file" ]]; then cp "$media/$file" upload/narration/; fi
+            done
           fi
           echo "name=$name" >> "$GITHUB_OUTPUT"
 
