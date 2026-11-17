@@ -98,9 +98,9 @@ CAMERA = {  # race -> (scale, center y)
     "xenentoma": (5.0, 16.0),
     "spaghetti": (6.4, 17.0),
     "nurariten": (5.0, 18.0),
-    "dinosauroid": (5.0, 17.0),
-    "bathyas": (5.0, 16.0),
-    "octamyces": (6.0, 17.5),
+    "dinosauroid": (5.0, 18.0),
+    "bathyas": (5.0, 18.0),
+    "octamyces": (5.0, 19.0),
 }
 
 
@@ -182,8 +182,8 @@ FIDGETS = {
                     ("fidget_study", "studies you")],
     "bathyas": [("fidget_shield", "shields its eyes"), ("fidget_sigh", "tired sigh"), ("fidget_doze", "dozes off"),
                 ("fidget_poke", "pokes the sword")],
-    "octamyces": [("fidget_fold", "the eye folds shut"), ("fidget_align", "frames re-align"), ("fidget_gills", "gills breathe out"),
-                  ("fidget_probe", "the sensor probes")],
+    "octamyces": [("fidget_crown", "the crown folds and blooms"), ("fidget_click", "the rings click round"),
+                  ("fidget_spores", "the gills breathe out spores"), ("fidget_probe", "the sensor probes")],
 }
 
 

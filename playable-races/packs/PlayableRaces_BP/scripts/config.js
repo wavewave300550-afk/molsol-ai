@@ -1,5 +1,5 @@
 export const NS = "plrace";
-export const VERSION = "1.4.0";
+export const VERSION = "1.5.0";
 export const RP_VERSION_KEY = `${NS}.rp_version`;
 export const PROP_DATA = `${NS}:data`;
 export const WORLD_SETTINGS = `${NS}:settings`;

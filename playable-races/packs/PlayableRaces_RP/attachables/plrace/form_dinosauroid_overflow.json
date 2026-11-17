@@ -46,13 +46,19 @@
      "v.plr_still = 1 - math.clamp(q.modified_move_speed * 5, 0, 1);",
      "v.plr_spr = q.is_sprinting ? 1 : 0;",
      "v.plr_walk = 1 - v.plr_spr;",
-     "v.plr_bw0 = 0.5857 + 0.4474 * math.cos(v.plr_ph * 2) + 0.5302 * math.sin(v.plr_ph * 2) - 0.04868 * math.cos(v.plr_ph * 4);",
-     "v.plr_bw1 = 0.04135 * math.sin(v.plr_ph * 4) + 0.1447 * math.cos(v.plr_ph * 6) - 0.05157 * math.sin(v.plr_ph * 6);",
-     "v.plr_bw2 = -0.07815 * math.cos(v.plr_ph * 8) - 0.03016 * math.sin(v.plr_ph * 8);",
-     "v.plr_br0 = 0.5106 + 0.1828 * math.cos(v.plr_ph * 2) + 0.88 * math.sin(v.plr_ph * 2) - 0.02517 * math.cos(v.plr_ph * 4);",
-     "v.plr_br1 = -0.1446 * math.sin(v.plr_ph * 4) + 0.1175 * math.cos(v.plr_ph * 6) - 0.1661 * math.sin(v.plr_ph * 6);",
-     "v.plr_br2 = -0.174 * math.cos(v.plr_ph * 8);",
-     "v.plr_bob = ((v.plr_walk) * (math.clamp(q.modified_move_speed / 0.8, 0, 1.25)) * ((v.plr_bw0 + v.plr_bw1 + v.plr_bw2) - (-0.001))) + ((v.plr_spr) * (v.plr_mv) * ((v.plr_br0 + v.plr_br1 + v.plr_br2) - (-0.001)));"
+     "v.plr_bw0 = 0.1101 - 0.05152 * math.cos(v.plr_ph * 2) - 0.342 * math.sin(v.plr_ph * 2) + 0.02134 * math.cos(v.plr_ph * 4);",
+     "v.plr_bw1 = 0.0612 * math.sin(v.plr_ph * 4) + 0.05414 * math.cos(v.plr_ph * 6) + 0.04009 * math.sin(v.plr_ph * 6);",
+     "v.plr_bw2 = -0.02604 * math.cos(v.plr_ph * 8) + 0.02054 * math.sin(v.plr_ph * 8);",
+     "v.plr_br0 = -0.1128 - 0.2129 * math.cos(v.plr_ph * 2) + 0.07078 * math.sin(v.plr_ph * 2) + 0.1461 * math.cos(v.plr_ph * 4);",
+     "v.plr_br1 = 0.4365 * math.sin(v.plr_ph * 4) + 0.1484 * math.cos(v.plr_ph * 6) - 0.04245 * math.sin(v.plr_ph * 6);",
+     "v.plr_br2 = 0.07695 * math.cos(v.plr_ph * 8) - 0.05866 * math.sin(v.plr_ph * 8);",
+     "v.plr_bob = ((v.plr_walk) * (math.clamp(q.modified_move_speed / 0.8, 0, 1.25)) * ((v.plr_bw0 + v.plr_bw1 + v.plr_bw2) - (0.064))) + ((v.plr_spr) * (v.plr_mv) * ((v.plr_br0 + v.plr_br1 + v.plr_br2) - (0.064)));",
+     "v.plr_dw0 = (0.5 - 0.5 * math.cos(180 * math.clamp((math.sin(q.time_of_day * 1440 + 45) - 0.6701) * 13.51, 0, 1)));",
+     "v.plr_dw1 = (0.5 - 0.5 * math.cos(180 * math.clamp((math.sin(q.time_of_day * 1440 - 45) - 0.6701) * 13.51, 0, 1)));",
+     "v.plr_dw2 = (0.5 - 0.5 * math.cos(180 * math.clamp((math.sin(q.time_of_day * 1440 - 135) - 0.6701) * 13.51, 0, 1)));",
+     "v.plr_dw3 = (0.5 - 0.5 * math.cos(180 * math.clamp((math.sin(q.time_of_day * 1440 + 135) - 0.6701) * 13.51, 0, 1)));",
+     "v.plr_at0 = (-3 * (math.sin(math.clamp((v.attack_time ?? 0) * 3, 0, 1) * 180))) + (7 * (math.sin(math.clamp(v.attack_time ?? 0, 0, 1) * 180)));",
+     "v.plr_at1 = (5 * (math.sin(math.clamp((v.attack_time ?? 0) * 3, 0, 1) * 180))) + (-10 * (math.sin(math.clamp(v.attack_time ?? 0, 0, 1) * 180)));"
     ],
     "animate": [
      {

@@ -1,6 +1,6 @@
 # Installation Guide
 
-**File to install:** [`dist/PlayableRaces.mcaddon`](../dist/PlayableRaces.mcaddon) (about 2.5 MB) — **version 1.4.0**, nine lineages (001–009); 1.2.0 redrew races 004–006, 1.2.1 and 1.3.1 target the Flying Spaghetti Monster being invisible, 1.3.0 gives every race new ability effects, 1.3.1 adds *Lineage Codex → Display Check*, **1.4.0 (Expansion 02) adds the Unknown Dinosauroid, Bathyas (Unique) and Octamyces Undecimus**.
+**File to install:** [`dist/PlayableRaces.mcaddon`](../dist/PlayableRaces.mcaddon) (about 3.4 MB) — **version 1.5.0**, nine lineages (001–009); 1.2.0 redrew races 004–006, 1.2.1 and 1.3.1 target the Flying Spaghetti Monster being invisible, 1.3.0 gives every race new ability effects, 1.3.1 adds *Lineage Codex → Display Check*, **1.4.0 (Expansion 02) adds the Unknown Dinosauroid, Bathyas (Unique) and Octamyces Undecimus**, and **1.5.0 redraws those three** in a Marketplace-premium style.
 It contains the behavior pack *Playable Races* and the resource pack *Playable Races (Resources)*. (Before 1.1.0 they were called *Playable Races: Foundation*; the pack ids are the same, so 1.1.0 is an update, not a second add-on.)
 The two `.mcpack` files in `dist/` are the same packs, separated, for servers or manual installs.
 
@@ -67,14 +67,14 @@ All players in the world use the same packs; joining players download the resour
 1. Unzip the two `.mcpack` files into `behavior_packs/PlayableRaces_BP` and `resource_packs/PlayableRaces_RP`.
 2. Add them to the world's `world_behavior_packs.json` and `world_resource_packs.json`:
    ```json
-   [{ "pack_id": "6a3f2c1e-8d4b-4f7a-9c2e-1b5d7e9f0a21", "version": [1, 4, 0] }]
+   [{ "pack_id": "6a3f2c1e-8d4b-4f7a-9c2e-1b5d7e9f0a21", "version": [1, 5, 0] }]
    ```
    ```json
-   [{ "pack_id": "9d6a5f4b-b07e-4cad-8f5b-4e8a0b2c3d54", "version": [1, 4, 0] }]
+   [{ "pack_id": "9d6a5f4b-b07e-4cad-8f5b-4e8a0b2c3d54", "version": [1, 5, 0] }]
    ```
 3. Set `texturepack-required=true` in `server.properties` so clients receive the resource pack.
 
 ## Updating and uninstalling
 
-* A newer version with a higher pack version replaces the old one on import (current: **1.4.0**). **Updating from 1.3.x** adds races 007–009; nothing else about existing lineages, items or saved choices changes. **Updating from 1.1.x** changes only how races 004–006 look and move — every form, ability and saved choice stays as it was. **Updating from 1.0.x keeps everything:** races 001–003, their item ids, saved player data and world settings are unchanged; the new lineages simply appear in the Codex and nobody's choice is reset. If Minecraft reports a duplicate pack, delete the old *Playable Races* packs from Settings > Storage first. Lineages, cooldowns, hydration and other progress are stored on the players and the world and survive updates.
+* A newer version with a higher pack version replaces the old one on import (current: **1.5.0**). **Updating from 1.4.x** only changes how races 007–009 look and move; abilities, items and saved choices stay the same. **Updating from 1.3.x** adds races 007–009; nothing else about existing lineages, items or saved choices changes. **Updating from 1.1.x** changes only how races 004–006 look and move — every form, ability and saved choice stays as it was. **Updating from 1.0.x keeps everything:** races 001–003, their item ids, saved player data and world settings are unchanged; the new lineages simply appear in the Codex and nobody's choice is reset. If Minecraft reports a duplicate pack, delete the old *Playable Races* packs from Settings > Storage first. Lineages, cooldowns, hydration and other progress are stored on the players and the world and survive updates.
 * To uninstall, deactivate both packs in the world. Racial effects are short, continuously refreshed effects, so they run out on their own (Health Boost within 2 minutes, everything else within seconds) and players return to normal. The crest and focus items belong to the add-on; once its item types are gone the game removes them (or shows them as unknown items, depending on version). The Salamander's swim-speed attribute returns to normal when the player next leaves water while the add-on is active, or on death. The player's own skin is shown again immediately. Helper entities (shed exuviae, meatballs, gates, heralds, procession columns, hyphal echoes) despawn on their own timers within 30 s even without scripts. Bathyas' drawn sword (*The Impaled Sun*) is an add-on item: it disappears with the add-on.

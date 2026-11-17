@@ -51,12 +51,41 @@
     }
    },
    "minecraft:particle_appearance_tinting": {
-    "color": [
-     1.0,
-     1.0,
-     1.0,
-     1.0
-    ]
+    "color": {
+     "gradient": {
+      "0.00": [
+       0.184,
+       0.682,
+       0.561,
+       1.0
+      ],
+      "0.30": [
+       0.078,
+       0.502,
+       0.435,
+       1.0
+      ],
+      "0.55": [
+       0.231,
+       0.247,
+       0.58,
+       1.0
+      ],
+      "0.78": [
+       0.851,
+       0.647,
+       0.216,
+       1.0
+      ],
+      "1.00": [
+       0.839,
+       0.675,
+       0.388,
+       1.0
+      ]
+     },
+     "interpolant": "v.particle_random_3"
+    }
    },
    "minecraft:particle_initial_spin": {
     "rotation": "v.particle_random_2 * 360",

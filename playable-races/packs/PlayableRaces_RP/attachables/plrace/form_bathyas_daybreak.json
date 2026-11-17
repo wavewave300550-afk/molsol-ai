@@ -19,6 +19,7 @@
    "animations": {
     "first_person": "animation.plrace.bathyas.first_person",
     "third_person": "animation.plrace.bathyas.third_person",
+    "neck": "animation.plrace.bathyas.neck",
     "appendages": "animation.plrace.bathyas.appendages",
     "life_hunt": "animation.plrace.bathyas.life_hunt",
     "locomotion": "animation.plrace.bathyas.locomotion",
@@ -31,6 +32,9 @@
     "intro_daybreak": "animation.plrace.bathyas.intro_daybreak",
     "fx_daybreak": "animation.plrace.bathyas.fx_daybreak",
     "daybreak_loop": "animation.plrace.bathyas.daybreak_loop",
+    "daybreak_hold": "animation.plrace.bathyas.daybreak_hold",
+    "outro_daybreak": "animation.plrace.bathyas.outro_daybreak",
+    "execution_arms": "animation.plrace.bathyas.execution_arms",
     "step_r": "animation.plrace.bathyas.step_r",
     "step_l": "animation.plrace.bathyas.step_l",
     "land": "animation.plrace.bathyas.land",
@@ -50,20 +54,31 @@
      "v.plr_still = 1 - math.clamp(q.modified_move_speed * 5, 0, 1);",
      "v.plr_spr = q.is_sprinting ? 1 : 0;",
      "v.plr_walk = 1 - v.plr_spr;",
-     "v.plr_bw0 = -0.5607 - 0.4563 * math.cos(v.plr_ph * 2) - 0.2361 * math.sin(v.plr_ph * 2) + 0.04924 * math.cos(v.plr_ph * 4);",
-     "v.plr_bw1 = -0.02584 * math.sin(v.plr_ph * 4) + 0.04958 * math.cos(v.plr_ph * 6);",
-     "v.plr_br0 = -1.448 - 1.398 * math.cos(v.plr_ph * 2) - 0.5042 * math.sin(v.plr_ph * 2) - 0.06691 * math.cos(v.plr_ph * 4);",
-     "v.plr_br1 = -0.1895 * math.sin(v.plr_ph * 4) + 0.02007 * math.sin(v.plr_ph * 6) + 0.0553 * math.cos(v.plr_ph * 8);",
-     "v.plr_br2 = 0.03938 * math.sin(v.plr_ph * 8);",
-     "v.plr_bob = ((v.plr_walk) * (math.clamp(q.modified_move_speed / 0.8, 0, 1.25)) * ((v.plr_bw0 + v.plr_bw1) - (-0.133))) + ((v.plr_spr) * (v.plr_mv) * ((v.plr_br0 + v.plr_br1 + v.plr_br2) - (-0.133)));",
-     "v.plr_bl0 = math.clamp(math.sin(q.life_time * 32.73 + 100) * 3 - 2, 0, 1);",
-     "v.plr_bl1 = 2 * v.plr_bl0 * v.plr_still - 0.8 * math.sin(q.life_time * 68.4);",
-     "v.plr_bl2 = 1.6 + 0.6 * math.sin(q.life_time * 25.2);",
-     "v.plr_bl3 = 1.2 * math.sin(q.life_time * 18 + 40) * v.plr_still;",
-     "v.plr_bt0 = v.plr_mv * (math.pow(math.max(0, -math.cos(v.plr_ph)), 8) + 0.55 * math.pow(math.max(0, math.cos(v.plr_ph)), 8));",
-     "v.plr_bt1 = v.plr_mv * (4 + 8 * v.plr_spr);",
-     "v.plr_bt2 = v.plr_mv * (2.6 * math.sin(v.plr_ph) + math.max(0, math.sin(v.plr_ph)) + 3 * math.clamp(q.yaw_speed * 0.02, -1, 1));",
-     "v.plr_bt3 = 0.12 * math.clamp(q.target_y_rotation, -70, 70) - 4 * math.cos(v.plr_ph) * v.plr_mv;"
+     "v.plr_bw0 = -0.1685 - 0.2795 * math.cos(v.plr_ph * 2) + 0.04923 * math.sin(v.plr_ph * 2) - 0.03096 * math.cos(v.plr_ph * 4);",
+     "v.plr_bw1 = -0.07088 * math.sin(v.plr_ph * 4) - 0.03874 * math.sin(v.plr_ph * 6) - 0.04399 * math.cos(v.plr_ph * 8);",
+     "v.plr_br0 = -0.8501 - 0.9215 * math.cos(v.plr_ph * 2) - 0.04665 * math.sin(v.plr_ph * 2) - 0.06038 * math.cos(v.plr_ph * 4);",
+     "v.plr_br1 = -0.3353 * math.sin(v.plr_ph * 4) - 0.1479 * math.cos(v.plr_ph * 6) - 0.09441 * math.sin(v.plr_ph * 6);",
+     "v.plr_br2 = -0.09631 * math.cos(v.plr_ph * 8) + 0.05168 * math.sin(v.plr_ph * 8);",
+     "v.plr_bob = ((v.plr_walk) * (math.clamp(q.modified_move_speed / 0.8, 0, 1.25)) * ((v.plr_bw0 + v.plr_bw1) - (0.000))) + ((v.plr_spr) * (v.plr_mv) * ((v.plr_br0 + v.plr_br1 + v.plr_br2) - (0.000)));",
+     "v.plr_hb0 = ((math.mod(q.life_time, 1.154) < 0.24 ? math.sin(math.mod(q.life_time, 1.154) * 750) : 0) + 0.55 * (math.mod(q.life_time - 0.27, 1.154) < 0.28 ? math.sin(math.mod(q.life_time - 0.27, 1.154) * 642.9) : 0));",
+     "v.plr_hb1 = ((math.mod(q.life_time - 0.06, 1.154) < 0.24 ? math.sin(math.mod(q.life_time - 0.06, 1.154) * 750) : 0) + 0.55 * (math.mod(q.life_time - 0.33, 1.154) < 0.28 ? math.sin(math.mod(q.life_time - 0.33, 1.154) * 642.9) : 0));",
+     "v.plr_hb2 = ((math.mod(q.life_time, 0.7895) < 0.24 ? math.sin(math.mod(q.life_time, 0.7895) * 750) : 0) + 0.55 * (math.mod(q.life_time - 0.27, 0.7895) < 0.28 ? math.sin(math.mod(q.life_time - 0.27, 0.7895) * 642.9) : 0));",
+     "v.plr_br0 = math.sin(q.life_time * 57.6);",
+     "v.plr_br1 = math.max(0, -math.sin(q.life_time * 57.6 - 25));",
+     "v.plr_gl0 = math.mod(q.life_time + 3, 12.7);",
+     "v.plr_gl1 = 0.5 * (math.cos(math.clamp((v.plr_gl0 - 3) / 1.3, 0, 1) * 180) - math.cos(math.clamp(v.plr_gl0 / 1.1, 0, 1) * 180));",
+     "v.plr_mu0 = math.mod(q.life_time + 2, 9.1);",
+     "v.plr_mu1 = 0.5 * (math.cos(math.clamp((v.plr_mu0 - 2.1) / 0.5, 0, 1) * 180) - math.cos(math.clamp(v.plr_mu0 / 0.4, 0, 1) * 180));",
+     "v.plr_tw0 = math.mod(q.life_time + 1.1, 7.3);",
+     "v.plr_tw1 = 0.5 * (math.cos(math.clamp((v.plr_tw0 - 0.95) / 0.7, 0, 1) * 180) - math.cos(math.clamp(v.plr_tw0 / 0.35, 0, 1) * 180));",
+     "v.plr_tw2 = math.mod(q.life_time + 4.2, 9.4);",
+     "v.plr_tw3 = 0.5 * (math.cos(math.clamp((v.plr_tw2 - 0.95) / 0.7, 0, 1) * 180) - math.cos(math.clamp(v.plr_tw2 / 0.35, 0, 1) * 180));",
+     "v.plr_br2 = math.sin(q.life_time * 108);",
+     "v.plr_bt0 = v.plr_mv * (math.pow(math.max(0, -math.cos(v.plr_ph)), 8) + math.pow(math.max(0, math.cos(v.plr_ph)), 8));",
+     "v.plr_bt1 = v.plr_mv * (3 + 7 * v.plr_spr);",
+     "v.plr_bt2 = v.plr_mv * (3.2 * math.sin(v.plr_ph) + 3 * math.clamp(q.yaw_speed * 0.02, -1, 1));",
+     "v.plr_bt3 = 0.12 * math.clamp(q.target_y_rotation, -70, 70) - 4 * math.cos(v.plr_ph) * v.plr_mv;",
+     "v.plr_bt4 = (1.6 * (v.plr_mv)) + (4 * ((v.plr_spr) * (v.plr_mv))) + (1.6 * (v.plr_bt0));"
     ],
     "animate": [
      {
@@ -71,6 +86,9 @@
      },
      {
       "third_person": "!c.is_first_person"
+     },
+     {
+      "neck": "!c.is_first_person"
      },
      "appendages",
      {
@@ -103,6 +121,13 @@
      },
      {
       "daybreak_loop": "!c.is_first_person"
+     },
+     {
+      "daybreak_hold": "!c.is_first_person"
+     },
+     "outro_daybreak",
+     {
+      "execution_arms": "!c.is_first_person"
      }
     ]
    },

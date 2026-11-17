@@ -22,25 +22,23 @@
     "steady": "animation.plrace.octamyces.steady",
     "vigil": "controller.animation.plrace.octamyces.vigil",
     "gaze": "animation.plrace.octamyces.gaze",
-    "glance": "animation.plrace.octamyces.glance",
-    "fidget": "controller.animation.plrace.octamyces.fidget",
+    "blink": "animation.plrace.octamyces.blink",
     "locomotion": "animation.plrace.octamyces.locomotion",
     "airborne": "animation.plrace.octamyces.airborne",
     "landing": "controller.animation.plrace.octamyces.landing",
     "attack": "animation.plrace.octamyces.attack",
     "swim": "animation.plrace.octamyces.swim",
     "hurt": "animation.plrace.octamyces.hurt",
+    "hurt_lids": "animation.plrace.octamyces.hurt_lids",
     "intro_offset": "animation.plrace.octamyces.intro_offset",
     "fx_offset": "animation.plrace.octamyces.fx_offset",
     "offset_loop": "animation.plrace.octamyces.offset_loop",
     "life": "animation.plrace.octamyces.life",
-    "vigil_wait": "animation.plrace.octamyces.vigil_wait",
+    "vigil_settle": "animation.plrace.octamyces.vigil_settle",
     "surveil": "animation.plrace.octamyces.surveil",
-    "fidget_wait": "animation.plrace.octamyces.fidget_wait",
-    "fidget_rest": "animation.plrace.octamyces.fidget_rest",
-    "fidget_fold": "animation.plrace.octamyces.fidget_fold",
-    "fidget_align": "animation.plrace.octamyces.fidget_align",
-    "fidget_gills": "animation.plrace.octamyces.fidget_gills",
+    "fidget_crown": "animation.plrace.octamyces.fidget_crown",
+    "fidget_click": "animation.plrace.octamyces.fidget_click",
+    "fidget_spores": "animation.plrace.octamyces.fidget_spores",
     "fidget_probe": "animation.plrace.octamyces.fidget_probe",
     "land": "animation.plrace.octamyces.land",
     "land_hard": "animation.plrace.octamyces.land_hard"
@@ -58,7 +56,13 @@
      "v.plr_still = 1 - math.clamp(q.modified_move_speed * 5, 0, 1);",
      "v.plr_spr = q.is_sprinting ? 1 : 0;",
      "v.plr_walk = 1 - v.plr_spr;",
-     "v.plr_bob = 0;"
+     "v.plr_bob = 0;",
+     "v.oct_b1 = math.mod(q.life_time, 8.7);",
+     "v.oct_b2 = math.mod(q.life_time + 4.9, 13.3);",
+     "v.oct_b1 = math.clamp(v.oct_b1 / 0.2, 0, 1) - math.clamp((v.oct_b1 - 0.27) / 0.3, 0, 1);",
+     "v.oct_b2 = math.clamp(v.oct_b2 / 0.2, 0, 1) - math.clamp((v.oct_b2 - 0.27) / 0.3, 0, 1);",
+     "v.oct_blink = math.max(math.max(v.oct_b1, v.oct_b2), (q.is_sleeping ? 1 : 0));",
+     "v.oct_blink = v.oct_blink * v.oct_blink * (3 - 2 * v.oct_blink);"
     ],
     "animate": [
      {
@@ -77,10 +81,7 @@
       "gaze": "!c.is_first_person"
      },
      {
-      "glance": "!c.is_first_person"
-     },
-     {
-      "fidget": "!c.is_first_person"
+      "blink": "!c.is_first_person"
      },
      {
       "locomotion": "!c.is_first_person && !q.is_riding && !q.is_gliding && !q.is_swimming"
@@ -99,6 +100,9 @@
      },
      {
       "hurt": "!c.is_first_person && q.hurt_time > 0"
+     },
+     {
+      "hurt_lids": "!c.is_first_person && q.hurt_time > 0"
      },
      "intro_offset",
      {

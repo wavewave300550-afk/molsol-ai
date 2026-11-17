@@ -87,7 +87,7 @@
        "moving": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding"
       },
       {
-       "fidget_shield": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.3), 5) == 0 && !q.is_item_equipped(0))"
+       "fidget_shield": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.3), 5) == 0 && !q.is_item_equipped(1))"
       },
       {
        "fidget_sigh": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.3), 5) == 1)"

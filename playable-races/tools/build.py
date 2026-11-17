@@ -40,7 +40,7 @@ import fx_ex  # noqa: E402
 from vfx import atlas as vfx_atlas  # noqa: E402
 
 NS = "plrace"
-VERSION = [1, 4, 0]
+VERSION = [1, 5, 0]
 MIN_ENGINE = [1, 26, 60]
 SERVER_API = "2.11.0"
 UI_API = "2.3.0"
@@ -899,14 +899,14 @@ def manifests():
             {"module_name": "@minecraft/server", "version": SERVER_API},
             {"module_name": "@minecraft/server-ui", "version": UI_API}],
         "metadata": {"authors": ["Playable Races project"], "product_type": "addon",
-                     "generated_with": {"plrace_build": ["1.4.0"]}}}
+                     "generated_with": {"plrace_build": ["1.5.0"]}}}
     rp = {"format_version": 2, "header": {
         "name": "pack.name", "description": "pack.description", "uuid": UUID["rp"], "pack_scope": "world",
         "version": VERSION, "min_engine_version": MIN_ENGINE},
         "modules": [{"type": "resources", "uuid": UUID["rp_res"], "version": VERSION}],
         "dependencies": [{"uuid": UUID["bp"], "version": VERSION}],
         "metadata": {"authors": ["Playable Races project"], "product_type": "addon",
-                     "generated_with": {"plrace_build": ["1.4.0"]}}}
+                     "generated_with": {"plrace_build": ["1.5.0"]}}}
     wjson(os.path.join(BP, "manifest.json"), bp)
     wjson(os.path.join(RP, "manifest.json"), rp)
 

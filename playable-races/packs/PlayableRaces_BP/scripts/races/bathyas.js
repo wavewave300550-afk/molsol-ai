@@ -426,7 +426,7 @@ function dawnTick(p, s, h, t) {
             sound(dim, "mob.elderguardian.idle", c, 1.2, 0.45);
     }
     if (t === D.execution) {
-        tempForm(p, s, "daybreak", D.end - D.execution + 10);
+        tempForm(p, s, "daybreak", D.end - D.execution);
         pose(p, "bat_execution");
         particle(dim, "plrace:sun_extract", add(c, v3(0, 1.25, 0)));
         sound(dim, "item.trident.riptide_3", c, 1.2, 0.5);

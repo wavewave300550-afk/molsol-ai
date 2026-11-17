@@ -1,6 +1,6 @@
 ## Playable Races - Foundation + Expansion 01 + Expansion 02 (Races 001-009)
 pack.name=Playable Races (Resources)
-plrace.rp_version=1.4.0
+plrace.rp_version=1.5.0
 pack.description=Races 001-009: Flora Salamander, Runic Titan Golem, Blood Moon Jackalope, Xenentoma, Flying Spaghetti Monster, Nurariten [Unique], Unknown Dinosauroid, Bathyas [Unique], Octamyces Undecimus
 item.plrace:form_salamander=Aberrant Flora Salamander Form (Stable)
 item.plrace:form_salamander_static=Aberrant Flora Salamander Form (still body)

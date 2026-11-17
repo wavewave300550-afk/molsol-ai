@@ -20,13 +20,14 @@
     "first_person": "animation.plrace.octamyces.first_person",
     "third_person": "animation.plrace.octamyces.third_person",
     "steady": "animation.plrace.octamyces.steady",
-    "vigil": "controller.animation.plrace.octamyces.vigil",
+    "vigil_plain": "controller.animation.plrace.octamyces.vigil_plain",
     "locomotion": "animation.plrace.octamyces.locomotion",
     "airborne": "animation.plrace.octamyces.airborne",
     "landing": "controller.animation.plrace.octamyces.landing",
     "attack": "animation.plrace.octamyces.attack",
     "swim": "animation.plrace.octamyces.swim",
     "hurt": "animation.plrace.octamyces.hurt",
+    "hurt_lids": "animation.plrace.octamyces.hurt_lids",
     "intro_record": "animation.plrace.octamyces.intro_record",
     "fx_record": "animation.plrace.octamyces.fx_record",
     "record_loop": "animation.plrace.octamyces.record_loop",
@@ -49,7 +50,13 @@
      "v.plr_still = 1 - math.clamp(q.modified_move_speed * 5, 0, 1);",
      "v.plr_spr = q.is_sprinting ? 1 : 0;",
      "v.plr_walk = 1 - v.plr_spr;",
-     "v.plr_bob = 0;"
+     "v.plr_bob = 0;",
+     "v.oct_b1 = math.mod(q.life_time, 8.7);",
+     "v.oct_b2 = math.mod(q.life_time + 4.9, 13.3);",
+     "v.oct_b1 = math.clamp(v.oct_b1 / 0.2, 0, 1) - math.clamp((v.oct_b1 - 0.27) / 0.3, 0, 1);",
+     "v.oct_b2 = math.clamp(v.oct_b2 / 0.2, 0, 1) - math.clamp((v.oct_b2 - 0.27) / 0.3, 0, 1);",
+     "v.oct_blink = math.max(math.max(v.oct_b1, v.oct_b2), (q.is_sleeping ? 1 : 0));",
+     "v.oct_blink = v.oct_blink * v.oct_blink * (3 - 2 * v.oct_blink);"
     ],
     "animate": [
      {
@@ -62,7 +69,7 @@
       "steady": "!c.is_first_person"
      },
      {
-      "vigil": "!c.is_first_person"
+      "vigil_plain": "!c.is_first_person"
      },
      {
       "locomotion": "!c.is_first_person && !q.is_riding && !q.is_gliding && !q.is_swimming"
@@ -81,6 +88,9 @@
      },
      {
       "hurt": "!c.is_first_person && q.hurt_time > 0"
+     },
+     {
+      "hurt_lids": "!c.is_first_person && q.hurt_time > 0"
      },
      "intro_record",
      {

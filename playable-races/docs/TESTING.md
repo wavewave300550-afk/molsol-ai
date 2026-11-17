@@ -1,8 +1,39 @@
 # Testing Report
 
-*Version 1.4.0 (races 001–009: Expansion 02 adds races 007–009; races 004–006 redrawn in 1.2.0, the in-game hotfixes 1.2.1 and 1.3.1 below, and new ability effects for every race in 1.3.0 — see [CREATIVE.md](CREATIVE.md#expansion-02-v140-races-007009)).*
+*Version 1.5.0 (races 001–009: Expansion 02 adds races 007–009, redrawn in 1.5.0; races 004–006 redrawn in 1.2.0, the in-game hotfixes 1.2.1 and 1.3.1 below, and new ability effects for every race in 1.3.0 — see [CREATIVE.md](CREATIVE.md#expansion-02-v140-races-007009)).*
 
 **Bottom line:** everything that can be verified without a Minecraft client was verified and passes. What only a real client or server can show — visuals, timing, and "feel" — has **not** been verified in game, and is listed separately below as **proposed** in-game tests. Nothing in this report claims an in-game result that did not happen.
+
+## v1.5.0: races 007–009 redrawn (Marketplace-premium bodies and motion)
+* **Automated checks:**
+  * `npm test`: **372 / 372 assertions**. Gameplay is unchanged; the Display Check, form swaps and the Bathyas sword recovery all run against the new bodies.
+  * Project validator: **116,165 checks, 0 errors**. The count rose with the new geometry.
+  * TypeScript strict: 0 errors.
+  * **Creator Tools 0.21.0: 0 errors**, 9 warnings (the race portraits, used from scripts), 85 recommendations, 41 test suites passed.
+* **Budgets (from the build):**
+
+  | Race | Bones | Cubes | Texture |
+  |---|---|---|---|
+  | Dinosauroid | 86 | 252 (up to 280 in Overflow) | 256×256 |
+  | Bathyas | 79–80 | 241–275 | 256×256 |
+  | Octamyces | 80 | 273 (279 in Sporeveil) | 256×256 |
+
+  * Longest Molang expression: 373 characters.
+  * No sign pairs, no scientific notation, every ternary in parentheses.
+  * Only queries already used by earlier races.
+  * Fastest idle motion: 2.6 Hz.
+* **Feet on the ground** (fitted body bob against the measured foot floor):
+  * Dinosauroid: walk 0.05 px, sprint 0.11 px.
+  * Bathyas: walk 0.04 px, sprint 0.15 px.
+  * Octamyces floats, and its lowest point never comes within 4.2 px of the ground in any clip or form.
+* **Review gates:** each body passed three reviews in offline renders of the shipped data — silhouette, then surface and glow, then motion. Each was judged at the in-game 3rd-person camera and at player scale, on white and dark ground. Problems caught and fixed are listed in [CREATIVE.md](CREATIVE.md#visual-overhaul-v150-races-007009-redrawn).
+* **Also fixed for this release:**
+  * The geometry writer folds every cube and bone angle into (−180°, 180°]. The Bathyas redesign had produced exact −180° angles, which the validator rejects.
+  * Bathyas' Daybreak form now ends on the same tick the return pose starts.
+* **Not verified in game** (no client here):
+  * Look at all three bodies from the 3rd-person camera.
+  * Check Bathyas' ability poses: their new position keys ("socket keys") should keep his shoulders seated. Check in particular that the drawn-sword pose holds the item correctly.
+  * Check the Octamyces skirt and the Dinosauroid fans in first person.
 
 ## v1.4.0 — Expansion 02: races 007–009
 * **`npm test`: 372 / 372 assertions** (87 new: the three lineages, all thirteen of their abilities, the Bathyas sword's recovery after death and logout, Display Check across nine bodies, and its new still-body fallback), **validator 98,876 checks, 0 errors**, TypeScript strict 0 errors, **Creator Tools 0.21.0: 0 errors**, 9 warnings (the nine race portraits, used from scripts), 85 recommendations, 41 test suites passed.
@@ -53,9 +84,9 @@ After installing v1.2.0 the player reported that **the Flying Spaghetti Monster 
 | Check | Tool | Result |
 |---|---|---|
 | TypeScript strict typecheck against the official **@minecraft/server 2.11.0** and **@minecraft/server-ui 2.3.0** typings | `npx tsc --noEmit` | **0 errors** |
-| Minecraft Creator Tools 0.21.0 validation (the "Add-On Best Practices" suite Mojang points creators to) | `npx @minecraft/creator-tools@0.21.0 validate -i packs` | **0 errors**, 9 warnings, 85 recommendations, 41 test suites passed (v1.4.0; below) |
-| Project static validator: manifests, every geometry/texture/animation/render-controller/particle/locator link, animation bone names, UV bounds, attachable skeleton pivots = vanilla player skeleton, player/armour render-controller overrides = vanilla + one condition, items/icons/lang, every identifier string in the compiled scripts (particles, vanilla sound events, effect ids, items, entities, pose animations), texture memory budget; **since v1.0.2 also every Molang expression** in animations, controllers and attachable scripts parses, uses only known queries, and every variable it reads is set in `pre_animation` or exposed by the player; controller transitions point at existing states | `python3 tools/validate.py` | **98,876 checks, 0 errors** (v1.4.0; 60,577 in v1.3.0; 59,521 in v1.2.1; 48,774 in v1.2.0; 63,151 in v1.1.0 — the count follows the number of cubes and faces, and the redrawn models use far fewer cubes, e.g. the Spaghetti Monster 131 instead of 588; since v1.2.0 it also rejects numbers in scientific notation inside Molang, and parses every Molang string in the particle effects, which may read only the particle's built-in variables or variables the scripts pass in) |
-| Runtime smoke test: the **compiled behavior-pack scripts** run on a strict mock of the Script API, driven through real gameplay scenarios (table below) | `node tests/run.mjs` | **372 / 372 assertions** (v1.4.0; 285 in v1.3.1, 277 in v1.3.0) |
+| Minecraft Creator Tools 0.21.0 validation (the "Add-On Best Practices" suite Mojang points creators to) | `npx @minecraft/creator-tools@0.21.0 validate -i packs` | **0 errors**, 9 warnings, 85 recommendations, 41 test suites passed (v1.5.0; below) |
+| Project static validator: manifests, every geometry/texture/animation/render-controller/particle/locator link, animation bone names, UV bounds, attachable skeleton pivots = vanilla player skeleton, player/armour render-controller overrides = vanilla + one condition, items/icons/lang, every identifier string in the compiled scripts (particles, vanilla sound events, effect ids, items, entities, pose animations), texture memory budget; **since v1.0.2 also every Molang expression** in animations, controllers and attachable scripts parses, uses only known queries, and every variable it reads is set in `pre_animation` or exposed by the player; controller transitions point at existing states | `python3 tools/validate.py` | **116,165 checks, 0 errors** (v1.5.0; 98,876 in v1.4.0; 60,577 in v1.3.0; 59,521 in v1.2.1; 48,774 in v1.2.0; 63,151 in v1.1.0 — the count follows the number of cubes and faces, and the redrawn models use far fewer cubes, e.g. the Spaghetti Monster 131 instead of 588; since v1.2.0 it also rejects numbers in scientific notation inside Molang, and parses every Molang string in the particle effects, which may read only the particle's built-in variables or variables the scripts pass in) |
+| Runtime smoke test: the **compiled behavior-pack scripts** run on a strict mock of the Script API, driven through real gameplay scenarios (table below) | `node tests/run.mjs` | **372 / 372 assertions** (v1.5.0 and v1.4.0; 285 in v1.3.1, 277 in v1.3.0) |
 | **Animation runtime (v1.0.2):** the shipped attachables (animate lists, blend conditions, `pre_animation`, Molang, Catmull-Rom keyframes, animation controllers) are executed by an offline interpreter on top of the vanilla player skeleton (walk swing, arm bob, head look, attack swing from Mojang's `player.animation.json`) through idle, walk, sprint, jump/landing, attack and hurt scenarios; idle-behaviour controllers cycle through all their behaviours; no query used by the packs is left unsimulated | `python3 tools/anim_gifs.py` (+ `--fidgets`) | GIFs in `docs/images` |
 | **Feet on the ground (v1.0.2):** lowest leg point sampled every tick through walk and sprint cycles of the final packs | runtime above | Salamander −0.04…+0.26, Golem −0.04…+0.11, Jackalope walk −0.08…+0.07 model px from the ground; Jackalope sprint −0.12 at contact, up to +1.57 in the deliberate flight phase |
 | **Gait fit for races 004–006 (v1.2.0 bodies):** body bob fitted to the measured foot floor (lowest foot point, sampled 48× per stride) | `tools/build.py` report | Xenentoma walk 0.10 px, six-legged sprint 0.16 px max error (12-harmonic fit; with the default 4 harmonics it was 0.33 / 0.56 px, so the fit was refined); Nurariten walk 0.08 px, sprint 0.10 px; the Spaghetti Monster hovers (no feet to fit). Foot **slide** was not measured offline (see the in-game list) |

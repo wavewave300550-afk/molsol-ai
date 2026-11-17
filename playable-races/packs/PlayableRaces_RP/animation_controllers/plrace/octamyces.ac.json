@@ -75,113 +75,6 @@
     }
    }
   },
-  "controller.animation.plrace.octamyces.fidget": {
-   "initial_state": "wait",
-   "states": {
-    "wait": {
-     "animations": [
-      "fidget_wait"
-     ],
-     "transitions": [
-      {
-       "moving": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding"
-      },
-      {
-       "fidget_fold": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.7), 4) == 0)"
-      },
-      {
-       "fidget_align": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.7), 4) == 1)"
-      },
-      {
-       "fidget_gills": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.7), 4) == 2)"
-      },
-      {
-       "fidget_probe": "q.all_animations_finished && (math.mod(math.floor(q.life_time * 1.7), 4) == 3)"
-      },
-      {
-       "rest": "q.all_animations_finished"
-      }
-     ]
-    },
-    "moving": {
-     "transitions": [
-      {
-       "wait": "!(q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding)"
-      }
-     ],
-     "blend_transition": 0.2
-    },
-    "rest": {
-     "animations": [
-      "fidget_rest"
-     ],
-     "transitions": [
-      {
-       "moving": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding"
-      },
-      {
-       "wait": "q.all_animations_finished"
-      }
-     ]
-    },
-    "fidget_fold": {
-     "animations": [
-      "fidget_fold"
-     ],
-     "blend_transition": 0.3,
-     "transitions": [
-      {
-       "moving": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding"
-      },
-      {
-       "wait": "q.all_animations_finished"
-      }
-     ]
-    },
-    "fidget_align": {
-     "animations": [
-      "fidget_align"
-     ],
-     "blend_transition": 0.3,
-     "transitions": [
-      {
-       "moving": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding"
-      },
-      {
-       "wait": "q.all_animations_finished"
-      }
-     ]
-    },
-    "fidget_gills": {
-     "animations": [
-      "fidget_gills"
-     ],
-     "blend_transition": 0.3,
-     "transitions": [
-      {
-       "moving": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding"
-      },
-      {
-       "wait": "q.all_animations_finished"
-      }
-     ]
-    },
-    "fidget_probe": {
-     "animations": [
-      "fidget_probe"
-     ],
-     "blend_transition": 0.3,
-     "transitions": [
-      {
-       "moving": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding"
-      },
-      {
-       "wait": "q.all_animations_finished"
-      }
-     ]
-    }
-   }
-  },
   "controller.animation.plrace.octamyces.vigil": {
    "initial_state": "alive",
    "states": {
@@ -189,7 +82,121 @@
      "animations": [
       "life"
      ],
-     "blend_transition": 0.25,
+     "blend_transition": 0.4,
+     "transitions": [
+      {
+       "settle": "!(q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || (v.attack_time ?? 0) > 0.01 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding || q.is_using_item)"
+      }
+     ]
+    },
+    "settle": {
+     "animations": [
+      "life",
+      "vigil_settle"
+     ],
+     "blend_transition": 0.6,
+     "transitions": [
+      {
+       "alive": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || (v.attack_time ?? 0) > 0.01 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding || q.is_using_item"
+      },
+      {
+       "fidget_crown": "q.any_animation_finished && (math.mod(math.floor(q.life_time * 1.7), 4) == 0)"
+      },
+      {
+       "fidget_click": "q.any_animation_finished && (math.mod(math.floor(q.life_time * 1.7), 4) == 1)"
+      },
+      {
+       "fidget_spores": "q.any_animation_finished && (math.mod(math.floor(q.life_time * 1.7), 4) == 2)"
+      },
+      {
+       "fidget_probe": "q.any_animation_finished && (math.mod(math.floor(q.life_time * 1.7), 4) == 3)"
+      },
+      {
+       "surveil": "q.any_animation_finished"
+      }
+     ]
+    },
+    "surveil": {
+     "animations": [
+      "surveil"
+     ],
+     "blend_transition": 2.0,
+     "transitions": [
+      {
+       "alive": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || (v.attack_time ?? 0) > 0.01 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding || q.is_using_item"
+      }
+     ]
+    },
+    "fidget_crown": {
+     "animations": [
+      "life",
+      "fidget_crown"
+     ],
+     "blend_transition": 0.5,
+     "transitions": [
+      {
+       "alive": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || (v.attack_time ?? 0) > 0.01 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding || q.is_using_item"
+      },
+      {
+       "surveil": "q.any_animation_finished"
+      }
+     ]
+    },
+    "fidget_click": {
+     "animations": [
+      "life",
+      "fidget_click"
+     ],
+     "blend_transition": 0.5,
+     "transitions": [
+      {
+       "alive": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || (v.attack_time ?? 0) > 0.01 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding || q.is_using_item"
+      },
+      {
+       "surveil": "q.any_animation_finished"
+      }
+     ]
+    },
+    "fidget_spores": {
+     "animations": [
+      "life",
+      "fidget_spores"
+     ],
+     "blend_transition": 0.5,
+     "transitions": [
+      {
+       "alive": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || (v.attack_time ?? 0) > 0.01 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding || q.is_using_item"
+      },
+      {
+       "surveil": "q.any_animation_finished"
+      }
+     ]
+    },
+    "fidget_probe": {
+     "animations": [
+      "life",
+      "fidget_probe"
+     ],
+     "blend_transition": 0.5,
+     "transitions": [
+      {
+       "alive": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || (v.attack_time ?? 0) > 0.01 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding || q.is_using_item"
+      },
+      {
+       "surveil": "q.any_animation_finished"
+      }
+     ]
+    }
+   }
+  },
+  "controller.animation.plrace.octamyces.vigil_plain": {
+   "initial_state": "alive",
+   "states": {
+    "alive": {
+     "animations": [
+      "life"
+     ],
+     "blend_transition": 0.4,
      "transitions": [
       {
        "settle": "!(q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || (v.attack_time ?? 0) > 0.01 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding || q.is_using_item)"
@@ -201,7 +208,7 @@
       "life",
       "vigil_wait"
      ],
-     "blend_transition": 2.0,
+     "blend_transition": 0.6,
      "transitions": [
       {
        "alive": "q.modified_move_speed > 0.04 || !q.is_on_ground || q.is_in_water || q.hurt_time > 0 || (v.attack_time ?? 0) > 0.01 || q.is_sneaking || q.is_riding || q.is_sleeping || q.is_gliding || q.is_using_item"

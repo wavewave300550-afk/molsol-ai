@@ -463,7 +463,7 @@ function dawnTick(p: Player, s: Session, h: Dawn, t: number): void {
     if (k % 2 === 0) sound(dim, "mob.elderguardian.idle", c, 1.2, 0.45);
   }
   if (t === D.execution) {
-    tempForm(p, s, "daybreak", D.end - D.execution + 10);
+    tempForm(p, s, "daybreak", D.end - D.execution); // the base form returns as bat_return plays (the hand rides the blade home)
     pose(p, "bat_execution");
     particle(dim, "plrace:sun_extract", add(c, v3(0, 1.25, 0)));
     sound(dim, "item.trident.riptide_3", c, 1.2, 0.5);

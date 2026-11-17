@@ -180,9 +180,9 @@ def expansion(xen, fsm, nur):
 
 WHITE = (255, 255, 255)
 EXP02 = {  # race -> (module, title, scale, centre y, texture per variant)
-    "dinosauroid": (dinosauroid, "007 The Unknown Dinosauroid - the taxonomic impossibility", 7.0, 18),
-    "bathyas": (bathyas, "008 Bathyas, the Sun-Impaled [UNIQUE] - impaled and unshackled", 6.6, 19),
-    "octamyces": (octamyces, "009 Octamyces Undecimus - the witness of eleven realities", 7.0, 18),
+    "dinosauroid": (dinosauroid, "007 The Unknown Dinosauroid - the taxonomic impossibility", 5.8, 19),
+    "bathyas": (bathyas, "008 Bathyas, the Sun-Impaled [UNIQUE] - impaled and unshackled", 6.2, 19),
+    "octamyces": (octamyces, "009 Octamyces Undecimus - the witness of eleven realities", 6.3, 20),
 }
 
 

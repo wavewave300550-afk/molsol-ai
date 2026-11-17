@@ -833,12 +833,6 @@
      "acc_c_breast": "query.has_armor_slot(1)"
     },
     {
-     "acc_c_lsh": "query.has_armor_slot(1)"
-    },
-    {
-     "acc_c_rsh": "query.has_armor_slot(1)"
-    },
-    {
      "acc_f_l": false
     },
     {
@@ -882,12 +876,6 @@
      "acc_c_breast": false
     },
     {
-     "acc_c_lsh": false
-    },
-    {
-     "acc_c_rsh": false
-    },
-    {
      "acc_f_l": false
     },
     {
@@ -923,12 +911,6 @@
     },
     {
      "acc_c_breast": false
-    },
-    {
-     "acc_c_lsh": false
-    },
-    {
-     "acc_c_rsh": false
     },
     {
      "acc_l_l": false
@@ -1088,22 +1070,13 @@
      "*": false
     },
     {
-     "acc_c_band": "query.has_armor_slot(1)"
+     "acc_c_collar": "query.has_armor_slot(1)"
     },
     {
-     "acc_c_rim": "query.has_armor_slot(1)"
+     "acc_f_tips": false
     },
     {
-     "acc_f_l": false
-    },
-    {
-     "acc_f_r": false
-    },
-    {
-     "acc_l_l": false
-    },
-    {
-     "acc_l_r": false
+     "acc_l_fins": false
     }
    ],
    "overlay_color": {
@@ -1128,22 +1101,13 @@
      "*": false
     },
     {
-     "acc_l_l": "query.has_armor_slot(2)"
+     "acc_l_fins": "query.has_armor_slot(2)"
     },
     {
-     "acc_l_r": "query.has_armor_slot(2)"
+     "acc_c_collar": false
     },
     {
-     "acc_c_band": false
-    },
-    {
-     "acc_c_rim": false
-    },
-    {
-     "acc_f_l": false
-    },
-    {
-     "acc_f_r": false
+     "acc_f_tips": false
     }
    ],
    "overlay_color": {
@@ -1168,22 +1132,13 @@
      "*": false
     },
     {
-     "acc_f_l": "query.has_armor_slot(3)"
+     "acc_f_tips": "query.has_armor_slot(3)"
     },
     {
-     "acc_f_r": "query.has_armor_slot(3)"
+     "acc_c_collar": false
     },
     {
-     "acc_c_band": false
-    },
-    {
-     "acc_c_rim": false
-    },
-    {
-     "acc_l_l": false
-    },
-    {
-     "acc_l_r": false
+     "acc_l_fins": false
     }
    ],
    "overlay_color": {
