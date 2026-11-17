@@ -1,0 +1,59 @@
+{
+  "$schema": "../episode.schema.json",
+  "schemaVersion": 1,
+  "id": "voice-test",
+  "kind": "pipeline-test",
+  "title": "ทดสอบเสียงผู้บรรยาย",
+  "language": "th",
+  "durationTier": "standard",
+  "sources": [
+    {
+      "id": "pubchem-water",
+      "label": "PubChem: Water (CID 962)",
+      "citation": "National Center for Biotechnology Information. PubChem Compound Summary for CID 962, Water.",
+      "url": "https://pubchem.ncbi.nlm.nih.gov/compound/962"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "hello",
+      "label": "ทดสอบเสียง",
+      "factual": false,
+      "narration": "สวัสดี นี่คือการทดสอบเสียงบรรยายภาษาไทยสำหรับช่องวิทยาศาสตร์ของเรา",
+      "visual": { "type": "title", "kicker": "VOICE TEST", "title": "ทดสอบเสียงผู้บรรยาย", "subtitle": "Madame Scientia" }
+    },
+    {
+      "id": "water",
+      "label": "สูตรเคมีของน้ำ",
+      "narration": "น้ำหนึ่งโมเลกุลประกอบด้วยไฮโดรเจนสองอะตอม และออกซิเจนหนึ่งอะตอม จึงเขียนเป็นสูตรเคมีได้ว่า H2O",
+      "sourceIds": ["pubchem-water"],
+      "cues": [
+        { "id": "hydrogen", "text": "ไฮโดรเจน" },
+        { "id": "oxygen", "text": "ออกซิเจน" }
+      ],
+      "visual": {
+        "type": "molecule",
+        "title": "โมเลกุลของน้ำ",
+        "formula": "H2O",
+        "atoms": [
+          { "id": "O", "element": "O", "x": 0, "y": 0 },
+          { "id": "H1", "element": "H", "x": -0.79, "y": 0.61 },
+          { "id": "H2", "element": "H", "x": 0.79, "y": 0.61 }
+        ],
+        "bonds": [
+          { "from": "O", "to": "H1" },
+          { "from": "O", "to": "H2" }
+        ],
+        "reveal": { "hydrogen": ["H1", "H2"], "oxygen": ["O"] }
+      }
+    },
+    {
+      "id": "check",
+      "label": "ฟังเสียง",
+      "factual": false,
+      "narration": "ฟังว่าเสียงชัดและจังหวะเป็นธรรมชาติไหม ถ้าดี เราพร้อมเริ่มตอนแรกแล้ว",
+      "visual": { "type": "title", "title": "เสียงชัดไหม", "subtitle": "จังหวะเป็นธรรมชาติไหม" }
+    }
+  ],
+  "approval": null
+}

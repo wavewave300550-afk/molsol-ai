@@ -117,8 +117,9 @@ no scientific claim (intro, outro).
   - **GitHub Actions:** repository secret `ELEVENLABS_API_KEY`.
   - **This computer:** `tiktok/.env` (git-ignored; see `.env.example`).
   - **Claude Code cloud session:** save it as an environment secret for
-    `api.elevenlabs.io`; the proxy adds it to each request. Run with
-    `ELEVENLABS_API_KEY=injected-by-proxy`.
+    `api.elevenlabs.io` (header `xi-api-key`); the proxy adds it to each
+    request. Run with `ELEVENLABS_API_KEY=injected-by-proxy` and
+    `NODE_USE_ENV_PROXY=1` (Node's `fetch` only uses the proxy with it).
 - **Narrator:** every episode is read by the channel's permanent Thai voice,
   **Madame Scientia** (`XAF1635HwW2TJGfbLzfc`, set in `src/lib/config.ts`).
   A take only uses another voice when one is given explicitly (`--voice <id>`,
