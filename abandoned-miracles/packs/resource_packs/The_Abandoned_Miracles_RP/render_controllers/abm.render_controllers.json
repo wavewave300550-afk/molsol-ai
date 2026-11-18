@@ -1,0 +1,76 @@
+{
+ "format_version": "1.10.0",
+ "render_controllers": {
+  "controller.render.abm.layered": {
+   "geometry": "Geometry.default",
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "*_glow": "Material.glow"
+    },
+    {
+     "*_glow_*": "Material.glow"
+    },
+    {
+     "*_glass": "Material.glass"
+    },
+    {
+     "*_glass_*": "Material.glass"
+    }
+   ],
+   "textures": ["Texture.default"]
+  },
+  "controller.render.abm.vesperra": {
+   "geometry": "Geometry.default",
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "*_glow": "Material.glow"
+    }
+   ],
+   "textures": ["Texture.default"],
+   "part_visibility": [
+    {
+     "*": true
+    },
+    {
+     "shell_l*": "q.property('abm:armor_l') < 2"
+    },
+    {
+     "shell_r*": "q.property('abm:armor_r') < 2"
+    },
+    {
+     "shield_c*": "q.property('abm:armor_c') < 2"
+    },
+    {
+     "shell_l_crack": "q.property('abm:armor_l') == 1"
+    },
+    {
+     "shell_r_crack": "q.property('abm:armor_r') == 1"
+    },
+    {
+     "shield_c_crack": "q.property('abm:armor_c') == 1"
+    },
+    {
+     "shell_l_over": "q.property('abm:armor_l') < 2 && q.property('abm:molt') < 1"
+    },
+    {
+     "shell_r_over": "q.property('abm:armor_r') < 2 && q.property('abm:molt') < 1"
+    },
+    {
+     "shell_f_over": "q.property('abm:molt') < 1"
+    },
+    {
+     "shell_b_over": "q.property('abm:molt') < 1"
+    },
+    {
+     "shell_b_collar": "q.property('abm:molt') < 2"
+    }
+   ]
+  }
+ }
+}

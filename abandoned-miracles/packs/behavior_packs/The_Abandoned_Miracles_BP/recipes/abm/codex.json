@@ -1,0 +1,27 @@
+{
+ "format_version": "1.21.60",
+ "minecraft:recipe_shaped": {
+  "description": {
+   "identifier": "abm:codex"
+  },
+  "tags": ["crafting_table"],
+  "pattern": [" B ", "BKB", " B "],
+  "key": {
+   "B": {
+    "item": "minecraft:bone"
+   },
+   "K": {
+    "item": "minecraft:book"
+   }
+  },
+  "unlock": [
+   {
+    "item": "minecraft:book"
+   }
+  ],
+  "result": {
+   "item": "abm:codex",
+   "count": 1
+  }
+ }
+}

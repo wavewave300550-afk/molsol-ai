@@ -1,0 +1,26 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "abm:cocoon_anchor",
+   "materials": {
+    "default": "entity_alphatest",
+    "glow": "entity_emissive_alpha"
+   },
+   "textures": {
+    "default": "textures/entity/abm/cocoon_anchor"
+   },
+   "geometry": {
+    "default": "geometry.abm.cocoon_anchor"
+   },
+   "scripts": {
+    "animate": ["pulse", "grow"]
+   },
+   "animations": {
+    "pulse": "animation.abm.cocoon_anchor.pulse",
+    "grow": "animation.abm.cocoon_anchor.grow"
+   },
+   "render_controllers": ["controller.render.abm.layered"]
+  }
+ }
+}

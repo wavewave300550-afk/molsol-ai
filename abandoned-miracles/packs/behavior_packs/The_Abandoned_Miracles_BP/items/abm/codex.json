@@ -1,0 +1,19 @@
+{
+ "format_version": "1.21.130",
+ "minecraft:item": {
+  "description": {
+   "identifier": "abm:codex",
+   "menu_category": {
+    "category": "items"
+   }
+  },
+  "components": {
+   "minecraft:icon": "abm_codex",
+   "minecraft:max_stack_size": 1,
+   "minecraft:display_name": {
+    "value": "item.abm:codex.name"
+   },
+   "minecraft:rarity": "uncommon"
+  }
+ }
+}

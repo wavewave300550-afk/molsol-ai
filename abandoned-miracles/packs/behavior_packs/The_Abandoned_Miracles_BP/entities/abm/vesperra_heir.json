@@ -1,0 +1,150 @@
+{
+ "format_version": "1.26.0",
+ "minecraft:entity": {
+  "description": {
+   "identifier": "abm:vesperra_heir",
+   "is_spawnable": false,
+   "is_summonable": true,
+   "properties": {
+    "abm:anim": {
+     "type": "int",
+     "range": [0, 15],
+     "default": 0,
+     "client_sync": true
+    },
+    "abm:variant": {
+     "type": "int",
+     "range": [0, 7],
+     "default": 0,
+     "client_sync": true
+    }
+   }
+  },
+  "component_groups": {
+   "abm:gone": {
+    "minecraft:instant_despawn": {}
+   }
+  },
+  "components": {
+   "minecraft:type_family": {
+    "family": ["abm_helper", "abm_heir", "monster"]
+   },
+   "minecraft:health": {
+    "value": 14,
+    "max": 14
+   },
+   "minecraft:collision_box": {
+    "width": 1.1,
+    "height": 0.9
+   },
+   "minecraft:physics": {
+    "has_gravity": true,
+    "has_collision": true
+   },
+   "minecraft:knockback_resistance": {
+    "value": 0.6
+   },
+   "minecraft:fire_immune": {},
+   "minecraft:persistent": {},
+   "minecraft:breathable": {
+    "total_supply": 15,
+    "suffocate_time": 0,
+    "breathes_water": true
+   },
+   "minecraft:timer": {
+    "looping": false,
+    "time": 45,
+    "time_down_event": {
+     "event": "abm:despawn"
+    }
+   },
+   "minecraft:damage_sensor": {
+    "triggers": [
+     {
+      "cause": "fall",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "suffocation",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "drowning",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "contact",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "fire",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "fire_tick",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "lava",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "magma",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "freezing",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "lightning",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "stalactite",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "stalagmite",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "fly_into_wall",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "falling_block",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "anvil",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "campfire",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "soul_campfire",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "temperature",
+      "deals_damage": "no"
+     },
+     {
+      "cause": "wither",
+      "deals_damage": "no"
+     }
+    ]
+   }
+  },
+  "events": {
+   "abm:despawn": {
+    "add": {
+     "component_groups": ["abm:gone"]
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,43 @@
+{
+ "format_version": 2,
+ "header": {
+  "name": "pack.name",
+  "description": "pack.description",
+  "uuid": "a8b1c0de-7e11-4f6a-9a01-ab4d0c0de001",
+  "version": [1, 0, 0],
+  "min_engine_version": [1, 26, 60]
+ },
+ "modules": [
+  {
+   "type": "data",
+   "uuid": "a8b1c0de-7e11-4f6a-9a01-ab4d0c0de002",
+   "version": [1, 0, 0]
+  },
+  {
+   "type": "script",
+   "language": "javascript",
+   "uuid": "a8b1c0de-7e11-4f6a-9a01-ab4d0c0de003",
+   "version": [1, 0, 0],
+   "entry": "scripts/main.js"
+  }
+ ],
+ "dependencies": [
+  {
+   "uuid": "a8b1c0de-7e11-4f6a-9a01-ab4d0c0de011",
+   "version": [1, 0, 0]
+  },
+  {
+   "module_name": "@minecraft/server",
+   "version": "2.11.0"
+  },
+  {
+   "module_name": "@minecraft/server-ui",
+   "version": "2.3.0"
+  }
+ ],
+ "metadata": {
+  "authors": ["The Abandoned Miracles project"],
+  "license": "All rights reserved",
+  "product_type": "addon"
+ }
+}

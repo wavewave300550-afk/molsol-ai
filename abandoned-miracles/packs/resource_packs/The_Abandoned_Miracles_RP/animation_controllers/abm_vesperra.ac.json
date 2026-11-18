@@ -1,0 +1,316 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.abm.vesperra.action": {
+   "initial_state": "none",
+   "states": {
+    "scythe_p1": {
+     "animations": [
+      "scythe_p1",
+      {
+       "scythe_turn_p1": "q.property('abm:variant') == 1"
+      },
+      {
+       "scythe_cast_p1": "q.property('abm:variant') == 2"
+      }
+     ],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 1"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "scythe_p2": {
+     "animations": [
+      "scythe_p2",
+      {
+       "scythe_turn_p2": "q.property('abm:variant') == 1"
+      },
+      {
+       "scythe_cast_p2": "q.property('abm:variant') == 2"
+      },
+      "scythe_thrust_p2"
+     ],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 1"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "procession_p1": {
+     "animations": ["procession_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 2"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "procession_p2": {
+     "animations": ["procession_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 2"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "molting_p1": {
+     "animations": ["molting_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 3"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "molting_p2": {
+     "animations": ["molting_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 3"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "cocoon_p1": {
+     "animations": ["cocoon_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 4"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "cocoon_p2": {
+     "animations": ["cocoon_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 4"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "feint_p1": {
+     "animations": ["feint_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 5"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "feint_p2": {
+     "animations": ["feint_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 5"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "heirs_p1": {
+     "animations": ["heirs_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 6"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "heirs_p2": {
+     "animations": ["heirs_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 6"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "coronation_p1": {
+     "animations": ["coronation_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 7"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "coronation_p2": {
+     "animations": ["coronation_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 7"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "transition": {
+     "animations": ["transition"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 8"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "stagger": {
+     "animations": ["stagger"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 9"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "death": {
+     "animations": ["death"],
+     "blend_transition": 0.2
+    },
+    "intro": {
+     "animations": ["intro"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 11"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "none": {
+     "transitions": [
+      {
+       "scythe_p1": "q.property('abm:anim') == 1 && q.property('abm:phase') == 1"
+      },
+      {
+       "scythe_p2": "q.property('abm:anim') == 1 && q.property('abm:phase') == 2"
+      },
+      {
+       "procession_p1": "q.property('abm:anim') == 2 && q.property('abm:phase') == 1"
+      },
+      {
+       "procession_p2": "q.property('abm:anim') == 2 && q.property('abm:phase') == 2"
+      },
+      {
+       "molting_p1": "q.property('abm:anim') == 3 && q.property('abm:phase') == 1"
+      },
+      {
+       "molting_p2": "q.property('abm:anim') == 3 && q.property('abm:phase') == 2"
+      },
+      {
+       "cocoon_p1": "q.property('abm:anim') == 4 && q.property('abm:phase') == 1"
+      },
+      {
+       "cocoon_p2": "q.property('abm:anim') == 4 && q.property('abm:phase') == 2"
+      },
+      {
+       "feint_p1": "q.property('abm:anim') == 5 && q.property('abm:phase') == 1"
+      },
+      {
+       "feint_p2": "q.property('abm:anim') == 5 && q.property('abm:phase') == 2"
+      },
+      {
+       "heirs_p1": "q.property('abm:anim') == 6 && q.property('abm:phase') == 1"
+      },
+      {
+       "heirs_p2": "q.property('abm:anim') == 6 && q.property('abm:phase') == 2"
+      },
+      {
+       "coronation_p1": "q.property('abm:anim') == 7 && q.property('abm:phase') == 1"
+      },
+      {
+       "coronation_p2": "q.property('abm:anim') == 7 && q.property('abm:phase') == 2"
+      },
+      {
+       "transition": "q.property('abm:anim') == 8"
+      },
+      {
+       "stagger": "q.property('abm:anim') == 9"
+      },
+      {
+       "death": "q.property('abm:anim') == 10"
+      },
+      {
+       "intro": "q.property('abm:anim') == 11"
+      }
+     ],
+     "blend_transition": 0.22
+    }
+   }
+  },
+  "controller.animation.abm.vesperra.phase": {
+   "initial_state": "one",
+   "states": {
+    "one": {
+     "transitions": [
+      {
+       "two": "q.property('abm:phase') == 2"
+      }
+     ],
+     "blend_transition": 0.25
+    },
+    "two": {
+     "animations": ["p2_pose", "p2_flutter"],
+     "transitions": [
+      {
+       "one": "q.property('abm:phase') == 1"
+      }
+     ],
+     "blend_transition": 0.25
+    }
+   }
+  },
+  "controller.animation.abm.vesperra.feet": {
+   "initial_state": "still",
+   "states": {
+    "still": {
+     "transitions": [
+      {
+       "moving": "q.modified_move_speed > 0.12 && q.property('abm:anim') == 0"
+      }
+     ]
+    },
+    "moving": {
+     "animations": ["footfalls"],
+     "transitions": [
+      {
+       "still": "q.modified_move_speed < 0.06 || q.property('abm:anim') != 0"
+      }
+     ]
+    }
+   }
+  },
+  "controller.animation.abm.vesperra_heir": {
+   "initial_state": "emerge",
+   "states": {
+    "emerge": {
+     "animations": ["emerge"],
+     "transitions": [
+      {
+       "idle": "q.anim_time >= 0.7"
+      }
+     ],
+     "blend_transition": 0.1
+    },
+    "idle": {
+     "transitions": [
+      {
+       "bite": "q.property('abm:anim') == 1"
+      }
+     ],
+     "blend_transition": 0.1
+    },
+    "bite": {
+     "animations": ["bite"],
+     "transitions": [
+      {
+       "idle": "q.property('abm:anim') != 1"
+      }
+     ],
+     "blend_transition": 0.1
+    }
+   }
+  }
+ }
+}

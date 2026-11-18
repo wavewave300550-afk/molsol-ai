@@ -1,0 +1,32 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "abm:vesperra_heir",
+   "materials": {
+    "default": "entity_alphatest",
+    "glow": "entity_emissive_alpha"
+   },
+   "textures": {
+    "default": "textures/entity/abm/vesperra_heir"
+   },
+   "geometry": {
+    "default": "geometry.abm.vesperra_heir"
+   },
+   "scripts": {
+    "animate": ["idle", "walk", "ctl"]
+   },
+   "animations": {
+    "idle": "animation.abm.vesperra_heir.idle",
+    "walk": "animation.abm.vesperra_heir.walk",
+    "emerge": "animation.abm.vesperra_heir.emerge",
+    "bite": "animation.abm.vesperra_heir.bite",
+    "ctl": "controller.animation.abm.vesperra_heir"
+   },
+   "render_controllers": ["controller.render.abm.layered"],
+   "sound_effects": {
+    "bite": "abm.vesperra.heir_bite"
+   }
+  }
+ }
+}

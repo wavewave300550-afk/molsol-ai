@@ -1,0 +1,119 @@
+{
+  "_comment": "Beat timings for Vesperra, in game ticks from the start of each action. Shared by the script (hit windows) and the animation generator (keyframes), so they cannot drift apart.",
+  "intro": {
+    "rise": 30,
+    "crown": 70,
+    "total": 110
+  },
+  "transition": {
+    "crack": 24,
+    "split": 56,
+    "unfold": 96,
+    "total": 130
+  },
+  "stagger": {
+    "total": 36
+  },
+  "death": {
+    "crown": 30,
+    "molt": 70,
+    "fail": 110,
+    "collapse": 140,
+    "total": 176
+  },
+  "ivory_scythe": {
+    "p1": {
+      "hit1": 26,
+      "decide": 30,
+      "hit2": 56,
+      "end": 86
+    },
+    "p2": {
+      "hit1": 24,
+      "decide": 28,
+      "hit2": 52,
+      "hit3": 70,
+      "end": 100
+    }
+  },
+  "needle_procession": {
+    "p1": {
+      "plant": 14,
+      "first": 36,
+      "gap": 13,
+      "end": 92
+    },
+    "p2": {
+      "plant": 12,
+      "first": 30,
+      "gap": 10,
+      "cross": 68,
+      "end": 108
+    }
+  },
+  "royal_molting": {
+    "p1": {
+      "launch": 30,
+      "end": 76
+    },
+    "p2": {
+      "launch": 24,
+      "second": 46,
+      "end": 92
+    }
+  },
+  "cocoon_edict": {
+    "p1": {
+      "spawn": 12,
+      "constrict": 60,
+      "end": 84
+    },
+    "p2": {
+      "spawn": 10,
+      "constrict": 50,
+      "end": 74
+    }
+  },
+  "false_submission": {
+    "p1": {
+      "cue": 32,
+      "thrust": 48,
+      "dash": 8,
+      "end": 104
+    },
+    "p2": {
+      "cue": 24,
+      "thrust": 38,
+      "dash": 8,
+      "cue2": 54,
+      "thrust2": 68,
+      "end": 124
+    }
+  },
+  "the_heirs": {
+    "p1": {
+      "detach": 26,
+      "end": 52
+    },
+    "p2": {
+      "detach": 20,
+      "end": 44
+    }
+  },
+  "coronation": {
+    "p1": {
+      "first": 26,
+      "interval": 11,
+      "warn": 34,
+      "count": 7,
+      "end": 160
+    },
+    "p2": {
+      "first": 22,
+      "interval": 12,
+      "warn": 30,
+      "count": 7,
+      "end": 158
+    }
+  }
+}

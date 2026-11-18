@@ -1,0 +1,28 @@
+{
+ "format_version": 2,
+ "header": {
+  "name": "pack.name",
+  "description": "pack.description",
+  "uuid": "a8b1c0de-7e11-4f6a-9a01-ab4d0c0de011",
+  "version": [1, 0, 0],
+  "min_engine_version": [1, 26, 60]
+ },
+ "modules": [
+  {
+   "type": "resources",
+   "uuid": "a8b1c0de-7e11-4f6a-9a01-ab4d0c0de012",
+   "version": [1, 0, 0]
+  }
+ ],
+ "dependencies": [
+  {
+   "uuid": "a8b1c0de-7e11-4f6a-9a01-ab4d0c0de001",
+   "version": [1, 0, 0]
+  }
+ ],
+ "metadata": {
+  "authors": ["The Abandoned Miracles project"],
+  "license": "All rights reserved",
+  "product_type": "addon"
+ }
+}

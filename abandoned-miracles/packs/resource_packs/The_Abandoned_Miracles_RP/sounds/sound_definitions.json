@@ -1,0 +1,458 @@
+{
+ "format_version": "1.20.20",
+ "sound_definitions": {
+  "abm.vesperra.step": {
+   "category": "hostile",
+   "min_distance": 4,
+   "max_distance": 28,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/step0",
+     "volume": 0.5,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/vesperra/step1",
+     "volume": 0.5,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/vesperra/step2",
+     "volume": 0.5,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.idle": {
+   "category": "hostile",
+   "min_distance": 5,
+   "max_distance": 32,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/idle0",
+     "volume": 0.45,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/vesperra/idle1",
+     "volume": 0.45,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.scythe_wind": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/scythe_wind",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.scythe_swing": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/scythe_swing",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.needle_plant": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/needle_plant",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.needle_stab": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/needle_stab",
+     "volume": 0.85,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.lane_erupt": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 56,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/lane_erupt",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.molt_wind": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/molt_wind",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.molt_burst": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 64,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/molt_burst",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.cocoon_spit": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/cocoon_spit",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.cocoon_weave": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/cocoon_weave",
+     "volume": 0.7,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.cocoon_snap": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/cocoon_snap",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.anchor_break": {
+   "category": "hostile",
+   "min_distance": 4,
+   "max_distance": 32,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/anchor_break",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.feint_fall": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/feint_fall",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.feint_cue": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/feint_cue",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.thrust": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 56,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/thrust",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.heirs_call": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/heirs_call",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.heirs_detach": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/heirs_detach",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.heir_bite": {
+   "category": "hostile",
+   "min_distance": 3,
+   "max_distance": 20,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/heir_bite",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.crown_raise": {
+   "category": "hostile",
+   "min_distance": 10,
+   "max_distance": 64,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/crown_raise",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.fracture_mark": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 56,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/fracture_mark0",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/vesperra/fracture_mark1",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/vesperra/fracture_mark2",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.fracture_erupt": {
+   "category": "hostile",
+   "min_distance": 10,
+   "max_distance": 64,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/fracture_erupt0",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/vesperra/fracture_erupt1",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.armor_hit": {
+   "category": "hostile",
+   "min_distance": 4,
+   "max_distance": 28,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/armor_hit0",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/vesperra/armor_hit1",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/vesperra/armor_hit2",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.armor_break": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 64,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/armor_break",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.body_hit": {
+   "category": "hostile",
+   "min_distance": 4,
+   "max_distance": 24,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/body_hit0",
+     "volume": 0.7,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/vesperra/body_hit1",
+     "volume": 0.7,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.stagger": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/stagger",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.transition_crack": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/transition_crack",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.transition_split": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/transition_split",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.transition_cry": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 80,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/transition_cry",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.intro_rise": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/intro_rise",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.death_cry": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 80,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/death_cry",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.death_fail": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/death_fail",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.death_fall": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/death_fall",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.vesperra.trophy": {
+   "category": "hostile",
+   "min_distance": 4,
+   "max_distance": 16,
+   "sounds": [
+    {
+     "name": "sounds/abm/vesperra/trophy",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    }
+   ]
+  }
+ }
+}

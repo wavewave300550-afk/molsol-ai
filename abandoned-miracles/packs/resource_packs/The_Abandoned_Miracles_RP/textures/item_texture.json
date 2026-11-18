@@ -1,0 +1,15 @@
+{
+ "resource_pack_name": "abm",
+ "texture_name": "atlas.items",
+ "texture_data": {
+  "abm_codex": {
+   "textures": "textures/items/abm/abm_codex"
+  },
+  "abm_seal_vesperra": {
+   "textures": "textures/items/abm/abm_seal_vesperra"
+  },
+  "abm_ivory_diadem": {
+   "textures": "textures/items/abm/abm_ivory_diadem"
+  }
+ }
+}

@@ -1,0 +1,121 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "abm:vesperra",
+   "materials": {
+    "default": "entity_alphatest",
+    "glow": "entity_emissive_alpha"
+   },
+   "textures": {
+    "default": "textures/entity/abm/vesperra"
+   },
+   "geometry": {
+    "default": "geometry.abm.vesperra"
+   },
+   "scripts": {
+    "pre_animation": [
+     "v.p2 = q.property('abm:phase') == 2;",
+     "v.duty = (v.p2 ? 0.55 : 0.7);",
+     "v.gait = q.modified_distance_moved * (v.p2 ? 0.42 : 0.526);",
+     "v.turn = (q.body_y_rotation + 3600) / 60;",
+     "v.go = math.clamp(q.modified_move_speed * 4, 0, 1);",
+     "v.w_l1 = math.mod(v.gait + (v.p2 ? 0 : 0.66), 1);",
+     "v.t_l1 = math.mod(v.turn + 0.66, 1);",
+     "v.w_l2 = math.mod(v.gait + (v.p2 ? 0.5 : 0.33), 1);",
+     "v.t_l2 = math.mod(v.turn + 0.33, 1);",
+     "v.w_l3 = math.mod(v.gait + (v.p2 ? 0 : 0), 1);",
+     "v.t_l3 = math.mod(v.turn + 0, 1);",
+     "v.w_r1 = math.mod(v.gait + (v.p2 ? 0.5 : 0.16), 1);",
+     "v.t_r1 = math.mod(v.turn + 0.16, 1);",
+     "v.w_r2 = math.mod(v.gait + (v.p2 ? 0 : 0.83), 1);",
+     "v.t_r2 = math.mod(v.turn + 0.83, 1);",
+     "v.w_r3 = math.mod(v.gait + (v.p2 ? 0.5 : 0.5), 1);",
+     "v.t_r3 = math.mod(v.turn + 0.5, 1);",
+     "v.lane1 = (q.property('abm:variant') < 2 ? -1 : (q.property('abm:variant') < 4 ? 0 : 1));",
+     "v.lane2 = ((q.property('abm:variant') == 0 || q.property('abm:variant') == 5) ? 0 : ((q.property('abm:variant') == 2 || q.property('abm:variant') == 4) ? -1 : 1));",
+     "v.lane3 = ((q.property('abm:variant') == 0 || q.property('abm:variant') == 2) ? 1 : ((q.property('abm:variant') == 1 || q.property('abm:variant') == 4) ? 0 : -1));"
+    ],
+    "animate": ["idle", "walk", "turn", "ctl_phase", "ctl_action", "ctl_feet"]
+   },
+   "animations": {
+    "idle": "animation.abm.vesperra.idle",
+    "walk": "animation.abm.vesperra.walk",
+    "turn": "animation.abm.vesperra.turn",
+    "p2_pose": "animation.abm.vesperra.p2_pose",
+    "p2_flutter": "animation.abm.vesperra.p2_flutter",
+    "footfalls": "animation.abm.vesperra.footfalls",
+    "scythe_p1": "animation.abm.vesperra.scythe_p1",
+    "scythe_turn_p1": "animation.abm.vesperra.scythe_turn_p1",
+    "scythe_cast_p1": "animation.abm.vesperra.scythe_cast_p1",
+    "procession_p1": "animation.abm.vesperra.procession_p1",
+    "molting_p1": "animation.abm.vesperra.molting_p1",
+    "cocoon_p1": "animation.abm.vesperra.cocoon_p1",
+    "feint_p1": "animation.abm.vesperra.feint_p1",
+    "heirs_p1": "animation.abm.vesperra.heirs_p1",
+    "coronation_p1": "animation.abm.vesperra.coronation_p1",
+    "scythe_p2": "animation.abm.vesperra.scythe_p2",
+    "scythe_turn_p2": "animation.abm.vesperra.scythe_turn_p2",
+    "scythe_cast_p2": "animation.abm.vesperra.scythe_cast_p2",
+    "scythe_thrust_p2": "animation.abm.vesperra.scythe_thrust_p2",
+    "procession_p2": "animation.abm.vesperra.procession_p2",
+    "molting_p2": "animation.abm.vesperra.molting_p2",
+    "cocoon_p2": "animation.abm.vesperra.cocoon_p2",
+    "feint_p2": "animation.abm.vesperra.feint_p2",
+    "heirs_p2": "animation.abm.vesperra.heirs_p2",
+    "coronation_p2": "animation.abm.vesperra.coronation_p2",
+    "intro": "animation.abm.vesperra.intro",
+    "stagger": "animation.abm.vesperra.stagger",
+    "transition": "animation.abm.vesperra.transition",
+    "death": "animation.abm.vesperra.death",
+    "ctl_action": "controller.animation.abm.vesperra.action",
+    "ctl_phase": "controller.animation.abm.vesperra.phase",
+    "ctl_feet": "controller.animation.abm.vesperra.feet"
+   },
+   "render_controllers": ["controller.render.abm.vesperra"],
+   "particle_effects": {
+    "shards": "abm:vesperra_shards",
+    "molt": "abm:vesperra_molt",
+    "dust": "abm:vesperra_dust",
+    "drip": "abm:vesperra_drip",
+    "glint": "abm:vesperra_glint"
+   },
+   "sound_effects": {
+    "step": "abm.vesperra.step",
+    "idle": "abm.vesperra.idle",
+    "scythe_wind": "abm.vesperra.scythe_wind",
+    "scythe_swing": "abm.vesperra.scythe_swing",
+    "needle_plant": "abm.vesperra.needle_plant",
+    "needle_stab": "abm.vesperra.needle_stab",
+    "lane_erupt": "abm.vesperra.lane_erupt",
+    "molt_wind": "abm.vesperra.molt_wind",
+    "molt_burst": "abm.vesperra.molt_burst",
+    "cocoon_spit": "abm.vesperra.cocoon_spit",
+    "cocoon_weave": "abm.vesperra.cocoon_weave",
+    "cocoon_snap": "abm.vesperra.cocoon_snap",
+    "anchor_break": "abm.vesperra.anchor_break",
+    "feint_fall": "abm.vesperra.feint_fall",
+    "feint_cue": "abm.vesperra.feint_cue",
+    "thrust": "abm.vesperra.thrust",
+    "heirs_call": "abm.vesperra.heirs_call",
+    "heirs_detach": "abm.vesperra.heirs_detach",
+    "heir_bite": "abm.vesperra.heir_bite",
+    "crown_raise": "abm.vesperra.crown_raise",
+    "fracture_mark": "abm.vesperra.fracture_mark",
+    "fracture_erupt": "abm.vesperra.fracture_erupt",
+    "armor_hit": "abm.vesperra.armor_hit",
+    "armor_break": "abm.vesperra.armor_break",
+    "body_hit": "abm.vesperra.body_hit",
+    "stagger": "abm.vesperra.stagger",
+    "transition_crack": "abm.vesperra.transition_crack",
+    "transition_split": "abm.vesperra.transition_split",
+    "transition_cry": "abm.vesperra.transition_cry",
+    "intro_rise": "abm.vesperra.intro_rise",
+    "death_cry": "abm.vesperra.death_cry",
+    "death_fail": "abm.vesperra.death_fail",
+    "death_fall": "abm.vesperra.death_fall",
+    "trophy": "abm.vesperra.trophy"
+   }
+  }
+ }
+}

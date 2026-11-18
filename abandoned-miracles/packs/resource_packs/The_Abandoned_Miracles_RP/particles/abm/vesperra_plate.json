@@ -1,0 +1,49 @@
+{
+ "format_version": "1.10.0",
+ "particle_effect": {
+  "description": {
+   "identifier": "abm:vesperra_plate",
+   "basic_render_parameters": {
+    "material": "particles_alpha",
+    "texture": "textures/particle/abm/vesperra"
+   }
+  },
+  "components": {
+   "minecraft:emitter_rate_instant": {
+    "num_particles": 1
+   },
+   "minecraft:emitter_lifetime_once": {
+    "active_time": 0.05
+   },
+   "minecraft:emitter_shape_point": {
+    "offset": [0, 0, 0],
+    "direction": ["v.dir.direction_x", "v.dir.direction_y", "v.dir.direction_z"]
+   },
+   "minecraft:particle_initial_speed": "v.dir.speed",
+   "minecraft:particle_lifetime_expression": {
+    "max_lifetime": "v.life"
+   },
+   "minecraft:particle_motion_dynamic": {
+    "linear_acceleration": [0, 0, 0],
+    "linear_drag_coefficient": 0
+   },
+   "minecraft:particle_appearance_billboard": {
+    "size": [0.62, 0.62],
+    "facing_camera_mode": "rotate_xyz",
+    "uv": {
+     "texture_width": 64,
+     "texture_height": 64,
+     "uv": [0, 32],
+     "uv_size": [16, 16]
+    }
+   },
+   "minecraft:particle_appearance_tinting": {
+    "color": [1, 1, 1, "math.clamp((1 - (v.particle_age / v.particle_lifetime)) * 6, 0, 1)"]
+   },
+   "minecraft:particle_initial_spin": {
+    "rotation": "v.particle_random_1 * 360",
+    "rotation_rate": 900
+   }
+  }
+ }
+}
