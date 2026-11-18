@@ -1,0 +1,35 @@
+{
+  "_comment": "Beat timings for Orison, in game ticks from the start of each action. Shared by the script (hit windows) and the animation generator (keyframes), so they cannot drift apart.",
+  "intro": { "wake": 30, "swing": 70, "total": 116 },
+  "transition": { "crack": 26, "shatter": 60, "emerge": 100, "total": 136 },
+  "stagger": { "total": 36 },
+  "death": { "stop": 34, "repeat": 74, "ribbons": 112, "empty": 142, "total": 184 },
+  "footstep_echo": {
+    "p1": { "mark": 14, "first": 46, "gap": 6, "count": 5, "end": 100 },
+    "p2": { "mark": 12, "first": 42, "gap": 5, "count": 8, "end": 108 }
+  },
+  "pendulum_verdict": {
+    "p1": { "swing": 36, "sweep": 14, "end": 82 },
+    "p2": { "swing": 30, "sweep": 14, "swing2": 66, "end": 112 }
+  },
+  "deferred_wound": {
+    "p1": { "first": 12, "gap": 8, "count": 4, "fuse": 40, "end": 102 },
+    "p2": { "first": 10, "gap": 7, "count": 6, "fuse": 36, "echo": 28, "end": 134 }
+  },
+  "hourglass_drain": {
+    "p1": { "cast": 22, "end": 52 },
+    "p2": { "cast": 18, "end": 46 }
+  },
+  "tomorrows_witness": {
+    "p1": { "lock": 14, "strike": 44, "end": 76 },
+    "p2": { "lock": 12, "strike": 40, "end": 72 }
+  },
+  "secondhand_exchange": {
+    "p1": { "mark": 8, "swap": 44, "strike": 58, "end": 92 },
+    "p2": { "mark": 6, "swap": 36, "strike": 50, "mark2": 54, "swap2": 84, "strike2": 98, "end": 130 }
+  },
+  "hour_never": {
+    "p1": { "preview": 20, "show": 26, "step": 30, "exec": 134, "gap": 40, "end": 250 },
+    "p2": { "preview": 18, "show": 20, "step": 24, "exec": 112, "gap": 34, "end": 216 }
+  }
+}

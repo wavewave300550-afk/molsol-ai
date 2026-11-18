@@ -1,0 +1,35 @@
+{
+  "_comment": "Beat timings for Nomos, in game ticks from the start of each action. Shared by the script (telegraphs, hit windows) and the animation generator (keyframes).",
+  "intro": { "unfold": 40, "align": 80, "total": 120 },
+  "transition": { "scatter": 30, "rise": 70, "unfold": 110, "total": 150 },
+  "stagger": { "total": 36 },
+  "death": { "misalign": 40, "fold": 90, "collapse": 140, "needle": 170, "total": 190 },
+  "meridian_incision": {
+    "p1": { "draw1": 4, "hit1": 36, "draw2": 40, "hit2": 70, "end": 96 },
+    "p2": { "draw1": 4, "hit1": 32, "gap": 14, "count": 3, "end": 92 }
+  },
+  "latitude_shear": {
+    "p1": { "mark": 2, "start": 36, "duration": 60, "end": 122 },
+    "p2": { "mark": 2, "start": 30, "duration": 54, "start2": 56, "end": 134 }
+  },
+  "ink_borders": {
+    "p1": { "mark": 6, "active": 40, "life": 160, "end": 70 },
+    "p2": { "mark": 6, "active": 36, "life": 220, "end": 66 }
+  },
+  "unmapped_gate": {
+    "p1": { "mark": 6, "fold": 24, "relocate": 38, "strike": 44, "end": 76 },
+    "p2": { "mark": 6, "fold": 20, "relocate": 32, "strike": 38, "mark2": 42, "fold2": 56, "relocate2": 68, "strike2": 74, "end": 104 }
+  },
+  "compass_darts": {
+    "p1": { "appear": 4, "lock": 30, "interval": 9, "warn": 15, "end": 100 },
+    "p2": { "appear": 4, "lock": 26, "interval": 7, "warn": 14, "lock2": 68, "end": 122 }
+  },
+  "folded_country": {
+    "p1": { "mark": 4, "hit": 34, "interval": 18, "count": 3, "end": 96 },
+    "p2": { "mark": 4, "hit": 32, "interval": 16, "count": 4, "end": 106 }
+  },
+  "great_recalculation": {
+    "p1": { "preview": 10, "previewGap": 14, "strike": 96, "interval": 46, "warn": 40, "end": 214 },
+    "p2": { "preview": 8, "previewGap": 12, "strike": 82, "interval": 40, "warn": 34, "end": 186 }
+  }
+}
