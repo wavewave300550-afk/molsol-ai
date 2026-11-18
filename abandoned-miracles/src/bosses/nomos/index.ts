@@ -457,6 +457,13 @@ export class NomosController extends BossController {
       if (!e.loco.canStand(p)) continue;
       return p;
     }
+    // the target hugs a wall or a corner: the nearest coordinate Nomos is allowed to occupy
+    const lim = e.arena.radius - (e.stats.leashInset + 0.5);
+    const c = {
+      x: Math.min(e.arena.cx + lim, Math.max(e.arena.cx - lim, tg.x)),
+      z: Math.min(e.arena.cz + lim, Math.max(e.arena.cz - lim, tg.z)),
+    };
+    if (distXZ(c, from) >= V.gate.minJump && e.loco.canStand(c)) return c;
     return undefined;
   }
 
