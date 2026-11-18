@@ -13,6 +13,8 @@ import type { Encounter } from "./encounter";
 import { trace } from "./trace";
 
 const HISTORY = 4;
+/** Ticks an available attack may go unused before the starvation guard starts to favour it. */
+const STARVED = 900;
 
 export class AttackScheduler {
   private readyAt = new Map<string, number>();
@@ -55,6 +57,9 @@ export class AttackScheduler {
       else if (this.recent.includes(a.id)) w *= 0.55;
       const idle = now - (this.lastUsed.get(a.id) ?? -600);
       w *= 1 + Math.min(1.5, idle / 800);
+      // starvation guard: an attack that has waited a long time moves to the front of the queue,
+      // so every fight shows the whole move set however the players happen to stand
+      if (idle > STARVED) w *= 1 + (idle - STARVED) / 150;
       return w;
     });
     return pick;

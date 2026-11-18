@@ -1,0 +1,34 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "abm:orison_shadow",
+   "materials": {
+    "default": "entity_alphatest",
+    "glow": "entity_emissive_alpha",
+    "glass": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/abm/orison_shadow"
+   },
+   "geometry": {
+    "default": "geometry.abm.orison_shadow"
+   },
+   "scripts": {
+    "animate": ["idle", "ctl"]
+   },
+   "animations": {
+    "idle": "animation.abm.orison_shadow.idle",
+    "rise": "animation.abm.orison_shadow.rise",
+    "point": "animation.abm.orison_shadow.point",
+    "strike": "animation.abm.orison_shadow.strike",
+    "sink": "animation.abm.orison_shadow.sink",
+    "ctl": "controller.animation.abm.orison_shadow"
+   },
+   "render_controllers": ["controller.render.abm.layered"],
+   "sound_effects": {
+    "strike": "abm.orison.shadow_strike"
+   }
+  }
+ }
+}

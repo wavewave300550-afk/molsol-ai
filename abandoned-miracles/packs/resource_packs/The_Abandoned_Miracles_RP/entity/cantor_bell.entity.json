@@ -1,0 +1,28 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "abm:cantor_bell",
+   "materials": {
+    "default": "entity_alphatest",
+    "glow": "entity_emissive_alpha"
+   },
+   "textures": {
+    "default": "textures/entity/abm/cantor_bell"
+   },
+   "geometry": {
+    "default": "geometry.abm.cantor_bell"
+   },
+   "scripts": {
+    "animate": ["idle", "ctl"]
+   },
+   "animations": {
+    "idle": "animation.abm.cantor_bell.idle",
+    "land": "animation.abm.cantor_bell.land",
+    "ring": "animation.abm.cantor_bell.ring",
+    "ctl": "controller.animation.abm.cantor_bell"
+   },
+   "render_controllers": ["controller.render.abm.layered"]
+  }
+ }
+}

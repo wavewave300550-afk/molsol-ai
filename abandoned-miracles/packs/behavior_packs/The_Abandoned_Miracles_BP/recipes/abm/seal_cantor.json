@@ -1,0 +1,30 @@
+{
+ "format_version": "1.21.60",
+ "minecraft:recipe_shaped": {
+  "description": {
+   "identifier": "abm:seal_cantor"
+  },
+  "tags": ["crafting_table"],
+  "pattern": ["CGC", "GBG", "CGC"],
+  "key": {
+   "C": {
+    "item": "minecraft:copper_block"
+   },
+   "G": {
+    "item": "minecraft:gold_ingot"
+   },
+   "B": {
+    "item": "minecraft:bell"
+   }
+  },
+  "unlock": [
+   {
+    "item": "minecraft:bell"
+   }
+  ],
+  "result": {
+   "item": "abm:seal_cantor",
+   "count": 1
+  }
+ }
+}

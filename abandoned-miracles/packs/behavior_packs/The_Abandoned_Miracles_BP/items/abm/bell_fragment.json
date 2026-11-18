@@ -1,0 +1,24 @@
+{
+ "format_version": "1.21.130",
+ "minecraft:item": {
+  "description": {
+   "identifier": "abm:bell_fragment",
+   "menu_category": {
+    "category": "items"
+   }
+  },
+  "components": {
+   "minecraft:icon": "abm_bell_fragment",
+   "minecraft:max_stack_size": 1,
+   "minecraft:display_name": {
+    "value": "item.abm:bell_fragment.name"
+   },
+   "minecraft:glint": true,
+   "minecraft:rarity": "epic",
+   "minecraft:cooldown": {
+    "category": "abm_trophy",
+    "duration": 3.0
+   }
+  }
+ }
+}

@@ -71,6 +71,67 @@
      "shell_b_collar": "q.property('abm:molt') < 2"
     }
    ]
+  },
+  "controller.render.abm.cantor": {
+   "geometry": "Geometry.default",
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "*_glow": "Material.glow"
+    }
+   ],
+   "textures": ["Texture.default"],
+   "part_visibility": [
+    {
+     "*": true
+    },
+    {
+     "bell_chunk": "q.property('abm:phase') == 1"
+    },
+    {
+     "bell_crack_glow": "q.property('abm:phase') == 2 || q.property('abm:anim') == 8"
+    },
+    {
+     "bell_s1": "q.property('abm:bells_out') == 0"
+    },
+    {
+     "bell_s2": "q.property('abm:bells_out') == 0"
+    }
+   ]
+  },
+  "controller.render.abm.orison": {
+   "geometry": "Geometry.default",
+   "materials": [
+    {
+     "*": "Material.default"
+    },
+    {
+     "*_glow": "Material.glow"
+    },
+    {
+     "*_glow_*": "Material.glow"
+    },
+    {
+     "*_glass": "Material.glass"
+    },
+    {
+     "*_glass_*": "Material.glass"
+    }
+   ],
+   "textures": ["Texture.default"],
+   "part_visibility": [
+    {
+     "*": true
+    },
+    {
+     "hourglass_glass": "q.property('abm:glass') == 0"
+    },
+    {
+     "hourglass_broken_glass": "q.property('abm:glass') == 1"
+    }
+   ]
   }
  }
 }

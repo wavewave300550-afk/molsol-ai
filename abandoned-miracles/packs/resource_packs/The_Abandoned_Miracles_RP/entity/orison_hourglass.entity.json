@@ -1,0 +1,29 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "abm:orison_hourglass",
+   "materials": {
+    "default": "entity_alphatest",
+    "glow": "entity_emissive_alpha",
+    "glass": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/abm/orison_hourglass"
+   },
+   "geometry": {
+    "default": "geometry.abm.orison_hourglass"
+   },
+   "scripts": {
+    "animate": ["run", "grow", "ctl"]
+   },
+   "animations": {
+    "run": "animation.abm.orison_hourglass.run",
+    "grow": "animation.abm.orison_hourglass.grow",
+    "pulse": "animation.abm.orison_hourglass.pulse",
+    "ctl": "controller.animation.abm.orison_hourglass"
+   },
+   "render_controllers": ["controller.render.abm.layered"]
+  }
+ }
+}

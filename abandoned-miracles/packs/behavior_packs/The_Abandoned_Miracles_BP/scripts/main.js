@@ -23,9 +23,9 @@ var CONFIG = {
   },
   bosses: {
     vesperra: { health: 480, phase2At: 0.45, arenaRadius: 17, arenaShape: "circle", clearance: 9, leashInset: 4, damageTaken: 0.1 },
-    cantor: { health: 520, phase2At: 0.5, arenaRadius: 19, arenaShape: "circle", clearance: 11, leashInset: 6, damageTaken: 0.1 },
-    nomos: { health: 560, phase2At: 0.4, arenaRadius: 20, arenaShape: "square", clearance: 9, leashInset: 4, damageTaken: 0.1 },
-    orison: { health: 600, phase2At: 0.35, arenaRadius: 18, arenaShape: "circle", clearance: 10, leashInset: 4, damageTaken: 0.1 }
+    cantor: { health: 520, phase2At: 0.5, arenaRadius: 19, arenaShape: "circle", clearance: 11, leashInset: 6, damageTaken: 0.125 },
+    nomos: { health: 560, phase2At: 0.4, arenaRadius: 20, arenaShape: "square", clearance: 9, leashInset: 4, damageTaken: 0.125 },
+    orison: { health: 600, phase2At: 0.35, arenaRadius: 18, arenaShape: "circle", clearance: 10, leashInset: 4, damageTaken: 0.128 }
   },
   encounter: {
     /** Players beyond this count do not add health. */
@@ -403,6 +403,53 @@ function rect(x0, z0, x1, z1) {
     { x: x0, z: z1 }
   ]);
 }
+var Union = class {
+  constructor(parts) {
+    this.parts = parts;
+    this.cx = parts.reduce((s, p) => s + p.cx, 0) / Math.max(1, parts.length);
+    this.cz = parts.reduce((s, p) => s + p.cz, 0) / Math.max(1, parts.length);
+    this.reach = Math.max(0, ...parts.map((p) => Math.hypot(p.cx - this.cx, p.cz - this.cz) + p.reach));
+  }
+  contains(x, z) {
+    for (const p of this.parts) if (p.contains(x, z)) return true;
+    return false;
+  }
+  draw(pen) {
+    for (const p of this.parts) p.draw(pen);
+  }
+  sample(rng, n) {
+    const out = [];
+    if (this.parts.length === 0) return out;
+    for (let i = 0; i < n; i++) out.push(...rng.pick(this.parts).sample(rng, 1));
+    return out;
+  }
+};
+var Except = class {
+  constructor(bounds, safe) {
+    this.bounds = bounds;
+    this.safe = safe;
+    this.cx = bounds.cx;
+    this.cz = bounds.cz;
+    this.reach = bounds.reach;
+  }
+  contains(x, z) {
+    if (!this.bounds.contains(x, z)) return false;
+    for (const s of this.safe) if (s.contains(x, z)) return false;
+    return true;
+  }
+  draw(pen) {
+    for (const s of this.safe) s.draw(pen);
+  }
+  sample(rng, n) {
+    const out = [];
+    let guard = n * 20;
+    while (out.length < n && guard-- > 0) {
+      const p = this.bounds.sample(rng, 1)[0];
+      if (p && this.contains(p.x, p.z)) out.push(p);
+    }
+    return out;
+  }
+};
 
 // src/core/arena.ts
 var Arena = class {
@@ -965,12 +1012,13 @@ var HazardSystem = class {
         Math.max(1, o.delay) + t,
         () => {
           const c = new Circle(o.from.x + o.dir.x * o.speed * t, o.from.z + o.dir.z * o.speed * t, o.radius);
-          if (!this.enc.arena.contains(c.cx, c.cz, -2)) return;
-          for (const p of this.inside(c)) {
-            if (hit.has(p.id)) continue;
-            if (this.enc.damage.hit(p, o, this.enc.timeline.now) > 0) {
-              hit.add(p.id);
-              o.onHit?.(p);
+          if (this.enc.arena.contains(c.cx, c.cz, -2)) {
+            for (const p of this.inside(c)) {
+              if (hit.has(p.id)) continue;
+              if (this.enc.damage.hit(p, o, this.enc.timeline.now) > 0) {
+                hit.add(p.id);
+                o.onHit?.(p);
+              }
             }
           }
           if (t === life) {
@@ -1362,6 +1410,7 @@ function grantRewards(enc) {
 
 // src/core/scheduler.ts
 var HISTORY = 4;
+var STARVED = 900;
 var AttackScheduler = class {
   constructor(enc) {
     this.enc = enc;
@@ -1398,6 +1447,7 @@ var AttackScheduler = class {
       else if (this.recent.includes(a.id)) w *= 0.55;
       const idle = now - (this.lastUsed.get(a.id) ?? -600);
       w *= 1 + Math.min(1.5, idle / 800);
+      if (idle > STARVED) w *= 1 + (idle - STARVED) / 150;
       return w;
     });
     return pick;
@@ -2749,6 +2799,3073 @@ function boot(mods) {
   if (g.__abmTrace) g.__abm = { manager, CONFIG };
 }
 
+// src/bosses/cantor/index.ts
+import { MolangVariableMap as MolangVariableMap2 } from "@minecraft/server";
+
+// shared/cantor.timings.json
+var cantor_timings_default = {
+  _comment: "Beat timings for Cantor XIII in game ticks from the start of each action. One beat = 10 ticks, one measure = 40 ticks. Shared by the script (hit windows) and the animation generator (keyframes).",
+  beat: 10,
+  measure: 40,
+  intro: {
+    wake: 40,
+    toll: 80,
+    total: 120
+  },
+  transition: {
+    crack: 30,
+    break: 60,
+    unfold: 100,
+    total: 140
+  },
+  stagger: {
+    total: 40
+  },
+  death: {
+    bell: 30,
+    pipes: 60,
+    pipeStep: 8,
+    legs: 150,
+    legStep: 16,
+    total: 220
+  },
+  prime_downbeat: {
+    p1: {
+      strike: 30,
+      end: 110
+    },
+    p2: {
+      strike: 30,
+      second: 54,
+      end: 134
+    }
+  },
+  counterpoint: {
+    p1: {
+      first: 40,
+      second: 80,
+      end: 220
+    },
+    p2: {
+      first: 40,
+      second: 64,
+      end: 204
+    }
+  },
+  glass_aria: {
+    p1: {
+      open: 16,
+      first: 40,
+      gap: 20,
+      volleys: 3,
+      end: 130
+    },
+    p2: {
+      open: 14,
+      first: 36,
+      gap: 16,
+      volleys: 4,
+      wave: 52,
+      end: 144
+    }
+  },
+  held_note: {
+    p1: {
+      blast: 60,
+      end: 100
+    },
+    p2: {
+      blast: 52,
+      echo: 84,
+      end: 120
+    }
+  },
+  silent_measure: {
+    p1: {
+      freeze: 20,
+      strike: 80,
+      end: 160
+    },
+    p2: {
+      freeze: 16,
+      strike: 72,
+      second: 96,
+      end: 176
+    }
+  },
+  twin_resonance: {
+    p1: {
+      detach: 30,
+      end: 60
+    },
+    p2: {
+      detach: 24,
+      end: 52
+    }
+  },
+  final_requiem: {
+    p1: {
+      strikes: [
+        60,
+        100,
+        140,
+        180
+      ],
+      end: 224
+    },
+    p2: {
+      strikes: [
+        60,
+        104,
+        144,
+        188
+      ],
+      end: 232
+    }
+  }
+};
+
+// src/bosses/cantor/tuning.ts
+var CANTOR = {
+  move: {
+    p1: { speed: 0.06, turn: 2.6, home: 5, settle: 2.5 },
+    p2: { speed: 0.085, turn: 3.6, home: 6.5, settle: 1.5 }
+  },
+  downbeat: {
+    cooldown: [70, 60],
+    damage: 13,
+    secondDamage: 6,
+    speed: 0.3,
+    thickness: 1.6,
+    minDoor: 3.4,
+    /** Safe doors in the ring: count, width (degrees). */
+    gaps: 3,
+    gapWidth: 40,
+    /** Phase II second ring: doors turned by this much and this wide, so the doors overlap. */
+    secondShift: 20,
+    secondWidth: 44
+  },
+  counterpoint: {
+    cooldown: [220, 190],
+    damage: 9,
+    speed: [0.3, 0.34],
+    thickness: 1.4,
+    doorHalf: 2.5,
+    doorSpacing: 13
+  },
+  aria: {
+    cooldown: [160, 130],
+    damage: 9,
+    speed: 0.55,
+    range: 20,
+    radius: 0.55,
+    warn: 24,
+    fans: [[-40, -20, 0, 20, 40], [-30, -10, 10, 30]],
+    /** Phase II positional wave: a half ring towards the aim with two doors. */
+    waveSpeed: 0.3,
+    waveReach: 16,
+    waveArc: 200,
+    waveGap: 34
+  },
+  heldNote: {
+    cooldown: [200, 170],
+    damage: 18,
+    echoDamage: 14,
+    halfAngle: 42,
+    echoHalf: 30,
+    inner: 3.2,
+    range: 15
+  },
+  silent: {
+    cooldown: [300, 260],
+    damage: 14,
+    secondDamage: 5,
+    speed: 0.4,
+    thickness: 1.6,
+    gaps: 4,
+    gapWidth: 34,
+    secondShift: 14,
+    secondWidth: 40,
+    minDoor: 3.4,
+    /** Rhythmic attacks that must have been played since the last Silent Measure. */
+    needsRhythm: 2
+  },
+  twin: {
+    cooldown: [480, 400],
+    damage: 9,
+    radius: 4.5,
+    warn: 34,
+    intervals: [[70, 90], [50, 70]],
+    lifetime: [320, 400],
+    firstDelay: 20,
+    health: 24,
+    /** Destroying both bells staggers Cantor for this many ticks. */
+    staggerTicks: 40
+  },
+  requiem: {
+    cooldown: [720, 680],
+    damage: 17,
+    /** Floor ring radii (they match the copper rings laid into the basilica floor). */
+    inner: 6,
+    middle: 12,
+    outer: 13,
+    far: 9
+  }
+};
+
+// src/bosses/cantor/index.ts
+var S = (id) => `abm.cantor.${id}`;
+var P = (id) => `abm:cantor_${id}`;
+var BEAT = cantor_timings_default.beat;
+var MEASURE = cantor_timings_default.measure;
+var BROKEN_BEATS = [0, 12, 20, 32];
+var beats = (name, phase) => cantor_timings_default[name][phase === 2 ? "p2" : "p1"];
+function doors(base, count, width) {
+  const out = [];
+  for (let k = 0; k < count; k++) out.push([base + k * 360 / count - width / 2, width]);
+  return out;
+}
+function widen(gaps, r, min) {
+  const cap = 360 / gaps.length - 8;
+  return gaps.map(([g0, gw]) => {
+    const w = Math.min(cap, Math.max(gw, min / Math.max(0.5, r) * (180 / Math.PI)));
+    return [g0 + gw / 2 - w / 2, w];
+  });
+}
+var CantorController = class extends BossController {
+  constructor(enc) {
+    super(enc);
+    this.key = "cantor";
+    this.displayName = "Cantor XIII";
+    this.phase2Name = "The Broken Symphony";
+    this.trophyItem = "abm:bell_fragment";
+    this.style = {
+      line: P("tg_line"),
+      arc: P("tg_arc"),
+      disc: P("tg_disc"),
+      safeLine: P("safe_line"),
+      safeArc: P("safe_arc"),
+      strike: P("strike")
+    };
+    /** The beat is withheld (no pulse, dark windows) until this encounter tick. */
+    this.silentUntil = 0;
+    /** Rhythmic attacks played since the last Silent Measure. */
+    this.sinceSilent = 0;
+    this.nextIdleSound = 160;
+    /** Encounter ticks at which attacks started (asserted on by the rhythm test). */
+    this.attackStarts = [];
+    this.attacks = [
+      this.primeDownbeat(),
+      this.counterpoint(),
+      this.glassAria(),
+      this.heldNote(),
+      this.silentMeasure(),
+      this.twinResonance(),
+      this.finalRequiem()
+    ];
+  }
+  // ------------------------------------------------------------------ framework hooks
+  configure(phase) {
+    const m = phase === 2 ? CANTOR.move.p2 : CANTOR.move.p1;
+    this.enc.loco.speed = m.speed;
+    this.enc.loco.turnRate = m.turn;
+  }
+  intro() {
+    return cantor_timings_default.intro.total;
+  }
+  phaseTransition() {
+    const e = this.enc;
+    const t = cantor_timings_default.transition;
+    e.helpers.removeKind("bell");
+    e.setProp("abm:bells_out", 0);
+    this.endSilence();
+    this.silentUntil = e.timeline.now + t.total;
+    e.timeline.after(t.break, () => {
+      const c = e.boss.location;
+      for (const p of e.hazards.inside(new Circle(c.x, c.z, 6))) {
+        const d = Math.hypot(p.location.x - c.x, p.location.z - c.z) || 1;
+        try {
+          p.applyKnockback({ x: (p.location.x - c.x) / d * 1.5, z: (p.location.z - c.z) / d * 1.5 }, 0.3);
+        } catch {
+        }
+      }
+      e.visuals.decor(P("dust"), { x: c.x, y: e.arena.floorY + 0.4, z: c.z });
+    }, "phase");
+    return t.total;
+  }
+  phase2Ready() {
+    this.silentUntil = 0;
+    this.sinceSilent = 0;
+  }
+  death() {
+    const e = this.enc;
+    const t = cantor_timings_default.death;
+    this.endSilence();
+    this.silentUntil = e.timeline.now + t.total + 1e3;
+    e.setProp("abm:bells_out", 0);
+    for (let i = 0; i < 3; i++) {
+      e.timeline.after(t.legs + i * t.legStep + 9, () => {
+        const c = e.boss.location;
+        e.visuals.scatter(P("dust"), new Circle(c.x, c.z, 3.5).sample(e.rng, 4), e.arena.floorY + 0.4);
+      }, "death");
+    }
+    return t.total;
+  }
+  /** Cantor holds the middle of its hall and turns, deliberately, to face whoever it is playing to. */
+  position(target) {
+    const e = this.enc;
+    const m = e.phase === 2 ? CANTOR.move.p2 : CANTOR.move.p1;
+    const b = e.boss.location;
+    let anchor = { x: e.arena.cx, z: e.arena.cz };
+    if (e.phase === 2 && target) {
+      const dx = target.location.x - e.arena.cx;
+      const dz = target.location.z - e.arena.cz;
+      const d = Math.hypot(dx, dz) || 1;
+      const k = Math.min(m.home - 1.5, d * 0.35) / d;
+      anchor = { x: e.arena.cx + dx * k, z: e.arena.cz + dz * k };
+    }
+    const off = distXZ(b, anchor);
+    if (off > (e.phase === 2 ? m.settle + 1.2 : m.home)) {
+      e.loco.goTo(anchor, m.settle);
+      return true;
+    }
+    e.loco.halt();
+    if (target) e.loco.turnToward(e.loco.yawTo(target.location), 4);
+    return false;
+  }
+  tick() {
+    const e = this.enc;
+    const now = e.timeline.now;
+    if (!e.sm.inCombat) return;
+    if (!e.sm.busy) {
+      const due = Math.max(e.nextAttackAt, now);
+      e.nextAttackAt = Math.ceil(due / BEAT) * BEAT;
+    }
+    if (now >= this.silentUntil) {
+      const onBeat = e.phase === 2 ? BROKEN_BEATS.includes(now % MEASURE) : now % BEAT === 0;
+      if (onBeat) {
+        const b = e.boss.location;
+        e.visuals.decor(P("beat"), { x: b.x, y: e.arena.floorY + 0.1, z: b.z });
+        if (now % MEASURE === 0) e.audio.play(S("beat"), b, 0.5);
+      }
+    }
+    this.tickBells(now);
+    if (now >= this.nextIdleSound && !e.sm.busy) {
+      e.audio.play(S("idle"), e.boss.location, 0.6);
+      this.nextIdleSound = now + 200 + e.rng.int(0, 160);
+    }
+  }
+  incoming(damage, _info) {
+    const e = this.enc;
+    e.defer(() => {
+      const b = e.boss.location;
+      e.audio.play(S("hit"), b, 0.7);
+      e.visuals.decor(P("strike"), { x: b.x, y: b.y + 4, z: b.z });
+    });
+    return damage;
+  }
+  onHelperGone(h) {
+    if (h.kind !== "bell") return;
+    const e = this.enc;
+    e.timeline.cancel(`bell${h.id}`);
+    const left = e.helpers.count("bell");
+    if (left === 0) e.setProp("abm:bells_out", 0);
+    if (h.killed) {
+      e.audio.play(S("bell_destroy"), e.boss.location);
+      trace("bell_destroyed", { left });
+      if (left === 0 && e.sm.inCombat) e.stagger(CANTOR.twin.staggerTicks);
+    }
+  }
+  onAttackCancelled(def) {
+    if (def.id === "silent_measure") this.endSilence();
+  }
+  cleanup() {
+    this.silentUntil = 0;
+  }
+  // ------------------------------------------------------------------ shared helpers
+  dist(e) {
+    const t = e.targeting.primary(e.timeline.now);
+    return t ? distXZ(e.boss.location, t.location) : 99;
+  }
+  begin(run, rhythmic = true) {
+    this.attackStarts.push(run.t0);
+    if (rhythmic) this.sinceSilent++;
+  }
+  /** Distance from a point to the far side of the arena (how far a ring must travel to clear it). */
+  reach(p) {
+    const a = this.enc.arena;
+    return a.radius * (a.square ? Math.SQRT2 : 1) + Math.hypot(p.x - a.cx, p.z - a.cz) + 1;
+  }
+  get floor() {
+    return this.enc.arena.floorY + 0.08;
+  }
+  /**
+   * A moving wave. Collision and picture come from the same shapeAt(t) on the
+   * same ticks: this draws it on even ticks with marks that live exactly until
+   * the next redraw, and the hazard system tests that same drawn shape.
+   */
+  wave(run, o) {
+    const e = run.enc;
+    run.at(o.shown, () => e.hazards.sweep({
+      tag: run.tag,
+      warn: o.start - o.shown,
+      duration: o.duration,
+      every: 1,
+      draw: false,
+      shapeAt: (tt) => o.shapeAt(tt - tt % 2),
+      damage: o.damage,
+      label: o.label,
+      knock: o.knock ?? 0.6,
+      knockUp: 0.2,
+      from: o.from,
+      fx: 2,
+      sound: S("wave")
+    }));
+    for (let tt = 0; tt <= o.duration; tt += 2) {
+      run.at(o.start + tt, () => o.shapeAt(tt).draw(e.visuals.pen(P("wave_line"), P("wave_arc"), void 0, this.floor, 3 / 20)));
+    }
+  }
+  /** Mark the doors of a ring as safe wedges for `ticks`. */
+  markDoors(c, gaps, r0, r1, ticks) {
+    for (const [g0, gw] of gaps) this.enc.hazards.telegraph(new Ring(c.x, c.z, r0, r1, g0, gw), ticks, true);
+  }
+  flash(c, r) {
+    const m = new MolangVariableMap2();
+    m.setFloat("variable.r", r);
+    this.enc.visuals.spawn(P("ring_flash"), { x: c.x, y: this.floor, z: c.z }, m);
+  }
+  endSilence() {
+    this.enc.setProp("abm:silent", 0);
+  }
+  // ------------------------------------------------------------------ 01 Prime Downbeat
+  primeDownbeat() {
+    const self = this;
+    return {
+      id: "prime_downbeat",
+      name: "Prime Downbeat",
+      index: 1,
+      cooldown: CANTOR.downbeat.cooldown,
+      weight: (e) => self.dist(e) < 11 ? 3.2 : 2,
+      run(run) {
+        const e = run.enc;
+        self.begin(run);
+        const t = beats("prime_downbeat", run.phase);
+        const D = CANTOR.downbeat;
+        const b = e.boss.location;
+        const c = { x: b.x, z: b.z };
+        const R = self.reach(c);
+        const duration = Math.ceil((R - 2) / D.speed);
+        const base = e.rng.range(0, 360);
+        const ringAt = (gaps) => (tt) => {
+          const r = 2 + tt * D.speed;
+          const r0 = Math.max(0.3, r - D.thickness / 2);
+          return new Ring(c.x, c.z, r0, r + D.thickness / 2, 0, 360, widen(gaps, r0, D.minDoor));
+        };
+        const g1 = doors(base, D.gaps, D.gapWidth);
+        self.markDoors(c, g1, 2.5, R, t.strike + duration);
+        run.at(t.strike, () => self.flash(c, 3));
+        let last = t.strike;
+        self.wave(run, { shown: 0, start: t.strike, duration, shapeAt: ringAt(g1), damage: D.damage, label: "downbeat", from: c });
+        if (run.phase === 2) {
+          const g2 = doors(base + (e.rng.chance(0.5) ? 1 : -1) * D.secondShift, D.gaps, D.secondWidth);
+          self.markDoors(c, g2, 2.5, R, t.second + duration);
+          self.wave(run, { shown: 0, start: t.second, duration, shapeAt: ringAt(g2), damage: D.secondDamage, label: "downbeat_echo", from: c });
+          run.at(t.second, () => self.flash(c, 3));
+          last = t.second;
+        }
+        run.windows(t.strike, last - t.strike + duration, Math.max(10, t.end - last - duration));
+      }
+    };
+  }
+  // ------------------------------------------------------------------ 02 Counterpoint
+  counterpoint() {
+    const self = this;
+    return {
+      id: "counterpoint",
+      name: "Counterpoint",
+      index: 2,
+      cooldown: CANTOR.counterpoint.cooldown,
+      weight: (e) => (self.dist(e) > 7 ? 2.6 : 1.6) + (e.targeting.count() > 1 ? 0.8 : 0),
+      run(run) {
+        const e = run.enc;
+        self.begin(run);
+        const t = beats("counterpoint", run.phase);
+        const K = CANTOR.counterpoint;
+        const a = e.arena;
+        const R = a.radius;
+        const speed = K.speed[run.phase - 1];
+        const duration = Math.ceil((2 * R + 2) / speed);
+        const theta = e.rng.pick([0, 45, 90, 135, 180, 225, 270, 315]);
+        const who = run.target;
+        const voices = [
+          { theta, start: t.first },
+          { theta: theta + (e.rng.chance(0.5) ? 90 : -90), start: t.second }
+        ];
+        const fronts = [];
+        for (const v of voices) {
+          const d = thetaToDir(v.theta);
+          const n = { x: -d.z, z: d.x };
+          const u = who ? (who.location.x - a.cx) * n.x + (who.location.z - a.cz) * n.z : 0;
+          let d1 = u - K.doorSpacing / 2 + e.rng.range(-1.2, 1.2);
+          while (d1 > -2) d1 -= K.doorSpacing;
+          while (d1 < -K.doorSpacing - 2) d1 += K.doorSpacing;
+          const doorsAt = [d1, d1 + K.doorSpacing].filter((x) => Math.abs(x) < R - 3.5);
+          if (doorsAt.length === 0) doorsAt.push(0);
+          fronts.push((tt) => {
+            const s = -(R + 1) + speed * tt;
+            const h2 = R * R - s * s;
+            if (tt < 0 || tt > duration || h2 <= 1) return new Union([]);
+            const h = Math.sqrt(h2);
+            const px = a.cx + d.x * s;
+            const pz = a.cz + d.z * s;
+            const cuts = doorsAt.map((x) => [x - K.doorHalf, x + K.doorHalf]).sort((p, q) => p[0] - q[0]);
+            const parts = [];
+            let from = -h;
+            for (const [c0, c1] of [...cuts, [h, h]]) {
+              const to = Math.min(h, c0);
+              if (to - from > 0.4) parts.push(new Lane(px + n.x * from, pz + n.z * from, px + n.x * to, pz + n.z * to, K.thickness / 2));
+              from = Math.max(from, c1);
+            }
+            return new Union(parts);
+          });
+          for (const x of doorsAt) {
+            const half = Math.sqrt(Math.max(1, R * R - x * x));
+            const cx = a.cx + n.x * x;
+            const cz = a.cz + n.z * x;
+            e.hazards.telegraph(new Lane(cx - d.x * half, cz - d.z * half, cx + d.x * half, cz + d.z * half, K.doorHalf - 0.3), v.start + duration, true);
+          }
+        }
+        voices.forEach((v, i) => self.wave(run, {
+          shown: 0,
+          start: v.start,
+          duration,
+          damage: K.damage,
+          label: `counterpoint_${i + 1}`,
+          knock: 0.9,
+          shapeAt: fronts[i]
+        }));
+        run.windows(t.first, t.second - t.first + duration, Math.max(8, t.end - t.second - duration));
+      }
+    };
+  }
+  // ------------------------------------------------------------------ 03 Glass Aria
+  glassAria() {
+    const self = this;
+    return {
+      id: "glass_aria",
+      name: "Glass Aria",
+      index: 3,
+      cooldown: CANTOR.aria.cooldown,
+      weight: (e) => {
+        const d = self.dist(e);
+        return d >= 4 && d <= 17 ? 2.8 : 1.2;
+      },
+      run(run) {
+        const e = run.enc;
+        self.begin(run);
+        const t = beats("glass_aria", run.phase);
+        const G = CANTOR.aria;
+        if (run.target) e.loco.facePoint(run.target.location);
+        const b = e.boss.location;
+        const aim = yawToTheta(e.loco.yaw);
+        const ad = thetaToDir(aim);
+        const from = { x: b.x + ad.x * 2.2, y: e.arena.floorY + 1.6, z: b.z + ad.z * 2.2 };
+        const flight = Math.ceil(G.range / G.speed);
+        let last = t.first;
+        const groups = [[], []];
+        for (let k = 0; k < t.volleys; k++) {
+          const at = t.first + k * t.gap;
+          last = at;
+          const dirs = G.fans[k % 2].map((off) => thetaToDir(aim + off));
+          groups[k % 2].push({ at, dirs });
+          const shown = Math.max(2, at - G.warn);
+          run.at(shown, () => {
+            for (const d of dirs) e.hazards.telegraph(new Lane(from.x, from.z, from.x + d.x * G.range, from.z + d.z * G.range, G.radius), at - shown);
+          });
+          run.at(at, () => {
+            for (const d of dirs) e.visuals.flyer(P("shard"), from, { x: d.x, y: 0, z: d.z }, G.speed * 20, flight / 20);
+            e.audio.play(S("glass_shard"), from);
+          });
+        }
+        let waveAt;
+        let waveEnd = 0;
+        if (run.phase === 2) {
+          const gaps = [[aim - 50 - G.waveGap / 2, G.waveGap], [aim + 50 - G.waveGap / 2, G.waveGap]];
+          const c = { x: b.x, z: b.z };
+          const duration = Math.ceil((G.waveReach - 2) / G.waveSpeed);
+          self.markDoors(c, gaps, 2.5, G.waveReach, t.wave + duration);
+          waveEnd = t.wave + duration;
+          waveAt = (tt) => new Ring(c.x, c.z, Math.max(0.3, 2 + tt * G.waveSpeed - 0.8), 2 + tt * G.waveSpeed + 0.8, aim - G.waveArc / 2, G.waveArc, gaps);
+          for (let tt = 0; tt <= duration; tt += 2) {
+            run.at(t.wave + tt, () => waveAt(tt).draw(e.visuals.pen(P("wave_line"), P("wave_arc"), void 0, self.floor, 3 / 20)));
+          }
+        }
+        groups.forEach((volleys, gi) => {
+          if (volleys.length === 0) return;
+          const start = volleys[0].at;
+          const end = Math.max(volleys[volleys.length - 1].at + flight, gi === 1 ? waveEnd : 0);
+          const begin = gi === 1 && waveAt ? Math.min(start, t.wave) : start;
+          const shown = Math.max(2, begin - G.warn);
+          run.at(shown, () => e.hazards.sweep({
+            tag: run.tag,
+            warn: begin - shown,
+            duration: end - begin,
+            every: 1,
+            draw: false,
+            damage: G.damage,
+            blockable: true,
+            knock: 0.5,
+            label: gi === 0 ? "aria_shards_a" : "aria_shards_b",
+            shapeAt: (tt) => {
+              const now = begin + tt;
+              const parts = [];
+              for (const v of volleys) {
+                const f = now - v.at;
+                if (f < 1 || f > flight) continue;
+                for (const d of v.dirs) parts.push(new Circle(from.x + d.x * G.speed * f, from.z + d.z * G.speed * f, G.radius));
+              }
+              if (gi === 1 && waveAt && now >= t.wave && now <= waveEnd && (now - t.wave) % 2 === 0) parts.push(waveAt(now - t.wave));
+              return new Union(parts);
+            }
+          }));
+        });
+        if (waveEnd) last = Math.max(last, waveEnd - flight);
+        run.windows(t.first, last - t.first + flight, Math.max(8, t.end - last - flight));
+      }
+    };
+  }
+  // ------------------------------------------------------------------ 04 Held Note
+  heldNote() {
+    const self = this;
+    return {
+      id: "held_note",
+      name: "Held Note",
+      index: 4,
+      cooldown: CANTOR.heldNote.cooldown,
+      weight: (e) => {
+        const d = self.dist(e);
+        return d >= 3 && d <= 15 ? 2.4 : 0.6;
+      },
+      run(run) {
+        const e = run.enc;
+        self.begin(run);
+        const t = beats("held_note", run.phase);
+        const H = CANTOR.heldNote;
+        if (run.target) e.loco.facePoint(run.target.location);
+        const b = e.boss.location;
+        const c = { x: b.x, z: b.z };
+        const aim = yawToTheta(e.loco.yaw);
+        e.hazards.strike({
+          shape: sector(c.x, c.z, H.inner, H.range, aim, H.halfAngle),
+          warn: t.blast,
+          tag: run.tag,
+          damage: H.damage,
+          knock: 1.5,
+          knockUp: 0.3,
+          from: c,
+          fx: 14,
+          label: "held_note"
+        });
+        e.hazards.telegraph(new Circle(c.x, c.z, H.inner - 0.3), t.blast, true);
+        const steps = Math.floor(t.blast / BEAT) - 1;
+        for (let i = 1; i <= steps; i++) {
+          run.at(i * BEAT, () => e.hazards.telegraph(sector(c.x, c.z, H.inner, H.range, aim, H.halfAngle * i / (steps + 1)), BEAT));
+        }
+        let last = t.blast;
+        if (run.phase === 2) {
+          run.at(t.blast, () => {
+            const tg = e.targeting.primary(e.timeline.now) ?? run.target;
+            const a2 = tg ? dirToTheta(tg.location.x - c.x, tg.location.z - c.z) : aim;
+            e.hazards.strike({
+              shape: sector(c.x, c.z, H.inner, H.range, a2, H.echoHalf),
+              warn: t.echo - t.blast,
+              tag: run.tag,
+              damage: H.echoDamage,
+              knock: 1.2,
+              knockUp: 0.3,
+              from: c,
+              fx: 10,
+              label: "held_echo"
+            });
+            e.hazards.telegraph(new Circle(c.x, c.z, H.inner - 0.3), t.echo - t.blast, true);
+            run.at(t.blast + 4, () => e.loco.face(a2 - 90));
+          });
+          last = t.echo;
+        }
+        run.windows(t.blast, last - t.blast + 2, Math.max(10, t.end - last - 2));
+      }
+    };
+  }
+  // ------------------------------------------------------------------ 05 The Silent Measure
+  silentMeasure() {
+    const self = this;
+    return {
+      id: "silent_measure",
+      name: "The Silent Measure",
+      index: 5,
+      cooldown: CANTOR.silent.cooldown,
+      // there has to be a rhythm before it can be withheld
+      weight: () => self.sinceSilent >= CANTOR.silent.needsRhythm ? 2.2 : 0,
+      run(run) {
+        const e = run.enc;
+        self.begin(run, false);
+        self.sinceSilent = 0;
+        const t = beats("silent_measure", run.phase);
+        const Q = CANTOR.silent;
+        const b = e.boss.location;
+        const c = { x: b.x, z: b.z };
+        const R = self.reach(c);
+        const duration = Math.ceil((R - 1.5) / Q.speed);
+        const base = e.rng.range(0, 360);
+        const ringAt = (gaps) => (tt) => {
+          const r = Math.max(1.5, R - tt * Q.speed);
+          const r0 = Math.max(0.3, r - Q.thickness / 2);
+          return new Ring(c.x, c.z, r0, r + Q.thickness / 2, 0, 360, widen(gaps, r0, Q.minDoor));
+        };
+        run.at(t.freeze, () => {
+          self.silentUntil = e.timeline.now + (t.strike - t.freeze);
+          e.setProp("abm:silent", 1);
+          const m = new MolangVariableMap2();
+          m.setFloat("variable.life", (t.strike - t.freeze) / 20);
+          e.visuals.spawn(P("rest"), { x: b.x, y: b.y + 10.6, z: b.z }, m);
+        });
+        const g1 = doors(base, Q.gaps, Q.gapWidth);
+        self.markDoors(c, g1, 2, R, t.strike + duration);
+        run.at(t.strike, () => {
+          self.endSilence();
+          self.flash(c, R * 0.5);
+        });
+        let last = t.strike;
+        self.wave(run, { shown: 0, start: t.strike, duration, shapeAt: ringAt(g1), damage: Q.damage, label: "silent_ring", from: c });
+        if (run.phase === 2) {
+          const g2 = doors(base + (e.rng.chance(0.5) ? 1 : -1) * Q.secondShift, Q.gaps, Q.secondWidth);
+          self.markDoors(c, g2, 2, R, t.second + duration);
+          self.wave(run, { shown: 0, start: t.second, duration, shapeAt: ringAt(g2), damage: Q.secondDamage, label: "silent_echo", from: c });
+          last = t.second;
+        }
+        run.windows(t.strike, last - t.strike + duration, Math.max(10, t.end - last - duration));
+      }
+    };
+  }
+  // ------------------------------------------------------------------ 06 Twin Resonance
+  twinResonance() {
+    const self = this;
+    return {
+      id: "twin_resonance",
+      name: "Twin Resonance",
+      index: 6,
+      cooldown: CANTOR.twin.cooldown,
+      weight: (e) => e.helpers.count("bell") > 0 ? 0 : 2,
+      run(run) {
+        const e = run.enc;
+        self.begin(run);
+        const t = beats("twin_resonance", run.phase);
+        const W = CANTOR.twin;
+        const i = run.phase - 1;
+        run.at(t.detach, () => {
+          const a = e.arena;
+          const b = e.boss.location;
+          const tg = e.targeting.primary(e.timeline.now) ?? run.target;
+          const near = tg ? a.clampInside(tg.location.x + (a.cx - tg.location.x) * 0.2, tg.location.z + (a.cz - tg.location.z) * 0.2, 2.5) : a.polar(e.rng.range(0, 360), 9, 2.5);
+          const far = a.clampInside(2 * a.cx - near.x, 2 * a.cz - near.z, 2.5);
+          const spots = [near, far].map((p) => {
+            const d = Math.hypot(p.x - b.x, p.z - b.z);
+            if (d >= 4) return p;
+            const th = d > 0.1 ? dirToTheta(p.x - b.x, p.z - b.z) : e.rng.range(0, 360);
+            const dir = thetaToDir(th);
+            return a.clampInside(b.x + dir.x * 4.5, b.z + dir.z * 4.5, 2.5);
+          });
+          const now = e.timeline.now;
+          spots.forEach((p, k) => {
+            e.helpers.spawn("abm:cantor_bell", a.at(p, 0.05), "bell", {
+              lifetime: W.lifetime[i],
+              data: { interval: W.intervals[i][k], next: now + W.firstDelay + k * 20, hp: W.health, busyUntil: 0 }
+            });
+            e.visuals.decor(P("dust"), a.at(p, 0.4));
+          });
+          if (e.helpers.count("bell") > 0) e.setProp("abm:bells_out", 1);
+        });
+        run.windows(t.detach, 4, Math.max(8, t.end - t.detach - 4));
+      }
+    };
+  }
+  /** Each detached bell keeps its own interval. Striking a bell interrupts the pulse it is winding up. */
+  tickBells(now) {
+    const e = this.enc;
+    const W = CANTOR.twin;
+    for (const h of e.helpers.of("bell")) {
+      const tag = `bell${h.id}`;
+      let hp = h.data.hp;
+      try {
+        hp = h.entity.getComponent("minecraft:health")?.currentValue ?? hp;
+      } catch {
+        continue;
+      }
+      if (hp < h.data.hp - 0.01) {
+        h.data.hp = hp;
+        if (e.timeline.cancel(tag) > 0) {
+          h.data.next = now + h.data.interval;
+          h.data.busyUntil = 0;
+          this.setBellAnim(h, 0);
+          trace("bell_interrupted", { id: h.id });
+        }
+      }
+      if (now < h.data.next || now < h.data.busyUntil) continue;
+      const at = h.entity.location;
+      h.data.next = now + h.data.interval;
+      h.data.busyUntil = now + W.warn + 4;
+      this.setBellAnim(h, 1);
+      e.hazards.strike({
+        shape: new Circle(at.x, at.z, W.radius),
+        warn: W.warn,
+        tag,
+        damage: W.damage,
+        label: "bell_pulse",
+        knock: 0.7,
+        from: at,
+        sound: S("bell_pulse"),
+        fx: 5,
+        condition: () => h.entity.isValid,
+        onStrike: () => this.flash(at, W.radius)
+      });
+      e.timeline.after(W.warn + 2, () => this.setBellAnim(h, 0), tag);
+    }
+  }
+  setBellAnim(h, v) {
+    try {
+      if (h.entity.isValid) h.entity.setProperty("abm:anim", v);
+    } catch {
+    }
+  }
+  // ------------------------------------------------------------------ 07 The Final Requiem
+  finalRequiem() {
+    const self = this;
+    return {
+      id: "final_requiem",
+      name: "The Final Requiem",
+      index: 7,
+      ultimate: true,
+      interruptible: false,
+      cooldown: CANTOR.requiem.cooldown,
+      weight: (e) => e.healthFraction() < 0.9 ? 5 : 0,
+      run(run) {
+        const e = run.enc;
+        self.begin(run);
+        const strikes = cantor_timings_default.final_requiem[run.phase === 2 ? "p2" : "p1"];
+        const Q = CANTOR.requiem;
+        const a = e.arena;
+        const R = a.radius;
+        const k0 = e.rng.int(0, 5);
+        const sixths = (odd, r0, r1) => [0, 2, 4].map((j) => new Ring(a.cx, a.cz, r0, r1, (k0 + odd + j) * 60, 60));
+        const band = (r0, r1) => [new Ring(a.cx, a.cz, r0, r1)];
+        const measures = run.phase === 1 ? [sixths(0, 2.5, R + 1), band(Q.inner, Q.middle), sixths(1, 2.5, Q.middle), [new Circle(a.cx, a.cz, Q.inner)]] : [band(Q.inner, Q.middle), sixths(0, 2.5, Q.middle), sixths(1, Q.far, R + 1), band(Q.outer, R + 1)];
+        strikes.strikes.forEach((at, i) => {
+          const shown = i === 0 ? 1 : strikes.strikes[i - 1];
+          run.at(shown, () => {
+            e.hazards.strike({
+              shape: new Except(a.bounds(-1), measures[i]),
+              warn: at - shown,
+              tag: run.tag,
+              safe: true,
+              damage: Q.damage,
+              fx: 16,
+              knockUp: 0.3,
+              label: `requiem_${i + 1}`
+            });
+            e.hazards.telegraph(new Ring(a.cx, a.cz, R - 0.4, R + 0.4), at - shown);
+          });
+        });
+        const first = strikes.strikes[0];
+        const last = strikes.strikes[strikes.strikes.length - 1];
+        run.windows(first, last - first + 2, Math.max(10, strikes.end - last - 2));
+      }
+    };
+  }
+};
+var MODULE = {
+  create: (enc) => new CantorController(enc),
+  arena: { structure: "abm:basilica_of_the_last_note", size: 51, height: 16, nameKey: "abm.arena.cantor" },
+  helpers: ["abm:cantor_bell"]
+};
+
+// shared/nomos.timings.json
+var nomos_timings_default = {
+  _comment: "Beat timings for Nomos, in game ticks from the start of each action. Shared by the script (telegraphs, hit windows) and the animation generator (keyframes).",
+  intro: { unfold: 40, align: 80, total: 120 },
+  transition: { scatter: 30, rise: 70, unfold: 110, total: 150 },
+  stagger: { total: 36 },
+  death: { misalign: 40, fold: 90, collapse: 140, needle: 170, total: 190 },
+  meridian_incision: {
+    p1: { draw1: 4, hit1: 36, draw2: 40, hit2: 70, end: 96 },
+    p2: { draw1: 4, hit1: 32, gap: 14, count: 3, end: 92 }
+  },
+  latitude_shear: {
+    p1: { mark: 2, start: 36, duration: 60, end: 122 },
+    p2: { mark: 2, start: 30, duration: 54, start2: 56, end: 134 }
+  },
+  ink_borders: {
+    p1: { mark: 6, active: 40, life: 160, end: 70 },
+    p2: { mark: 6, active: 36, life: 220, end: 66 }
+  },
+  unmapped_gate: {
+    p1: { mark: 6, fold: 24, relocate: 38, strike: 44, end: 76 },
+    p2: { mark: 6, fold: 20, relocate: 32, strike: 38, mark2: 42, fold2: 56, relocate2: 68, strike2: 74, end: 104 }
+  },
+  compass_darts: {
+    p1: { appear: 4, lock: 30, interval: 9, warn: 15, end: 100 },
+    p2: { appear: 4, lock: 26, interval: 7, warn: 14, lock2: 68, end: 122 }
+  },
+  folded_country: {
+    p1: { mark: 4, hit: 34, interval: 18, count: 3, end: 96 },
+    p2: { mark: 4, hit: 32, interval: 16, count: 4, end: 106 }
+  },
+  great_recalculation: {
+    p1: { preview: 10, previewGap: 14, strike: 96, interval: 46, warn: 40, end: 214 },
+    p2: { preview: 8, previewGap: 12, strike: 82, interval: 40, warn: 34, end: 186 }
+  }
+};
+
+// src/bosses/nomos/grid.ts
+var GRID_N = 8;
+var QUADRANTS = [0, 1, 2, 3];
+var QUADRANT_THETA = [180, 270, 90, 0];
+var SurveyGrid = class {
+  constructor(arena) {
+    this.cx = arena.cx;
+    this.cz = arena.cz;
+    this.half = arena.radius;
+    this.cell = this.half * 2 / GRID_N;
+  }
+  bounds() {
+    return { x0: this.cx - this.half, z0: this.cz - this.half, x1: this.cx + this.half, z1: this.cz + this.half };
+  }
+  /** Column / row of a world position (clamped into the grid). */
+  cellOf(x, z) {
+    const c = Math.min(GRID_N - 1, Math.max(0, Math.floor((x - (this.cx - this.half)) / this.cell)));
+    const r = Math.min(GRID_N - 1, Math.max(0, Math.floor((z - (this.cz - this.half)) / this.cell)));
+    return { c, r };
+  }
+  cellCentre(c, r) {
+    return { x: this.cx - this.half + (c + 0.5) * this.cell, z: this.cz - this.half + (r + 0.5) * this.cell };
+  }
+  cellRect(c, r) {
+    const x0 = this.cx - this.half + c * this.cell;
+    const z0 = this.cz - this.half + r * this.cell;
+    return rect(x0, z0, x0 + this.cell, z0 + this.cell);
+  }
+  /** "C5"-style name of a cell, for messages and docs. */
+  cellName(c, r) {
+    return "ABCDEFGH"[c] + String(r + 1);
+  }
+  quadrantOf(x, z) {
+    return (x >= this.cx ? 1 : 0) + (z >= this.cz ? 2 : 0);
+  }
+  quadrantBounds(q) {
+    const east = (q & 1) === 1;
+    const south = (q & 2) === 2;
+    return {
+      x0: east ? this.cx : this.cx - this.half,
+      x1: east ? this.cx + this.half : this.cx,
+      z0: south ? this.cz : this.cz - this.half,
+      z1: south ? this.cz + this.half : this.cz
+    };
+  }
+  quadrantCentre(q) {
+    const b = this.quadrantBounds(q);
+    return { x: (b.x0 + b.x1) / 2, z: (b.z0 + b.z1) / 2 };
+  }
+  /** Nearest ruled line (cell boundary) to a coordinate on one axis. */
+  snapLine(v, axis) {
+    const o = axis === "x" ? this.cx - this.half : this.cz - this.half;
+    return o + Math.round((v - o) / this.cell) * this.cell;
+  }
+  inside(p, inset = 0) {
+    return Math.abs(p.x - this.cx) <= this.half - inset && Math.abs(p.z - this.cz) <= this.half - inset;
+  }
+  /** Clip the infinite line through `p` along `theta` to a box; undefined when it misses. */
+  clip(p, theta, b = this.bounds()) {
+    const d = thetaToDir(theta);
+    let t0 = -1e9;
+    let t1 = 1e9;
+    for (const [o, dd, lo, hi] of [[p.x, d.x, b.x0, b.x1], [p.z, d.z, b.z0, b.z1]]) {
+      if (Math.abs(dd) < 1e-9) {
+        if (o < lo || o > hi) return void 0;
+        continue;
+      }
+      let a = (lo - o) / dd;
+      let c = (hi - o) / dd;
+      if (a > c) [a, c] = [c, a];
+      t0 = Math.max(t0, a);
+      t1 = Math.min(t1, c);
+    }
+    if (t0 >= t1) return void 0;
+    return [{ x: p.x + d.x * t0, z: p.z + d.z * t0 }, { x: p.x + d.x * t1, z: p.z + d.z * t1 }];
+  }
+  /** A straight incision across the whole arena through `p` along `theta`. */
+  chord(p, theta, halfWidth) {
+    const q = { x: Math.min(this.cx + this.half - 0.1, Math.max(this.cx - this.half + 0.1, p.x)), z: Math.min(this.cz + this.half - 0.1, Math.max(this.cz - this.half + 0.1, p.z)) };
+    const seg = this.clip(q, theta) ?? [q, q];
+    return new Lane(seg[0].x, seg[0].z, seg[1].x, seg[1].z, halfWidth);
+  }
+  /**
+   * How far (blocks) the worst-placed point of the arena is from the nearest
+   * point that `danger` does not cover. A two-pass chamfer distance transform on
+   * a one-block lattice: cheap enough to run before every arena-wide pattern.
+   * Returns Infinity when the pattern leaves no safe point at all.
+   */
+  maxDistanceToSafety(danger, step = 1) {
+    const n = Math.round(this.half * 2 / step);
+    const d = new Float32Array(n * n);
+    const BIG = 1e6;
+    let anySafe = false;
+    for (let j = 0; j < n; j++) {
+      for (let i = 0; i < n; i++) {
+        const x = this.cx - this.half + (i + 0.5) * step;
+        const z = this.cz - this.half + (j + 0.5) * step;
+        const safe = !danger.contains(x, z);
+        d[j * n + i] = safe ? 0 : BIG;
+        anySafe = anySafe || safe;
+      }
+    }
+    if (!anySafe) return Infinity;
+    const A = step;
+    const B = step * Math.SQRT2;
+    const at = (i, j) => i < 0 || j < 0 || i >= n || j >= n ? BIG : d[j * n + i];
+    for (let j = 0; j < n; j++) {
+      for (let i = 0; i < n; i++) {
+        const k = j * n + i;
+        d[k] = Math.min(d[k], at(i - 1, j) + A, at(i, j - 1) + A, at(i - 1, j - 1) + B, at(i + 1, j - 1) + B);
+      }
+    }
+    let worst = 0;
+    for (let j = n - 1; j >= 0; j--) {
+      for (let i = n - 1; i >= 0; i--) {
+        const k = j * n + i;
+        d[k] = Math.min(d[k], at(i + 1, j) + A, at(i, j + 1) + A, at(i + 1, j + 1) + B, at(i - 1, j + 1) + B);
+        if (d[k] > worst) worst = d[k];
+      }
+    }
+    return worst;
+  }
+  /** Can a walking player always get clear of `danger` within `warnTicks`? */
+  reachable(danger, warnTicks, walk, reaction) {
+    return this.maxDistanceToSafety(danger) <= Math.max(0, warnTicks - reaction) * walk;
+  }
+};
+
+// src/bosses/nomos/patterns.ts
+function inBounds(b, x, z) {
+  return x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1;
+}
+function sampleBounds(shape, b, rng, n) {
+  const out = [];
+  let guard = n * 24;
+  while (out.length < n && guard-- > 0) {
+    const x = rng.range(b.x0, b.x1);
+    const z = rng.range(b.z0, b.z1);
+    if (shape.contains(x, z)) out.push({ x, z });
+  }
+  return out;
+}
+function clipLine(b, px, pz, dx, dz) {
+  let t0 = -1e9;
+  let t1 = 1e9;
+  for (const [o, d, lo, hi] of [[px, dx, b.x0, b.x1], [pz, dz, b.z0, b.z1]]) {
+    if (Math.abs(d) < 1e-9) {
+      if (o < lo || o > hi) return void 0;
+      continue;
+    }
+    let a = (lo - o) / d;
+    let c = (hi - o) / d;
+    if (a > c) [a, c] = [c, a];
+    t0 = Math.max(t0, a);
+    t1 = Math.min(t1, c);
+  }
+  if (t1 - t0 < 0.2) return void 0;
+  return [px + dx * t0, pz + dz * t0, px + dx * t1, pz + dz * t1];
+}
+var Stripes = class _Stripes {
+  constructor(b, theta, period, width, offset = 0, centreOnly = false) {
+    this.b = b;
+    this.theta = theta;
+    this.period = period;
+    this.width = width;
+    this.offset = offset;
+    this.centreOnly = centreOnly;
+    this.cx = (b.x0 + b.x1) / 2;
+    this.cz = (b.z0 + b.z1) / 2;
+    this.reach = Math.hypot(b.x1 - b.x0, b.z1 - b.z0) / 2;
+    const d = thetaToDir(theta);
+    this.ux = d.x;
+    this.uz = d.z;
+    this.nx = -d.z;
+    this.nz = d.x;
+  }
+  /** Signed distance across the corridors, from the box corner. */
+  across(x, z) {
+    return (x - this.b.x0) * this.nx + (z - this.b.z0) * this.nz;
+  }
+  /** Index of the period that a point falls in (used to pick the corridor a player stands in). */
+  bandIndex(x, z) {
+    return Math.floor((this.across(x, z) - this.offset) / this.period);
+  }
+  contains(x, z) {
+    if (!inBounds(this.b, x, z)) return false;
+    const s = this.across(x, z) - this.offset;
+    const m = (s % this.period + this.period) % this.period;
+    return m < this.width;
+  }
+  /** The complementary corridors (what is safe when this is dangerous). */
+  complement(centreOnly = true) {
+    return new _Stripes(this.b, this.theta, this.period, this.period - this.width, this.offset + this.width, centreOnly);
+  }
+  draw(pen) {
+    const cs = [this.across(this.b.x0, this.b.z0), this.across(this.b.x1, this.b.z0), this.across(this.b.x0, this.b.z1), this.across(this.b.x1, this.b.z1)];
+    const lo = Math.floor((Math.min(...cs) - this.offset) / this.period) - 1;
+    const hi = Math.ceil((Math.max(...cs) - this.offset) / this.period) + 1;
+    for (let k = lo; k <= hi; k++) {
+      const s0 = this.offset + k * this.period;
+      const lines = this.centreOnly ? [s0 + this.width / 2] : this.width >= 3.2 ? [s0, s0 + this.width / 2, s0 + this.width] : [s0, s0 + this.width];
+      for (const s of lines) {
+        const px = this.b.x0 + this.nx * s;
+        const pz = this.b.z0 + this.nz * s;
+        const seg = clipLine(this.b, px, pz, this.ux, this.uz);
+        if (seg) pen.line(seg[0], seg[1], seg[2], seg[3]);
+      }
+    }
+  }
+  sample(rng, n) {
+    return sampleBounds(this, this.b, rng, n);
+  }
+};
+var Checker = class {
+  constructor(b, cell, parity, ox = 0, oz = 0) {
+    this.b = b;
+    this.cell = cell;
+    this.parity = parity;
+    this.ox = ox;
+    this.oz = oz;
+    this.cx = (b.x0 + b.x1) / 2;
+    this.cz = (b.z0 + b.z1) / 2;
+    this.reach = Math.hypot(b.x1 - b.x0, b.z1 - b.z0) / 2;
+  }
+  squareOf(x, z) {
+    return [Math.floor((x - this.b.x0 + this.ox) / this.cell), Math.floor((z - this.b.z0 + this.oz) / this.cell)];
+  }
+  contains(x, z) {
+    if (!inBounds(this.b, x, z)) return false;
+    const [i, j] = this.squareOf(Math.min(x, this.b.x1 - 1e-6), Math.min(z, this.b.z1 - 1e-6));
+    return ((i + j) % 2 + 2) % 2 === this.parity;
+  }
+  /** The covered squares (parity) or the others (1 - parity), clipped to the box. */
+  squares(parity = this.parity) {
+    const out = [];
+    const b = this.b;
+    const [i1, j1] = this.squareOf(b.x1 - 1e-6, b.z1 - 1e-6);
+    for (let i = 0; i <= i1; i++) {
+      for (let j = 0; j <= j1; j++) {
+        if ((i + j) % 2 !== parity) continue;
+        const x0 = Math.max(b.x0, b.x0 - this.ox + i * this.cell);
+        const x1 = Math.min(b.x1, b.x0 - this.ox + (i + 1) * this.cell);
+        const z0 = Math.max(b.z0, b.z0 - this.oz + j * this.cell);
+        const z1 = Math.min(b.z1, b.z0 - this.oz + (j + 1) * this.cell);
+        if (x1 - x0 > 0.01 && z1 - z0 > 0.01) out.push({ x0, z0, x1, z1 });
+      }
+    }
+    return out;
+  }
+  /** Centres of the covered squares (parity) or of the others (1 - parity). */
+  centres(parity = this.parity) {
+    return this.squares(parity).map((q) => ({ x: (q.x0 + q.x1) / 2, z: (q.z0 + q.z1) / 2 }));
+  }
+  draw(pen) {
+    for (const q of this.squares()) {
+      pen.line(q.x0, q.z0, q.x1, q.z0);
+      pen.line(q.x1, q.z0, q.x1, q.z1);
+      pen.line(q.x1, q.z1, q.x0, q.z1);
+      pen.line(q.x0, q.z1, q.x0, q.z0);
+      pen.line(q.x0, q.z0, q.x1, q.z1);
+    }
+  }
+  sample(rng, n) {
+    return sampleBounds(this, this.b, rng, n);
+  }
+};
+var Marks = class {
+  constructor(cx, cz, paint) {
+    this.cx = cx;
+    this.cz = cz;
+    this.paint = paint;
+    this.reach = 0;
+  }
+  contains() {
+    return false;
+  }
+  draw(pen) {
+    this.paint(pen);
+  }
+  sample() {
+    return [];
+  }
+};
+
+// src/bosses/nomos/tuning.ts
+var NOMOS = {
+  move: {
+    p1: { speed: 0.07, turn: 3.2, near: 6.5, far: 12.5, station: 9 },
+    p2: { speed: 0.1, turn: 4.6, near: 6, far: 13, station: 9 }
+  },
+  /** Walking speed (blocks/tick) and reaction time assumed by the safe-route validator. */
+  fair: { walk: 4.317 / 20, reaction: 8 },
+  meridian: { cooldown: [150, 120], damage: 14, halfWidth: 1.4, fan: 60 },
+  shear: {
+    cooldown: [230, 200],
+    damage: 12,
+    halfWidth: 1.2,
+    /** Bands start this far from the arena centre and stop this far from it. */
+    from: 15,
+    to: 4.2,
+    speed: 0.18,
+    farCentre: 60,
+    spread: 32
+  },
+  borders: {
+    cooldown: [340, 300],
+    damage: 10,
+    halfWidth: 0.6,
+    length: 24,
+    slowTicks: 40,
+    redrawEvery: 20
+  },
+  gate: {
+    cooldown: [260, 210],
+    damage: 15,
+    radius: 5,
+    offset: 3.5,
+    minJump: 6,
+    crossHalfWidth: 1.6,
+    crossOffset: 4.5
+  },
+  darts: { cooldown: [200, 170], damage: 9, speed: 0.9, range: 34, radius: 0.7, height: 1.4, mount: 1.1, mountDamage: 5 },
+  folded: { cooldown: [220, 190], damage: 13, width: 2.5 },
+  recalc: { cooldown: [780, 720], damage: 18, cell: 10, stripe: 5, inner: 4, ring: [9, 14] },
+  poise: { threshold: 110, window: 100, stagger: 36, lockout: 420 }
+};
+
+// src/bosses/nomos/index.ts
+var S2 = (id) => `abm.nomos.${id}`;
+var P2 = (id) => `abm:nomos_${id}`;
+var beats2 = (name, phase) => nomos_timings_default[name][phase === 2 ? "p2" : "p1"];
+var dir8 = (theta) => (Math.round(theta / 45) % 8 + 8) % 8;
+var NomosController = class extends BossController {
+  constructor(enc) {
+    super(enc);
+    this.key = "nomos";
+    this.displayName = "Nomos";
+    this.phase2Name = "There Is No North";
+    this.trophyItem = "abm:sovereign_needle";
+    this.style = {
+      line: P2("tg_line"),
+      arc: P2("tg_arc"),
+      disc: P2("tg_disc"),
+      safeLine: P2("safe_line"),
+      safeArc: P2("safe_arc"),
+      strike: P2("strike")
+    };
+    /** Encounter tick until which ink borders stand (0 = none). */
+    this.bordersUntil = 0;
+    /** Bumped whenever the standing borders are wiped; their scheduled work checks it. */
+    this.borderEpoch = 0;
+    this.inked = /* @__PURE__ */ new Map();
+    /** Every dart direction ever locked, in order (read by tests: a locked dart never re-aims). */
+    this.dartLocks = [];
+    /** Where each Unmapped Gate tried to arrive, and whether it could (read by tests). */
+    this.gateLog = [];
+    this.stationAt = 0;
+    this.foldedUntil = 0;
+    this.poise = 0;
+    this.poiseSince = 0;
+    this.poiseLocked = 0;
+    this.nextIdleSound = 140;
+    this.grid = new SurveyGrid(enc.arena);
+    this.attacks = [
+      this.meridianIncision(),
+      this.latitudeShear(),
+      this.inkBorders(),
+      this.unmappedGate(),
+      this.compassDarts(),
+      this.foldedCountry(),
+      this.greatRecalculation()
+    ];
+  }
+  // ------------------------------------------------------------------ framework hooks
+  configure(phase) {
+    const m = phase === 2 ? NOMOS.move.p2 : NOMOS.move.p1;
+    this.enc.loco.speed = m.speed;
+    this.enc.loco.turnRate = m.turn;
+  }
+  intro() {
+    for (const q of QUADRANTS) this.indicate(q, 0);
+    return nomos_timings_default.intro.total;
+  }
+  phaseTransition() {
+    const e = this.enc;
+    this.wipeBorders();
+    const t = nomos_timings_default.transition;
+    for (const q of QUADRANTS) {
+      e.timeline.after(t.unfold + q * 6, () => {
+        const c = this.grid.quadrantCentre(q);
+        this.indicate(q, dir8(dirToTheta(c.x - this.grid.cx, c.z - this.grid.cz)));
+        e.visuals.decor(P2("grid"), e.arena.at(c, 0.1));
+        e.hazards.telegraph(new Marks(c.x, c.z, (pen) => pen.arc(c.x, c.z, 2.2, 0, 360)), 30, true);
+      }, "phase");
+    }
+    return t.total;
+  }
+  death() {
+    const e = this.enc;
+    this.wipeBorders();
+    e.timeline.after(nomos_timings_default.death.collapse + 16, () => {
+      const b = e.boss.location;
+      e.visuals.scatter(P2("dust"), new Circle(b.x, b.z, 3.5).sample(e.rng, 8), e.arena.floorY + 0.4);
+    }, "death");
+    return nomos_timings_default.death.total;
+  }
+  /**
+   * Nomos keeps its distance and works from fixed stations - cell centres about nine
+   * blocks from its target, on the arena-centre side - rather than closing in.
+   */
+  position(target) {
+    const e = this.enc;
+    if (!target) {
+      e.loco.halt();
+      return false;
+    }
+    const m = e.phase === 2 ? NOMOS.move.p2 : NOMOS.move.p1;
+    const now = e.timeline.now;
+    const b = e.boss.location;
+    const d = distXZ(b, target.location);
+    if (!this.station && (d < m.near || d > m.far)) {
+      const t = target.location;
+      let dx = this.grid.cx - t.x;
+      let dz = this.grid.cz - t.z;
+      let l = Math.hypot(dx, dz);
+      if (l < 2) {
+        dx = b.x - t.x;
+        dz = b.z - t.z;
+        l = Math.hypot(dx, dz) || 1;
+      }
+      const want = e.arena.clampInside(t.x + dx / l * m.station, t.z + dz / l * m.station, e.stats.leashInset);
+      const cell = this.grid.cellOf(want.x, want.z);
+      this.station = this.grid.cellCentre(cell.c, cell.r);
+      this.stationAt = now;
+    }
+    if (this.station) {
+      const left = e.loco.goTo(this.station, 0.7);
+      if (left <= 0.7 || now - this.stationAt > 160) this.station = void 0;
+      return true;
+    }
+    e.loco.halt();
+    e.loco.turnToward(e.loco.yawTo(target.location), 3);
+    return false;
+  }
+  tick() {
+    const e = this.enc;
+    const now = e.timeline.now;
+    if (!e.sm.inCombat) return;
+    if (now >= this.nextIdleSound && !e.sm.busy) {
+      e.audio.play(S2("idle"), e.boss.location, 0.5);
+      this.nextIdleSound = now + 150 + e.rng.int(0, 100);
+    }
+    if (e.phase === 2 && !e.sm.busy && now % 20 === 0) {
+      const t = e.targeting.primary(now);
+      if (t) {
+        for (const q of QUADRANTS) {
+          const c = this.grid.quadrantCentre(q);
+          if (distXZ(c, t.location) > 0.5) this.indicate(q, dir8(dirToTheta(t.location.x - c.x, t.location.z - c.z)));
+        }
+      }
+    }
+    if (now - this.poiseSince > NOMOS.poise.window) {
+      this.poise = 0;
+      this.poiseSince = now;
+    }
+  }
+  incoming(damage, info) {
+    const e = this.enc;
+    const now = e.timeline.now;
+    if (now < this.foldedUntil) return 0;
+    this.poise += damage;
+    const tip = this.poise >= NOMOS.poise.threshold && now >= this.poiseLocked;
+    if (tip) {
+      this.poise = 0;
+      this.poiseLocked = now + NOMOS.poise.lockout;
+    }
+    const at = info.projectile && info.projectile.isValid ? info.projectile.location : localToWorld(e.boss.location, e.loco.yaw, 0, 4.2, 1.2);
+    e.defer(() => {
+      e.audio.play(S2("hit_metal"), at, 0.75);
+      e.visuals.decor(P2("spark"), at);
+      if (tip) e.stagger(NOMOS.poise.stagger);
+    });
+    return damage;
+  }
+  onAttackCancelled(def) {
+    if (def.id === "ink_borders") this.wipeBorders();
+    this.foldedUntil = 0;
+  }
+  cleanup() {
+    this.wipeBorders();
+    this.station = void 0;
+  }
+  // ------------------------------------------------------------------ shared helpers
+  /** Standing ink borders dry up at once (phase change, death, reset, interrupted stamp). */
+  wipeBorders() {
+    this.borderEpoch++;
+    this.bordersUntil = 0;
+  }
+  /** Point the indicator of quadrant q (0..3) along one of eight bearings. */
+  indicate(q, step) {
+    this.enc.setProp(`abm:q${q + 1}`, (step % 8 + 8) % 8);
+  }
+  front() {
+    return yawToTheta(this.enc.loco.yaw);
+  }
+  dist(e) {
+    const t = e.targeting.primary(e.timeline.now);
+    return t ? distXZ(e.boss.location, t.location) : 99;
+  }
+  /** Where the given (or primary) target stands now; a point ahead of Nomos when nobody is left. */
+  aim(run, index = 0) {
+    const e = this.enc;
+    const ps = e.targeting.participants();
+    const who = ps.length > 0 ? ps[index % ps.length] : void 0;
+    const p = index === 0 ? e.targeting.primary(e.timeline.now) ?? who ?? run.target : who;
+    if (p && p.isValid) return { x: p.location.x, z: p.location.z };
+    const b = e.boss.location;
+    const d = thetaToDir(this.front());
+    return e.arena.clampInside(b.x + d.x * 8, b.z + d.z * 8, 1);
+  }
+  floorPen(line, ticks) {
+    return this.enc.visuals.pen(line, P2("tg_arc"), void 0, this.enc.arena.floorY + 0.08, ticks / 20);
+  }
+  // ------------------------------------------------------------------ 01 Meridian Incision
+  meridianIncision() {
+    const self = this;
+    return {
+      id: "meridian_incision",
+      name: "Meridian Incision",
+      index: 1,
+      cooldown: NOMOS.meridian.cooldown,
+      weight: (e) => self.dist(e) >= 7 ? 3 : 1.7,
+      run(run) {
+        const e = run.enc;
+        const g = self.grid;
+        const M = NOMOS.meridian;
+        const cut = (p, theta, warn, label) => {
+          e.hazards.strike({ shape: g.chord(p, theta, M.halfWidth), warn, tag: run.tag, damage: M.damage, knockUp: 0.3, fx: 10, label });
+        };
+        if (run.phase === 1) {
+          const t2 = beats2("meridian_incision", 1);
+          const p0 = self.aim(run);
+          e.loco.facePoint(p0);
+          let theta = self.front();
+          run.at(t2.draw1, () => {
+            const p = self.aim(run);
+            const b = e.boss.location;
+            if (distXZ(p, b) > 0.5) theta = dirToTheta(p.x - b.x, p.z - b.z);
+            cut(p, theta, t2.hit1 - t2.draw1, "meridian_1");
+          });
+          run.at(t2.draw2, () => cut(self.aim(run), theta + 90, t2.hit2 - t2.draw2, "meridian_2"));
+          run.windows(t2.hit1, t2.hit2 - t2.hit1 + 2, Math.max(8, t2.end - t2.hit2 - 2));
+          return;
+        }
+        const t = beats2("meridian_incision", 2);
+        const base = e.rng.int(0, 7) * 45;
+        for (let i = 0; i < t.count; i++) {
+          run.at(t.draw1 + i * t.gap, () => {
+            const p = self.aim(run, i);
+            const theta = base + i * M.fan;
+            self.indicate(g.quadrantOf(p.x, p.z), dir8(theta));
+            cut(p, theta, t.hit1 - t.draw1, `meridian_${i + 1}`);
+          });
+        }
+        const last = t.hit1 + (t.count - 1) * t.gap;
+        run.windows(t.hit1, last - t.hit1 + 2, Math.max(8, t.end - last - 2));
+      }
+    };
+  }
+  // ------------------------------------------------------------------ 02 Latitude Shear
+  /** Two curved bands, `o` blocks either side of the arena centre along bearing `phi`. */
+  shearBands(phi, o) {
+    const g = this.grid;
+    const C = NOMOS.shear;
+    const u = thetaToDir(phi);
+    const band = (sign) => new Ring(
+      g.cx + sign * u.x * C.farCentre,
+      g.cz + sign * u.z * C.farCentre,
+      C.farCentre - o - C.halfWidth,
+      C.farCentre - o + C.halfWidth,
+      wrapDeg(phi + (sign > 0 ? 180 : 0) - C.spread),
+      C.spread * 2
+    );
+    return new Union([band(1), band(-1)]);
+  }
+  latitudeShear() {
+    const self = this;
+    return {
+      id: "latitude_shear",
+      name: "Latitude Shear",
+      index: 2,
+      cooldown: NOMOS.shear.cooldown,
+      weight: (e) => 1.9 + Math.min(1.2, (e.targeting.count() - 1) * 0.6),
+      run(run) {
+        const e = run.enc;
+        const g = self.grid;
+        const C = NOMOS.shear;
+        const t = beats2("latitude_shear", run.phase);
+        const p2 = run.phase === 2;
+        const tg = self.aim(run);
+        let phi = distXZ(tg, { x: g.cx, z: g.cz }) > 3 ? dirToTheta(tg.x - g.cx, tg.z - g.cz) : self.front();
+        if (p2) phi = Math.round(phi / 45) * 45;
+        const safeHalf = C.to - C.halfWidth - 0.2;
+        const close = (axis, warn, label) => {
+          e.hazards.sweep({
+            tag: run.tag,
+            warn,
+            duration: t.duration,
+            every: 2,
+            shapeAt: (tt) => self.shearBands(axis, C.from - C.speed * tt),
+            damage: C.damage,
+            knockUp: 0.25,
+            label,
+            fx: 2,
+            onHit: (p) => e.audio.play(S2("shear_hit"), p.location, 0.9)
+          });
+        };
+        run.at(t.mark, () => {
+          for (const q of QUADRANTS) self.indicate(q, dir8(phi + (q % 2 ? 180 : 0)));
+          close(phi, t.start - t.mark, "shear_1");
+          if (!p2) e.hazards.telegraph(g.chord({ x: g.cx, z: g.cz }, phi + 90, safeHalf), t.start - t.mark + t.duration, true);
+        });
+        let end = t.start + t.duration;
+        if (p2) {
+          run.at(t.start, () => {
+            close(phi + 90, t.start2 - t.start, "shear_2");
+            const u = thetaToDir(phi);
+            const n = thetaToDir(phi + 90);
+            const sq = [[1, 1], [1, -1], [-1, -1], [-1, 1]].map(([a, b]) => ({ x: g.cx + (u.x * a + n.x * b) * safeHalf, z: g.cz + (u.z * a + n.z * b) * safeHalf }));
+            e.hazards.telegraph(new Polygon(sq), t.start2 - t.start + t.duration, true);
+          });
+          end = t.start2 + t.duration;
+        }
+        run.windows(t.start, end - t.start + 2, Math.max(8, t.end - end - 2));
+      }
+    };
+  }
+  // ------------------------------------------------------------------ 03 Ink Borders
+  inkBorders() {
+    const self = this;
+    return {
+      id: "ink_borders",
+      name: "Ink Borders",
+      index: 3,
+      cooldown: NOMOS.borders.cooldown,
+      weight: (e) => e.timeline.now < self.bordersUntil ? 0 : 1.8,
+      run(run) {
+        const e = run.enc;
+        const g = self.grid;
+        const B = NOMOS.borders;
+        const t = beats2("ink_borders", run.phase);
+        const p2 = run.phase === 2;
+        run.at(t.mark, () => {
+          const tg = self.aim(run);
+          const b = e.boss.location;
+          const bb = g.bounds();
+          const half = B.length / 2;
+          const alongZ = (x, zc) => new Lane(x, Math.max(bb.z0 + 0.5, zc - half), x, Math.min(bb.z1 - 0.5, zc + half), B.halfWidth);
+          const alongX = (z, xc) => new Lane(Math.max(bb.x0 + 0.5, xc - half), z, Math.min(bb.x1 - 0.5, xc + half), z, B.halfWidth);
+          const clampX = (x) => Math.min(bb.x1 - 1, Math.max(bb.x0 + 1, x));
+          const clampZ = (z) => Math.min(bb.z1 - 1, Math.max(bb.z0 + 1, z));
+          const ruled = (v, axis, away) => {
+            let line = g.snapLine(v, axis);
+            if (Math.abs(line - v) < 2) line += (away >= 0 ? 1 : -1) * g.cell;
+            return axis === "x" ? clampX(line) : clampZ(line);
+          };
+          const lanes = [];
+          const mostlyX = Math.abs(tg.x - b.x) >= Math.abs(tg.z - b.z);
+          if (!p2) {
+            if (mostlyX) {
+              lanes.push(alongZ(clampX(tg.x), tg.z), alongX(ruled(tg.z, "z", tg.z - b.z), tg.x));
+            } else {
+              lanes.push(alongX(clampZ(tg.z), tg.x), alongZ(ruled(tg.x, "x", tg.x - b.x), tg.z));
+            }
+          } else {
+            const sx = tg.x <= g.cx ? 1 : -1;
+            const sz = tg.z <= g.cz ? 1 : -1;
+            const xa = clampX(tg.x);
+            const xb = clampX(tg.x + sx * 7.5);
+            const za = clampZ(tg.z - sz * 3.75);
+            const zb = clampZ(tg.z + sz * 3.75);
+            const xm = (xa + xb) / 2;
+            lanes.push(
+              alongZ(xa, tg.z),
+              alongZ(xb, tg.z),
+              new Lane(xa, za, xm, za, B.halfWidth),
+              new Lane(xm, zb, xb, zb, B.halfWidth)
+            );
+            for (const q of QUADRANTS) self.indicate(q, q % 2 ? 2 : 0);
+          }
+          const shape = new Union(lanes);
+          const warn = t.active - t.mark;
+          const epoch = ++self.borderEpoch;
+          self.bordersUntil = e.timeline.now + warn + t.life;
+          trace("ink_borders", { lanes: lanes.length, until: self.bordersUntil });
+          e.hazards.strike({
+            tag: run.tag,
+            shape,
+            warn,
+            damage: B.damage,
+            label: "ink_border",
+            fx: 10,
+            effects: [{ id: "slowness", ticks: B.slowTicks, amp: 0 }]
+          });
+          const amp = p2 ? 1 : 0;
+          for (let tt = 2; tt <= t.life; tt += 2) {
+            e.timeline.after(warn + tt, () => {
+              if (epoch === self.borderEpoch) for (const p of e.hazards.inside(shape)) self.inkTouch(p, amp);
+            }, run.tag);
+          }
+          for (let tt = 0; tt < t.life; tt += B.redrawEvery) {
+            e.timeline.after(warn + tt, () => {
+              if (epoch !== self.borderEpoch) return;
+              const pen = self.floorPen(P2("border_line"), B.redrawEvery + 3);
+              for (const l of lanes) pen.line(l.ax, l.az, l.bx, l.bz);
+            }, run.tag);
+          }
+          e.timeline.after(warn + t.life + 1, () => {
+            if (epoch === self.borderEpoch) self.bordersUntil = 0;
+          }, run.tag);
+        });
+        run.windows(t.active, 8, Math.max(8, t.end - t.active - 8));
+      }
+    };
+  }
+  // ------------------------------------------------------------------ 04 Unmapped Gate
+  /** A validated arrival point about `offset` blocks from the target; undefined when none is safe. */
+  gateDestination(tg, from, offsets, dist) {
+    const e = this.enc;
+    const base = distXZ(tg, from) > 0.5 ? dirToTheta(tg.x - from.x, tg.z - from.z) : this.front();
+    for (const off of offsets) {
+      const d = thetaToDir(base + off);
+      const p = { x: tg.x + d.x * dist, z: tg.z + d.z * dist };
+      if (!e.arena.contains(p.x, p.z, e.stats.leashInset + 0.5)) continue;
+      if (distXZ(p, from) < NOMOS.gate.minJump) continue;
+      if (!e.loco.canStand(p)) continue;
+      return p;
+    }
+    const lim = e.arena.radius - (e.stats.leashInset + 0.5);
+    const c = {
+      x: Math.min(e.arena.cx + lim, Math.max(e.arena.cx - lim, tg.x)),
+      z: Math.min(e.arena.cz + lim, Math.max(e.arena.cz - lim, tg.z))
+    };
+    if (distXZ(c, from) >= NOMOS.gate.minJump && e.loco.canStand(c)) return c;
+    return void 0;
+  }
+  unmappedGate() {
+    const self = this;
+    return {
+      id: "unmapped_gate",
+      name: "Unmapped Gate",
+      index: 4,
+      cooldown: NOMOS.gate.cooldown,
+      weight: (e) => {
+        const d = self.dist(e);
+        const b = e.boss.location;
+        const cornered = !e.arena.contains(b.x, b.z, 9);
+        return (d > 12 ? 2.8 : 1.2) + (cornered ? 1.2 : 0);
+      },
+      run(run) {
+        const e = run.enc;
+        const g = self.grid;
+        const G = NOMOS.gate;
+        const t = beats2("unmapped_gate", run.phase);
+        const y = e.arena.floorY;
+        const jump = (mark, fold, relocate, strike, cross) => {
+          run.at(mark, () => {
+            const from = e.boss.location;
+            const tg = self.aim(run);
+            const dest = cross ? self.gateDestination(tg, from, [0, 90, -90, 180].map((a) => a - dirToTheta(tg.x - from.x, tg.z - from.z) % 90), G.crossOffset) : self.gateDestination(tg, from, [0, 30, -30, 60, -60, 90, -90, 120, -120, 150, -150, 180], G.offset);
+            const at = dest ?? { x: from.x, z: from.z };
+            self.gateLog.push({ x: at.x, z: at.z, ok: !!dest });
+            trace("gate", { ok: !!dest, x: at.x, z: at.z });
+            e.hazards.telegraph(new Marks(from.x, from.z, (pen) => {
+              pen.arc(from.x, from.z, 2.4, 0, 360);
+              pen.line(from.x - 2.4, from.z, from.x + 2.4, from.z);
+              pen.line(from.x, from.z - 2.4, from.x, from.z + 2.4);
+            }), relocate - mark, true);
+            e.visuals.decor(P2("grid"), { x: at.x, y: y + 0.1, z: at.z });
+            self.indicate(g.quadrantOf(at.x, at.z), dir8(dirToTheta(at.x - from.x, at.z - from.z)));
+            const shape = cross ? new Union([g.chord(at, 0, G.crossHalfWidth), g.chord(at, 90, G.crossHalfWidth)]) : new Circle(at.x, at.z, G.radius);
+            e.hazards.strike({ shape, warn: strike - mark, tag: run.tag, damage: G.damage, knock: cross ? 0 : 1.2, knockUp: 0.3, from: at, fx: 12, label: cross ? "gate_cross" : "gate_arrival" });
+            run.at(fold, () => {
+              self.foldedUntil = e.timeline.now + (strike - fold);
+            });
+            run.at(relocate, () => {
+              if (!dest) return;
+              const now = self.aim(run);
+              const ok2 = e.loco.relocate(dest, e.loco.yaw);
+              if (ok2) e.loco.facePoint(now);
+              else trace("gate_blocked", { x: dest.x, z: dest.z });
+            });
+            run.at(strike + 1, () => {
+              self.foldedUntil = 0;
+            });
+          });
+        };
+        jump(t.mark, t.fold, t.relocate, t.strike, false);
+        let last = t.strike;
+        if (run.phase === 2) {
+          jump(t.mark2, t.fold2, t.relocate2, t.strike2, true);
+          last = t.strike2;
+        }
+        run.windows(t.fold, last - t.fold + 2, Math.max(8, t.end - last - 2));
+      }
+    };
+  }
+  // ------------------------------------------------------------------ 05 Compass Darts
+  compassDarts() {
+    const self = this;
+    return {
+      id: "compass_darts",
+      name: "Compass Darts",
+      index: 5,
+      cooldown: NOMOS.darts.cooldown,
+      weight: (e) => {
+        const d = self.dist(e);
+        return d >= 6 ? e.phase === 2 ? 2.9 : 2.5 : 1.2;
+      },
+      run(run) {
+        const e = run.enc;
+        const g = self.grid;
+        const D = NOMOS.darts;
+        const t = beats2("compass_darts", run.phase);
+        const p2 = run.phase === 2;
+        const b = e.boss.location;
+        const yaw = e.loco.yaw;
+        if (run.target) e.loco.facePoint(run.target.location);
+        const volleys = [];
+        if (!p2) {
+          volleys.push({ lock: t.lock, origins: [-2.7, -0.9, 0.9, 2.7].map((r) => localToWorld(b, e.loco.yaw, r, 0, 2.4)) });
+        } else {
+          volleys.push({ lock: t.lock, origins: QUADRANTS.map((q) => g.quadrantCentre(q)) });
+          const r = g.half - 2;
+          volleys.push({ lock: t.lock2, origins: [{ x: g.cx, z: g.cz - r }, { x: g.cx + r, z: g.cz }, { x: g.cx, z: g.cz + r }, { x: g.cx - r, z: g.cz }] });
+        }
+        let last = 0;
+        let n = 0;
+        for (const v of volleys) {
+          v.origins.forEach((o, i) => {
+            const index = n++;
+            const lockAt = v.lock + i * t.interval;
+            last = Math.max(last, lockAt + t.warn);
+            const who = () => {
+              const ps = e.targeting.participants();
+              return ps.length > 0 ? ps[index % ps.length] : void 0;
+            };
+            const firstTrack = Math.max(t.appear, v.lock - 26);
+            for (let tt = firstTrack; tt < lockAt; tt += 4) {
+              run.at(tt, () => {
+                const p = who();
+                if (!p) return;
+                if (tt === firstTrack) e.visuals.decor(P2("grid"), { x: o.x, y: e.arena.floorY + 0.1, z: o.z });
+                self.floorPen(P2("aim_line"), 5).line(o.x, o.z, p.location.x, p.location.z);
+              });
+            }
+            run.at(lockAt, () => {
+              const p = who();
+              const d = p && distXZ(p.location, o) > 0.3 ? normXZ(p.location.x - o.x, p.location.z - o.z) : thetaToDir(yawToTheta(yaw));
+              self.dartLocks.push({ tick: e.timeline.now, ox: o.x, oz: o.z, dx: d.x, dz: d.z });
+              trace("dart_lock", { index, dx: d.x, dz: d.z });
+              if (p2) self.indicate(i % 4, dir8(dirToTheta(d.x, d.z)));
+              const bb = g.bounds();
+              const ex = d.x > 1e-6 ? (bb.x1 - o.x) / d.x : d.x < -1e-6 ? (bb.x0 - o.x) / d.x : Infinity;
+              const ez = d.z > 1e-6 ? (bb.z1 - o.z) / d.z : d.z < -1e-6 ? (bb.z0 - o.z) / d.z : Infinity;
+              const range = Math.max(3, Math.min(D.range, Math.min(ex, ez) - 0.4));
+              e.hazards.strike({
+                tag: run.tag,
+                shape: new Circle(o.x, o.z, D.mount),
+                warn: t.warn,
+                damage: D.mountDamage,
+                label: "dart_release"
+              });
+              e.hazards.projectile({
+                tag: run.tag,
+                delay: t.warn,
+                from: { x: o.x, y: e.arena.floorY + D.height, z: o.z },
+                dir: d,
+                speed: D.speed,
+                range,
+                radius: D.radius,
+                particle: P2("dart"),
+                damage: D.damage,
+                blockable: true,
+                knock: 0.5,
+                label: "compass_dart",
+                sound: p2 ? S2("dart_fire") : void 0
+              });
+            });
+          });
+        }
+        run.windows(t.lock, last - t.lock + 2, Math.max(8, t.end - last - 2));
+      }
+    };
+  }
+  /** Wet ink: slow whoever stands on a standing border (no damage). */
+  inkTouch(p, amp) {
+    const now = this.enc.timeline.now;
+    try {
+      p.addEffect("slowness", NOMOS.borders.slowTicks, { amplifier: amp, showParticles: false });
+    } catch {
+      return;
+    }
+    if (now - (this.inked.get(p.id) ?? -100) >= 20) {
+      this.inked.set(p.id, now);
+      this.enc.audio.play(S2("border_touch"), p.location, 0.8);
+      trace("border_touch", { player: p.id });
+    }
+  }
+  // ------------------------------------------------------------------ 06 Folded Country
+  foldedCountry() {
+    const self = this;
+    return {
+      id: "folded_country",
+      name: "Folded Country",
+      index: 6,
+      cooldown: NOMOS.folded.cooldown,
+      weight: (e) => self.dist(e) > 13 ? 3.1 : 2,
+      run(run) {
+        const e = run.enc;
+        const g = self.grid;
+        const F = NOMOS.folded;
+        const t = beats2("folded_country", run.phase);
+        const p2 = run.phase === 2;
+        const tg = self.aim(run);
+        const b = e.boss.location;
+        e.loco.facePoint(tg);
+        const along = Math.abs(tg.x - b.x) >= Math.abs(tg.z - b.z) ? 0 : 90;
+        const period = F.width * 2;
+        const bb = g.bounds();
+        const startOffset = (theta) => {
+          const probe = new Stripes(bb, theta, period, F.width, 0);
+          const s = probe.across(tg.x, tg.z);
+          return (s % period + period) % period < F.width ? 0 : F.width;
+        };
+        const offA = startOffset(along);
+        const offB = startOffset(along + 90);
+        let last = 0;
+        for (let i = 0; i < t.count; i++) {
+          const mark = t.mark + i * t.interval;
+          const hit = t.hit + i * t.interval;
+          last = hit;
+          const theta = p2 && i % 2 === 1 ? along + 90 : along;
+          const flip = p2 ? Math.floor(i / 2) % 2 : i % 2;
+          const offset = (theta === along ? offA : offB) + flip * F.width;
+          const shape = new Stripes(bb, theta, period, F.width, offset);
+          run.at(mark, () => {
+            if (p2) for (const q of QUADRANTS) self.indicate(q, dir8(theta));
+            e.hazards.telegraph(shape.complement(true), hit - mark, true);
+            e.hazards.strike({ shape, warn: hit - mark, tag: run.tag, damage: F.damage, knockUp: 0.3, fx: 14, label: `folded_${i + 1}` });
+          });
+        }
+        run.windows(t.hit, last - t.hit + 2, Math.max(8, t.end - last - 2));
+      }
+    };
+  }
+  // ------------------------------------------------------------------ 07 The Great Recalculation
+  /**
+   * One "projection" of the floor inside a box. Three systems exist:
+   *   0 Cartesian  a chessboard of 10-block squares, alternate squares struck out;
+   *   1 polar      a disc round the arena centre and a ring further out;
+   *   2 oblique    diagonal corridors.
+   * `sector` (start theta) restricts the polar system to one quadrant.
+   */
+  projection(system6, b, variant, sector2) {
+    const g = this.grid;
+    const R = NOMOS.recalc;
+    if (system6 === 0) {
+      const shift = [[1, 1], [1, 0], [0, 1]][(variant >> 1) % 3];
+      const d2 = new Checker(b, R.cell, variant % 2, shift[0] * R.cell / 2, shift[1] * R.cell / 2);
+      const safe = new Marks(d2.cx, d2.cz, (pen) => {
+        for (const q of d2.squares(1 - d2.parity)) {
+          pen.arc((q.x0 + q.x1) / 2, (q.z0 + q.z1) / 2, Math.min(1.6, (q.x1 - q.x0) / 2 - 0.6, (q.z1 - q.z0) / 2 - 0.6), 0, 360);
+        }
+      });
+      return { danger: d2, safe, system: system6 };
+    }
+    if (system6 === 1) {
+      const a0 = sector2 ?? 0;
+      const sweep = sector2 === void 0 ? 360 : 90;
+      const danger = new Union([new Ring(g.cx, g.cz, 0, R.inner, a0, sweep), new Ring(g.cx, g.cz, R.ring[0], R.ring[1], a0, sweep)]);
+      const safe = new Marks(g.cx, g.cz, (pen) => {
+        pen.arc(g.cx, g.cz, (R.inner + R.ring[0]) / 2, a0, sweep);
+        pen.arc(g.cx, g.cz, R.ring[1] + 2.5, a0, sweep);
+      });
+      return { danger, safe, system: system6 };
+    }
+    const d = new Stripes(b, variant % 2 ? 45 : 135, R.stripe * 2, R.stripe, variant % 4 * (R.stripe / 2));
+    return { danger: d, safe: d.complement(true), system: system6 };
+  }
+  /** The three configurations of one Great Recalculation, fixed before anything is shown. */
+  buildConfigurations(phase, warn) {
+    const e = this.enc;
+    const g = this.grid;
+    const order = e.rng.shuffle([0, 1, 2]);
+    const out = [];
+    for (let k = 0; k < 3; k++) {
+      const variant = e.rng.int(0, 7);
+      let cfg;
+      if (phase === 1) {
+        cfg = this.projection(order[k], g.bounds(), variant);
+      } else {
+        const parts = QUADRANTS.map((q) => this.projection((order[k] + q) % 3, g.quadrantBounds(q), variant + q, QUADRANT_THETA[q]));
+        cfg = { danger: new Union(parts.map((p) => p.danger)), safe: new Union(parts.map((p) => p.safe)), system: order[k] };
+      }
+      if (!g.reachable(cfg.danger, warn, NOMOS.fair.walk, NOMOS.fair.reaction)) {
+        trace("unsafe_pattern", { k, system: order[k], worst: g.maxDistanceToSafety(cfg.danger) });
+        cfg = this.projection(1, g.bounds(), 0);
+      }
+      out.push(cfg);
+    }
+    return out;
+  }
+  greatRecalculation() {
+    const self = this;
+    return {
+      id: "great_recalculation",
+      name: "The Great Recalculation",
+      index: 7,
+      ultimate: true,
+      interruptible: false,
+      cooldown: NOMOS.recalc.cooldown,
+      weight: (e) => e.healthFraction() < 0.9 ? 5 : 0,
+      run(run) {
+        const e = run.enc;
+        const t = beats2("great_recalculation", run.phase);
+        const configs = self.buildConfigurations(run.phase, t.warn);
+        trace("recalculation", { systems: configs.map((c) => c.system) });
+        configs.forEach((cfg, k) => {
+          run.at(t.preview + k * t.previewGap, () => e.hazards.telegraph(cfg.danger, t.previewGap - 2));
+          const at = t.strike + k * t.interval;
+          run.at(at - t.warn, () => {
+            if (run.phase === 2) for (const q of QUADRANTS) self.indicate(q, (cfg.system + q) % 3 * 2 + k);
+            e.hazards.telegraph(cfg.safe, t.warn, true);
+          });
+          run.strike(at, { shape: cfg.danger, warn: t.warn, damage: NOMOS.recalc.damage, knockUp: 0.35, fx: 22, label: `recalculation_${k + 1}` });
+        });
+        const first = t.strike - t.warn;
+        const last = t.strike + 2 * t.interval;
+        run.windows(first, last - first + 2, Math.max(10, t.end - last - 2));
+      }
+    };
+  }
+};
+var MODULE2 = {
+  create: (enc) => new NomosController(enc),
+  arena: { structure: "abm:observatory_of_unwritten_borders", size: 47, height: 15, nameKey: "abm.arena.nomos" },
+  helpers: []
+};
+
+// src/bosses/orison/index.ts
+import { world as world6 } from "@minecraft/server";
+
+// shared/orison.timings.json
+var orison_timings_default = {
+  _comment: "Beat timings for Orison, in game ticks from the start of each action. Shared by the script (hit windows) and the animation generator (keyframes), so they cannot drift apart.",
+  intro: { wake: 30, swing: 70, total: 116 },
+  transition: { crack: 26, shatter: 60, emerge: 100, total: 136 },
+  stagger: { total: 36 },
+  death: { stop: 34, repeat: 74, ribbons: 112, empty: 142, total: 184 },
+  footstep_echo: {
+    p1: { mark: 14, first: 46, gap: 6, count: 5, end: 100 },
+    p2: { mark: 12, first: 42, gap: 5, count: 8, end: 108 }
+  },
+  pendulum_verdict: {
+    p1: { swing: 36, sweep: 14, end: 82 },
+    p2: { swing: 30, sweep: 14, swing2: 66, end: 112 }
+  },
+  deferred_wound: {
+    p1: { first: 12, gap: 8, count: 4, fuse: 40, end: 102 },
+    p2: { first: 10, gap: 7, count: 6, fuse: 36, echo: 28, end: 134 }
+  },
+  hourglass_drain: {
+    p1: { cast: 22, end: 52 },
+    p2: { cast: 18, end: 46 }
+  },
+  tomorrows_witness: {
+    p1: { lock: 14, strike: 44, end: 76 },
+    p2: { lock: 12, strike: 40, end: 72 }
+  },
+  secondhand_exchange: {
+    p1: { mark: 8, swap: 44, strike: 58, end: 92 },
+    p2: { mark: 6, swap: 36, strike: 50, mark2: 54, swap2: 84, strike2: 98, end: 130 }
+  },
+  hour_never: {
+    p1: { preview: 20, show: 26, step: 30, exec: 134, gap: 40, end: 250 },
+    p2: { preview: 18, show: 20, step: 24, exec: 112, gap: 34, end: 216 }
+  }
+};
+
+// src/bosses/orison/history.ts
+var _PositionHistory = class _PositionHistory {
+  constructor() {
+    this.tracks = /* @__PURE__ */ new Map();
+  }
+  /** Call every tick with the current participants; samples on the interval. */
+  record(players, now) {
+    if (now % _PositionHistory.INTERVAL !== 0) return;
+    for (const p of players) {
+      if (!p.isValid) continue;
+      let t = this.tracks.get(p.id);
+      if (!t) {
+        if (this.tracks.size >= _PositionHistory.MAX_PLAYERS) continue;
+        t = { x: new Float32Array(_PositionHistory.CAPACITY), z: new Float32Array(_PositionHistory.CAPACITY), head: 0, size: 0, lastSeen: now };
+        this.tracks.set(p.id, t);
+      }
+      const l = p.location;
+      t.x[t.head] = l.x;
+      t.z[t.head] = l.z;
+      t.head = (t.head + 1) % _PositionHistory.CAPACITY;
+      if (t.size < _PositionHistory.CAPACITY) t.size++;
+      t.lastSeen = now;
+    }
+    for (const [id, t] of this.tracks) if (now - t.lastSeen > _PositionHistory.STALE) this.tracks.delete(id);
+  }
+  /** Up to `n` most recent samples, newest first. */
+  recent(id, n) {
+    const t = this.tracks.get(id);
+    if (!t) return [];
+    const out = [];
+    const count = Math.min(n, t.size);
+    for (let i = 1; i <= count; i++) {
+      const k = (t.head - i + _PositionHistory.CAPACITY * 2) % _PositionHistory.CAPACITY;
+      out.push({ x: t.x[k], z: t.z[k] });
+    }
+    return out;
+  }
+  /** Average velocity (blocks per tick) over the last `samplesBack` samples. */
+  velocity(id, samplesBack) {
+    const r = this.recent(id, samplesBack + 1);
+    if (r.length < 2) return { x: 0, z: 0 };
+    const a = r[0];
+    const b = r[r.length - 1];
+    const ticks = (r.length - 1) * _PositionHistory.INTERVAL;
+    return { x: (a.x - b.x) / ticks, z: (a.z - b.z) / ticks };
+  }
+  /** Distance walked over the last `n` samples. */
+  pathLength(id, n) {
+    const r = this.recent(id, n);
+    let d = 0;
+    for (let i = 1; i < r.length; i++) d += Math.hypot(r[i].x - r[i - 1].x, r[i].z - r[i - 1].z);
+    return d;
+  }
+  size(id) {
+    return this.tracks.get(id)?.size ?? 0;
+  }
+  trackedPlayers() {
+    return this.tracks.size;
+  }
+  totalSamples() {
+    let n = 0;
+    for (const t of this.tracks.values()) n += t.size;
+    return n;
+  }
+  forget(id) {
+    this.tracks.delete(id);
+  }
+  clear() {
+    this.tracks.clear();
+  }
+};
+_PositionHistory.INTERVAL = 4;
+_PositionHistory.CAPACITY = 64;
+_PositionHistory.MAX_PLAYERS = 8;
+_PositionHistory.STALE = 60;
+var PositionHistory = _PositionHistory;
+
+// src/bosses/orison/patterns.ts
+var patternLabel = (p) => `${p.kind}:${p.parity}`;
+var PatternShape = class {
+  constructor(pattern, arena, wedges, band) {
+    this.pattern = pattern;
+    this.wedges = wedges;
+    this.band = band;
+    this.cx = arena.cx;
+    this.cz = arena.cz;
+    this.reach = arena.radius + 1;
+  }
+  bandOf(r) {
+    return Math.floor(r / this.band);
+  }
+  wedgeOf(theta) {
+    const w = 360 / this.wedges;
+    return Math.floor(((theta + w / 2) % 360 + 360) % 360 / w);
+  }
+  /** Is the cell (band i, wedge j) dangerous in this pattern? */
+  danger(i, j) {
+    const p = this.pattern;
+    if (p.kind === "rings") return i % 2 === p.parity;
+    if (p.kind === "wedges") return j % 2 === p.parity;
+    return (i + j) % 2 === p.parity;
+  }
+  contains(x, z) {
+    const dx = x - this.cx;
+    const dz = z - this.cz;
+    const r = Math.hypot(dx, dz);
+    if (r > this.reach) return false;
+    return this.danger(this.bandOf(r), this.wedgeOf(Math.atan2(dz, dx) * DEG));
+  }
+  draw(pen) {
+    const bands = Math.ceil(this.reach / this.band);
+    const w = 360 / this.wedges;
+    const p = this.pattern;
+    if (p.kind !== "wedges") {
+      for (let i = 1; i <= bands; i++) pen.arc(this.cx, this.cz, Math.min(this.reach, i * this.band), 0, 360);
+    }
+    if (p.kind !== "rings") {
+      for (let j = 0; j < this.wedges; j++) {
+        const d = thetaToDir(j * w + w / 2);
+        const r0 = p.kind === "checker" ? 0.5 : 0.5;
+        pen.line(this.cx + d.x * r0, this.cz + d.z * r0, this.cx + d.x * this.reach, this.cz + d.z * this.reach);
+      }
+    }
+    for (let i = 0; i < bands; i++) {
+      const rm = Math.min(this.reach, (i + 0.5) * this.band);
+      const step = p.kind === "rings" ? Math.max(1, Math.round(this.wedges / 4)) : 1;
+      for (let j = 0; j < this.wedges; j += step) {
+        if (!this.danger(i, j)) continue;
+        if (p.kind === "wedges" && i % 2 === 1) continue;
+        const d = thetaToDir(j * w);
+        pen.disc(this.cx + d.x * rm, this.cz + d.z * rm, Math.min(1.5, this.band * 0.36));
+      }
+    }
+  }
+  sample(rng, n) {
+    const out = [];
+    let guard = n * 30;
+    while (out.length < n && guard-- > 0) {
+      const a = rng.range(0, Math.PI * 2);
+      const d = Math.sqrt(rng.next()) * this.reach;
+      const x = this.cx + Math.cos(a) * d;
+      const z = this.cz + Math.sin(a) * d;
+      if (this.contains(x, z)) out.push({ x, z });
+    }
+    return out;
+  }
+};
+function choosePatterns(rng, phase) {
+  const a = rng.chance(0.5) ? 0 : 1;
+  const b = rng.chance(0.5) ? 0 : 1;
+  if (phase === 1) {
+    const first = rng.chance(0.5) ? "rings" : "wedges";
+    const other = first === "rings" ? "wedges" : "rings";
+    return [{ kind: first, parity: a }, { kind: other, parity: b }, { kind: first, parity: a === 0 ? 1 : 0 }];
+  }
+  const mid = rng.chance(0.5) ? "rings" : "wedges";
+  return [{ kind: "checker", parity: a }, { kind: mid, parity: b }, { kind: "checker", parity: a === 0 ? 1 : 0 }];
+}
+
+// src/bosses/orison/tuning.ts
+var ORISON = {
+  move: {
+    /** Phase I walks in a tick-tock: `stride` ticks moving, `rest` ticks held. */
+    p1: { speed: 0.11, turn: 5, hold: 8, chase: 9.5, stride: 12, rest: 8 },
+    /** Phase II: the shadow walks first and the body follows the same path `lead` ticks later. */
+    p2: { speed: 0.15, turn: 7, hold: 6.5, chase: 7.5, lead: 10 }
+  },
+  history: {
+    /** Samples used by the attacks, [phase I, phase II]: 5 s and 10 s of movement. */
+    window: [25, 50]
+  },
+  echo: { cooldown: [170, 140], damage: 12, radius: [1.6, 1.8], minSpacing: 2 },
+  verdict: {
+    cooldown: [150, 120],
+    damage: 16,
+    inner: 2.2,
+    outer: 11,
+    arc: [140, 200],
+    /** Angular half-width of the blade, degrees. */
+    blade: 9,
+    /** Phase II return swing covers this outer band instead. */
+    returnBand: [5.5, 14]
+  },
+  wound: { cooldown: [200, 170], damage: 13, radius: 2.2 },
+  drain: {
+    cooldown: [420, 360],
+    count: [2, 3],
+    radius: 4,
+    lifetime: [240, 300],
+    /** Ticks after appearing before an hourglass starts to act. */
+    arm: 30,
+    pulseWarn: 40,
+    pulseEvery: 70,
+    damage: 8,
+    /** Slowness is re-applied every `slowEvery` ticks for `slowTicks`, only to players inside the area. */
+    slowTicks: 30,
+    slowEvery: 10,
+    slowAmp: 1,
+    /** Destroying an hourglass jams Orison for this long. */
+    breakStagger: 36
+  },
+  witness: { cooldown: [190, 150], damage: 15, radius: [3, 2.6], samplesBack: 5 },
+  exchange: { cooldown: [260, 220], arrive: 15, depart: 8, arriveRadius: 4.5, departRadius: 3, offset: 3.5, minJump: 6 },
+  hour: { cooldown: [780, 720], damage: 18, band: 4, wedges: [8, 12] }
+};
+
+// src/bosses/orison/index.ts
+var S3 = (id) => `abm.orison.${id}`;
+var P3 = (id) => `abm:orison_${id}`;
+var NUMERAL = [P3("numeral_1"), P3("numeral_2"), P3("numeral_3")];
+var beats3 = (name, phase) => orison_timings_default[name][phase === 2 ? "p2" : "p1"];
+var live = (p) => isAlivePlayer(p) ? p : void 0;
+var OrisonController = class extends BossController {
+  constructor(enc) {
+    super(enc);
+    this.key = "orison";
+    this.displayName = "Orison";
+    this.phase2Name = "Tomorrow Has Already Happened";
+    this.trophyItem = "abm:unlived_hourglass";
+    this.style = {
+      line: P3("tg_line"),
+      arc: P3("tg_arc"),
+      disc: P3("tg_disc"),
+      safeLine: P3("safe_line"),
+      safeArc: P3("safe_arc"),
+      strike: P3("strike")
+    };
+    /** Recent positions of the participants. Bounded; see history.ts. */
+    this.history = new PositionHistory();
+    /** The three patterns of the most recent ultimate, and what was actually executed. */
+    this.lastHour = { previewed: [], executed: [] };
+    /** The spots locked by the most recent Tomorrow's Witness. */
+    this.lastPrediction = [];
+    /** 1 once the chest hourglass has shattered (Phase II). */
+    this.glass = 0;
+    /** Phase II: positions the shadow has walked through, oldest first (a delay line of `lead` ticks). */
+    this.trail = [];
+    /** While the encounter clock is below this the shadow is on an errand and does not lead. */
+    this.shadowBusyUntil = 0;
+    /** Encounter tick until which an hourglass pulse is announced but has not yet struck. */
+    this.pulseUntil = 0;
+    this.nextIdleSound = 100;
+    this.attacks = [
+      this.footstepEcho(),
+      this.pendulumVerdict(),
+      this.deferredWound(),
+      this.hourglassDrain(),
+      this.tomorrowsWitness(),
+      this.secondhandExchange(),
+      this.hourThatNeverOccurred()
+    ];
+    this.onLeave = (ev) => this.history.forget(ev.playerId);
+    world6.afterEvents.playerLeave.subscribe(this.onLeave);
+  }
+  // ------------------------------------------------------------------ framework hooks
+  configure(phase) {
+    const m = phase === 2 ? ORISON.move.p2 : ORISON.move.p1;
+    this.enc.loco.speed = m.speed;
+    this.enc.loco.turnRate = m.turn;
+  }
+  intro() {
+    return orison_timings_default.intro.total;
+  }
+  phaseTransition() {
+    const e = this.enc;
+    const t = orison_timings_default.transition;
+    e.timeline.after(t.shatter, () => {
+      this.glass = 1;
+      e.setProp("abm:glass", 1);
+      const chest = localToWorld(e.boss.location, e.loco.yaw, 0, 5.6, 0.5);
+      e.visuals.spawn(P3("shard"), chest);
+      e.visuals.spawn(P3("sand"), chest);
+      const c = e.boss.location;
+      for (const p of e.hazards.inside(new Circle(c.x, c.z, 5))) {
+        const d = Math.hypot(p.location.x - c.x, p.location.z - c.z) || 1;
+        try {
+          p.applyKnockback({ x: (p.location.x - c.x) / d * 1.4, z: (p.location.z - c.z) / d * 1.4 }, 0.3);
+        } catch {
+        }
+      }
+    }, "phase");
+    e.timeline.after(t.emerge, () => {
+      this.ensureShadow();
+    }, "phase");
+    return t.total;
+  }
+  phase2Ready() {
+    this.trail = [];
+    this.shadowBusyUntil = 0;
+    this.ensureShadow();
+  }
+  death() {
+    const e = this.enc;
+    const t = orison_timings_default.death;
+    if (this.shadowAt) {
+      const at = e.arena.at(this.shadowAt, 1.5);
+      e.visuals.spawn(P3("wisp"), at);
+      e.visuals.spawn(P3("wisp"), { x: at.x, y: at.y + 1.5, z: at.z });
+    }
+    this.shadowAt = void 0;
+    e.timeline.after(t.repeat, () => {
+      const f = localToWorld(e.boss.location, e.loco.yaw, 0, 0.2, 4);
+      e.visuals.decor(P3("echo"), f);
+    }, "death");
+    e.timeline.after(t.empty, () => e.visuals.spawn(P3("sand"), localToWorld(e.boss.location, e.loco.yaw, 0, 5.2, 0.5)), "death");
+    return t.total;
+  }
+  position(target) {
+    const e = this.enc;
+    if (!target) {
+      e.loco.halt();
+      return false;
+    }
+    const b = e.boss.location;
+    const d = distXZ(b, target.location);
+    if (e.phase === 2) return this.followShadow(target, d);
+    const m = ORISON.move.p1;
+    if (d > m.chase) {
+      const beat = e.timeline.now % (m.stride + m.rest);
+      if (beat < m.stride) {
+        const k = (d - m.hold) / d;
+        e.loco.goTo({ x: b.x + (target.location.x - b.x) * k, z: b.z + (target.location.z - b.z) * k }, 0.4);
+        return true;
+      }
+    }
+    e.loco.halt();
+    e.loco.turnToward(e.loco.yawTo(target.location), 3);
+    return false;
+  }
+  tick() {
+    const e = this.enc;
+    const now = e.timeline.now;
+    this.history.record(e.targeting.participants(), now);
+    if (!e.sm.inCombat) return;
+    this.tickDrains(now);
+    if (e.phase === 2) this.tickShadow(now);
+    if (now >= this.nextIdleSound && !e.sm.busy) {
+      e.audio.play(S3("idle"), e.boss.location, 0.6);
+      this.nextIdleSound = now + 150 + e.rng.int(0, 120);
+    }
+  }
+  incoming(damage, _info) {
+    const e = this.enc;
+    e.defer(() => e.audio.play(S3("hurt"), e.boss.location, 0.7));
+    return damage;
+  }
+  onHelperGone(h) {
+    const e = this.enc;
+    if (h.kind === "drain") {
+      e.timeline.cancel(`hg${h.id}`);
+      if (h.killed) {
+        const at = e.arena.at({ x: h.data.x, z: h.data.z }, 1.2);
+        e.visuals.spawn(P3("shard"), at);
+        e.visuals.spawn(P3("sand"), at);
+        e.audio.play(S3("hourglass_break"), at);
+        e.stagger(ORISON.drain.breakStagger);
+      }
+    }
+  }
+  onAttackCancelled(_def) {
+    this.enc.helpers.removeKind("mark");
+    this.shadowBusyUntil = 0;
+    this.trail = [];
+    const sh = this.shadow();
+    if (sh) this.shade(sh, 0 /* Idle */);
+  }
+  extra() {
+    return { glass: this.glass };
+  }
+  restore(extra) {
+    this.glass = extra.glass === 1 ? 1 : 0;
+    this.enc.setProp("abm:glass", this.glass);
+  }
+  cleanup() {
+    this.history.clear();
+    this.trail = [];
+    this.lastPrediction = [];
+    this.pulseUntil = 0;
+    try {
+      world6.afterEvents.playerLeave.unsubscribe(this.onLeave);
+    } catch {
+    }
+  }
+  // ------------------------------------------------------------------ shared helpers
+  dist(e) {
+    const t = e.targeting.primary(e.timeline.now);
+    return t ? distXZ(e.boss.location, t.location) : 99;
+  }
+  front() {
+    return yawToTheta(this.enc.loco.yaw);
+  }
+  floor(lift = 0.07) {
+    return this.enc.arena.floorY + lift;
+  }
+  /** Rising numeral over a mark: III, II, I. A countdown that does not depend on colour. */
+  numeral(n, at) {
+    if (n < 1 || n > 3) return;
+    this.enc.visuals.spawn(NUMERAL[n - 1], { x: at.x, y: this.floor(1.1), z: at.z });
+  }
+  shade(h, state) {
+    try {
+      if (h.entity.isValid) h.entity.setProperty("abm:anim", state);
+    } catch {
+    }
+  }
+  // ------------------------------------------------------------------ the shadow (Phase II)
+  /** The persistent shadow, if it currently exists. */
+  shadow() {
+    return this.enc.helpers.of("shadow")[0];
+  }
+  ensureShadow() {
+    const e = this.enc;
+    let sh = this.shadow();
+    if (sh) return sh;
+    const at = localToWorld(e.boss.location, e.loco.yaw, 2.5, 0, 0);
+    const p = e.arena.clampInside(at.x, at.z, 1);
+    sh = e.helpers.spawn("abm:orison_shadow", e.arena.at(p, 0.05), "shadow", { yaw: e.loco.yaw });
+    if (sh) {
+      this.shadowAt = p;
+      this.trail = [];
+      e.visuals.decor(P3("wisp"), e.arena.at(p, 1));
+    }
+    return sh;
+  }
+  /** Move a helper towards a point at `speed` blocks per tick (velocity steering, like the boss). */
+  glide(h, goal, speed) {
+    const l = h.entity.location;
+    const dx = goal.x - l.x;
+    const dz = goal.z - l.z;
+    const d = Math.hypot(dx, dz);
+    try {
+      const v = h.entity.getVelocity();
+      const step = Math.min(speed, d);
+      const k = d > 0.05 ? step / d : 0;
+      h.entity.applyImpulse({ x: dx * k - v.x, y: 0, z: dz * k - v.z });
+      if (d > 0.05) h.entity.setRotation({ x: 0, y: dirToYaw(dx, dz) });
+    } catch {
+    }
+    return d;
+  }
+  /** Phase II locomotion: the echo goes first, the body follows where the echo was `lead` ticks ago. */
+  followShadow(target, d) {
+    const e = this.enc;
+    const m = ORISON.move.p2;
+    const b = e.boss.location;
+    const sh = this.shadow();
+    const now = e.timeline.now;
+    if (!sh || now < this.shadowBusyUntil) {
+      if (d > m.chase) {
+        const k = (d - m.hold) / d;
+        e.loco.goTo({ x: b.x + (target.location.x - b.x) * k, z: b.z + (target.location.z - b.z) * k }, 0.4);
+        return true;
+      }
+      e.loco.halt();
+      e.loco.turnToward(e.loco.yawTo(target.location), 3);
+      return false;
+    }
+    const sl = sh.entity.location;
+    let goal = { x: sl.x, z: sl.z };
+    const ds = distXZ(sl, target.location);
+    if (ds > m.hold + 0.5) {
+      const k = (ds - m.hold) / ds;
+      goal = { x: sl.x + (target.location.x - sl.x) * k, z: sl.z + (target.location.z - sl.z) * k };
+    }
+    goal = e.arena.clampInside(goal.x, goal.z, e.stats.leashInset);
+    this.glide(sh, goal, m.speed);
+    this.shadowAt = { x: sl.x, z: sl.z };
+    this.trail.push({ x: sl.x, z: sl.z });
+    let follow;
+    while (this.trail.length > m.lead) follow = this.trail.shift();
+    if (follow && Math.hypot(follow.x - b.x, follow.z - b.z) > 0.7) {
+      e.loco.goTo(follow, 0.4);
+      return true;
+    }
+    e.loco.halt();
+    e.loco.turnToward(e.loco.yawTo(target.location), 3);
+    return false;
+  }
+  /** Keep the shadow alive and, while the body is busy, parked at its side. */
+  tickShadow(now) {
+    const e = this.enc;
+    const sh = this.ensureShadow();
+    if (!sh) return;
+    const l = sh.entity.location;
+    this.shadowAt = { x: l.x, z: l.z };
+    if (now < this.shadowBusyUntil) {
+      this.glide(sh, { x: l.x, z: l.z }, 0);
+      return;
+    }
+    if (e.sm.busy || e.sm.sub === "STAGGER" || e.sm.sub === "RESET") {
+      const side = localToWorld(e.boss.location, e.loco.yaw, 2.6, 0, 0.5);
+      this.glide(sh, e.arena.clampInside(side.x, side.z, 1), ORISON.move.p2.speed);
+    }
+  }
+  /**
+   * Put a shadow at `spot` for `ticks`. Phase I conjures a temporary one; Phase II sends the
+   * real shadow, which is why its errands interrupt its leading.
+   */
+  sendShadow(spot, ticks, state) {
+    const e = this.enc;
+    const now = e.timeline.now;
+    const at = e.arena.at(spot, 0.05);
+    if (e.phase === 2) {
+      const sh = this.ensureShadow();
+      if (!sh) return void 0;
+      try {
+        sh.entity.teleport(at, { keepVelocity: false });
+      } catch {
+        return void 0;
+      }
+      this.shadowBusyUntil = Math.max(this.shadowBusyUntil, now + ticks);
+      this.shadowAt = { x: spot.x, z: spot.z };
+      this.trail = [];
+      this.shade(sh, state);
+      e.visuals.decor(P3("wisp"), { x: at.x, y: at.y + 1, z: at.z });
+      return sh;
+    }
+    const h = e.helpers.spawn("abm:orison_shadow", at, "mark", { lifetime: ticks, yaw: e.loco.yaw });
+    if (h) {
+      this.shade(h, state);
+      e.visuals.decor(P3("wisp"), { x: at.x, y: at.y + 1, z: at.z });
+    }
+    return h;
+  }
+  /** In Phase II the shadow makes each attack's gesture before the body does. */
+  shadowLeads(run) {
+    if (run.phase !== 2) return;
+    const sh = this.shadow();
+    if (!sh || this.enc.timeline.now < this.shadowBusyUntil) return;
+    this.shade(sh, 1 /* Strike */);
+    run.at(12, () => {
+      if (this.enc.timeline.now >= this.shadowBusyUntil) this.shade(sh, 0 /* Idle */);
+    });
+  }
+  // ------------------------------------------------------------------ hourglasses (Drain)
+  /** Slowness for players standing in an armed hourglass's area - re-applied in short doses, never stored. */
+  tickDrains(now) {
+    const e = this.enc;
+    if (now % ORISON.drain.slowEvery !== 0) return;
+    const drains = e.helpers.of("drain");
+    if (drains.length === 0) return;
+    for (const h of drains) {
+      if (now < h.data.armed) continue;
+      const area = new Circle(h.data.x, h.data.z, ORISON.drain.radius);
+      for (const p of e.hazards.inside(area)) {
+        try {
+          p.addEffect("slowness", ORISON.drain.slowTicks, { amplifier: ORISON.drain.slowAmp, showParticles: true });
+          trace("orison_slow", { player: p.name, tick: now });
+        } catch {
+        }
+      }
+      if (now % 40 === 0) {
+        e.visuals.pen(this.style.line, this.style.arc, void 0, this.floor(), 2).arc(h.data.x, h.data.z, ORISON.drain.radius, 0, 360);
+      }
+    }
+  }
+  /** True while Orison is performing one of its two arena-wide attacks. */
+  wideAttack() {
+    const id = this.enc.currentAttack?.id;
+    return id === "pendulum_verdict" || id === "hour_never";
+  }
+  /**
+   * An hourglass pulses on its own clock, with one rule of fairness: a pulse is never announced
+   * while an arena-wide attack is in progress, and (see the weights of those attacks) an arena-wide
+   * attack never begins while a pulse is announced. The two are always a full warning apart.
+   */
+  armDrain(h, lifetime) {
+    const e = this.enc;
+    const D = ORISON.drain;
+    const tag = `hg${h.id}`;
+    const area = new Circle(h.data.x, h.data.z, D.radius);
+    const dies = e.timeline.now + lifetime;
+    e.visuals.pen(this.style.line, this.style.arc, void 0, this.floor(), D.arm / 20).arc(h.data.x, h.data.z, D.radius, 0, 360);
+    const pulse = () => {
+      if (!h.entity.isValid) return;
+      const now = e.timeline.now;
+      if (now + D.pulseWarn + 2 >= dies) return;
+      if (this.wideAttack()) {
+        e.timeline.after(10, pulse, tag);
+        return;
+      }
+      try {
+        h.entity.setProperty("abm:anim", 1);
+      } catch {
+        return;
+      }
+      this.pulseUntil = Math.max(this.pulseUntil, now + D.pulseWarn);
+      e.hazards.strike({
+        shape: area,
+        warn: D.pulseWarn,
+        tag,
+        damage: D.damage,
+        fx: 4,
+        sound: S3("drain_pulse"),
+        label: "hourglass_drain",
+        condition: () => h.entity.isValid,
+        onStrike: () => {
+          e.visuals.decor(P3("pulse"), { x: h.data.x, y: this.floor(), z: h.data.z });
+          try {
+            if (h.entity.isValid) h.entity.setProperty("abm:anim", 0);
+          } catch {
+          }
+        }
+      });
+      e.timeline.after(D.pulseEvery, pulse, tag);
+    };
+    e.timeline.after(D.arm, pulse, tag);
+  }
+  // ------------------------------------------------------------------ 01 Footstep Echo
+  footstepEcho() {
+    const self = this;
+    return {
+      id: "footstep_echo",
+      name: "Footstep Echo",
+      index: 1,
+      cooldown: ORISON.echo.cooldown,
+      weight: (e) => {
+        const t = e.targeting.primary(e.timeline.now);
+        if (!t) return 0;
+        return self.history.pathLength(t.id, ORISON.history.window[e.phase - 1]) > 6 ? 3 : 1.3;
+      },
+      run(run) {
+        const e = run.enc;
+        const t = beats3("footstep_echo", run.phase);
+        const i = run.phase - 1;
+        if (live(run.target)) e.loco.facePoint(run.target.location);
+        self.shadowLeads(run);
+        const last = t.first + t.gap * (t.count - 1);
+        run.at(t.mark, () => {
+          const tgt = live(run.target) ?? e.targeting.primary(e.timeline.now);
+          const trailPts = tgt ? [{ x: tgt.location.x, z: tgt.location.z }, ...self.history.recent(tgt.id, ORISON.history.window[i])] : [];
+          const picked = [];
+          for (const p of trailPts) {
+            if (picked.length >= t.count) break;
+            if (picked.every((q) => Math.hypot(q.x - p.x, q.z - p.z) >= ORISON.echo.minSpacing)) picked.push(p);
+          }
+          if (picked.length === 0) picked.push(e.arena.randomPoint(e.rng, 3));
+          trace("orison_echo", { points: picked.map((p) => ({ x: p.x, z: p.z })), player: tgt?.name ?? "" });
+          const ordered = picked.slice().reverse();
+          ordered.forEach((p, k) => {
+            const at = t.first + (t.count - ordered.length + k) * t.gap;
+            e.visuals.spawn(P3("footprint"), { x: p.x, y: self.floor(), z: p.z });
+            e.hazards.strike({
+              shape: new Circle(p.x, p.z, ORISON.echo.radius[i]),
+              warn: at - t.mark,
+              tag: run.tag,
+              damage: ORISON.echo.damage,
+              fx: 4,
+              sound: S3("echo_burst"),
+              knockUp: 0.2,
+              label: "footstep_echo",
+              onStrike: () => e.visuals.decor(P3("echo"), { x: p.x, y: self.floor(0.9), z: p.z })
+            });
+          });
+        });
+        run.windows(t.mark, last - t.mark + 2, Math.max(8, t.end - last - 2));
+      }
+    };
+  }
+  // ------------------------------------------------------------------ 02 Pendulum Verdict
+  pendulumVerdict() {
+    const self = this;
+    return {
+      id: "pendulum_verdict",
+      name: "Pendulum Verdict",
+      index: 2,
+      cooldown: ORISON.verdict.cooldown,
+      weight: (e) => {
+        if (e.timeline.now <= self.pulseUntil) return 0;
+        const d = self.dist(e);
+        return d <= ORISON.verdict.outer + 1 ? 3 : 0.6;
+      },
+      run(run) {
+        const e = run.enc;
+        const t = beats3("pendulum_verdict", run.phase);
+        const V = ORISON.verdict;
+        const p2 = run.phase === 2;
+        if (live(run.target)) e.loco.facePoint(run.target.location);
+        self.shadowLeads(run);
+        const b = e.boss.location;
+        const front = self.front();
+        const dir = e.rng.chance(0.5) ? 1 : -1;
+        run.variant(dir === 1 ? 0 : 1);
+        const arc = V.arc[run.phase - 1];
+        const a0 = front - dir * arc / 2;
+        const a1 = front + dir * arc / 2;
+        const swing = (startTick, from, to, r0, r1, label) => {
+          const lo = Math.min(from, to);
+          const begin = Math.max(1, startTick - Math.min(startTick - 1, 34));
+          run.at(begin, () => {
+            const warn = startTick - begin;
+            e.hazards.telegraph(new Ring(b.x, b.z, r0, r1, lo, arc), warn);
+            e.hazards.sweep({
+              tag: run.tag,
+              warn,
+              duration: t.sweep,
+              every: 1,
+              shapeAt: (tt) => sector(b.x, b.z, r0, r1, from + (to - from) * tt / t.sweep, V.blade),
+              damage: V.damage,
+              blockable: true,
+              knock: 1.3,
+              knockUp: 0.3,
+              label,
+              fx: 2
+            });
+          });
+        };
+        swing(t.swing, a0, a1, V.inner, V.outer, "pendulum_verdict");
+        let last = t.swing + t.sweep;
+        if (p2) {
+          swing(t.swing2, a1, a0, V.returnBand[0], V.returnBand[1], "pendulum_return");
+          last = t.swing2 + t.sweep;
+        }
+        run.windows(t.swing, last - t.swing + 2, Math.max(8, t.end - last - 2));
+      }
+    };
+  }
+  // ------------------------------------------------------------------ 03 Deferred Wound
+  deferredWound() {
+    const self = this;
+    return {
+      id: "deferred_wound",
+      name: "Deferred Wound",
+      index: 3,
+      cooldown: ORISON.wound.cooldown,
+      weight: (e) => 2 + Math.min(1.5, (e.targeting.count() - 1) * 0.6),
+      run(run) {
+        const e = run.enc;
+        const t = beats3("deferred_wound", run.phase);
+        const p2 = run.phase === 2;
+        if (live(run.target)) e.loco.facePoint(run.target.location);
+        self.shadowLeads(run);
+        let last = 0;
+        const countdown = (at, from, fuse) => {
+          for (let n = 3; n >= 1; n--) {
+            const when = from + Math.round(fuse * (3 - n) / 3);
+            run.at(when, () => self.numeral(n, at));
+          }
+        };
+        for (let k = 0; k < t.count; k++) {
+          const mark = t.first + k * t.gap;
+          const boom = mark + t.fuse;
+          last = Math.max(last, boom + (p2 ? t.echo : 0));
+          run.at(mark, () => {
+            const ps = e.targeting.participants();
+            const who = ps.length > 0 ? ps[k % ps.length] : void 0;
+            let c;
+            if (!who) c = e.arena.randomPoint(e.rng, 3);
+            else if (p2 && k % 2 === 1) {
+              const old = self.history.recent(who.id, 10);
+              c = old.length > 0 ? old[old.length - 1] : { x: who.location.x, z: who.location.z };
+            } else c = { x: who.location.x, z: who.location.z };
+            const shape = new Circle(c.x, c.z, ORISON.wound.radius);
+            countdown(c, mark, t.fuse);
+            e.hazards.strike({ shape, warn: t.fuse, tag: run.tag, damage: ORISON.wound.damage, fx: 5, sound: S3("wound_burst"), knockUp: 0.3, label: "deferred_wound" });
+            if (p2) {
+              run.at(boom, () => {
+                e.hazards.strike({ shape, warn: t.echo, tag: run.tag, damage: ORISON.wound.damage, fx: 5, sound: S3("wound_burst"), knockUp: 0.3, label: "deferred_wound_again" });
+              });
+              countdown(c, boom, t.echo);
+            }
+          });
+        }
+        run.windows(t.first, last - t.first + 2, Math.max(8, t.end - last - 2));
+      }
+    };
+  }
+  // ------------------------------------------------------------------ 04 Hourglass Drain
+  hourglassDrain() {
+    const self = this;
+    return {
+      id: "hourglass_drain",
+      name: "Hourglass Drain",
+      index: 4,
+      cooldown: ORISON.drain.cooldown,
+      weight: (e) => {
+        if (e.helpers.count("drain") > 0) return 0;
+        return self.dist(e) > 9 ? 2.4 : 1.7;
+      },
+      run(run) {
+        const e = run.enc;
+        const t = beats3("hourglass_drain", run.phase);
+        const i = run.phase - 1;
+        self.shadowLeads(run);
+        run.at(t.cast, () => {
+          const ps = e.targeting.participants();
+          const b = e.boss.location;
+          const placed = [];
+          for (let k = 0; k < ORISON.drain.count[i]; k++) {
+            const who = ps.length > 0 ? ps[k % ps.length] : void 0;
+            const base = who ? who.location : { x: e.arena.cx, z: e.arena.cz };
+            let pos;
+            for (let attempt = 0; attempt < 8 && !pos; attempt++) {
+              const d = thetaToDir(e.rng.range(0, 360));
+              const r = 2.2 + e.rng.range(0, 0.8) + (k >= ps.length ? 3 : 0);
+              const c = e.arena.clampInside(base.x + d.x * r, base.z + d.z * r, 2);
+              const clear = Math.hypot(c.x - b.x, c.z - b.z) >= 2.5 && placed.every((q) => Math.hypot(q.x - c.x, q.z - c.z) >= 3);
+              if (clear) pos = c;
+            }
+            if (!pos) continue;
+            placed.push(pos);
+            const life = ORISON.drain.lifetime[i];
+            const h = e.helpers.spawn("abm:orison_hourglass", e.arena.at(pos, 0.05), "drain", {
+              lifetime: life,
+              data: { x: pos.x, z: pos.z, armed: e.timeline.now + ORISON.drain.arm }
+            });
+            if (h) {
+              self.armDrain(h, life);
+              e.visuals.decor(P3("sand"), e.arena.at(pos, 1.6));
+            }
+          }
+          trace("orison_drain", { count: placed.length });
+        });
+        run.windows(t.cast, 4, Math.max(8, t.end - t.cast - 4));
+      }
+    };
+  }
+  // ------------------------------------------------------------------ 05 Tomorrow's Witness
+  tomorrowsWitness() {
+    const self = this;
+    return {
+      id: "tomorrows_witness",
+      name: "Tomorrow's Witness",
+      index: 5,
+      cooldown: ORISON.witness.cooldown,
+      weight: (e) => {
+        const t = e.targeting.primary(e.timeline.now);
+        if (!t) return 0;
+        const v = self.history.velocity(t.id, ORISON.witness.samplesBack);
+        return Math.hypot(v.x, v.z) > 0.08 ? 3 : 1.4;
+      },
+      run(run) {
+        const e = run.enc;
+        const t = beats3("tomorrows_witness", run.phase);
+        const i = run.phase - 1;
+        const p2 = run.phase === 2;
+        if (live(run.target)) e.loco.facePoint(run.target.location);
+        const lead = t.strike - t.lock;
+        run.at(t.lock, () => {
+          const tgt = live(run.target) ?? e.targeting.primary(e.timeline.now);
+          const here = tgt ? { x: tgt.location.x, z: tgt.location.z } : e.arena.randomPoint(e.rng, 3);
+          const vel = tgt ? self.history.velocity(tgt.id, ORISON.witness.samplesBack) : { x: 0, z: 0 };
+          const speed = Math.hypot(vel.x, vel.z);
+          const spots = [e.arena.clampInside(here.x + vel.x * lead, here.z + vel.z * lead, 1)];
+          if (p2) {
+            let back;
+            if (speed > 0.03) back = { x: here.x - vel.x * lead * 0.6, z: here.z - vel.z * lead * 0.6 };
+            else {
+              const toC = Math.hypot(e.arena.cx - here.x, e.arena.cz - here.z);
+              const d = toC > 1 ? { x: (e.arena.cx - here.x) / toC, z: (e.arena.cz - here.z) / toC } : thetaToDir(e.rng.range(0, 360));
+              back = { x: here.x + d.x * 3.4, z: here.z + d.z * 3.4 };
+            }
+            spots.push(e.arena.clampInside(back.x, back.z, 1));
+          }
+          self.lastPrediction = spots.map((s) => ({ x: s.x, z: s.z }));
+          trace("orison_predict", { spots: self.lastPrediction, from: here, vx: vel.x, vz: vel.z, strikeIn: lead });
+          const mark = self.sendShadow(spots[0], lead + 16, 2 /* Point */);
+          const b = e.boss.location;
+          const pen = e.visuals.pen(self.style.line, self.style.arc, void 0, self.floor(), lead / 20);
+          pen.line(b.x, b.z, spots[0].x, spots[0].z);
+          for (const s of spots) {
+            e.hazards.strike({
+              shape: new Circle(s.x, s.z, ORISON.witness.radius[i]),
+              warn: lead,
+              tag: run.tag,
+              damage: ORISON.witness.damage,
+              fx: 6,
+              sound: S3("shadow_strike"),
+              knock: 0.8,
+              knockUp: 0.3,
+              label: "tomorrows_witness"
+            });
+          }
+          run.at(t.strike - 6, () => {
+            if (mark) self.shade(mark, 1 /* Strike */);
+          });
+          run.at(t.strike + 12, () => {
+            const sh = self.shadow();
+            if (p2 && sh) self.shade(sh, 0 /* Idle */);
+          });
+        });
+        run.windows(t.lock, lead + 2, Math.max(8, t.end - t.strike - 2));
+      }
+    };
+  }
+  // ------------------------------------------------------------------ 06 Secondhand Exchange
+  /** A validated place to arrive: near the target, a real distance from where Orison stands now. */
+  pickDestination(tgt, from) {
+    const e = this.enc;
+    const X = ORISON.exchange;
+    const cands = [];
+    if (tgt) {
+      const away = dirToTheta(tgt.location.x - from.x, tgt.location.z - from.z);
+      for (const off of [0, 50, -50, 100, -100, 150, -150, 180]) {
+        const d = thetaToDir(away + off);
+        cands.push({ x: tgt.location.x + d.x * X.offset, z: tgt.location.z + d.z * X.offset });
+      }
+    }
+    for (let k = 0; k < 6; k++) cands.push(e.arena.randomPoint(e.rng, e.stats.leashInset + 1));
+    for (const c of cands) {
+      const p = e.arena.clampInside(c.x, c.z, e.stats.leashInset + 0.5);
+      if (Math.hypot(p.x - from.x, p.z - from.z) < X.minJump) continue;
+      if (!e.loco.canStand(p)) continue;
+      return p;
+    }
+    return void 0;
+  }
+  secondhandExchange() {
+    const self = this;
+    return {
+      id: "secondhand_exchange",
+      name: "Secondhand Exchange",
+      index: 6,
+      cooldown: ORISON.exchange.cooldown,
+      weight: (e) => {
+        const d = self.dist(e);
+        return d > 10 ? 3.2 : d > 6 ? 1.6 : 0.9;
+      },
+      run(run) {
+        const e = run.enc;
+        const t = beats3("secondhand_exchange", run.phase);
+        const X = ORISON.exchange;
+        const steps = [[t.mark, t.swap, t.strike]];
+        if (run.phase === 2) steps.push([t.mark2, t.swap2, t.strike2]);
+        let last = 0;
+        for (const [mk, sw, st] of steps) {
+          last = st;
+          run.at(mk, () => {
+            const tgt = live(run.target) ?? e.targeting.primary(e.timeline.now);
+            const bl = e.boss.location;
+            const from = { x: bl.x, z: bl.z };
+            const dest = self.pickDestination(tgt, from);
+            const arrive = dest ?? from;
+            trace("orison_exchange", { from, to: arrive, valid: dest !== void 0 });
+            const mark = self.sendShadow(arrive, st - mk + 14, 2 /* Point */);
+            const warn = st - mk;
+            e.hazards.strike({
+              shape: new Circle(arrive.x, arrive.z, X.arriveRadius),
+              warn,
+              tag: run.tag,
+              damage: X.arrive,
+              knock: 1.2,
+              knockUp: 0.35,
+              fx: 8,
+              label: "exchange_arrive"
+            });
+            if (dest) {
+              e.hazards.strike({
+                shape: new Circle(from.x, from.z, X.departRadius),
+                warn,
+                tag: run.tag,
+                damage: X.depart,
+                fx: 4,
+                sound: S3("shadow_strike"),
+                label: "exchange_depart"
+              });
+              e.visuals.pen(self.style.safeLine, self.style.safeArc, void 0, self.floor(), warn / 20).line(from.x, from.z, arrive.x, arrive.z);
+            }
+            run.at(sw, () => {
+              if (!dest) return;
+              const face = tgt && tgt.isValid ? dirToYaw(tgt.location.x - dest.x, tgt.location.z - dest.z) : e.loco.yaw;
+              const ok2 = e.loco.relocate(dest, face);
+              trace("orison_swap", { ok: ok2 });
+              const y = self.floor(1.5);
+              e.visuals.spawn(P3("wisp"), { x: from.x, y, z: from.z });
+              e.visuals.spawn(P3("wisp"), { x: dest.x, y, z: dest.z });
+              if (ok2 && mark && mark.entity.isValid) {
+                try {
+                  mark.entity.teleport(e.arena.at(from, 0.05), { keepVelocity: false });
+                  self.shadowAt = { x: from.x, z: from.z };
+                } catch {
+                }
+              }
+            });
+            run.at(st - 6, () => {
+              if (mark) self.shade(mark, 1 /* Strike */);
+            });
+          });
+        }
+        run.at(last + 12, () => {
+          const sh = self.shadow();
+          if (sh) self.shade(sh, 0 /* Idle */);
+        });
+        run.windows(t.mark, last - t.mark + 2, Math.max(8, t.end - last - 2));
+      }
+    };
+  }
+  // ------------------------------------------------------------------ 07 The Hour That Never Occurred
+  hourThatNeverOccurred() {
+    const self = this;
+    return {
+      id: "hour_never",
+      name: "The Hour That Never Occurred",
+      index: 7,
+      ultimate: true,
+      interruptible: false,
+      cooldown: ORISON.hour.cooldown,
+      weight: (e) => e.healthFraction() < 0.92 && e.timeline.now > self.pulseUntil ? 5 : 0,
+      run(run) {
+        const e = run.enc;
+        const t = beats3("hour_never", run.phase);
+        const p2 = run.phase === 2;
+        const i = run.phase - 1;
+        self.shadowLeads(run);
+        const patterns = Object.freeze(choosePatterns(e.rng, run.phase));
+        const shapes = patterns.map((p) => new PatternShape(p, e.arena, ORISON.hour.wedges[i], ORISON.hour.band));
+        self.lastHour = { previewed: patterns.map(patternLabel), executed: [] };
+        trace("orison_preview", { patterns: self.lastHour.previewed.slice() });
+        const centre = { x: e.arena.cx, z: e.arena.cz };
+        patterns.forEach((_p, k) => {
+          run.at(t.preview + k * t.step, () => {
+            e.hazards.telegraph(shapes[k], t.show);
+            self.numeral(k + 1, centre);
+            for (const a of [0, 120, 240]) self.numeral(k + 1, e.arena.polar(a + k * 40, 9));
+          });
+        });
+        for (let k = 0; k < patterns.length; k++) {
+          const at = t.exec + k * t.gap;
+          const commit = k === 0 ? t.preview : t.exec + (k - 1) * t.gap;
+          run.at(commit, () => {
+            e.hazards.strike({
+              shape: shapes[k],
+              warn: at - commit,
+              quiet: true,
+              tag: run.tag,
+              damage: ORISON.hour.damage,
+              fx: 14,
+              sound: S3("hour_strike"),
+              knockUp: 0.3,
+              label: `hour_${k + 1}`,
+              onStrike: () => {
+                self.lastHour.executed.push(patternLabel(patterns[k]));
+                trace("orison_execute", { index: k, pattern: patternLabel(patterns[k]) });
+              }
+            });
+          });
+          if (!p2) run.at(at - 10, () => e.hazards.telegraph(shapes[k], 10));
+          run.at(at - 30, () => self.numeral(k + 1, centre));
+        }
+        const last = t.exec + 2 * t.gap;
+        run.windows(t.preview, last - t.preview + 2, Math.max(10, t.end - last - 2));
+      }
+    };
+  }
+};
+var MODULE3 = {
+  create: (enc) => new OrisonController(enc),
+  arena: { structure: "abm:court_of_unlived_hours", size: 47, height: 14, nameKey: "abm.arena.orison" },
+  helpers: ["abm:orison_hourglass", "abm:orison_shadow"]
+};
+
 // shared/vesperra.timings.json
 var vesperra_timings_default = {
   _comment: "Beat timings for Vesperra, in game ticks from the start of each action. Shared by the script (hit windows) and the animation generator (keyframes), so they cannot drift apart.",
@@ -2871,7 +5988,7 @@ var vesperra_timings_default = {
 };
 
 // src/bosses/vesperra/armor.ts
-import { Player as Player8 } from "@minecraft/server";
+import { Player as Player10 } from "@minecraft/server";
 
 // src/bosses/vesperra/tuning.ts
 var VESPERRA = {
@@ -2975,7 +6092,7 @@ var ArmorSystem = class {
     let eye;
     let view;
     try {
-      eye = a instanceof Player8 ? a.getHeadLocation() : this.headOf(a);
+      eye = a instanceof Player10 ? a.getHeadLocation() : this.headOf(a);
       view = a.getViewDirection();
     } catch {
       return void 0;
@@ -3045,8 +6162,8 @@ var ArmorSystem = class {
 };
 
 // src/bosses/vesperra/index.ts
-var S = (id) => `abm.vesperra.${id}`;
-var P = (id) => `abm:vesperra_${id}`;
+var S4 = (id) => `abm.vesperra.${id}`;
+var P4 = (id) => `abm:vesperra_${id}`;
 var LANE_ORDERS = [
   [-1, 0, 1],
   [-1, 1, 0],
@@ -3055,7 +6172,7 @@ var LANE_ORDERS = [
   [1, -1, 0],
   [1, 0, -1]
 ];
-var beats = (name, phase) => vesperra_timings_default[name][phase === 2 ? "p2" : "p1"];
+var beats4 = (name, phase) => vesperra_timings_default[name][phase === 2 ? "p2" : "p1"];
 var VesperraController = class extends BossController {
   constructor(enc) {
     super(enc);
@@ -3064,12 +6181,12 @@ var VesperraController = class extends BossController {
     this.phase2Name = "The True Empress";
     this.trophyItem = "abm:ivory_diadem";
     this.style = {
-      line: P("tg_line"),
-      arc: P("tg_arc"),
-      disc: P("tg_disc"),
-      safeLine: P("safe_line"),
-      safeArc: P("safe_arc"),
-      strike: P("strike")
+      line: P4("tg_line"),
+      arc: P4("tg_arc"),
+      disc: P4("tg_disc"),
+      safeLine: P4("safe_line"),
+      safeArc: P4("safe_arc"),
+      strike: P4("strike")
     };
     /** Royal Moltings performed so far (drives the shed look; capped). */
     this.molts = 0;
@@ -3095,7 +6212,7 @@ var VesperraController = class extends BossController {
   }
   intro() {
     const e = this.enc;
-    e.audio.play(S("intro_rise"), e.boss.location);
+    e.audio.play(S4("intro_rise"), e.boss.location);
     return vesperra_timings_default.intro.total;
   }
   phaseTransition() {
@@ -3110,7 +6227,7 @@ var VesperraController = class extends BossController {
         } catch {
         }
       }
-      for (const r of REGIONS) e.visuals.decor(P("molt"), this.armor.anchor(r));
+      for (const r of REGIONS) e.visuals.decor(P4("molt"), this.armor.anchor(r));
     }, "phase");
     return t.total;
   }
@@ -3123,9 +6240,9 @@ var VesperraController = class extends BossController {
     e.timeline.after(t.crown, () => {
       this.armor.hp.c = 0;
       this.armor.sync();
-      e.visuals.spawn(P("shards"), this.armor.anchor("c"));
+      e.visuals.spawn(P4("shards"), this.armor.anchor("c"));
     }, "death");
-    e.timeline.after(t.collapse, () => e.visuals.scatter(P("dust"), new Circle(e.boss.location.x, e.boss.location.z, 3).sample(e.rng, 8), e.arena.floorY + 0.4), "death");
+    e.timeline.after(t.collapse, () => e.visuals.scatter(P4("dust"), new Circle(e.boss.location.x, e.boss.location.z, 3).sample(e.rng, 8), e.arena.floorY + 0.4), "death");
     return t.total;
   }
   position(target) {
@@ -3151,7 +6268,7 @@ var VesperraController = class extends BossController {
     const now = e.timeline.now;
     if (e.sm.inCombat) this.tickHeirs(now);
     if (now >= this.nextIdleSound && e.sm.inCombat && !e.sm.busy) {
-      e.audio.play(S("idle"), e.boss.location, 0.6);
+      e.audio.play(S4("idle"), e.boss.location, 0.6);
       this.nextIdleSound = now + 140 + e.rng.int(0, 120);
     }
   }
@@ -3166,24 +6283,24 @@ var VesperraController = class extends BossController {
       this.armor.sync();
       const at = region ? this.armor.anchor(region) : localToWorld(e.boss.location, e.loco.yaw, 0, 3.6, 0.8);
       if (out.broke) {
-        e.visuals.spawn(P("shards"), at);
-        e.visuals.spawn(P("molt"), at);
-        e.audio.play(S("armor_break"), at);
+        e.visuals.spawn(P4("shards"), at);
+        e.visuals.spawn(P4("molt"), at);
+        e.audio.play(S4("armor_break"), at);
         e.stagger(VESPERRA.armor.breakStagger);
         e.save();
       } else if (out.plateHit) {
-        e.visuals.decor(P("strike"), at);
-        e.audio.play(S("armor_hit"), at, 0.8);
+        e.visuals.decor(P4("strike"), at);
+        e.audio.play(S4("armor_hit"), at, 0.8);
       } else {
-        if (region) e.visuals.decor(P("drip"), at);
-        e.audio.play(S("body_hit"), at, 0.7);
+        if (region) e.visuals.decor(P4("drip"), at);
+        e.audio.play(S4("body_hit"), at, 0.7);
       }
     });
     return dmg;
   }
   onHelperGone(h) {
     if (h.kind === "anchor" && h.killed) {
-      this.enc.audio.play(S("anchor_break"), h.entity.isValid ? h.entity.location : this.enc.boss.location);
+      this.enc.audio.play(S4("anchor_break"), h.entity.isValid ? h.entity.location : this.enc.boss.location);
     }
     this.enc.timeline.cancel(`heir${h.id}`);
   }
@@ -3234,7 +6351,7 @@ var VesperraController = class extends BossController {
       },
       run(run) {
         const e = run.enc;
-        const t = beats("ivory_scythe", run.phase);
+        const t = beats4("ivory_scythe", run.phase);
         const p2 = run.phase === 2;
         if (run.target) e.loco.facePoint(run.target.location);
         const b = e.boss.location;
@@ -3280,7 +6397,7 @@ var VesperraController = class extends BossController {
             });
             run.at(t.hit2, () => {
               for (let i = 0; i < 6; i++) {
-                e.timeline.after(1 + i * 2, () => e.hazards.telegraphWith(P("crescent"), band(6 + i * 1.2), 6), run.tag);
+                e.timeline.after(1 + i * 2, () => e.hazards.telegraphWith(P4("crescent"), band(6 + i * 1.2), 6), run.tag);
               }
             });
           }
@@ -3321,7 +6438,7 @@ var VesperraController = class extends BossController {
       },
       run(run) {
         const e = run.enc;
-        const t = beats("needle_procession", run.phase);
+        const t = beats4("needle_procession", run.phase);
         const p2 = run.phase === 2;
         if (run.target) e.loco.facePoint(run.target.location);
         const b = e.boss.location;
@@ -3343,7 +6460,7 @@ var VesperraController = class extends BossController {
             const a1 = localToWorld(b, yaw, lane * C.spacing, 0, 1.5 + C.length);
             shape = new Lane(a0.x, a0.z, a1.x, a1.z, C.halfWidth);
           }
-          run.strike(hit, { shape, warn: hit - (t.plant + k * 4), damage: C.damage, fx: 9, sound: S("lane_erupt"), knockUp: 0.3, label: `procession_${k}` });
+          run.strike(hit, { shape, warn: hit - (t.plant + k * 4), damage: C.damage, fx: 9, sound: S4("lane_erupt"), knockUp: 0.3, label: `procession_${k}` });
         });
         if (p2) {
           run.at(t.cross - 18, () => {
@@ -3358,7 +6475,7 @@ var VesperraController = class extends BossController {
                 tag: run.tag,
                 damage: C.damage,
                 fx: 8,
-                sound: S("lane_erupt"),
+                sound: S4("lane_erupt"),
                 knockUp: 0.3,
                 label: "procession_cross"
               });
@@ -3384,7 +6501,7 @@ var VesperraController = class extends BossController {
       },
       run(run) {
         const e = run.enc;
-        const t = beats("royal_molting", run.phase);
+        const t = beats4("royal_molting", run.phase);
         const p2 = run.phase === 2;
         const b = e.boss.location;
         const M = VESPERRA.molting;
@@ -3401,7 +6518,7 @@ var VesperraController = class extends BossController {
               speed: M.speed,
               range: M.range,
               radius: M.radius,
-              particle: P("plate"),
+              particle: P4("plate"),
               damage: M.damage,
               blockable: true,
               knock: 0.7,
@@ -3440,7 +6557,7 @@ var VesperraController = class extends BossController {
       },
       run(run) {
         const e = run.enc;
-        const t = beats("cocoon_edict", run.phase);
+        const t = beats4("cocoon_edict", run.phase);
         const i = run.phase - 1;
         const n = VESPERRA.cocoon.anchors[i];
         const radius = VESPERRA.cocoon.radius[i];
@@ -3458,7 +6575,7 @@ var VesperraController = class extends BossController {
             e.helpers.spawn("abm:cocoon_anchor", e.arena.at(p, 0.05), "anchor", { lifetime: hold + 24, data: { run: run.seq } });
           }
           const y = e.arena.floorY + 1.3;
-          const pen = e.visuals.pen(P("thread"), P("tg_arc"), void 0, y, hold / 20);
+          const pen = e.visuals.pen(P4("thread"), P4("tg_arc"), void 0, y, hold / 20);
           for (let k = 0; k < n; k++) {
             const a = pts[k];
             const q2 = pts[(k + 1) % n];
@@ -3471,7 +6588,7 @@ var VesperraController = class extends BossController {
             damage: VESPERRA.cocoon.damage,
             label: "cocoon_constrict",
             effects: [{ id: "slowness", ticks: VESPERRA.cocoon.slowTicks, amp: 1 }],
-            sound: S("cocoon_snap"),
+            sound: S4("cocoon_snap"),
             condition: () => {
               const alive = e.helpers.of("anchor").filter((h) => h.data.run === run.seq).length;
               if (alive < n) trace("cocoon_broken", { alive, needed: n });
@@ -3498,7 +6615,7 @@ var VesperraController = class extends BossController {
       },
       run(run) {
         const e = run.enc;
-        const t = beats("false_submission", run.phase);
+        const t = beats4("false_submission", run.phase);
         const F = VESPERRA.feint;
         if (run.target) e.loco.facePoint(run.target.location);
         const thrust = (cue, at, reaim) => {
@@ -3545,7 +6662,7 @@ var VesperraController = class extends BossController {
       },
       run(run) {
         const e = run.enc;
-        const t = beats("the_heirs", run.phase);
+        const t = beats4("the_heirs", run.phase);
         run.at(t.detach, () => {
           const b = e.boss.location;
           const need = VESPERRA.heirs.max - e.helpers.count("heir");
@@ -3559,7 +6676,7 @@ var VesperraController = class extends BossController {
               yaw: e.loco.yaw,
               data: { side, nextBite: e.timeline.now + 40, biting: 0 }
             });
-            if (h) e.visuals.decor(P("molt"), { x: pos.x, y: e.arena.floorY + 0.8, z: pos.z });
+            if (h) e.visuals.decor(P4("molt"), { x: pos.x, y: e.arena.floorY + 0.8, z: pos.z });
           }
         });
         run.windows(t.detach, 4, Math.max(8, t.end - t.detach - 4));
@@ -3642,7 +6759,7 @@ var VesperraController = class extends BossController {
       weight: (e) => e.healthFraction() < 0.9 ? 5 : 0,
       run(run) {
         const e = run.enc;
-        const t = beats("coronation", run.phase);
+        const t = beats4("coronation", run.phase);
         const p2 = run.phase === 2;
         const base = e.rng.range(0, 360);
         const step = 360 / 7;
@@ -3664,10 +6781,10 @@ var VesperraController = class extends BossController {
                 tag: run.tag,
                 damage: VESPERRA.coronation.damage,
                 fx: 12,
-                sound: S("fracture_erupt"),
+                sound: S4("fracture_erupt"),
                 knockUp: 0.35,
                 label: `coronation_${i}`,
-                onStrike: () => e.visuals.scatter(P("fracture"), lane.sample(e.rng, 8), e.arena.floorY + 0.06)
+                onStrike: () => e.visuals.scatter(P4("fracture"), lane.sample(e.rng, 8), e.arena.floorY + 0.06)
               });
             }
           });
@@ -3677,11 +6794,11 @@ var VesperraController = class extends BossController {
     };
   }
 };
-var MODULE = {
+var MODULE4 = {
   create: (enc) => new VesperraController(enc),
   arena: { structure: "abm:hall_of_endless_succession", size: 45, height: 14, nameKey: "abm.arena.vesperra" },
   helpers: ["abm:vesperra_heir", "abm:cocoon_anchor"]
 };
 
-// build/entry_vesperra.ts
-boot({ vesperra: MODULE });
+// src/main.ts
+boot({ vesperra: MODULE4, cantor: MODULE, nomos: MODULE2, orison: MODULE3 });

@@ -1,0 +1,381 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.abm.orison.action": {
+   "initial_state": "none",
+   "states": {
+    "echo_p1": {
+     "animations": ["echo_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 1"
+      }
+     ],
+     "blend_transition": 0.14
+    },
+    "echo_p2": {
+     "animations": ["echo_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 1"
+      }
+     ],
+     "blend_transition": 0.14
+    },
+    "verdict_p1": {
+     "animations": [
+      {
+       "verdict_p1_a": "q.property('abm:variant') == 0"
+      },
+      {
+       "verdict_p1_b": "q.property('abm:variant') == 1"
+      }
+     ],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 2"
+      }
+     ],
+     "blend_transition": 0.14
+    },
+    "verdict_p2": {
+     "animations": [
+      {
+       "verdict_p2_a": "q.property('abm:variant') == 0"
+      },
+      {
+       "verdict_p2_b": "q.property('abm:variant') == 1"
+      }
+     ],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 2"
+      }
+     ],
+     "blend_transition": 0.14
+    },
+    "wound_p1": {
+     "animations": ["wound_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 3"
+      }
+     ],
+     "blend_transition": 0.14
+    },
+    "wound_p2": {
+     "animations": ["wound_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 3"
+      }
+     ],
+     "blend_transition": 0.14
+    },
+    "drain_p1": {
+     "animations": ["drain_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 4"
+      }
+     ],
+     "blend_transition": 0.14
+    },
+    "drain_p2": {
+     "animations": ["drain_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 4"
+      }
+     ],
+     "blend_transition": 0.14
+    },
+    "witness_p1": {
+     "animations": ["witness_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 5"
+      }
+     ],
+     "blend_transition": 0.14
+    },
+    "witness_p2": {
+     "animations": ["witness_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 5"
+      }
+     ],
+     "blend_transition": 0.14
+    },
+    "exchange_p1": {
+     "animations": ["exchange_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 6"
+      }
+     ],
+     "blend_transition": 0.14
+    },
+    "exchange_p2": {
+     "animations": ["exchange_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 6"
+      }
+     ],
+     "blend_transition": 0.14
+    },
+    "hour_p1": {
+     "animations": ["hour_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 7"
+      }
+     ],
+     "blend_transition": 0.14
+    },
+    "hour_p2": {
+     "animations": ["hour_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 7"
+      }
+     ],
+     "blend_transition": 0.14
+    },
+    "transition": {
+     "animations": ["transition"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 8"
+      }
+     ],
+     "blend_transition": 0.16
+    },
+    "stagger": {
+     "animations": ["stagger"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 9"
+      }
+     ],
+     "blend_transition": 0.16
+    },
+    "death": {
+     "animations": ["death"],
+     "blend_transition": 0.16
+    },
+    "intro": {
+     "animations": ["intro"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 11"
+      }
+     ],
+     "blend_transition": 0.16
+    },
+    "none": {
+     "transitions": [
+      {
+       "echo_p1": "q.property('abm:anim') == 1 && q.property('abm:phase') == 1"
+      },
+      {
+       "echo_p2": "q.property('abm:anim') == 1 && q.property('abm:phase') == 2"
+      },
+      {
+       "verdict_p1": "q.property('abm:anim') == 2 && q.property('abm:phase') == 1"
+      },
+      {
+       "verdict_p2": "q.property('abm:anim') == 2 && q.property('abm:phase') == 2"
+      },
+      {
+       "wound_p1": "q.property('abm:anim') == 3 && q.property('abm:phase') == 1"
+      },
+      {
+       "wound_p2": "q.property('abm:anim') == 3 && q.property('abm:phase') == 2"
+      },
+      {
+       "drain_p1": "q.property('abm:anim') == 4 && q.property('abm:phase') == 1"
+      },
+      {
+       "drain_p2": "q.property('abm:anim') == 4 && q.property('abm:phase') == 2"
+      },
+      {
+       "witness_p1": "q.property('abm:anim') == 5 && q.property('abm:phase') == 1"
+      },
+      {
+       "witness_p2": "q.property('abm:anim') == 5 && q.property('abm:phase') == 2"
+      },
+      {
+       "exchange_p1": "q.property('abm:anim') == 6 && q.property('abm:phase') == 1"
+      },
+      {
+       "exchange_p2": "q.property('abm:anim') == 6 && q.property('abm:phase') == 2"
+      },
+      {
+       "hour_p1": "q.property('abm:anim') == 7 && q.property('abm:phase') == 1"
+      },
+      {
+       "hour_p2": "q.property('abm:anim') == 7 && q.property('abm:phase') == 2"
+      },
+      {
+       "transition": "q.property('abm:anim') == 8"
+      },
+      {
+       "stagger": "q.property('abm:anim') == 9"
+      },
+      {
+       "death": "q.property('abm:anim') == 10"
+      },
+      {
+       "intro": "q.property('abm:anim') == 11"
+      }
+     ],
+     "blend_transition": 0.2
+    }
+   }
+  },
+  "controller.animation.abm.orison.phase": {
+   "initial_state": "one",
+   "states": {
+    "one": {
+     "transitions": [
+      {
+       "two": "q.property('abm:phase') == 2"
+      }
+     ],
+     "blend_transition": 0.25
+    },
+    "two": {
+     "animations": ["p2_pose", "p2_flutter"],
+     "transitions": [
+      {
+       "one": "q.property('abm:phase') == 1"
+      }
+     ],
+     "blend_transition": 0.25
+    }
+   }
+  },
+  "controller.animation.abm.orison.pendulum": {
+   "initial_state": "swing",
+   "states": {
+    "swing": {
+     "animations": ["pendulum_swing"],
+     "transitions": [
+      {
+       "still": "((q.property('abm:anim') == 5 || q.property('abm:anim') == 9) || q.property('abm:anim') == 10) || q.property('abm:anim') == 11"
+      }
+     ],
+     "blend_transition": 0.5
+    },
+    "still": {
+     "transitions": [
+      {
+       "swing": "q.property('abm:anim') == 0"
+      }
+     ],
+     "blend_transition": 0.7
+    }
+   }
+  },
+  "controller.animation.abm.orison.feet": {
+   "initial_state": "still",
+   "states": {
+    "still": {
+     "transitions": [
+      {
+       "moving": "q.modified_move_speed > 0.12 && q.property('abm:anim') == 0"
+      }
+     ]
+    },
+    "moving": {
+     "animations": ["footfalls"],
+     "transitions": [
+      {
+       "still": "q.modified_move_speed < 0.06 || q.property('abm:anim') != 0"
+      }
+     ]
+    }
+   }
+  },
+  "controller.animation.abm.orison_shadow": {
+   "initial_state": "rise",
+   "states": {
+    "rise": {
+     "animations": ["rise"],
+     "transitions": [
+      {
+       "idle": "q.anim_time >= 0.5"
+      }
+     ],
+     "blend_transition": 0.05
+    },
+    "idle": {
+     "transitions": [
+      {
+       "strike": "q.property('abm:anim') == 1"
+      },
+      {
+       "point": "q.property('abm:anim') == 2"
+      },
+      {
+       "sink": "q.property('abm:anim') == 3"
+      }
+     ],
+     "blend_transition": 0.1
+    },
+    "strike": {
+     "animations": ["strike"],
+     "transitions": [
+      {
+       "idle": "q.property('abm:anim') != 1"
+      }
+     ],
+     "blend_transition": 0.12
+    },
+    "point": {
+     "animations": ["point"],
+     "transitions": [
+      {
+       "idle": "q.property('abm:anim') != 2"
+      }
+     ],
+     "blend_transition": 0.12
+    },
+    "sink": {
+     "animations": ["sink"],
+     "transitions": [
+      {
+       "idle": "q.property('abm:anim') != 3"
+      }
+     ],
+     "blend_transition": 0.1
+    }
+   }
+  },
+  "controller.animation.abm.orison_hourglass": {
+   "initial_state": "idle",
+   "states": {
+    "idle": {
+     "transitions": [
+      {
+       "pulse": "q.property('abm:anim') == 1"
+      }
+     ],
+     "blend_transition": 0.05
+    },
+    "pulse": {
+     "animations": ["pulse"],
+     "transitions": [
+      {
+       "idle": "q.property('abm:anim') != 1"
+      }
+     ],
+     "blend_transition": 0.05
+    }
+   }
+  }
+ }
+}

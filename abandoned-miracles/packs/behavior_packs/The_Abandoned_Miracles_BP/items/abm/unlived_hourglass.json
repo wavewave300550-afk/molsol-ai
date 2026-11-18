@@ -1,0 +1,24 @@
+{
+ "format_version": "1.21.130",
+ "minecraft:item": {
+  "description": {
+   "identifier": "abm:unlived_hourglass",
+   "menu_category": {
+    "category": "items"
+   }
+  },
+  "components": {
+   "minecraft:icon": "abm_unlived_hourglass",
+   "minecraft:max_stack_size": 1,
+   "minecraft:display_name": {
+    "value": "item.abm:unlived_hourglass.name"
+   },
+   "minecraft:glint": true,
+   "minecraft:rarity": "epic",
+   "minecraft:cooldown": {
+    "category": "abm_trophy",
+    "duration": 3.0
+   }
+  }
+ }
+}

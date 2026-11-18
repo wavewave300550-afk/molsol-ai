@@ -1,0 +1,102 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "abm:orison",
+   "materials": {
+    "default": "entity_alphatest",
+    "glow": "entity_emissive_alpha",
+    "glass": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/abm/orison"
+   },
+   "geometry": {
+    "default": "geometry.abm.orison"
+   },
+   "scripts": {
+    "pre_animation": ["v.p2 = q.property('abm:phase') == 2;", "v.gait = q.modified_distance_moved * (v.p2 ? 0.3 : 0.327);", "v.turn = (q.body_y_rotation + 3600) / 60;", "v.go = math.clamp(q.modified_move_speed * 4, 0, 1);", "v.w_l = math.mod(v.gait, 1);", "v.w_r = math.mod(v.gait + 0.5, 1);", "v.t_l = math.mod(v.turn, 1);", "v.t_r = math.mod(v.turn + 0.5, 1);"],
+    "animate": ["idle", "walk", "turn", "ctl_pendulum", "ctl_phase", "ctl_action", "ctl_feet"]
+   },
+   "animations": {
+    "pendulum_swing": "animation.abm.orison.pendulum_swing",
+    "idle": "animation.abm.orison.idle",
+    "walk": "animation.abm.orison.walk",
+    "turn": "animation.abm.orison.turn",
+    "p2_pose": "animation.abm.orison.p2_pose",
+    "p2_flutter": "animation.abm.orison.p2_flutter",
+    "footfalls": "animation.abm.orison.footfalls",
+    "echo_p1": "animation.abm.orison.echo_p1",
+    "verdict_p1_a": "animation.abm.orison.verdict_p1_a",
+    "verdict_p1_b": "animation.abm.orison.verdict_p1_b",
+    "wound_p1": "animation.abm.orison.wound_p1",
+    "drain_p1": "animation.abm.orison.drain_p1",
+    "witness_p1": "animation.abm.orison.witness_p1",
+    "exchange_p1": "animation.abm.orison.exchange_p1",
+    "hour_p1": "animation.abm.orison.hour_p1",
+    "echo_p2": "animation.abm.orison.echo_p2",
+    "verdict_p2_a": "animation.abm.orison.verdict_p2_a",
+    "verdict_p2_b": "animation.abm.orison.verdict_p2_b",
+    "wound_p2": "animation.abm.orison.wound_p2",
+    "drain_p2": "animation.abm.orison.drain_p2",
+    "witness_p2": "animation.abm.orison.witness_p2",
+    "exchange_p2": "animation.abm.orison.exchange_p2",
+    "hour_p2": "animation.abm.orison.hour_p2",
+    "intro": "animation.abm.orison.intro",
+    "stagger": "animation.abm.orison.stagger",
+    "transition": "animation.abm.orison.transition",
+    "death": "animation.abm.orison.death",
+    "ctl_action": "controller.animation.abm.orison.action",
+    "ctl_phase": "controller.animation.abm.orison.phase",
+    "ctl_pendulum": "controller.animation.abm.orison.pendulum",
+    "ctl_feet": "controller.animation.abm.orison.feet"
+   },
+   "render_controllers": ["controller.render.abm.orison"],
+   "particle_effects": {
+    "sand": "abm:orison_sand",
+    "wisp": "abm:orison_wisp",
+    "shard": "abm:orison_shard",
+    "glint": "abm:orison_glint",
+    "spark": "abm:orison_spark"
+   },
+   "sound_effects": {
+    "tick": "abm.orison.tick",
+    "tap": "abm.orison.tap",
+    "step": "abm.orison.step",
+    "idle": "abm.orison.idle",
+    "hurt": "abm.orison.hurt",
+    "gavel": "abm.orison.gavel",
+    "echo_read": "abm.orison.echo_read",
+    "echo_mark": "abm.orison.echo_mark",
+    "echo_burst": "abm.orison.echo_burst",
+    "verdict_wind": "abm.orison.verdict_wind",
+    "verdict_swing": "abm.orison.verdict_swing",
+    "wound_mark": "abm.orison.wound_mark",
+    "wound_burst": "abm.orison.wound_burst",
+    "drain_wind": "abm.orison.drain_wind",
+    "drain_cast": "abm.orison.drain_cast",
+    "drain_pulse": "abm.orison.drain_pulse",
+    "hourglass_break": "abm.orison.hourglass_break",
+    "witness_hush": "abm.orison.witness_hush",
+    "witness_lock": "abm.orison.witness_lock",
+    "shadow_strike": "abm.orison.shadow_strike",
+    "exchange_mark": "abm.orison.exchange_mark",
+    "exchange_swap": "abm.orison.exchange_swap",
+    "hour_call": "abm.orison.hour_call",
+    "hour_chime": "abm.orison.hour_chime",
+    "hour_strike": "abm.orison.hour_strike",
+    "stagger": "abm.orison.stagger",
+    "transition_crack": "abm.orison.transition_crack",
+    "transition_shatter": "abm.orison.transition_shatter",
+    "shadow_emerge": "abm.orison.shadow_emerge",
+    "intro_wind": "abm.orison.intro_wind",
+    "intro_strike": "abm.orison.intro_strike",
+    "death_stop": "abm.orison.death_stop",
+    "ribbon_fall": "abm.orison.ribbon_fall",
+    "death_empty": "abm.orison.death_empty",
+    "death_fall": "abm.orison.death_fall",
+    "trophy": "abm.orison.trophy"
+   }
+  }
+ }
+}

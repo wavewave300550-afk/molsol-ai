@@ -1,0 +1,78 @@
+{
+ "format_version": "1.26.0",
+ "minecraft:entity": {
+  "description": {
+   "identifier": "abm:orison_shadow",
+   "is_spawnable": false,
+   "is_summonable": true,
+   "properties": {
+    "abm:anim": {
+     "type": "int",
+     "range": [0, 15],
+     "default": 0,
+     "client_sync": true
+    },
+    "abm:variant": {
+     "type": "int",
+     "range": [0, 7],
+     "default": 0,
+     "client_sync": true
+    }
+   }
+  },
+  "component_groups": {
+   "abm:gone": {
+    "minecraft:instant_despawn": {}
+   }
+  },
+  "components": {
+   "minecraft:type_family": {
+    "family": ["abm_helper", "abm_shadow", "inanimate"]
+   },
+   "minecraft:health": {
+    "value": 20,
+    "max": 20
+   },
+   "minecraft:collision_box": {
+    "width": 0.8,
+    "height": 2.6
+   },
+   "minecraft:physics": {
+    "has_gravity": false,
+    "has_collision": false
+   },
+   "minecraft:knockback_resistance": {
+    "value": 1.0
+   },
+   "minecraft:fire_immune": {},
+   "minecraft:persistent": {},
+   "minecraft:breathable": {
+    "total_supply": 15,
+    "suffocate_time": 0,
+    "breathes_water": true
+   },
+   "minecraft:timer": {
+    "looping": false,
+    "time": 1500,
+    "time_down_event": {
+     "event": "abm:despawn"
+    }
+   },
+   "minecraft:damage_sensor": {
+    "triggers": [
+     {
+      "cause": "all",
+      "deals_damage": "no"
+     }
+    ]
+   }
+  },
+  "events": {
+   "abm:despawn": {
+    "add": {
+     "component_groups": ["abm:gone"]
+    }
+   }
+  }
+ }
+}

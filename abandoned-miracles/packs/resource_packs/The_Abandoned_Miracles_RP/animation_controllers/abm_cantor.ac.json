@@ -1,0 +1,299 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.abm.cantor.action": {
+   "initial_state": "none",
+   "states": {
+    "downbeat_p1": {
+     "animations": ["downbeat_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 1"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "downbeat_p2": {
+     "animations": ["downbeat_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 1"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "counterpoint_p1": {
+     "animations": ["counterpoint_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 2"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "counterpoint_p2": {
+     "animations": ["counterpoint_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 2"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "aria_p1": {
+     "animations": ["aria_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 3"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "aria_p2": {
+     "animations": ["aria_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 3"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "held_p1": {
+     "animations": ["held_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 4"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "held_p2": {
+     "animations": ["held_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 4"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "silent_p1": {
+     "animations": ["silent_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 5"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "silent_p2": {
+     "animations": ["silent_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 5"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "twin_p1": {
+     "animations": ["twin_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 6"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "twin_p2": {
+     "animations": ["twin_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 6"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "requiem_p1": {
+     "animations": ["requiem_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 7"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "requiem_p2": {
+     "animations": ["requiem_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 7"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "transition": {
+     "animations": ["transition"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 8"
+      }
+     ],
+     "blend_transition": 0.25
+    },
+    "stagger": {
+     "animations": ["stagger"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 9"
+      }
+     ],
+     "blend_transition": 0.25
+    },
+    "death": {
+     "animations": ["death"],
+     "blend_transition": 0.25
+    },
+    "intro": {
+     "animations": ["intro"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 11"
+      }
+     ],
+     "blend_transition": 0.25
+    },
+    "none": {
+     "transitions": [
+      {
+       "downbeat_p1": "q.property('abm:anim') == 1 && q.property('abm:phase') == 1"
+      },
+      {
+       "downbeat_p2": "q.property('abm:anim') == 1 && q.property('abm:phase') == 2"
+      },
+      {
+       "counterpoint_p1": "q.property('abm:anim') == 2 && q.property('abm:phase') == 1"
+      },
+      {
+       "counterpoint_p2": "q.property('abm:anim') == 2 && q.property('abm:phase') == 2"
+      },
+      {
+       "aria_p1": "q.property('abm:anim') == 3 && q.property('abm:phase') == 1"
+      },
+      {
+       "aria_p2": "q.property('abm:anim') == 3 && q.property('abm:phase') == 2"
+      },
+      {
+       "held_p1": "q.property('abm:anim') == 4 && q.property('abm:phase') == 1"
+      },
+      {
+       "held_p2": "q.property('abm:anim') == 4 && q.property('abm:phase') == 2"
+      },
+      {
+       "silent_p1": "q.property('abm:anim') == 5 && q.property('abm:phase') == 1"
+      },
+      {
+       "silent_p2": "q.property('abm:anim') == 5 && q.property('abm:phase') == 2"
+      },
+      {
+       "twin_p1": "q.property('abm:anim') == 6 && q.property('abm:phase') == 1"
+      },
+      {
+       "twin_p2": "q.property('abm:anim') == 6 && q.property('abm:phase') == 2"
+      },
+      {
+       "requiem_p1": "q.property('abm:anim') == 7 && q.property('abm:phase') == 1"
+      },
+      {
+       "requiem_p2": "q.property('abm:anim') == 7 && q.property('abm:phase') == 2"
+      },
+      {
+       "transition": "q.property('abm:anim') == 8"
+      },
+      {
+       "stagger": "q.property('abm:anim') == 9"
+      },
+      {
+       "death": "q.property('abm:anim') == 10"
+      },
+      {
+       "intro": "q.property('abm:anim') == 11"
+      }
+     ],
+     "blend_transition": 0.25
+    }
+   }
+  },
+  "controller.animation.abm.cantor.phase": {
+   "initial_state": "one",
+   "states": {
+    "one": {
+     "transitions": [
+      {
+       "two": "q.property('abm:phase') == 2"
+      }
+     ],
+     "blend_transition": 0.25
+    },
+    "two": {
+     "animations": ["p2_pose", "p2_unstable"],
+     "transitions": [
+      {
+       "one": "q.property('abm:phase') == 1"
+      }
+     ],
+     "blend_transition": 0.25
+    }
+   }
+  },
+  "controller.animation.abm.cantor.feet": {
+   "initial_state": "still",
+   "states": {
+    "still": {
+     "transitions": [
+      {
+       "moving": "q.modified_move_speed > 0.1 && q.property('abm:anim') == 0"
+      }
+     ]
+    },
+    "moving": {
+     "animations": ["footfalls"],
+     "transitions": [
+      {
+       "still": "q.modified_move_speed < 0.05 || q.property('abm:anim') != 0"
+      }
+     ]
+    }
+   }
+  },
+  "controller.animation.abm.cantor_bell": {
+   "initial_state": "land",
+   "states": {
+    "land": {
+     "animations": ["land"],
+     "transitions": [
+      {
+       "idle": "q.anim_time >= 0.6"
+      }
+     ],
+     "blend_transition": 0.1
+    },
+    "idle": {
+     "transitions": [
+      {
+       "ring": "q.property('abm:anim') == 1"
+      }
+     ],
+     "blend_transition": 0.15
+    },
+    "ring": {
+     "animations": ["ring"],
+     "transitions": [
+      {
+       "idle": "q.property('abm:anim') != 1"
+      }
+     ],
+     "blend_transition": 0.15
+    }
+   }
+  }
+ }
+}

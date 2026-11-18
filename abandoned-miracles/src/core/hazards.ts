@@ -206,12 +206,13 @@ export class HazardSystem {
         Math.max(1, o.delay) + t,
         () => {
           const c = new Circle(o.from.x + o.dir.x * o.speed * t, o.from.z + o.dir.z * o.speed * t, o.radius);
-          if (!this.enc.arena.contains(c.cx, c.cz, -2)) return;
-          for (const p of this.inside(c)) {
-            if (hit.has(p.id)) continue;
-            if (this.enc.damage.hit(p, o, this.enc.timeline.now) > 0) {
-              hit.add(p.id);
-              o.onHit?.(p);
+          if (this.enc.arena.contains(c.cx, c.cz, -2)) {
+            for (const p of this.inside(c)) {
+              if (hit.has(p.id)) continue;
+              if (this.enc.damage.hit(p, o, this.enc.timeline.now) > 0) {
+                hit.add(p.id);
+                o.onHit?.(p);
+              }
             }
           }
           if (t === life) {

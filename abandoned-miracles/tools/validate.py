@@ -163,7 +163,7 @@ def check_script():
     R.begin("script")
     p = os.path.join(BP, "scripts", "main.js")
     src = open(p, encoding="utf-8").read()
-    imports = set(re.findall(r'from\s*"([^"]+)"', src)) | set(re.findall(r'import\s*"([^"]+)"', src))
+    imports = set(re.findall(r'^\s*import\s[^;\n]*?from\s*"([^"]+)"', src, re.M)) | set(re.findall(r'^\s*import\s*"([^"]+)"', src, re.M))
     R.ok(imports <= {"@minecraft/server", "@minecraft/server-ui"}, f"bundle imports unexpected modules: {sorted(imports)}")
     R.ok("eval(" not in src and "new Function(" not in src, "bundle uses eval / Function")
     R.ok("runTimeout(" not in src, "bundle uses system.runTimeout (hazards must use the encounter timeline)")

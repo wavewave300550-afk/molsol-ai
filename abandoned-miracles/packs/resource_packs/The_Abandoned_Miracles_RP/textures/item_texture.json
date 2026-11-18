@@ -10,6 +10,24 @@
   },
   "abm_ivory_diadem": {
    "textures": "textures/items/abm/abm_ivory_diadem"
+  },
+  "abm_seal_cantor": {
+   "textures": "textures/items/abm/abm_seal_cantor"
+  },
+  "abm_bell_fragment": {
+   "textures": "textures/items/abm/abm_bell_fragment"
+  },
+  "abm_seal_nomos": {
+   "textures": "textures/items/abm/abm_seal_nomos"
+  },
+  "abm_sovereign_needle": {
+   "textures": "textures/items/abm/abm_sovereign_needle"
+  },
+  "abm_seal_orison": {
+   "textures": "textures/items/abm/abm_seal_orison"
+  },
+  "abm_unlived_hourglass": {
+   "textures": "textures/items/abm/abm_unlived_hourglass"
   }
  }
 }

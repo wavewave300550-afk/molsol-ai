@@ -155,7 +155,11 @@ export class Bot {
     for (const h of hazards) {
       const end = lastTick(h);
       const begin = h.kind === "strike" ? h.at : h.start;
-      for (let t = Math.max(begin, et + 1); t <= end; t += h.kind === "strike" ? 1 : h.every) {
+      const stepT = h.kind === "strike" ? 1 : h.every;
+      // a sweep is only live on its own grid (start, start + every, ...): start sampling on that grid
+      let first = Math.max(begin, et + 1);
+      if (h.kind !== "strike") first = begin + Math.ceil((first - begin) / stepT) * stepT;
+      for (let t = first; t <= end; t += stepT) {
         const k = Math.min(1, steps > 0 ? (t - et) / steps : 1);
         if (strikes(h, t, l.x + dx * k, l.z + dz * k)) {
           hits++;

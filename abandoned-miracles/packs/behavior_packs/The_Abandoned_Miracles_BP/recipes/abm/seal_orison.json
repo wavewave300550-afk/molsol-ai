@@ -1,0 +1,30 @@
+{
+ "format_version": "1.21.60",
+ "minecraft:recipe_shaped": {
+  "description": {
+   "identifier": "abm:seal_orison"
+  },
+  "tags": ["crafting_table"],
+  "pattern": ["GCG", "CSC", "GCG"],
+  "key": {
+   "G": {
+    "item": "minecraft:glass"
+   },
+   "C": {
+    "item": "minecraft:clock"
+   },
+   "S": {
+    "item": "minecraft:soul_sand"
+   }
+  },
+  "unlock": [
+   {
+    "item": "minecraft:clock"
+   }
+  ],
+  "result": {
+   "item": "abm:seal_orison",
+   "count": 1
+  }
+ }
+}

@@ -16,7 +16,11 @@ each experiment succeeded in the most literal and catastrophic way. The civiliza
 Each boss has its own model, rig, textures, animation set, two combat phases, seven attacks, arena, sounds, particles,
 introduction, death sequence and trophy.
 
-![Vesperra, both phases](docs/previews/vesperra/phases.png)
+| Vesperra | Cantor XIII |
+|---|---|
+| ![Vesperra, both phases](docs/previews/vesperra/phases.png) | ![Cantor XIII, both phases](docs/previews/cantor/phases.png) |
+| **Nomos** | **Orison** |
+| ![Nomos, both phases](docs/previews/nomos/phases.png) | ![Orison, both phases](docs/previews/orison/phases.png) |
 
 > Images in this repository are rendered from the shipped models and animations by the project's own preview
 > renderer. They are **not** screenshots of the game. See [TEST_REPORT.md](TEST_REPORT.md) for exactly what has and has
@@ -63,17 +67,27 @@ Use a **Seal** on the floor where the fight should happen.
 |---|---|---|
 | Seal of the Ivory Succession | Vesperra | a circle 35 blocks across, 9 high |
 | Seal of the Last Note | Cantor XIII | a circle 39 blocks across, 11 high |
-| Seal of Unwritten Borders | Nomos | a square 41 blocks across, 9 high |
-| Seal of Unlived Hours | Orison | a circle 37 blocks across, 10 high |
+| Seal of the Unmapped Sovereign | Nomos | a square 41 blocks across, 9 high |
+| Seal of the Unlived Hour | Orison | a circle 37 blocks across, 10 high |
 
 * The spot is checked first. If the ground is too uneven, too cramped, too low or not fully loaded, nothing happens, the
   Seal is kept, and you are told what is missing. Nothing is ever dug out or flattened for you.
-* Seals are in the Creative inventory and craftable in survival (recipes in each boss's chapter under `docs/bosses/`).
+* Seals are in the Creative inventory and craftable in survival (3 × 3 crafting table, see below).
 * Other ways: `/abm:summon <vesperra|cantor|nomos|orison>` (operators, skips the ground check),
   `/scriptevent abm:summon <boss>` from a command block or NPC, or plain `/summon abm:vesperra`
   (`abm:cantor_xiii`, `abm:nomos`, `abm:orison`).
 * Want the full setting? Operators can raise a boss's **demonstration arena** from the Codex or with
   `/abm:arena <boss>`. This *replaces blocks* around you and asks for confirmation first.
+
+**Recipes** (corners / edges / centre)
+
+| Result | Corners | Edges | Centre |
+|---|---|---|---|
+| Seal of the Ivory Succession | block of quartz | bone block | fermented spider eye |
+| Seal of the Last Note | block of copper | gold ingot | bell |
+| Seal of the Unmapped Sovereign | paper | compass | empty map |
+| Seal of the Unlived Hour | glass | clock | soul sand |
+| Codex of the Abandoned Miracles | – | bone | book |
 
 ### Reading the fight
 

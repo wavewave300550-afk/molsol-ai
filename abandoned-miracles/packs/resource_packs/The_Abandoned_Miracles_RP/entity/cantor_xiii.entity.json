@@ -1,0 +1,113 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "abm:cantor_xiii",
+   "materials": {
+    "default": "entity_alphatest",
+    "glow": "entity_emissive_alpha"
+   },
+   "textures": {
+    "default": "textures/entity/abm/cantor_xiii"
+   },
+   "geometry": {
+    "default": "geometry.abm.cantor_xiii"
+   },
+   "scripts": {
+    "pre_animation": [
+     "v.p2 = q.property('abm:phase') == 2;",
+     "v.duty = (v.p2 ? 0.66 : 0.72);",
+     "v.gait = q.modified_distance_moved * (v.p2 ? 0.5 : 0.411);",
+     "v.turn = (q.body_y_rotation + 3600) / 60;",
+     "v.go = math.clamp(q.modified_move_speed * 5, 0, 1);",
+     "v.w1 = math.mod(v.gait + 0, 1);",
+     "v.t1 = math.mod(v.turn + 0, 1);",
+     "v.w2 = math.mod(v.gait + 0.3333, 1);",
+     "v.t2 = math.mod(v.turn + 0.3333, 1);",
+     "v.w3 = math.mod(v.gait + 0.6667, 1);",
+     "v.t3 = math.mod(v.turn + 0.6667, 1);",
+     "v.lit = (q.property('abm:silent') == 1 ? 0 : (v.p2 ? math.sin(q.life_time * 520) + math.sin(q.life_time * 333) > -0.4 : math.sin(q.life_time * 720) > -0.35));"
+    ],
+    "animate": ["idle", "walk", "turn", "ctl_phase", "ctl_action", "ctl_feet"]
+   },
+   "animations": {
+    "idle": "animation.abm.cantor.idle",
+    "walk": "animation.abm.cantor.walk",
+    "turn": "animation.abm.cantor.turn",
+    "p2_pose": "animation.abm.cantor.p2_pose",
+    "p2_unstable": "animation.abm.cantor.p2_unstable",
+    "footfalls": "animation.abm.cantor.footfalls",
+    "downbeat_p1": "animation.abm.cantor.downbeat_p1",
+    "counterpoint_p1": "animation.abm.cantor.counterpoint_p1",
+    "aria_p1": "animation.abm.cantor.aria_p1",
+    "held_p1": "animation.abm.cantor.held_p1",
+    "silent_p1": "animation.abm.cantor.silent_p1",
+    "twin_p1": "animation.abm.cantor.twin_p1",
+    "requiem_p1": "animation.abm.cantor.requiem_p1",
+    "downbeat_p2": "animation.abm.cantor.downbeat_p2",
+    "counterpoint_p2": "animation.abm.cantor.counterpoint_p2",
+    "aria_p2": "animation.abm.cantor.aria_p2",
+    "held_p2": "animation.abm.cantor.held_p2",
+    "silent_p2": "animation.abm.cantor.silent_p2",
+    "twin_p2": "animation.abm.cantor.twin_p2",
+    "requiem_p2": "animation.abm.cantor.requiem_p2",
+    "intro": "animation.abm.cantor.intro",
+    "stagger": "animation.abm.cantor.stagger",
+    "transition": "animation.abm.cantor.transition",
+    "death": "animation.abm.cantor.death",
+    "ctl_action": "controller.animation.abm.cantor.action",
+    "ctl_phase": "controller.animation.abm.cantor.phase",
+    "ctl_feet": "controller.animation.abm.cantor.feet"
+   },
+   "render_controllers": ["controller.render.abm.cantor"],
+   "particle_effects": {
+    "spark": "abm:cantor_spark",
+    "dust": "abm:cantor_dust",
+    "note": "abm:cantor_note",
+    "glass": "abm:cantor_glass",
+    "fragments": "abm:cantor_fragments"
+   },
+   "sound_effects": {
+    "step": "abm.cantor.step",
+    "idle": "abm.cantor.idle",
+    "creak": "abm.cantor.creak",
+    "bell_strike": "abm.cantor.bell_strike",
+    "bell_small": "abm.cantor.bell_small",
+    "bell_pulse": "abm.cantor.bell_pulse",
+    "wave": "abm.cantor.wave",
+    "organ_rise": "abm.cantor.organ_rise",
+    "organ_charge": "abm.cantor.organ_charge",
+    "organ_blast": "abm.cantor.organ_blast",
+    "glass_open": "abm.cantor.glass_open",
+    "glass_shard": "abm.cantor.glass_shard",
+    "glass_break": "abm.cantor.glass_break",
+    "silence": "abm.cantor.silence",
+    "implode": "abm.cantor.implode",
+    "detach": "abm.cantor.detach",
+    "bell_destroy": "abm.cantor.bell_destroy",
+    "requiem_start": "abm.cantor.requiem_start",
+    "requiem_1": "abm.cantor.requiem_1",
+    "requiem_2": "abm.cantor.requiem_2",
+    "requiem_3": "abm.cantor.requiem_3",
+    "requiem_4": "abm.cantor.requiem_4",
+    "transition_ring": "abm.cantor.transition_ring",
+    "transition_crack": "abm.cantor.transition_crack",
+    "transition_break": "abm.cantor.transition_break",
+    "transition_unfold": "abm.cantor.transition_unfold",
+    "transition_roar": "abm.cantor.transition_roar",
+    "stagger": "abm.cantor.stagger",
+    "hit": "abm.cantor.hit",
+    "beat": "abm.cantor.beat",
+    "death_toll": "abm.cantor.death_toll",
+    "death_bell": "abm.cantor.death_bell",
+    "death_pipe1": "abm.cantor.death_pipe1",
+    "death_pipe2": "abm.cantor.death_pipe2",
+    "death_pipe3": "abm.cantor.death_pipe3",
+    "death_leg": "abm.cantor.death_leg",
+    "death_final": "abm.cantor.death_final",
+    "intro": "abm.cantor.intro",
+    "trophy": "abm.cantor.trophy"
+   }
+  }
+ }
+}

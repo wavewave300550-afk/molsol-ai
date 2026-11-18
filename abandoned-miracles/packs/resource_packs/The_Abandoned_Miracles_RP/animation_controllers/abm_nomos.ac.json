@@ -1,0 +1,283 @@
+{
+ "format_version": "1.10.0",
+ "animation_controllers": {
+  "controller.animation.abm.nomos.action": {
+   "initial_state": "none",
+   "states": {
+    "meridian_p1": {
+     "animations": ["meridian_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 1"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "meridian_p2": {
+     "animations": ["meridian_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 1"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "shear_p1": {
+     "animations": ["shear_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 2"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "shear_p2": {
+     "animations": ["shear_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 2"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "borders_p1": {
+     "animations": ["borders_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 3"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "borders_p2": {
+     "animations": ["borders_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 3"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "gate_p1": {
+     "animations": ["gate_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 4"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "gate_p2": {
+     "animations": ["gate_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 4"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "darts_p1": {
+     "animations": ["darts_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 5"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "darts_p2": {
+     "animations": ["darts_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 5"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "folded_p1": {
+     "animations": ["folded_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 6"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "folded_p2": {
+     "animations": ["folded_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 6"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "recalc_p1": {
+     "animations": ["recalc_p1"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 7"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "recalc_p2": {
+     "animations": ["recalc_p2"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 7"
+      }
+     ],
+     "blend_transition": 0.18
+    },
+    "transition": {
+     "animations": ["transition"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 8"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "stagger": {
+     "animations": ["stagger"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 9"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "death": {
+     "animations": ["death"],
+     "blend_transition": 0.2
+    },
+    "intro": {
+     "animations": ["intro"],
+     "transitions": [
+      {
+       "none": "q.property('abm:anim') != 11"
+      }
+     ],
+     "blend_transition": 0.2
+    },
+    "none": {
+     "transitions": [
+      {
+       "meridian_p1": "q.property('abm:anim') == 1 && q.property('abm:phase') == 1"
+      },
+      {
+       "meridian_p2": "q.property('abm:anim') == 1 && q.property('abm:phase') == 2"
+      },
+      {
+       "shear_p1": "q.property('abm:anim') == 2 && q.property('abm:phase') == 1"
+      },
+      {
+       "shear_p2": "q.property('abm:anim') == 2 && q.property('abm:phase') == 2"
+      },
+      {
+       "borders_p1": "q.property('abm:anim') == 3 && q.property('abm:phase') == 1"
+      },
+      {
+       "borders_p2": "q.property('abm:anim') == 3 && q.property('abm:phase') == 2"
+      },
+      {
+       "gate_p1": "q.property('abm:anim') == 4 && q.property('abm:phase') == 1"
+      },
+      {
+       "gate_p2": "q.property('abm:anim') == 4 && q.property('abm:phase') == 2"
+      },
+      {
+       "darts_p1": "q.property('abm:anim') == 5 && q.property('abm:phase') == 1"
+      },
+      {
+       "darts_p2": "q.property('abm:anim') == 5 && q.property('abm:phase') == 2"
+      },
+      {
+       "folded_p1": "q.property('abm:anim') == 6 && q.property('abm:phase') == 1"
+      },
+      {
+       "folded_p2": "q.property('abm:anim') == 6 && q.property('abm:phase') == 2"
+      },
+      {
+       "recalc_p1": "q.property('abm:anim') == 7 && q.property('abm:phase') == 1"
+      },
+      {
+       "recalc_p2": "q.property('abm:anim') == 7 && q.property('abm:phase') == 2"
+      },
+      {
+       "transition": "q.property('abm:anim') == 8"
+      },
+      {
+       "stagger": "q.property('abm:anim') == 9"
+      },
+      {
+       "death": "q.property('abm:anim') == 10"
+      },
+      {
+       "intro": "q.property('abm:anim') == 11"
+      }
+     ],
+     "blend_transition": 0.22
+    }
+   }
+  },
+  "controller.animation.abm.nomos.phase": {
+   "initial_state": "one",
+   "states": {
+    "one": {
+     "animations": ["compass_spin"],
+     "transitions": [
+      {
+       "two": "q.property('abm:phase') == 2"
+      },
+      {
+       "changing": "q.property('abm:anim') == 8"
+      }
+     ],
+     "blend_transition": 0.6
+    },
+    "changing": {
+     "transitions": [
+      {
+       "two": "q.property('abm:phase') == 2"
+      },
+      {
+       "one": "q.property('abm:anim') != 8 && q.property('abm:phase') == 1"
+      }
+     ],
+     "blend_transition": 0.25
+    },
+    "two": {
+     "animations": ["p2_pose", "p2_compass"],
+     "transitions": [
+      {
+       "one": "q.property('abm:phase') == 1"
+      }
+     ],
+     "blend_transition": 0.25
+    }
+   }
+  },
+  "controller.animation.abm.nomos.feet": {
+   "initial_state": "still",
+   "states": {
+    "still": {
+     "transitions": [
+      {
+       "moving": "q.modified_move_speed > 0.12 && q.property('abm:anim') == 0"
+      }
+     ]
+    },
+    "moving": {
+     "animations": ["footfalls"],
+     "transitions": [
+      {
+       "still": "q.modified_move_speed < 0.06 || q.property('abm:anim') != 0"
+      }
+     ]
+    }
+   }
+  }
+ }
+}

@@ -453,6 +453,1513 @@
      "load_on_low_memory": true
     }
    ]
+  },
+  "abm.cantor.step": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 56,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/step0",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/cantor/step1",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/cantor/step2",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.idle": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 48,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/idle0",
+     "volume": 0.5,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/cantor/idle1",
+     "volume": 0.5,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.creak": {
+   "category": "hostile",
+   "min_distance": 8.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/creak",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.bell_strike": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 96,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/bell_strike",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.bell_small": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 56,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/bell_small0",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/cantor/bell_small1",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.bell_pulse": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 56,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/bell_pulse0",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/cantor/bell_pulse1",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.wave": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 80,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/wave",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.organ_rise": {
+   "category": "hostile",
+   "min_distance": 8.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/organ_rise",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.organ_charge": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 80,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/organ_charge",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.organ_blast": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 96,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/organ_blast",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.glass_open": {
+   "category": "hostile",
+   "min_distance": 8.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/glass_open",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.glass_shard": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 56,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/glass_shard0",
+     "volume": 0.85,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/cantor/glass_shard1",
+     "volume": 0.85,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.glass_break": {
+   "category": "hostile",
+   "min_distance": 6,
+   "max_distance": 40,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/glass_break",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.silence": {
+   "category": "hostile",
+   "min_distance": 8.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/silence",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.implode": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 96,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/implode",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.detach": {
+   "category": "hostile",
+   "min_distance": 8.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/detach",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.bell_destroy": {
+   "category": "hostile",
+   "min_distance": 6,
+   "max_distance": 40,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/bell_destroy",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.requiem_start": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 96,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/requiem_start",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.requiem_1": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 96,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/requiem_1",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.requiem_2": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 96,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/requiem_2",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.requiem_3": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 96,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/requiem_3",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.requiem_4": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 96,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/requiem_4",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.transition_ring": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 96,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/transition_ring",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.transition_crack": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 96,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/transition_crack",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.transition_break": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 96,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/transition_break",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.transition_unfold": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 80,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/transition_unfold",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.transition_roar": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 96,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/transition_roar",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.stagger": {
+   "category": "hostile",
+   "min_distance": 8.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/stagger",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.hit": {
+   "category": "hostile",
+   "min_distance": 4,
+   "max_distance": 28,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/hit0",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/cantor/hit1",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/cantor/hit2",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.beat": {
+   "category": "hostile",
+   "min_distance": 6,
+   "max_distance": 32,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/beat",
+     "volume": 0.35,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.death_toll": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 96,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/death_toll",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.death_bell": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 96,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/death_bell",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.death_pipe1": {
+   "category": "hostile",
+   "min_distance": 10,
+   "max_distance": 64,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/death_pipe1",
+     "volume": 0.85,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.death_pipe2": {
+   "category": "hostile",
+   "min_distance": 10,
+   "max_distance": 64,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/death_pipe2",
+     "volume": 0.85,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.death_pipe3": {
+   "category": "hostile",
+   "min_distance": 10,
+   "max_distance": 64,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/death_pipe3",
+     "volume": 0.85,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.death_leg": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 80,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/death_leg",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.death_final": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 96,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/death_final",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.intro": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 96,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/intro",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.cantor.trophy": {
+   "category": "hostile",
+   "min_distance": 4,
+   "max_distance": 16,
+   "sounds": [
+    {
+     "name": "sounds/abm/cantor/trophy",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.step": {
+   "category": "hostile",
+   "min_distance": 4,
+   "max_distance": 28,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/step0",
+     "volume": 0.5,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/nomos/step1",
+     "volume": 0.5,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/nomos/step2",
+     "volume": 0.5,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.idle": {
+   "category": "hostile",
+   "min_distance": 5,
+   "max_distance": 30,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/idle0",
+     "volume": 0.4,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/nomos/idle1",
+     "volume": 0.4,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.scribe": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/scribe0",
+     "volume": 0.85,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/nomos/scribe1",
+     "volume": 0.85,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.incision": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 64,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/incision0",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/nomos/incision1",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.calipers": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/calipers",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.shear": {
+   "category": "hostile",
+   "min_distance": 10,
+   "max_distance": 64,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/shear",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.shear_hit": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/shear_hit",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.border_stamp": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 56,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/border_stamp",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.border_set": {
+   "category": "hostile",
+   "min_distance": 10,
+   "max_distance": 64,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/border_set",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.border_touch": {
+   "category": "hostile",
+   "min_distance": 4,
+   "max_distance": 24,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/border_touch",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.gate_ready": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/gate_ready",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.gate_fold": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 64,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/gate_fold",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.gate_unfold": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 64,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/gate_unfold",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.gate_arrive": {
+   "category": "hostile",
+   "min_distance": 10,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/gate_arrive",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.dart_spin": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/dart_spin",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.dart_lock": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/dart_lock0",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/nomos/dart_lock1",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.dart_fire": {
+   "category": "hostile",
+   "min_distance": 6,
+   "max_distance": 56,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/dart_fire0",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/nomos/dart_fire1",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.unfold": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/unfold0",
+     "volume": 0.85,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/nomos/unfold1",
+     "volume": 0.85,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.fold_slam": {
+   "category": "hostile",
+   "min_distance": 10,
+   "max_distance": 64,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/fold_slam0",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/nomos/fold_slam1",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.recalc_begin": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 80,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/recalc_begin",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.recalc_shift": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/recalc_shift0",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/nomos/recalc_shift1",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.recalc_strike": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 80,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/recalc_strike0",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/nomos/recalc_strike1",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.stagger": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/stagger",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.transition_shudder": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/transition_shudder",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.transition_wind": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/transition_wind",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.transition_rise": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 80,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/transition_rise",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.ring_release": {
+   "category": "hostile",
+   "min_distance": 10,
+   "max_distance": 64,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/ring_release0",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/nomos/ring_release1",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.ring_drop": {
+   "category": "hostile",
+   "min_distance": 10,
+   "max_distance": 64,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/ring_drop0",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/nomos/ring_drop1",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.death_crumple": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/death_crumple",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.death_fall": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 80,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/death_fall",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.needle_slow": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 48,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/needle_slow",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.needle_stop": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 56,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/needle_stop",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.intro_unpack": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/intro_unpack",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.intro_level": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/intro_level",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.hit_metal": {
+   "category": "hostile",
+   "min_distance": 4,
+   "max_distance": 28,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/hit_metal0",
+     "volume": 0.75,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/nomos/hit_metal1",
+     "volume": 0.75,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/nomos/hit_metal2",
+     "volume": 0.75,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.nomos.trophy": {
+   "category": "hostile",
+   "min_distance": 4,
+   "max_distance": 16,
+   "sounds": [
+    {
+     "name": "sounds/abm/nomos/trophy",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.tick": {
+   "category": "hostile",
+   "min_distance": 4,
+   "max_distance": 28,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/tick0",
+     "volume": 0.6,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/orison/tick1",
+     "volume": 0.6,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.tap": {
+   "category": "hostile",
+   "min_distance": 6,
+   "max_distance": 40,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/tap0",
+     "volume": 0.7,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/orison/tap1",
+     "volume": 0.7,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.step": {
+   "category": "hostile",
+   "min_distance": 4,
+   "max_distance": 30,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/step0",
+     "volume": 0.55,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/orison/step1",
+     "volume": 0.55,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.idle": {
+   "category": "hostile",
+   "min_distance": 5,
+   "max_distance": 30,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/idle0",
+     "volume": 0.4,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/orison/idle1",
+     "volume": 0.4,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.hurt": {
+   "category": "hostile",
+   "min_distance": 4,
+   "max_distance": 24,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/hurt0",
+     "volume": 0.7,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/orison/hurt1",
+     "volume": 0.7,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.gavel": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 60,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/gavel",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.echo_read": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/echo_read",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.echo_mark": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 56,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/echo_mark",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.echo_burst": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 56,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/echo_burst0",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/orison/echo_burst1",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.verdict_wind": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 60,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/verdict_wind",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.verdict_swing": {
+   "category": "hostile",
+   "min_distance": 10,
+   "max_distance": 64,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/verdict_swing",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.wound_mark": {
+   "category": "hostile",
+   "min_distance": 6,
+   "max_distance": 48,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/wound_mark0",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/orison/wound_mark1",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.wound_burst": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 60,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/wound_burst0",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/orison/wound_burst1",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.drain_wind": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/drain_wind",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.drain_cast": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 56,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/drain_cast",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.drain_pulse": {
+   "category": "hostile",
+   "min_distance": 6,
+   "max_distance": 40,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/drain_pulse",
+     "volume": 0.85,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.hourglass_break": {
+   "category": "hostile",
+   "min_distance": 6,
+   "max_distance": 40,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/hourglass_break",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.witness_hush": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/witness_hush",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.witness_lock": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 60,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/witness_lock",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.shadow_strike": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 56,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/shadow_strike",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.exchange_mark": {
+   "category": "hostile",
+   "min_distance": 8,
+   "max_distance": 60,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/exchange_mark",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.exchange_swap": {
+   "category": "hostile",
+   "min_distance": 10,
+   "max_distance": 64,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/exchange_swap",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.hour_call": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/hour_call",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.hour_chime": {
+   "category": "hostile",
+   "min_distance": 10,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/hour_chime0",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/orison/hour_chime1",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/orison/hour_chime2",
+     "volume": 0.9,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.hour_strike": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/hour_strike0",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/orison/hour_strike1",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.stagger": {
+   "category": "hostile",
+   "min_distance": 6.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/stagger",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.transition_crack": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/transition_crack",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.transition_shatter": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 80,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/transition_shatter",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.shadow_emerge": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/shadow_emerge",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.intro_wind": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/intro_wind",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.intro_strike": {
+   "category": "hostile",
+   "min_distance": 14,
+   "max_distance": 80,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/intro_strike",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.death_stop": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/death_stop",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.ribbon_fall": {
+   "category": "hostile",
+   "min_distance": 6,
+   "max_distance": 48,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/ribbon_fall0",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    },
+    {
+     "name": "sounds/abm/orison/ribbon_fall1",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.death_empty": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/death_empty",
+     "volume": 0.95,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.death_fall": {
+   "category": "hostile",
+   "min_distance": 12,
+   "max_distance": 72,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/death_fall",
+     "volume": 1.0,
+     "load_on_low_memory": true
+    }
+   ]
+  },
+  "abm.orison.trophy": {
+   "category": "hostile",
+   "min_distance": 4,
+   "max_distance": 16,
+   "sounds": [
+    {
+     "name": "sounds/abm/orison/trophy",
+     "volume": 0.8,
+     "load_on_low_memory": true
+    }
+   ]
   }
  }
 }

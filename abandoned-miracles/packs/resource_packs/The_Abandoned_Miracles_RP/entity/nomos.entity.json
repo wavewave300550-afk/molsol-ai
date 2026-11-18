@@ -1,0 +1,111 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "abm:nomos",
+   "materials": {
+    "default": "entity_alphatest",
+    "glow": "entity_emissive_alpha",
+    "glass": "entity_alphablend"
+   },
+   "textures": {
+    "default": "textures/entity/abm/nomos"
+   },
+   "geometry": {
+    "default": "geometry.abm.nomos"
+   },
+   "scripts": {
+    "pre_animation": [
+     "v.p2 = q.property('abm:phase') == 2;",
+     "v.gait = q.modified_distance_moved * 0.9;",
+     "v.turn = (q.body_y_rotation + 3600) / 60;",
+     "v.go = math.clamp(q.modified_move_speed * 4, 0, 1);",
+     "v.w_fl = math.mod(v.gait + 0.25, 1);",
+     "v.t_fl = math.mod(v.turn + 0.25, 1);",
+     "v.w_fr = math.mod(v.gait + 0.75, 1);",
+     "v.t_fr = math.mod(v.turn + 0.75, 1);",
+     "v.w_bl = math.mod(v.gait + 0, 1);",
+     "v.t_bl = math.mod(v.turn + 0, 1);",
+     "v.w_br = math.mod(v.gait + 0.5, 1);",
+     "v.t_br = math.mod(v.turn + 0.5, 1);"
+    ],
+    "animate": ["idle", "walk", "turn", "ctl_phase", "ctl_action", "ctl_feet"]
+   },
+   "animations": {
+    "idle": "animation.abm.nomos.idle",
+    "walk": "animation.abm.nomos.walk",
+    "turn": "animation.abm.nomos.turn",
+    "compass_spin": "animation.abm.nomos.compass_spin",
+    "p2_pose": "animation.abm.nomos.p2_pose",
+    "p2_compass": "animation.abm.nomos.p2_compass",
+    "footfalls": "animation.abm.nomos.footfalls",
+    "meridian_p1": "animation.abm.nomos.meridian_p1",
+    "shear_p1": "animation.abm.nomos.shear_p1",
+    "borders_p1": "animation.abm.nomos.borders_p1",
+    "gate_p1": "animation.abm.nomos.gate_p1",
+    "darts_p1": "animation.abm.nomos.darts_p1",
+    "folded_p1": "animation.abm.nomos.folded_p1",
+    "recalc_p1": "animation.abm.nomos.recalc_p1",
+    "meridian_p2": "animation.abm.nomos.meridian_p2",
+    "shear_p2": "animation.abm.nomos.shear_p2",
+    "borders_p2": "animation.abm.nomos.borders_p2",
+    "gate_p2": "animation.abm.nomos.gate_p2",
+    "darts_p2": "animation.abm.nomos.darts_p2",
+    "folded_p2": "animation.abm.nomos.folded_p2",
+    "recalc_p2": "animation.abm.nomos.recalc_p2",
+    "intro": "animation.abm.nomos.intro",
+    "stagger": "animation.abm.nomos.stagger",
+    "transition": "animation.abm.nomos.transition",
+    "death": "animation.abm.nomos.death",
+    "ctl_action": "controller.animation.abm.nomos.action",
+    "ctl_phase": "controller.animation.abm.nomos.phase",
+    "ctl_feet": "controller.animation.abm.nomos.feet"
+   },
+   "render_controllers": ["controller.render.abm.layered"],
+   "particle_effects": {
+    "ink": "abm:nomos_ink",
+    "flake": "abm:nomos_flake",
+    "spark": "abm:nomos_spark",
+    "dust": "abm:nomos_dust"
+   },
+   "sound_effects": {
+    "step": "abm.nomos.step",
+    "idle": "abm.nomos.idle",
+    "scribe": "abm.nomos.scribe",
+    "incision": "abm.nomos.incision",
+    "calipers": "abm.nomos.calipers",
+    "shear": "abm.nomos.shear",
+    "shear_hit": "abm.nomos.shear_hit",
+    "border_stamp": "abm.nomos.border_stamp",
+    "border_set": "abm.nomos.border_set",
+    "border_touch": "abm.nomos.border_touch",
+    "gate_ready": "abm.nomos.gate_ready",
+    "gate_fold": "abm.nomos.gate_fold",
+    "gate_unfold": "abm.nomos.gate_unfold",
+    "gate_arrive": "abm.nomos.gate_arrive",
+    "dart_spin": "abm.nomos.dart_spin",
+    "dart_lock": "abm.nomos.dart_lock",
+    "dart_fire": "abm.nomos.dart_fire",
+    "unfold": "abm.nomos.unfold",
+    "fold_slam": "abm.nomos.fold_slam",
+    "recalc_begin": "abm.nomos.recalc_begin",
+    "recalc_shift": "abm.nomos.recalc_shift",
+    "recalc_strike": "abm.nomos.recalc_strike",
+    "stagger": "abm.nomos.stagger",
+    "transition_shudder": "abm.nomos.transition_shudder",
+    "transition_wind": "abm.nomos.transition_wind",
+    "transition_rise": "abm.nomos.transition_rise",
+    "ring_release": "abm.nomos.ring_release",
+    "ring_drop": "abm.nomos.ring_drop",
+    "death_crumple": "abm.nomos.death_crumple",
+    "death_fall": "abm.nomos.death_fall",
+    "needle_slow": "abm.nomos.needle_slow",
+    "needle_stop": "abm.nomos.needle_stop",
+    "intro_unpack": "abm.nomos.intro_unpack",
+    "intro_level": "abm.nomos.intro_level",
+    "hit_metal": "abm.nomos.hit_metal",
+    "trophy": "abm.nomos.trophy"
+   }
+  }
+ }
+}

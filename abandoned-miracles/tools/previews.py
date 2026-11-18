@@ -44,7 +44,7 @@ def build(key: str) -> None:
                "p.abm:phase": phase, "p.abm:variant": 0}
         env.update(extra_env or {})
         env = ce.env(env)
-        base = list(spec["base"]) + (list(spec.get("base_p2", [])) if phase == 2 else [])
+        base = list(spec["base"]) + list(spec.get("base_p2" if phase == 2 else "base_p1", []))
         ps = [by[n].sample(2.0 + t, env) for n in base if n in by]
         ps += [by[n].sample(t, env) for n in names if n in by]
         return combine(*ps)

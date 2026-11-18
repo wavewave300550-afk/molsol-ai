@@ -18,6 +18,71 @@ Minecraft itself.**
 
 ---
 
+## The four encounters at a glance
+
+Every boss has exactly two phases and exactly seven attacks. Phase II never adds an eighth attack: it changes how the
+same seven behave (more beats, mirrored or recombined patterns, shorter cooldowns). Full timings, damage and weights
+are in the boss chapters.
+
+| | Vesperra | Cantor XIII | Nomos | Orison |
+|---|---|---|---|---|
+| Base health | 480 | 520 | 560 | 600 |
+| Phase II at | 45 % — *The True Empress* | 50 % — *The Broken Symphony* | 40 % — *There Is No North* | 35 % — *Tomorrow Has Already Happened* |
+| Signature system | three breakable armour regions hit by aim | a beat the whole fight is played on | an 8 × 8 logical survey grid | a bounded history of where players stood |
+| Arena | The Hall of Endless Succession | The Basilica of the Last Note | The Observatory of Unwritten Borders | The Court of Unlived Hours |
+| Trophy | Ivory Diadem of Succession | Fragment of the Thirteenth Bell | Needle of the Unmapped Sovereign | Hourglass of the Unlived Future |
+| Helpers | Heirs (max 2), cocoon anchors | detached bells | none | shadows, hourglasses |
+
+**Vesperra, The Ivory Succession**
+
+| # | Attack | What it is | Counterplay |
+|---|---|---|---|
+| 1 | Ivory Scythe | two-beat frontal sweep; the second beat is aimed at where the target went | leave the sector, or get behind her |
+| 2 | Needle Procession | three parallel lanes fired in a marked order | step to a lane that has already fired |
+| 3 | Royal Molting | eight shell plates ejected along drawn flight paths | stand between two paths |
+| 4 | Cocoon Edict | three anchors raise a silk triangle that constricts | break an anchor or walk out |
+| 5 | False Submission | a feigned stagger, then a lunge down a lane | read the cue (needles cocked, crown glint) and stay off the lane |
+| 6 | The Heirs | up to two Heirs guard her exposed flanks | kill them, or wait out their 25 s |
+| 7 | Coronation of Fracture | seven fracture chords laid through the players, one after another | keep walking; never stand on a marked chord |
+
+**Cantor XIII, The Walking Requiem**
+
+| # | Attack | What it is | Counterplay |
+|---|---|---|---|
+| 1 | Prime Downbeat | a ring rolls outward from the bell across the hall | stand in a marked door and let it pass |
+| 2 | Counterpoint | two wave fronts at right angles, each with marked corridors | take a corridor of the first, then of the second |
+| 3 | Glass Aria | volleys of glass shards in fixed fans | stand between lanes, change lane between volleys |
+| 4 | Held Note | a sustained cone from the organ pipes | sidestep, or stand under the pipes |
+| 5 | The Silent Measure | the pulse stops; the owed beat arrives late from the walls inward | the silence is the warning: find a door |
+| 6 | Twin Resonance | two detached bells toll discs on their own intervals | leave the disc or strike the bell to reset it |
+| 7 | The Final Requiem | four measures over the floor's cells; safe cells are lit | read the lit cells and walk |
+
+**Nomos, The Unmapped Sovereign**
+
+| # | Attack | What it is | Counterplay |
+|---|---|---|---|
+| 1 | Meridian Incision | a line ruled across the whole map cuts, then a second through where you went | step off the line and do not stop where you landed |
+| 2 | Latitude Shear | two curved bands close on the arena centre | go to the marked lane or behind a band |
+| 3 | Ink Borders | borders stamped on the grid; the stamp wounds, the standing ink only slows | step off the marked lines before the stamp; route around wet ink |
+| 4 | Unmapped Gate | folds away and unfolds at a marked coordinate with a cross | leave the disc and its row and column |
+| 5 | Compass Darts | needles take a bearing, lock, and fly | move until the lock, then step off the path |
+| 6 | Folded Country | alternate corridors of the floor are folded away | sidestep into the neighbouring corridor on the beat |
+| 7 | The Great Recalculation | the whole floor is re-projected three times | read the preview; solve one state at a time |
+
+**Orison, The Witness of Tomorrow**
+
+| # | Attack | What it is | Counterplay |
+|---|---|---|---|
+| 1 | Footstep Echo | the target's last footprints detonate, newest first | do not retrace your own path |
+| 2 | Pendulum Verdict | a pendulum blade sweeps a drawn arc (Phase II: and swings back through the outer band) | step under the swing, beyond its reach, or behind Orison |
+| 3 | Deferred Wound | marks set where players stand go off after a countdown | walk away from each mark |
+| 4 | Hourglass Drain | hourglasses set beside players slow and pulse | leave the circles, or break one (which also staggers Orison) |
+| 5 | Tomorrow's Witness | a shadow strikes where the target is predicted to be | change direction after the prediction locks |
+| 6 | Secondhand Exchange | Orison swaps places with a marked spot; both ends strike | leave the arrival circle; do not hide where it leaves |
+| 7 | The Hour That Never Occurred | three arena-wide patterns are previewed, then happen in the same order | remember the order; the third is the first inverted |
+
+---
+
 ## 1. Platform
 
 | | |
@@ -220,7 +285,7 @@ Bosses never spawn naturally (no spawn rules, `is_spawnable: false`).
 |---|---|---|
 | base health | 480 / 520 / 560 / 600 | Vesperra / Cantor XIII / Nomos / Orison (native entity health) |
 | Phase II threshold | 45 % / 50 % / 40 % / 35 % | |
-| `damageTaken` | per boss (see chapters) | share of incoming weapon damage that reaches the boss |
+| `damageTaken` | 0.10 / 0.125 / 0.125 / 0.128 | share of incoming weapon damage that reaches the boss (Vesperra / Cantor XIII / Nomos / Orison) |
 | `hpPerExtraPlayer` | 0.45 | health scaling per additional participant (max 4) |
 | `maxHitFraction` | 0.04 | largest share of health one hit can remove |
 | difficulty | story / **normal** / hard | damage ×0.6 / 1 / 1.3, health ×0.75 / 1 / 1.25, attack gap ×1.35 / 1 / 0.8 |

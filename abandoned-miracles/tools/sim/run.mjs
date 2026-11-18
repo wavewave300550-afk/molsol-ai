@@ -168,13 +168,16 @@ async function suiteAttacks(key) {
           check(def, `no attack with index ${idx}`);
           name = def.name;
           place(ctx.players[0], ctx.enc, dist, bearing);
+          // a sturdy target: it must outlive the whole attack, or the attack is cut short by the reset rule
+          ctx.players[0]._health.effectiveMax = 400;
+          ctx.players[0]._health.currentValue = 400;
           const hp0 = ctx.players[0]._health.currentValue;
           const s0 = count("strike");
           const usedBefore = ctx.enc.scheduler.usage.get(def.id) ?? 0;
           forceAttack(ctx.enc, def, [bot]);
           check((ctx.enc.scheduler.usage.get(def.id) ?? 0) === usedBefore + 1, "usage not recorded");
           check(!ctx.enc.scheduler.ready(def), "no cooldown after use");
-          run(90, [bot], () => ctx.players[0]._health.currentValue < hp0);
+          run(90, [bot]);
           strikes += count("strike") - s0;
           if (ctx.players[0]._health.currentValue < hp0) hitSpots++;
           check(ctx.enc.sm.inCombat, `left combat state: ${ctx.enc.sm.top}`);
