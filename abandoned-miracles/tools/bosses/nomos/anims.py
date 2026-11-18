@@ -103,11 +103,16 @@ def merge(*poses: Dict[str, dict]) -> Dict[str, dict]:
     return combine(*poses)
 
 
+IND_SPAN = {1: 1.0, 2: 1.22, 3: 1.55, 4: 2.2}
+
+
 def indicators_out(frac: float = 1.0) -> Dict[str, dict]:
     """The four rings leave the hub for their sheets and lie flat."""
     out = {}
     for k, (x, y, z) in IND_HOME.items():
-        out[f"ind_{k}"] = {"pos": [x * frac, y * frac, z * frac], "rot": [90 * frac, 0, 0]}
+        # nested rings are different sizes on the hub; as separate indicators they open to a similar span
+        s = 1 + (IND_SPAN[k] - 1) * frac
+        out[f"ind_{k}"] = {"pos": [x * frac, y * frac, z * frac], "rot": [90 * frac, 0, 0], "scale": [s, s, s]}
     return out
 
 

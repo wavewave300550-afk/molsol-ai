@@ -146,6 +146,7 @@ export default async function suite({ test, check, begin, toPhase, forceAttack, 
 
   await test("nomos: Unmapped Gate only lands on validated ground inside the arena", async () => {
     let jumps = 0;
+    let refused = 0;
     for (const phase of [1, 2]) {
       for (const [dist, bearing] of [[10, 0], [15, 180], [19, 90], [6, -120], [26, 45]]) {
         const ctx = await begin("nomos");
@@ -166,13 +167,23 @@ export default async function suite({ test, check, begin, toPhase, forceAttack, 
         forceAttack(enc, attack(enc, "unmapped_gate"), [bot, watch]);
         const mine = ctrl.gateLog.slice(n0);
         check(mine.length === phase, `P${phase}: ${mine.length} gate(s) opened`);
+        const lim = enc.arena.radius - enc.stats.leashInset - 0.5;
         for (const d of mine) {
+          if (!d.ok) {
+            // a refusal is only legitimate when Nomos already stands beside the nearest coordinate it may occupy
+            // (the log then holds its own position); 3 blocks of slack for the player's movement since the mark
+            const pl = players[0]._loc;
+            const cx = Math.min(enc.arena.cx + lim, Math.max(enc.arena.cx - lim, pl.x));
+            const cz = Math.min(enc.arena.cz + lim, Math.max(enc.arena.cz - lim, pl.z));
+            check(Math.hypot(cx - d.x, cz - d.z) < 6 + 3, `no destination found (${dist}@${bearing}) although the target was ${Math.hypot(cx - d.x, cz - d.z).toFixed(1)} blocks away`);
+            refused++;
+            continue;
+          }
           jumps++;
-          check(d.ok, `no destination found (${dist}@${bearing})`);
           check(enc.arena.contains(d.x, d.z, enc.stats.leashInset), `destination ${d.x.toFixed(1)},${d.z.toFixed(1)} is not inside the arena`);
           check(enc.loco.canStand({ x: d.x, y: enc.arena.floorY, z: d.z }), "destination is not standable");
         }
-        check(far > 3, `Nomos never relocated (largest step ${far.toFixed(2)})`);
+        if (mine.some((d) => d.ok)) check(far > 3, `Nomos never relocated (largest step ${far.toFixed(2)})`);
         const l = enc.boss._loc;
         check(enc.arena.contains(l.x, l.z, 0), "Nomos ended outside the arena");
         check(Math.abs(l.y - y0) < 1e-6, "Nomos changed height");
@@ -200,7 +211,8 @@ export default async function suite({ test, check, begin, toPhase, forceAttack, 
     check(enc.controller.gateLog.slice(n0).every((d) => !d.ok), "a destination was accepted although nowhere is standable");
     check(far < 1, `Nomos moved ${far.toFixed(2)} blocks in one tick without valid ground`);
     check(enc.sm.inCombat && !enc.sm.busy, "the fight did not continue");
-    return `${jumps} validated relocations, blocked case holds position`;
+    check(jumps >= 10, `only ${jumps} relocations happened`);
+    return `${jumps} validated relocations, ${refused} refused beside the target, blocked case holds position`;
   });
 
   await test("nomos: Compass Darts never re-aim after the lock", async () => {
