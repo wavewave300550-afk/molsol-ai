@@ -21,10 +21,10 @@ trail from the back, and the back plate is a clock face.
 | | |
 |---|---|
 | Height | about 8 blocks to the top of the bob at rest; collision box 1.8 × 6.4 |
-| Geometry | 51 bones, 132 cubes, per-face UV, one 256×128 texture; three render layers: opaque, emissive (`*_glow`: sand, coffin seam, pendulum eye), alpha-blended (`*_glass`: hourglass bulbs) |
-| Rig | root → body → torso → escapement, hourglass (glass / broken glass / two sand volumes / glow), coffin, pendulum, 4 × 3-segment arms, 3 ribbons of 4–5 segments; plumb; 2 legs × (hip, 4 segments) |
+| Geometry | 55 bones, 159 cubes, per-face UV, one 256×128 texture; three render layers: opaque, emissive (`*_glow`: sand, coffin seam, pendulum eye, the hour blades and hands of the Phase II dial), alpha-blended (`*_glass`: hourglass bulbs) |
+| Rig | root → body → torso → escapement, hourglass (glass / broken glass / two sand volumes / glow), coffin, pendulum, 4 × 3-segment arms, 3 ribbons of 4–5 segments, the dial of unlived hours (rim, blades, two hands); plumb; 2 legs × (hip, 4 segments) |
 | Helpers | `abm:orison_shadow` (own geometry: a flat cut-out rising from a pool with a pale ring and two jointed arms, 8 bones) · `abm:orison_hourglass` (6 bones) |
-| Phase II look | the intact chest glass is hidden and a broken one shown (`abm:glass` property); the upper bulb is empty, its glow is out and the spilled sand lies low in the case; the body hunches, the coffin hangs askew, the hands spread low and wide and the ribbons flutter |
+| Phase II look | **the dial of unlived hours**: when the glass bursts, a broken clock face five blocks across unfolds behind the torso — an incomplete rim on four spokes, ten glowing hour blades of unequal length (two hours are missing, XII is the longest) and two hands of its own. The face turns slowly one way while its hands run the other, much too fast. It is hidden in Phase I (`abm:glass` property) and is the main change of silhouette. Also: the intact chest glass is replaced by a broken one; the upper bulb is empty, its glow is out and the spilled sand lies low in the case; the body hunches, the coffin hangs askew, the hands spread low and wide and the ribbons flutter |
 
 ### Locomotion
 
@@ -177,7 +177,8 @@ removed, temporary shadow markers despawned) by a stagger, the phase change, a r
 ## Phase II — Tomorrow Has Already Happened (35 %)
 
 Health stops at the threshold; Orison is invulnerable for the 136-tick transition. The chest glass cracks (26) and
-shatters (60: sand, shards, a harmless push for anyone within 5 blocks), and at tick 100 the shadow steps out of it.
+shatters (60: sand, shards, a harmless push for anyone within 5 blocks); the dial of unlived hours unfolds out of
+the burst behind it, and at tick 100 the shadow steps out of the chest.
 All hourglasses and pending hazards are removed when the transition begins.
 
 - **The shadow** is a real, persistent helper entity (exactly one; replaced if lost). While Orison is idle the shadow
@@ -195,7 +196,7 @@ Intro (116 ticks, invulnerable): the stopped mechanism wakes (30) and the pendul
 
 Death (184 ticks): the shadow is removed first, at the moment the sequence begins, leaving only wisps where it stood.
 The pendulum stops (34). The body repeats its last verdict swing (74) and nothing answers it — one echo particle that
-fails to form. The ribbons fall (112), the hourglass empties (142), the body folds down. The trophy and experience
+fails to form. The ribbons fall (112), the hourglass empties (142), the dial closes, the body folds down. The trophy and experience
 are then awarded by the framework.
 
 ## Tuning

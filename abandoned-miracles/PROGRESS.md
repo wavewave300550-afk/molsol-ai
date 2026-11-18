@@ -14,7 +14,7 @@ _Last updated: all four bosses integrated into one add-on; static validation and
 | Asset toolkit (`tools/kit`): geometry + UV atlas, texture painters, software renderer, Molang DSL, animations, particles, audio synthesis, NBT/structures | done | used by all four bosses |
 | Build pipeline (`tools/build.py`) → packs, `.mcaddon`, `.mcpack`, `.bbmodel` | done | `npm run build` |
 | Encounter framework (`src/core`): manager, state machine, scheduler, targeting, arena, hazards, damage, locomotion, helpers, HUD, rewards, persistence | done | strict type-check; simulation |
-| Static validator (`tools/validate.py`) + Mojang Creator Tools validator | done | 13,823 checks, 0 failed; Creator Tools 0 errors / 0 warnings |
+| Static validator (`tools/validate.py`) + Mojang Creator Tools validator | done | 13,853 checks, 0 failed; Creator Tools 0 errors / 0 warnings |
 | Headless simulation (`tools/sim`) | done | 210/210 scenarios; 1,680/1,680 over 8 seeds |
 | Summoning Seals, Codex UI, `/abm:` commands, `/scriptevent` API, settings | done | simulation |
 
@@ -25,7 +25,7 @@ _Last updated: all four bosses integrated into one add-on; static validation and
 | 001 Vesperra, The Ivory Succession | done (58 bones, 182 cubes) | done | done | done (45×14×45) | done | done | 51/51 | **unverified** |
 | 002 Cantor XIII, The Walking Requiem | done (45 bones, 190 cubes) | done | done | done (51×16×51) | done | done | 53/53 | **unverified** |
 | 003 Nomos, The Unmapped Sovereign | done (64 bones, 195 cubes) | done | done | done (47×15×47) | done | done | 53/53 | **unverified** |
-| 004 Orison, The Witness of Tomorrow | done (51 bones, 132 cubes) | done | done | done (47×14×47) | done | done | 53/53 | **unverified** |
+| 004 Orison, The Witness of Tomorrow | done (55 bones, 159 cubes) | done | done | done (47×14×47) | done | done | 53/53 | **unverified** |
 
 For each of the 28 attacks, in both phases, the simulation shows that it is chosen by the AI, executes, can hit a
 stationary player, and can be avoided by a bot that walks, reacts after 0.3 s and knows only what was telegraphed.
@@ -62,7 +62,6 @@ A checklist for the first real session is in `TEST_REPORT.md` §1.
 
 ## Incomplete / worth improving
 
-* Orison's Phase II silhouette differs from Phase I less than the other bosses' do.
 * The simulation bot does not model Slowness or knockback, so slow-plus-hazard combinations (Nomos' wet ink,
   Orison's hourglasses) and recovery after being knocked back are argued from timings, not proven.
 * Peak telegraph particle calls (about 75 in one tick for Nomos' and Cantor's ultimates) are unmeasured on devices.

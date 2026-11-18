@@ -130,6 +130,18 @@
     },
     {
      "hourglass_broken_glass": "q.property('abm:glass') == 1"
+    },
+    {
+     "halo": "q.property('abm:glass') == 1"
+    },
+    {
+     "halo_glow": "q.property('abm:glass') == 1"
+    },
+    {
+     "halo_hand_glow": "q.property('abm:glass') == 1"
+    },
+    {
+     "halo_hour_glow": "q.property('abm:glass') == 1"
     }
    ]
   }

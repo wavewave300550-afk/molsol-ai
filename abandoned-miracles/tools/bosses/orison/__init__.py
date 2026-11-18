@@ -20,7 +20,7 @@ PREVIEW = {
     "phase2": "Tomorrow Has Already Happened",
     "base": ["idle", "walk", "turn", "pendulum_swing"],
     "base_p2": ["p2_pose", "p2_flutter"],
-    "hidden": ["hourglass_broken_glass"],
+    "hidden": ["hourglass_broken_glass", "halo", "halo_glow", "halo_hand_glow", "halo_hour_glow"],
     "hidden_p2": ["hourglass_glass"],
     "pad": 18,
     "actions": [
@@ -138,7 +138,8 @@ def assets() -> K.BossAssets:
     glass = "q.property('abm:glass')"
     out.render_controllers["controller.render.abm.orison"] = K.render_controller(
         materials=K.layered_materials(),
-        part_visibility=[{"*": True}, {"hourglass_glass": f"{glass} == 0"}, {"hourglass_broken_glass": f"{glass} == 1"}])
+        part_visibility=[{"*": True}, {"hourglass_glass": f"{glass} == 0"}, {"hourglass_broken_glass": f"{glass} == 1"}]
+        + [{b: f"{glass} == 1"} for b in model.HALO_BONES])      # the dial of unlived hours exists only after the burst
 
     out.bp_entities["orison"] = K.boss_entity(
         "abm:orison", "abm_orison", 600, 1.8, 6.4, 3.2, 8.2, "loot_tables/abm/orison.json",

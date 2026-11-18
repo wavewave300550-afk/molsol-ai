@@ -171,6 +171,11 @@ def build_base() -> List[Anim]:
     flut.rot("arm_ul_c", sin(lt * 700) * 5 * gate, 0, 0)
     flut.rot("arm_lr_c", sin(lt * 520 + 40) * 6 * gate, 0, 0)
     flut.rot("hourglass", 0, 0, sin(lt * 800) * 1.5 * gate)
+    # the dial of unlived hours: the face creeps one way, its hands run the other, far too fast
+    flut.rot("halo", 0, 0, lt * 7)
+    flut.rot("halo_hand_glow", 0, 0, lt * -64)
+    flut.rot("halo_hour_glow", 0, 0, lt * -11 + sin(lt * 240) * 6 * gate)
+    flut.scale("halo_glow", 1 + sin(lt * 190) * 0.035)
 
     steps = Anim(A + "footfalls", length=1.6, loop=True)
     steps.sound(0.0, "step").sound(0.8, "step")
@@ -396,6 +401,12 @@ def set_pieces(T: dict) -> List[Anim]:
     tr.poses([(0, {}), (crack * 0.6, clutch, "out"), (crack, clutch, "linear"), (shatter - 0.3, strain, "inout"),
               (shatter - 0.04, strain, "linear"), (shatter + 0.08, burst, "snap"), (shatter + 0.7, burst, "linear"),
               (emerge, spent, "bounce"), (emerge + 0.5, spent, "linear"), (total, P2_POSE, "inout")])
+    # the dial unfolds out of the burst (it is invisible until the glass breaks)
+    tr.track("halo", "scale", [(0, [0.02, 0.02, 0.02]), (shatter, [0.02, 0.02, 0.02], "linear"),
+                               (shatter + 0.12, [0.45, 0.45, 0.45], "out"), (emerge, [1.12, 1.12, 1.12], "out"),
+                               (emerge + 0.4, [1, 1, 1], "inout"), (total, [1, 1, 1], "linear")])
+    tr.track("halo", "rot", [(0, [0, 0, -150]), (shatter, [0, 0, -150], "linear"), (emerge + 0.4, [0, 0, 0], "out"),
+                             (total, [0, 0, 0], "linear")])
     tr.sound(0.05, "transition_crack").sound(shatter - 0.03, "transition_shatter").sound(emerge, "shadow_emerge")
     tr.particle(crack, "shard", "sand").particle(shatter, "shard", "sand").particle(shatter, "sand", "sand")
     tr.particle(shatter + 0.5, "sand", "sand").particle(emerge, "wisp", "chest")
@@ -430,6 +441,9 @@ def set_pieces(T: dict) -> List[Anim]:
     # 4. the hourglass empties completely
     dz.track("sand_bottom", "scale", [(0, [1, 1, 1]), (ribbons, [1, 1, 1], "linear"), (empty, [0.6, 0.04, 0.6], "in"), (total, [0.02, 0.02, 0.02], "linear")])
     dz.track("coffin_glow", "scale", [(0, [1, 1, 1]), (empty, [1, 1, 1], "linear"), (empty + 0.5, [0.01, 0.01, 0.01], "in")])
+    # the dial of unlived hours closes last: the hours it showed are let go
+    dz.track("halo", "scale", [(0, [1, 1, 1]), (ribbons, [1, 1, 1], "linear"), (empty, [1.06, 1.06, 1.06], "inout"),
+                               (empty + 0.7, [0.02, 0.02, 0.02], "in"), (total, [0.02, 0.02, 0.02], "linear")])
     dz.track("pendulum_glow", "scale", [(0, [1, 1, 1]), (stop, [1, 1, 1], "linear"), (stop + 0.8, [0.01, 0.01, 0.01], "in")])
     dz.sound(0.05, "death_stop").sound(repeat - 0.02, "gavel").sound(ribbons - 0.3, "death_empty").sound(total - 0.55, "death_fall")
     dz.particle(ribbons, "sand", "sand").particle(empty - 0.3, "sand", "sand").particle(total - 0.4, "spark", "top")

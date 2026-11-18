@@ -357,7 +357,40 @@ def build() -> Model:
             parent = name
             py -= 8.2
     m.get("ribbon_1_a").locator("ribbon", (15, 108, 9))
+
+    # ------------------------------------------------------------------ Phase II only: the dial of unlived hours
+    # When the hourglass bursts, the hours it was holding back unfold behind Orison as a broken clock face:
+    # an incomplete rim, hour blades of unequal length, and two hands that belong to no time in particular.
+    # Hidden in Phase I by the render controller (see HALO_BONES); it turns slowly in Phase II.
+    cx, cy, cz = HALO
+    R = 40.0
+    halo = m.bone("halo", (cx, cy, cz), "torso")
+    halo.box((cx - 3, cy - 3, cz - 0.8), (6, 6, 1.6), "gold", uv_key="halo_hub")
+    seg = 2 * (R - 9) * math.tan(math.radians(15)) + 0.6
+    for k in range(12):
+        if k in (4, 5, 8):                                   # the rim is broken in two places
+            continue
+        halo.box((cx - seg / 2, cy + R - 10, cz - 0.6), (seg, 2.2, 1.2), "blue" if k % 2 else "silver",
+                 pivot=(cx, cy, cz), rotation=(0, 0, k * 30 + 15), uv_key=f"halo_rim_{k % 2}")
+    for k in (1, 3, 6, 10):                                  # four spokes still hold it together
+        halo.box((cx - 0.5, cy + 3, cz - 0.4), (1, R - 14, 0.8), "iron",
+                 pivot=(cx, cy, cz), rotation=(0, 0, k * 30), uv_key="halo_spoke")
+    blades = m.bone("halo_glow", (cx, cy, cz), "halo")
+    for k, ln in enumerate((24, 11, 9, 17, 0, 8, 13, 10, 0, 20, 9, 12)):   # XII is the longest; two hours are missing
+        if not ln:
+            continue
+        blades.box((cx - 1.5, cy + R - 6, cz - 0.45), (3, ln, 0.9), "spectral",
+                   pivot=(cx, cy, cz), rotation=(0, 0, k * 30), uv_key=f"halo_blade_{ln}")
+    hand = m.bone("halo_hand_glow", (cx, cy, cz - 1.4), "halo")
+    hand.box((cx - 0.9, cy - 5, cz - 1.75), (1.8, R - 6, 0.7), "spectral")                    # tomorrow's minute hand
+    hand.box((cx - 2.2, cy + R - 20, cz - 1.7), (4.4, 6, 0.6), "spectral")
+    hand2 = m.bone("halo_hour_glow", (cx, cy, cz - 2.2), "halo", (0, 0, 118))
+    hand2.box((cx - 1.2, cy - 4, cz - 2.55), (2.4, R - 18, 0.7), "spectral")                  # and its hour hand
     return m
+
+
+HALO = (0.0, 99.0, 12.0)
+HALO_BONES = ("halo", "halo_glow", "halo_hand_glow", "halo_hour_glow")
 
 
 # --------------------------------------------------------------------------- helper entities
