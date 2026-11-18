@@ -12,7 +12,7 @@ import { BOSS_KEYS, BossKey, CONFIG } from "./config";
 import { SEAL_ITEM, manager } from "./core/manager";
 import { V3 } from "./core/math";
 import { report } from "./core/trace";
-import { openCodex } from "./ui";
+import { openCodex, setSummonHandler } from "./ui";
 
 export const CODEX_ITEM = "abm:codex";
 export const TROPHY: Record<BossKey, string> = {
@@ -75,16 +75,40 @@ export function useSeal(p: Player, key: BossKey, floor: V3, force = false): bool
   return false;
 }
 
+/** Trophies answer with their Miracle's sound and a line of text. */
+function flourish(p: Player, key: BossKey): void {
+  try {
+    p.dimension.playSound(TROPHY_SOUND[key], p.location, { volume: 0.8 });
+    p.onScreenDisplay.setActionBar({ rawtext: [{ translate: `abm.trophy.${key}` }] });
+  } catch (e) {
+    report("trophy", e);
+  }
+}
+
 export function initItems(): void {
+  setSummonHandler((p, key, floor) => {
+    useSeal(p, key, floor);
+  });
+  // Tapping / clicking a block with the item in hand. This is the path touch players use,
+  // so the Codex and the trophies respond here as well as the Seals.
   world.afterEvents.playerInteractWithBlock.subscribe((ev) => {
     if (!ev.isFirstEvent) return;
     const id = ev.beforeItemStack?.typeId ?? ev.itemStack?.typeId;
-    const key = id ? SEAL_TO_KEY.get(id) : undefined;
-    if (!key || !debounce(ev.player)) return;
-    const b = ev.block;
-    useSeal(ev.player, key, { x: b.x + 0.5, y: b.y + 1, z: b.z + 0.5 });
+    if (!id) return;
+    const key = SEAL_TO_KEY.get(id);
+    if (key) {
+      if (!debounce(ev.player)) return;
+      const b = ev.block;
+      useSeal(ev.player, key, { x: b.x + 0.5, y: b.y + 1, z: b.z + 0.5 });
+    } else if (id === CODEX_ITEM) {
+      if (debounce(ev.player)) void openCodex(ev.player);
+    } else {
+      const trophy = TROPHY_TO_KEY.get(id);
+      if (trophy && debounce(ev.player)) flourish(ev.player, trophy);
+    }
   });
 
+  // Using the item without a block under the cursor.
   world.afterEvents.itemUse.subscribe((ev) => {
     const id = ev.itemStack.typeId;
     const p = ev.source;
@@ -94,7 +118,6 @@ export function initItems(): void {
     }
     const seal = SEAL_TO_KEY.get(id);
     if (seal) {
-      // used in the air: take the block being looked at, if any
       if (!debounce(p)) return;
       try {
         const hit = p.getBlockFromViewDirection({ maxDistance: 10 });
@@ -108,14 +131,7 @@ export function initItems(): void {
       return;
     }
     const trophy = TROPHY_TO_KEY.get(id);
-    if (trophy && debounce(p)) {
-      try {
-        p.dimension.playSound(TROPHY_SOUND[trophy], p.location, { volume: 0.8 });
-        p.onScreenDisplay.setActionBar({ rawtext: [{ translate: `abm.trophy.${trophy}` }] });
-      } catch (e) {
-        report("trophy", e);
-      }
-    }
+    if (trophy && debounce(p)) flourish(p, trophy);
   });
 
   world.afterEvents.playerLeave.subscribe((ev) => lastUse.delete(ev.playerId));

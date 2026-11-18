@@ -115,6 +115,8 @@ def boss_entity(identifier: str, family: str, health: float, width: float, heigh
     the phase gate and the death sequence are enforced by the script before damage is applied.
     """
     props = dict(STANDARD_PROPS)
+    # a boss is born in its INTRO pose (animation state 11), so it never flashes its bind pose on spawn
+    props["abm:anim"] = {"type": "int", "range": [0, 15], "default": 11, "client_sync": True}
     props.update(extra_props or {})
     return {
         "format_version": ENTITY_FORMAT,

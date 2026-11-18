@@ -2446,6 +2446,10 @@ async function settingsMenu(p) {
   saveSettings();
   p.sendMessage(tr("abm.ui.saved"));
 }
+var summonHere = () => void 0;
+function setSummonHandler(fn) {
+  summonHere = fn;
+}
 async function openCodex(p) {
   try {
     const op = isOperator(p);
@@ -2458,7 +2462,11 @@ async function openCodex(p) {
     if (r.selection < keys.length) {
       const k = keys[r.selection];
       const s = CONFIG.bosses[k];
-      await new MessageFormData().title(tr(`entity.${bossType(k)}.name`)).body({ rawtext: [{ translate: `abm.lore.${k}` }, { text: "\n\n" }, { translate: "abm.summon.need", with: [String(s.arenaRadius * 2 + 1), String(s.clearance)] }] }).button1(tr("abm.ui.cancel")).button2(tr("abm.ui.title")).show(p);
+      const info = await new MessageFormData().title(tr(`entity.${bossType(k)}.name`)).body({ rawtext: [{ translate: `abm.lore.${k}` }, { text: "\n\n" }, { translate: "abm.summon.need", with: [String(s.arenaRadius * 2 + 1), String(s.clearance)] }] }).button1(tr("abm.ui.cancel")).button2(tr(op ? "abm.ui.summon_here" : "abm.ui.ok")).show(p);
+      if (op && !info.canceled && info.selection === 1) {
+        const l = p.location;
+        summonHere(p, k, { x: Math.floor(l.x) + 0.5, y: Math.floor(l.y), z: Math.floor(l.z) + 0.5 });
+      }
       return;
     }
     const extra = r.selection - keys.length;
@@ -2533,14 +2541,33 @@ function useSeal(p, key, floor, force = false) {
   }
   return false;
 }
+function flourish(p, key) {
+  try {
+    p.dimension.playSound(TROPHY_SOUND[key], p.location, { volume: 0.8 });
+    p.onScreenDisplay.setActionBar({ rawtext: [{ translate: `abm.trophy.${key}` }] });
+  } catch (e) {
+    report("trophy", e);
+  }
+}
 function initItems() {
+  setSummonHandler((p, key, floor) => {
+    useSeal(p, key, floor);
+  });
   world5.afterEvents.playerInteractWithBlock.subscribe((ev) => {
     if (!ev.isFirstEvent) return;
     const id = ev.beforeItemStack?.typeId ?? ev.itemStack?.typeId;
-    const key = id ? SEAL_TO_KEY.get(id) : void 0;
-    if (!key || !debounce(ev.player)) return;
-    const b = ev.block;
-    useSeal(ev.player, key, { x: b.x + 0.5, y: b.y + 1, z: b.z + 0.5 });
+    if (!id) return;
+    const key = SEAL_TO_KEY.get(id);
+    if (key) {
+      if (!debounce(ev.player)) return;
+      const b = ev.block;
+      useSeal(ev.player, key, { x: b.x + 0.5, y: b.y + 1, z: b.z + 0.5 });
+    } else if (id === CODEX_ITEM) {
+      if (debounce(ev.player)) void openCodex(ev.player);
+    } else {
+      const trophy = TROPHY_TO_KEY.get(id);
+      if (trophy && debounce(ev.player)) flourish(ev.player, trophy);
+    }
   });
   world5.afterEvents.itemUse.subscribe((ev) => {
     const id = ev.itemStack.typeId;
@@ -2564,14 +2591,7 @@ function initItems() {
       return;
     }
     const trophy = TROPHY_TO_KEY.get(id);
-    if (trophy && debounce(p)) {
-      try {
-        p.dimension.playSound(TROPHY_SOUND[trophy], p.location, { volume: 0.8 });
-        p.onScreenDisplay.setActionBar({ rawtext: [{ translate: `abm.trophy.${trophy}` }] });
-      } catch (e) {
-        report("trophy", e);
-      }
-    }
+    if (trophy && debounce(p)) flourish(p, trophy);
   });
   world5.afterEvents.playerLeave.subscribe((ev) => lastUse.delete(ev.playerId));
 }
@@ -2728,15 +2748,6 @@ function boot(mods) {
   const g = globalThis;
   if (g.__abmTrace) g.__abm = { manager, CONFIG };
 }
-
-// src/bosses/cantor/index.ts
-var MODULE = void 0;
-
-// src/bosses/nomos/index.ts
-var MODULE2 = void 0;
-
-// src/bosses/orison/index.ts
-var MODULE3 = void 0;
 
 // shared/vesperra.timings.json
 var vesperra_timings_default = {
@@ -3666,11 +3677,11 @@ var VesperraController = class extends BossController {
     };
   }
 };
-var MODULE4 = {
+var MODULE = {
   create: (enc) => new VesperraController(enc),
   arena: { structure: "abm:hall_of_endless_succession", size: 45, height: 14, nameKey: "abm.arena.vesperra" },
   helpers: ["abm:vesperra_heir", "abm:cocoon_anchor"]
 };
 
-// src/main.ts
-boot({ vesperra: MODULE4, cantor: MODULE, nomos: MODULE2, orison: MODULE3 });
+// build/entry_vesperra.ts
+boot({ vesperra: MODULE });

@@ -72,6 +72,8 @@ def build(keys) -> dict:
         "abm.ui.arena.warn": "This REPLACES blocks in a %s x %s area around you with the arena and cannot be undone. Use it only on empty ground.",
         "abm.ui.confirm": "Raise it",
         "abm.ui.cancel": "Cancel",
+        "abm.ui.ok": "Close",
+        "abm.ui.summon_here": "Summon here",
         "abm.ui.dismiss": "Dismiss the nearest encounter",
         "abm.ui.difficulty": "Difficulty",
         "abm.ui.vfx": "Reduced decorative particles",

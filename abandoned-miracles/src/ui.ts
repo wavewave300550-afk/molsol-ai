@@ -82,6 +82,13 @@ async function settingsMenu(p: Player): Promise<void> {
   p.sendMessage(tr("abm.ui.saved"));
 }
 
+let summonHere: (p: Player, key: BossKey, floor: Vector3) => void = () => undefined;
+
+/** items.ts provides the summon routine (kept as a hook to avoid a circular import). */
+export function setSummonHandler(fn: (p: Player, key: BossKey, floor: Vector3) => void): void {
+  summonHere = fn;
+}
+
 export async function openCodex(p: Player): Promise<void> {
   try {
     const op = isOperator(p);
@@ -95,12 +102,17 @@ export async function openCodex(p: Player): Promise<void> {
     if (r.selection < keys.length) {
       const k = keys[r.selection];
       const s = CONFIG.bosses[k];
-      await new MessageFormData()
+      const info = await new MessageFormData()
         .title(tr(`entity.${bossType(k)}.name`))
         .body({ rawtext: [{ translate: `abm.lore.${k}` }, { text: "\n\n" }, { translate: "abm.summon.need", with: [String(s.arenaRadius * 2 + 1), String(s.clearance)] }] })
         .button1(tr("abm.ui.cancel"))
-        .button2(tr("abm.ui.title"))
+        .button2(tr(op ? "abm.ui.summon_here" : "abm.ui.ok"))
         .show(p);
+      // operators can wake the Miracle on the spot (the usual ground check still applies)
+      if (op && !info.canceled && info.selection === 1) {
+        const l = p.location;
+        summonHere(p, k, { x: Math.floor(l.x) + 0.5, y: Math.floor(l.y), z: Math.floor(l.z) + 0.5 });
+      }
       return;
     }
     const extra = r.selection - keys.length;

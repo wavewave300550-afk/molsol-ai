@@ -9,7 +9,7 @@
     "abm:anim": {
      "type": "int",
      "range": [0, 15],
-     "default": 0,
+     "default": 11,
      "client_sync": true
     },
     "abm:variant": {
