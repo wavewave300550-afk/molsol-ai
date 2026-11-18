@@ -54,6 +54,9 @@ export class NomosController extends BossController {
   readonly attacks: readonly AttackDef[];
   /** Encounter tick until which ink borders stand (0 = none). */
   bordersUntil = 0;
+  /** Bumped whenever the standing borders are wiped; their scheduled work checks it. */
+  private borderEpoch = 0;
+  private readonly inked = new Map<string, number>();
   /** Every dart direction ever locked, in order (read by tests: a locked dart never re-aims). */
   readonly dartLocks: Array<{ tick: number; ox: number; oz: number; dx: number; dz: number }> = [];
   /** Where each Unmapped Gate tried to arrive, and whether it could (read by tests). */
@@ -90,6 +93,7 @@ export class NomosController extends BossController {
 
   phaseTransition(): number {
     const e = this.enc;
+    this.wipeBorders();
     const t = T.transition;
     // each quadrant is handed to its own indicator as the compass comes apart
     for (const q of QUADRANTS) {
@@ -105,6 +109,7 @@ export class NomosController extends BossController {
 
   death(): number {
     const e = this.enc;
+    this.wipeBorders();
     e.timeline.after(T.death.collapse + 16, () => {
       const b = e.boss.location;
       e.visuals.scatter(P("dust"), new Circle(b.x, b.z, 3.5).sample(e.rng, 8), e.arena.floorY + 0.4);
@@ -113,7 +118,7 @@ export class NomosController extends BossController {
   }
 
   /**
-   * Nomos keeps its distance and works from "stations" - cell centres about nine
+   * Nomos keeps its distance and works from fixed stations - cell centres about nine
    * blocks from its target, on the arena-centre side - rather than closing in.
    */
   position(target: Player | undefined): boolean {
@@ -196,16 +201,22 @@ export class NomosController extends BossController {
   }
 
   onAttackCancelled(def: AttackDef): void {
-    if (def.id === "ink_borders") this.bordersUntil = 0;
+    if (def.id === "ink_borders") this.wipeBorders();
     this.foldedUntil = 0;
   }
 
   cleanup(): void {
-    this.bordersUntil = 0;
+    this.wipeBorders();
     this.station = undefined;
   }
 
   // ------------------------------------------------------------------ shared helpers
+
+  /** Standing ink borders dry up at once (phase change, death, reset, interrupted stamp). */
+  private wipeBorders(): void {
+    this.borderEpoch++;
+    this.bordersUntil = 0;
+  }
 
   /** Point the indicator of quadrant q (0..3) along one of eight bearings. */
   private indicate(q: number, step: number): void {
@@ -383,35 +394,48 @@ export class NomosController extends BossController {
               lanes.push(alongX(clampZ(tg.z), tg.x), alongZ(ruled(tg.x, "x", tg.x - b.x), tg.z));
             }
           } else {
-            // Phase II: four borders, a "#" around the target; every one has open ends
+            // Phase II: a surveyed corridor with two staggered gates. Four borders, but never a closed
+            // cell: each cross-border spans only half the corridor, from opposite sides.
             const sx = tg.x <= g.cx ? 1 : -1;
             const sz = tg.z <= g.cz ? 1 : -1;
             const xa = clampX(tg.x);
             const xb = clampX(tg.x + sx * 7.5);
             const za = clampZ(tg.z - sz * 3.75);
             const zb = clampZ(tg.z + sz * 3.75);
-            const xc = (xa + xb) / 2;
-            lanes.push(alongZ(xa, tg.z), alongZ(xb, tg.z), alongX(za, xc), alongX(zb, xc));
+            const xm = (xa + xb) / 2;
+            lanes.push(
+              alongZ(xa, tg.z), alongZ(xb, tg.z),
+              new Lane(xa, za, xm, za, B.halfWidth), new Lane(xm, zb, xb, zb, B.halfWidth),
+            );
             for (const q of QUADRANTS) self.indicate(q, q % 2 ? 2 : 0);
           }
           const shape = new Union(lanes);
           const warn = t.active - t.mark;
+          const epoch = ++self.borderEpoch;
           self.bordersUntil = e.timeline.now + warn + t.life;
           trace("ink_borders", { lanes: lanes.length, until: self.bordersUntil });
-          // a border is a standing hazard: touching it stings and slows, standing in it keeps stinging
-          e.hazards.sweep({
-            tag: run.tag, warn, duration: t.life, every: B.hitEvery, once: false, draw: false, shapeAt: () => shape,
-            damage: B.damage, label: "ink_border", effects: [{ id: "slowness", ticks: B.slowTicks, amp: 0 }],
-            onHit: (p) => e.audio.play(S("border_touch"), p.location, 0.8),
+          // the stamp: the borders are inked in one stroke, and that stroke cuts
+          e.hazards.strike({
+            tag: run.tag, shape, warn, damage: B.damage, label: "ink_border", fx: 10,
+            effects: [{ id: "slowness", ticks: B.slowTicks, amp: 0 }],
           });
+          // ... then they stand as wet ink. A standing border never blocks and never wounds: whoever
+          // touches it is slowed, which is what makes the next attack harder to walk out of.
+          const amp = p2 ? 1 : 0;
+          for (let tt = 2; tt <= t.life; tt += 2) {
+            e.timeline.after(warn + tt, () => {
+              if (epoch === self.borderEpoch) for (const p of e.hazards.inside(shape)) self.inkTouch(p, amp);
+            }, run.tag);
+          }
           for (let tt = 0; tt < t.life; tt += B.redrawEvery) {
             e.timeline.after(warn + tt, () => {
+              if (epoch !== self.borderEpoch) return;
               const pen = self.floorPen(P("border_line"), B.redrawEvery + 3);
               for (const l of lanes) pen.line(l.ax, l.az, l.bx, l.bz);
             }, run.tag);
           }
           e.timeline.after(warn + t.life + 1, () => {
-            self.bordersUntil = 0;
+            if (epoch === self.borderEpoch) self.bordersUntil = 0;
           }, run.tag);
         });
         run.windows(t.active, 8, Math.max(8, t.end - t.active - 8));
@@ -558,9 +582,19 @@ export class NomosController extends BossController {
               self.dartLocks.push({ tick: e.timeline.now, ox: o.x, oz: o.z, dx: d.x, dz: d.z });
               trace("dart_lock", { index, dx: d.x, dz: d.z });
               if (p2) self.indicate(i % 4, dir8(dirToTheta(d.x, d.z)));
+              // a dart flies until it pins into the edge of the map
+              const bb = g.bounds();
+              const ex = d.x > 1e-6 ? (bb.x1 - o.x) / d.x : d.x < -1e-6 ? (bb.x0 - o.x) / d.x : Infinity;
+              const ez = d.z > 1e-6 ? (bb.z1 - o.z) / d.z : d.z < -1e-6 ? (bb.z0 - o.z) / d.z : Infinity;
+              const range = Math.max(3, Math.min(D.range, Math.min(ex, ez) - 0.4));
+              // the needle's mount snaps as it releases: do not stand on the station
+              e.hazards.strike({
+                tag: run.tag, shape: new Circle(o.x, o.z, D.mount), warn: t.warn, damage: D.mountDamage,
+                label: "dart_release",
+              });
               e.hazards.projectile({
                 tag: run.tag, delay: t.warn, from: { x: o.x, y: e.arena.floorY + D.height, z: o.z }, dir: d, speed: D.speed,
-                range: D.range, radius: D.radius, particle: P("dart"), damage: D.damage, blockable: true, knock: 0.5,
+                range, radius: D.radius, particle: P("dart"), damage: D.damage, blockable: true, knock: 0.5,
                 label: "compass_dart", sound: p2 ? S("dart_fire") : undefined,
               });
             });
@@ -569,6 +603,21 @@ export class NomosController extends BossController {
         run.windows(t.lock, last - t.lock + 2, Math.max(8, t.end - last - 2));
       },
     };
+  }
+
+  /** Wet ink: slow whoever stands on a standing border (no damage). */
+  private inkTouch(p: Player, amp: number): void {
+    const now = this.enc.timeline.now;
+    try {
+      p.addEffect("slowness", V.borders.slowTicks, { amplifier: amp, showParticles: false });
+    } catch {
+      return;
+    }
+    if (now - (this.inked.get(p.id) ?? -100) >= 20) {
+      this.inked.set(p.id, now);
+      this.enc.audio.play(S("border_touch"), p.location, 0.8);
+      trace("border_touch", { player: p.id });
+    }
   }
 
   // ------------------------------------------------------------------ 06 Folded Country
@@ -632,9 +681,13 @@ export class NomosController extends BossController {
     const g = this.grid;
     const R = V.recalc;
     if (system === 0) {
-      const d = new Checker(b, R.cell, (variant % 2) as 0 | 1);
+      // the board is shifted half a square on at least one axis, so no full square sits in a corner
+      const shift = [[1, 1], [1, 0], [0, 1]][(variant >> 1) % 3];
+      const d = new Checker(b, R.cell, (variant % 2) as 0 | 1, (shift[0] * R.cell) / 2, (shift[1] * R.cell) / 2);
       const safe = new Marks(d.cx, d.cz, (pen) => {
-        for (const c of d.centres((1 - d.parity) as 0 | 1)) pen.arc(c.x, c.z, 1.6, 0, 360);
+        for (const q of d.squares((1 - d.parity) as 0 | 1)) {
+          pen.arc((q.x0 + q.x1) / 2, (q.z0 + q.z1) / 2, Math.min(1.6, (q.x1 - q.x0) / 2 - 0.6, (q.z1 - q.z0) / 2 - 0.6), 0, 360);
+        }
       });
       return { danger: d, safe, system };
     }

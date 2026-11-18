@@ -69,6 +69,8 @@ export class OrisonController extends BossController {
   /** While the encounter clock is below this the shadow is on an errand and does not lead. */
   private shadowBusyUntil = 0;
   private shadowAt: XZ | undefined;
+  /** Encounter tick until which an hourglass pulse is announced but has not yet struck. */
+  private pulseUntil = 0;
   private nextIdleSound = 100;
   private readonly onLeave: (ev: { playerId: string }) => void;
 
@@ -225,6 +227,7 @@ export class OrisonController extends BossController {
     this.history.clear();
     this.trail = [];
     this.lastPrediction = [];
+    this.pulseUntil = 0;
     try {
       world.afterEvents.playerLeave.unsubscribe(this.onLeave);
     } catch {
@@ -425,34 +428,53 @@ export class OrisonController extends BossController {
     }
   }
 
+  /** True while Orison is performing one of its two arena-wide attacks. */
+  private wideAttack(): boolean {
+    const id = this.enc.currentAttack?.id;
+    return id === "pendulum_verdict" || id === "hour_never";
+  }
+
+  /**
+   * An hourglass pulses on its own clock, with one rule of fairness: a pulse is never announced
+   * while an arena-wide attack is in progress, and (see the weights of those attacks) an arena-wide
+   * attack never begins while a pulse is announced. The two are always a full warning apart.
+   */
   private armDrain(h: Helper, lifetime: number): void {
     const e = this.enc;
     const D = O.drain;
     const tag = `hg${h.id}`;
     const area = new Circle(h.data.x, h.data.z, D.radius);
+    const dies = e.timeline.now + lifetime;
     e.visuals.pen(this.style.line, this.style.arc, undefined, this.floor(), D.arm / 20).arc(h.data.x, h.data.z, D.radius, 0, 360);
-    for (let at = D.arm; at + D.pulseWarn < lifetime; at += D.pulseEvery) {
-      e.timeline.after(at, () => {
-        if (!h.entity.isValid) return;
-        try {
-          h.entity.setProperty("abm:anim", 1);
-        } catch {
-          return;
-        }
-        e.hazards.strike({
-          shape: area, warn: D.pulseWarn, tag, damage: D.damage, fx: 4, sound: S("drain_pulse"), label: "hourglass_drain",
-          condition: () => h.entity.isValid,
-          onStrike: () => {
-            e.visuals.decor(P("pulse"), { x: h.data.x, y: this.floor(), z: h.data.z });
-            try {
-              if (h.entity.isValid) h.entity.setProperty("abm:anim", 0);
-            } catch {
-              /* gone */
-            }
-          },
-        });
-      }, tag);
-    }
+    const pulse = (): void => {
+      if (!h.entity.isValid) return;
+      const now = e.timeline.now;
+      if (now + D.pulseWarn + 2 >= dies) return;
+      if (this.wideAttack()) {
+        e.timeline.after(10, pulse, tag);
+        return;
+      }
+      try {
+        h.entity.setProperty("abm:anim", 1);
+      } catch {
+        return;
+      }
+      this.pulseUntil = Math.max(this.pulseUntil, now + D.pulseWarn);
+      e.hazards.strike({
+        shape: area, warn: D.pulseWarn, tag, damage: D.damage, fx: 4, sound: S("drain_pulse"), label: "hourglass_drain",
+        condition: () => h.entity.isValid,
+        onStrike: () => {
+          e.visuals.decor(P("pulse"), { x: h.data.x, y: this.floor(), z: h.data.z });
+          try {
+            if (h.entity.isValid) h.entity.setProperty("abm:anim", 0);
+          } catch {
+            /* gone */
+          }
+        },
+      });
+      e.timeline.after(D.pulseEvery, pulse, tag);
+    };
+    e.timeline.after(D.arm, pulse, tag);
   }
 
   // ------------------------------------------------------------------ 01 Footstep Echo
@@ -509,6 +531,8 @@ export class OrisonController extends BossController {
     return {
       id: "pendulum_verdict", name: "Pendulum Verdict", index: 2, cooldown: O.verdict.cooldown,
       weight: (e) => {
+        // never on top of an announced hourglass pulse
+        if (e.timeline.now <= self.pulseUntil) return 0;
         const d = self.dist(e);
         return d <= O.verdict.outer + 1 ? 3.0 : 0.6;
       },
@@ -820,7 +844,7 @@ export class OrisonController extends BossController {
     return {
       id: "hour_never", name: "The Hour That Never Occurred", index: 7, ultimate: true, interruptible: false,
       cooldown: O.hour.cooldown,
-      weight: (e) => (e.healthFraction() < 0.92 ? 5 : 0),
+      weight: (e) => (e.healthFraction() < 0.92 && e.timeline.now > self.pulseUntil ? 5 : 0),
       run(run: AttackRun): void {
         const e = run.enc;
         const t = beats("hour_never", run.phase);

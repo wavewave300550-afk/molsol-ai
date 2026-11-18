@@ -114,20 +114,24 @@ export class Stripes implements Shape {
   }
 }
 
-/** A chessboard of `cell`-sized squares inside a box; squares of the given parity are covered. */
+/**
+ * A chessboard of `cell`-sized squares inside a box; squares of the given parity are covered.
+ * The board can be shifted by (ox, oz) so that the squares along a wall are cut short: a full
+ * square in a corner of the arena would leave its far corner a whole square away from safety.
+ */
 export class Checker implements Shape {
   readonly cx: number;
   readonly cz: number;
   readonly reach: number;
 
-  constructor(readonly b: Bounds, readonly cell: number, readonly parity: 0 | 1) {
+  constructor(readonly b: Bounds, readonly cell: number, readonly parity: 0 | 1, readonly ox = 0, readonly oz = 0) {
     this.cx = (b.x0 + b.x1) / 2;
     this.cz = (b.z0 + b.z1) / 2;
     this.reach = Math.hypot(b.x1 - b.x0, b.z1 - b.z0) / 2;
   }
 
   private squareOf(x: number, z: number): [number, number] {
-    return [Math.floor((x - this.b.x0) / this.cell), Math.floor((z - this.b.z0) / this.cell)];
+    return [Math.floor((x - this.b.x0 + this.ox) / this.cell), Math.floor((z - this.b.z0 + this.oz) / this.cell)];
   }
 
   contains(x: number, z: number): boolean {
@@ -136,28 +140,37 @@ export class Checker implements Shape {
     return (((i + j) % 2) + 2) % 2 === this.parity;
   }
 
-  /** Centres of the covered squares (parity) or of the others (1 - parity). */
-  centres(parity: 0 | 1 = this.parity): XZ[] {
-    const out: XZ[] = [];
-    const nx = Math.round((this.b.x1 - this.b.x0) / this.cell);
-    const nz = Math.round((this.b.z1 - this.b.z0) / this.cell);
-    for (let i = 0; i < nx; i++) {
-      for (let j = 0; j < nz; j++) {
-        if ((i + j) % 2 === parity) out.push({ x: this.b.x0 + (i + 0.5) * this.cell, z: this.b.z0 + (j + 0.5) * this.cell });
+  /** The covered squares (parity) or the others (1 - parity), clipped to the box. */
+  squares(parity: 0 | 1 = this.parity): Bounds[] {
+    const out: Bounds[] = [];
+    const b = this.b;
+    const [i1, j1] = this.squareOf(b.x1 - 1e-6, b.z1 - 1e-6);
+    for (let i = 0; i <= i1; i++) {
+      for (let j = 0; j <= j1; j++) {
+        if ((i + j) % 2 !== parity) continue;
+        const x0 = Math.max(b.x0, b.x0 - this.ox + i * this.cell);
+        const x1 = Math.min(b.x1, b.x0 - this.ox + (i + 1) * this.cell);
+        const z0 = Math.max(b.z0, b.z0 - this.oz + j * this.cell);
+        const z1 = Math.min(b.z1, b.z0 - this.oz + (j + 1) * this.cell);
+        if (x1 - x0 > 0.01 && z1 - z0 > 0.01) out.push({ x0, z0, x1, z1 });
       }
     }
     return out;
   }
 
+  /** Centres of the covered squares (parity) or of the others (1 - parity). */
+  centres(parity: 0 | 1 = this.parity): XZ[] {
+    return this.squares(parity).map((q) => ({ x: (q.x0 + q.x1) / 2, z: (q.z0 + q.z1) / 2 }));
+  }
+
   draw(pen: Pen): void {
-    const h = this.cell / 2;
-    for (const c of this.centres()) {
+    for (const q of this.squares()) {
       // outline plus one diagonal: a struck-out square reads as danger without relying on colour
-      pen.line(c.x - h, c.z - h, c.x + h, c.z - h);
-      pen.line(c.x + h, c.z - h, c.x + h, c.z + h);
-      pen.line(c.x + h, c.z + h, c.x - h, c.z + h);
-      pen.line(c.x - h, c.z + h, c.x - h, c.z - h);
-      pen.line(c.x - h, c.z - h, c.x + h, c.z + h);
+      pen.line(q.x0, q.z0, q.x1, q.z0);
+      pen.line(q.x1, q.z0, q.x1, q.z1);
+      pen.line(q.x1, q.z1, q.x0, q.z1);
+      pen.line(q.x0, q.z1, q.x0, q.z0);
+      pen.line(q.x0, q.z0, q.x1, q.z1);
     }
   }
 

@@ -40,6 +40,18 @@ function doors(base: number, count: number, width: number): Array<[number, numbe
   return out;
 }
 
+/**
+ * A door is never narrower than `min` blocks: close to the centre, where a fixed angle would pinch it
+ * shut, it opens up instead (the floor marks stay the narrower, always-safe wedge).
+ */
+function widen(gaps: ReadonlyArray<readonly [number, number]>, r: number, min: number): Array<[number, number]> {
+  const cap = 360 / gaps.length - 8;
+  return gaps.map(([g0, gw]): [number, number] => {
+    const w = Math.min(cap, Math.max(gw, (min / Math.max(0.5, r)) * (180 / Math.PI)));
+    return [g0 + gw / 2 - w / 2, w];
+  });
+}
+
 interface WaveOptions {
   /** Attack-relative tick at which the wave starts moving. */
   start: number;
@@ -240,13 +252,14 @@ export class CantorController extends BossController {
 
   /**
    * A moving wave. Collision and picture come from the same shapeAt(t) on the
-   * same ticks: the hazard system tests it every other tick and this draws it
-   * on those ticks with marks that live exactly until the next redraw.
+   * same ticks: this draws it on even ticks with marks that live exactly until
+   * the next redraw, and the hazard system tests that same drawn shape.
    */
   private wave(run: AttackRun, o: WaveOptions): void {
     const e = run.enc;
+    // tested every tick, but against the shape that is on the floor (redrawn on even ticks)
     run.at(o.shown, () => e.hazards.sweep({
-      tag: run.tag, warn: o.start - o.shown, duration: o.duration, every: 2, draw: false, shapeAt: o.shapeAt,
+      tag: run.tag, warn: o.start - o.shown, duration: o.duration, every: 1, draw: false, shapeAt: (tt) => o.shapeAt(tt - (tt % 2)),
       damage: o.damage, label: o.label, knock: o.knock ?? 0.6, knockUp: 0.2, from: o.from, fx: 2, sound: S("wave"),
     }));
     for (let tt = 0; tt <= o.duration; tt += 2) {
@@ -288,28 +301,24 @@ export class CantorController extends BossController {
         const base = e.rng.range(0, 360);
         const ringAt = (gaps: Array<[number, number]>) => (tt: number) => {
           const r = 2 + tt * D.speed;
-          return new Ring(c.x, c.z, Math.max(0.3, r - D.thickness / 2), r + D.thickness / 2, 0, 360, gaps);
+          const r0 = Math.max(0.3, r - D.thickness / 2);
+          return new Ring(c.x, c.z, r0, r + D.thickness / 2, 0, 360, widen(gaps, r0, D.minDoor));
         };
         // the bell falls on the beat; the doors are shown from the first tick
         const g1 = doors(base, D.gaps, D.gapWidth);
         self.markDoors(c, g1, 2.5, R, t.strike + duration);
         run.at(t.strike, () => self.flash(c, 3));
         let last = t.strike;
-        let shapeAt: (tt: number) => Shape = ringAt(g1);
+        self.wave(run, { shown: 0, start: t.strike, duration, shapeAt: ringAt(g1), damage: D.damage, label: "downbeat", from: c });
         if (run.phase === 2) {
-          // Phase II: a second toll on the off-beat. Its doors are turned, but they overlap the first set -
-          // the place to stand is where both sets of marks agree. The two rings are one hazard, so a
-          // player caught by the first is not struck again by the second.
+          // Phase II: a second, weaker toll on the off-beat. Its doors are turned but overlap the first
+          // set: stand where both sets of marks agree, or step across between the two rings.
           const g2 = doors(base + (e.rng.chance(0.5) ? 1 : -1) * D.secondShift, D.gaps, D.secondWidth);
-          const lag = t.second - t.strike;
-          const first = ringAt(g1);
-          const second = ringAt(g2);
           self.markDoors(c, g2, 2.5, R, t.second + duration);
-          shapeAt = (tt) => new Union([...(tt <= duration ? [first(tt)] : []), ...(tt >= lag ? [second(tt - lag)] : [])]);
+          self.wave(run, { shown: 0, start: t.second, duration, shapeAt: ringAt(g2), damage: D.secondDamage, label: "downbeat_echo", from: c });
           run.at(t.second, () => self.flash(c, 3));
           last = t.second;
         }
-        self.wave(run, { shown: 0, start: t.strike, duration: last - t.strike + duration, shapeAt, damage: D.damage, label: "downbeat", from: c });
         run.windows(t.strike, last - t.strike + duration, Math.max(10, t.end - last - duration));
       },
     };
@@ -374,12 +383,10 @@ export class CantorController extends BossController {
             e.hazards.telegraph(new Lane(cx - d.x * half, cz - d.z * half, cx + d.x * half, cz + d.z * half, K.doorHalf - 0.3), v.start + duration, true);
           }
         }
-        // one hazard for both voices: whoever is caught by the first front is not struck again by the second
-        const lag = t.second - t.first;
-        self.wave(run, {
-          shown: 0, start: t.first, duration: lag + duration, damage: K.damage, label: "counterpoint", knock: 0.9,
-          shapeAt: (tt) => new Union([fronts[0](tt), fronts[1](tt - lag)]),
-        });
+        // two hazards: the first front can be answered at its door, the second at its own
+        voices.forEach((v, i) => self.wave(run, {
+          shown: 0, start: v.start, duration, damage: K.damage, label: `counterpoint_${i + 1}`, knock: 0.9, shapeAt: fronts[i],
+        }));
         run.windows(t.first, t.second - t.first + duration, Math.max(8, t.end - t.second - duration));
       },
     };
@@ -536,7 +543,8 @@ export class CantorController extends BossController {
         const base = e.rng.range(0, 360);
         const ringAt = (gaps: Array<[number, number]>) => (tt: number) => {
           const r = Math.max(1.5, R - tt * Q.speed);
-          return new Ring(c.x, c.z, Math.max(0.3, r - Q.thickness / 2), r + Q.thickness / 2, 0, 360, gaps);
+          const r0 = Math.max(0.3, r - Q.thickness / 2);
+          return new Ring(c.x, c.z, r0, r + Q.thickness / 2, 0, 360, widen(gaps, r0, Q.minDoor));
         };
         // the bell is arrested mid-swing: no pulse, dark windows, a rest sign over the bell
         run.at(t.freeze, () => {
@@ -554,17 +562,13 @@ export class CantorController extends BossController {
           self.flash(c, R * 0.5);
         });
         let last = t.strike;
-        let shapeAt: (tt: number) => Shape = ringAt(g1);
+        self.wave(run, { shown: 0, start: t.strike, duration, shapeAt: ringAt(g1), damage: Q.damage, label: "silent_ring", from: c });
         if (run.phase === 2) {
           const g2 = doors(base + (e.rng.chance(0.5) ? 1 : -1) * Q.secondShift, Q.gaps, Q.secondWidth);
-          const lag = t.second - t.strike;
-          const first = ringAt(g1);
-          const second = ringAt(g2);
           self.markDoors(c, g2, 2, R, t.second + duration);
-          shapeAt = (tt) => new Union([...(tt <= duration ? [first(tt)] : []), ...(tt >= lag ? [second(tt - lag)] : [])]);
+          self.wave(run, { shown: 0, start: t.second, duration, shapeAt: ringAt(g2), damage: Q.secondDamage, label: "silent_echo", from: c });
           last = t.second;
         }
-        self.wave(run, { shown: 0, start: t.strike, duration: last - t.strike + duration, shapeAt, damage: Q.damage, label: "silent_ring", from: c });
         run.windows(t.strike, last - t.strike + duration, Math.max(10, t.end - last - duration));
       },
     };
@@ -679,12 +683,15 @@ export class CantorController extends BossController {
         const sixths = (odd: number, r0: number, r1: number): Shape[] =>
           [0, 2, 4].map((j) => new Ring(a.cx, a.cz, r0, r1, (k0 + odd + j) * 60, 60));
         const band = (r0: number, r1: number): Shape[] => [new Ring(a.cx, a.cz, r0, r1)];
+        // Every measure's answer can be walked to from anywhere in the answer before it.
+        // I:  sixths -> the middle band -> the other sixths -> under the bell.
+        // II: the middle band -> short sixths -> the other sixths, far half only -> the walls.
         const measures: Shape[][] = run.phase === 1
           ? [sixths(0, 2.5, R + 1), band(Q.inner, Q.middle), sixths(1, 2.5, Q.middle), [new Circle(a.cx, a.cz, Q.inner)]]
-          : [sixths(0, 9, R + 1), sixths(1, 2.5, Q.middle), band(Q.outer, R + 1), band(Q.inner, Q.middle)];
+          : [band(Q.inner, Q.middle), sixths(0, 2.5, Q.middle), sixths(1, Q.far, R + 1), band(Q.outer, R + 1)];
         strikes.strikes.forEach((at, i) => {
           // each measure is shown when the one before it lands, so only one answer is on the floor at a time
-          const shown = i === 0 ? 2 : strikes.strikes[i - 1];
+          const shown = i === 0 ? 1 : strikes.strikes[i - 1];
           run.at(shown, () => {
             e.hazards.strike({
               shape: new Except(a.bounds(-1), measures[i]), warn: at - shown, tag: run.tag, safe: true, damage: Q.damage,

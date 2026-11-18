@@ -1,37 +1,121 @@
 {
-  "_comment": "Beat timings for Cantor XIII in game ticks from the start of each action. One beat = 10 ticks, one measure = 40 ticks. Shared by the script (hit windows) and the animation generator (keyframes).",
-  "beat": 10,
-  "measure": 40,
-  "intro": { "wake": 40, "toll": 80, "total": 120 },
-  "transition": { "crack": 30, "break": 60, "unfold": 100, "total": 140 },
-  "stagger": { "total": 40 },
-  "death": { "bell": 30, "pipes": 60, "pipeStep": 8, "legs": 150, "legStep": 16, "total": 220 },
-  "prime_downbeat": {
-    "p1": { "strike": 30, "end": 110 },
-    "p2": { "strike": 30, "second": 54, "end": 134 }
+ "_comment": "Beat timings for Cantor XIII in game ticks from the start of each action. One beat = 10 ticks, one measure = 40 ticks. Shared by the script (hit windows) and the animation generator (keyframes).",
+ "beat": 10,
+ "measure": 40,
+ "intro": {
+  "wake": 40,
+  "toll": 80,
+  "total": 120
+ },
+ "transition": {
+  "crack": 30,
+  "break": 60,
+  "unfold": 100,
+  "total": 140
+ },
+ "stagger": {
+  "total": 40
+ },
+ "death": {
+  "bell": 30,
+  "pipes": 60,
+  "pipeStep": 8,
+  "legs": 150,
+  "legStep": 16,
+  "total": 220
+ },
+ "prime_downbeat": {
+  "p1": {
+   "strike": 30,
+   "end": 110
   },
-  "counterpoint": {
-    "p1": { "first": 40, "second": 80, "end": 220 },
-    "p2": { "first": 40, "second": 64, "end": 204 }
-  },
-  "glass_aria": {
-    "p1": { "open": 16, "first": 40, "gap": 20, "volleys": 3, "end": 130 },
-    "p2": { "open": 14, "first": 36, "gap": 16, "volleys": 4, "wave": 52, "end": 144 }
-  },
-  "held_note": {
-    "p1": { "blast": 60, "end": 100 },
-    "p2": { "blast": 52, "echo": 84, "end": 120 }
-  },
-  "silent_measure": {
-    "p1": { "freeze": 20, "strike": 80, "end": 160 },
-    "p2": { "freeze": 16, "strike": 72, "second": 96, "end": 176 }
-  },
-  "twin_resonance": {
-    "p1": { "detach": 30, "end": 60 },
-    "p2": { "detach": 24, "end": 52 }
-  },
-  "final_requiem": {
-    "p1": { "strikes": [50, 90, 130, 170], "end": 214 },
-    "p2": { "strikes": [50, 94, 134, 178], "end": 222 }
+  "p2": {
+   "strike": 30,
+   "second": 54,
+   "end": 134
   }
+ },
+ "counterpoint": {
+  "p1": {
+   "first": 40,
+   "second": 80,
+   "end": 220
+  },
+  "p2": {
+   "first": 40,
+   "second": 64,
+   "end": 204
+  }
+ },
+ "glass_aria": {
+  "p1": {
+   "open": 16,
+   "first": 40,
+   "gap": 20,
+   "volleys": 3,
+   "end": 130
+  },
+  "p2": {
+   "open": 14,
+   "first": 36,
+   "gap": 16,
+   "volleys": 4,
+   "wave": 52,
+   "end": 144
+  }
+ },
+ "held_note": {
+  "p1": {
+   "blast": 60,
+   "end": 100
+  },
+  "p2": {
+   "blast": 52,
+   "echo": 84,
+   "end": 120
+  }
+ },
+ "silent_measure": {
+  "p1": {
+   "freeze": 20,
+   "strike": 80,
+   "end": 160
+  },
+  "p2": {
+   "freeze": 16,
+   "strike": 72,
+   "second": 96,
+   "end": 176
+  }
+ },
+ "twin_resonance": {
+  "p1": {
+   "detach": 30,
+   "end": 60
+  },
+  "p2": {
+   "detach": 24,
+   "end": 52
+  }
+ },
+ "final_requiem": {
+  "p1": {
+   "strikes": [
+    60,
+    100,
+    140,
+    180
+   ],
+   "end": 224
+  },
+  "p2": {
+   "strikes": [
+    60,
+    104,
+    144,
+    188
+   ],
+   "end": 232
+  }
+ }
 }

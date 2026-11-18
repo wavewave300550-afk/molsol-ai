@@ -10,14 +10,14 @@ export const CANTOR = {
     p2: { speed: 0.085, turn: 3.6, home: 6.5, settle: 1.5 },
   },
   downbeat: {
-    cooldown: [70, 60] as [number, number], damage: 13, speed: 0.3, thickness: 1.6,
+    cooldown: [70, 60] as [number, number], damage: 13, secondDamage: 6, speed: 0.3, thickness: 1.6, minDoor: 3.4,
     /** Safe doors in the ring: count, width (degrees). */
     gaps: 3, gapWidth: 40,
     /** Phase II second ring: doors turned by this much and this wide, so the doors overlap. */
     secondShift: 20, secondWidth: 44,
   },
   counterpoint: {
-    cooldown: [220, 190] as [number, number], damage: 12, speed: [0.3, 0.34], thickness: 1.4,
+    cooldown: [220, 190] as [number, number], damage: 9, speed: [0.3, 0.34], thickness: 1.4,
     doorHalf: 2.5, doorSpacing: 13,
   },
   aria: {
@@ -31,8 +31,8 @@ export const CANTOR = {
     inner: 3.2, range: 15,
   },
   silent: {
-    cooldown: [300, 260] as [number, number], damage: 14, speed: 0.4, thickness: 1.6, gaps: 4, gapWidth: 34,
-    secondShift: 18, secondWidth: 40,
+    cooldown: [300, 260] as [number, number], damage: 14, secondDamage: 5, speed: 0.4, thickness: 1.6, gaps: 4, gapWidth: 34,
+    secondShift: 14, secondWidth: 40, minDoor: 3.4,
     /** Rhythmic attacks that must have been played since the last Silent Measure. */
     needsRhythm: 2,
   },
@@ -45,6 +45,6 @@ export const CANTOR = {
   requiem: {
     cooldown: [720, 680] as [number, number], damage: 17,
     /** Floor ring radii (they match the copper rings laid into the basilica floor). */
-    inner: 6, middle: 12, outer: 13,
+    inner: 6, middle: 12, outer: 13, far: 9,
   },
 };

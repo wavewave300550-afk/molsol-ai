@@ -58,9 +58,9 @@ export const CONFIG = {
 
   bosses: {
     vesperra: { health: 480, phase2At: 0.45, arenaRadius: 17, arenaShape: "circle", clearance: 9, leashInset: 4, damageTaken: 0.1 },
-    cantor: { health: 520, phase2At: 0.5, arenaRadius: 19, arenaShape: "circle", clearance: 11, leashInset: 6, damageTaken: 0.1 },
-    nomos: { health: 560, phase2At: 0.4, arenaRadius: 20, arenaShape: "square", clearance: 9, leashInset: 4, damageTaken: 0.1 },
-    orison: { health: 600, phase2At: 0.35, arenaRadius: 18, arenaShape: "circle", clearance: 10, leashInset: 4, damageTaken: 0.1 },
+    cantor: { health: 520, phase2At: 0.5, arenaRadius: 19, arenaShape: "circle", clearance: 11, leashInset: 6, damageTaken: 0.125 },
+    nomos: { health: 560, phase2At: 0.4, arenaRadius: 20, arenaShape: "square", clearance: 9, leashInset: 4, damageTaken: 0.125 },
+    orison: { health: 600, phase2At: 0.35, arenaRadius: 18, arenaShape: "circle", clearance: 10, leashInset: 4, damageTaken: 0.128 },
   } as Record<BossKey, BossBaseStats>,
 
   encounter: {

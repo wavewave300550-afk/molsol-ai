@@ -32,7 +32,7 @@ export const ORISON = {
     /** Slowness is re-applied every `slowEvery` ticks for `slowTicks`, only to players inside the area. */
     slowTicks: 30, slowEvery: 10, slowAmp: 1,
     /** Destroying an hourglass jams Orison for this long. */
-    breakStagger: 30,
+    breakStagger: 36,
   },
   witness: { cooldown: [190, 150] as [number, number], damage: 15, radius: [3.0, 2.6] as [number, number], samplesBack: 5 },
   exchange: { cooldown: [260, 220] as [number, number], arrive: 15, depart: 8, arriveRadius: 4.5, departRadius: 3.0, offset: 3.5, minJump: 6 },

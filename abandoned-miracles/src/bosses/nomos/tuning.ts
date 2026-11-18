@@ -17,14 +17,14 @@ export const NOMOS = {
     from: 15, to: 4.2, speed: 0.18, farCentre: 60, spread: 32,
   },
   borders: {
-    cooldown: [340, 300] as [number, number], damage: 6, halfWidth: 0.6, length: 24, slowTicks: 40,
-    hitEvery: 4, redrawEvery: 20,
+    cooldown: [340, 300] as [number, number], damage: 10, halfWidth: 0.6, length: 24, slowTicks: 40,
+    redrawEvery: 20,
   },
   gate: {
     cooldown: [260, 210] as [number, number], damage: 15, radius: 5, offset: 3.5, minJump: 6,
     crossHalfWidth: 1.6, crossOffset: 4.5,
   },
-  darts: { cooldown: [200, 170] as [number, number], damage: 9, speed: 0.9, range: 34, radius: 0.7, height: 1.4 },
+  darts: { cooldown: [200, 170] as [number, number], damage: 9, speed: 0.9, range: 34, radius: 0.7, height: 1.4, mount: 1.1, mountDamage: 5 },
   folded: { cooldown: [220, 190] as [number, number], damage: 13, width: 2.5 },
   recalc: { cooldown: [780, 720] as [number, number], damage: 18, cell: 10, stripe: 5, inner: 4, ring: [9, 14] as [number, number] },
   poise: { threshold: 110, window: 100, stagger: 36, lockout: 420 },
