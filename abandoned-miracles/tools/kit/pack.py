@@ -33,11 +33,15 @@ UUID = {
 }
 
 
-def write_json(path: str, obj, compact_lists: bool = True) -> None:
+def write_json(path: str, obj, compact_lists: bool = True, minify: bool = False) -> None:
+    """minify=True writes one top-level entry per line with no other whitespace (large generated files)."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    text = json.dumps(obj, indent=1, ensure_ascii=False)
-    if compact_lists:
-        text = _compact(text)
+    if minify:
+        text = json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
+    else:
+        text = json.dumps(obj, indent=1, ensure_ascii=False)
+        if compact_lists:
+            text = _compact(text)
     with open(path, "w", encoding="utf-8") as f:
         f.write(text + "\n")
 

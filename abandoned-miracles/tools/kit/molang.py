@@ -223,7 +223,7 @@ def out(x) -> Union[float, str]:
             return float(x.s) if re.fullmatch(r"-?\d+(\.\d+)?", x.s) else x.s
         except ValueError:
             return x.s
-    return round(float(x), 4)
+    return round(float(x), 3)
 
 
 def ev(x, env: dict) -> float:

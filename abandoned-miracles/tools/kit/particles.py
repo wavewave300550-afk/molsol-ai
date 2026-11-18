@@ -149,7 +149,7 @@ def tg_line(identifier: str, sprite: Sprite, color, *, width: float = 0.34, dens
     prog = f"(v.emitter_age / {draw_time})"
     return effect(identifier, sprite, merge(
         steady(f"v.len * {density} / {draw_time}", 400, draw_time),
-        point([f"v.dx * v.len * {prog}", 0, f"v.dz * v.len * {prog}"], [0, 0, 0]),
+        point([f"v.dx * v.len * {prog}", 0, f"v.dz * v.len * {prog}"], [0, 1, 0]),
         speed(0), life("v.life"),
         billboard([width, width], FLAT),
         tint(r, g, b, f"({FADE_IN_OUT}) * ({1 - pulse} + {pulse} * math.sin(v.particle_age * 900))"),
@@ -163,7 +163,7 @@ def tg_arc(identifier: str, sprite: Sprite, color, *, width: float = 0.34, densi
     ang = f"(v.a0 + v.sweep * v.emitter_age / {draw_time})"
     return effect(identifier, sprite, merge(
         steady(f"math.max(4, v.r * math.abs(v.sweep) * 0.01745 * {density}) / {draw_time}", 500, draw_time),
-        point([f"math.cos({ang}) * v.r", 0, f"math.sin({ang}) * v.r"], [0, 0, 0]),
+        point([f"math.cos({ang}) * v.r", 0, f"math.sin({ang}) * v.r"], [0, 1, 0]),
         speed(0), life("v.life"),
         billboard([width, width], FLAT),
         tint(r, g, b, f"({FADE_IN_OUT}) * ({1 - pulse} + {pulse} * math.sin(v.particle_age * 900))"),

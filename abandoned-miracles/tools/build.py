@@ -83,7 +83,8 @@ def write_client(assets) -> None:
         for ce in a.client_entities:
             K.write_json(os.path.join(RP, "entity", ce.identifier.split(":")[1] + ".entity.json"), ce.json())
         if a.animations:
-            K.write_json(os.path.join(RP, "animations", f"abm_{a.key}.animation.json"), animations_file(a.animations))
+            K.write_json(os.path.join(RP, "animations", f"abm_{a.key}.animation.json"), animations_file(a.animations),
+                         minify=True)
         if a.controllers:
             K.write_json(os.path.join(RP, "animation_controllers", f"abm_{a.key}.ac.json"),
                          controllers_file(a.controllers))
