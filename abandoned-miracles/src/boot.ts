@@ -8,6 +8,7 @@ import type { BossModule } from "./core/boss";
 import { manager } from "./core/manager";
 import { initItems } from "./items";
 import { install, installed, moduleOf } from "./registry";
+import { initScriptEvents } from "./scriptevents";
 
 export function boot(mods: Partial<Record<BossKey, BossModule | undefined>>): void {
   install(mods);
@@ -20,6 +21,7 @@ export function boot(mods: Partial<Record<BossKey, BossModule | undefined>>): vo
   }
   manager.init(helpers);
   initItems();
+  initScriptEvents();
   // Test harness hook: the headless simulation (tools/sim) reaches the manager through this.
   const g = globalThis as { __abmTrace?: unknown; __abm?: unknown };
   if (g.__abmTrace) g.__abm = { manager, CONFIG };

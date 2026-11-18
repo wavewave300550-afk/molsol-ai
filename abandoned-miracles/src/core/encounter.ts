@@ -136,6 +136,7 @@ export class Encounter {
   }
 
   private health(): EntityHealthComponent | undefined {
+    if (!this.boss.isValid) return undefined;
     return this.boss.getComponent("minecraft:health") as EntityHealthComponent | undefined;
   }
 
@@ -238,6 +239,7 @@ export class Encounter {
     } catch (e) {
       report(`${this.key} tick`, e);
     }
+    if (this.ended) return;       // the encounter was released during this tick (defeat, reset, abandonment)
     if (now % CONFIG.hud.intervalTicks === 0) renderHud(this);
     if (now % 100 === 0 && this.sm.inCombat) this.save();
   }

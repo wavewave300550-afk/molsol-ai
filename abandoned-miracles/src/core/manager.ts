@@ -7,7 +7,7 @@
  * arena, so several can run at once in different places or dimensions.
  */
 import {
-  Dimension, Entity, EntityHurtBeforeEvent, ItemStack, Player, system, world,
+  Dimension, Entity, EntityHurtBeforeEvent, ItemStack, system, world,
 } from "@minecraft/server";
 import { BOSS_KEYS, BossKey, CONFIG } from "../config";
 import { Arena } from "./arena";
@@ -34,6 +34,13 @@ const TYPE_TO_KEY = new Map<string, BossKey>(BOSS_KEYS.map((k) => [BOSS_TYPE[k],
 const DIMENSIONS = ["overworld", "nether", "the_end"];
 
 export type SummonFailure = "unknown" | "overlap" | "floor" | "ceiling" | "unloaded" | "spawn";
+
+/** Whoever asks for a summon: a player, or a command block / NPC standing in for one. */
+export interface SummonSource {
+  dimension: Dimension;
+  location: V3;
+  name?: string;
+}
 
 export interface SummonResult {
   ok: boolean;
@@ -149,10 +156,10 @@ export class EncounterManager implements EncounterHost {
    * Summon a boss at a floor position chosen by a player. Never edits terrain:
    * if the place cannot host the arena the summon is refused with a reason.
    */
-  trySummon(player: Player, key: BossKey, floor: V3, force = false): SummonResult {
+  trySummon(by: SummonSource, key: BossKey, floor: V3, force = false): SummonResult {
     if (!this.factories.has(key)) return { ok: false, reason: "unknown" };
     const stats = CONFIG.bosses[key];
-    const dim = player.dimension;
+    const dim = by.dimension;
     for (const e of this.encounters.values()) {
       if (e.dim.id !== dim.id) continue;
       const d = Math.hypot(e.arena.cx - floor.x, e.arena.cz - floor.z);
@@ -164,14 +171,14 @@ export class EncounterManager implements EncounterHost {
     }
     let boss: Entity;
     try {
-      const yaw = dirToYaw(player.location.x - floor.x, player.location.z - floor.z);
+      const yaw = dirToYaw(by.location.x - floor.x, by.location.z - floor.z);
       boss = dim.spawnEntity(BOSS_TYPE[key], { x: floor.x, y: floor.y + 0.05, z: floor.z }, { initialRotation: yaw });
     } catch (e) {
       report("spawn boss", e);
       return { ok: false, reason: "spawn" };
     }
     const enc = this.create(boss, key, floor);
-    trace("summon", { boss: key, by: player.name, coverage: scan.coverage });
+    trace("summon", { boss: key, by: by.name ?? "", coverage: scan.coverage });
     return { ok: !!enc, encounter: enc, coverage: scan.coverage, reason: enc ? undefined : "spawn" };
   }
 

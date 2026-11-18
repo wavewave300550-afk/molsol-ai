@@ -633,6 +633,81 @@ def check_packaging():
     return {"mcaddon_bytes": size, "files": len(names)}
 
 
+KNOWN_COMMANDS = {"gamerule", "time", "weather", "tickingarea", "setworldspawn", "scoreboard", "execute", "structure",
+                  "tp", "give", "tellraw", "tag", "function"}
+
+
+def check_testworld(client, items):
+    """The optional demonstration world: archive, level.dat, pack references, kit functions."""
+    R.begin("test world")
+    path = os.path.join(DIST, "The_Abandoned_Miracles_Test_World.mcworld")
+    if not os.path.exists(path):
+        R.warn("test world not built; skipped")
+        return None
+    from kit import nbt
+    with zipfile.ZipFile(path) as z:
+        R.ok(z.testzip() is None, "mcworld archive is corrupt")
+        names = set(z.namelist())
+        for need in ("level.dat", "levelname.txt", "world_behavior_packs.json", "world_resource_packs.json"):
+            R.ok(need in names, f"mcworld: {need} missing")
+        raw = z.read("level.dat")
+        size = struct.unpack("<ii", raw[:8])
+        R.ok(size[1] == len(raw) - 8, "level.dat header length does not match its payload")
+        lv = nbt.loads(raw[8:]).v
+        R.ok(lv["LevelName"].v == z.read("levelname.txt").decode(), "level name differs between level.dat and levelname.txt")
+        R.ok(lv["Generator"].v == 2, "test world is not a flat world")
+        R.ok(lv["commandsEnabled"].v == 1, "cheats are not enabled in the test world")
+        R.ok("gametest" not in lv["experiments"].v and all(t.v == 0 for t in lv["experiments"].v.values()), "test world enables experiments")
+        packs = {}
+        for n in names:
+            m = re.match(r"(behavior_packs|resource_packs)/([^/]+)/manifest.json$", n)
+            if m:
+                h = json.loads(z.read(n))["header"]
+                packs[h["uuid"]] = (m.group(1), m.group(2), h["version"])
+        for ref_file, kind in (("world_behavior_packs.json", "behavior_packs"), ("world_resource_packs.json", "resource_packs")):
+            for ref in json.loads(z.read(ref_file)):
+                ok = ref["pack_id"] in packs and packs[ref["pack_id"]][0] == kind and packs[ref["pack_id"]][2] == ref["version"]
+                R.ok(ok, f"{ref_file} references a pack that is not embedded: {ref}")
+        R.ok(len(packs) == 3, f"expected 3 embedded packs, found {len(packs)}")
+        structures = {"abm:" + os.path.basename(n)[:-12] for n in names if "/structures/abm/" in n}
+        structures |= {"abmtw:" + os.path.basename(n)[:-12] for n in names if "/structures/abmtw/" in n}
+        fns = {n.split("/functions/")[1][:-11] for n in names if n.endswith(".mcfunction")}
+        tick = [n for n in names if n.endswith("functions/tick.json")]
+        if R.ok(len(tick) == 1, "kit tick.json missing"):
+            for f in json.loads(z.read(tick[0]))["values"]:
+                R.ok(f in fns, f"tick.json runs missing function {f}")
+        loaded = set()
+        for n in names:
+            if not n.endswith(".mcfunction"):
+                continue
+            for i, line in enumerate(z.read(n).decode().splitlines(), 1):
+                if not line.strip():
+                    continue
+                R.ok(line.split()[0] in KNOWN_COMMANDS, f"{n}:{i}: unexpected command '{line.split()[0]}'")
+                R.ok(len(line) < 1800, f"{n}:{i}: command too long")
+                for st in re.findall(r"structure load (\S+)", line):
+                    R.ok(st in structures, f"{n}:{i}: structure {st} is not in the world's packs")
+                    loaded.add(st)
+                for fn in re.findall(r"run function (\S+)", line):
+                    R.ok(fn in fns, f"{n}:{i}: function {fn} missing")
+                for it in re.findall(r"give @s (\S+)", line):
+                    R.ok(it in items, f"{n}:{i}: gives unknown item {it}")
+                m = re.search(r"tellraw @s (\{.*\})$", line)
+                if m:
+                    try:
+                        json.loads(m.group(1))
+                        R.ok(True, "")
+                    except ValueError as e:
+                        R.ok(False, f"{n}:{i}: tellraw JSON invalid: {e}")
+        arenas = {s for s in structures if s.startswith("abm:")}
+        R.ok(arenas <= loaded, f"arenas never placed by the kit: {sorted(arenas - loaded)}")
+        for n in names:
+            if n.endswith(".mcstructure") and "/abmtw/" in n:
+                root, used = read_nbt(z.read(n))
+                R.ok(max(root["size"]) <= 64, f"{n}: larger than 64 blocks")
+    return {"bytes": os.path.getsize(path), "files": len(names), "arenas": sorted(arenas)}
+
+
 def run_mct():
     R.begin("minecraft creator tools")
     script = None
@@ -675,6 +750,7 @@ def main():
     items = check_items(lang, src)
     summary["structures"] = check_structures()
     summary["packaging"] = check_packaging()
+    summary["testworld"] = check_testworld(client, items)
     if args.mct:
         summary["mct"] = run_mct()
     summary.update({

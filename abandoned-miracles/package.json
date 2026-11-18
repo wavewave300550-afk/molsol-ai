@@ -5,10 +5,13 @@
   "description": "Minecraft Bedrock add-on: four original dark-fantasy bosses (Vesperra, Cantor XIII, Nomos, Orison)",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "build": "python3 tools/build.py",
+    "build": "python3 tools/build.py && python3 tools/testworld.py",
     "validate": "python3 tools/validate.py",
     "sim": "node tools/sim/run.mjs",
-    "test": "npm run typecheck && npm run build && npm run validate && npm run sim"
+    "sim:seeds": "node tools/sim/seeds.mjs 6",
+    "previews": "python3 tools/previews.py",
+    "report": "python3 tools/report.py",
+    "test": "npm run typecheck && npm run build && python3 tools/validate.py --mct && npm run sim && npm run sim:seeds && npm run report"
   },
   "devDependencies": {
     "@minecraft/server": "2.11.0",

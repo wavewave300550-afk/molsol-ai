@@ -73,6 +73,13 @@ def build(key: str) -> None:
             frames.append(render.render(model, pose(names, t, phase, dist=speed * t), yaw=32, pitch=14, size=(380, 380), bounds=bounds,
                                         hidden=hidden2 if phase == 2 else hidden1, scale_figure=False, ss=1))
         frames[0].save(os.path.join(out, f"{name}.gif"), save_all=True, append_images=frames[1:], duration=100, loop=0, optimize=True)
+    # demonstration arena (layout preview in flat colours)
+    try:
+        from kit import iso
+        arena = importlib.import_module(f"bosses.{key}.arena").build()
+        iso.render(arena).save(os.path.join(out, "arena.png"))
+    except Exception as e:                                # noqa: BLE001 - previews must not stop on an arena problem
+        print(f"[previews] {key}: arena preview skipped ({e})")
     print(f"[previews] {key}: {len(os.listdir(out))} files in docs/previews/{key}")
 
 

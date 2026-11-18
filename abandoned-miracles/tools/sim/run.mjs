@@ -508,6 +508,26 @@ async function suiteCommands(key) {
     sim.runCommand("abm:arena", p, key);
     run(2);
     check(sim.stats.structures.length === placedBefore + 1, "abm:arena did not place the arena structure");
+    // the same three actions through /scriptevent (command blocks, NPCs, map makers)
+    const se = w.mc.system.afterEvents.scriptEventReceive;
+    se._fire({ id: "abm:summon", message: `${key} force`, sourceEntity: p, sourceType: "Entity" });
+    run(3);
+    check(w.manager.list().length === 1, "scriptevent abm:summon did not create an encounter");
+    se._fire({ id: "abm:dismiss", message: "", sourceEntity: p, sourceType: "Entity" });
+    run(3);
+    check(w.manager.list().length === 0, "scriptevent abm:dismiss did not end the encounter");
+    const block = { x: 40, y: 63, z: 40, dimension: p.dimension };
+    se._fire({ id: "abm:summon", message: key, sourceBlock: block, sourceType: "Block" });
+    run(3);
+    check(w.manager.list().length === 1, "scriptevent abm:summon from a command block did not work");
+    w.manager.cancel(w.manager.list()[0]);
+    run(3);
+    const before = sim.stats.structures.length;
+    se._fire({ id: "abm:arena", message: key, sourceEntity: p, sourceType: "Entity" });
+    check(sim.stats.structures.length === before + 1, "scriptevent abm:arena did not place the arena");
+    se._fire({ id: "abm:summon", message: "nonsense", sourceEntity: p, sourceType: "Entity" });
+    run(2);
+    check(w.manager.list().length === 0, "scriptevent with an unknown boss did something");
     // codex: operator opens settings and changes difficulty
     uiSim.answers = [{ canceled: false, selection: w.manager.list().length + countBosses(w) }, { canceled: false, formValues: [2, true, true, false] }];
     const stack = new w.mc.ItemStack("abm:codex");

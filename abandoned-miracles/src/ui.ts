@@ -3,7 +3,7 @@
  * Players read about the four Miracles; operators can also change settings,
  * raise a demonstration arena (explicit, confirmed, destructive) or dismiss an encounter.
  */
-import { Player, PlayerPermissionLevel, world } from "@minecraft/server";
+import { Dimension, Player, PlayerPermissionLevel, Vector3, world } from "@minecraft/server";
 import { ActionFormData, MessageFormData, ModalFormData } from "@minecraft/server-ui";
 import { BOSS_KEYS, BossKey, CONFIG, applySettings } from "./config";
 import { manager } from "./core/manager";
@@ -22,22 +22,27 @@ export function isOperator(p: Player): boolean {
   }
 }
 
-/** Place a demonstration arena centred on the player, floor at their feet. Destructive by design. */
-export function raiseArena(p: Player, key: BossKey): boolean {
+/** Place a demonstration arena centred on a floor position. Destructive by design; only ever called on explicit request. */
+export function raiseArenaAt(dim: Dimension, floor: Vector3, key: BossKey): boolean {
   const info = arenaOf(key);
   if (!info) return false;
-  const l = p.location;
   const half = Math.floor(info.size / 2);
   try {
-    world.structureManager.place(info.structure, p.dimension, {
-      x: Math.floor(l.x) - half, y: Math.floor(l.y) - 1, z: Math.floor(l.z) - half,
+    world.structureManager.place(info.structure, dim, {
+      x: Math.floor(floor.x) - half, y: Math.floor(floor.y) - 1, z: Math.floor(floor.z) - half,
     });
-    p.sendMessage(tr("abm.arena.built"));
     return true;
   } catch (e) {
     report("raiseArena", e);
     return false;
   }
+}
+
+/** Place a demonstration arena centred on the player, floor at their feet. */
+export function raiseArena(p: Player, key: BossKey): boolean {
+  const ok = raiseArenaAt(p.dimension, p.location, key);
+  if (ok) p.sendMessage(tr("abm.arena.built"));
+  return ok;
 }
 
 async function arenaMenu(p: Player): Promise<void> {

@@ -160,3 +160,82 @@ def level_dat(root: T, storage_version: int = 10) -> bytes:
     """Bedrock level.dat = 8-byte header (storage version, payload length) + little-endian NBT."""
     body = dumps(root)
     return struct.pack("<ii", storage_version, len(body)) + body
+
+
+# --------------------------------------------------------------------------- typed reader (round-trips level.dat)
+
+def loads(data: bytes) -> T:
+    """Parse little-endian NBT into typed `T` values (so it can be modified and written back unchanged)."""
+    pos = 0
+
+    def rd(fmt: str):
+        nonlocal pos
+        v = struct.unpack_from("<" + fmt, data, pos)
+        pos += struct.calcsize("<" + fmt)
+        return v[0]
+
+    def text() -> str:
+        nonlocal pos
+        n = rd("H")
+        s = data[pos:pos + n].decode("utf-8")
+        pos += n
+        return s
+
+    def payload(tag: int) -> T:
+        nonlocal pos
+        if tag == BYTE:
+            return T(BYTE, rd("b"))
+        if tag == SHORT:
+            return T(SHORT, rd("h"))
+        if tag == INT:
+            return T(INT, rd("i"))
+        if tag == LONG:
+            return T(LONG, rd("q"))
+        if tag == FLOAT:
+            return T(FLOAT, rd("f"))
+        if tag == DOUBLE:
+            return T(DOUBLE, rd("d"))
+        if tag == STRING:
+            return T(STRING, text())
+        if tag == LIST:
+            elem, n = rd("b"), rd("i")
+            if elem == INT:
+                vals = list(struct.unpack_from(f"<{n}i", data, pos))
+                pos += 4 * n
+                return T(LIST, vals, INT)
+            return T(LIST, [payload(elem) for _ in range(n)], elem)
+        if tag == COMPOUND:
+            out = {}
+            while True:
+                t = rd("b")
+                if t == END:
+                    return T(COMPOUND, out)
+                name = text()
+                out[name] = payload(t)
+        raise ValueError(f"unsupported NBT tag {tag}")
+
+    tag = rd("b")
+    text()
+    return payload(tag)
+
+
+def _payload_double(v: float) -> bytes:
+    return struct.pack("<d", v)
+
+
+_base_payload = _payload
+
+
+def _payload(t: T) -> bytes:          # noqa: F811 - extend the writer with DOUBLE
+    if t.tag == DOUBLE:
+        return _payload_double(t.v)
+    if t.tag == LIST and t.elem != INT:
+        return struct.pack("<bi", t.elem if t.v else END, len(t.v)) + b"".join(_payload(auto(x)) for x in t.v)
+    if t.tag == COMPOUND:
+        out = []
+        for k, x in t.v.items():
+            x = auto(x)
+            kb = k.encode("utf-8")
+            out.append(struct.pack("<bH", x.tag, len(kb)) + kb + _payload(x))
+        return b"".join(out) + b"\x00"
+    return _base_payload(t)

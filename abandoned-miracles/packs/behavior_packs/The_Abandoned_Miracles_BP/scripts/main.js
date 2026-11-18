@@ -1,12 +1,12 @@
 // src/boot.ts
-import { system as system4 } from "@minecraft/server";
+import { system as system5 } from "@minecraft/server";
 
 // src/commands.ts
 import {
   CommandPermissionLevel,
   CustomCommandParamType,
   CustomCommandStatus,
-  Player as Player7,
+  Player as Player6,
   system as system3
 } from "@minecraft/server";
 
@@ -1765,6 +1765,7 @@ var Encounter = class {
     this.deferred.push(fn);
   }
   health() {
+    if (!this.boss.isValid) return void 0;
     return this.boss.getComponent("minecraft:health");
   }
   effectiveHealth() {
@@ -1857,6 +1858,7 @@ var Encounter = class {
     } catch (e) {
       report(`${this.key} tick`, e);
     }
+    if (this.ended) return;
     if (now % CONFIG.hud.intervalTicks === 0) renderHud(this);
     if (now % 100 === 0 && this.sm.inCombat) this.save();
   }
@@ -2234,10 +2236,10 @@ var EncounterManager = class {
    * Summon a boss at a floor position chosen by a player. Never edits terrain:
    * if the place cannot host the arena the summon is refused with a reason.
    */
-  trySummon(player, key, floor, force = false) {
+  trySummon(by, key, floor, force = false) {
     if (!this.factories.has(key)) return { ok: false, reason: "unknown" };
     const stats = CONFIG.bosses[key];
-    const dim = player.dimension;
+    const dim = by.dimension;
     for (const e of this.encounters.values()) {
       if (e.dim.id !== dim.id) continue;
       const d = Math.hypot(e.arena.cx - floor.x, e.arena.cz - floor.z);
@@ -2249,14 +2251,14 @@ var EncounterManager = class {
     }
     let boss;
     try {
-      const yaw = dirToYaw(player.location.x - floor.x, player.location.z - floor.z);
+      const yaw = dirToYaw(by.location.x - floor.x, by.location.z - floor.z);
       boss = dim.spawnEntity(BOSS_TYPE[key], { x: floor.x, y: floor.y + 0.05, z: floor.z }, { initialRotation: yaw });
     } catch (e) {
       report("spawn boss", e);
       return { ok: false, reason: "spawn" };
     }
     const enc = this.create(boss, key, floor);
-    trace("summon", { boss: key, by: player.name, coverage: scan.coverage });
+    trace("summon", { boss: key, by: by.name ?? "", coverage: scan.coverage });
     return { ok: !!enc, encounter: enc, coverage: scan.coverage, reason: enc ? void 0 : "spawn" };
   }
   create(boss, key, centre) {
@@ -2399,23 +2401,26 @@ function isOperator(p) {
     return false;
   }
 }
-function raiseArena(p, key) {
+function raiseArenaAt(dim, floor, key) {
   const info = arenaOf(key);
   if (!info) return false;
-  const l = p.location;
   const half = Math.floor(info.size / 2);
   try {
-    world4.structureManager.place(info.structure, p.dimension, {
-      x: Math.floor(l.x) - half,
-      y: Math.floor(l.y) - 1,
-      z: Math.floor(l.z) - half
+    world4.structureManager.place(info.structure, dim, {
+      x: Math.floor(floor.x) - half,
+      y: Math.floor(floor.y) - 1,
+      z: Math.floor(floor.z) - half
     });
-    p.sendMessage(tr("abm.arena.built"));
     return true;
   } catch (e) {
     report("raiseArena", e);
     return false;
   }
+}
+function raiseArena(p, key) {
+  const ok2 = raiseArenaAt(p.dimension, p.location, key);
+  if (ok2) p.sendMessage(tr("abm.arena.built"));
+  return ok2;
 }
 async function arenaMenu(p) {
   const keys = BOSS_KEYS.filter((k) => arenaOf(k));
@@ -2590,7 +2595,7 @@ function registerCommands(ev) {
       },
       (origin, boss) => {
         const p = origin.sourceEntity;
-        if (!(p instanceof Player7)) return fail("Players only.");
+        if (!(p instanceof Player6)) return fail("Players only.");
         const l = p.location;
         system3.run(() => useSeal(p, boss, { x: Math.floor(l.x) + 0.5, y: Math.floor(l.y), z: Math.floor(l.z) + 0.5 }, true));
         return ok();
@@ -2606,7 +2611,7 @@ function registerCommands(ev) {
       },
       (origin, boss) => {
         const p = origin.sourceEntity;
-        if (!(p instanceof Player7)) return fail("Players only.");
+        if (!(p instanceof Player6)) return fail("Players only.");
         system3.run(() => raiseArena(p, boss));
         return ok();
       }
@@ -2615,7 +2620,7 @@ function registerCommands(ev) {
       { name: "abm:dismiss", description: "End the nearest Abandoned Miracles encounter", permissionLevel: lvl, cheatsRequired: true },
       (origin) => {
         const p = origin.sourceEntity;
-        if (!(p instanceof Player7)) return fail("Players only.");
+        if (!(p instanceof Player6)) return fail("Players only.");
         const enc = manager.nearest(p.dimension, p.location);
         if (!enc) return fail("No encounter nearby.");
         system3.run(() => manager.cancel(enc));
@@ -2633,7 +2638,7 @@ function registerCommands(ev) {
       },
       (origin, action, value) => {
         const p = origin.sourceEntity;
-        if (!(p instanceof Player7)) return fail("Players only.");
+        if (!(p instanceof Player6)) return fail("Players only.");
         if (action === "on" || action === "off") {
           CONFIG.debug = action === "on";
           system3.run(() => saveSettings());
@@ -2661,10 +2666,56 @@ function registerCommands(ev) {
   }
 }
 
+// src/scriptevents.ts
+import { Player as Player7, system as system4 } from "@minecraft/server";
+function parseBoss(word) {
+  return BOSS_KEYS.find((k) => k === word);
+}
+function initScriptEvents() {
+  system4.afterEvents.scriptEventReceive.subscribe(
+    (ev) => {
+      try {
+        const words = ev.message.trim().split(/\s+/).filter((w) => w.length > 0);
+        let dim;
+        let at;
+        let name = "command";
+        if (ev.sourceEntity && ev.sourceEntity.isValid) {
+          dim = ev.sourceEntity.dimension;
+          at = ev.sourceEntity.location;
+          if (ev.sourceEntity instanceof Player7) name = ev.sourceEntity.name;
+        } else if (ev.sourceBlock) {
+          dim = ev.sourceBlock.dimension;
+          at = { x: ev.sourceBlock.x + 0.5, y: ev.sourceBlock.y + 1, z: ev.sourceBlock.z + 0.5 };
+        } else {
+          return;
+        }
+        const floor = { x: Math.floor(at.x) + 0.5, y: Math.floor(at.y), z: Math.floor(at.z) + 0.5 };
+        if (ev.id === "abm:summon") {
+          const key = parseBoss(words[0]);
+          if (!key || !manager.has(key)) return;
+          const res = manager.trySummon({ dimension: dim, location: at, name }, key, floor, words[1] === "force");
+          if (!res.ok && ev.sourceEntity instanceof Player7) {
+            ev.sourceEntity.sendMessage({ rawtext: [{ translate: `abm.summon.fail.${res.reason ?? "unknown"}`, with: [String(Math.round((res.coverage ?? 0) * 100))] }] });
+          }
+        } else if (ev.id === "abm:dismiss") {
+          const enc = manager.nearest(dim, at);
+          if (enc) manager.cancel(enc);
+        } else if (ev.id === "abm:arena") {
+          const key = parseBoss(words[0]);
+          if (key && arenaOf(key)) raiseArenaAt(dim, floor, key);
+        }
+      } catch (e) {
+        report("scriptevent", e);
+      }
+    },
+    { namespaces: ["abm"] }
+  );
+}
+
 // src/boot.ts
 function boot(mods) {
   install(mods);
-  system4.beforeEvents.startup.subscribe((ev) => registerCommands(ev));
+  system5.beforeEvents.startup.subscribe((ev) => registerCommands(ev));
   const helpers = [];
   for (const k of installed()) {
     const m = moduleOf(k);
@@ -2673,6 +2724,7 @@ function boot(mods) {
   }
   manager.init(helpers);
   initItems();
+  initScriptEvents();
   const g = globalThis;
   if (g.__abmTrace) g.__abm = { manager, CONFIG };
 }
@@ -2799,10 +2851,10 @@ var vesperra_timings_default = {
     },
     p2: {
       first: 22,
-      interval: 12,
-      warn: 30,
+      interval: 13,
+      warn: 36,
       count: 7,
-      end: 158
+      end: 168
     }
   }
 };

@@ -110,10 +110,10 @@
     },
     "p2": {
       "first": 22,
-      "interval": 12,
-      "warn": 30,
+      "interval": 13,
+      "warn": 36,
       "count": 7,
-      "end": 158
+      "end": 168
     }
   }
 }
