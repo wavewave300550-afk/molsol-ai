@@ -119,7 +119,7 @@ def functions(sites: dict, hub_size) -> dict:
                "gamerule showcoordinates true", "gamerule keepinventory true", "gamerule mobgriefing false",
                "time set 6000", "weather clear"]
     prepare += [f"tickingarea add {a[0]} {a[1]} {a[2]} {b[0]} {b[1]} {b[2]} abmtw_{k}" for k, (a, b) in areas.items()]
-    finish = [f"tickingarea remove abmtw_{k}" for k in areas] + [f"setworldspawn 0 {SURFACE} 0", "scoreboard players set #t abm_tw 1000"]
+    finish = [f"tickingarea remove abmtw_{k}" for k in areas] + [f"setworldspawn 0 {SURFACE} 0", "scoreboard players set abmtwclock abm_tw 1000"]
     # the section sign is written literally (UTF-8), not as a \u escape: function files are plain text
     say = lambda text: 'tellraw @s {"rawtext":[{"text":' + json.dumps(text, ensure_ascii=False) + "}]}"      # noqa: E731
     greet = [f"tp @s 0.5 {SURFACE} 0.5", "give @s abm:codex 1"]
@@ -127,17 +127,17 @@ def functions(sites: dict, hub_size) -> dict:
     greet += [say("§l§6The Abandoned Miracles§r §7- test world"),
               say("§7Four arenas stand around this plaza. Follow a causeway, walk to the middle of the arena and §fuse its Seal on the floor§7.")]
     greet += [say(f"§f{sites[k]['word']}§7: {TITLES[k]}") for k in sites]
-    greet += [say("§7The §fCodex§7 explains each Miracle and holds the settings. §f/abm:summon <boss>§7 works anywhere."),
+    greet += [say("§7The §fCodex§7 explains each Miracle and holds the settings. §f/abm:wake <boss>§7 works anywhere."),
               say("§7This world is in §fSurvival§7 so the fights are real; you keep your inventory when you die."),
               # the reference loadout (enchanted diamond) comes from the add-on's script
-              "scriptevent abm:kit",
+              "scriptevent abm:kit give",
               "tag @s add abm_tw"]
-    tick = ["scoreboard objectives add abm_tw dummy", "scoreboard players add #t abm_tw 0",
-            "execute if score #t abm_tw matches 0..299 run scoreboard players add #t abm_tw 1",
-            "execute if score #t abm_tw matches 2 run function abmtw/prepare"]
-    tick += [f"execute if score #t abm_tw matches {t} run function abmtw/build" for t in (100, 150, 200, 250)]
-    tick += ["execute if score #t abm_tw matches 299 run function abmtw/finish",
-             "execute as @a[tag=!abm_tw] at @s if score #t abm_tw matches 250.. run function abmtw/greet"]
+    tick = ["scoreboard objectives add abm_tw dummy", "scoreboard players add abmtwclock abm_tw 0",
+            "execute if score abmtwclock abm_tw matches 0..299 run scoreboard players add abmtwclock abm_tw 1",
+            "execute if score abmtwclock abm_tw matches 2 run function abmtw/prepare"]
+    tick += [f"execute if score abmtwclock abm_tw matches {t} run function abmtw/build" for t in (100, 150, 200, 250)]
+    tick += ["execute if score abmtwclock abm_tw matches 299 run function abmtw/finish",
+             "execute as @a[tag=!abm_tw] at @s if score abmtwclock abm_tw matches 250.. run function abmtw/greet"]
     return {"tick": tick, "prepare": prepare, "build": loads, "finish": finish, "greet": greet}
 
 

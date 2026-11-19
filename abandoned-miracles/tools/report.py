@@ -53,11 +53,15 @@ def main() -> None:
         w("| Pack files against Mojang's schemas | not run in this build | run `python3 tools/validate.py --mct` |")
     w("| Script against the stable API surface | **verified** | TypeScript strict type-check against `@minecraft/server` 2.6.0 and `@minecraft/server-ui` 2.0.0 typings (the versions the manifest asks for) |")
     w(f"| Combat logic, state machine, cleanup, multiplayer rules | **verified in simulation** | {len(results) - len(failed)}/{len(results)} scenarios (shipped script bundle, strict Script API stand-in) |")
-    w("| Loading in Minecraft, rendering, animation, particles, audio | **NOT VERIFIED** | no Minecraft client or server could be run here |")
+    w("| Loading in Minecraft | **partly observed on a real device** | the project owner opened builds 1.0.0 / 1.0.1 on iOS and sent the Content Log and a screenshot: "
+      "entity, geometry, render-controller, animation-controller, particle, sound, item, recipe and structure files produced no errors; "
+      "Vesperra's model and textures render; a Seal summons her; the summon line, the boss bar and the action-bar HUD appear |")
+    w("| Animation, particles in motion, audio, combat in the game | **NOT VERIFIED** | in that session the game rejected all four animation files "
+      "(see section 7); the fix in 1.0.2 has not been confirmed in the game |")
     w("| Performance on real devices | **NOT VERIFIED** | budgets and call counts only (section 6) |")
     w("| Play-feel, difficulty, 4–7 minute target with human players | **NOT VERIFIED** | simulated bot times only (section 5) |")
     w("")
-    w("### Why nothing was run in the game\n")
+    w("### Why nothing was run in the game by the build itself\n")
     w("* The only way to run Bedrock in this environment is Bedrock Dedicated Server through Minecraft Creator Tools. "
       "That requires accepting the Minecraft End User License Agreement, which the project owner must do personally "
       "(`npx -y @minecraft/creator-tools@0.21.0 eula`); it was not accepted on their behalf.")
@@ -66,7 +70,7 @@ def main() -> None:
       "the project's own software renderer from the shipped geometry, textures and animation data.\n")
     w("### First things to check in a real game\n")
     w("1. Import the `.mcaddon`, enable both packs on a world, watch the Content Log while it loads.")
-    w("2. `/abm:summon vesperra` on flat ground: model, textures, idle and walk; boss bar; action-bar line.")
+    w("2. `/abm:wake vesperra` on flat ground: model, textures, idle and walk; boss bar; action-bar line.")
     w("3. Does the boss walk and turn smoothly? If it jitters or does not move, switch *Stepwise boss movement* on in the Codex and report it.")
     w("4. Are floor telegraphs visible, flat on the ground and aligned with where damage lands? (`/abm:debug attack 1` … `7`)")
     w("5. `/abm:debug phase2` and `/abm:debug kill`: transformation and death sequences.")
@@ -264,7 +268,15 @@ def main() -> None:
 
     w("## 7. Known issues and limitations\n")
     issues = [
-        "Nothing has been run in Minecraft. Any of the assumptions the simulation makes about the engine could be wrong; "
+        "**Found on a real device and fixed in 1.0.2 (fixes not yet confirmed in the game):** "
+        "(1) each boss had a sound-only footstep animation with an empty `bones` object; the game's schema requires at least one bone, "
+        "and it then discarded *every* animation in the same file, so all four bosses stood frozen and the log filled with "
+        "\"can't find animation\". (2) The test world's tick function used the score holder `#t`, which `execute if score` does not parse; "
+        "one bad line unloads the whole function, so the arenas were never built and nothing was handed out. "
+        "(3) The custom command `abm:summon` made the game warn that the alias `summon` is taken; it is now `abm:wake`. "
+        "(4) The boss bar read \"Unknown\": `minecraft:boss` now carries the name. "
+        "None of the four was caught by the project's validator, by Minecraft Creator Tools or by the simulation; the validator and the simulator now have a rule for each.",
+        "Apart from that one session, nothing has been observed in Minecraft. Any of the assumptions the simulation makes about the engine could be wrong; "
         "the most consequential are script-driven movement (velocity impulses and `setRotation` on a mob without AI goals), "
         "the timing of `beforeEvents.entityHurt` relative to invulnerability frames, and flat-on-floor particle rendering.",
         "Player absorption hearts are bypassed by hazard damage (the Script API does not expose them).",

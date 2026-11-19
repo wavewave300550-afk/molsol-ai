@@ -176,6 +176,8 @@ def build_base() -> List[Anim]:
     wobble.scale("bell_crack_glow", 1 + sin(lt * 900) * 0.04)
 
     steps = Anim(A + "footfalls", length=2.0, loop=True)
+
+    steps.pos("root", 0, 0, 0)        # a sound-only animation still needs one bone channel (see Anim.json)
     for t in (0.0, 0.667, 1.333):
         steps.sound(t, "step")
     return [idle, walk, turn, hold, wobble, steps]

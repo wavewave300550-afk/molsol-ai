@@ -178,6 +178,8 @@ def build_base() -> List[Anim]:
     flut.scale("abdomen_1", 1 + sin(lt * 200) * 0.05, 1 - sin(lt * 200) * 0.06, 1)
 
     steps = Anim(A + "footfalls", length=0.96, loop=True)
+
+    steps.pos("root", 0, 0, 0)        # a sound-only animation still needs one bone channel (see Anim.json)
     for t in (0.0, 0.32, 0.64):
         steps.sound(t, "step")
     return [idle, walk, turn, hold, flut, steps]

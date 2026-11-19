@@ -744,12 +744,22 @@ export const system = {
   clearRun() {},
 };
 
+const VANILLA_COMMANDS = new Set(["summon", "kill", "give", "tp", "teleport", "clear", "effect", "enchant", "execute", "fill", "function",
+  "gamemode", "gamerule", "help", "list", "locate", "loot", "me", "msg", "tell", "w", "say", "scoreboard", "setblock", "spawnpoint", "structure",
+  "tag", "tellraw", "time", "title", "weather", "xp", "clone", "damage", "difficulty", "event", "music", "particle", "playsound", "replaceitem",
+  "ride", "schedule", "stopsound", "testfor", "tickingarea", "camera", "dialogue", "fog", "inputpermission", "reload", "scriptevent", "hud",
+  "place", "recipe", "transfer", "kick", "op", "deop", "stop", "save", "whitelist", "allowlist", "permission", "setworldspawn", "spreadplayers",
+  "daylock", "alwaysday", "mobevent", "ability", "immutableworld", "worldbuilder", "wb", "toggledownfall", "setmaxplayers", "playanimation",
+  "camerashake", "clearspawnpoint", "controlscheme", "aimassist", "gametest", "script", "wsserver", "connect", "home", "sethome"]);
+
 /** Called by the harness once the bundle has been imported. */
 export function boot() {
   const reg = {
     registerEnum: (name, values) => sim.enums.set(name, values),
     registerCommand: (def, cb) => {
       if (!/^[a-z]+:[a-z_]+$/.test(def.name)) sim.fail(`command name ${def.name} needs a namespace`);
+      // the game also registers the part after the colon as an alias and warns when that is a vanilla command
+      if (VANILLA_COMMANDS.has(def.name.split(":")[1])) sim.fail(`command alias ${def.name.split(":")[1]} is already a vanilla command`);
       for (const p of [...(def.mandatoryParameters ?? []), ...(def.optionalParameters ?? [])]) {
         if (p.type === "Enum" && !sim.enums.has(p.name)) sim.fail(`command ${def.name}: enum ${p.name} not registered`);
       }

@@ -2,7 +2,7 @@
 
 Status legend: **done** (built, validated, simulated) · **incomplete** · **blocked** · **unverified** (cannot be checked in this environment).
 
-_Last updated: fixes after the first real play session (see below); static validation and simulation pass; nothing confirmed in game yet._
+_Last updated: version 1.0.2 — fixes for what the first real play session showed (see below); those fixes are not yet confirmed in the game._
 
 ## Finished
 
@@ -14,8 +14,8 @@ _Last updated: fixes after the first real play session (see below); static valid
 | Asset toolkit (`tools/kit`): geometry + UV atlas, texture painters, software renderer, Molang DSL, animations, particles, audio synthesis, NBT/structures | done | used by all four bosses |
 | Build pipeline (`tools/build.py`) → packs, `.mcaddon`, `.mcpack`, `.bbmodel` | done | `npm run build` |
 | Encounter framework (`src/core`): manager, state machine, scheduler, targeting, arena, hazards, damage, locomotion, helpers, HUD, rewards, persistence | done | strict type-check; simulation |
-| Static validator (`tools/validate.py`) + Mojang Creator Tools validator | done | 14,118 checks, 0 failed; Creator Tools 0 errors / 0 warnings |
-| Headless simulation (`tools/sim`) | done | 210/210 scenarios; 1,050/1,050 over 5 seeds |
+| Static validator (`tools/validate.py`) + Mojang Creator Tools validator | done | 16,895 checks, 0 failed; Creator Tools 0 errors / 0 warnings |
+| Headless simulation (`tools/sim`) | done | 210/210 scenarios; 840/840 over 4 seeds |
 | Summoning Seals, Codex UI, `/abm:` commands, `/scriptevent` API, settings | done | simulation |
 
 ### Stage B — the four bosses
@@ -43,8 +43,25 @@ stationary player, and can be avoided by a bot that walks, reacts after 0.3 s an
 
 ## After the first real play session
 
-The first time the add-on was opened in the game the report was "a lot of errors", without the messages. Not being able
-to see them, the whole build was audited against Mojang's vanilla sample packs and the Script API documentation.
+The project owner opened the add-on on an iOS device and sent the Content Log and a screenshot.
+
+**What that session showed working:** the packs load; entity, geometry, render-controller, animation-controller,
+particle, sound, item, recipe and structure files raise no errors; Vesperra's model and textures render; using a Seal
+summons her; the summon line, the boss bar and the action-bar HUD appear.
+
+**What it showed broken — fixed in 1.0.2, fixes not yet confirmed in the game:**
+
+| Seen in the game | Cause | Fix |
+|---|---|---|
+| "can't find animation …" for every animation; bosses frozen | each boss's sound-only `footfalls` animation had an empty `bones` object; the schema needs at least one bone and the game then discards the whole animation file | the animation carries one no-op bone channel; the build refuses an animation without one; validator rule |
+| "Function abmtw/tick failed to load"; no arenas, nothing handed out | score holder `#t` is a syntax error in `execute if score`, and one bad line unloads the function | plain name `abmtwclock`; validator rule for score holders |
+| "Custom Command alias [summon] already in use" | the game also registers the bare alias, and `/summon` is its own | the command is now `/abm:wake`; the simulator rejects vanilla aliases |
+| boss bar reads "Unknown" | a custom entity's bar is not named from the lang file | `minecraft:boss` carries the name |
+
+None of these was caught by the project's validator, by Minecraft Creator Tools or by the simulation.
+
+Before the log arrived, the build had also been audited against Mojang's vanilla sample packs and the Script API
+documentation (1.0.1):
 
 | Found | Fixed |
 |---|---|
@@ -58,11 +75,11 @@ to see them, the whole build was audited against Mojang's vanilla sample packs a
 | Turning and walking relied on untested engine behaviour | each boss now checks that its yaw and position actually changed and switches itself to teleport-based turning / stepwise walking if not |
 | `manifest.json` carried `product_type: addon` (a Marketplace flag) | removed |
 
-Whether these were the errors that were seen is **not known**. Nothing has been confirmed in the game yet.
+These were not the errors that had been seen, but each is a real defect.
 
 ## Blocked
 
-* **In-game runtime verification.** The only way to run Bedrock here is Bedrock Dedicated Server through Minecraft
+* **In-game runtime verification by the build itself.** The only way to run Bedrock here is Bedrock Dedicated Server through Minecraft
   Creator Tools, which requires accepting the Minecraft EULA. Only the project owner may do that
   (`npx -y @minecraft/creator-tools@0.21.0 eula`); it was not accepted on their behalf. No Minecraft client is
   available either, so rendering, animation, particles and audio could not be observed in any case.

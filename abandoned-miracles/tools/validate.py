@@ -322,6 +322,12 @@ def check_animation_bodies(client, geos, anims, ctrls, use):
                     if length is not None:
                         R.ok(max(times) <= length + 1e-6, f"{name}: {bone}.{ch} has a keyframe after the end")
         check_molang(name, {k: v for k, v in a.items() if k in ("bones", "anim_time_update", "blend_weight")})
+        # schema rules the game enforces per FILE: one violation discards every animation in it
+        R.ok("bones" not in a or len(a["bones"]) > 0, f"{name}: empty 'bones' (the game rejects the whole file)")
+        for bone, chans in a.get("bones", {}).items():
+            R.ok(isinstance(chans, dict) and len(chans) > 0, f"{name}: bone {bone} has no channel")
+        for field in ("sound_effects", "particle_effects", "timeline"):
+            R.ok(field not in a or len(a[field]) > 0, f"{name}: empty '{field}'")
     for name, c in ctrls.items():
         users = use.get(name, set())
         R.ok(bool(users), f"{name}: not used by any client entity")
@@ -700,6 +706,11 @@ def check_testworld(client, items):
                 for ev in re.findall(r"^scriptevent (\S+)", line):
                     R.ok(f'"{ev}"' in bundle, f"{n}:{i}: script event {ev} is not handled by the add-on's script")
                 R.ok("\\u00a7" not in line, f"{n}:{i}: colour code written as a \\u escape")
+                # seen in the game: `execute if score #name ...` is a syntax error, and one bad line unloads the function
+                for who in re.findall(r"\bscore (\S+) \S+ matches", line) + re.findall(r"scoreboard players \w+ (\S+) ", line):
+                    R.ok(bool(re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*|@[a-z](\[.*\])?", who)), f"{n}:{i}: score holder '{who}' is not a plain name or selector")
+                if line.startswith("scriptevent"):
+                    R.ok(len(line.split()) >= 3, f"{n}:{i}: scriptevent needs a message argument")
                 m = re.search(r"tellraw @s (\{.*\})$", line)
                 if m:
                     try:

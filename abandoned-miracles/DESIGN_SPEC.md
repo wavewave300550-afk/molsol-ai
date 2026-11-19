@@ -270,7 +270,7 @@ client by distance travelled and yaw turned, so it matches whatever the server a
 |---|---|
 | Seals | four items in the Creative inventory and craftable; use one on a level, open floor (tap or click the floor block; handled through the block-interaction *before* event, which fires for any block, with item-use as a second path) |
 | Codex | `abm:codex` — reads about each Miracle; for operators: settings, optional arena placement, dismiss |
-| Commands (operator, cheats) | `/abm:summon <boss>`, `/abm:arena <boss>`, `/abm:dismiss`, `/abm:debug <on\|off\|phase2\|kill\|attack n\|info>` |
+| Commands (operator, cheats) | `/abm:wake <boss>`, `/abm:arena <boss>`, `/abm:dismiss`, `/abm:debug <on\|off\|phase2\|kill\|attack n\|info>` |
 | Script events | `/scriptevent abm:summon <boss> [force]`, `abm:dismiss`, `abm:arena <boss>`, `abm:kit` — for command blocks and NPCs |
 | Reference kit | Codex button (operators) or `/scriptevent abm:kit`: enchanted diamond armour and sword, shield, food |
 | Entities | `/summon abm:vesperra`, `abm:cantor_xiii`, `abm:nomos`, `abm:orison` are adopted into an encounter automatically |

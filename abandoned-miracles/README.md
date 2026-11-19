@@ -76,7 +76,7 @@ Use a **Seal** on the floor where the fight should happen.
 * The spot is checked first. If the ground is too uneven, too cramped, too low or not fully loaded, nothing happens, the
   Seal is kept, and you are told what is missing. Nothing is ever dug out or flattened for you.
 * Seals are in the Creative inventory and craftable in survival (3 × 3 crafting table, see below).
-* Other ways: `/abm:summon <vesperra|cantor|nomos|orison>` (operators, skips the ground check),
+* Other ways: `/abm:wake <vesperra|cantor|nomos|orison>` (operators, skips the ground check),
   `/scriptevent abm:summon <boss>` from a command block or NPC, or plain `/summon abm:vesperra`
   (`abm:cantor_xiii`, `abm:nomos`, `abm:orison`).
 * Want the full setting? Operators can raise a boss's **demonstration arena** from the Codex or with
@@ -132,7 +132,7 @@ If a boss slides or will not turn, the add-on switches that boss to stepwise mov
 ### Commands (operators, cheats on)
 
 ```
-/abm:summon <boss>             summon at your feet
+/abm:wake <boss>               summon at your feet
 /abm:arena <boss>              raise that boss's demonstration arena around you (replaces blocks)
 /abm:dismiss                   end the nearest encounter
 /abm:debug on|off              verbose logging

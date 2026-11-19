@@ -1,6 +1,6 @@
 /**
  * Custom slash commands (cheats + operator), mainly for creators and testers.
- *   /abm:summon <boss>         summon at your feet, bypassing the floor check
+ *   /abm:wake <boss>           summon at your feet, bypassing the floor check
  *   /abm:arena <boss>          raise the demonstration arena around you (replaces blocks)
  *   /abm:dismiss               end the nearest encounter
  *   /abm:debug <action> [n]    on | off | phase2 | kill | attack <1-7> | info
@@ -25,7 +25,8 @@ export function registerCommands(ev: StartupEvent): void {
     const lvl = CommandPermissionLevel.GameDirectors;
 
     reg.registerCommand(
-      { name: "abm:summon", description: "Summon one of the Abandoned Miracles at your position", permissionLevel: lvl, cheatsRequired: true,
+      // not "abm:summon": the game also registers the bare alias, and /summon is taken ("alias already in use")
+      { name: "abm:wake", description: "Wake one of the Abandoned Miracles at your position", permissionLevel: lvl, cheatsRequired: true,
         mandatoryParameters: [{ name: "abm:boss", type: CustomCommandParamType.Enum }] },
       (origin, boss: string) => {
         const p = origin.sourceEntity;

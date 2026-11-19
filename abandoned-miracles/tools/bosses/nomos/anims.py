@@ -223,6 +223,8 @@ def build_base() -> List[Anim]:
         comp.rot(f"map_{tag}_3", 0, 0, sin(lt * 70 + 90 * sz - 80) * 5 * sx)
 
     steps = Anim(A + "footfalls", length=0.8, loop=True)
+
+    steps.pos("root", 0, 0, 0)        # a sound-only animation still needs one bone channel (see Anim.json)
     steps.sound(0.0, "step").sound(0.4, "step")
     return [idle, walk, turn, spin, hold, comp, steps]
 

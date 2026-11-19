@@ -181,6 +181,11 @@ class Anim:
             if (b, ch) in self.static:
                 raise ValueError(f"{self.name}: {b}.{ch} has both a static value and keyframes")
             bones.setdefault(b, {})[CHANNELS[ch]] = {tkey(t): [out(x) for x in ks[t]] for t in sorted(ks)}
+        if not bones:
+            # Seen in the game: an empty "bones" object fails the animation schema ("Required child not found")
+            # and the game then discards EVERY animation in the same file. A sound-only animation must carry
+            # one harmless channel instead, e.g. anim.pos("root", 0, 0, 0).
+            raise ValueError(f"{self.name}: no bone channel - the game would reject the whole animation file")
         d["bones"] = {b: bones[b] for b in sorted(bones)}
         for field, src in (("sound_effects", self.sounds), ("particle_effects", self.particles)):
             if src:

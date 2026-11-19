@@ -60,7 +60,8 @@
    "abm:bar": {
     "minecraft:boss": {
      "hud_range": 48,
-     "should_darken_sky": false
+     "should_darken_sky": false,
+     "name": "Vesperra, The Ivory Succession"
     }
    },
    "abm:remnant": {

@@ -496,10 +496,10 @@ async function suiteCommands(key) {
   await test(`${key}: commands, codex and explicit arena placement`, async () => {
     const w = await freshWorld();
     const p = addPlayer("Op", { x: 0.5, y: 64, z: 0.5 });
-    let r = sim.runCommand("abm:summon", p, key);
-    check(r.status === 0, "abm:summon failed");
+    let r = sim.runCommand("abm:wake", p, key);
+    check(r.status === 0, "abm:wake failed");
     run(3);
-    check(w.manager.list().length === 1, "abm:summon did not create an encounter");
+    check(w.manager.list().length === 1, "abm:wake did not create an encounter");
     r = sim.runCommand("abm:debug", p, "info");
     check(r.status === 0 && r.message.includes(key), "abm:debug info");
     r = sim.runCommand("abm:debug", p, "attack", 3);

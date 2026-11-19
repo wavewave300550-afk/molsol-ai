@@ -164,6 +164,15 @@ def write_items(assets, shared) -> None:
 def write_entities(assets) -> None:
     for a in assets:
         for stem, ent in a.bp_entities.items():
+            # Seen in the game: a custom entity's boss bar reads "Unknown" unless minecraft:boss names it.
+            body = ent["minecraft:entity"]
+            ident = body["description"]["identifier"]
+            for group in [body.get("components", {})] + list(body.get("component_groups", {}).values()):
+                if "minecraft:boss" in group:
+                    name = a.lang.get(f"entity.{ident}.name")
+                    if not name:
+                        raise SystemExit(f"{ident}: no display name for its boss bar")
+                    group["minecraft:boss"]["name"] = name
             K.write_json(os.path.join(BP, "entities", "abm", f"{stem}.json"), ent)
 
 

@@ -16,7 +16,7 @@ ADDON_NAME = "The Abandoned Miracles"
 ADDON_TAGLINE = "Four perfect miracles. Four catastrophic successes."
 # Raise this for every build that is handed out: the game refuses to import a pack whose UUID and
 # version it already has, so a fixed build with the old number would silently not replace the broken one.
-VERSION = [1, 0, 1]
+VERSION = [1, 0, 2]
 # The LOWEST versions the add-on really needs (not the newest available): a pack that asks for a newer
 # script module than the player's game provides does not load at all. The script is type-checked against
 # exactly these typings (see package.json), so nothing newer can slip in.

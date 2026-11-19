@@ -2800,9 +2800,10 @@ function registerCommands(ev) {
     reg.registerEnum("abm:debug_action", ["on", "off", "phase2", "kill", "attack", "info"]);
     const lvl = CommandPermissionLevel.GameDirectors;
     reg.registerCommand(
+      // not "abm:summon": the game also registers the bare alias, and /summon is taken ("alias already in use")
       {
-        name: "abm:summon",
-        description: "Summon one of the Abandoned Miracles at your position",
+        name: "abm:wake",
+        description: "Wake one of the Abandoned Miracles at your position",
         permissionLevel: lvl,
         cheatsRequired: true,
         mandatoryParameters: [{ name: "abm:boss", type: CustomCommandParamType.Enum }]
