@@ -51,7 +51,7 @@ def main() -> None:
         w(f"| Pack files against Mojang's schemas | **verified** | Minecraft Creator Tools 0.21.0 validator: {m['errors']} errors, {m['warnings']} warnings |")
     else:
         w("| Pack files against Mojang's schemas | not run in this build | run `python3 tools/validate.py --mct` |")
-    w("| Script against the stable API surface | **verified** | TypeScript strict type-check against `@minecraft/server` 2.11.0 and `@minecraft/server-ui` 2.3.0 typings |")
+    w("| Script against the stable API surface | **verified** | TypeScript strict type-check against `@minecraft/server` 2.6.0 and `@minecraft/server-ui` 2.0.0 typings (the versions the manifest asks for) |")
     w(f"| Combat logic, state machine, cleanup, multiplayer rules | **verified in simulation** | {len(results) - len(failed)}/{len(results)} scenarios (shipped script bundle, strict Script API stand-in) |")
     w("| Loading in Minecraft, rendering, animation, particles, audio | **NOT VERIFIED** | no Minecraft client or server could be run here |")
     w("| Performance on real devices | **NOT VERIFIED** | budgets and call counts only (section 6) |")

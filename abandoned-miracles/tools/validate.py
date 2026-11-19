@@ -334,8 +334,11 @@ def check_animation_bodies(client, geos, anims, ctrls, use):
                     key = a if isinstance(a, str) else next(iter(a))
                     R.ok(key in amap, f"{name}.{sname}: animation '{key}' not declared by {ident}")
             for tr in st.get("transitions", []):
-                for target in tr:
+                for target, cond in tr.items():
                     R.ok(target in states, f"{name}.{sname}: transition to unknown state {target}")
+                    # q.anim_time / q.life_time are 0 outside an animation: such a transition never fires
+                    R.ok(not re.search(r"\b(anim_time|life_time)\b", str(cond)),
+                         f"{name}.{sname}: transition uses an animation-only query ({cond})")
             if not st.get("transitions"):
                 R.ok(sname in ("death", "dead", "done"), f"{name}.{sname}: state has no exit")
         # every state must be reachable from the initial state
@@ -364,8 +367,8 @@ def check_render_controllers(client, geos):
             for m in rc.get("materials", []):
                 for pat, ref in m.items():
                     key = ref.split(".", 1)[1]
-                    if pat != "*" and not any(fnmatch.fnmatch(b, pat) for b in g["bones"]):
-                        continue                       # pattern is for another entity that shares this controller
+                    # The game resolves every Material.<name> a controller mentions, whether or not the
+                    # bone pattern matches anything on this entity: all of them must be declared.
                     R.ok(key in d["materials"], f"{name}: material '{key}' not declared by {d['identifier']}")
             for pv in rc.get("part_visibility", []):
                 for pat in pv:
@@ -634,7 +637,7 @@ def check_packaging():
 
 
 KNOWN_COMMANDS = {"gamerule", "time", "weather", "tickingarea", "setworldspawn", "scoreboard", "execute", "structure",
-                  "tp", "give", "tellraw", "tag", "function"}
+                  "tp", "give", "tellraw", "tag", "function", "scriptevent"}
 
 
 def check_testworld(client, items):
@@ -672,6 +675,8 @@ def check_testworld(client, items):
         structures = {"abm:" + os.path.basename(n)[:-12] for n in names if "/structures/abm/" in n}
         structures |= {"abmtw:" + os.path.basename(n)[:-12] for n in names if "/structures/abmtw/" in n}
         fns = {n.split("/functions/")[1][:-11] for n in names if n.endswith(".mcfunction")}
+        with open(os.path.join(BP, "scripts", "main.js"), encoding="utf-8") as bf:
+            bundle = bf.read()
         tick = [n for n in names if n.endswith("functions/tick.json")]
         if R.ok(len(tick) == 1, "kit tick.json missing"):
             for f in json.loads(z.read(tick[0]))["values"]:
@@ -692,6 +697,9 @@ def check_testworld(client, items):
                     R.ok(fn in fns, f"{n}:{i}: function {fn} missing")
                 for it in re.findall(r"give @s (\S+)", line):
                     R.ok(it in items, f"{n}:{i}: gives unknown item {it}")
+                for ev in re.findall(r"^scriptevent (\S+)", line):
+                    R.ok(f'"{ev}"' in bundle, f"{n}:{i}: script event {ev} is not handled by the add-on's script")
+                R.ok("\\u00a7" not in line, f"{n}:{i}: colour code written as a \\u escape")
                 m = re.search(r"tellraw @s (\{.*\})$", line)
                 if m:
                     try:

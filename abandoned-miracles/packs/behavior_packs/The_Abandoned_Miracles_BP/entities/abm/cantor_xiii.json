@@ -74,7 +74,7 @@
   },
   "components": {
    "minecraft:type_family": {
-    "family": ["abm_boss", "abm_cantor", "monster", "mob"]
+    "family": ["abm_boss", "abm_cantor", "mob"]
    },
    "minecraft:health": {
     "value": 520,

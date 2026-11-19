@@ -68,7 +68,7 @@
   },
   "components": {
    "minecraft:type_family": {
-    "family": ["abm_boss", "abm_orison", "monster", "mob"]
+    "family": ["abm_boss", "abm_orison", "mob"]
    },
    "minecraft:health": {
     "value": 600,

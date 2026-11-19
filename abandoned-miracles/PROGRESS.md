@@ -2,7 +2,7 @@
 
 Status legend: **done** (built, validated, simulated) · **incomplete** · **blocked** · **unverified** (cannot be checked in this environment).
 
-_Last updated: all four bosses integrated into one add-on; static validation and simulation pass; in-game verification blocked._
+_Last updated: fixes after the first real play session (see below); static validation and simulation pass; nothing confirmed in game yet._
 
 ## Finished
 
@@ -10,12 +10,12 @@ _Last updated: all four bosses integrated into one add-on; static validation and
 
 | Item | Status | Evidence |
 |---|---|---|
-| Target versions verified (Bedrock 1.26.60, `@minecraft/server` 2.11.0, `@minecraft/server-ui` 2.3.0, no beta APIs, no experiments) | done | npm dist-tags, Mojang `bedrock-samples` `version.json`, typings |
+| Target versions verified (built against Bedrock 1.26.60; requires 1.26.10+, `@minecraft/server` 2.6.0, `@minecraft/server-ui` 2.0.0 — the lowest stable versions with everything used; no beta APIs, no experiments) | done | npm dist-tags, Mojang `bedrock-samples` `version.json`, typings |
 | Asset toolkit (`tools/kit`): geometry + UV atlas, texture painters, software renderer, Molang DSL, animations, particles, audio synthesis, NBT/structures | done | used by all four bosses |
 | Build pipeline (`tools/build.py`) → packs, `.mcaddon`, `.mcpack`, `.bbmodel` | done | `npm run build` |
 | Encounter framework (`src/core`): manager, state machine, scheduler, targeting, arena, hazards, damage, locomotion, helpers, HUD, rewards, persistence | done | strict type-check; simulation |
-| Static validator (`tools/validate.py`) + Mojang Creator Tools validator | done | 13,853 checks, 0 failed; Creator Tools 0 errors / 0 warnings |
-| Headless simulation (`tools/sim`) | done | 210/210 scenarios; 1,680/1,680 over 8 seeds |
+| Static validator (`tools/validate.py`) + Mojang Creator Tools validator | done | 14,118 checks, 0 failed; Creator Tools 0 errors / 0 warnings |
+| Headless simulation (`tools/sim`) | done | 210/210 scenarios; 1,050/1,050 over 5 seeds |
 | Summoning Seals, Codex UI, `/abm:` commands, `/scriptevent` API, settings | done | simulation |
 
 ### Stage B — the four bosses
@@ -41,6 +41,25 @@ stationary player, and can be avoided by a bot that walks, reacts after 0.3 s an
 | Visual previews for all four bosses (`docs/previews/`) — rendered offline, not screenshots | done |
 | Editable Blockbench sources (`assets/blockbench/`) | done (generated; **unverified** — not opened in Blockbench) |
 
+## After the first real play session
+
+The first time the add-on was opened in the game the report was "a lot of errors", without the messages. Not being able
+to see them, the whole build was audited against Mojang's vanilla sample packs and the Script API documentation.
+
+| Found | Fixed |
+|---|---|
+| Heir, Cocoon Anchor and Resonant Bell used the shared render controller, which names `Material.glass`, without declaring it | every client entity now declares all three layer materials; the validator requires it |
+| Three helper controllers left their first state on `q.anim_time`, which is 0 outside an animation | `q.all_animations_finished`; the validator rejects animation-only queries in transitions |
+| Seals, Codex and trophies only listened to the block-interaction *after* event, which does not fire for a plain floor | the *before* event (fires for any block) is handled too; the simulator now models both the way the game fires them |
+| The packs asked for `@minecraft/server` 2.11.0 / 1.26.60 | lowered to the true minimum, 2.6.0 / 1.26.10; type-checked against those typings |
+| Bosses and helpers had the `monster` family | removed: they no longer vanish on Peaceful |
+| The test world was in Creative (bosses cannot hurt creative players) | Survival, keep-inventory, with the reference kit handed out on arrival |
+| A failure in a per-tick path logged twenty lines a second | each distinct failure is logged once (then every 200th), shown once in chat, and an encounter that keeps failing folds away and refunds its Seal |
+| Turning and walking relied on untested engine behaviour | each boss now checks that its yaw and position actually changed and switches itself to teleport-based turning / stepwise walking if not |
+| `manifest.json` carried `product_type: addon` (a Marketplace flag) | removed |
+
+Whether these were the errors that were seen is **not known**. Nothing has been confirmed in the game yet.
+
 ## Blocked
 
 * **In-game runtime verification.** The only way to run Bedrock here is Bedrock Dedicated Server through Minecraft
@@ -50,7 +69,7 @@ stationary player, and can be avoided by a bot that walks, reacts after 0.3 s an
 
 ## Unverified (needs a real game)
 
-* That the packs load without Content Log errors on a real 1.26.60 client.
+* That the packs load without Content Log errors on a real client.
 * How models, emissive layers, animations, particle telegraphs and sounds actually look and sound.
 * Script-driven boss movement on real physics (a teleport fallback is in the Codex settings).
 * The test world's first-run arena construction.

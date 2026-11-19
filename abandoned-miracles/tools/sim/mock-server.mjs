@@ -22,7 +22,7 @@ import path from "node:path";
 export const EntityDamageCause = new Proxy({}, { get: (_, k) => String(k) });
 export const GameMode = { Survival: "Survival", Creative: "Creative", Adventure: "Adventure", Spectator: "Spectator" };
 export const EquipmentSlot = { Head: "Head", Chest: "Chest", Legs: "Legs", Feet: "Feet", Mainhand: "Mainhand", Offhand: "Offhand" };
-export const EntityComponentTypes = { Equippable: "minecraft:equippable", Health: "minecraft:health" };
+export const EntityComponentTypes = { Equippable: "minecraft:equippable", Health: "minecraft:health", Inventory: "minecraft:inventory" };
 export const CommandPermissionLevel = { Any: 0, GameDirectors: 1, Admin: 2, Host: 3, Owner: 4 };
 export const CustomCommandParamType = new Proxy({}, { get: (_, k) => String(k) });
 export const CustomCommandStatus = { Success: 0, Failure: 1 };
@@ -90,6 +90,12 @@ export const sim = {
     if (this.restricted) this.fail(`${what} called in restricted (before-event) context`);
   },
 
+  /** As in the game: while the script module is being evaluated the world cannot be read or changed. */
+  early: false,
+  needWorld(what) {
+    if (this.early) this.fail(`${what} called in early execution (before worldLoad)`);
+  },
+
   loadPacks(root) {
     const bp = firstDir(path.join(root, "behavior_packs"));
     const rp = firstDir(path.join(root, "resource_packs"));
@@ -144,6 +150,14 @@ export const sim = {
       this.after = [];
       for (const f of q) f();
     }
+  },
+
+  /** Run callbacks queued with system.run (the game runs them at the start of the next tick). */
+  drainRuns() {
+    const runs = this.runs;
+    this.runs = [];
+    for (const cb of runs) cb();
+    this.flush();
   },
 
   /** Advance the world by one tick. */
@@ -212,6 +226,10 @@ class Health {
   }
 }
 
+const KNOWN_ENCHANTS = new Set(["protection", "unbreaking", "sharpness", "mending", "feather_falling", "thorns"]);
+export const EnchantmentTypes = { get: (id) => (KNOWN_ENCHANTS.has(id.replace("minecraft:", "")) ? { id: id.replace("minecraft:", "") } : undefined) };
+export const ItemComponentTypes = { Enchantable: "minecraft:enchantable" };
+
 export class ItemStack {
   constructor(typeId, amount = 1) {
     if (!typeId.startsWith("minecraft:") && !sim.defs.items.has(typeId)) sim.fail(`ItemStack: unknown item ${typeId}`);
@@ -220,7 +238,16 @@ export class ItemStack {
     this.enchants = {};
   }
   getComponent(id) {
-    if (id === "minecraft:enchantable") return { getEnchantment: (n) => (this.enchants[n] ? { level: this.enchants[n] } : undefined) };
+    if (id === "minecraft:enchantable") {
+      return {
+        getEnchantment: (n) => (this.enchants[n] ? { level: this.enchants[n] } : undefined),
+        addEnchantment: (e) => {
+          if (!e || !e.type || !KNOWN_ENCHANTS.has(e.type.id)) sim.fail(`addEnchantment: bad enchantment ${JSON.stringify(e)}`);
+          if (!Number.isInteger(e.level) || e.level < 1 || e.level > 5) sim.fail(`addEnchantment: level ${e.level}`);
+          this.enchants[e.type.id] = e.level;
+        },
+      };
+    }
     return undefined;
   }
 }
@@ -348,6 +375,7 @@ export class Entity {
     this._need();
     if (id === "minecraft:health" || id === "health") return this._health;
     if (id === "minecraft:equippable") return this._equip;
+    if (id === "minecraft:inventory") return this._inventory;
     return undefined;
   }
   setProperty(name, value) {
@@ -469,6 +497,14 @@ export class Player extends Entity {
     this._xp = 0;
     this.playerPermissionLevel = PlayerPermissionLevel.Operator;
     const self = this;
+    this._worn = new Map();
+    this._bag = [];
+    this._inventory = { container: { addItem: (st) => {
+      sim.guard("container.addItem");
+      if (!(st instanceof ItemStack)) sim.fail("container.addItem: not an ItemStack");
+      self._bag.push(st);
+      return undefined;
+    } } };
     this._equip = {
       get totalArmor() {
         return self._armor;
@@ -483,7 +519,9 @@ export class Player extends Entity {
       },
       setEquipment: (slot, item) => {
         sim.guard("setEquipment");
+        if (!Object.values(EquipmentSlot).includes(slot)) sim.fail(`setEquipment: unknown slot ${slot}`);
         if (slot === EquipmentSlot.Mainhand) self._held = item;
+        else if (item) self._worn.set(slot, item);
         return true;
       },
     };
@@ -648,18 +686,20 @@ export const world = {
     playerLeave: afterSignal(), playerInteractWithBlock: afterSignal(), itemUse: afterSignal(), playerSpawn: afterSignal(),
     entityHurt: afterSignal(), entityRemove: afterSignal(),
   },
-  beforeEvents: { entityHurt: new Signal(), entityRemove: new Signal() },
+  beforeEvents: { entityHurt: new Signal(), entityRemove: new Signal(), playerInteractWithBlock: new Signal() },
   getDimension(id) {
+    sim.needWorld("world.getDimension");
     const key = id.replace("minecraft:", "");
     if (!["overworld", "nether", "the_end"].includes(key)) throw new Error(`no dimension ${id}`);
     if (!dims.has(key)) dims.set(key, new Dimension("minecraft:" + key));
     return dims.get(key);
   },
-  getAllPlayers: () => sim.players.filter((p) => p.isValid),
-  getPlayers: () => sim.players.filter((p) => p.isValid),
-  getEntity: (id) => sim.entities.get(id),
-  getDynamicProperty: (k) => sim.worldProps.get(k),
+  getAllPlayers: () => (sim.needWorld("world.getAllPlayers"), sim.players.filter((p) => p.isValid)),
+  getPlayers: () => (sim.needWorld("world.getPlayers"), sim.players.filter((p) => p.isValid)),
+  getEntity: (id) => (sim.needWorld("world.getEntity"), sim.entities.get(id)),
+  getDynamicProperty: (k) => (sim.needWorld("world.getDynamicProperty"), sim.worldProps.get(k)),
   setDynamicProperty: (k, v) => {
+    sim.needWorld("world.setDynamicProperty");
     sim.guard("world.setDynamicProperty");
     sim.worldProps.set(k, v);
   },
@@ -671,7 +711,11 @@ export const world = {
       sim.stats.structures.push({ id: name, at: { ...loc } });
     },
   },
-  sendMessage: () => {},
+  sendMessage: (m) => {
+    sim.needWorld("world.sendMessage");
+    sim.guard("world.sendMessage");
+    if (sim.stats) sim.stats.messages.push({ to: "*", text: typeof m === "string" ? m : JSON.stringify(m) });
+  },
 };
 
 export const system = {
@@ -718,7 +762,24 @@ export function boot() {
   } finally {
     sim.restricted = false;
   }
+  sim.early = false;
   world.afterEvents.worldLoad._fire({});
+}
+
+/**
+ * A player taps a block with whatever they hold. As in the game, the BEFORE event fires for any block
+ * (restricted context); the after event fires only when the block itself reacted, which a floor never does.
+ */
+export function tapBlock(player, block, stack, interactive = false) {
+  sim.restricted = true;
+  try {
+    for (const sub of world.beforeEvents.playerInteractWithBlock.subs) {
+      sub.cb({ player, block, isFirstEvent: true, itemStack: stack, cancel: false, blockFace: "Up", faceLocation: { x: 0.5, y: 1, z: 0.5 } });
+    }
+  } finally {
+    sim.restricted = false;
+  }
+  if (interactive) world.afterEvents.playerInteractWithBlock._fire({ player, block, isFirstEvent: true, beforeItemStack: stack, itemStack: stack, blockFace: "Up", faceLocation: { x: 0.5, y: 1, z: 0.5 } });
 }
 
 export function addPlayer(name, loc, dim = "overworld") {

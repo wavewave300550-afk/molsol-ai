@@ -15,6 +15,7 @@
 import { CONFIG } from "../config";
 import type { Encounter } from "./encounter";
 import { XZ, angDiff, approachAngle, dirToYaw, wrapDeg, yawToDir } from "./math";
+import { trace } from "./trace";
 
 export const enum MoveAnim {
   Idle = 0,
@@ -32,6 +33,12 @@ export class Locomotion {
   turnRate = 4;
   private anim: MoveAnim = MoveAnim.Idle;
   private moving = false;
+  private lastApplied: number | undefined;
+  private yawMisses = 0;
+  private yawByTeleport = false;
+  /** Set when velocity impulses turn out not to move this entity: walk in validated steps instead. */
+  private stepwise = false;
+  private stalls = 0;
   private progress = { x: 0, z: 0, tick: 0 };
 
   constructor(private readonly enc: Encounter) {
@@ -52,9 +59,27 @@ export class Locomotion {
     this.enc.setProp("abm:move", a);
   }
 
+  /**
+   * Turn the entity. setRotation is the cheap way; if the engine does not keep the yaw it was given
+   * (the entity's own body control can win), this notices and turns by teleporting in place instead.
+   */
   private applyYaw(): void {
+    const boss = this.enc.boss;
     try {
-      this.enc.boss.setRotation({ x: 0, y: this.yaw });
+      if (!this.yawByTeleport && this.lastApplied !== undefined) {
+        const got = boss.getRotation().y;
+        if (Math.abs(angDiff(got, this.lastApplied)) > 12) {
+          if (++this.yawMisses >= 6) {
+            this.yawByTeleport = true;
+            trace("yaw_fallback", { boss: this.enc.key });
+          }
+        } else {
+          this.yawMisses = 0;
+        }
+      }
+      if (this.yawByTeleport) boss.teleport(boss.location, { rotation: { x: 0, y: this.yaw }, keepVelocity: true });
+      else boss.setRotation({ x: 0, y: this.yaw });
+      this.lastApplied = this.yaw;
     } catch {
       /* invalid entity: the encounter tick will notice */
     }
@@ -125,7 +150,7 @@ export class Locomotion {
     this.moving = true;
     this.setAnim(MoveAnim.Walk);
     try {
-      if (CONFIG.movement.mode === "impulse") {
+      if (this.impulses()) {
         const v = boss.getVelocity();
         boss.applyImpulse({ x: f.x * step - v.x, y: 0, z: f.z * step - v.z });
       } else {
@@ -141,8 +166,12 @@ export class Locomotion {
     return d;
   }
 
+  private impulses(): boolean {
+    return CONFIG.movement.mode === "impulse" && !this.stepwise;
+  }
+
   private stopVelocity(): void {
-    if (CONFIG.movement.mode !== "impulse") return;
+    if (!this.impulses()) return;
     try {
       const v = this.enc.boss.getVelocity();
       if (Math.abs(v.x) + Math.abs(v.z) > 1e-4) this.enc.boss.applyImpulse({ x: -v.x, y: 0, z: -v.z });
@@ -164,10 +193,16 @@ export class Locomotion {
     const l = this.enc.boss.location;
     if (Math.hypot(l.x - this.progress.x, l.z - this.progress.z) > 0.6) {
       this.progress = { x: l.x, z: l.z, tick: now };
+      this.stalls = 0;
       return;
     }
     if (now - this.progress.tick < 40) return;
     this.progress = { x: l.x, z: l.z, tick: now };
+    // Two stalls in a row while pushing with impulses: impulses are not moving this entity here.
+    if (this.impulses() && ++this.stalls >= 2) {
+      this.stepwise = true;
+      trace("step_fallback", { boss: this.enc.key });
+    }
     const d = Math.hypot(goal.x - l.x, goal.z - l.z) || 1;
     this.relocate({ x: l.x + ((goal.x - l.x) / d) * 1.5, z: l.z + ((goal.z - l.z) / d) * 1.5 });
   }

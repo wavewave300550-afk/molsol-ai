@@ -44,6 +44,7 @@ export async function freshWorld() {
   generation++;
   seedRandom(seedBase + generation * 7919);
   sim.reset();
+  sim.early = true;                 // until boot() fires worldLoad, as in the game
   sim.intervals.length = 0;
   sim.commands.clear();
   sim.enums.clear();
@@ -251,6 +252,7 @@ export function useSeal(mcApi, player, key, floor) {
   const block = { x: Math.floor(floor.x), y: Math.floor(floor.y) - 1, z: Math.floor(floor.z) };
   const stack = new mcApi.ItemStack({ vesperra: "abm:seal_vesperra", cantor: "abm:seal_cantor", nomos: "abm:seal_nomos", orison: "abm:seal_orison" }[key]);
   player._held = stack;
-  mcApi.world.afterEvents.playerInteractWithBlock._fire({ player, block, isFirstEvent: true, beforeItemStack: stack, itemStack: stack, blockFace: "Up", faceLocation: floor });
+  mcApi.tapBlock(player, { ...block, dimension: player.dimension }, stack);     // a plain floor block: before event only
+  sim.drainRuns();                  // the Seal acts in the tick after the tap
   sim.flush();
 }

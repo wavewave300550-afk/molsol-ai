@@ -13,6 +13,7 @@ import { BOSS_KEYS, BossKey } from "./config";
 import { manager } from "./core/manager";
 import { V3 } from "./core/math";
 import { report } from "./core/trace";
+import { giveKit } from "./kit";
 import { arenaOf } from "./registry";
 import { raiseArenaAt } from "./ui";
 
@@ -49,6 +50,8 @@ export function initScriptEvents(): void {
         } else if (ev.id === "abm:dismiss") {
           const enc = manager.nearest(dim, at);
           if (enc) manager.cancel(enc);
+        } else if (ev.id === "abm:kit") {
+          if (ev.sourceEntity instanceof Player) giveKit(ev.sourceEntity);
         } else if (ev.id === "abm:arena") {
           const key = parseBoss(words[0]);
           if (key && arenaOf(key)) raiseArenaAt(dim, floor, key);

@@ -69,7 +69,7 @@ def _bell_helper():
     ring.rot("clapper", -sin(q("anim_time") * 720 - 60) * 34, 0, 0)
     ring.scale("bell_glow", 1.4)
     ctl = Controller("controller.animation.abm.cantor_bell", "land")
-    ctl.state("land", ["land"], [("idle", q("anim_time").ge(0.6))], blend=0.1)
+    ctl.state("land", ["land"], [("idle", q("all_animations_finished"))], blend=0.1)
     ctl.state("idle", [], [("ring", prop("abm:anim").eq(1))], blend=0.15)
     ctl.state("ring", ["ring"], [("idle", prop("abm:anim").ne(1))], blend=0.15)
     for a in (idle, land, ring):

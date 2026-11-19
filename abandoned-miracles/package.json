@@ -14,8 +14,8 @@
     "test": "npm run typecheck && npm run build && python3 tools/validate.py --mct && npm run sim && npm run sim:seeds && npm run report"
   },
   "devDependencies": {
-    "@minecraft/server": "2.11.0",
-    "@minecraft/server-ui": "2.3.0",
+    "@minecraft/server": "2.6.0",
+    "@minecraft/server-ui": "2.0.0",
     "@minecraft/vanilla-data": "1.26.60",
     "esbuild": "0.24.2",
     "typescript": "5.6.3"

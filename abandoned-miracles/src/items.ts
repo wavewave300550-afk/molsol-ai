@@ -91,21 +91,39 @@ export function initItems(): void {
   });
   // Tapping / clicking a block with the item in hand. This is the path touch players use,
   // so the Codex and the trophies respond here as well as the Seals.
-  world.afterEvents.playerInteractWithBlock.subscribe((ev) => {
-    if (!ev.isFirstEvent) return;
-    const id = ev.beforeItemStack?.typeId ?? ev.itemStack?.typeId;
-    if (!id) return;
+  const onBlock = (player: Player, id: string | undefined, at: V3): void => {
+    if (!id || !player.isValid) return;
     const key = SEAL_TO_KEY.get(id);
     if (key) {
-      if (!debounce(ev.player)) return;
-      const b = ev.block;
-      useSeal(ev.player, key, { x: b.x + 0.5, y: b.y + 1, z: b.z + 0.5 });
+      if (!debounce(player)) return;
+      useSeal(player, key, { x: at.x + 0.5, y: at.y + 1, z: at.z + 0.5 });
     } else if (id === CODEX_ITEM) {
-      if (debounce(ev.player)) void openCodex(ev.player);
+      if (debounce(player)) void openCodex(player);
     } else {
       const trophy = TROPHY_TO_KEY.get(id);
-      if (trophy && debounce(ev.player)) flourish(ev.player, trophy);
+      if (trophy && debounce(player)) flourish(player, trophy);
     }
+  };
+  // The BEFORE event fires for every tap on any block. (The after event only fires when the block
+  // itself reacted - a chest, a button - which a plain floor never does.) It runs in the restricted
+  // context, so everything is read here and acted on in the next tick.
+  world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
+    if (!ev.isFirstEvent) return;
+    const id = ev.itemStack?.typeId;
+    if (!id || !(SEAL_TO_KEY.has(id) || id === CODEX_ITEM || TROPHY_TO_KEY.has(id))) return;
+    const player = ev.player;
+    const at = { x: ev.block.x, y: ev.block.y, z: ev.block.z };
+    system.run(() => {
+      try {
+        onBlock(player, id, at);
+      } catch (e) {
+        report("item on block", e);
+      }
+    });
+  });
+  world.afterEvents.playerInteractWithBlock.subscribe((ev) => {
+    if (!ev.isFirstEvent) return;
+    onBlock(ev.player, ev.beforeItemStack?.typeId ?? ev.itemStack?.typeId, ev.block);
   });
 
   // Using the item without a block under the cursor.

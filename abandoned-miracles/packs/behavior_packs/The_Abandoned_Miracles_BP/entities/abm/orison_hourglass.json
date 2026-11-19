@@ -27,7 +27,7 @@
   },
   "components": {
    "minecraft:type_family": {
-    "family": ["abm_helper", "abm_hourglass", "monster"]
+    "family": ["abm_helper", "abm_hourglass", "mob"]
    },
    "minecraft:health": {
     "value": 16,

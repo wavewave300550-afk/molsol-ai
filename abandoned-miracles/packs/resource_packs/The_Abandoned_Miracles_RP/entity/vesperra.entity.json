@@ -5,7 +5,8 @@
    "identifier": "abm:vesperra",
    "materials": {
     "default": "entity_alphatest",
-    "glow": "entity_emissive_alpha"
+    "glow": "entity_emissive_alpha",
+    "glass": "entity_alphablend"
    },
    "textures": {
     "default": "textures/entity/abm/vesperra"

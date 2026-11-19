@@ -87,8 +87,8 @@ are in the boss chapters.
 
 | | |
 |---|---|
-| Game | Minecraft: Bedrock Edition **1.26.60** (latest stable at build time) or newer; `min_engine_version` 1.26.60 |
-| Script modules | `@minecraft/server` **2.11.0**, `@minecraft/server-ui` **2.3.0** — the stable versions for 1.26.60 |
+| Game | Minecraft: Bedrock Edition **1.26.10 or newer**; built and checked against 1.26.60 (latest stable at build time); `min_engine_version` 1.26.10 |
+| Script modules | `@minecraft/server` **2.6.0**, `@minecraft/server-ui` **2.0.0** — deliberately the *lowest* stable versions that contain everything used (2.6.0 is the first with `world.beforeEvents.entityHurt`). A pack that asks for a newer module than the player's game has does not load at all; a newer game serves an older 2.x request. The script is type-checked against exactly these typings |
 | Experiments | none. No Beta APIs, no experimental toggles, no custom blocks |
 | Namespace | `abm:` for every identifier |
 | Packs | one behaviour pack + one resource pack in `The_Abandoned_Miracles.mcaddon` |
@@ -187,7 +187,7 @@ arena). **No block is ever placed, removed or changed by an encounter.**
 
 ### 3.4 Damage dealt to the boss
 
-Processed in `world.beforeEvents.entityHurt` (stable in 2.11.0), in this order:
+Processed in `world.beforeEvents.entityHurt` (stable since 2.6.0), in this order:
 
 1. refused while untouchable (intro, transition, death) and for environmental causes (fall, fire, lava, suffocation,
    drowning, cactus, lightning, …); explosions count 30 %;
@@ -268,10 +268,11 @@ client by distance travelled and yaw turned, so it matches whatever the server a
 
 | | |
 |---|---|
-| Seals | four items in the Creative inventory and craftable; use one on a level, open floor |
+| Seals | four items in the Creative inventory and craftable; use one on a level, open floor (tap or click the floor block; handled through the block-interaction *before* event, which fires for any block, with item-use as a second path) |
 | Codex | `abm:codex` — reads about each Miracle; for operators: settings, optional arena placement, dismiss |
 | Commands (operator, cheats) | `/abm:summon <boss>`, `/abm:arena <boss>`, `/abm:dismiss`, `/abm:debug <on\|off\|phase2\|kill\|attack n\|info>` |
-| Script events | `/scriptevent abm:summon <boss> [force]`, `abm:dismiss`, `abm:arena <boss>` — for command blocks and NPCs |
+| Script events | `/scriptevent abm:summon <boss> [force]`, `abm:dismiss`, `abm:arena <boss>`, `abm:kit` — for command blocks and NPCs |
+| Reference kit | Codex button (operators) or `/scriptevent abm:kit`: enchanted diamond armour and sword, shield, food |
 | Entities | `/summon abm:vesperra`, `abm:cantor_xiii`, `abm:nomos`, `abm:orison` are adopted into an encounter automatically |
 
 Bosses never spawn naturally (no spawn rules, `is_spawnable: false`).

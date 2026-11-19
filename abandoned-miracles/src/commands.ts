@@ -70,8 +70,9 @@ export function registerCommands(ev: StartupEvent): void {
         }
         const enc = manager.nearest(p.dimension, p.location);
         if (!enc) return fail("No encounter nearby.");
-        if (action === "phase2") enc.force("phase2");
-        else if (action === "kill") enc.force("death");
+        // command callbacks run in the restricted context: anything that changes the world waits a tick
+        if (action === "phase2") system.run(() => enc.force("phase2"));
+        else if (action === "kill") system.run(() => enc.force("death"));
         else if (action === "attack") {
           const a = enc.controller.attacks.find((x) => x.index === value);
           if (!a) return fail("attack needs a number 1-7.");

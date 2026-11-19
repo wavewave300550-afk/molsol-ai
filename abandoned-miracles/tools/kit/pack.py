@@ -15,9 +15,12 @@ from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 ADDON_NAME = "The Abandoned Miracles"
 ADDON_TAGLINE = "Four perfect miracles. Four catastrophic successes."
 VERSION = [1, 0, 0]
-MIN_ENGINE = [1, 26, 60]              # latest stable Bedrock at build time: 1.26.60
-SERVER_VERSION = "2.11.0"             # @minecraft/server stable in 1.26.60
-SERVER_UI_VERSION = "2.3.0"           # @minecraft/server-ui stable in 1.26.60
+# The LOWEST versions the add-on really needs (not the newest available): a pack that asks for a newer
+# script module than the player's game provides does not load at all. The script is type-checked against
+# exactly these typings (see package.json), so nothing newer can slip in.
+MIN_ENGINE = [1, 26, 10]              # first release whose stable API has world.beforeEvents.entityHurt
+SERVER_VERSION = "2.6.0"              # @minecraft/server stable in 1.26.10 (newer games serve it as 2.x)
+SERVER_UI_VERSION = "2.0.0"           # @minecraft/server-ui stable in 1.26.10
 ENTITY_FORMAT = "1.26.0"
 ITEM_FORMAT = "1.21.130"
 NAMESPACE = "abm"
@@ -76,8 +79,7 @@ def bp_manifest() -> dict:
             {"module_name": "@minecraft/server", "version": SERVER_VERSION},
             {"module_name": "@minecraft/server-ui", "version": SERVER_UI_VERSION},
         ],
-        "metadata": {"authors": ["The Abandoned Miracles project"], "license": "All rights reserved",
-                     "product_type": "addon"},
+        "metadata": {"authors": ["The Abandoned Miracles project"], "license": "All rights reserved"},
     }
 
 
@@ -88,8 +90,7 @@ def rp_manifest() -> dict:
                    "version": VERSION, "min_engine_version": MIN_ENGINE},
         "modules": [{"type": "resources", "uuid": UUID["rp_res"], "version": VERSION}],
         "dependencies": [{"uuid": UUID["bp_header"], "version": VERSION}],
-        "metadata": {"authors": ["The Abandoned Miracles project"], "license": "All rights reserved",
-                     "product_type": "addon"},
+        "metadata": {"authors": ["The Abandoned Miracles project"], "license": "All rights reserved"},
     }
 
 
@@ -136,7 +137,8 @@ def boss_entity(identifier: str, family: str, health: float, width: float, heigh
                 "abm:gone": {"minecraft:instant_despawn": {}},
             },
             "components": {
-                "minecraft:type_family": {"family": ["abm_boss", family, "monster", "mob"]},
+                # no "monster" family: the game removes monsters on Peaceful, and golems hunt them
+                "minecraft:type_family": {"family": ["abm_boss", family, "mob"]},
                 "minecraft:health": {"value": health, "max": health},
                 "minecraft:collision_box": {"width": width, "height": height},
                 "minecraft:custom_hit_test": {"hitboxes": [{"width": hit_width, "height": hit_height,
@@ -177,7 +179,7 @@ def helper_entity(identifier: str, family: str, health: float, width: float, hei
     props = {"abm:anim": int_prop(0, 15), "abm:variant": int_prop(0, 7)}
     props.update(extra_props or {})
     comps = {
-        "minecraft:type_family": {"family": ["abm_helper", family, "inanimate" if not damageable else "monster"]},
+        "minecraft:type_family": {"family": ["abm_helper", family, "inanimate" if not damageable else "mob"]},
         "minecraft:health": {"value": health, "max": health},
         "minecraft:collision_box": {"width": width, "height": height},
         "minecraft:physics": {"has_gravity": gravity, "has_collision": gravity},

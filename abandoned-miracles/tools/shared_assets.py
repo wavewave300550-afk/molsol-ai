@@ -75,6 +75,8 @@ def build(keys) -> dict:
         "abm.ui.ok": "Close",
         "abm.ui.summon_here": "Summon here",
         "abm.ui.dismiss": "Dismiss the nearest encounter",
+        "abm.ui.kit": "Take the reference kit (enchanted diamond)",
+        "abm.kit.given": "§7Reference kit handed out: enchanted diamond armour and sword, a shield and food.",
         "abm.ui.difficulty": "Difficulty",
         "abm.ui.vfx": "Reduced decorative particles",
         "abm.ui.actionbar": "Action-bar status line",

@@ -87,7 +87,7 @@ def _helpers():
     sink.track("pool_glass", "scale", [(0, [1, 1, 1]), (0.4, [0.3, 1, 0.3], "in")])
     anim_p = prop("abm:anim")
     sc = Controller("controller.animation.abm.orison_shadow", "rise")
-    sc.state("rise", ["rise"], [("idle", q("anim_time").ge(0.5))], blend=0.05)
+    sc.state("rise", ["rise"], [("idle", q("all_animations_finished"))], blend=0.05)
     sc.state("idle", [], [("strike", anim_p.eq(1)), ("point", anim_p.eq(2)), ("sink", anim_p.eq(3))], blend=0.1)
     sc.state("strike", ["strike"], [("idle", anim_p.ne(1))], blend=0.12)
     sc.state("point", ["point"], [("idle", anim_p.ne(2))], blend=0.12)

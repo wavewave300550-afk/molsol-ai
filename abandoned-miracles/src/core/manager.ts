@@ -138,13 +138,27 @@ export class EncounterManager implements EncounterHost {
     system.runInterval(() => this.tick(), 1);
   }
 
+  /** Encounters whose whole tick threw, with the number of consecutive failures. */
+  private readonly failing = new Map<Encounter, number>();
+
   tick(): void {
     this.ticks++;
     for (const e of [...this.encounters.values()]) {
       try {
         e.tick();
+        this.failing.delete(e);
       } catch (err) {
         report(`encounter ${e.key}`, err);
+        const n = (this.failing.get(e) ?? 0) + 1;
+        this.failing.set(e, n);
+        if (n >= 60) {
+          this.failing.delete(e);
+          try {
+            this.abandon(e);
+          } catch (err2) {
+            report(`abandon ${e.key}`, err2);
+          }
+        }
       }
     }
     if (this.ticks % 200 === 0) this.sweepOrphans();

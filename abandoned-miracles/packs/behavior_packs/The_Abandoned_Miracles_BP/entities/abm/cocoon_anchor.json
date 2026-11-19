@@ -27,7 +27,7 @@
   },
   "components": {
    "minecraft:type_family": {
-    "family": ["abm_helper", "abm_anchor", "monster"]
+    "family": ["abm_helper", "abm_anchor", "mob"]
    },
    "minecraft:health": {
     "value": 8,

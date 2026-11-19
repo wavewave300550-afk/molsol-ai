@@ -86,7 +86,7 @@
   },
   "components": {
    "minecraft:type_family": {
-    "family": ["abm_boss", "abm_vesperra", "monster", "mob"]
+    "family": ["abm_boss", "abm_vesperra", "mob"]
    },
    "minecraft:health": {
     "value": 480,

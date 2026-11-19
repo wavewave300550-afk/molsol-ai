@@ -73,7 +73,7 @@ def _helpers():
     bite.track("body", "pos", [(0, [0, 0, 0]), (0.5, [0, 3, 3], "out"), (0.6, [0, 0, -7], "snap"), (0.8, [0, 0, 0], "out")])
     bite.sound(0.58, "bite")
     hc = Controller("controller.animation.abm.vesperra_heir", "emerge")
-    hc.state("emerge", ["emerge"], [("idle", q("anim_time").ge(0.7))], blend=0.1)
+    hc.state("emerge", ["emerge"], [("idle", q("all_animations_finished"))], blend=0.1)
     hc.state("idle", [], [("bite", prop("abm:anim").eq(1))], blend=0.1)
     hc.state("bite", ["bite"], [("idle", prop("abm:anim").ne(1))], blend=0.1)
     for a in (idle, walk, emerge, bite):

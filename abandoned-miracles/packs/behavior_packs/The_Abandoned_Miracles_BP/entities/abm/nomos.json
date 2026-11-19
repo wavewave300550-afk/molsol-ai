@@ -86,7 +86,7 @@
   },
   "components": {
    "minecraft:type_family": {
-    "family": ["abm_boss", "abm_nomos", "monster", "mob"]
+    "family": ["abm_boss", "abm_nomos", "mob"]
    },
    "minecraft:health": {
     "value": 560,

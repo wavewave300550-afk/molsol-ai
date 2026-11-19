@@ -210,6 +210,9 @@ export class Encounter {
     }, "intro");
   }
 
+  /** Consecutive ticks whose combat logic threw. */
+  private faults = 0;
+
   tick(): void {
     if (this.ended) return;
     if (!this.boss.isValid) {
@@ -236,8 +239,16 @@ export class Encounter {
     try {
       this.controller.tick();
       if (this.sm.inCombat) this.combat(now);
+      this.faults = 0;
     } catch (e) {
       report(`${this.key} tick`, e);
+      // Three seconds of nothing but failures: fold the encounter away (Seal refunded) rather than
+      // leave a broken boss standing and the log filling up.
+      if (++this.faults >= 60) {
+        this.faults = 0;
+        this.host.abandon(this);
+        return;
+      }
     }
     if (this.ended) return;       // the encounter was released during this tick (defeat, reset, abandonment)
     if (now % CONFIG.hud.intervalTicks === 0) renderHud(this);

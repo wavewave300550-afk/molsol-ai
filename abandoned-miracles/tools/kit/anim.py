@@ -331,7 +331,11 @@ class ClientEntity:
         return e
 
     def json(self) -> dict:
-        desc: dict = {"identifier": self.identifier, "materials": self.materials, "textures": self.textures,
+        # The shared render controller names Material.glow and Material.glass; an entity that does not
+        # declare one of them logs a render error every frame it is drawn, so all three always exist.
+        materials = {"default": "entity_alphatest", "glow": "entity_emissive_alpha", "glass": "entity_alphablend"}
+        materials.update(self.materials)
+        desc: dict = {"identifier": self.identifier, "materials": materials, "textures": self.textures,
                       "geometry": self.geometry}
         scripts: dict = {}
         if self.initialize:

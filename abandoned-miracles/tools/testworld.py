@@ -3,7 +3,7 @@ Build the demonstration world: dist/The_Abandoned_Miracles_Test_World.mcworld
 
     python3 tools/testworld.py
 
-The world is a flat creative world with the add-on applied plus a tiny,
+The world is a flat survival world with the add-on applied plus a tiny,
 commands-only "test world kit" behaviour pack. On first load the kit raises a
 central plaza and the four demonstration arenas with `structure load`, sets
 calm game rules and hands every arriving player the Codex and the four Seals.
@@ -120,13 +120,17 @@ def functions(sites: dict, hub_size) -> dict:
                "time set 6000", "weather clear"]
     prepare += [f"tickingarea add {a[0]} {a[1]} {a[2]} {b[0]} {b[1]} {b[2]} abmtw_{k}" for k, (a, b) in areas.items()]
     finish = [f"tickingarea remove abmtw_{k}" for k in areas] + [f"setworldspawn 0 {SURFACE} 0", "scoreboard players set #t abm_tw 1000"]
-    say = lambda text: 'tellraw @s {"rawtext":[{"text":' + json.dumps(text) + "}]}"      # noqa: E731
+    # the section sign is written literally (UTF-8), not as a \u escape: function files are plain text
+    say = lambda text: 'tellraw @s {"rawtext":[{"text":' + json.dumps(text, ensure_ascii=False) + "}]}"      # noqa: E731
     greet = [f"tp @s 0.5 {SURFACE} 0.5", "give @s abm:codex 1"]
     greet += [f"give @s {SEALS[k]} 1" for k in sites]
     greet += [say("§l§6The Abandoned Miracles§r §7- test world"),
               say("§7Four arenas stand around this plaza. Follow a causeway, walk to the middle of the arena and §fuse its Seal on the floor§7.")]
     greet += [say(f"§f{sites[k]['word']}§7: {TITLES[k]}") for k in sites]
-    greet += [say("§7The §fCodex§7 explains each Miracle and holds the settings. Seals are also in the Creative inventory; §f/abm:summon <boss>§7 works anywhere."),
+    greet += [say("§7The §fCodex§7 explains each Miracle and holds the settings. §f/abm:summon <boss>§7 works anywhere."),
+              say("§7This world is in §fSurvival§7 so the fights are real; you keep your inventory when you die."),
+              # the reference loadout (enchanted diamond) comes from the add-on's script
+              "scriptevent abm:kit",
               "tag @s add abm_tw"]
     tick = ["scoreboard objectives add abm_tw dummy", "scoreboard players add #t abm_tw 0",
             "execute if score #t abm_tw matches 0..299 run scoreboard players add #t abm_tw 1",
@@ -147,7 +151,7 @@ def level_dat() -> bytes:
             raise SystemExit(f"level.dat template has no field {key}")
         v[key] = nbt.T(v[key].tag, value, v[key].elem)
     put("LevelName", WORLD_NAME)
-    put("GameType", 1)
+    put("GameType", 0)                # survival: in creative the bosses cannot hurt anyone, so nothing could be judged
     put("Difficulty", 2)
     put("SpawnX", 0)
     put("SpawnY", SURFACE)

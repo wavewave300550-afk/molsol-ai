@@ -1,12 +1,12 @@
 // src/boot.ts
-import { system as system5 } from "@minecraft/server";
+import { system as system5, world as world6 } from "@minecraft/server";
 
 // src/commands.ts
 import {
   CommandPermissionLevel,
   CustomCommandParamType,
   CustomCommandStatus,
-  Player as Player6,
+  Player as Player7,
   system as system3
 } from "@minecraft/server";
 
@@ -608,12 +608,33 @@ function trace(kind, data = {}) {
 function tracing() {
   return current() !== void 0;
 }
+var seenErrors = /* @__PURE__ */ new Map();
+var announced = 0;
+var notifier;
+function setErrorNotifier(f) {
+  notifier = f;
+}
 function report(where, err) {
+  const head = (err instanceof Error ? err.message : String(err)).split("\n")[0];
   const msg = err instanceof Error ? `${err.message}
 ${err.stack ?? ""}` : String(err);
   const s = current();
   if (s) s("error", { where, msg });
-  console.warn(`[abm] error in ${where}: ${msg}`);
+  const key = `${where}|${head}`;
+  const n = (seenErrors.get(key) ?? 0) + 1;
+  seenErrors.set(key, n);
+  if (n === 1) {
+    console.warn(`[abm] error in ${where}: ${msg}`);
+    if (notifier && announced < 6) {
+      announced++;
+      try {
+        notifier(`§7[The Abandoned Miracles] internal problem in §f${where}§7: ${head}`);
+      } catch {
+      }
+    }
+  } else if (n % 200 === 0) {
+    console.warn(`[abm] error in ${where} (x${n}): ${head}`);
+  }
 }
 
 // src/core/stateMachine.ts
@@ -1172,6 +1193,11 @@ var Locomotion = class {
     this.turnRate = 4;
     this.anim = 0 /* Idle */;
     this.moving = false;
+    this.yawMisses = 0;
+    this.yawByTeleport = false;
+    /** Set when velocity impulses turn out not to move this entity: walk in validated steps instead. */
+    this.stepwise = false;
+    this.stalls = 0;
     this.progress = { x: 0, z: 0, tick: 0 };
     let y = 0;
     try {
@@ -1188,9 +1214,27 @@ var Locomotion = class {
     this.anim = a;
     this.enc.setProp("abm:move", a);
   }
+  /**
+   * Turn the entity. setRotation is the cheap way; if the engine does not keep the yaw it was given
+   * (the entity's own body control can win), this notices and turns by teleporting in place instead.
+   */
   applyYaw() {
+    const boss = this.enc.boss;
     try {
-      this.enc.boss.setRotation({ x: 0, y: this.yaw });
+      if (!this.yawByTeleport && this.lastApplied !== void 0) {
+        const got = boss.getRotation().y;
+        if (Math.abs(angDiff(got, this.lastApplied)) > 12) {
+          if (++this.yawMisses >= 6) {
+            this.yawByTeleport = true;
+            trace("yaw_fallback", { boss: this.enc.key });
+          }
+        } else {
+          this.yawMisses = 0;
+        }
+      }
+      if (this.yawByTeleport) boss.teleport(boss.location, { rotation: { x: 0, y: this.yaw }, keepVelocity: true });
+      else boss.setRotation({ x: 0, y: this.yaw });
+      this.lastApplied = this.yaw;
     } catch {
     }
   }
@@ -1254,7 +1298,7 @@ var Locomotion = class {
     this.moving = true;
     this.setAnim(1 /* Walk */);
     try {
-      if (CONFIG.movement.mode === "impulse") {
+      if (this.impulses()) {
         const v = boss.getVelocity();
         boss.applyImpulse({ x: f.x * step - v.x, y: 0, z: f.z * step - v.z });
       } else {
@@ -1268,8 +1312,11 @@ var Locomotion = class {
     this.watchProgress(g);
     return d;
   }
+  impulses() {
+    return CONFIG.movement.mode === "impulse" && !this.stepwise;
+  }
   stopVelocity() {
-    if (CONFIG.movement.mode !== "impulse") return;
+    if (!this.impulses()) return;
     try {
       const v = this.enc.boss.getVelocity();
       if (Math.abs(v.x) + Math.abs(v.z) > 1e-4) this.enc.boss.applyImpulse({ x: -v.x, y: 0, z: -v.z });
@@ -1288,10 +1335,15 @@ var Locomotion = class {
     const l = this.enc.boss.location;
     if (Math.hypot(l.x - this.progress.x, l.z - this.progress.z) > 0.6) {
       this.progress = { x: l.x, z: l.z, tick: now };
+      this.stalls = 0;
       return;
     }
     if (now - this.progress.tick < 40) return;
     this.progress = { x: l.x, z: l.z, tick: now };
+    if (this.impulses() && ++this.stalls >= 2) {
+      this.stepwise = true;
+      trace("step_fallback", { boss: this.enc.key });
+    }
     const d = Math.hypot(goal.x - l.x, goal.z - l.z) || 1;
     this.relocate({ x: l.x + (goal.x - l.x) / d * 1.5, z: l.z + (goal.z - l.z) / d * 1.5 });
   }
@@ -1765,6 +1817,8 @@ var Encounter = class {
     this.deferred = [];
     this.props = /* @__PURE__ */ new Map();
     this.outsiderNote = /* @__PURE__ */ new Map();
+    /** Consecutive ticks whose combat logic threw. */
+    this.faults = 0;
     this.stats = CONFIG.bosses[key];
     this.bossId = boss.id;
     this.dim = boss.dimension;
@@ -1905,8 +1959,14 @@ var Encounter = class {
     try {
       this.controller.tick();
       if (this.sm.inCombat) this.combat(now);
+      this.faults = 0;
     } catch (e) {
       report(`${this.key} tick`, e);
+      if (++this.faults >= 60) {
+        this.faults = 0;
+        this.host.abandon(this);
+        return;
+      }
     }
     if (this.ended) return;
     if (now % CONFIG.hud.intervalTicks === 0) renderHud(this);
@@ -2194,6 +2254,8 @@ var EncounterManager = class {
     this.factories = /* @__PURE__ */ new Map();
     this.ticks = 0;
     this.started = false;
+    /** Encounters whose whole tick threw, with the number of consecutive failures. */
+    this.failing = /* @__PURE__ */ new Map();
   }
   register(key, factory) {
     this.factories.set(key, factory);
@@ -2275,8 +2337,19 @@ var EncounterManager = class {
     for (const e of [...this.encounters.values()]) {
       try {
         e.tick();
+        this.failing.delete(e);
       } catch (err) {
         report(`encounter ${e.key}`, err);
+        const n = (this.failing.get(e) ?? 0) + 1;
+        this.failing.set(e, n);
+        if (n >= 60) {
+          this.failing.delete(e);
+          try {
+            this.abandon(e);
+          } catch (err2) {
+            report(`abandon ${e.key}`, err2);
+          }
+        }
       }
     }
     if (this.ticks % 200 === 0) this.sweepOrphans();
@@ -2412,8 +2485,8 @@ var manager = new EncounterManager();
 
 // src/items.ts
 import {
-  EntityComponentTypes as EntityComponentTypes2,
-  EquipmentSlot as EquipmentSlot2,
+  EntityComponentTypes as EntityComponentTypes3,
+  EquipmentSlot as EquipmentSlot3,
   GameMode as GameMode3,
   system as system2,
   world as world5
@@ -2439,6 +2512,60 @@ function moduleOf(k) {
 }
 function arenaOf(k) {
   return modules[k]?.arena;
+}
+
+// src/kit.ts
+import {
+  EnchantmentTypes,
+  EntityComponentTypes as EntityComponentTypes2,
+  EquipmentSlot as EquipmentSlot2,
+  ItemComponentTypes,
+  ItemStack as ItemStack3
+} from "@minecraft/server";
+function enchanted(id, enchantments, amount = 1) {
+  const stack = new ItemStack3(id, amount);
+  try {
+    const c = stack.getComponent(ItemComponentTypes.Enchantable);
+    if (c) {
+      for (const [name, level] of Object.entries(enchantments)) {
+        const type = EnchantmentTypes.get(name);
+        if (!type) continue;
+        try {
+          c.addEnchantment({ type, level });
+        } catch {
+        }
+      }
+    }
+  } catch (e) {
+    report("kit enchant", e);
+  }
+  return stack;
+}
+function giveKit(p) {
+  try {
+    const eq = p.getComponent(EntityComponentTypes2.Equippable);
+    const inv = p.getComponent(EntityComponentTypes2.Inventory)?.container;
+    const stow = (stack) => {
+      const left = inv ? inv.addItem(stack) : stack;
+      if (left) p.dimension.spawnItem(left, p.location);
+    };
+    const wear = (slot, stack) => {
+      if (eq && !eq.getEquipment(slot)) eq.setEquipment(slot, stack);
+      else stow(stack);
+    };
+    const armour = { protection: 4, unbreaking: 3 };
+    wear(EquipmentSlot2.Head, enchanted("minecraft:diamond_helmet", armour));
+    wear(EquipmentSlot2.Chest, enchanted("minecraft:diamond_chestplate", armour));
+    wear(EquipmentSlot2.Legs, enchanted("minecraft:diamond_leggings", armour));
+    wear(EquipmentSlot2.Feet, enchanted("minecraft:diamond_boots", armour));
+    wear(EquipmentSlot2.Offhand, new ItemStack3("minecraft:shield", 1));
+    stow(enchanted("minecraft:diamond_sword", { sharpness: 5, unbreaking: 3 }));
+    stow(new ItemStack3("minecraft:cooked_beef", 32));
+    stow(new ItemStack3("minecraft:golden_apple", 8));
+    p.sendMessage({ rawtext: [{ translate: "abm.kit.given" }] });
+  } catch (e) {
+    report("kit", e);
+  }
 }
 
 // src/ui.ts
@@ -2506,7 +2633,7 @@ async function openCodex(p) {
     const keys = BOSS_KEYS.filter((k) => manager.has(k));
     const form = new ActionFormData().title(tr("abm.ui.title")).body({ rawtext: [{ translate: "abm.ui.body1" }, { text: "\n\n" }, { translate: "abm.ui.body2" }] });
     for (const k of keys) form.button(tr(`entity.${bossType(k)}.name`));
-    if (op) form.button(tr("abm.ui.settings")).button(tr("abm.ui.arena")).button(tr("abm.ui.dismiss"));
+    if (op) form.button(tr("abm.ui.settings")).button(tr("abm.ui.arena")).button(tr("abm.ui.dismiss")).button(tr("abm.ui.kit"));
     const r = await form.show(p);
     if (r.canceled || r.selection === void 0) return;
     if (r.selection < keys.length) {
@@ -2526,6 +2653,8 @@ async function openCodex(p) {
       const enc = manager.nearest(p.dimension, p.location);
       if (enc) manager.cancel(enc);
       p.sendMessage(tr("abm.msg.cancelled"));
+    } else if (extra === 3) {
+      giveKit(p);
     }
   } catch (e) {
     report("codex", e);
@@ -2561,14 +2690,14 @@ function debounce(p) {
 function consumeHeld(p, typeId) {
   try {
     if (p.getGameMode() === GameMode3.Creative) return;
-    const eq = p.getComponent(EntityComponentTypes2.Equippable);
-    const held = eq?.getEquipment(EquipmentSlot2.Mainhand);
+    const eq = p.getComponent(EntityComponentTypes3.Equippable);
+    const held = eq?.getEquipment(EquipmentSlot3.Mainhand);
     if (!eq || !held || held.typeId !== typeId) return;
     if (held.amount > 1) {
       held.amount -= 1;
-      eq.setEquipment(EquipmentSlot2.Mainhand, held);
+      eq.setEquipment(EquipmentSlot3.Mainhand, held);
     } else {
-      eq.setEquipment(EquipmentSlot2.Mainhand, void 0);
+      eq.setEquipment(EquipmentSlot3.Mainhand, void 0);
     }
   } catch (e) {
     report("consumeHeld", e);
@@ -2603,21 +2732,36 @@ function initItems() {
   setSummonHandler((p, key, floor) => {
     useSeal(p, key, floor);
   });
-  world5.afterEvents.playerInteractWithBlock.subscribe((ev) => {
-    if (!ev.isFirstEvent) return;
-    const id = ev.beforeItemStack?.typeId ?? ev.itemStack?.typeId;
-    if (!id) return;
+  const onBlock = (player, id, at) => {
+    if (!id || !player.isValid) return;
     const key = SEAL_TO_KEY.get(id);
     if (key) {
-      if (!debounce(ev.player)) return;
-      const b = ev.block;
-      useSeal(ev.player, key, { x: b.x + 0.5, y: b.y + 1, z: b.z + 0.5 });
+      if (!debounce(player)) return;
+      useSeal(player, key, { x: at.x + 0.5, y: at.y + 1, z: at.z + 0.5 });
     } else if (id === CODEX_ITEM) {
-      if (debounce(ev.player)) void openCodex(ev.player);
+      if (debounce(player)) void openCodex(player);
     } else {
       const trophy = TROPHY_TO_KEY.get(id);
-      if (trophy && debounce(ev.player)) flourish(ev.player, trophy);
+      if (trophy && debounce(player)) flourish(player, trophy);
     }
+  };
+  world5.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
+    if (!ev.isFirstEvent) return;
+    const id = ev.itemStack?.typeId;
+    if (!id || !(SEAL_TO_KEY.has(id) || id === CODEX_ITEM || TROPHY_TO_KEY.has(id))) return;
+    const player = ev.player;
+    const at = { x: ev.block.x, y: ev.block.y, z: ev.block.z };
+    system2.run(() => {
+      try {
+        onBlock(player, id, at);
+      } catch (e) {
+        report("item on block", e);
+      }
+    });
+  });
+  world5.afterEvents.playerInteractWithBlock.subscribe((ev) => {
+    if (!ev.isFirstEvent) return;
+    onBlock(ev.player, ev.beforeItemStack?.typeId ?? ev.itemStack?.typeId, ev.block);
   });
   world5.afterEvents.itemUse.subscribe((ev) => {
     const id = ev.itemStack.typeId;
@@ -2665,7 +2809,7 @@ function registerCommands(ev) {
       },
       (origin, boss) => {
         const p = origin.sourceEntity;
-        if (!(p instanceof Player6)) return fail("Players only.");
+        if (!(p instanceof Player7)) return fail("Players only.");
         const l = p.location;
         system3.run(() => useSeal(p, boss, { x: Math.floor(l.x) + 0.5, y: Math.floor(l.y), z: Math.floor(l.z) + 0.5 }, true));
         return ok();
@@ -2681,7 +2825,7 @@ function registerCommands(ev) {
       },
       (origin, boss) => {
         const p = origin.sourceEntity;
-        if (!(p instanceof Player6)) return fail("Players only.");
+        if (!(p instanceof Player7)) return fail("Players only.");
         system3.run(() => raiseArena(p, boss));
         return ok();
       }
@@ -2690,7 +2834,7 @@ function registerCommands(ev) {
       { name: "abm:dismiss", description: "End the nearest Abandoned Miracles encounter", permissionLevel: lvl, cheatsRequired: true },
       (origin) => {
         const p = origin.sourceEntity;
-        if (!(p instanceof Player6)) return fail("Players only.");
+        if (!(p instanceof Player7)) return fail("Players only.");
         const enc = manager.nearest(p.dimension, p.location);
         if (!enc) return fail("No encounter nearby.");
         system3.run(() => manager.cancel(enc));
@@ -2708,7 +2852,7 @@ function registerCommands(ev) {
       },
       (origin, action, value) => {
         const p = origin.sourceEntity;
-        if (!(p instanceof Player6)) return fail("Players only.");
+        if (!(p instanceof Player7)) return fail("Players only.");
         if (action === "on" || action === "off") {
           CONFIG.debug = action === "on";
           system3.run(() => saveSettings());
@@ -2716,8 +2860,8 @@ function registerCommands(ev) {
         }
         const enc = manager.nearest(p.dimension, p.location);
         if (!enc) return fail("No encounter nearby.");
-        if (action === "phase2") enc.force("phase2");
-        else if (action === "kill") enc.force("death");
+        if (action === "phase2") system3.run(() => enc.force("phase2"));
+        else if (action === "kill") system3.run(() => enc.force("death"));
         else if (action === "attack") {
           const a = enc.controller.attacks.find((x) => x.index === value);
           if (!a) return fail("attack needs a number 1-7.");
@@ -2737,7 +2881,7 @@ function registerCommands(ev) {
 }
 
 // src/scriptevents.ts
-import { Player as Player7, system as system4 } from "@minecraft/server";
+import { Player as Player8, system as system4 } from "@minecraft/server";
 function parseBoss(word) {
   return BOSS_KEYS.find((k) => k === word);
 }
@@ -2752,7 +2896,7 @@ function initScriptEvents() {
         if (ev.sourceEntity && ev.sourceEntity.isValid) {
           dim = ev.sourceEntity.dimension;
           at = ev.sourceEntity.location;
-          if (ev.sourceEntity instanceof Player7) name = ev.sourceEntity.name;
+          if (ev.sourceEntity instanceof Player8) name = ev.sourceEntity.name;
         } else if (ev.sourceBlock) {
           dim = ev.sourceBlock.dimension;
           at = { x: ev.sourceBlock.x + 0.5, y: ev.sourceBlock.y + 1, z: ev.sourceBlock.z + 0.5 };
@@ -2764,12 +2908,14 @@ function initScriptEvents() {
           const key = parseBoss(words[0]);
           if (!key || !manager.has(key)) return;
           const res = manager.trySummon({ dimension: dim, location: at, name }, key, floor, words[1] === "force");
-          if (!res.ok && ev.sourceEntity instanceof Player7) {
+          if (!res.ok && ev.sourceEntity instanceof Player8) {
             ev.sourceEntity.sendMessage({ rawtext: [{ translate: `abm.summon.fail.${res.reason ?? "unknown"}`, with: [String(Math.round((res.coverage ?? 0) * 100))] }] });
           }
         } else if (ev.id === "abm:dismiss") {
           const enc = manager.nearest(dim, at);
           if (enc) manager.cancel(enc);
+        } else if (ev.id === "abm:kit") {
+          if (ev.sourceEntity instanceof Player8) giveKit(ev.sourceEntity);
         } else if (ev.id === "abm:arena") {
           const key = parseBoss(words[0]);
           if (key && arenaOf(key)) raiseArenaAt(dim, floor, key);
@@ -2785,6 +2931,14 @@ function initScriptEvents() {
 // src/boot.ts
 function boot(mods) {
   install(mods);
+  setErrorNotifier((line) => {
+    system5.run(() => {
+      try {
+        world6.sendMessage(line);
+      } catch {
+      }
+    });
+  });
   system5.beforeEvents.startup.subscribe((ev) => registerCommands(ev));
   const helpers = [];
   for (const k of installed()) {
@@ -4776,7 +4930,7 @@ var MODULE2 = {
 };
 
 // src/bosses/orison/index.ts
-import { world as world6 } from "@minecraft/server";
+import { world as world7 } from "@minecraft/server";
 
 // shared/orison.timings.json
 var orison_timings_default = {
@@ -5067,7 +5221,7 @@ var OrisonController = class extends BossController {
       this.hourThatNeverOccurred()
     ];
     this.onLeave = (ev) => this.history.forget(ev.playerId);
-    world6.afterEvents.playerLeave.subscribe(this.onLeave);
+    world7.afterEvents.playerLeave.subscribe(this.onLeave);
   }
   // ------------------------------------------------------------------ framework hooks
   configure(phase) {
@@ -5194,7 +5348,7 @@ var OrisonController = class extends BossController {
     this.lastPrediction = [];
     this.pulseUntil = 0;
     try {
-      world6.afterEvents.playerLeave.unsubscribe(this.onLeave);
+      world7.afterEvents.playerLeave.unsubscribe(this.onLeave);
     } catch {
     }
   }
@@ -5988,7 +6142,7 @@ var vesperra_timings_default = {
 };
 
 // src/bosses/vesperra/armor.ts
-import { Player as Player10 } from "@minecraft/server";
+import { Player as Player11 } from "@minecraft/server";
 
 // src/bosses/vesperra/tuning.ts
 var VESPERRA = {
@@ -6092,7 +6246,7 @@ var ArmorSystem = class {
     let eye;
     let view;
     try {
-      eye = a instanceof Player10 ? a.getHeadLocation() : this.headOf(a);
+      eye = a instanceof Player11 ? a.getHeadLocation() : this.headOf(a);
       view = a.getViewDirection();
     } catch {
       return void 0;

@@ -27,7 +27,7 @@
   },
   "components": {
    "minecraft:type_family": {
-    "family": ["abm_helper", "abm_cantor_bell", "monster"]
+    "family": ["abm_helper", "abm_cantor_bell", "mob"]
    },
    "minecraft:health": {
     "value": 24,

@@ -10,6 +10,7 @@ import { manager } from "./core/manager";
 import { arenaOf } from "./registry";
 import { saveSettings } from "./core/persistence";
 import { report } from "./core/trace";
+import { giveKit } from "./kit";
 
 const DIFFICULTIES = ["story", "normal", "hard"] as const;
 const tr = (key: string, ...w: string[]) => ({ rawtext: [{ translate: key, with: w }] });
@@ -96,7 +97,7 @@ export async function openCodex(p: Player): Promise<void> {
     const form = new ActionFormData().title(tr("abm.ui.title"))
       .body({ rawtext: [{ translate: "abm.ui.body1" }, { text: "\n\n" }, { translate: "abm.ui.body2" }] });
     for (const k of keys) form.button(tr(`entity.${bossType(k)}.name`));
-    if (op) form.button(tr("abm.ui.settings")).button(tr("abm.ui.arena")).button(tr("abm.ui.dismiss"));
+    if (op) form.button(tr("abm.ui.settings")).button(tr("abm.ui.arena")).button(tr("abm.ui.dismiss")).button(tr("abm.ui.kit"));
     const r = await form.show(p);
     if (r.canceled || r.selection === undefined) return;
     if (r.selection < keys.length) {
@@ -122,6 +123,8 @@ export async function openCodex(p: Player): Promise<void> {
       const enc = manager.nearest(p.dimension, p.location);
       if (enc) manager.cancel(enc);
       p.sendMessage(tr("abm.msg.cancelled"));
+    } else if (extra === 3) {
+      giveKit(p);
     }
   } catch (e) {
     report("codex", e);

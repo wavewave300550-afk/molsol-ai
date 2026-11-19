@@ -5,7 +5,7 @@
   "description": "pack.description",
   "uuid": "a8b1c0de-7e11-4f6a-9a01-ab4d0c0de011",
   "version": [1, 0, 0],
-  "min_engine_version": [1, 26, 60]
+  "min_engine_version": [1, 26, 10]
  },
  "modules": [
   {
@@ -22,7 +22,6 @@
  ],
  "metadata": {
   "authors": ["The Abandoned Miracles project"],
-  "license": "All rights reserved",
-  "product_type": "addon"
+  "license": "All rights reserved"
  }
 }

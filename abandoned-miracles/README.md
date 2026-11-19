@@ -38,9 +38,11 @@ introduction, death sequence and trophy.
 
 **Requirements**
 
-* Minecraft: Bedrock Edition **1.26.60 or newer** (iOS, Android, Windows; other Bedrock platforms should work too).
+* Minecraft: Bedrock Edition **1.26.10 or newer** (iOS, Android, Windows; other Bedrock platforms should work too).
+  Built and checked against 1.26.60. Older versions cannot load it: the script needs an API that 1.26.10 introduced.
 * No experimental toggles. No Beta APIs. The add-on uses the stable Script API only
-  (`@minecraft/server` 2.11.0, `@minecraft/server-ui` 2.3.0), which the game provides — there is nothing else to install.
+  (it asks for `@minecraft/server` 2.6.0 and `@minecraft/server-ui` 2.0.0, the lowest versions that have everything
+  it uses; newer games provide them) — there is nothing else to install.
 
 **Steps**
 
@@ -51,9 +53,10 @@ introduction, death sequence and trophy.
 The add-on is safe to add to an existing world: it adds entities and items, never generates anything, never spawns a
 boss on its own, and never changes a block during a fight.
 
-Or simply open `The_Abandoned_Miracles_Test_World.mcworld`. During its first few seconds it raises a central plaza and
-the four arenas, then hands you the Codex and the four Seals. Follow a causeway, walk to the middle of an arena and use
-its Seal on the floor.
+Or simply open `The_Abandoned_Miracles_Test_World.mcworld`. It is a Survival world (you keep your inventory when you
+die). During its first few seconds it raises a central plaza and the four arenas, then hands you the Codex, the four
+Seals and the reference kit — enchanted diamond armour and sword, a shield and food. Follow a causeway, walk to the
+middle of an arena and use its Seal on the floor.
 
 ---
 
@@ -119,6 +122,13 @@ Each Miracle leaves a unique trophy — one per player who fought, up to four �
 the **Ivory Diadem of Succession**, the **Fragment of the Thirteenth Bell**, the **Needle of the Unmapped Sovereign**
 and the **Hourglass of the Unlived Future**.
 
+### If something goes wrong
+
+The first time the add-on's script hits an internal problem it says so once in chat, in grey:
+`[The Abandoned Miracles] internal problem in …`. That line (a screenshot is enough) is exactly what is needed to fix it.
+An encounter that keeps failing folds itself away and returns its Seal rather than leaving a broken boss behind.
+If a boss slides or will not turn, the add-on switches that boss to stepwise movement by itself.
+
 ### Commands (operators, cheats on)
 
 ```
@@ -129,6 +139,7 @@ and the **Hourglass of the Unlived Future**.
 /abm:debug phase2|kill         force the transformation / the death sequence
 /abm:debug attack <1-7>        make the boss use that attack next
 /abm:debug info                state, health, scale, attack usage
+/scriptevent abm:kit           hand yourself the reference kit (also a button in the Codex)
 ```
 
 ---
