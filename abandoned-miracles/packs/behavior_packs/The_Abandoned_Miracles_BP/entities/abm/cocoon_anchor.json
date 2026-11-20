@@ -17,6 +17,12 @@
      "range": [0, 7],
      "default": 0,
      "client_sync": true
+    },
+    "abm:yaw": {
+     "type": "float",
+     "range": [-180.0, 180.0],
+     "default": 0.0,
+     "client_sync": true
     }
    }
   },

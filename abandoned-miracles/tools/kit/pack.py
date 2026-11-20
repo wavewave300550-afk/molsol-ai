@@ -16,7 +16,7 @@ ADDON_NAME = "The Abandoned Miracles"
 ADDON_TAGLINE = "Four perfect miracles. Four catastrophic successes."
 # Raise this for every build that is handed out: the game refuses to import a pack whose UUID and
 # version it already has, so a fixed build with the old number would silently not replace the broken one.
-VERSION = [1, 0, 2]
+VERSION = [1, 0, 3]
 # The LOWEST versions the add-on really needs (not the newest available): a pack that asks for a newer
 # script module than the player's game provides does not load at all. The script is type-checked against
 # exactly these typings (see package.json), so nothing newer can slip in.
@@ -110,6 +110,10 @@ NO_DAMAGE_CAUSES = ["fall", "suffocation", "drowning", "contact", "fire", "fire_
                     "anvil", "campfire", "soul_campfire", "temperature", "wither"]
 
 
+# The yaw the script wants the model to face (degrees, Minecraft convention). See kit.anim.add_facing.
+YAW_PROP = {"type": "float", "range": [-180.0, 180.0], "default": 0.0, "client_sync": True}
+
+
 def int_prop(lo: int, hi: int, default: int = 0) -> dict:
     return {"type": "int", "range": [lo, hi], "default": default, "client_sync": True}
 
@@ -124,6 +128,7 @@ def boss_entity(identifier: str, family: str, health: float, width: float, heigh
     props = dict(STANDARD_PROPS)
     # a boss is born in its INTRO pose (animation state 11), so it never flashes its bind pose on spawn
     props["abm:anim"] = {"type": "int", "range": [0, 15], "default": 11, "client_sync": True}
+    props["abm:yaw"] = dict(YAW_PROP)
     props.update(extra_props or {})
     return {
         "format_version": ENTITY_FORMAT,
@@ -151,7 +156,6 @@ def boss_entity(identifier: str, family: str, health: float, width: float, heigh
                 "minecraft:jump.static": {},
                 "minecraft:variable_max_auto_step": {"base_value": 1.0625, "controlled_value": 1.0625,
                                                      "jump_prevented_value": 1.0625},
-                "minecraft:body_rotation_always_follows_head": {},
                 "minecraft:knockback_resistance": {"value": 1.0},
                 "minecraft:persistent": {},
                 "minecraft:fire_immune": {},
@@ -178,7 +182,7 @@ def helper_entity(identifier: str, family: str, health: float, width: float, hei
     A native timer removes the entity after `max_life_seconds` even if scripts are not running,
     so helpers can never be left behind in a world.
     """
-    props = {"abm:anim": int_prop(0, 15), "abm:variant": int_prop(0, 7)}
+    props = {"abm:anim": int_prop(0, 15), "abm:variant": int_prop(0, 7), "abm:yaw": dict(YAW_PROP)}
     props.update(extra_props or {})
     comps = {
         "minecraft:type_family": {"family": ["abm_helper", family, "inanimate" if not damageable else "mob"]},

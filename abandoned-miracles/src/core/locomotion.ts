@@ -16,6 +16,7 @@ import { CONFIG } from "../config";
 import type { Encounter } from "./encounter";
 import { XZ, angDiff, approachAngle, dirToYaw, wrapDeg, yawToDir } from "./math";
 import { trace } from "./trace";
+import { yawProperty } from "./facing";
 
 export const enum MoveAnim {
   Idle = 0,
@@ -51,6 +52,16 @@ export class Locomotion {
     this.yaw = wrapDeg(y);
     const l = enc.boss.location;
     this.progress = { x: l.x, z: l.z, tick: 0 };
+    this.publish();
+  }
+
+  /**
+   * Publish the authoritative yaw to the client (property abm:yaw). The model is turned to this value
+   * by its own animation, so it faces where the script says even when the engine keeps the body still.
+   * Called every tick; the property is only written when the value changes.
+   */
+  publish(): void {
+    this.enc.setProp("abm:yaw", yawProperty(this.yaw));
   }
 
   private setAnim(a: MoveAnim): void {

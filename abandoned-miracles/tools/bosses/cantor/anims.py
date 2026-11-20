@@ -90,14 +90,15 @@ def client_entity() -> ClientEntity:
     ce.render_controllers = ["controller.render.abm.cantor"]
     p2 = ce.var("p2", prop("abm:phase").eq(2))
     ce.var("duty", cond(p2, 0.66, 0.72))
-    ce.var("gait", q("modified_distance_moved") * cond(p2, 0.5, 0.411))
-    ce.var("turn", (q("body_y_rotation") + 3600) / 60.0)
+    ce.var("gait", M.BLOCKS_MOVED * cond(p2, 0.5, 0.411))
+    ce.var("turn", (v("yaw") + 3600) / 60.0)        # v.yaw: see kit.anim.add_facing
     ce.var("go", M.clamp(q("modified_move_speed") * 5, 0, 1))
     for n, off in PHASE.items():
         ce.var(f"w{n}", mod(v("gait") + off, 1))
         ce.var(f"t{n}", mod(v("turn") + off, 1))
     # the pulse the windows keep: two beats a second, uneven once the symphony is broken
-    lt = q("life_time")
+    from kit.anim import add_clock
+    lt = add_clock(ce)
     ce.var("lit", cond(prop("abm:silent").eq(1), 0,
                        cond(p2, (sin(lt * 520) + sin(lt * 333)).gt(-0.4), sin(lt * 720).gt(-0.35))))
     return ce

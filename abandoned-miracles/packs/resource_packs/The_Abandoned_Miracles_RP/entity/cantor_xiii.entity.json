@@ -15,11 +15,13 @@
     "default": "geometry.abm.cantor_xiii"
    },
    "scripts": {
+    "initialize": ["v.clock = 0;", "v.yaw = q.property('abm:yaw');"],
     "pre_animation": [
+     "v.yaw = math.lerprotate(v.yaw, q.property('abm:yaw'), 0.45);",
      "v.p2 = q.property('abm:phase') == 2;",
      "v.duty = (v.p2 ? 0.66 : 0.72);",
-     "v.gait = q.modified_distance_moved * (v.p2 ? 0.5 : 0.411);",
-     "v.turn = (q.body_y_rotation + 3600) / 60;",
+     "v.gait = q.modified_distance_moved * 0.25 * (v.p2 ? 0.5 : 0.411);",
+     "v.turn = (v.yaw + 3600) / 60;",
      "v.go = math.clamp(q.modified_move_speed * 5, 0, 1);",
      "v.w1 = math.mod(v.gait + 0, 1);",
      "v.t1 = math.mod(v.turn + 0, 1);",
@@ -27,9 +29,10 @@
      "v.t2 = math.mod(v.turn + 0.3333, 1);",
      "v.w3 = math.mod(v.gait + 0.6667, 1);",
      "v.t3 = math.mod(v.turn + 0.6667, 1);",
-     "v.lit = (q.property('abm:silent') == 1 ? 0 : (v.p2 ? math.sin(q.life_time * 520) + math.sin(q.life_time * 333) > -0.4 : math.sin(q.life_time * 720) > -0.35));"
+     "v.clock = math.mod(v.clock + q.delta_time, 3600);",
+     "v.lit = (q.property('abm:silent') == 1 ? 0 : (v.p2 ? math.sin(v.clock * 520) + math.sin(v.clock * 333) > -0.4 : math.sin(v.clock * 720) > -0.35));"
     ],
-    "animate": ["idle", "walk", "turn", "ctl_phase", "ctl_action", "ctl_feet"]
+    "animate": ["face", "idle", "walk", "turn", "ctl_phase", "ctl_action", "ctl_feet"]
    },
    "animations": {
     "idle": "animation.abm.cantor.idle",
@@ -58,7 +61,8 @@
     "death": "animation.abm.cantor.death",
     "ctl_action": "controller.animation.abm.cantor.action",
     "ctl_phase": "controller.animation.abm.cantor.phase",
-    "ctl_feet": "controller.animation.abm.cantor.feet"
+    "ctl_feet": "controller.animation.abm.cantor.feet",
+    "face": "animation.abm.cantor_xiii.face"
    },
    "render_controllers": ["controller.render.abm.cantor"],
    "particle_effects": {

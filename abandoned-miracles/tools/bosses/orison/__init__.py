@@ -133,6 +133,11 @@ def assets() -> K.BossAssets:
     helper_ce, helper_anims, helper_ctrls = _helpers()
     out.client_entities = [ce] + helper_ce
     out.animations = anim_list + helper_anims
+    # models face the yaw the script publishes (abm:yaw), not whatever the engine does with the body
+    from kit.anim import add_facing
+    for _ce in out.client_entities:
+        if _ce.identifier in ('abm:orison', 'abm:orison_shadow'):
+            out.animations.append(add_facing(_ce, "animation." + _ce.identifier.replace(":", ".") + "."))
     out.controllers = ctrls + helper_ctrls
 
     glass = "q.property('abm:glass')"

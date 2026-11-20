@@ -15,10 +15,12 @@
     "default": "geometry.abm.nomos"
    },
    "scripts": {
+    "initialize": ["v.yaw = q.property('abm:yaw');"],
     "pre_animation": [
+     "v.yaw = math.lerprotate(v.yaw, q.property('abm:yaw'), 0.45);",
      "v.p2 = q.property('abm:phase') == 2;",
-     "v.gait = q.modified_distance_moved * 0.9;",
-     "v.turn = (q.body_y_rotation + 3600) / 60;",
+     "v.gait = q.modified_distance_moved * 0.25 * 0.9;",
+     "v.turn = (v.yaw + 3600) / 60;",
      "v.go = math.clamp(q.modified_move_speed * 4, 0, 1);",
      "v.w_fl = math.mod(v.gait + 0.25, 1);",
      "v.t_fl = math.mod(v.turn + 0.25, 1);",
@@ -29,7 +31,7 @@
      "v.w_br = math.mod(v.gait + 0.5, 1);",
      "v.t_br = math.mod(v.turn + 0.5, 1);"
     ],
-    "animate": ["idle", "walk", "turn", "ctl_phase", "ctl_action", "ctl_feet"]
+    "animate": ["face", "idle", "walk", "turn", "ctl_phase", "ctl_action", "ctl_feet"]
    },
    "animations": {
     "idle": "animation.abm.nomos.idle",
@@ -59,7 +61,8 @@
     "death": "animation.abm.nomos.death",
     "ctl_action": "controller.animation.abm.nomos.action",
     "ctl_phase": "controller.animation.abm.nomos.phase",
-    "ctl_feet": "controller.animation.abm.nomos.feet"
+    "ctl_feet": "controller.animation.abm.nomos.feet",
+    "face": "animation.abm.nomos.face"
    },
    "render_controllers": ["controller.render.abm.layered"],
    "particle_effects": {

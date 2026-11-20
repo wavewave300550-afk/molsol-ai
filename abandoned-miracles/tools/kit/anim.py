@@ -298,6 +298,35 @@ class Controller:
         return {"initial_state": self.initial, "states": self.states}
 
 
+def add_facing(ce: "ClientEntity", prefix: str, root: str = "root") -> "Anim":
+    """Make the model face the yaw the script decided, whatever the engine does with the body.
+
+    Seen in the game: a scripted mob's body does not reliably follow Entity.setRotation (the engine's own
+    body/head control can hold it), so bosses walked sideways and attacked in directions they were not
+    facing. The script therefore publishes its yaw in the synced property abm:yaw, and this always-on
+    animation turns the root bone by the difference between that and the body yaw the engine actually
+    renders. If the engine does follow setRotation the difference is zero and nothing changes.
+
+    Positive Y rotation in a Bedrock animation turns a model to its own right, the same sense as
+    increasing entity yaw (this is how vanilla applies query.target_y_rotation to a head).
+    """
+    from .molang import lerprotate, prop, q, v
+    ce.initialize.append("v.yaw = q.property('abm:yaw');")
+    ce.pre_animation.insert(0, ("yaw", lerprotate(v("yaw"), prop("abm:yaw"), 0.45)))
+    face = Anim(prefix + "face", loop=True)
+    face.rot(root, 0, v("yaw") - q("body_y_rotation"), 0)
+    ce.animations["face"] = face.name
+    ce.animate.insert(0, "face")
+    return face
+
+
+def add_clock(ce: "ClientEntity") -> E:
+    """A per-entity clock in seconds for scripts.pre_animation, where q.life_time / q.anim_time read 0."""
+    from .molang import mod, q, v
+    ce.initialize.append("v.clock = 0;")
+    return ce.var("clock", mod(v("clock") + q("delta_time"), 3600))
+
+
 def controllers_file(ctrls: Iterable[Controller]) -> dict:
     return {"format_version": "1.10.0", "animation_controllers": {c.name: c.json() for c in ctrls}}
 

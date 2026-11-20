@@ -56,8 +56,9 @@ def main() -> None:
     w("| Loading in Minecraft | **partly observed on a real device** | the project owner opened builds 1.0.0 / 1.0.1 on iOS and sent the Content Log and a screenshot: "
       "entity, geometry, render-controller, animation-controller, particle, sound, item, recipe and structure files produced no errors; "
       "Vesperra's model and textures render; a Seal summons her; the summon line, the boss bar and the action-bar HUD appear |")
-    w("| Animation, particles in motion, audio, combat in the game | **NOT VERIFIED** | in that session the game rejected all four animation files "
-      "(see section 7); the fix in 1.0.2 has not been confirmed in the game |")
+    w("| Animation, particles in motion, audio, combat in the game | **observed faulty, fixes unconfirmed** | with 1.0.2 the owner reported, for all four bosses: "
+      "telegraphs dotted / misplaced / missing, bosses sliding or not turning, parts twisted, attack timing off, phase change and death looking wrong "
+      "(no screenshots or log). 1.0.3 addresses the causes that could be identified (section 7); none of it is confirmed in the game |")
     w("| Performance on real devices | **NOT VERIFIED** | budgets and call counts only (section 6) |")
     w("| Play-feel, difficulty, 4–7 minute target with human players | **NOT VERIFIED** | simulated bot times only (section 5) |")
     w("")
@@ -276,7 +277,14 @@ def main() -> None:
         "(3) The custom command `abm:summon` made the game warn that the alias `summon` is taken; it is now `abm:wake`. "
         "(4) The boss bar read \"Unknown\": `minecraft:boss` now carries the name. "
         "None of the four was caught by the project's validator, by Minecraft Creator Tools or by the simulation; the validator and the simulator now have a rule for each.",
-        "Apart from that one session, nothing has been observed in Minecraft. Any of the assumptions the simulation makes about the engine could be wrong; "
+        "**Reported from the second session and addressed in 1.0.3 (unconfirmed):** telegraph lines were laid out by emitter age, which the game advances once per "
+        "rendered frame, so they came out as per-frame clumps or not at all (now each particle places itself); `q.modified_distance_moved` is the limb-swing "
+        "accumulator, about four units per block, so every walk cycle ran four times too fast; the body yaw was pinned by "
+        "`minecraft:body_rotation_always_follows_head` and `setRotation` alone does not reliably turn a mob's rendered body, so bosses walked and attacked in "
+        "directions they did not face (the script now publishes its yaw in a synced property and the model's root bone follows it); "
+        "`q.life_time` was used outside an animation. Complaints about attack timing and about the phase change and death have no identified cause of their own yet.",
+        "The software previews and the simulation agree with each other by construction; they did not agree with the game in the four ways above. "
+        "Other such disagreements may remain. Any of the assumptions the simulation makes about the engine could be wrong; "
         "the most consequential are script-driven movement (velocity impulses and `setRotation` on a mob without AI goals), "
         "the timing of `beforeEvents.entityHurt` relative to invulnerability frames, and flat-on-floor particle rendering.",
         "Player absorption hearts are bypassed by hazard damage (the Script API does not expose them).",

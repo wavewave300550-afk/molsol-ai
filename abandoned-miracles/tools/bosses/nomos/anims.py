@@ -128,8 +128,8 @@ def client_entity() -> ClientEntity:
     ce.materials = {"default": "entity_alphatest", "glow": "entity_emissive_alpha", "glass": "entity_alphablend"}
     ce.render_controllers = ["controller.render.abm.layered"]
     ce.var("p2", prop("abm:phase").eq(2))
-    ce.var("gait", q("modified_distance_moved") * 0.9)
-    ce.var("turn", (q("body_y_rotation") + 3600) / 60.0)
+    ce.var("gait", M.BLOCKS_MOVED * 0.9)
+    ce.var("turn", (v("yaw") + 3600) / 60.0)        # v.yaw: see kit.anim.add_facing
     ce.var("go", M.clamp(q("modified_move_speed") * 4, 0, 1))
     for tag, _, _ in LEGS:
         ce.var(f"w_{tag}", mod(v("gait") + SEQ[tag], 1))
@@ -214,7 +214,7 @@ def build_base() -> List[Anim]:
     comp = Anim(A + "p2_compass", loop=True)
     for k in range(1, 5):
         # needle bearing = world theta (property * 45 degrees); the ring itself keeps a slow drift
-        comp.rot(f"ind_{k}_needle", 0, 0, 90 - prop(f"abm:q{k}") * 45 + q("body_y_rotation"))
+        comp.rot(f"ind_{k}_needle", 0, 0, 90 - prop(f"abm:q{k}") * 45 + v("yaw"))
         comp.rot(f"ind_{k}", 0, sin(lt * (40 + k * 7) + k * 90) * 6, 0)
         comp.set(f"ind_{k}", "pos", [0, sin(lt * (90 + k * 11) + k * 70) * 1.2, 0])
         comp.scale(f"ind_{k}_tip_glow", 1 + sin(lt * 260 + k * 90) * 0.3)

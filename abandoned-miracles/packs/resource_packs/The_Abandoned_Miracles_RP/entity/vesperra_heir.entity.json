@@ -15,14 +15,17 @@
     "default": "geometry.abm.vesperra_heir"
    },
    "scripts": {
-    "animate": ["idle", "walk", "ctl"]
+    "initialize": ["v.yaw = q.property('abm:yaw');"],
+    "pre_animation": ["v.yaw = math.lerprotate(v.yaw, q.property('abm:yaw'), 0.45);"],
+    "animate": ["face", "idle", "walk", "ctl"]
    },
    "animations": {
     "idle": "animation.abm.vesperra_heir.idle",
     "walk": "animation.abm.vesperra_heir.walk",
     "emerge": "animation.abm.vesperra_heir.emerge",
     "bite": "animation.abm.vesperra_heir.bite",
-    "ctl": "controller.animation.abm.vesperra_heir"
+    "ctl": "controller.animation.abm.vesperra_heir",
+    "face": "animation.abm.vesperra_heir.face"
    },
    "render_controllers": ["controller.render.abm.layered"],
    "sound_effects": {

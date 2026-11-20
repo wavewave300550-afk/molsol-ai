@@ -52,7 +52,7 @@ def timings() -> dict:
 def _helpers():
     """Heir and cocoon anchor: small rigs with their own motion."""
     lt = q("life_time")
-    dist = q("modified_distance_moved")
+    dist = q("modified_distance_moved") * 0.25      # blocks (the query counts four units per block)
     A = "animation.abm.vesperra_heir."
     heir = ClientEntity("abm:vesperra_heir", "geometry.abm.vesperra_heir", "textures/entity/abm/vesperra_heir")
     heir.materials = {"default": "entity_alphatest", "glow": "entity_emissive_alpha"}
@@ -111,6 +111,11 @@ def assets() -> K.BossAssets:
     helper_ce, helper_anims, helper_ctrls = _helpers()
     out.client_entities = [ce] + helper_ce
     out.animations = anim_list + helper_anims
+    # models face the yaw the script publishes (abm:yaw), not whatever the engine does with the body
+    from kit.anim import add_facing
+    for _ce in out.client_entities:
+        if _ce.identifier in ('abm:vesperra', 'abm:vesperra_heir'):
+            out.animations.append(add_facing(_ce, "animation." + _ce.identifier.replace(":", ".") + "."))
     out.controllers = ctrls + helper_ctrls
 
     al, ar, ac, molt = (f"q.property('abm:{n}')" for n in ("armor_l", "armor_r", "armor_c", "molt"))

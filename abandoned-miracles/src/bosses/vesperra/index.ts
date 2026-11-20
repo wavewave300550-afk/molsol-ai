@@ -10,6 +10,7 @@
 import { Player } from "@minecraft/server";
 import T from "../../../shared/vesperra.timings.json";
 import { BossKey } from "../../config";
+import { setYaw } from "../../core/facing";
 import { AttackDef, AttackRun, BossController, BossModule, IncomingInfo } from "../../core/boss";
 import type { Encounter } from "../../core/encounter";
 import type { Helper } from "../../core/helpers";
@@ -566,7 +567,7 @@ export class VesperraController extends BossController {
           h.entity.applyImpulse({ x: (dx / d) * step - v.x, y: 0, z: (dz / d) * step - v.z });
         }
         const face = threat ? threat.location : b;
-        h.entity.setRotation({ x: 0, y: (Math.atan2(-(face.x - l.x), face.z - l.z) * 180) / Math.PI });
+        setYaw(h.entity, (Math.atan2(-(face.x - l.x), face.z - l.z) * 180) / Math.PI);
       } catch {
         return;
       }

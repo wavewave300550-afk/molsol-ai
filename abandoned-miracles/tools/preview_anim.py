@@ -24,7 +24,7 @@ ims = []
 for spec in sys.argv[4:]:
     names, times = spec.split("@")
     for t in [float(x) for x in times.split(",")]:
-        env = ce.env({"q.life_time": 1.3 + t, "q.anim_time": t, "q.modified_distance_moved": dist + t * float(os.environ.get("SPEED", "0")),
+        env = ce.env({"q.life_time": 1.3 + t, "q.anim_time": t, "q.modified_distance_moved": 4 * (dist + t * float(os.environ.get("SPEED", "0"))),
                       "q.modified_move_speed": 1.0 if float(os.environ.get("SPEED", "0")) > 0 else 0.0,
                       "q.body_y_rotation": float(os.environ.get("BODYYAW", "0")) + t * float(os.environ.get("TURN", "0")),
                       "p.abm:phase": phase, "p.abm:variant": float(os.environ.get("VARIANT", "0"))})

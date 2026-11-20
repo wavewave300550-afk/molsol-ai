@@ -39,7 +39,7 @@ def build(key: str) -> None:
     bounds = (lo - pad, hi + pad)
 
     def pose(names, t, phase=1, dist=0.0, extra_env=None):
-        env = {"q.life_time": 2.0 + t, "q.anim_time": t, "q.modified_distance_moved": dist,
+        env = {"q.life_time": 2.0 + t, "q.anim_time": t, "q.modified_distance_moved": dist * 4,      # limb-swing units: four per block
                "q.modified_move_speed": 1.0 if dist else 0.0, "q.body_y_rotation": 0.0,
                "p.abm:phase": phase, "p.abm:variant": 0}
         env.update(extra_env or {})

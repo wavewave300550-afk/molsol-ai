@@ -142,17 +142,39 @@ FLAT = "emitter_transform_xz"
 
 # --------------------------------------------------------------------------- telegraph primitives
 
+def parametric(relative_position) -> dict:
+    """Each particle sits at a position computed from its own random numbers (evaluated per particle)."""
+    return {"minecraft:particle_motion_parametric": {"relative_position": list(relative_position)}}
+
+
+# Where a telegraph particle sits along its line or arc: a random number that belongs to the particle.
+# NOT the emitter's age: the game emits once per rendered frame, so every particle born in the same frame
+# shares one emitter age - a line placed by emitter age comes out as a few clumps (six at 30 fps) instead
+# of a line, and differently on every device.
+ALONG = "v.particle_random_1"
+
+
+# `density` arguments mean "particles per block if they were evenly spaced". Random placement needs
+# more of them for the same visual fill (coverage 1 - exp(-n * width) instead of n * width).
+FILL = 1.8
+
+
+def _draw_in(draw_time: float) -> str:
+    """Alpha factor that makes the mark appear from its start to its end over `draw_time` seconds."""
+    return f"math.clamp((v.particle_age - {ALONG} * {draw_time}) * 14, 0, 1)"
+
+
 def tg_line(identifier: str, sprite: Sprite, color, *, width: float = 0.34, density: float = 2.2,
             draw_time: float = 0.2, pulse: float = 0.25, material: str = "particles_blend") -> dict:
     """Ground line drawn from the emitter along (v.dx, v.dz) for v.len blocks; marks live for v.life s."""
     r, g, b = color
-    prog = f"(v.emitter_age / {draw_time})"
     return effect(identifier, sprite, merge(
-        steady(f"v.len * {density} / {draw_time}", 400, draw_time),
-        point([f"v.dx * v.len * {prog}", 0, f"v.dz * v.len * {prog}"], [0, 1, 0]),
+        once(f"math.clamp(v.len * {round(density * FILL, 2)}, 3, 400)"),
+        point([0, 0, 0], [0, 1, 0]),
         speed(0), life("v.life"),
+        parametric([f"v.dx * v.len * {ALONG}", 0, f"v.dz * v.len * {ALONG}"]),
         billboard([width, width], FLAT),
-        tint(r, g, b, f"({FADE_IN_OUT}) * ({1 - pulse} + {pulse} * math.sin(v.particle_age * 900))"),
+        tint(r, g, b, f"({FADE_IN_OUT}) * {_draw_in(draw_time)} * ({1 - pulse} + {pulse} * math.sin(v.particle_age * 900))"),
     ), material=material)
 
 
@@ -160,13 +182,14 @@ def tg_arc(identifier: str, sprite: Sprite, color, *, width: float = 0.34, densi
            draw_time: float = 0.2, pulse: float = 0.25, material: str = "particles_blend") -> dict:
     """Ground arc of radius v.r from angle v.a0 sweeping v.sweep degrees (0 = +X, 90 = +Z)."""
     r, g, b = color
-    ang = f"(v.a0 + v.sweep * v.emitter_age / {draw_time})"
+    ang = f"(v.a0 + v.sweep * {ALONG})"
     return effect(identifier, sprite, merge(
-        steady(f"math.max(4, v.r * math.abs(v.sweep) * 0.01745 * {density}) / {draw_time}", 500, draw_time),
-        point([f"math.cos({ang}) * v.r", 0, f"math.sin({ang}) * v.r"], [0, 1, 0]),
+        once(f"math.clamp(v.r * math.abs(v.sweep) * 0.01745 * {round(density * FILL, 2)}, 4, 500)"),
+        point([0, 0, 0], [0, 1, 0]),
         speed(0), life("v.life"),
+        parametric([f"math.cos({ang}) * v.r", 0, f"math.sin({ang}) * v.r"]),
         billboard([width, width], FLAT),
-        tint(r, g, b, f"({FADE_IN_OUT}) * ({1 - pulse} + {pulse} * math.sin(v.particle_age * 900))"),
+        tint(r, g, b, f"({FADE_IN_OUT}) * {_draw_in(draw_time)} * ({1 - pulse} + {pulse} * math.sin(v.particle_age * 900))"),
     ), material=material)
 
 

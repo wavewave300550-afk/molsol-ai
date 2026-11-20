@@ -15,11 +15,13 @@
     "default": "geometry.abm.vesperra"
    },
    "scripts": {
+    "initialize": ["v.yaw = q.property('abm:yaw');"],
     "pre_animation": [
+     "v.yaw = math.lerprotate(v.yaw, q.property('abm:yaw'), 0.45);",
      "v.p2 = q.property('abm:phase') == 2;",
      "v.duty = (v.p2 ? 0.55 : 0.7);",
-     "v.gait = q.modified_distance_moved * (v.p2 ? 0.42 : 0.526);",
-     "v.turn = (q.body_y_rotation + 3600) / 60;",
+     "v.gait = q.modified_distance_moved * 0.25 * (v.p2 ? 0.42 : 0.526);",
+     "v.turn = (v.yaw + 3600) / 60;",
      "v.go = math.clamp(q.modified_move_speed * 4, 0, 1);",
      "v.w_l1 = math.mod(v.gait + (v.p2 ? 0 : 0.66), 1);",
      "v.t_l1 = math.mod(v.turn + 0.66, 1);",
@@ -37,7 +39,7 @@
      "v.lane2 = ((q.property('abm:variant') == 0 || q.property('abm:variant') == 5) ? 0 : ((q.property('abm:variant') == 2 || q.property('abm:variant') == 4) ? -1 : 1));",
      "v.lane3 = ((q.property('abm:variant') == 0 || q.property('abm:variant') == 2) ? 1 : ((q.property('abm:variant') == 1 || q.property('abm:variant') == 4) ? 0 : -1));"
     ],
-    "animate": ["idle", "walk", "turn", "ctl_phase", "ctl_action", "ctl_feet"]
+    "animate": ["face", "idle", "walk", "turn", "ctl_phase", "ctl_action", "ctl_feet"]
    },
    "animations": {
     "idle": "animation.abm.vesperra.idle",
@@ -71,7 +73,8 @@
     "death": "animation.abm.vesperra.death",
     "ctl_action": "controller.animation.abm.vesperra.action",
     "ctl_phase": "controller.animation.abm.vesperra.phase",
-    "ctl_feet": "controller.animation.abm.vesperra.feet"
+    "ctl_feet": "controller.animation.abm.vesperra.feet",
+    "face": "animation.abm.vesperra.face"
    },
    "render_controllers": ["controller.render.abm.vesperra"],
    "particle_effects": {

@@ -93,8 +93,8 @@ def client_entity() -> ClientEntity:
     ce.render_controllers = ["controller.render.abm.vesperra"]
     p2 = ce.var("p2", prop("abm:phase").eq(2))
     ce.var("duty", cond(p2, 0.55, 0.7))
-    ce.var("gait", q("modified_distance_moved") * cond(p2, 0.42, 0.526))
-    ce.var("turn", (q("body_y_rotation") + 3600) / 60.0)
+    ce.var("gait", M.BLOCKS_MOVED * cond(p2, 0.42, 0.526))
+    ce.var("turn", (v("yaw") + 3600) / 60.0)        # v.yaw: see kit.anim.add_facing
     ce.var("go", M.clamp(q("modified_move_speed") * 4, 0, 1))
     for tag, n, _ in LEGS:
         key = f"{tag}{n}"

@@ -2,7 +2,7 @@
 
 Status legend: **done** (built, validated, simulated) · **incomplete** · **blocked** · **unverified** (cannot be checked in this environment).
 
-_Last updated: version 1.0.2 — fixes for what the first real play session showed (see below); those fixes are not yet confirmed in the game._
+_Last updated: version 1.0.3 — fixes for what two real play sessions showed (see below). 1.0.2's fixes were confirmed by the second session (animations and effects load); 1.0.3's are not yet confirmed._
 
 ## Finished
 
@@ -14,8 +14,8 @@ _Last updated: version 1.0.2 — fixes for what the first real play session show
 | Asset toolkit (`tools/kit`): geometry + UV atlas, texture painters, software renderer, Molang DSL, animations, particles, audio synthesis, NBT/structures | done | used by all four bosses |
 | Build pipeline (`tools/build.py`) → packs, `.mcaddon`, `.mcpack`, `.bbmodel` | done | `npm run build` |
 | Encounter framework (`src/core`): manager, state machine, scheduler, targeting, arena, hazards, damage, locomotion, helpers, HUD, rewards, persistence | done | strict type-check; simulation |
-| Static validator (`tools/validate.py`) + Mojang Creator Tools validator | done | 16,895 checks, 0 failed; Creator Tools 0 errors / 0 warnings |
-| Headless simulation (`tools/sim`) | done | 210/210 scenarios; 840/840 over 4 seeds |
+| Static validator (`tools/validate.py`) + Mojang Creator Tools validator | done | 17,128 checks, 0 failed; Creator Tools 0 errors / 0 warnings |
+| Headless simulation (`tools/sim`) | done | 210/210 scenarios; 630/630 over 3 seeds |
 | Summoning Seals, Codex UI, `/abm:` commands, `/scriptevent` API, settings | done | simulation |
 
 ### Stage B — the four bosses
@@ -59,6 +59,21 @@ summons her; the summon line, the boss bar and the action-bar HUD appear.
 | boss bar reads "Unknown" | a custom entity's bar is not named from the lang file | `minecraft:boss` carries the name |
 
 None of these was caught by the project's validator, by Minecraft Creator Tools or by the simulation.
+
+**Second session (1.0.2 on the same device).** Animations and effects now load. The owner reported, for all four
+bosses and without further detail: telegraphs dotted, misplaced, missing or odd-looking; bosses sliding or not
+turning; parts twisted; attack timing off; phase change and death looking wrong. No Content Log this time. Causes
+found by reasoning from those symptoms — fixed in 1.0.3, **none confirmed in the game**:
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| telegraph lines dotted or missing | lines and arcs were laid out by the emitter's age; the game ticks an emitter once per rendered frame, so all particles born in a frame share one position (six clumps at 30 fps; effects with a 0.05 s draw time got one or two) | each particle places itself from its own random number (`particle_motion_parametric`); frame-rate independent |
+| legs flailing, feet sliding | `q.modified_distance_moved` is the game's limb-swing accumulator, about four units per block, not metres; every walk cycle ran four times too fast | ×0.25 everywhere; previews feed the query in its real unit |
+| bosses not turning, walking sideways, attacks not where the body points | the body yaw was pinned by `minecraft:body_rotation_always_follows_head`, and `Entity.setRotation` alone does not reliably turn a mob's rendered body | the script publishes its yaw in a synced property and the root bone is turned by the difference from the body yaw the engine renders; the component is gone |
+| Cantor's windows not pulsing | `q.life_time` reads 0 outside an animation | a client clock variable |
+
+Attack timing and the phase-change / death complaints have no identified cause of their own yet; they may be
+consequences of the facing and walk-cycle faults. A screenshot of each remaining fault has been asked for.
 
 Before the log arrived, the build had also been audited against Mojang's vanilla sample packs and the Script API
 documentation (1.0.1):

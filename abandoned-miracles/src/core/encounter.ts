@@ -251,6 +251,7 @@ export class Encounter {
       }
     }
     if (this.ended) return;       // the encounter was released during this tick (defeat, reset, abandonment)
+    this.loco.publish();
     if (now % CONFIG.hud.intervalTicks === 0) renderHud(this);
     if (now % 100 === 0 && this.sm.inCombat) this.save();
   }

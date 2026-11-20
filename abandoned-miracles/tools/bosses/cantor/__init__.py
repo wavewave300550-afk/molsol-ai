@@ -91,6 +91,11 @@ def assets() -> K.BossAssets:
     bell_ce, bell_anims, bell_ctrls = _bell_helper()
     out.client_entities = [ce, bell_ce]
     out.animations = anim_list + bell_anims
+    # models face the yaw the script publishes (abm:yaw), not whatever the engine does with the body
+    from kit.anim import add_facing
+    for _ce in out.client_entities:
+        if _ce.identifier in ('abm:cantor_xiii',):
+            out.animations.append(add_facing(_ce, "animation." + _ce.identifier.replace(":", ".") + "."))
     out.controllers = ctrls + bell_ctrls
 
     phase, anim, out_p = (f"q.property('abm:{n}')" for n in ("phase", "anim", "bells_out"))

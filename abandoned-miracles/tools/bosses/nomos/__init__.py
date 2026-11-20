@@ -58,6 +58,11 @@ def assets() -> K.BossAssets:
     ce.sound_effects = {k: f"abm.nomos.{k}" for k in snd}
     out.client_entities = [ce]
     out.animations = anim_list
+    # models face the yaw the script publishes (abm:yaw), not whatever the engine does with the body
+    from kit.anim import add_facing
+    for _ce in out.client_entities:
+        if _ce.identifier in ('abm:nomos',):
+            out.animations.append(add_facing(_ce, "animation." + _ce.identifier.replace(":", ".") + "."))
     out.controllers = ctrls
 
     out.bp_entities["nomos"] = K.boss_entity(

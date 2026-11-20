@@ -15,6 +15,7 @@
 import { Player, world } from "@minecraft/server";
 import T from "../../../shared/orison.timings.json";
 import { BossKey } from "../../config";
+import { setYaw } from "../../core/facing";
 import { AttackDef, AttackRun, BossController, BossModule, IncomingInfo } from "../../core/boss";
 import type { Encounter } from "../../core/encounter";
 import type { Helper } from "../../core/helpers";
@@ -297,7 +298,7 @@ export class OrisonController extends BossController {
       const step = Math.min(speed, d);
       const k = d > 0.05 ? step / d : 0;
       h.entity.applyImpulse({ x: dx * k - v.x, y: 0, z: dz * k - v.z });
-      if (d > 0.05) h.entity.setRotation({ x: 0, y: dirToYaw(dx, dz) });
+      if (d > 0.05) setYaw(h.entity, dirToYaw(dx, dz));
     } catch {
       /* gone */
     }

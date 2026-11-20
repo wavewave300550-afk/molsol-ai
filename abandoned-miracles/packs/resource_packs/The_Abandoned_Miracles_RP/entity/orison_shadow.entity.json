@@ -15,7 +15,9 @@
     "default": "geometry.abm.orison_shadow"
    },
    "scripts": {
-    "animate": ["idle", "ctl"]
+    "initialize": ["v.yaw = q.property('abm:yaw');"],
+    "pre_animation": ["v.yaw = math.lerprotate(v.yaw, q.property('abm:yaw'), 0.45);"],
+    "animate": ["face", "idle", "ctl"]
    },
    "animations": {
     "idle": "animation.abm.orison_shadow.idle",
@@ -23,7 +25,8 @@
     "point": "animation.abm.orison_shadow.point",
     "strike": "animation.abm.orison_shadow.strike",
     "sink": "animation.abm.orison_shadow.sink",
-    "ctl": "controller.animation.abm.orison_shadow"
+    "ctl": "controller.animation.abm.orison_shadow",
+    "face": "animation.abm.orison_shadow.face"
    },
    "render_controllers": ["controller.render.abm.layered"],
    "sound_effects": {

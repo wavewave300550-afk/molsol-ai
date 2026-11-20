@@ -30,6 +30,12 @@
      "default": 0,
      "client_sync": true
     },
+    "abm:yaw": {
+     "type": "float",
+     "range": [-180.0, 180.0],
+     "default": 0.0,
+     "client_sync": true
+    },
     "abm:q1": {
      "type": "int",
      "range": [0, 7],
@@ -117,7 +123,6 @@
     "controlled_value": 1.0625,
     "jump_prevented_value": 1.0625
    },
-   "minecraft:body_rotation_always_follows_head": {},
    "minecraft:knockback_resistance": {
     "value": 1.0
    },

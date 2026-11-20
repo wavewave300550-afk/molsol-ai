@@ -9,20 +9,22 @@
    }
   },
   "components": {
-   "minecraft:emitter_rate_steady": {
-    "spawn_rate": "math.max(4, v.r * math.abs(v.sweep) * 0.01745 * 1.1) / 0.2",
-    "max_particles": 500
+   "minecraft:emitter_rate_instant": {
+    "num_particles": "math.clamp(v.r * math.abs(v.sweep) * 0.01745 * 1.98, 4, 500)"
    },
    "minecraft:emitter_lifetime_once": {
-    "active_time": 0.2
+    "active_time": 0.05
    },
    "minecraft:emitter_shape_point": {
-    "offset": ["math.cos((v.a0 + v.sweep * v.emitter_age / 0.2)) * v.r", 0, "math.sin((v.a0 + v.sweep * v.emitter_age / 0.2)) * v.r"],
+    "offset": [0, 0, 0],
     "direction": [0, 1, 0]
    },
    "minecraft:particle_initial_speed": 0,
    "minecraft:particle_lifetime_expression": {
     "max_lifetime": "v.life"
+   },
+   "minecraft:particle_motion_parametric": {
+    "relative_position": ["math.cos((v.a0 + v.sweep * v.particle_random_1)) * v.r", 0, "math.sin((v.a0 + v.sweep * v.particle_random_1)) * v.r"]
    },
    "minecraft:particle_appearance_billboard": {
     "size": [0.3, 0.3],
@@ -39,7 +41,7 @@
      0.86,
      1.0,
      0.9,
-     "(math.clamp((v.particle_age / v.particle_lifetime) * 8, 0, 1) * math.clamp((1 - (v.particle_age / v.particle_lifetime)) * 5, 0, 1)) * (1.0 + 0.0 * math.sin(v.particle_age * 900))"
+     "(math.clamp((v.particle_age / v.particle_lifetime) * 8, 0, 1) * math.clamp((1 - (v.particle_age / v.particle_lifetime)) * 5, 0, 1)) * math.clamp((v.particle_age - v.particle_random_1 * 0.2) * 14, 0, 1) * (1.0 + 0.0 * math.sin(v.particle_age * 900))"
     ]
    }
   }

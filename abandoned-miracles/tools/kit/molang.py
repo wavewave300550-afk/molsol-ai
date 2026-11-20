@@ -164,6 +164,14 @@ def lerp(a, b, t):
     return _call("lerp", lambda p, q_, k: p + (q_ - p) * k, a, b, t)
 
 
+def lerprotate(a, b, t):
+    """Lerp from a to b (degrees) the short way round the circle."""
+    def f(p, q_, k):
+        d = math.fmod(q_ - p + 540.0, 360.0) - 180.0
+        return p + d * k
+    return _call("lerprotate", f, a, b, t)
+
+
 def mod(a, b):
     return _call("mod", lambda p, q_: math.fmod(p, q_) if q_ else 0.0, a, b)
 
@@ -211,7 +219,11 @@ def raw(text: str, fn: Callable[[dict], float] = lambda e: 0.0) -> E:
 
 ANIM_TIME = q("anim_time")
 LIFE_TIME = q("life_time")
+# q.modified_distance_moved is NOT metres: it is the game's limb-swing accumulator, which advances by
+# min(1, 4 * blocks moved this tick) every tick - four units per block at boss walking speeds. (Seen in
+# the game: walk cycles authored per block ran four times too fast.) BLOCKS_MOVED is the distance in blocks.
 DIST = q("modified_distance_moved")
+BLOCKS_MOVED = q("modified_distance_moved") * 0.25
 MOVE_SPEED = q("modified_move_speed")
 
 

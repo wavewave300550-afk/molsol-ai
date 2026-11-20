@@ -82,8 +82,8 @@ def client_entity() -> ClientEntity:
     ce.materials = {"default": "entity_alphatest", "glow": "entity_emissive_alpha", "glass": "entity_alphablend"}
     ce.render_controllers = ["controller.render.abm.orison"]
     p2 = ce.var("p2", prop("abm:phase").eq(2))
-    ce.var("gait", q("modified_distance_moved") * cond(p2, 0.3, 0.327))
-    ce.var("turn", (q("body_y_rotation") + 3600) / 60.0)
+    ce.var("gait", M.BLOCKS_MOVED * cond(p2, 0.3, 0.327))
+    ce.var("turn", (v("yaw") + 3600) / 60.0)        # v.yaw: see kit.anim.add_facing
     ce.var("go", M.clamp(q("modified_move_speed") * 4, 0, 1))
     ce.var("w_l", mod(v("gait"), 1))
     ce.var("w_r", mod(v("gait") + 0.5, 1))

@@ -1183,6 +1183,26 @@ function clearHud(enc) {
   }
 }
 
+// src/core/facing.ts
+var published = /* @__PURE__ */ new WeakMap();
+function yawProperty(yaw) {
+  const y = Math.round(wrapDeg(yaw) * 10) / 10;
+  return Math.max(-180, Math.min(180, y));
+}
+function setYaw(e, yaw) {
+  const y = yawProperty(yaw);
+  try {
+    e.setRotation({ x: 0, y });
+  } catch {
+  }
+  if (published.get(e) === y) return;
+  try {
+    e.setProperty("abm:yaw", y);
+    published.set(e, y);
+  } catch {
+  }
+}
+
 // src/core/locomotion.ts
 var Locomotion = class {
   constructor(enc) {
@@ -1208,6 +1228,15 @@ var Locomotion = class {
     this.yaw = wrapDeg(y);
     const l = enc.boss.location;
     this.progress = { x: l.x, z: l.z, tick: 0 };
+    this.publish();
+  }
+  /**
+   * Publish the authoritative yaw to the client (property abm:yaw). The model is turned to this value
+   * by its own animation, so it faces where the script says even when the engine keeps the body still.
+   * Called every tick; the property is only written when the value changes.
+   */
+  publish() {
+    this.enc.setProp("abm:yaw", yawProperty(this.yaw));
   }
   setAnim(a) {
     if (a === this.anim) return;
@@ -1969,6 +1998,7 @@ var Encounter = class {
       }
     }
     if (this.ended) return;
+    this.loco.publish();
     if (now % CONFIG.hud.intervalTicks === 0) renderHud(this);
     if (now % 100 === 0 && this.sm.inCombat) this.save();
   }
@@ -5405,7 +5435,7 @@ var OrisonController = class extends BossController {
       const step = Math.min(speed, d);
       const k = d > 0.05 ? step / d : 0;
       h.entity.applyImpulse({ x: dx * k - v.x, y: 0, z: dz * k - v.z });
-      if (d > 0.05) h.entity.setRotation({ x: 0, y: dirToYaw(dx, dz) });
+      if (d > 0.05) setYaw(h.entity, dirToYaw(dx, dz));
     } catch {
     }
     return d;
@@ -6866,7 +6896,7 @@ var VesperraController = class extends BossController {
           h.entity.applyImpulse({ x: dx / d * step - v.x, y: 0, z: dz / d * step - v.z });
         }
         const face = threat ? threat.location : b;
-        h.entity.setRotation({ x: 0, y: Math.atan2(-(face.x - l.x), face.z - l.z) * 180 / Math.PI });
+        setYaw(h.entity, Math.atan2(-(face.x - l.x), face.z - l.z) * 180 / Math.PI);
       } catch {
         return;
       }

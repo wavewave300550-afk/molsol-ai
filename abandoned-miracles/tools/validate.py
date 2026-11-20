@@ -272,6 +272,13 @@ def check_client(client, geos, anims, ctrls, rcs, particles, sounds):
         for short, sid in d.get("sound_effects", {}).items():
             R.ok(sid in sounds, f"{ident}: sound_effects.{short} -> {sid} not defined")
         check_molang(f"{ident} scripts", d.get("scripts", {}), skip_keys=("animate",))
+        # q.life_time / q.anim_time only count inside an animation; in entity scripts they read 0
+        for script in d.get("scripts", {}).get("pre_animation", []) + d.get("scripts", {}).get("initialize", []):
+            R.ok(not re.search(r"\bq(uery)?\.(life_time|anim_time)\b", script), f"{ident}: animation-only time query in an entity script: {script}")
+        # walk cycles: the query is the limb-swing accumulator (four units per block), never used raw
+        for script in d.get("scripts", {}).get("pre_animation", []):
+            if "modified_distance_moved" in script:
+                R.ok("modified_distance_moved * 0.25" in script, f"{ident}: q.modified_distance_moved used without the 0.25 block conversion")
         for a in d.get("scripts", {}).get("animate", []):
             if isinstance(a, dict):
                 check_molang(f"{ident} animate", list(a.values()))
@@ -359,6 +366,27 @@ def check_animation_bodies(client, geos, anims, ctrls, use):
         check_molang(name, c)
 
 
+def check_facing(client):
+    """Every boss (and every helper the script turns) faces by the published yaw, not by engine rotation."""
+    R.begin("facing")
+    turned = {"abm:vesperra", "abm:cantor_xiii", "abm:nomos", "abm:orison", "abm:vesperra_heir", "abm:orison_shadow"}
+    for f in files(os.path.join(BP, "entities"), ".json"):
+        e = load(f)["minecraft:entity"]
+        ident = e["description"]["identifier"]
+        if ident not in turned:
+            continue
+        prop = e["description"].get("properties", {}).get("abm:yaw", {})
+        R.ok(prop.get("type") == "float" and prop.get("client_sync") is True and prop.get("range") == [-180.0, 180.0],
+             f"{ident}: property abm:yaw missing or not a synced float in [-180, 180]")
+        R.ok("minecraft:body_rotation_always_follows_head" not in e.get("components", {}),
+             f"{ident}: body_rotation_always_follows_head pins the body to the head yaw")
+        d = client.get(ident, {})
+        sc = d.get("scripts", {})
+        R.ok("face" in d.get("animations", {}) and "face" in sc.get("animate", []), f"{ident}: no always-on facing animation")
+        R.ok(any("v.yaw" in s for s in sc.get("initialize", [])) and any(s.startswith("v.yaw =") for s in sc.get("pre_animation", [])),
+             f"{ident}: v.yaw is not initialised and updated")
+
+
 def check_render_controllers(client, geos):
     R.begin("render controllers")
     rcs = {}
@@ -408,6 +436,11 @@ def check_particles():
         if rate is not None:
             R.ok(isinstance(rate, (int, float)) and rate <= 600, f"{ident}: max_particles {rate} too high")
         check_molang(ident, comps)
+        # Seen in the game: the emitter ticks once per rendered frame, so anything placed by the emitter's
+        # age comes out in per-frame clumps (a dotted or missing line, different on every device).
+        for k, c in comps.items():
+            if k.startswith("minecraft:emitter_shape"):
+                R.ok("emitter_age" not in json.dumps(c), f"{ident}: particle placement depends on emitter age (frame-rate dependent)")
         out[ident] = p
     return out
 
@@ -762,6 +795,7 @@ def main():
     particles = check_particles()
     sounds, audio_bytes = check_sounds()
     rcs = check_render_controllers(client, geos)
+    check_facing(client)
     anims, ctrls = check_animations(client, geos, {})
     use = check_client(client, geos, anims, ctrls, rcs, particles, sounds)
     check_animation_bodies(client, geos, anims, ctrls, use)
