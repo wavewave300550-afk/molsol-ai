@@ -448,7 +448,9 @@ def build_bp_entities():
         },
         "component_groups": {
             "joan:despawn": {"minecraft:instant_despawn": {}},
+            # the boss bar always comes from one of these two groups, so swapping them can never drop it
             "joan:dark_sky": {"minecraft:boss": {"hud_range": 64, "should_darken_sky": True}},
+            "joan:light_sky": {"minecraft:boss": {"hud_range": 64, "should_darken_sky": False}},
         },
         "components": {
             "minecraft:type_family": {"family": ["joan", "boss", "monster", "mob"]},
@@ -488,8 +490,8 @@ def build_bp_entities():
         },
         "events": {
             "joan:despawn": {"add": {"component_groups": ["joan:despawn"]}},
-            "joan:darken": {"add": {"component_groups": ["joan:dark_sky"]}},
-            "joan:brighten": {"remove": {"component_groups": ["joan:dark_sky"]}},
+            "joan:darken": {"add": {"component_groups": ["joan:dark_sky"]}, "remove": {"component_groups": ["joan:light_sky"]}},
+            "joan:brighten": {"add": {"component_groups": ["joan:light_sky"]}, "remove": {"component_groups": ["joan:dark_sky"]}},
         },
     }}
     write_json(os.path.join(BP, "entities", "joan_of_arc.json"), joan)

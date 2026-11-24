@@ -140,6 +140,18 @@ expect(J.nameTag === "Joan of Arc", "boss bar name set");
 expect(__log.titles.some((t) => t.t.includes("BOSS 001")), "boss title shown");
 expect(B.field.livePaths().some((p) => p.o.tag === "arena"), "processional ring written");
 expect(__log.sounds.includes("joan.choir.light") && __log.sounds.includes("joan.bell.toll"), "intro music cues");
+{
+  // the Processional Ring sweeps arrows sniped from outside, but not shots fired from inside
+  const H = B.home;
+  const sniped = new Entity("minecraft:arrow", dim, { x: H.x + 27.2, y: H.y + 0.6, z: H.z });
+  sniped.__vel = { x: -1.5, y: 0, z: 0 };
+  const own = new Entity("minecraft:arrow", dim, { x: H.x + 25.6, y: H.y + 0.6, z: H.z + 0.5 });
+  own.__vel = { x: 1.5, y: 0, z: 0 };
+  await tick(2);
+  expect(B.field.wasRedirected(sniped), "an arrow sniped from outside the arena is caught by the ring");
+  expect(!B.field.wasRedirected(own), "a player's own shot from inside is never caught by the ring");
+  for (const a of [sniped, own]) if (a.__valid) a.remove();
+}
 
 // ------------------------------------------------------------------ 2. road physics (direct)
 async function roadTest() {

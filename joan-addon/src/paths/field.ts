@@ -192,6 +192,7 @@ export class PathField {
   }
 
   private allowed(p: Path, isProj: boolean, player: boolean, e: Entity): boolean {
+    if (p.o.accept && !p.o.accept(e)) return false;
     if (isProj) return p.o.carryProjectiles !== false && !(p.o.ownerIsPlayer && this.projectileOwnedByPlayer(e));
     if (player) return p.o.carryPlayers !== false;
     return p.o.carryMobs !== false;

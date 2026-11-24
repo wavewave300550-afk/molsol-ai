@@ -53,6 +53,7 @@ export interface PathOpts {
   maxRide?: number; // ticks a rider may stay before being flung (orbits)
   renderEvery?: number; // ticks between flow emitters (default 10); large decorative roads use more
   chevrons?: boolean; // draw direction chevrons (default true)
+  accept?: (e: Entity) => boolean; // extra filter for what this road may take
   /** Called when a rider reaches the end of the flow and there is no continuation. */
   onEnd?: (e: Entity, p: Path) => void;
   /** Where riders are flung at the end of the flow (projectiles get aimed). */

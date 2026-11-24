@@ -54,11 +54,11 @@ GUARD_BANNER = (d(0.05, 1, -0.05), BACK)
 GUARD2 = {   # phase II: lower, wider, leaning in
     "root": {"position": (0, -0.8, 0)},
     "hips": (4, 0, 0), "torso": (8, -14, 0), "head": (-8, 12, 0),
-    "arm_r": (-30, 0, 28), "forearm_r": (-52, 0, 0),
+    "arm_r": (-28, 0, 36), "forearm_r": (-50, 0, 0),
     "arm_l": (-14, 0, -24), "forearm_l": (-46, 0, 0),
     "leg_r": (-14, 10, 6), "shin_r": (14, 0, 0), "leg_l": (12, -10, -7), "shin_l": (10, 0, 0),
 }
-GUARD2_BANNER = (d(0.12, 1, -0.32), BACK)
+GUARD2_BANNER = (d(-0.2, 1, -0.26), BACK)
 
 
 class Key:
@@ -759,7 +759,8 @@ def minor_animations() -> Dict[str, dict]:
                              f"0.35 + query.property('joan:stake') * 0.55"]},
         "post": {"rotation": [0, 0, f"math.sin({t} * 90) * 0.6"]},
     }}
-    A["animation.joan.stake.purified"] = {"loop": True, "bones": {"flames": {"scale": 0.0}}}
+    A["animation.joan.stake.purified"] = {"loop": True, "override_previous_animation": True,
+                                          "bones": {"flames": {"scale": 0.0}}}
     A["animation.joan.stake.sink"] = {"loop": False, "animation_length": 1.5, "bones": {
         "root": {"position": {"0.0": [0, 0, 0], "1.5": [0, -64, 0]}}}}
     # lily waystone: float + spin; flips 180 degrees when its road is reversed

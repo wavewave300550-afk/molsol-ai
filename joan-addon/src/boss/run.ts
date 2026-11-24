@@ -4,7 +4,8 @@ import { actionbar, emit, ring, sigil, sound } from "../core/fx.js";
 import { burn, fightersNear, foesNear, hurt, isPlayer, push } from "../core/targets.js";
 import { add, flatDir, hdist, v, V3 } from "../core/vec.js";
 import { Path } from "../paths/path.js";
-import { circle, skyArc } from "../paths/shapes.js";
+import { skyArc } from "../paths/shapes.js";
+import { arenaRing } from "./arena.js";
 import { JoanBoss, SkillGen } from "./joan.js";
 import { death, transition } from "./scenes.js";
 import { skillByName } from "./skills/index.js";
@@ -160,16 +161,6 @@ function* returnHome(b: JoanBoss): SkillGen {
   b.anim("surge_slam");
   b.impactFx(b.pos, 2.5);
   yield 12;
-}
-
-export function arenaRing(b: JoanBoss): void {
-  if (b.field.livePaths().some((p) => p.o.tag === "arena")) return;
-  b.field.add(circle(b.home, TUNING.arenaRadius, 0, 1, false), {
-    kind: "ring", owner: b.id, loop: true, speed: 0.8, radius: 1.6, aerial: true, form: 20, life: 20 * 60 * 30,
-    carryPlayers: false, carryMobs: false, carryProjectiles: true, memory: false, burning: false, damage: 0,
-    color: { red: 1, green: 0.88, blue: 0.5, alpha: 0.45 }, chevron: { red: 1, green: 0.9, blue: 0.6, alpha: 0.5 }, tag: "arena",
-    renderEvery: 40, chevrons: false,
-  }, b.now);
 }
 
 // =========================================================================== reactions & secrets

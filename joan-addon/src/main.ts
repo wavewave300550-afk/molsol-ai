@@ -16,7 +16,8 @@ import {
   Vector3,
   world,
 } from "@minecraft/server";
-import { arenaRing, bellRung, crossingPyre, tickBoss, turnedRoad, tutorial } from "./boss/run.js";
+import { arenaRing } from "./boss/arena.js";
+import { bellRung, crossingPyre, tickBoss, turnedRoad, tutorial } from "./boss/run.js";
 import { JoanBoss } from "./boss/joan.js";
 import { sweepOrphans } from "./boss/minions.js";
 import { intro } from "./boss/scenes.js";

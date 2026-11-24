@@ -1,10 +1,11 @@
 import { system } from "@minecraft/server";
-import { COLORS, TUNING } from "../config.js";
+import { COLORS } from "../config.js";
 import { emit, shake, sound, title } from "../core/fx.js";
 import { allPlayersNear } from "../core/targets.js";
 import { groundY } from "../core/terrain.js";
 import { add, flatDir, scale, v } from "../core/vec.js";
-import { circle, skyArc } from "../paths/shapes.js";
+import { skyArc } from "../paths/shapes.js";
+import { arenaRing } from "./arena.js";
 import type { JoanBoss, SkillGen } from "./joan.js";
 import { dropRewards } from "../rewards.js";
 
@@ -54,12 +55,7 @@ export function* intro(b: JoanBoss): SkillGen {
   yield 44;
   sound(b.dim, "joan.bell.toll", land, 1, 1);
   // the Processional Ring - arena boundary that deflects outside projectiles
-  b.field.add(circle(land, TUNING.arenaRadius, 0, 1, false), {
-    kind: "ring", owner: b.id, loop: true, speed: 0.8, radius: 1.6, aerial: true, form: 30, life: 20 * 60 * 30,
-    carryPlayers: false, carryMobs: false, carryProjectiles: true, memory: false, burning: false, damage: 0,
-    color: { red: 1, green: 0.88, blue: 0.5, alpha: 0.45 }, chevron: { red: 1, green: 0.9, blue: 0.6, alpha: 0.5 },
-    tag: "arena", renderEvery: 40, chevrons: false,
-  }, b.now);
+  arenaRing(b);
   yield 24;
   b.setPhase(1);
   b.mode = "fight";
