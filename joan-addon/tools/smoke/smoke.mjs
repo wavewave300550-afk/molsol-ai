@@ -55,7 +55,7 @@ fs.mkdirSync(dir, { recursive: true });
 fs.copyFileSync(path.join(HERE, "mock-server.mjs"), path.join(dir, "index.mjs"));
 fs.writeFileSync(path.join(dir, "package.json"), JSON.stringify({ name: "@minecraft/server", type: "module", exports: "./index.mjs" }));
 const mc = await import(pathToFileURL(path.join(dir, "index.mjs")).href);
-const { world, system, Player, ItemStack, Entity, __tick, __issues, __log, __perf, __walls } = mc;
+const { world, system, Player, ItemStack, Entity, __tick, __issues, __log, __perf, __walls, __plants } = mc;
 
 const warnings = [];
 console.warn = (...a) => warnings.push(a.join(" "));
@@ -213,6 +213,57 @@ async function roadTest() {
 }
 await roadTest();
 
+// ------------------------------------------------------------------ 2b. terrain & engine regressions (independent review)
+{
+  const { line, circle, skyArc } = shapes;
+  const quiet = { form: 2, life: 60, burning: false, damage: 0, memory: false, crossings: false, switching: false };
+  for (let x = 80; x <= 100; x++) for (let z = -3; z <= 3; z++) __plants.add(`${x},${z}`);
+  const meadow = B.groundRoad(line({ x: 80, y: 64, z: 0 }, { x: 98, y: 64, z: 0 }), { kind: "road", ...quiet });
+  expect(!!meadow && meadow.length > 17, `a road across short grass keeps its length (${meadow ? meadow.length.toFixed(1) : "none"})`);
+  const arc = B.airRoad(skyArc({ x: 85, y: 64, z: 0 }, { x: 96, y: 64, z: 0 }, 4), { kind: "arc", ...quiet, carryPlayers: false });
+  expect(!!arc && arc.length > 10, "a sky road can start from a grassy cell");
+  __walls.push({ x0: 110, x1: 111, z0: -6, z1: 6, y1: 72 });
+  const walled = B.groundRoad(line({ x: 104, y: 64, z: 0 }, { x: 118, y: 64, z: 0 }), { kind: "road", ...quiet });
+  expect(!!walled && walled.length < 7.5, `a wall stops a ground road (${walled ? walled.length.toFixed(1) : "none"})`);
+  const halo = B.groundRoad(circle({ x: 110.5, y: 64, z: 0 }, 4, 0, 1, true), { kind: "loop", loop: true, ...quiet });
+  expect(!halo, "a halo cut open by a wall is refused instead of being closed through it");
+  const r = B.groundRoad(line({ x: 60, y: 64, z: 20 }, { x: 70, y: 64, z: 20 }), { kind: "road", ...quiet, life: 400, restless: 40 });
+  await tick(3);
+  B.field.reverse(r, 5, B.now);
+  await tick(6);
+  const flow1 = r.flow;
+  await tick(30);
+  expect(r.flow === flow1 && r.reverseAt < 0, "the restless clock restarts after a commanded reversal");
+  const ring = B.groundRoad(circle({ x: 0, y: 64, z: -60 }, 5, 0, 1, true), { kind: "loop", loop: true, ...quiet, speed: 1.1, life: 200 });
+  const ex = B.groundRoad(line({ x: 5, y: 64, z: -60 }, { x: 14, y: 64, z: -60 }), { kind: "exit", ...quiet, speed: 0.5, life: 200 });
+  B.field.junction(ring, 0, ex, 0);
+  await tick(3);
+  const runner = new Entity("minecraft:zombie", dim, { x: 0, y: 64, z: -55 });
+  let switched = false;
+  for (let i = 0; i < 80 && !switched; i++) {
+    await tick(1);
+    if (B.field.riderPath(runner) === ex) switched = true;
+  }
+  expect(switched, "a fast rider on a loop still takes the exit junction");
+  runner.remove();
+  // the engine's knockback model (JOAN_KB) must not run away: carried speed stays near the road speed
+  const lane = B.groundRoad(line({ x: 120, y: 64, z: 40 }, { x: 150, y: 64, z: 40 }), { kind: "road", ...quiet, speed: 0.42, life: 120 });
+  await tick(3);
+  P.location = { x: 121, y: 64, z: 40 };
+  P.__vel = { x: 0, y: 0, z: 0 };
+  await tick(8);
+  const lx0 = P.location.x;
+  await tick(20);
+  const perTick = (P.location.x - lx0) / 20;
+  console.error(`knockback model ${process.env.JOAN_KB || "halve"}: player carried at ${perTick.toFixed(3)} blocks/tick on a 0.42 road`);
+  expect(perTick > 0.42 * 0.35 && perTick < 0.42 * 2.0, `carry speed is bounded under knockback model "${process.env.JOAN_KB || "halve"}" (${perTick.toFixed(2)} b/tick)`);
+  __walls.length = 0;
+  __plants.clear();
+  B.field.retireAll(B.now, 1);
+  P.location = { x: 0, y: 64, z: 0 };
+  await tick(3);
+}
+
 // ------------------------------------------------------------------ 3. every skill in phase I
 const force = (name) => commands["joan:skill"]({ sourceEntity: P }, name);
 async function runSkill(name, place, maxTicks = 700) {
@@ -253,6 +304,20 @@ expect(results.salvation.hurt > 0 || results.salvation.knocked > 0, "False Salva
 results.convergence = await runSkill("convergence", near(9));
 expect(results.convergence.knocked > 0, "Convergence funnels the player");
 results.detour = await runSkill("detour", near(10));
+{
+  heal();
+  B.gcdUntil = 0;
+  near(6)();
+  force("detour");
+  for (let i = 0; i < 30 && !(B.action && B.action.name === "detour"); i++) await tick(1);
+  await tick(10);
+  P.location = { x: J.location.x + 2.9, y: J.location.y + 0.7, z: J.location.z };
+  P.__vel = { x: 0, y: 0, z: 0 };
+  await tick(30);
+  const away = Math.hypot(P.location.x - J.location.x, P.location.z - J.location.z);
+  expect(away > 4, `Heaven's Detour throws a player out of its orbit (${away.toFixed(1)} blocks)`);
+  for (let i = 0; i < 200 && B.action; i++) await tick(1);
+}
 results.procession = await runSkill("procession", near(8));
 expect(__log.spawned.includes("joan:echo"), "procession spawned echoes");
 expect(__log.spawned.includes("joan:standard"), "convergence planted phantom standards");
@@ -294,6 +359,14 @@ expect(B.mode === "fight" && B.phase === 1, "free fight stays in phase I");
   expect(B.action && B.action.name === "return", "Joan returns along a sky road when pulled out of her arena");
   for (let i = 0; i < 200 && B.action; i++) await tick(1);
   expect(Math.hypot(J.location.x - B.home.x, J.location.z - B.home.z) < 6, "she is back at the arena centre");
+  // a forest / house in the way of the sky road: she still gets home instead of looping
+  for (let i = 0; i < 400 && B.action; i++) await tick(1);
+  J.location = { x: B.home.x + 45, y: 64, z: B.home.z };
+  __walls.push({ x0: B.home.x + 28, x1: B.home.x + 30, z0: B.home.z - 12, z1: B.home.z + 12, y1: 90 });
+  await tick(3);
+  for (let i = 0; i < 200 && B.action; i++) await tick(1);
+  expect(Math.hypot(J.location.x - B.home.x, J.location.z - B.home.z) < 6, "a blocked sky road does not trap her outside the arena");
+  __walls.length = 0;
   B.gcdUntil = 0;
 }
 
@@ -450,6 +523,29 @@ await tick(20 * 42);
 expect(Math.abs(hpOf(B2.e) - 600) < 0.01 && B2.phase === 1, "the encounter resets when the arena is empty");
 P.location = { x: 0, y: 64, z: 0 };
 
+// ------------------------------------------------------------------ 13b. phase II with the ultimate due but nobody left: still resets
+{
+  const fresh = new Entity("minecraft:zombie", dim, { x: 0, y: 64, z: 0 });
+  fresh.remove();
+  B2.setPhase(2);
+  B2.flags.ultCount = 0;
+  B2.e.__health.currentValue = 140;
+  P.location = { x: 400, y: 64, z: 400 };
+  await tick(20 * 42);
+  expect(Math.abs(hpOf(B2.e) - 600) < 0.01 && B2.phase === 1, "an empty arena resets even when the ultimate is due");
+  expect(B2.field.livePaths().some((p) => p.o.tag === "arena" && p.endAt > B2.now + 100), "the Processional Ring survives the reset");
+  P.location = { x: 0, y: 64, z: 0 };
+  // helpers break on a single player hit
+  const echo = dim.spawnEntity("joan:echo", { x: 3, y: 64, z: 3 });
+  world.afterEvents.entityHitEntity.fire({ damagingEntity: P, hitEntity: echo });
+  expect(!echo.isValid, "a procession echo shatters on a player's hit");
+  const light = dim.spawnEntity("joan:seraph", { x: 3, y: 66, z: 3 });
+  const arrowS = new Entity("minecraft:arrow", dim, { x: 3, y: 66, z: 2 });
+  world.afterEvents.projectileHitEntity.fire({ projectile: arrowS, source: P, getEntityHit: () => ({ entity: light }) });
+  expect(!light.isValid, "a seraph light can be shot down");
+  if (arrowS.isValid) arrowS.remove();
+}
+
 // ------------------------------------------------------------------ 14. clear + resume after reload
 commands["joan:clear"]({ sourceEntity: P });
 await tick(3);
@@ -458,8 +554,11 @@ const R = new Entity("joan:joan_of_arc", dim, { x: 10, y: 64, z: 10 });
 R.__dyn.set("joan:started", true);
 R.__dyn.set("joan:phase", 2);
 R.__dyn.set("joan:home", { x: 10, y: 64, z: 10 });
+const leftover = new Entity("joan:waystone", dim, { x: 12, y: 65, z: 12 });
+leftover.__dyn.set("joan:owner", R.id);
 world.afterEvents.entityLoad.fire({ entity: R });
 await tick(2);
+expect(!leftover.isValid, "helpers left from before a reload are cleared when she is re-adopted");
 const BR = bosses.get(R.id);
 expect(BR && BR.mode === "fight" && BR.phase === 2, "a saved Joan resumes her fight in phase II after a reload");
 

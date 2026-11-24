@@ -116,7 +116,12 @@ const ENTITY_DEFS = DATA.entities;
 const ITEMS = new Set(DATA.items);
 const MOLANG_VARS = new Set(DATA.molangVars);
 const GROUND = 64;
-export const __walls = []; // {x0,x1,z0,z1,y1}
+export const __walls = []; // {x0,x1,z0,z1,y1} solid boxes standing on the ground
+export const __plants = new Set(); // "x,z" cells with a passable plant at y = GROUND (short grass, flowers...)
+// How applyKnockback combines with the current motion. The 2.11 typings describe it as an impulse added to
+// the velocity; the classic engine halves the old motion first. The smoke test runs under all three.
+const KB = process.env.JOAN_KB || "halve";
+const plantAt = (x, y, z) => Math.floor(y) === GROUND && __plants.has(`${Math.floor(x)},${Math.floor(z)}`);
 function finite(v, what) {
   if (!v || !Number.isFinite(v.x) || !Number.isFinite(v.y) || !Number.isFinite(v.z)) issue(`non-finite vector for ${what}: ${JSON.stringify(v)}`);
 }
@@ -270,7 +275,8 @@ export class Entity {
     privileged("applyKnockback");
     if (!h || typeof h !== "object" || !Number.isFinite(h.x) || !Number.isFinite(h.z) || !Number.isFinite(vert)) issue(`bad knockback ${JSON.stringify(h)} ${vert}`);
     if (Math.hypot(h.x, h.z) > 4 || vert > 3) issue(`absurd knockback ${JSON.stringify(h)} ${vert}`);
-    this.__vel = { x: h.x, y: vert > 0 ? vert : this.__vel.y, z: h.z };
+    const k = KB === "set" ? 0 : KB === "halve" ? 0.5 : 1;
+    this.__vel = { x: this.__vel.x * k + h.x, y: vert > 0 ? vert : this.__vel.y, z: this.__vel.z * k + h.z };
     this.__knock++;
   }
   applyDamage(amount, opts = {}) {
@@ -462,9 +468,10 @@ function physics() {
 class Block {
   constructor(loc) {
     this.location = loc;
-    this.isAir = loc.y >= GROUND && !wallAt(loc.x + 0.5, loc.y + 0.5, loc.z + 0.5);
+    const plant = plantAt(loc.x + 0.5, loc.y + 0.5, loc.z + 0.5);
+    this.isAir = loc.y >= GROUND && !plant && !wallAt(loc.x + 0.5, loc.y + 0.5, loc.z + 0.5);
     this.isLiquid = false;
-    this.typeId = this.isAir ? "minecraft:air" : "minecraft:stone";
+    this.typeId = plant ? "minecraft:short_grass" : this.isAir ? "minecraft:air" : "minecraft:stone";
   }
 }
 class Dimension {
@@ -533,6 +540,10 @@ class Dimension {
     const max = o.maxDistance ?? 64;
     for (let t = 0; t <= max; t += 0.25) {
       const p = { x: from.x + dir.x * t, y: from.y + dir.y * t, z: from.z + dir.z * t };
+      if (o.includePassableBlocks && plantAt(p.x, p.y, p.z)) {
+        const b = { x: Math.floor(p.x), y: GROUND, z: Math.floor(p.z) };
+        return { block: new Block(b), face: "Up", faceLocation: { x: p.x - b.x, y: 0.4, z: p.z - b.z } };
+      }
       if (p.y < GROUND || wallAt(p.x, p.y, p.z)) {
         const b = { x: Math.floor(p.x), y: Math.floor(Math.min(p.y, GROUND - 0.001)), z: Math.floor(p.z) };
         if (p.y < GROUND) return { block: new Block({ ...b, y: GROUND - 1 }), face: "Up", faceLocation: { x: p.x - b.x, y: 1, z: p.z - b.z } };

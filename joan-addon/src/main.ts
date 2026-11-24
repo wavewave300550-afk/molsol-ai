@@ -19,12 +19,12 @@ import {
 import { arenaRing } from "./boss/arena.js";
 import { bellRung, crossingPyre, tickBoss, turnedRoad, tutorial } from "./boss/run.js";
 import { JoanBoss } from "./boss/joan.js";
-import { sweepOrphans } from "./boss/minions.js";
+import { ownerOf, removeQuietly, shatter, sweepOrphans } from "./boss/minions.js";
 import { intro } from "./boss/scenes.js";
 import { hitStandard } from "./boss/skills/convergence.js";
 import { SKILLS } from "./boss/skills/index.js";
 import { strikeWaystone } from "./boss/skills/stake.js";
-import { ITEM_BANNER, JOAN, STANDARD, WAYSTONE } from "./config.js";
+import { ECHO, ITEM_BANNER, JOAN, MINIONS, SERAPH, STANDARD, WAYSTONE } from "./config.js";
 import { resetFxBudget } from "./core/fx.js";
 import { isPlayer } from "./core/targets.js";
 import { dirOfYaw, dist, scale, add } from "./core/vec.js";
@@ -38,6 +38,14 @@ const DIMENSIONS = ["minecraft:overworld", "minecraft:nether", "minecraft:the_en
 // --------------------------------------------------------------------------- encounters
 function adopt(e: Entity, fresh: boolean): void {
   if (!e.isValid || bosses.has(e.id)) return;
+  // helpers she left behind before a chunk unload or reload belong to no running skill any more
+  for (const type of MINIONS) {
+    try {
+      for (const m of e.dimension.getEntities({ type })) if (ownerOf(m) === e.id) removeQuietly(m);
+    } catch {
+      // ignore
+    }
+  }
   const b = new JoanBoss(e, now);
   b.field.hooks = {
     onCaptured: (ent, p) => tutorial(b, ent, p),
@@ -163,6 +171,7 @@ world.afterEvents.entityHitEntity.subscribe((ev) => {
   if (target.typeId === JOAN && isPlayer(src)) bossOf(target)?.brain.noteMelee(src);
   else if (target.typeId === WAYSTONE) strikeWaystone(target, src);
   else if (target.typeId === STANDARD && isPlayer(src)) hitStandard(target);
+  else if ((target.typeId === ECHO || target.typeId === SERAPH) && isPlayer(src)) shatter(target);
 });
 
 world.afterEvents.projectileHitEntity.subscribe((ev) => {
@@ -181,6 +190,7 @@ world.afterEvents.projectileHitEntity.subscribe((ev) => {
     turnedRoad(b, src);
   } else if (hit.typeId === WAYSTONE) strikeWaystone(hit, ev.projectile);
   else if (hit.typeId === STANDARD && src && isPlayer(src)) hitStandard(hit);
+  else if ((hit.typeId === ECHO || hit.typeId === SERAPH) && src && isPlayer(src)) shatter(hit);
 });
 
 const RANGED = /(bow|crossbow|trident)$/;

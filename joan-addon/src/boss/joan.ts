@@ -2,7 +2,7 @@ import { Dimension, Entity, EntityDamageCause, Player, RGBA, system } from "@min
 import { COLORS, JOAN, PROP_ACTION, PROP_PHASE, PROP_SEQ, TUNING, difficultyScale } from "../config.js";
 import { burst, emit, ring, sigil, sound } from "../core/fx.js";
 import { fightersNear, foesNear, hurt, isPlayer, push } from "../core/targets.js";
-import { isOpen } from "../core/terrain.js";
+import { lineClear } from "../core/terrain.js";
 import { add, dist, flatDir, hdist, len, norm, scale, sub, v, V3, yawOf } from "../core/vec.js";
 import { ACT, ActName } from "../generated/anims.js";
 import { PathField } from "../paths/field.js";
@@ -273,6 +273,8 @@ export class JoanBoss {
   /** Ground road that follows the terrain. */
   groundRoad(points: V3[], extra: Partial<PathOpts>): Path | undefined {
     const pts = conform(this.dim, points, this.pos.y);
+    // a closed road that the terrain cut open must not be closed with a chord through walls
+    if (extra.loop && pts.length < points.length * 0.97) return undefined;
     return this.field.add(pts, this.roadOpts(extra), this.now);
   }
 
@@ -339,33 +341,37 @@ export class JoanBoss {
     let s = s0;
     const hitSet = new Set<string>();
     let guard = Math.ceil(Math.abs(s1 - s0) / Math.max(0.05, speed)) + 30;
-    while (guard-- > 0 && this.valid) {
-      s += dirSign * speed;
-      const done = dirSign > 0 ? s >= s1 : s <= s1;
-      const target = path.pointAt(done ? s1 : s);
-      const here = this.pos;
-      let vel = sub(target, here);
-      if (len(vel) > 3.2) {
-        this.teleport(target);
-        vel = v(0, 0, 0);
-      }
-      if (aerial || path.o.aerial) vel = add(vel, v(0, 0.08, 0));
-      this.drive(vel);
-      const ahead = path.pointAt(s + dirSign * 2);
-      this.face(ahead);
-      if (contact > 0) {
-        for (const e of foesNear(this.dim, here, 1.8)) {
-          if (hitSet.has(e.id)) continue;
-          hitSet.add(e.id);
-          hurt(e, contact, this.e);
-          const d = path.dirAt(s);
-          push(e, v(d.x * dirSign * 0.9, 0.45, d.z * dirSign * 0.9));
+    try {
+      while (guard-- > 0 && this.valid) {
+        s += dirSign * speed;
+        const done = dirSign > 0 ? s >= s1 : s <= s1;
+        const target = path.pointAt(done ? s1 : s);
+        const here = this.pos;
+        let vel = sub(target, here);
+        if (len(vel) > 3.2) {
+          this.teleport(target);
+          vel = v(0, 0, 0);
         }
+        if (aerial || path.o.aerial) vel = add(vel, v(0, 0.08, 0));
+        this.drive(vel);
+        const ahead = path.pointAt(s + dirSign * 2);
+        this.face(ahead);
+        if (contact > 0) {
+          for (const e of foesNear(this.dim, here, 1.8)) {
+            if (hitSet.has(e.id)) continue;
+            hitSet.add(e.id);
+            hurt(e, contact, this.e);
+            const d = path.dirAt(s);
+            push(e, v(d.x * dirSign * 0.9, 0.45, d.z * dirSign * 0.9));
+          }
+        }
+        if (done) break;
+        yield 1;
       }
-      if (done) break;
-      yield 1;
+    } finally {
+      // also when a stagger / bell / phase change interrupts the ride: no coasting off the road
+      if (this.valid) this.stop();
     }
-    this.stop();
   }
 
   /** Telegraphed ground impact: sigil grows for `ticks`, then the caller strikes. */
@@ -382,8 +388,7 @@ export class JoanBoss {
 
   /** Is there open sky / air above p (for aerial roads and descents)? */
   airAbove(p: V3, h: number): boolean {
-    for (let y = 1; y <= h; y += 2) if (!isOpen(this.dim, add(p, v(0, y, 0)))) return false;
-    return true;
+    return lineClear(this.dim, add(p, v(0, 0.5, 0)), add(p, v(0, h, 0)));
   }
 
   // ------------------------------------------------------------------ background tasks

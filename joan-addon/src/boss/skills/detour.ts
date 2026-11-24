@@ -1,5 +1,5 @@
 import { Entity, Player } from "@minecraft/server";
-import { COLORS, SERAPH } from "../../config.js";
+import { COLORS, PROJECTILES, SERAPH } from "../../config.js";
 import { emit, sound } from "../../core/fx.js";
 import { fightersNear, foesNear, hurt, push } from "../../core/targets.js";
 import { lineClear } from "../../core/terrain.js";
@@ -27,6 +27,11 @@ export function* heavensDetour(b: JoanBoss, t: Player): SkillGen {
   const duration = p2 ? 80 : 96;
   const orbits: Path[] = [];
   const aimBack = (e: Entity): V3 | undefined => {
+    if (!PROJECTILES.has(e.typeId)) {
+      // players and mobs are thrown OUT of the orbit, away from Joan
+      const out = flatDir(c, e.location);
+      return add(e.location, add(scale(out, 6), v(0, 0.5, 0)));
+    }
     const ps = fightersNear(b.dim, e.location, 40).sort((a, z) => dist(a.location, e.location) - dist(z.location, e.location));
     return ps[0] ? add(ps[0].location, v(0, 1.2, 0)) : undefined;
   };
@@ -47,7 +52,7 @@ export function* heavensDetour(b: JoanBoss, t: Player): SkillGen {
       const victim = targets.length ? targets[Math.floor(Math.random() * targets.length)] : t;
       if (victim.isValid) launchSeraph(b, victim, p2);
     }
-    if (i % 20 === 0) b.face(t.location);
+    if (i % 20 === 0 && t.isValid) b.face(t.location);
     yield 1;
   }
   b.anim("detour_release");

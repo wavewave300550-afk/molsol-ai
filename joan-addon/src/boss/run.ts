@@ -23,11 +23,10 @@ export function tickBoss(b: JoanBoss, now: number): boolean {
       b.start("death", death(b), false);
     } else if (b.flags.pendingTransition && b.phase === 1) {
       b.start("transition", transition(b), false);
-    } else if (shouldUlt(b, now)) {
+    } else if (shouldUlt(b, now) && ultTarget(b)) {
       const def = skillByName("stake");
-      const t = b.brain.target ?? b.fighters()[0];
+      const t = ultTarget(b);
       if (def && t) b.start("stake", wrap(b, def.name, def.run(b, t, undefined), true), false);
-      else b.flags.pendingUlt = false;
     } else {
       leash(b, now);
       if (!b.action && now >= b.stunUntil) {
@@ -42,6 +41,12 @@ export function tickBoss(b: JoanBoss, now: number): boolean {
   }
   b.stepAction();
   return true;
+}
+
+function ultTarget(b: JoanBoss): Player | undefined {
+  const t = b.brain.target;
+  if (t && t.isValid) return t;
+  return b.fighters()[0];
 }
 
 function shouldUlt(b: JoanBoss, now: number): boolean {
@@ -101,12 +106,12 @@ function phaseTwoChain(b: JoanBoss, last: string): void {
 /** Between skills: walk in (native AI), face the target, keep the standard aloft. */
 function idle(b: JoanBoss, now: number): void {
   const t = b.brain.target;
-  if (!t) {
+  if (!t || !t.isValid) {
     if (b.noTargetSince < 0) b.noTargetSince = now;
     return;
   }
   b.noTargetSince = -1;
-  if (now % 10 === 0 && hdist(b.pos, t.location) < 5) b.face(t.location);
+  if (now % 10 === 0 && t.isValid && hdist(b.pos, t.location) < 5) b.face(t.location);
 }
 
 /** Stay near the arena; reset the encounter when everyone has left. */
@@ -128,7 +133,7 @@ function leash(b: JoanBoss, now: number): void {
 function resetFight(b: JoanBoss): void {
   b.noTargetSince = -1;
   b.interrupt();
-  b.field.retireAll(b.now, 10);
+  for (const p of b.field.livePaths()) if (p.o.tag !== "arena") b.field.retire(p, b.now, 10);
   b.field.scars = [];
   b.participants.clear();
   try {
@@ -151,13 +156,20 @@ function* returnHome(b: JoanBoss): SkillGen {
   const road = b.airRoad(skyArc(add(b.pos, v(0, 0.2, 0)), b.home, 6), { kind: "arc", speed: 0.7, form: b.tel(), life: 80,
     carryPlayers: false, memory: false, crossings: false });
   b.anim("surge_windup");
-  if (!road) {
-    b.teleport(b.home);
-    return;
+  if (road && hdist(road.pointAt(road.length), b.home) < 4) {
+    yield b.tel();
+    b.anim("surge_ride");
+    yield* b.ride(road, 0, road.length, 1.2, 4, true);
+  } else {
+    if (road) b.field.retire(road, b.now, 1);
+    yield 10;
   }
-  yield b.tel();
-  b.anim("surge_ride");
-  yield* b.ride(road, 0, road.length, 1.2, 4, true);
+  if (hdist(b.pos, b.home) > 4) {
+    // trees, hills or houses blocked the sky road: she steps through the light instead
+    emit(b.dim, "joan:pillar", b.pos, { h: 8, color: COLORS.roadGold, life: 0.6, size: 0.6 });
+    b.teleport(b.home);
+    emit(b.dim, "joan:pillar", b.home, { h: 8, color: COLORS.roadGold, life: 0.6, size: 0.6 });
+  }
   b.anim("surge_slam");
   b.impactFx(b.pos, 2.5);
   yield 12;

@@ -1,5 +1,5 @@
 import { Dimension } from "@minecraft/server";
-import { groundY, isOpen } from "../core/terrain.js";
+import { bodyClear, groundY, lineClear } from "../core/terrain.js";
 import { add, dist, flatDir, lerp, norm, perpXZ, scale, sub, v, V3 } from "../core/vec.js";
 
 /** Curve builders. All return dense point lists (resampled later by Path). */
@@ -157,7 +157,7 @@ export function conform(dim: Dimension, pts: V3[], refY: number, maxStep = 1.6):
       if (y > prevY) break;
       y = prevY;
     }
-    if (!isOpen(dim, v(p.x, y + 0.6, p.z))) break;
+    if (!bodyClear(dim, v(p.x, y, p.z), 1.7)) break; // a real wall (plants and snow layers are passable)
     out.push(v(p.x, y + 0.05, p.z));
     prevY = y;
   }
@@ -170,11 +170,13 @@ export function conform(dim: Dimension, pts: V3[], refY: number, maxStep = 1.6):
   return out;
 }
 
-/** Clip an aerial curve at the first solid block. */
-export function clipAir(dim: Dimension, pts: V3[]): V3[] {
+/** Clip an aerial curve where a solid block crosses it (passable blocks are ignored). */
+export function clipAir(dim: Dimension, pts: V3[], bodyHeight = 2.0): V3[] {
   const out: V3[] = [];
-  for (const p of pts) {
-    if (!isOpen(dim, p) || !isOpen(dim, add(p, v(0, 1, 0)))) break;
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i];
+    if (i > 0 && !lineClear(dim, add(pts[i - 1], v(0, 0.3, 0)), add(p, v(0, 0.3, 0)))) break;
+    if (i % 2 === 0 && !bodyClear(dim, p, bodyHeight)) break;
     out.push(p);
   }
   return out;

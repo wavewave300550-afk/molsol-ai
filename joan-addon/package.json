@@ -7,7 +7,7 @@
     "build": "python3 tools/build.py",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "validate": "python3 tools/validate.py",
-    "smoke": "node tools/smoke/smoke.mjs",
+    "smoke": "node tools/smoke/smoke.mjs && JOAN_KB=set node tools/smoke/smoke.mjs && JOAN_KB=add node tools/smoke/smoke.mjs",
     "preview": "python3 tools/docs.py",
     "test": "npm run typecheck && npm run build && npm run validate && npm run smoke",
     "anim-preview": "python3 tools/animpreview.py build/preview/anim"

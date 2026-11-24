@@ -28,12 +28,20 @@ export function lineClear(dim: Dimension, a: V3, b: V3): boolean {
   }
 }
 
-/** Is the block cell at p open (air / passable / liquid)? */
-export function isOpen(dim: Dimension, p: Vector3): boolean {
+/**
+ * Room for a body standing at p: nothing with a collision box between p and
+ * p + height. Uses the engine's own notion of passable blocks (grass, flowers,
+ * snow layers, torches, crops...), exactly like groundY, so plants never count
+ * as walls.
+ */
+export function bodyClear(dim: Dimension, p: Vector3, height = 1.7): boolean {
   try {
-    const b = dim.getBlock({ x: Math.floor(p.x), y: Math.floor(p.y), z: Math.floor(p.z) });
-    if (!b) return true;
-    return b.isAir || b.isLiquid;
+    const hit = dim.getBlockFromRay({ x: p.x, y: p.y + 0.05, z: p.z }, { x: 0, y: 1, z: 0 }, {
+      maxDistance: height,
+      includeLiquidBlocks: false,
+      includePassableBlocks: false,
+    });
+    return !hit;
   } catch {
     return true;
   }

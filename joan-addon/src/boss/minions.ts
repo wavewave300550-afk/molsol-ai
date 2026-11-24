@@ -60,6 +60,19 @@ export function sweepOrphans(alive: Set<string>): number {
   return n;
 }
 
+/** A player broke a helper (echo / seraph light): it bursts into light at once. */
+export function shatter(e: Entity): void {
+  if (!e.isValid) return;
+  try {
+    const at = { x: e.location.x, y: e.location.y + 1, z: e.location.z };
+    e.dimension.spawnParticle("joan:burst", at);
+    e.dimension.playSound("joan.seraph.burst", at, { volume: 0.8, pitch: 1.3 });
+  } catch {
+    // cosmetic
+  }
+  removeQuietly(e);
+}
+
 export function setProp(e: Entity | undefined, id: string, value: boolean | number | string): void {
   if (!e || !e.isValid) return;
   try {

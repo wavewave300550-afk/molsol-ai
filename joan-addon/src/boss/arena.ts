@@ -11,7 +11,7 @@ import type { JoanBoss } from "./joan.js";
  * standing inside or on the edge.
  */
 export function arenaRing(b: JoanBoss): void {
-  if (b.field.livePaths().some((p) => p.o.tag === "arena")) return;
+  if (b.field.livePaths().some((p) => p.o.tag === "arena" && p.endAt > b.now + 20)) return;
   const R = TUNING.arenaRadius;
   b.field.add(circle(b.home, R, 0, 1, false), {
     kind: "ring", owner: b.id, loop: true, speed: 0.8, radius: 1.6, aerial: true, form: 20, life: 20 * 60 * 30,

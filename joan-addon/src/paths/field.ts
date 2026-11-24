@@ -48,6 +48,7 @@ export class PathField {
   paths: Path[] = [];
   scars: Scar[] = [];
   riders = new Map<string, Rider>();
+  /** After being thrown off a road, an entity is ignored by it (pathId -1 = by every road) for a moment. */
   exitCooldown = new Map<string, { pathId: number; until: number }>();
   hooks: FieldHooks = {};
   private lastSound = new Map<string, number>();
@@ -134,6 +135,7 @@ export class PathField {
       if (p.reverseAt >= 0 && now >= p.reverseAt) {
         p.flow = p.flow > 0 ? -1 : 1;
         p.reverseAt = -1;
+        if (p.o.restless) p.nextRestless = now + p.o.restless; // a commanded flip restarts the restless clock
         this.hooks.onReverse?.(p);
       }
       if (p.o.restless && p.isActive && p.nextRestless >= 0 && now >= p.nextRestless && p.reverseAt < 0) {
@@ -215,7 +217,7 @@ export class PathField {
     let best: { p: Path; s: number; c: V3; score: number } | undefined;
     for (const p of active) {
       if (!this.allowed(p, isProj, player, e)) continue;
-      if (cd && cd.pathId === p.id) continue;
+      if (cd && (cd.pathId === p.id || cd.pathId === -1)) continue;
       const margin = p.o.radius + (isProj ? 2.5 : 1.5);
       if (!p.inBounds(pos, margin)) continue;
       const n = p.nearest(isProj || p.o.aerial ? body : pos);
@@ -248,24 +250,32 @@ export class PathField {
         this.hooks.onProjectile?.(e, p);
       } else this.hooks.onCaptured?.(e, p);
     }
+    const prevS = rider.s;
     rider.s = s;
     if (p.o.maxRide && now - rider.since >= p.o.maxRide) {
       p.o.onEnd?.(e, p);
       if (e.isValid) this.fling(e, p, p.dirAt(s), isProj, isProj ? Math.max(len(this.velocityOf(e)), 1.2) : p.o.speed);
       this.riders.delete(e.id);
-      this.exitCooldown.set(e.id, { pathId: p.id, until: now + 16 });
+      this.exitCooldown.set(e.id, { pathId: -1, until: now + 16 }); // crossed orbits must not catch it straight back
       return;
     }
     const sneaking = player && (e as Player).isSneaking;
     const speed = isProj ? Math.max(len(this.velocityOf(e)), 0.85) : p.o.speed * (sneaking ? 0.4 : 1);
-    // mid-road junctions
-    const nextS = s + p.flow * Math.max(speed, 0.3);
+    // mid-road junctions: everything between last tick's position and the next step counts
+    const step = Math.max(speed, 0.3);
+    const ahead = (from: number, to: number): number => {
+      const d = (to - from) * p.flow;
+      return p.o.loop ? ((d % p.length) + p.length) % p.length : d;
+    };
+    const travelled = ahead(prevS, s);
+    const span = (travelled >= 0 && travelled < p.length / 2 ? travelled : 0) + step;
+    const startFrom = travelled >= 0 && travelled < p.length / 2 ? prevS : s;
     for (const j of p.junctions) {
       if (!j.to.isActive) continue;
-      const crossed = p.flow > 0 ? s <= j.s && nextS >= j.s : s >= j.s && nextS <= j.s;
-      if (crossed) {
+      const dj = ahead(startFrom, j.s);
+      if (dj >= 0 && dj <= span) {
         p = j.to;
-        s = j.toS;
+        s = j.to.nearest(isProj || j.to.o.aerial ? body : pos).s;
         rider.path = p;
         rider.s = s;
         rider.lastSwitch = now;
@@ -278,11 +288,12 @@ export class PathField {
         const live = p.next.filter((q) => q.alive);
         if (live.length) {
           const nxt = live[p.branchCounter++ % live.length];
+          const entry = nxt.nearest(isProj || nxt.o.aerial ? body : pos).s;
           rider.path = nxt;
-          rider.s = nxt.startS;
+          rider.s = entry;
           rider.lastSwitch = now;
           p = nxt;
-          s = nxt.startS;
+          s = entry;
         }
       } else {
         const dir = p.dirAt(s);
@@ -298,7 +309,9 @@ export class PathField {
     const c = p.pointAt(s);
     const ref = isProj || p.o.aerial ? body : pos;
     const toC = sub(c, ref);
-    const lat = sub(toC, scale(dir, dot(toC, dir)));
+    let lat = sub(toC, scale(dir, dot(toC, dir)));
+    const latLen = len(lat);
+    if (latLen > p.o.radius) lat = scale(lat, p.o.radius / latLen);
     const pull = sneaking ? 0 : (p.o.pull ?? 0.18);
     let vel = add(scale(dir, speed), scale(lat, isProj ? 0.4 : pull));
     if (!isProj && !p.o.aerial) vel = v(vel.x, Math.max(0, dir.y * speed), vel.z);
@@ -323,8 +336,19 @@ export class PathField {
 
   private setVelocity(e: Entity, vel: V3, player: boolean): void {
     try {
-      if (player) (e as Player).applyKnockback({ x: vel.x, z: vel.z }, vel.y);
-      else {
+      if (player) {
+        // Knockback adds to (a share of) the current motion rather than replacing it, so feed it only
+        // what is missing; stays bounded whether the engine sets, halves-and-adds or adds.
+        const cur = this.velocityOf(e);
+        let fx = vel.x - cur.x * 0.5;
+        let fz = vel.z - cur.z * 0.5;
+        const m = Math.hypot(fx, fz);
+        if (m > 1.5) {
+          fx *= 1.5 / m;
+          fz *= 1.5 / m;
+        }
+        (e as Player).applyKnockback({ x: fx, z: fz }, vel.y);
+      } else {
         e.clearVelocity();
         e.applyImpulse(vel);
       }

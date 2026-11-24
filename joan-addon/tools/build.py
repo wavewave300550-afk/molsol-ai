@@ -496,21 +496,20 @@ def build_bp_entities():
     }}
     write_json(os.path.join(BP, "entities", "joan_of_arc.json"), joan)
 
+    # Echoes, seraph lights and phantom standards never take engine damage: the scripts break them
+    # on a player's hit (echo / seraph: one hit, standard: three), so no death animation keeps acting.
+    immune = {"minecraft:damage_sensor": {"triggers": [{"cause": "all", "deals_damage": "no"}]}}
     echo = minion("joan:echo", ["joan_minion", "monster"], {
         "minecraft:health": {"value": 8, "max": 8},
         "minecraft:collision_box": {"width": 0.7, "height": 2.2},
-        "minecraft:damage_sensor": {"triggers": [{"cause": "fire", "deals_damage": "no"},
-                                                 {"cause": "fire_tick", "deals_damage": "no"},
-                                                 {"cause": "fall", "deals_damage": "no"}]},
+        **immune,
     }, {"joan:fire": {"type": "bool", "default": False, "client_sync": True}}, lifetime=40.0)
     write_json(os.path.join(BP, "entities", "echo.json"), echo)
 
     standard = minion("joan:standard", ["joan_minion", "monster"], {
         "minecraft:health": {"value": 30, "max": 30},
         "minecraft:collision_box": {"width": 0.8, "height": 2.8},
-        "minecraft:damage_sensor": {"triggers": [{"cause": "fire", "deals_damage": "no"},
-                                                 {"cause": "fire_tick", "deals_damage": "no"},
-                                                 {"cause": "fall", "deals_damage": "no"}]},
+        **immune,
     }, lifetime=45.0)
     write_json(os.path.join(BP, "entities", "standard.json"), standard)
 
@@ -533,8 +532,7 @@ def build_bp_entities():
     seraph = minion("joan:seraph", ["joan_minion", "monster"], {
         "minecraft:health": {"value": 2, "max": 2},
         "minecraft:collision_box": {"width": 0.5, "height": 0.5},
-        "minecraft:damage_sensor": {"triggers": [{"cause": "fire", "deals_damage": "no"},
-                                                 {"cause": "fire_tick", "deals_damage": "no"}]},
+        **immune,
     }, {"joan:fire": {"type": "bool", "default": False, "client_sync": True}}, lifetime=12.0)
     write_json(os.path.join(BP, "entities", "seraph.json"), seraph)
 
