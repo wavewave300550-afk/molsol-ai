@@ -1,0 +1,20 @@
+{
+  "name": "joan-of-arc-boss",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Minecraft Bedrock boss add-on: BOSS 001 - Joan of Arc, The Banner of Divine Paths",
+  "scripts": {
+    "build": "python3 tools/build.py",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "validate": "python3 tools/validate.py",
+    "smoke": "node tools/smoke/smoke.mjs",
+    "preview": "python3 tools/docs.py",
+    "test": "npm run typecheck && npm run build && npm run validate && npm run smoke",
+    "anim-preview": "python3 tools/animpreview.py build/preview/anim"
+  },
+  "devDependencies": {
+    "@minecraft/server": "2.11.0",
+    "@minecraft/vanilla-data": "1.26.60",
+    "typescript": "5.6.3"
+  }
+}
